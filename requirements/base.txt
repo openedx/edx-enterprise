@@ -4,5 +4,10 @@
 #
 #    pip-compile --output-file requirements/base.txt requirements/base.in
 #
+django-extensions==1.7.4
 django-model-utils==2.6
+django-simple-history==1.8.1
 Django==1.10.2            # via django-model-utils
+Pillow==3.4.2
+six==1.10.0               # via django-extensions
+unicodecsv==0.14.1

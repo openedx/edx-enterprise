@@ -42,7 +42,8 @@ Use the `fake_translations` make target for this purpose. This target will extra
 generate fake translations in the Esperanto (eo) language directory, and compile the translations.
 
 You can trigger the display of the translations by setting your browser's language to Esperanto (eo), and navigating to
-a page on the site. Instead of plain English strings, you should see specially-accented English strings that look like this:
+a page on the site. Instead of plain English strings, you should see specially-accented English strings that look
+like this:
 
     Thé Fütüré øf Ønlïné Édüçätïøn Ⱡσяєм ι# Før änýøné, änýwhéré, änýtïmé Ⱡσяєм #
 

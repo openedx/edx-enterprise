@@ -45,7 +45,14 @@ setup(
         'enterprise',
     ],
     include_package_data=True,
-    install_requires=["django-model-utils>=2.0"],
+    install_requires=[
+        "Django>=1.8.15,<1.11",
+        "django-model-utils>=2.0",
+        "unicodecsv>=0.14.1",
+        "django-autoslug>=1.9.3",
+        "Pillow>=3.1.1",
+        "django-extensions>=1.7.4"
+    ],
     license="AGPL 3.0",
     zip_safe=False,
     keywords='Django edx',
