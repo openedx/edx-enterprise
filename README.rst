@@ -25,15 +25,12 @@ enterprise
     :target: https://github.com/edx/edx-enterprise/blob/master/LICENSE.txt
     :alt: License
 
-The ``README.rst`` file should start with a brief description of the repository,
-which sets it in the context of other repositories under the ``edx``
-organization. It should make clear where this fits in to the overall edX
-codebase.
+``Enterprise`` app provides enterprise features to Open edX platform. Most of such features are
+structured around ``Enterprise Customer`` - an organization or a group of people that "consumes"
+courses on Open edX platform.
 
-Your project description goes here
-
-Overview (please modify)
-------------------------
+Overview
+--------
 
 The ``README.rst`` file should then provide an overview of the code in this
 repository, including the main components and useful entry points for starting

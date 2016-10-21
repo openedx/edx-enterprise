@@ -2,3 +2,7 @@
 
 Django                    # Web application framework
 django-model-utils        # Provides TimeStampedModel abstract base class
+unicodecsv                # Allows exporting CSV with unicode support (a drop-in replacement for built-in csv module)
+Pillow                    # Image manipulation module, required to use ImageField
+django_extensions         # Required to use TimeStampedModel
+django-simple-history     # History for Django models
