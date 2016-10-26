@@ -14,3 +14,5 @@ class EnterpriseConfig(AppConfig):
     """
 
     name = 'enterprise'
+    valid_extensions = ['.png', ]
+    image_size = 250 * 1024
