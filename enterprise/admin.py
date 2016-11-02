@@ -48,7 +48,7 @@ class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
     search_fields = ("name", "uuid",)
     inlines = [EnterpriseCustomerBrandingConfigurationInline, ]
 
-    EXPORT_AS_CSV_FIELDS = ["name", "active", "uuid"]
+    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid"]
 
     actions = [
         export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS)
