@@ -3,15 +3,20 @@
 Tests for the `edx-enterprise` models module.
 """
 
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
 
 import ddt
+import mock
 from faker import Factory as FakerFactory
 from pytest import mark
 
-from enterprise.models import EnterpriseCustomer
+from django.core.exceptions import ValidationError
+from django.core.files import File
+from django.core.files.storage import Storage
+
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, logo_path
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory
 
 
@@ -89,3 +94,105 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             user_id=user_id
         )
         self.assertEqual(method(customer_user), expected_to_str)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
+    """
+    Tests of the EnterpriseCustomerBrandingConfiguration model.
+    """
+
+    def test_logo_path(self):
+        """
+        Test path of image file should be enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
+        """
+        file_mock = mock.MagicMock(spec=File, name='FileMock')
+        file_mock.name = 'test1.png'
+        file_mock.size = 240 * 1024
+        branding_config = EnterpriseCustomerBrandingConfiguration(
+            id=1,
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo=file_mock
+        )
+
+        storage_mock = mock.MagicMock(spec=Storage, name='StorageMock')
+        with mock.patch('django.core.files.storage.default_storage._wrapped', storage_mock):
+            path = logo_path(branding_config, branding_config.logo.name)
+            self.assertEqual(path, 'enterprise/branding/1/1_logo.png')
+
+    def test_branding_configuration_saving_successfully(self):
+        """
+        Test enterprise customer branding configuration saving successfully.
+        """
+        storage_mock = mock.MagicMock(spec=Storage, name='StorageMock')
+        branding_config_1 = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo='test1.png'
+        )
+
+        storage_mock.exists.return_value = True
+        with mock.patch('django.core.files.storage.default_storage._wrapped', storage_mock):
+            branding_config_1.save()
+            self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 1)
+
+        branding_config_2 = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo='test2.png'
+        )
+
+        storage_mock.exists.return_value = False
+        with mock.patch('django.core.files.storage.default_storage._wrapped', storage_mock):
+            branding_config_2.save()
+            self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 2)
+
+    @ddt.data(
+        (False, 350 * 1024),
+        (False, 251 * 1024),
+        (False, 250 * 1024),
+        (True, 2 * 1024),
+        (True, 249 * 1024),
+    )
+    @ddt.unpack
+    def test_image_size(self, valid_image, image_size):
+        """
+        Test image size, image_size < (250 * 1024) e.g. 250kb. See apps.py.
+        """
+        file_mock = mock.MagicMock(spec=File, name='FileMock')
+        file_mock.name = 'test1.png'
+        file_mock.size = image_size
+        branding_configuration = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo=file_mock
+        )
+
+        if not valid_image:
+            with self.assertRaises(ValidationError):
+                branding_configuration.full_clean()
+        else:
+            branding_configuration.full_clean()  # exception here will fail the test
+
+    @ddt.data(
+        (False, '.jpg'),
+        (False, '.gif'),
+        (False, '.bmp'),
+        (True, '.png'),
+    )
+    @ddt.unpack
+    def test_image_type(self, valid_image, image_extension):
+        """
+        Test image type, currently .png is supported in configuration. see apps.py.
+        """
+        file_mock = mock.MagicMock(spec=File, name='FileMock')
+        file_mock.name = 'test1' + image_extension
+        file_mock.size = 240 * 1024
+        branding_configuration = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo=file_mock
+        )
+
+        if not valid_image:
+            with self.assertRaises(ValidationError):
+                branding_configuration.full_clean()
+        else:
+            branding_configuration.full_clean()  # exception here will fail the test

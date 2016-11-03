@@ -4,13 +4,19 @@ Database models for enterprise.
 """
 from __future__ import absolute_import, unicode_literals
 
+import os
 from uuid import uuid4
 
 from simple_history.models import HistoricalRecords  # likely a bug in import order checker
+
+from django.core.files.storage import default_storage
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
+
 from model_utils.models import TimeStampedModel
+
+from .validators import validate_image_extension, validate_image_size
 
 
 class EnterpriseCustomerManager(models.Manager):
@@ -107,3 +113,58 @@ class EnterpriseCustomerUser(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+def logo_path(instance, filename):
+    """
+    Delete the file if it already exist and returns the enterprise customer logo image path.
+
+    :param instance: EnterpriseCustomerBrandingConfiguration object
+    :param filename: file to upload
+    :return path: path of image file e.g. enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower()
+    """
+    extension = os.path.splitext(filename)[1].lower()
+    instance_id = str(instance.id)
+    fullname = os.path.join('enterprise/branding/', instance_id, instance_id + '_logo' + extension)
+    if default_storage.exists(fullname):
+        default_storage.delete(fullname)
+    return fullname
+
+
+class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
+    """
+    Model that keeps track of enterprise branding configurations e.g. enterprise customer logo.
+
+    Fields:
+        enterprise_customer (ForeignKey[EnterpriseCustomer]): enterprise customer
+        logo (ImageField): enterprise customer image
+    """
+
+    enterprise_customer = models.OneToOneField(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='branding_configuration'
+    )
+    logo = models.ImageField(
+        upload_to=logo_path,
+        help_text=_(u'Please add only .PNG files for logo images.'),
+        null=True, blank=True, max_length=255,
+        validators=[validate_image_extension, validate_image_size]
+    )
+
+    class Meta:
+        """Meta class for this Django model."""
+
+        verbose_name = _('Branding Configuration')
+        verbose_name_plural = _('Branding Configurations')
+
+    def save(self, *args, **kwargs):
+        """Save the enterprise customer branding config."""
+        if self.pk is None:
+            logo_image = self.logo
+            self.logo = None
+            super(EnterpriseCustomerBrandingConfiguration, self).save(*args, **kwargs)
+            self.logo = logo_image
+
+        super(EnterpriseCustomerBrandingConfiguration, self).save(*args, **kwargs)
