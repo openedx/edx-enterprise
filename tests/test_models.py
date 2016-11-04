@@ -15,7 +15,6 @@ from pytest import mark
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
-from django.contrib.sites.models import Site
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, logo_path
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory
@@ -71,20 +70,6 @@ class TestEnterpriseCustomer(unittest.TestCase):
             name=customer.name
         )
         self.assertEqual(method(customer), expected_to_str)
-
-    def test_site_association(self):
-        """
-        Test ``EnterpriseCustomer`` conversion to string.
-        """
-        faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()
-        EnterpriseCustomerFactory(uuid=customer_uuid)
-
-        customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
-        site = Site.objects.get(domain="example.com")
-
-        self.assertEqual(customer.site, site)
-        self.assertListEqual([customer], list(site.enterprise_customers.all()))
 
 
 @mark.django_db

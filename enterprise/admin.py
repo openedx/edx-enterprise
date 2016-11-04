@@ -42,7 +42,7 @@ class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
 
-    list_display = ("name", "uuid", "active", "logo")
+    list_display = ("name", "uuid", "site", "active", "logo")
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)

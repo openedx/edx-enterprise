@@ -8,8 +8,8 @@ import os
 from uuid import uuid4
 
 from simple_history.models import HistoricalRecords  # likely a bug in import order checker
-from django.contrib.sites.models import Site
 
+from django.contrib.sites.models import Site
 from django.core.files.storage import default_storage
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible

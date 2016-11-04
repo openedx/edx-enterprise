@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.1.2] - 2016-11-04
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+_____
+
+* Linked EnterpriseCustomer model to django Site model
+
+
 [0.1.1] - 2016-11-03
 ~~~~~~~~~~~~~~~~~~~~
 

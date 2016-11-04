@@ -23,8 +23,8 @@ class SiteFactory(factory.django.DjangoModelFactory):
         model = Site
         django_get_or_create = ('domain',)
 
-    domain = 'example.com'
-    name = 'example.com'
+    domain = factory.LazyAttribute(lambda x: FAKER.domain_name())
+    name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
 class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
