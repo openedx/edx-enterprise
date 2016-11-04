@@ -9,6 +9,7 @@ from uuid import uuid4
 
 from simple_history.models import HistoricalRecords  # likely a bug in import order checker
 
+from django.contrib.sites.models import Site
 from django.core.files.storage import default_storage
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -66,6 +67,8 @@ class EnterpriseCustomer(TimeStampedModel):
     name = models.CharField(max_length=255, blank=False, null=False, help_text=_("Enterprise Customer name."))
     active = models.BooleanField(default=True)
     history = HistoricalRecords()
+
+    site = models.ForeignKey(Site, related_name="enterprise_customers")
 
     def __str__(self):
         """

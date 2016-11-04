@@ -30,6 +30,7 @@ DATABASES = {
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.sites',
     'enterprise',
 )
 
@@ -40,3 +41,6 @@ LOCALE_PATHS = [
 ROOT_URLCONF = 'enterprise.urls'
 
 SECRET_KEY = 'insecure-secret-key'
+
+# Default Site id
+SITE_ID = 1

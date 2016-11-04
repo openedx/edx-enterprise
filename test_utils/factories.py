@@ -8,9 +8,23 @@ from uuid import UUID
 import factory
 from faker import Factory as FakerFactory
 
+from django.contrib.sites.models import Site
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 
 FAKER = FakerFactory.create()
+
+
+class SiteFactory(factory.django.DjangoModelFactory):
+    """
+    Factory class for Site model.
+    """
+
+    class Meta(object):
+        model = Site
+        django_get_or_create = ('domain',)
+
+    domain = factory.LazyAttribute(lambda x: FAKER.domain_name())
+    name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
 class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
@@ -31,6 +45,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     name = factory.LazyAttribute(lambda x: FAKER.company())
     active = True
+    site = factory.SubFactory(SiteFactory)
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):

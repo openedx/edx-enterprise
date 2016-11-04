@@ -42,13 +42,13 @@ class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
 
-    list_display = ("name", "uuid", "active", "logo")
+    list_display = ("name", "uuid", "site", "active", "logo")
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
     inlines = [EnterpriseCustomerBrandingConfigurationInline, ]
 
-    EXPORT_AS_CSV_FIELDS = ["name", "active", "uuid"]
+    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid"]
 
     actions = [
         export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS)
