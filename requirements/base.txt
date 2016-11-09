@@ -6,8 +6,9 @@
 #
 django-extensions==1.7.4
 django-model-utils==2.6
+django-object-actions==0.8.2
 django-simple-history==1.8.1
-Django==1.10.2            # via django-model-utils
+Django==1.10.3            # via django-model-utils
 Pillow==3.4.2
 six==1.10.0               # via django-extensions
 unicodecsv==0.14.1

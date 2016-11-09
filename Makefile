@@ -43,6 +43,7 @@ dummy_translations: ## generate dummy translation (.po) files
 	cd enterprise && i18n_tool dummy
 
 extract_translations: ## extract strings to be translated, outputting .mo files
+	rm -rf docs/_build
 	./manage.py makemessages -l en -v1 -d django
 	./manage.py makemessages -l en -v1 -d djangojs
 
@@ -75,6 +76,9 @@ requirements: ## install development environment requirements
 
 test: clean ## run tests in the current virtualenv
 	py.test
+
+diff_cover: test
+	diff-cover coverage.xml
 
 test-all: ## run tests on every supported Python/Django combination
 	tox -e quality

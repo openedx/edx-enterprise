@@ -13,6 +13,6 @@ class EnterpriseConfig(AppConfig):
     Configuration for the enterprise Django application.
     """
 
-    name = 'enterprise'
-    valid_extensions = ['.png', ]
+    name = "enterprise"
+    valid_extensions = [".png", ]
     image_size = 250 * 1024

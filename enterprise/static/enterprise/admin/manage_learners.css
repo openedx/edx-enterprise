@@ -1,0 +1,16 @@
+.learners-panel {
+  width: 750px;
+  display: inline-block;
+}
+
+.learners-panel .learners-table {
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.forms-panel {
+  vertical-align: top;
+  width: 250px;
+  display: inline-block;
+  margin-left: 20px;
+}

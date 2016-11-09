@@ -6,3 +6,4 @@ unicodecsv                # Allows exporting CSV with unicode support (a drop-in
 Pillow                    # Image manipulation module, required to use ImageField
 django_extensions         # Required to use TimeStampedModel
 django-simple-history     # History for Django models
+django-object-actions     # Object actions in Django admin

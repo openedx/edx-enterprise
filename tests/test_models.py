@@ -10,14 +10,17 @@ import unittest
 import ddt
 import mock
 from faker import Factory as FakerFactory
-from pytest import mark
+from pytest import mark, raises
 
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, logo_path
-from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser,
+                               PendingEnterpriseCustomerUser, handle_user_post_save, logo_path)
+from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
+                                  PendingEnterpriseCustomerUserFactory, UserFactory)
 
 
 @mark.django_db
@@ -74,6 +77,127 @@ class TestEnterpriseCustomer(unittest.TestCase):
 
 @mark.django_db
 @ddt.ddt
+# TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
+# pylint: disable=no-member
+class TestEnterpriseCustomerUserManager(unittest.TestCase):
+    """
+    Tests EnterpriseCustomerUserManager.
+    """
+
+    @ddt.data(
+        "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
+    )
+    def test_link_user_existing_user(self, user_email):
+        enterprise_customer = EnterpriseCustomerFactory()
+        user = UserFactory(email=user_email)
+        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no link records should exist"
+        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=user_email)) == 0, \
+            "Precondition check: no pending link records should exist"
+
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
+        actual_records = EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=enterprise_customer, user_id=user.id  # pylint: disable=no-member
+        )
+        assert len(actual_records) == 1
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "No pending link records should have been created"
+
+    @ddt.data(
+        "yoda@jeditemple.net", "luke_skywalker@resistance.org", "darth_vader@empire.com"
+    )
+    def test_link_user_no_user(self, user_email):
+        enterprise_customer = EnterpriseCustomerFactory()
+
+        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no link records should exist"
+        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=user_email)) == 0, \
+            "Precondition check: no pending link records should exist"
+
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
+        actual_records = PendingEnterpriseCustomerUser.objects.filter(
+            enterprise_customer=enterprise_customer, user_email=user_email
+        )
+        assert len(actual_records) == 1
+        assert len(EnterpriseCustomerUser.objects.all()) == 0, "No pending link records should have been created"
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_get_link_by_email_linked_user(self, email):
+        user = UserFactory(email=email)
+        existing_link = EnterpriseCustomerUserFactory(user_id=user.id)
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email) == existing_link
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_get_link_by_email_pending_link(self, email):
+        existing_pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email) == existing_pending_link
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_get_link_by_email_no_link(self, email):
+        assert len(EnterpriseCustomerUser.objects.all()) == 0
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email) is None
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_unlink_user_existing_user(self, email):
+        other_email = "other_email@example.com"
+        user1, user2 = UserFactory(email=email), UserFactory(email=other_email)
+        enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
+        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
+        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)
+        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_id=user1.id)
+        assert len(EnterpriseCustomerUser.objects.all()) == 3
+
+        query_method = EnterpriseCustomerUser.objects.filter
+
+        EnterpriseCustomerUser.objects.unlink_user(enterprise_customer1, email)
+        # removes what was asked
+        assert len(query_method(enterprise_customer=enterprise_customer1, user_id=user1.id)) == 0
+        # keeps records of the same user with different EC (though it shouldn't be the case)
+        assert len(query_method(enterprise_customer=enterprise_customer2, user_id=user1.id)) == 1
+        # keeps records of other users
+        assert len(query_method(user_id=user2.id)) == 1
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_unlink_user_pending_link(self, email):
+        other_email = "other_email@example.com"
+        enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_email=email)
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_email=other_email)
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_email=email)
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 3
+
+        query_method = PendingEnterpriseCustomerUser.objects.filter
+
+        EnterpriseCustomerUser.objects.unlink_user(enterprise_customer1, email)
+        # removes what was asked
+        assert len(query_method(enterprise_customer=enterprise_customer1, user_email=email)) == 0
+        # keeps records of the same user with different EC (though it shouldn't be the case)
+        assert len(query_method(enterprise_customer=enterprise_customer2, user_email=email)) == 1
+        # keeps records of other users
+        assert len(query_method(user_email=other_email)) == 1
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_unlink_user_existing_user_no_link(self, email):
+        user = UserFactory(email=email)
+        enterprise_customer = EnterpriseCustomerFactory()
+        query_method = EnterpriseCustomerUser.objects.filter
+
+        assert len(query_method(user_id=user.id)) == 0, "Precondition check: link record exists"
+
+        with raises(EnterpriseCustomerUser.DoesNotExist):
+            EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
+
+    @ddt.data("email1@example.com", "email2@example.com")
+    def test_unlink_user_no_user_no_pending_link(self, email):
+        enterprise_customer = EnterpriseCustomerFactory()
+        query_method = PendingEnterpriseCustomerUser.objects.filter
+
+        assert len(query_method(user_email=email)) == 0, "Precondition check: link record exists"
+
+        with raises(PendingEnterpriseCustomerUser.DoesNotExist):
+            EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
+
+
+@mark.django_db
+@ddt.ddt
 class TestEnterpriseCustomerUser(unittest.TestCase):
     """
     Tests of the EnterpriseCustomerUser model.
@@ -88,10 +212,63 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         customer_user_id, user_id = 15, 12
         customer_user = EnterpriseCustomerUserFactory(id=customer_user_id, user_id=user_id)
-        expected_to_str = "<EnterpriseCustomerUser {ID}: {customer_name} - {user_id}>".format(
+        expected_to_str = "<EnterpriseCustomerUser {ID}>: {enterprise_name} - {user_id}".format(
             ID=customer_user_id,
-            customer_name=customer_user.enterprise_customer.name,
+            enterprise_name=customer_user.enterprise_customer.name,
             user_id=user_id
+        )
+        self.assertEqual(method(customer_user), expected_to_str)
+
+    @ddt.data(
+        "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
+    )
+    def test_user_property_user_exists(self, email):
+        user_instance = UserFactory(email=email)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_instance.id)  # pylint: disable=no-member
+        assert enterprise_customer_user.user == user_instance  # pylint: disable=no-member
+
+    @ddt.data(1, 42, 1138)
+    def test_user_property_user_missing(self, user_id):
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_id)
+        assert enterprise_customer_user.user is None  # pylint: disable=no-member
+
+    @ddt.data(
+        "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
+    )
+    # TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
+    # pylint: disable=no-member
+    def test_user_email_property_user_exists(self, email):
+        user = UserFactory(email=email)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user.id)
+        assert enterprise_customer_user.user_email == email
+
+    # TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
+    # pylint: disable=no-member
+    def test_user_email_property_user_missing(self):
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=42)
+        assert enterprise_customer_user.user_email is None
+
+
+@mark.django_db
+@ddt.ddt
+class TestPendingEnterpriseCustomerUser(unittest.TestCase):
+    """
+    Tests of the PendingEnterpriseCustomerUser model.
+    """
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseCustomerUser`` conversion to string.
+        """
+        customer_user_id, user_email = 15, "some_email@example.com"
+        customer_user = PendingEnterpriseCustomerUserFactory(id=customer_user_id, user_email=user_email)
+        expected_to_str = "<PendingEnterpriseCustomerUser {ID}>: {enterprise_name} - {user_email}".format(
+            ID=customer_user_id,
+            enterprise_name=customer_user.enterprise_customer.name,
+            user_email=user_email
         )
         self.assertEqual(method(customer_user), expected_to_str)
 
@@ -103,65 +280,73 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
     Tests of the EnterpriseCustomerBrandingConfiguration model.
     """
 
-    def test_logo_path(self):
+    @staticmethod
+    def _make_file_mock(name="logo.png", size=240*1024):
         """
-        Test path of image file should be enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
+        Build file mock.
         """
-        file_mock = mock.MagicMock(spec=File, name='FileMock')
-        file_mock.name = 'test1.png'
-        file_mock.size = 240 * 1024
-        branding_config = EnterpriseCustomerBrandingConfiguration(
-            id=1,
-            enterprise_customer=EnterpriseCustomerFactory(),
-            logo=file_mock
-        )
-
-        storage_mock = mock.MagicMock(spec=Storage, name='StorageMock')
-        with mock.patch('django.core.files.storage.default_storage._wrapped', storage_mock):
-            path = logo_path(branding_config, branding_config.logo.name)
-            self.assertEqual(path, 'enterprise/branding/1/1_logo.png')
-
-    def test_branding_configuration_saving_successfully(self):
-        """
-        Test enterprise customer branding configuration saving successfully.
-        """
-        storage_mock = mock.MagicMock(spec=Storage, name='StorageMock')
-        branding_config_1 = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
-            logo='test1.png'
-        )
-
-        storage_mock.exists.return_value = True
-        with mock.patch('django.core.files.storage.default_storage._wrapped', storage_mock):
-            branding_config_1.save()
-            self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 1)
-
-        branding_config_2 = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
-            logo='test2.png'
-        )
-
-        storage_mock.exists.return_value = False
-        with mock.patch('django.core.files.storage.default_storage._wrapped', storage_mock):
-            branding_config_2.save()
-            self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 2)
+        file_mock = mock.MagicMock(spec=File, name="FileMock")
+        file_mock.name = name
+        file_mock.size = size
+        return file_mock
 
     @ddt.data(
         str, repr
     )
     def test_string_conversion(self, method):
         """
-        Test ``EnterpriseCustomer`` conversion to string.
+        Test ``EnterpriseCustomerUser`` conversion to string.
         """
+        file_mock = self._make_file_mock()
+        customer_branding_config = EnterpriseCustomerBrandingConfiguration(
+            id=1, logo=file_mock, enterprise_customer=EnterpriseCustomerFactory()
+        )
+        expected_str = "<EnterpriseCustomerBrandingConfiguration {ID}>: {enterprise_name}".format(
+            ID=customer_branding_config.id,
+            enterprise_name=customer_branding_config.enterprise_customer.name,
+        )
+        self.assertEqual(method(customer_branding_config), expected_str)
+
+    def test_logo_path(self):
+        """
+        Test path of image file should be enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
+        """
+        file_mock = self._make_file_mock()
         branding_config = EnterpriseCustomerBrandingConfiguration(
+            id=1,
             enterprise_customer=EnterpriseCustomerFactory(),
-            logo='test1.png'
+            logo=file_mock
         )
-        expected_to_str = '<EnterpriseCustomerBrandingConfiguration {ID}>: {enterprise_name}'.format(
-            ID=branding_config.id,
-            enterprise_name=branding_config.enterprise_customer.name,
+
+        storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
+        with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
+            path = logo_path(branding_config, branding_config.logo.name)
+            self.assertEqual(path, "enterprise/branding/1/1_logo.png")
+
+    def test_branding_configuration_saving_successfully(self):
+        """
+        Test enterprise customer branding configuration saving successfully.
+        """
+        storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
+        branding_config_1 = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo="test1.png"
         )
-        self.assertEqual(method(branding_config), expected_to_str)
+
+        storage_mock.exists.return_value = True
+        with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
+            branding_config_1.save()
+            self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 1)
+
+        branding_config_2 = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo="test2.png"
+        )
+
+        storage_mock.exists.return_value = False
+        with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
+            branding_config_2.save()
+            self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 2)
 
     @ddt.data(
         (False, 350 * 1024),
@@ -175,8 +360,8 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         """
         Test image size, image_size < (250 * 1024) e.g. 250kb. See apps.py.
         """
-        file_mock = mock.MagicMock(spec=File, name='FileMock')
-        file_mock.name = 'test1.png'
+        file_mock = mock.MagicMock(spec=File, name="FileMock")
+        file_mock.name = "test1.png"
         file_mock.size = image_size
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
             enterprise_customer=EnterpriseCustomerFactory(),
@@ -190,18 +375,18 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             branding_configuration.full_clean()  # exception here will fail the test
 
     @ddt.data(
-        (False, '.jpg'),
-        (False, '.gif'),
-        (False, '.bmp'),
-        (True, '.png'),
+        (False, ".jpg"),
+        (False, ".gif"),
+        (False, ".bmp"),
+        (True, ".png"),
     )
     @ddt.unpack
     def test_image_type(self, valid_image, image_extension):
         """
         Test image type, currently .png is supported in configuration. see apps.py.
         """
-        file_mock = mock.MagicMock(spec=File, name='FileMock')
-        file_mock.name = 'test1' + image_extension
+        file_mock = mock.MagicMock(spec=File, name="FileMock")
+        file_mock.name = "test1" + image_extension
         file_mock.size = 240 * 1024
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
             enterprise_customer=EnterpriseCustomerFactory(),
@@ -213,3 +398,90 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
                 branding_configuration.full_clean()
         else:
             branding_configuration.full_clean()  # exception here will fail the test
+
+
+@mark.django_db
+class TestUserPostSaveSignalHandler(unittest.TestCase):
+    """
+    Test User post_save signal handler.
+
+    This class does not user UserFactory intentionally
+    """
+
+    def test_handle_user_post_save_no_user_instance_nothing_happens(self):
+        # precondition checks
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert len(EnterpriseCustomerUser.objects.all()) == 0
+
+        parameters = {"instance": None, "created": False}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert len(EnterpriseCustomerUser.objects.all()) == 0
+
+    def test_handle_user_post_save_no_matching_pending_link(self):
+        user = User(email="jackie.chan@hollywood.com")
+
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no pending links available"
+        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no links exists"
+
+        parameters = {"instance": user, "created": True}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert len(EnterpriseCustomerUser.objects.all()) == 0
+
+    def test_handle_user_post_save_created_user(self):
+        email = "jackie.chan@hollywood.com"
+        user = User(id=1, email=email)
+        pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+
+        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
+        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+            "Precondition check: pending link exists"
+
+        parameters = {"instance": user, "created": True}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert len(EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=pending_link.enterprise_customer, user_id=user.id
+        )) == 1
+
+    def test_handle_user_post_save_modified_user_not_linked(self):
+        email = "jackie.chan@hollywood.com"
+        user = User(id=1, email=email)
+        pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+
+        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
+        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+            "Precondition check: pending link exists"
+
+        parameters = {"instance": user, "created": False}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert len(EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=pending_link.enterprise_customer, user_id=user.id
+        )) == 1
+
+    def test_handle_user_post_save_modified_user_already_linked(self):
+        email = "jackie.chan@hollywood.com"
+        user = User(id=1, email=email)
+        enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
+        existing_link = EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user.id)
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_email=email)
+
+        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1, "Precondition check: links exists"
+        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+            "Precondition check: pending link exists"
+
+        parameters = {"instance": user, "created": False}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        link = EnterpriseCustomerUser.objects.get(user_id=user.id)
+        # TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
+        assert link.id == existing_link.id, "Should keep existing link intact"  # pylint: disable=no-member
+        assert link.enterprise_customer == enterprise_customer1, "Should keep existing link intact"
+
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Should delete pending link"

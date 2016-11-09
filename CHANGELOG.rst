@@ -14,6 +14,24 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.3.0] - 2016-11-16
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+_____
+
+* Added Pending Enterprise Customer User model - keeps track of user email linked to Enterprise Customer, but not
+  yet used by any user.
+* Added custom "Manage Learners" admin view.
+
+Technical features
+------------------
+
+* Added sphinx-napoleon plugin to support rendering Google Style docstrings into documentation properly (i.e.
+  make it recognize function arguments, returns etc.)
+* Added translation files
+
+
 [0.2.0] - 2016-11-15
 ~~~~~~~~~~~~~~~~~~~~
 

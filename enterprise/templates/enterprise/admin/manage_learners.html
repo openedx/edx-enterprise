@@ -1,0 +1,116 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_urls %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'enterprise/admin/manage_learners.css' %}"/>
+{% endblock %}
+
+{% block extrahead %}
+<!--
+I wish we could use requireJS here (as instructed/suggested by edX guideline at
+"How to add a new Django app to the edX platform" section of
+https://openedx.atlassian.net/wiki/display/AC/How+to+add+a+new+feature+to+LMS+or+Studio
+
+But it is not possible:
+1. We can include RequireJS via, say {% static 'js/vendor/requirejs/require.js' %} and it'll work - Good
+2. RequireJS needs config (otherwise it won't find jquery, gettext, etc.) - Ok
+3. We can include LMS configs using {% static 'lms/js/require-config.js' %} - Good
+4. But the config defines `jquery`, `gettext` and quite a bunch of something else as shims and expects them to
+   be present on the page already, so we're back to including them with static template tag here - Bad
+5. We can just add them to admin base template - it can be overriden in edx-platform/lms/templates/admin - Good
+6. That quite a bunch of something else is put into "normal" (non-admin) LMS interface by mako `static` def - Good
+7. Django admin uses Django template, so we can't override it without reimplementing entire template + reworking all
+   templates that "extend"/"inherit" it into mako templates (which is ALL templates) - Bad
+7.1. So the only option is to keep it Django template
+8. Mako definitions can't be used in Django template, so `static_content.html` has no use here - Bad.
+8.1. And we're down to either inventing a parallel mechanism for including JS/CSS groups into Django template (bad
+     for obvious reasons) or listing all the "shims" using `static` tempalte tag (bad for obvious reasons too).
+
+We're back to including some files using `static` template tag again. So it is just simpler to directly include
+just three "vendor" files here and one app file in footer and avoid going into that much trouble.
+-->
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript" src="{% static 'common/js/vendor/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vendor/jquery.cookie.js' %}"></script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; {% if has_change_permission %}
+    <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  {% else %}
+    {{ opts.verbose_name_plural|capfirst }}
+  {% endif %}
+  &rsaquo; {% if has_change_permission %}
+    <a href="{% url opts|admin_urlname:'change' enterprise_customer.uuid %}">
+      {{ enterprise_customer|truncatewords:"18" }}
+    </a>
+  {% else %}
+    {{ enterprise_customer|capfirst }}
+  {% endif %}
+  &rsaquo; {% trans "Manage Learners" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="learners-panel">
+  <h1>Linked learners</h1>
+  <table class="learners-table linked-learners">
+    <thead>
+    <tr>
+      <th>{% trans "User Email" %}</th>
+      <th>{% trans "Username" %}</th>
+      <th>{% trans "Linked Date" %}</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for learner in learners %}
+    <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
+      <td>{{ learner.user_email }}</td>
+      <td>{{ learner.user.username }}</td>
+      <td>{{ learner.created }}</td>
+      <td class="delete-cell"><input type="button" value="Unlink"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h1>Pending linked learners</h1>
+  <table class="learners-table pending-linked-learners">
+    <thead>
+    <tr>
+      <th>{% trans "User Email" %}</th>
+      <th>{% trans "Linked Date" %}</th>
+      <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for learner in pending_learners %}
+    <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
+      <td>{{ learner.user_email }}</td>
+      <td>{{ learner.created }}</td>
+      <td class="delete-cell"><input type="button" value="Unlink"></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="forms-panel">
+  <h1>{% trans "Link learner" %}</h1>
+  <form action="" method="post">
+    {% csrf_token %}
+    {{ manage_learners_form }}
+    <input type="submit" value="Submit"/>
+  </form>
+</div>
+{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+<!-- See comment in extrahead block -->
+<script language="JavaScript" type="text/javascript" src="{% static 'enterprise/admin/manage_learners.js' %}"></script>
+{% endblock %}

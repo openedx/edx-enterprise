@@ -1,5 +1,6 @@
 # Additional requirements for development of this application
 
+diff-cover                # Changeset diff test coverage
 edx-lint                  # For updating pylintrc
 edx-i18n-tools            # For i18n_tool dummy
 pip-tools                 # Requirements file management

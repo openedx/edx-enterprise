@@ -4,7 +4,9 @@ data_file = .coverage
 source=enterprise
 omit =
     test_settings
+    enterprise/django_compatibility.py
     *migrations*
-    *admin.py
+    *admin/__init__.py
     *static*
     *templates*
+    *urls.py

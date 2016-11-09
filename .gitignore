@@ -61,6 +61,7 @@ output/*/index.html
 docs/_build
 docs/modules.rst
 docs/enterprise.rst
+docs/enterprise.*.rst
 
 # Private requirements
 requirements/private.in
