@@ -147,6 +147,23 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 2)
 
     @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseCustomer`` conversion to string.
+        """
+        branding_config = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo='test1.png'
+        )
+        expected_to_str = '<EnterpriseCustomerBrandingConfiguration {ID}>: {enterprise_name}'.format(
+            ID=branding_config.id,
+            enterprise_name=branding_config.enterprise_customer.name,
+        )
+        self.assertEqual(method(branding_config), expected_to_str)
+
+    @ddt.data(
         (False, 350 * 1024),
         (False, 251 * 1024),
         (False, 250 * 1024),

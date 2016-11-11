@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.2.0] - 2016-11-15
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+_____
+
+* Linked EnterpriseCustomer model to Identity Provider model
+
+
 [0.1.2] - 2016-11-04
 ~~~~~~~~~~~~~~~~~~~~
 

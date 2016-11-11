@@ -67,7 +67,7 @@ class EnterpriseCustomer(TimeStampedModel):
     name = models.CharField(max_length=255, blank=False, null=False, help_text=_("Enterprise Customer name."))
     active = models.BooleanField(default=True)
     history = HistoricalRecords()
-
+    identity_provider = models.SlugField(null=True, blank=True, default=None)
     site = models.ForeignKey(Site, related_name="enterprise_customers")
 
     def __str__(self):
@@ -171,3 +171,18 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
             self.logo = logo_image
 
         super(EnterpriseCustomerBrandingConfiguration, self).save(*args, **kwargs)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<EnterpriseCustomerBrandingConfiguration {ID}>: {enterprise_name}".format(
+            ID=self.id,
+            enterprise_name=self.enterprise_customer.name,
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()

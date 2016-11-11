@@ -5,8 +5,10 @@ Django admin integration for enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
+from django import forms
 from django.contrib import admin
 
+from enterprise import utils
 from enterprise.actions import export_as_csv_action
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser
 
@@ -36,26 +38,46 @@ class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
     can_delete = False
 
 
+class EnterpriseCustomerForm(forms.ModelForm):
+    """
+    A custom model form to convert a CharField to a TypedChoiceField.
+
+    A model form that converts a CharField to a TypedChoiceField if the choices
+    to display are accessible.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Convert SlugField to TypedChoiceField if choices can be accessed.
+        """
+        super(EnterpriseCustomerForm, self).__init__(*args, **kwargs)
+        idp_choices = utils.get_idp_choices()
+        if idp_choices is not None:
+            self.fields['identity_provider'] = forms.TypedChoiceField(choices=idp_choices, required=False)
+
+    class Meta:
+        model = EnterpriseCustomer
+        fields = "__all__"
+
+
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
     """
     Django admin model for EnterpriseCustomer.
     """
 
-    list_display = ("name", "uuid", "site", "active", "logo")
+    form = EnterpriseCustomerForm
+    list_display = ("name", "uuid", "site", "active", "logo", "identity_provider")
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
     inlines = [EnterpriseCustomerBrandingConfigurationInline, ]
 
-    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid"]
+    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider"]
 
     actions = [
         export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS)
     ]
-
-    class Meta(object):
-        model = EnterpriseCustomer
 
     @staticmethod
     def logo(instance):
