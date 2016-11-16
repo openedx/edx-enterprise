@@ -46,6 +46,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     name = factory.LazyAttribute(lambda x: FAKER.company())
     active = True
     site = factory.SubFactory(SiteFactory)
+    identity_provider = factory.LazyAttribute(lambda x: FAKER.slug())
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
