@@ -12,8 +12,8 @@ import unicodecsv
 from pytest import mark
 from six import BytesIO
 
-from enterprise.actions import export_as_csv_action
 from enterprise.admin import EnterpriseCustomerAdmin
+from enterprise.admin.actions import export_as_csv_action
 from test_utils.factories import EnterpriseCustomerFactory
 
 
@@ -74,7 +74,7 @@ class TestCSVExportAction(unittest.TestCase):
         """
         Asserts that CSV file ``actual_csv`` contains ``expected_rows``
         """
-        reader = unicodecsv.reader(actual_csv.getvalue().splitlines(), encoding='utf-8')
+        reader = unicodecsv.reader(actual_csv.getvalue().splitlines(), encoding="utf-8")
         # preprocess expected - convert everything to strings
         expected_rows = [
             [str(item) for item in row]
@@ -90,7 +90,10 @@ class TestCSVExportAction(unittest.TestCase):
         super(TestCSVExportAction, self).setUp()
         self.output_stream = BytesIO()
         response_instance_mock = mock.MagicMock(wraps=self.output_stream)
-        self.response_mock = self._make_patch("enterprise.actions.HttpResponse", return_value=response_instance_mock)
+        self.response_mock = self._make_patch(
+            "enterprise.admin.actions.HttpResponse",
+            return_value=response_instance_mock
+        )
 
         self.model_admin_mock = mock.Mock()
         self.model_admin_mock.model._meta.fields = [

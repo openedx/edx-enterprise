@@ -15,6 +15,12 @@ To run just the unit tests:
 
     $ make test
 
+To run just the unit tests and check diff coverage
+
+.. code-block:: bash
+
+    $ make diff_cover
+
 To run just the code quality checks:
 
 .. code-block:: bash

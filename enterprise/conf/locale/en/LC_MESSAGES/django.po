@@ -1,0 +1,106 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-11-17 03:11-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: enterprise/admin/forms.py:21
+msgid "Email or Username"
+msgstr ""
+
+#: enterprise/admin/forms.py:40
+#, python-brace-format
+msgid ""
+"{email_or_username} does not appear to be a valid email or known username"
+msgstr ""
+
+#: enterprise/admin/forms.py:47
+#, python-brace-format
+msgid ""
+"User with email {email} is already registered with Enterprise Customer "
+"{ec_name}"
+msgstr ""
+
+#: enterprise/admin/views.py:129
+#, python-brace-format
+msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
+msgstr ""
+
+#: enterprise/models.py:68
+msgid "Enterprise Customer"
+msgstr ""
+
+#: enterprise/models.py:69
+msgid "Enterprise Customers"
+msgstr ""
+
+#: enterprise/models.py:75
+msgid "Enterprise Customer name."
+msgstr ""
+
+#: enterprise/models.py:177
+msgid "Enterprise Customer User"
+msgstr ""
+
+#: enterprise/models.py:178
+msgid "Enterprise Customer Users"
+msgstr ""
+
+#: enterprise/models.py:287
+msgid "Please add only .PNG files for logo images."
+msgstr ""
+
+#: enterprise/models.py:295
+msgid "Branding Configuration"
+msgstr ""
+
+#: enterprise/models.py:296
+msgid "Branding Configurations"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:39
+msgid "Home"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:53
+msgid "Manage Learners"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:63
+#: enterprise/templates/enterprise/admin/manage_learners.html:85
+msgid "User Email"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:64
+msgid "Username"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:65
+#: enterprise/templates/enterprise/admin/manage_learners.html:86
+msgid "Linked Date"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:103
+msgid "Link learner"
+msgstr ""
+
+#: enterprise/validators.py:28
+msgid "Unsupported file extension."
+msgstr ""
+
+#: enterprise/validators.py:37
+msgid "The logo image file size must be less than 250KB."
+msgstr ""

@@ -6,9 +6,13 @@ from __future__ import absolute_import, unicode_literals
 
 import sys
 import unittest
+
+import ddt
 import mock
 
 from enterprise import utils
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser
+from enterprise.utils import get_all_field_names
 
 
 def mock_get_available_idps(idps):
@@ -83,6 +87,7 @@ def mock_saml_provider_config(providers):
     return SAMLProviderConfig
 
 
+@ddt.ddt
 class TestUtils(unittest.TestCase):
     """
     Tests for utility functions.
@@ -117,3 +122,16 @@ class TestUtils(unittest.TestCase):
 
         with MockThirdPartyAuth(expected_list):
             self.assertListEqual(utils.get_available_idps(), expected_list)
+
+    @ddt.unpack
+    @ddt.data(
+        (EnterpriseCustomer, [
+            "enterprisecustomeruser", "pendingenterprisecustomeruser", "branding_configuration", "created", "modified",
+            "uuid", "name", "active", "identity_provider", "site"
+        ]),
+        (EnterpriseCustomerUser, ["id", "created", "modified", "enterprise_customer", "user_id"]),
+        (EnterpriseCustomerBrandingConfiguration, ["id", "created", "modified", "enterprise_customer", "logo"]),
+    )
+    def test_get_all_field_names(self, model, expected_fields):
+        actual_field_names = get_all_field_names(model)
+        assert actual_field_names == expected_fields

@@ -4,26 +4,19 @@ Django admin integration for enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
-from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
-from django import forms
+from django.conf.urls import url
 from django.contrib import admin
+from django.http import HttpResponseRedirect
+from django_object_actions import DjangoObjectActions
+from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
-from enterprise import utils
-from enterprise.actions import export_as_csv_action
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser
-
-
-def get_all_field_names(model):
-    """
-    Return all fields' names from a model.
-
-    According to `Django documentation`_, ``get_all_field_names`` should become some monstrosity with chained
-    iterable ternary nested in a list comprehension. For now, a simpler version of iterating over fields and
-    getting their names work, but we might have to switch to full version in future.
-
-    .. _Django documentation: https://docs.djangoproject.com/en/1.8/ref/models/meta/
-    """
-    return [f.name for f in model._meta.get_fields()]
+from enterprise.admin.actions import export_as_csv_action
+from enterprise.admin.forms import EnterpriseCustomerForm
+from enterprise.admin.utils import UrlNames
+from enterprise.admin.views import EnterpriseCustomerManageLearnersView
+from enterprise.django_compatibility import reverse
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration
+from enterprise.utils import get_all_field_names
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -38,30 +31,8 @@ class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
     can_delete = False
 
 
-class EnterpriseCustomerForm(forms.ModelForm):
-    """
-    A custom model form to convert a CharField to a TypedChoiceField.
-
-    A model form that converts a CharField to a TypedChoiceField if the choices
-    to display are accessible.
-    """
-
-    def __init__(self, *args, **kwargs):
-        """
-        Convert SlugField to TypedChoiceField if choices can be accessed.
-        """
-        super(EnterpriseCustomerForm, self).__init__(*args, **kwargs)
-        idp_choices = utils.get_idp_choices()
-        if idp_choices is not None:
-            self.fields['identity_provider'] = forms.TypedChoiceField(choices=idp_choices, required=False)
-
-    class Meta:
-        model = EnterpriseCustomer
-        fields = "__all__"
-
-
 @admin.register(EnterpriseCustomer)
-class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
+class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
     Django admin model for EnterpriseCustomer.
     """
@@ -79,6 +50,8 @@ class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
         export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS)
     ]
 
+    change_actions = ("manage_learners",)
+
     @staticmethod
     def logo(instance):
         """
@@ -87,6 +60,30 @@ class EnterpriseCustomerAdmin(SimpleHistoryAdmin):
         if instance.branding_configuration:
             return instance.branding_configuration.logo
         return None
+
+    def manage_learners(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Object tool handler method - redirects to "Manage Learners" view
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        manage_learners_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS, args=(obj.uuid,))
+        return HttpResponseRedirect(manage_learners_url)
+
+    manage_learners.label = "Manage Learners"
+    manage_learners.short_description = "Allows managing learners for this Enterprise Customer"
+
+    def get_urls(self):
+        """
+        Returns the additional urls used by the custom object tools.
+        """
+        customer_urls = [
+            url(
+                r"^([^/]+)/manage_learners$",
+                self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
+                name=UrlNames.MANAGE_LEARNERS
+            )
+        ]
+        return customer_urls + super(EnterpriseCustomerAdmin, self).get_urls()
 
 
 @admin.register(EnterpriseCustomerUser)
