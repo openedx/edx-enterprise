@@ -158,19 +158,16 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_pending_link(self, email):
         other_email = "other_email@example.com"
-        enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
-        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_email=email)
-        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_email=other_email)
-        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_email=email)
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 3
+        enterprise_customer = EnterpriseCustomerFactory()
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=email)
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=other_email)
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 2
 
         query_method = PendingEnterpriseCustomerUser.objects.filter
 
-        EnterpriseCustomerUser.objects.unlink_user(enterprise_customer1, email)
+        EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
         # removes what was asked
-        assert len(query_method(enterprise_customer=enterprise_customer1, user_email=email)) == 0
-        # keeps records of the same user with different EC (though it shouldn't be the case)
-        assert len(query_method(enterprise_customer=enterprise_customer2, user_email=email)) == 1
+        assert len(query_method(enterprise_customer=enterprise_customer, user_email=email)) == 0
         # keeps records of other users
         assert len(query_method(user_email=other_email)) == 1
 
