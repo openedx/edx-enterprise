@@ -9,10 +9,11 @@ import unittest
 
 import ddt
 import mock
+import six
 
 from enterprise import utils
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser
-from enterprise.utils import get_all_field_names
+from enterprise.utils import disable_for_loaddata, get_all_field_names
 
 
 def mock_get_available_idps(idps):
@@ -92,6 +93,21 @@ class TestUtils(unittest.TestCase):
     """
     Tests for utility functions.
     """
+    @staticmethod
+    def get_magic_name(value):
+        """
+        Return value suitable for __name__ attribute.
+
+        For python2, __name__ must be str, while for python3 it must be unicode (as there are no str at all).
+
+        Arguments:
+            value basestring: string to "convert"
+
+        Returns:
+            str or unicode
+        """
+        return str(value) if six.PY2 else value
+
     def test_get_idp_choices(self):
         """
         Test get_idp_choices returns correct options for choice field or returns None if
@@ -135,3 +151,13 @@ class TestUtils(unittest.TestCase):
     def test_get_all_field_names(self, model, expected_fields):
         actual_field_names = get_all_field_names(model)
         assert actual_field_names == expected_fields
+
+    @ddt.data(True, False)
+    def test_disable_for_loaddata(self, raw):
+        signal_handler_mock = mock.MagicMock()
+        signal_handler_mock.__name__ = self.get_magic_name("Irrelevant")
+        wrapped_handler = disable_for_loaddata(signal_handler_mock)
+
+        wrapped_handler(raw=raw)
+
+        assert signal_handler_mock.called != raw
