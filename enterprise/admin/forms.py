@@ -7,14 +7,13 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 
 from django import forms
-from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
-from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from enterprise import utils
+from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, validate_email_to_link
 from enterprise.course_catalog_api import get_all_catalogs
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -23,38 +22,81 @@ class ManageLearnersForm(forms.Form):
     """
     Form to manage learner additions.
     """
-    email = forms.CharField(label=_("Email or Username"))
+    email_or_username = forms.CharField(label=_("Type in Email or Username to link single user"), required=False)
+    bulk_upload_csv = forms.FileField(
+        label=_("Or upload a CSV to enroll multiple users at once"), required=False,
+        help_text=_("The CSV must have a column of email addresses, indicated by the heading 'email' in the first row.")
+    )
 
-    def clean_email(self):
+    class Modes(object):
+        """
+        Namespace class for form modes.
+        """
+        MODE_SINGULAR = "singular"
+        MODE_BULK = "bulk"
+
+    class Fields(object):
+        """
+        Namespace class for field names.
+        """
+        GENERAL_ERRORS = forms.forms.NON_FIELD_ERRORS
+
+        EMAIL_OR_USERNAME = "email_or_username"
+        BULK_UPLOAD = "bulk_upload_csv"
+        MODE = "mode"
+
+    class CsvColumns(object):
+        """
+        Namespace class for CSV column names.
+        """
+        EMAIL = "email"
+
+    def clean_email_or_username(self):
         """
         Clean email form field
 
         Returns:
-            str: email to link
+            str: the cleaned value, converted to an email address (or an empty string)
         """
-        email_or_username = self.cleaned_data["email"].strip()
-        try:
-            user = User.objects.get(username=email_or_username)
-            email = user.email
-        except User.DoesNotExist:
-            email = email_or_username
+        email_or_username = self.cleaned_data[self.Fields.EMAIL_OR_USERNAME].strip()
 
-        try:
-            validate_email(email)
-        except ValidationError:
-            message = _("{email_or_username} does not appear to be a valid email or known username").format(
-                email_or_username=email_or_username
-            )
-            raise ValidationError(message)
+        if not email_or_username:
+            # The field is blank; we just return the existing blank value.
+            return email_or_username
 
-        existing_record = EnterpriseCustomerUser.objects.get_link_by_email(email)
-        if existing_record:
-            message = _("User with email {email} is already registered with Enterprise Customer {ec_name}").format(
-                email=email, ec_name=existing_record.enterprise_customer.name
-            )
-            raise ValidationError(message)
+        email = email_or_username__to__email(email_or_username)
+        validate_email_to_link(email, email_or_username, ValidationMessages.INVALID_EMAIL_OR_USERNAME)
 
         return email
+
+    def clean(self):
+        """
+        Clean fields that depend on each other.
+
+        In this case, the form can be used to link single user or bulk link multiple users. These are mutually
+        exclusive modes, so this method checks that only one field is passed.
+        """
+        cleaned_data = super(ManageLearnersForm, self).clean()
+
+        # Here we take values from `data` (and not `cleaned_data`) as we need raw values - field clean methods
+        # might "invalidate" the value and set it to None, while all we care here is if it was provided at all or not
+        email_or_username = self.data.get(self.Fields.EMAIL_OR_USERNAME, None)
+        bulk_upload_csv = self.files.get(self.Fields.BULK_UPLOAD, None)
+
+        if not email_or_username and not bulk_upload_csv:
+            raise ValidationError(ValidationMessages.NO_FIELDS_SPECIFIED)
+
+        if email_or_username and bulk_upload_csv:
+            raise ValidationError(ValidationMessages.BOTH_FIELDS_SPECIFIED)
+
+        if email_or_username:
+            mode = self.Modes.MODE_SINGULAR
+        else:
+            mode = self.Modes.MODE_BULK
+
+        cleaned_data[self.Fields.MODE] = mode
+
+        return cleaned_data
 
 
 class EnterpriseCustomerAdminForm(forms.ModelForm):

@@ -38,7 +38,8 @@ INSTALLED_APPS = (
 
 MIDDLEWARE_CLASSES = [
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware"
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
 ]
 
 MIDDLEWARE = MIDDLEWARE_CLASSES  # Django 1.10 compatibility - the setting was renamed
@@ -58,6 +59,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": {
                 "django.contrib.auth.context_processors.auth",  # this is required for admin
+                "django.contrib.messages.context_processors.messages",
             }
         }
     },

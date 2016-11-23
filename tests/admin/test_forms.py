@@ -14,9 +14,11 @@ from pytest import mark, raises
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.files import File
 
 from enterprise.admin.forms import (EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm,
                                     ManageLearnersForm)
+from enterprise.admin.utils import ValidationMessages
 from enterprise.course_catalog_api import NotConnectedToOpenEdX, get_all_catalogs
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
                                   PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
@@ -32,12 +34,18 @@ class TestManageLearnersForm(unittest.TestCase):
     """
 
     @staticmethod
-    def _make_bound_form(email):
+    def _make_bound_form(email, file_attached=False):
         """
         Builds bound ManageLearnersForm.
         """
-        form_data = {"email": email}
-        return ManageLearnersForm(form_data)
+        form_data = {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email}
+        file_data = {}
+        if file_attached:
+            mock_file = mock.Mock(spec=File)
+            mock_file.name = "some_file.csv"
+            mock_file.read.return_value = "fake file contents"
+            file_data = {ManageLearnersForm.Fields.BULK_UPLOAD: mock_file}
+        return ManageLearnersForm(form_data, file_data)
 
     @ddt.data(
         "qwe@asd.com", "email1@example.org", "john.t.kirk@starfleet.gov"
@@ -49,7 +57,7 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(email)
         assert form.is_valid()
         cleaned_data = form.clean()
-        assert cleaned_data["email"] == email
+        assert cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME] == email
 
     @ddt.data(
         "  space@cowboy.com  ", "\t\n\rspace@cowboy.com \r\n\t",
@@ -61,7 +69,7 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(email)
         assert form.is_valid()
         cleaned_data = form.clean()
-        assert cleaned_data["email"] == "space@cowboy.com"
+        assert cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME] == "space@cowboy.com"
 
     @ddt.data(
         "12345", "email1@", "@example.com"
@@ -73,17 +81,19 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(email)
         assert not form.is_valid()
         errors = form.errors
-        assert errors == {"email": ["{} does not appear to be a valid email or known username".format(email)]}
+        assert errors == {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: [
+            ValidationMessages.INVALID_EMAIL_OR_USERNAME.format(argument=email)
+        ]}
 
     @ddt.data(None, "")
-    def test_clean_empty_email(self, email):
+    def test_clean_empty_email_and_no_file(self, email):
         """
         Tests that a validation error is raised if empty email is passed
         """
-        form = self._make_bound_form(email)
+        form = self._make_bound_form(email, file_attached=False)
         assert not form.is_valid()
         errors = form.errors
-        assert errors == {"email": ["This field is required."]}
+        assert errors == {"__all__": [ValidationMessages.NO_FIELDS_SPECIFIED]}
 
     @ddt.unpack
     @ddt.data(
@@ -100,7 +110,7 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(username)
         assert form.is_valid()
         cleaned_data = form.clean()
-        assert cleaned_data["email"] == expected_email
+        assert cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME] == expected_email
 
     @ddt.unpack
     @ddt.data(
@@ -115,10 +125,10 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(form_entry)
         assert not form.is_valid()
         errors = form.errors
-        error_message = "User with email {email} is already registered with Enterprise Customer {ec_name}".format(
+        error_message = ValidationMessages.USER_ALREADY_REGISTERED.format(
             email=existing_email, ec_name=existing_record.enterprise_customer.name
         )
-        assert errors == {"email": [error_message]}
+        assert errors == {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: [error_message]}
 
     @ddt.data("user1@example.com", "qwe@asd.com",)
     def test_clean_existing_pending_link(self, existing_email):
@@ -127,10 +137,34 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(existing_email)
         assert not form.is_valid()
         errors = form.errors
-        error_message = "User with email {email} is already registered with Enterprise Customer {ec_name}".format(
+        error_message = ValidationMessages.USER_ALREADY_REGISTERED.format(
             email=existing_email, ec_name=existing_record.enterprise_customer.name
         )
-        assert errors == {"email": [error_message]}
+        assert errors == {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: [error_message]}
+
+    def test_clean_both_username_and_file(self):
+        form = self._make_bound_form("irrelevant@example.com", file_attached=True)
+
+        assert not form.is_valid()
+        assert form.errors == {"__all__": [ValidationMessages.BOTH_FIELDS_SPECIFIED]}
+
+    @ddt.data(None, "")
+    def test_clean_no_username_no_file(self, empty):
+        form = self._make_bound_form(empty, file_attached=False)
+
+        assert not form.is_valid()
+        assert form.errors == {"__all__": [ValidationMessages.NO_FIELDS_SPECIFIED]}
+
+    def test_clean_username_no_file(self):
+        form = self._make_bound_form("irrelevant@example.com", file_attached=False)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.MODE] == form.Modes.MODE_SINGULAR
+
+    @ddt.data(None, "")
+    def test_clean_no_username_file(self, empty):
+        form = self._make_bound_form(empty, file_attached=True)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.MODE] == form.Modes.MODE_BULK
 
 
 class TestEnterpriseCustomerAdminForm(unittest.TestCase):

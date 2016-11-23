@@ -100,10 +100,11 @@ just three "vendor" files here and one app file in footer and avoid going into t
 </div>
 
 <div class="forms-panel">
-  <h1>{% trans "Link learner" %}</h1>
-  <form action="" method="post">
+  <h1>{% trans "Link learners" %}</h1>
+  <form action="" method="post" enctype="multipart/form-data">
     {% csrf_token %}
-    {{ manage_learners_form }}
+    {# as_p will render the form fields wrapped in <p> tags: #}
+    {{ manage_learners_form.as_p }}
     <input type="submit" value="Submit"/>
   </form>
 </div>
