@@ -127,7 +127,7 @@ class TestUtils(unittest.TestCase):
     @ddt.data(
         (EnterpriseCustomer, [
             "enterprisecustomeruser", "pendingenterprisecustomeruser", "branding_configuration", "created", "modified",
-            "uuid", "name", "active", "identity_provider", "site"
+            "uuid", "name", "catalog", "active", "identity_provider", "site"
         ]),
         (EnterpriseCustomerUser, ["id", "created", "modified", "enterprise_customer", "user_id"]),
         (EnterpriseCustomerBrandingConfiguration, ["id", "created", "modified", "enterprise_customer", "logo"]),

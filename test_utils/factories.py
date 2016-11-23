@@ -49,6 +49,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     active = True
     site = factory.SubFactory(SiteFactory)
     identity_provider = factory.LazyAttribute(lambda x: FAKER.slug())
+    catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):

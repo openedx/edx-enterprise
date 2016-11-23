@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-17 03:11-0600\n"
+"POT-Creation-Date: 2016-11-23 10:42-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,26 +17,49 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: enterprise/admin/forms.py:21
+#: enterprise/admin/actions.py:68
+msgid "Unlink selected objects from existing course catalogs"
+msgstr ""
+
+#: enterprise/admin/forms.py:22
 msgid "Email or Username"
 msgstr ""
 
-#: enterprise/admin/forms.py:40
-#, python-brace-format
+#: enterprise/admin/forms.py:41
 msgid ""
 "{email_or_username} does not appear to be a valid email or known username"
 msgstr ""
 
-#: enterprise/admin/forms.py:47
-#, python-brace-format
+#: enterprise/admin/forms.py:48
 msgid ""
 "User with email {email} is already registered with Enterprise Customer "
 "{ec_name}"
 msgstr ""
 
+#: enterprise/admin/forms.py:86
+msgid "None"
+msgstr ""
+
 #: enterprise/admin/views.py:129
-#, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
+msgstr ""
+
+#: enterprise/course_catalog_api.py:45
+msgid ""
+"To get a catalog API client, this package must be installed in an OpenEdX "
+"environment."
+msgstr ""
+
+#: enterprise/course_catalog_api.py:58
+msgid ""
+"To get a CatalogIntegration object, this package must be installed in an "
+"OpenEdX environment."
+msgstr ""
+
+#: enterprise/course_catalog_api.py:62
+msgid ""
+"To parse a catalog API response, this package must be installed in an "
+"OpenEdX environment."
 msgstr ""
 
 #: enterprise/models.py:68
@@ -51,23 +74,27 @@ msgstr ""
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:177
-msgid "Enterprise Customer User"
+#: enterprise/models.py:76
+msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
 #: enterprise/models.py:178
+msgid "Enterprise Customer User"
+msgstr ""
+
+#: enterprise/models.py:179
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:287
+#: enterprise/models.py:288
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:295
+#: enterprise/models.py:296
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:296
+#: enterprise/models.py:297
 msgid "Branding Configurations"
 msgstr ""
 

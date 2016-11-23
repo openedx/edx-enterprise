@@ -73,6 +73,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=255, blank=False, null=False, help_text=_("Enterprise Customer name."))
+    catalog = models.PositiveIntegerField(null=True, help_text=_("Course catalog for the Enterprise Customer."))
     active = models.BooleanField(default=True)
     history = HistoricalRecords()
     identity_provider = models.SlugField(null=True, blank=True, default=None)

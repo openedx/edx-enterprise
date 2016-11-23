@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Custom admin forms.
+Forms to be used in the enterprise djangoapp.
 """
 from __future__ import absolute_import, unicode_literals
 
@@ -11,6 +11,7 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from enterprise import utils
+from enterprise.course_catalog_api import get_all_catalogs
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 
 
@@ -52,23 +53,37 @@ class ManageLearnersForm(forms.Form):
         return email
 
 
-class EnterpriseCustomerForm(forms.ModelForm):
+class EnterpriseCustomerAdminForm(forms.ModelForm):
     """
-    A custom model form to convert a CharField to a TypedChoiceField.
+    Alternate form for the EnterpriseCustomer admin page.
 
-    A model form that converts a CharField to a TypedChoiceField if the choices
-    to display are accessible.
+    This form fetches catalog names and IDs from the course catalog API.
     """
+    class Meta:
+        model = EnterpriseCustomer
+        fields = "__all__"
 
     def __init__(self, *args, **kwargs):
         """
-        Convert SlugField to TypedChoiceField if choices can be accessed.
+        Initialize the form.
+
+        Substitute a ChoiceField in for the catalog field that would
+        normally be set up as a plain number entry field.
         """
-        super(EnterpriseCustomerForm, self).__init__(*args, **kwargs)
+        super(EnterpriseCustomerAdminForm, self).__init__(*args, **kwargs)
+        self.fields['catalog'] = forms.ChoiceField(choices=self.get_catalog_options())
         idp_choices = utils.get_idp_choices()
         if idp_choices is not None:
             self.fields['identity_provider'] = forms.TypedChoiceField(choices=idp_choices, required=False)
 
-    class Meta:
-        model = EnterpriseCustomer
-        fields = "__all__"
+    def get_catalog_options(self):
+        """
+        Retrieve a list of catalog ID and name pairs.
+
+        Once retrieved, these name pairs can be used directly as a value
+        for the `choices` argument to a ChoiceField.
+        """
+        return ((None, _('None'),),) + tuple(
+            (catalog['id'], catalog['name'],)
+            for catalog in get_all_catalogs(self.user)
+        )

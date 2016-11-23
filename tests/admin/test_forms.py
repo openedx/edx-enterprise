@@ -4,13 +4,17 @@ Tests for the `edx-enterprise` admin forms module.
 """
 from __future__ import absolute_import, unicode_literals
 
+import random
 import unittest
 
 import ddt
 import mock
-from pytest import mark
+from pytest import mark, raises
 
-from enterprise.admin.forms import EnterpriseCustomerForm, ManageLearnersForm
+from django import forms
+
+from enterprise.admin.forms import EnterpriseCustomerAdminForm, ManageLearnersForm
+from enterprise.course_catalog_api import NotConnectedToOpenEdX, get_all_catalogs
 from test_utils.factories import EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
 
 
@@ -123,29 +127,116 @@ class TestManageLearnersForm(unittest.TestCase):
         assert errors == {"email": [error_message]}
 
 
-class TestEnterpriseCustomerForm(unittest.TestCase):
+class TestEnterpriseCustomerAdminForm(unittest.TestCase):
     """
-    Tests for EnterpriseCustomerForm.
+    Tests for EnterpriseCustomerAdminForm.
     """
 
     def setUp(self):
         """
         Test set up.
         """
-        super(TestEnterpriseCustomerForm, self).setUp()
+        super(TestEnterpriseCustomerAdminForm, self).setUp()
         self.idp_choices_mock = mock.Mock()
         patcher = mock.patch("enterprise.admin.forms.utils.get_idp_choices", self.idp_choices_mock)
         patcher.start()
         self.addCleanup(patcher.stop)
+        self.catalog_id = random.randint(2, 1000000)
+        self.patch_enterprise_customer_user()
+        self.addCleanup(self.unpatch_enterprise_customer_user)
 
-    def test_no_idp_choices(self):
+    @staticmethod
+    def patch_enterprise_customer_user():
+        """
+        Set the class-level form user to None.
+        """
+        EnterpriseCustomerAdminForm.user = None
+
+    @staticmethod
+    def unpatch_enterprise_customer_user():
+        """
+        Set the form to its original state.
+        """
+        delattr(EnterpriseCustomerAdminForm, 'user')  # pylint: disable=literal-used-as-attribute
+
+    @mock.patch('enterprise.admin.forms.get_all_catalogs')
+    def test_no_idp_choices(self, mocked_method):
+        mocked_method.return_value = []
         self.idp_choices_mock.return_value = None
-        form = EnterpriseCustomerForm()
+        form = EnterpriseCustomerAdminForm()
         assert not hasattr(form.fields['identity_provider'], 'choices')
 
-    def test_with_idp_choices(self):
+    @mock.patch('enterprise.admin.forms.get_all_catalogs')
+    def test_with_idp_choices(self, mocked_method):
+        mocked_method.return_value = []
         choices = (('idp1', 'idp1'), ('idp2', 'idp2'))
         self.idp_choices_mock.return_value = choices
-        form = EnterpriseCustomerForm()
+        form = EnterpriseCustomerAdminForm()
         assert hasattr(form.fields['identity_provider'], 'choices')
         assert form.fields['identity_provider'].choices == list(choices)
+
+    @mock.patch('enterprise.admin.forms.get_all_catalogs')
+    def test_interface_displays_selected_option(self, mock_method):
+        mock_method.return_value = [
+            {
+                "id": self.catalog_id,
+                "name": "My Catalog"
+            },
+            {
+                "id": 1,
+                "name": "Other catalog!"
+            }
+        ]
+        form = EnterpriseCustomerAdminForm()
+        assert isinstance(form.fields['catalog'], forms.ChoiceField)
+        assert form.fields['catalog'].choices == [
+            (None, 'None'),
+            (self.catalog_id, 'My Catalog'),
+            (1, 'Other catalog!'),
+        ]
+
+    @mock.patch('enterprise.course_catalog_api.get_catalog_api_client')
+    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
+    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
+    def test_with_mocked_get_edx_data(self, mocked_get_edx_data, *args):  # pylint: disable=unused-argument
+        mocked_get_edx_data.return_value = [
+            {
+                "id": self.catalog_id,
+                "name": "My Catalog"
+            },
+            {
+                "id": 1,
+                "name": "Other catalog!"
+            }
+        ]
+        form = EnterpriseCustomerAdminForm()
+        assert isinstance(form.fields['catalog'], forms.ChoiceField)
+        assert form.fields['catalog'].choices == [
+            (None, 'None'),
+            (self.catalog_id, 'My Catalog'),
+            (1, 'Other catalog!'),
+        ]
+
+    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
+    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
+    def test_raise_error_missing_course_discovery_api(self, *args):  # pylint: disable=unused-argument
+        message = 'To get a catalog API client, this package must be installed in an OpenEdX environment.'
+        with raises(NotConnectedToOpenEdX) as excinfo:
+            get_all_catalogs(None)
+        assert message == str(excinfo.value)
+
+    @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
+    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
+    def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
+        message = 'To get a CatalogIntegration object, this package must be installed in an OpenEdX environment.'
+        with raises(NotConnectedToOpenEdX) as excinfo:
+            get_all_catalogs(None)
+        assert message == str(excinfo.value)
+
+    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
+    @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
+    def test_raise_error_missing_get_edx_api_data(self, *args):  # pylint: disable=unused-argument
+        message = 'To parse a catalog API response, this package must be installed in an OpenEdX environment.'
+        with raises(NotConnectedToOpenEdX) as excinfo:
+            get_all_catalogs(None)
+        assert message == str(excinfo.value)

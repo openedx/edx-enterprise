@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.4.0] - 2016-11-21
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+_____
+
+* Set up logic to call course catalog API to retrieve catalog listing to attach to EnterpriseCustomer.
+
+
 [0.3.1] - 2016-11-21
 ~~~~~~~~~~~~~~~~~~~~
 
