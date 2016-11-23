@@ -10,8 +10,8 @@ from django.http import HttpResponseRedirect
 from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
-from enterprise.admin.actions import export_as_csv_action
-from enterprise.admin.forms import EnterpriseCustomerForm
+from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
+from enterprise.admin.forms import EnterpriseCustomerAdminForm
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView
 from enterprise.django_compatibility import reverse
@@ -37,20 +37,34 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
 
-    form = EnterpriseCustomerForm
-    list_display = ("name", "uuid", "site", "active", "logo", "identity_provider")
+    list_display = ("name", "uuid", "site", "active", "logo", "identity_provider", "catalog")
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
     inlines = [EnterpriseCustomerBrandingConfigurationInline, ]
 
-    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider"]
+    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider", "catalog"]
 
     actions = [
-        export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS)
+        export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS),
+        get_clear_catalog_id_action()
     ]
 
     change_actions = ("manage_learners",)
+
+    form = EnterpriseCustomerAdminForm
+
+    class Meta(object):
+        model = EnterpriseCustomer
+
+    def get_form(self, request, obj=None, **kwargs):
+        """
+        Retrieve the appropriate form to use, saving the request user
+        into the form for use in loading catalog details
+        """
+        form = super(EnterpriseCustomerAdmin, self).get_form(request, obj, **kwargs)
+        form.user = request.user
+        return form
 
     @staticmethod
     def logo(instance):
