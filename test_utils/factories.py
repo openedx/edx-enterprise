@@ -105,6 +105,7 @@ class UserFactory(factory.DjangoModelFactory):
 
         model = User
 
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
     email = factory.LazyAttribute(lambda x: FAKER.email())
     username = factory.LazyAttribute(lambda x: FAKER.user_name())
     first_name = factory.LazyAttribute(lambda x: FAKER.first_name())

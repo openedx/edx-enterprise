@@ -2,6 +2,8 @@
 """
 Utilities to get details from the course catalog API.
 """
+from __future__ import absolute_import, unicode_literals
+
 from django.utils.translation import ugettext_lazy as _
 
 try:

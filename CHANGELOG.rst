@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.4.1] - 2016-11-24
+~~~~~~~~~~~~~~~~~~~~
+
+Fixed User.post_save handler causing initial migrations to fail
+
 [0.4.0] - 2016-11-21
 ~~~~~~~~~~~~~~~~~~~~
 

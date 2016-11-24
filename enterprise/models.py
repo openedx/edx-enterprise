@@ -8,21 +8,18 @@ import os
 from logging import getLogger
 from uuid import uuid4
 
-from simple_history.models import HistoricalRecords  # likely a bug in import order checker
+from simple_history.models import HistoricalRecords
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.files.storage import default_storage
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
 from enterprise.validators import validate_image_extension, validate_image_size
-
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -320,41 +317,3 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
-
-
-@receiver(post_save, sender=User)
-def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
-    """
-    Handle User model changes.
-    """
-    created = kwargs.get("created", False)
-    user_instance = kwargs.get("instance", None)
-
-    if user_instance is None:
-        return  # should never happen, but better safe than 500 error
-
-    try:
-        pending_link_record = PendingEnterpriseCustomerUser.objects.get(user_email=user_instance.email)
-    except PendingEnterpriseCustomerUser.DoesNotExist:
-        return  # nothing to do in this case
-
-    if not created:
-        # existing user changed his email to match one of pending link records - try linking him to EC
-        try:
-            existing_record = EnterpriseCustomerUser.objects.get(user_id=user_instance.id)
-            message_template = "User {user} have changed email to match pending Enterprise Customer link, " \
-                               "but was already linked to Enterprise Customer {enterprise_customer} - " \
-                               "deleting pending link record"
-            logger.info(message_template.format(
-                user=user_instance, enterprise_customer=existing_record.enterprise_customer
-            ))
-            pending_link_record.delete()
-            return
-        except EnterpriseCustomerUser.DoesNotExist:
-            pass  # everything ok - current user is not linked to other ECs
-
-    EnterpriseCustomerUser.objects.create(
-        enterprise_customer=pending_link_record.enterprise_customer,
-        user_id=user_instance.id
-    )
-    pending_link_record.delete()
