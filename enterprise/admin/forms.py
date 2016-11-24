@@ -4,15 +4,19 @@ Forms to be used in the enterprise djangoapp.
 """
 from __future__ import absolute_import, unicode_literals
 
+from logging import getLogger
+
 from django import forms
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from enterprise import utils
 from enterprise.course_catalog_api import get_all_catalogs
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
+
+logger = getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class ManageLearnersForm(forms.Form):
@@ -72,9 +76,6 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         """
         super(EnterpriseCustomerAdminForm, self).__init__(*args, **kwargs)
         self.fields['catalog'] = forms.ChoiceField(choices=self.get_catalog_options())
-        idp_choices = utils.get_idp_choices()
-        if idp_choices is not None:
-            self.fields['identity_provider'] = forms.TypedChoiceField(choices=idp_choices, required=False)
 
     def get_catalog_options(self):
         """
@@ -87,3 +88,66 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             (catalog['id'], catalog['name'],)
             for catalog in get_all_catalogs(self.user)
         )
+
+
+class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
+    """
+    Alternate form for the EnterpriseCustomerIdentityProvider admin page.
+
+    This form fetches identity providers from lms third_party_auth app.
+    If third_party_auth app is not avilable it displays provider_id as a CharField.
+    """
+    class Meta:
+        model = EnterpriseCustomerIdentityProvider
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the form.
+
+        Substitutes CharField with TypedChoiceField for the provider_id field.
+        """
+        super(EnterpriseCustomerIdentityProviderAdminForm, self).__init__(*args, **kwargs)
+        idp_choices = utils.get_idp_choices()
+        if idp_choices is not None:
+            self.fields['provider_id'] = forms.TypedChoiceField(choices=idp_choices)
+
+    def clean(self):
+        """
+        Final validations of model fields.
+
+        1. Validate that selected site for enterprise customer matches with the selected identity provider's site.
+        """
+        super(EnterpriseCustomerIdentityProviderAdminForm, self).clean()
+
+        provider_id = self.cleaned_data.get('provider_id', None)
+        enterprise_customer = self.cleaned_data.get('enterprise_customer', None)
+
+        if provider_id is None or enterprise_customer is None:
+            # field validation for either provider_id or enterprise_customer has already raised
+            # a validation error.
+            return
+        try:
+            identity_provider = utils.get_identity_provider(provider_id)
+        except ObjectDoesNotExist:
+            # This should not happen, as identity providers displayed in drop down are fetched dynamically.
+            message = _(
+                "Selected Identity Provider does not exist, please contact system administrator for more info.",
+            )
+            # Log message for debugging
+            logger.exception(message)
+
+            raise ValidationError(message)
+
+        if identity_provider and identity_provider.site != enterprise_customer.site:
+            raise ValidationError(
+                _(
+                    "Site ({identity_provider_site}) of selected identity provider does not match with "
+                    "enterprise customer's site ({enterprise_customer_site})."
+                    "Please either select site with domain '{identity_provider_site}' or update identity provider's "
+                    "site to '{enterprise_customer_site}'."
+                ).format(
+                    enterprise_customer_site=enterprise_customer.site,
+                    identity_provider_site=identity_provider.site,
+                ),
+            )

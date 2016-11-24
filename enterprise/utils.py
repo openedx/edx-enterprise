@@ -6,27 +6,25 @@ from __future__ import absolute_import, unicode_literals
 
 from functools import wraps
 
+try:
+    # Try to import identity provider registry if third_party_auth is present
+    from third_party_auth.provider import Registry
+except ImportError:
+    Registry = None
 
 USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
 
 
-def get_available_idps():
+def get_identity_provider(provider_id):
     """
-    Get available Identity Providers.
+    Get Identity Provider with given id.
 
     Raises a ValueError if it third_party_auth app is not available.
 
     Return:
-        a list of SAMLProviderConfig instances if third_party_auth app is available.
+        Instance of ProviderConfig or None.
     """
-    try:
-        # We give a choice field to user only if SAMLProviderConfig is present, otherwise we show
-        # an integer field, Since, we will be adding a custom enterprise admin so we will also be removing
-        # this dependency.
-        from third_party_auth.models import SAMLProviderConfig
-        return SAMLProviderConfig.objects.current_set().filter(enabled=True).all()
-    except ImportError:
-        raise ValueError("SAMLProviderConfig is not available.")
+    return Registry and Registry.get(provider_id)
 
 
 def get_idp_choices():
@@ -37,9 +35,9 @@ def get_idp_choices():
         A list of choices of all identity providers, None if it can not get any available identity provider.
     """
     first = [("", "-"*7)]
-    try:
-        return first + [(idp.idp_slug, idp.name) for idp in get_available_idps()]
-    except ValueError:
+    if Registry:
+        return first + [(idp.provider_id, idp.name) for idp in Registry.enabled()]
+    else:
         return None
 
 

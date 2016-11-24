@@ -18,8 +18,8 @@ from django.core.files.storage import Storage
 
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser,
                                PendingEnterpriseCustomerUser, logo_path)
-from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserFactory)
+from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
+                                  EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory)
 
 
 @mark.django_db
@@ -72,6 +72,27 @@ class TestEnterpriseCustomer(unittest.TestCase):
             name=customer.name
         )
         self.assertEqual(method(customer), expected_to_str)
+
+    def test_identity_provider(self):
+        """
+        Test identity_provider property returns correct value without errors.
+        """
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        customer = EnterpriseCustomerFactory()
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=customer)
+
+        assert customer.identity_provider == provider_id  # pylint: disable=no-member
+
+    def test_no_identity_provider(self):
+        """
+        Test identity_provider property returns correct value without errors.
+
+        Test that identity_provider property does not raise ObjectDoesNotExist and returns None
+        if enterprise customer doesn not have an associated identity provider.
+        """
+        customer = EnterpriseCustomerFactory()
+        assert customer.identity_provider is None  # pylint: disable=no-member
 
 
 @mark.django_db
@@ -394,3 +415,43 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
                 branding_configuration.full_clean()
         else:
             branding_configuration.full_clean()  # exception here will fail the test
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
+    """
+    Tests of the EnterpriseCustomerIdentityProvider model.
+    """
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseCustomerIdentityProvider`` conversion to string.
+        """
+        provider_id, enterprise_customer_name = "saml-test", "TestShib"
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        ec_idp = EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=enterprise_customer,
+            provider_id=provider_id,
+        )
+
+        expected_to_str = "<EnterpriseCustomerIdentityProvider {provider_id}>: {enterprise_name}".format(
+            provider_id=provider_id,
+            enterprise_name=enterprise_customer_name,
+        )
+        self.assertEqual(method(ec_idp), expected_to_str)
+
+    @mock.patch("enterprise.models.utils.get_identity_provider")
+    def test_provider_name(self, mock_method):
+        """
+        Test provider_name property returns correct value without errors..
+        """
+        faker = FakerFactory.create()
+        provider_name = faker.name()
+        mock_method.return_value.configure_mock(name=provider_name)
+        ec_idp = EnterpriseCustomerIdentityProviderFactory()
+
+        assert ec_idp.provider_name == provider_name  # pylint: disable=no-member
