@@ -17,7 +17,7 @@ instructions.
 4. If D happend instead - check failed.
 
 **Reviewers:**
-- [ ] tag reviwer 
+- [ ] tag reviewer 
 - [ ] tag reviewer 
 
 **Merge checklist:**
