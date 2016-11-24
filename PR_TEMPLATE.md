@@ -25,7 +25,8 @@ instructions.
 - [ ] CI build is green
 - [ ] Version bumped
 - [ ] Changelog record added
-- [ ] Commits are squashed
+- [ ] Commits are (reasonably) squashed
+- [ ] Translations are updated
 - [ ] PR author is listed in AUTHORS
 
 **Post merge:**
