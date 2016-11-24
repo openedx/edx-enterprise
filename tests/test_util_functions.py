@@ -4,15 +4,17 @@ Tests for the `edx-enterprise` utility functions.
 """
 from __future__ import absolute_import, unicode_literals
 
-import sys
 import unittest
 
 import ddt
 import mock
 import six
 
+from faker import Factory as FakerFactory
+
 from enterprise import utils
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser)
 from enterprise.utils import disable_for_loaddata, get_all_field_names
 
 
@@ -27,65 +29,10 @@ def mock_get_available_idps(idps):
         idp_list = []
         for idp in idps:
             mock_idp = mock.Mock()
-            mock_idp.configure_mock(idp_slug=idp, name=idp)
+            mock_idp.configure_mock(provider_id=idp, name=idp)
             idp_list.append(mock_idp)
         return idp_list
     return _
-
-
-class MockThirdPartyAuth(object):
-    """
-    Mock class to stub out third_party_auth package for testing.
-    """
-    saved_state = {
-        'third_party_auth': None,
-        'third_party_auth.models': None,
-    }
-
-    def __init__(self, providers):
-        """
-        initialize list of providers, this is the list queryset will return.
-        """
-        self.providers = providers
-
-    def __enter__(self):
-        """
-        Save existing package reference, and mock third_party_auth package.
-        """
-        self.saved_state['third_party_auth'] = sys.modules.get('third_party_auth')
-        self.saved_state['third_party_auth.models'] = sys.modules.get('third_party_auth.models')
-
-        sys.modules['third_party_auth'] = mock.Mock()
-        sys.modules['third_party_auth.models'] = mock.Mock(
-            SAMLProviderConfig=mock_saml_provider_config(self.providers),
-        )
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Restore third_party_auth package references.
-        """
-        sys.modules['third_party_auth'] = self.saved_state['third_party_auth']
-        sys.modules['third_party_auth.models'] = self.saved_state['third_party_auth.models']
-
-
-def mock_saml_provider_config(providers):
-    """
-    get mock class for SAMLProviderConfig model.
-    """
-    class SAMLProviderConfig(object):
-        """
-        mock class for SAMLProviderConfig.
-        """
-        objects = mock.Mock(
-            current_set=mock.Mock(return_value=mock.Mock(
-                filter=mock.Mock(
-                    return_value=mock.Mock(all=mock.Mock(
-                        return_value=providers
-                    ))
-                )
-            ))
-        )
-    return SAMLProviderConfig
 
 
 @ddt.ddt
@@ -117,36 +64,41 @@ class TestUtils(unittest.TestCase):
         self.assertIsNone(options)
         expected_list = [('', '-'*7), ('test1', 'test1'), ('test2', 'test2')]
 
-        with mock.patch('enterprise.utils.get_available_idps', mock_get_available_idps(['test1', 'test2'])):
+        with mock.patch('enterprise.utils.Registry') as mock_registry:
+            mock_registry.enabled = mock_get_available_idps(['test1', 'test2'])
+
             choices = utils.get_idp_choices()
             self.assertListEqual(choices, expected_list)
 
-        available_providers = mock_get_available_idps(['test1', 'test2'])()
-
-        with MockThirdPartyAuth(available_providers):
-            self.assertListEqual(utils.get_idp_choices(), expected_list)
-
-    def test_get_available_idps(self):
+    def test_get_identity_provider(self):
         """
-        Test get_available_idps returns correct value or raises a ValueError if
-        thirdParty_auth is not installed.
+        Test get_identity_provider returns correct value.
         """
-        with self.assertRaises(ValueError):
-            utils.get_available_idps()
+        faker = FakerFactory.create()
+        name = faker.name()
+        provider_id = faker.slug()
 
-        expected_list = ['test1', 'test2']
+        # test that get_identity_provider returns None if third_party_auth is not available.
+        identity_provider = utils.get_identity_provider(provider_id=provider_id)
+        assert identity_provider is None
 
-        with MockThirdPartyAuth(expected_list):
-            self.assertListEqual(utils.get_available_idps(), expected_list)
+        # test that get_identity_provider does not return None if third_party_auth is  available.
+        with mock.patch('enterprise.utils.Registry') as mock_registry:
+            mock_registry.get.return_value.configure_mock(name=name, provider_id=provider_id)
+            identity_provider = utils.get_identity_provider(provider_id=provider_id)
+            assert identity_provider is not None
 
     @ddt.unpack
     @ddt.data(
         (EnterpriseCustomer, [
-            "enterprisecustomeruser", "pendingenterprisecustomeruser", "branding_configuration", "created", "modified",
-            "uuid", "name", "catalog", "active", "identity_provider", "site"
+            "enterprisecustomeruser", "pendingenterprisecustomeruser", "branding_configuration",
+            "enterprise_customer_identity_provider", "created", "modified", "uuid", "name", "catalog", "active", "site"
         ]),
         (EnterpriseCustomerUser, ["id", "created", "modified", "enterprise_customer", "user_id"]),
         (EnterpriseCustomerBrandingConfiguration, ["id", "created", "modified", "enterprise_customer", "logo"]),
+        (EnterpriseCustomerIdentityProvider, [
+            "id", "created", "modified", "enterprise_customer", "provider_id"
+        ]),
     )
     def test_get_all_field_names(self, model, expected_fields):
         actual_field_names = get_all_field_names(model)

@@ -14,8 +14,20 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.5.0] - 2016-11-28
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+_____
+
+Added checks to make sure enterprise customer and identity provider has one-to-one relation.
+
+
 [0.4.1] - 2016-11-24
 ~~~~~~~~~~~~~~~~~~~~
+
+Added
+_____
 
 Fixed User.post_save handler causing initial migrations to fail
 
