@@ -15,6 +15,8 @@ matrix:
   include:
     - python: 3.5
       env: TOXENV=quality
+    - python: 2.7
+      env: TOXENV=quality
     - python: 3.5
       env: TOXENV=docs
 

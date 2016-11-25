@@ -75,7 +75,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         normally be set up as a plain number entry field.
         """
         super(EnterpriseCustomerAdminForm, self).__init__(*args, **kwargs)
-        self.fields['catalog'] = forms.ChoiceField(choices=self.get_catalog_options())
+        self.fields['catalog'] = forms.ChoiceField(choices=self.get_catalog_options(), required=False)
 
     def get_catalog_options(self):
         """
