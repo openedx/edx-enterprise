@@ -11,9 +11,9 @@ from faker import Factory as FakerFactory
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
-from enterprise.models import (
-    EnterpriseCustomer, EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
-)
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser,
+                               PendingEnterpriseCustomerUser)
 
 FAKER = FakerFactory.create()
 
@@ -127,3 +127,22 @@ class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactor
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     provider_id = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class EnterpriseCustomerBrandingFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerBrandingFactory factory.
+
+    Creates an instance of EnterpriseCustomerBrandingFactory with minimal boilerplate - uses this class' attributes as
+    default parameters for EnterpriseCustomerBrandingFactory constructor.
+    """
+
+    class Meta(object):
+        """
+        Meta for EnterpriseCustomerBrandingFactory.
+        """
+
+        model = EnterpriseCustomerBrandingConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)

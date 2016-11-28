@@ -21,6 +21,7 @@ Added
 _____
 
 Added checks to make sure enterprise customer and identity provider has one-to-one relation.
+Added a helper method to retrieve enterprise customer branding information
 
 
 [0.4.1] - 2016-11-24
