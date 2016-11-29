@@ -12,6 +12,7 @@ from simple_history.models import HistoricalRecords
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -19,6 +20,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
+from enterprise import utils
 from enterprise.validators import validate_image_extension, validate_image_size
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -73,8 +75,19 @@ class EnterpriseCustomer(TimeStampedModel):
     catalog = models.PositiveIntegerField(null=True, help_text=_("Course catalog for the Enterprise Customer."))
     active = models.BooleanField(default=True)
     history = HistoricalRecords()
-    identity_provider = models.SlugField(null=True, blank=True, default=None)
     site = models.ForeignKey(Site, related_name="enterprise_customers")
+
+    @property
+    def identity_provider(self):
+        """
+        Unique slug for the identity provider associated with this enterprise customer.
+
+        Returns `None` if enterprise customer does not have any identity provider.
+        """
+        try:
+            return self.enterprise_customer_identity_provider and self.enterprise_customer_identity_provider.provider_id
+        except ObjectDoesNotExist:
+            return None
 
     def __str__(self):
         """
@@ -317,3 +330,56 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+@python_2_unicode_compatible
+class EnterpriseCustomerIdentityProvider(TimeStampedModel):
+    """
+    EnterpriseCustomerIdentityProvider is a One to One relationship between Enterprise Customer and Identity Provider.
+
+    There should be a link between an enterprise customer and its Identity Provider. This relationship has
+    following constraints
+        1. An enterprise customer may or may not have an identity provider.
+        2. An enterprise customer can not have more than one identity providers.
+        3. Enterprise customer site should match with identity provider's site. (i.e. same domain names)
+
+    Fields:
+        enterprise_customer (ForeignKey[EnterpriseCustomer]): enterprise customer
+        provider_id (:class:`django.db.models.SlugField`): The provider_id string of the identity provider.
+    """
+
+    enterprise_customer = models.OneToOneField(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name="enterprise_customer_identity_provider"
+    )
+    provider_id = models.SlugField(
+        null=False,
+        blank=False,
+        unique=True,
+        help_text="Slug field containing a unique identifier for the identity provider.",
+    )
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<EnterpriseCustomerIdentityProvider {provider_id}>: {enterprise_name}".format(
+            provider_id=self.provider_id,
+            enterprise_name=self.enterprise_customer.name,
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+    @property
+    def provider_name(self):
+        """
+        Readable name for the identity provider.
+        """
+        identity_provider = utils.get_identity_provider(self.provider_id)
+        return identity_provider and identity_provider.name

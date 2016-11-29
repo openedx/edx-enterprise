@@ -11,11 +11,14 @@ from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
-from enterprise.admin.forms import EnterpriseCustomerAdminForm
+from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView
 from enterprise.django_compatibility import reverse
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration
+from enterprise.models import (
+    EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerIdentityProvider,
+)
 from enterprise.utils import get_all_field_names
 
 
@@ -31,6 +34,18 @@ class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
     can_delete = False
 
 
+class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
+    """
+    Django admin model for EnterpriseCustomerIdentityProvider.
+
+    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
+    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
+    """
+
+    model = EnterpriseCustomerIdentityProvider
+    form = EnterpriseCustomerIdentityProviderAdminForm
+
+
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
@@ -41,7 +56,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
-    inlines = [EnterpriseCustomerBrandingConfigurationInline, ]
+    inlines = [EnterpriseCustomerBrandingConfigurationInline, EnterpriseCustomerIdentityProviderInline]
 
     EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider", "catalog"]
 
@@ -74,6 +89,17 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         if instance.branding_configuration:
             return instance.branding_configuration.logo
         return None
+
+    @staticmethod
+    def identity_provider(instance):
+        """
+        Instance is EnterpriseCustomer.
+
+        Return identity provider name to display in enterprise customer list admin view, and if identity provider name
+        is not available then return identity provider id.
+        """
+        ec_idp = instance.enterprise_customer_identity_provider
+        return ec_idp and ec_idp.provider_name or ec_idp.provider_id
 
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """

@@ -9,13 +9,19 @@ import unittest
 
 import ddt
 import mock
+from faker import Factory as FakerFactory
 from pytest import mark, raises
 
 from django import forms
+from django.core.exceptions import ObjectDoesNotExist
 
-from enterprise.admin.forms import EnterpriseCustomerAdminForm, ManageLearnersForm
+from enterprise.admin.forms import (EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm,
+                                    ManageLearnersForm)
 from enterprise.course_catalog_api import NotConnectedToOpenEdX, get_all_catalogs
-from test_utils.factories import EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
+from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
+                                  PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
+
+FAKER = FakerFactory.create()
 
 
 @mark.django_db
@@ -137,10 +143,6 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
         Test set up.
         """
         super(TestEnterpriseCustomerAdminForm, self).setUp()
-        self.idp_choices_mock = mock.Mock()
-        patcher = mock.patch("enterprise.admin.forms.utils.get_idp_choices", self.idp_choices_mock)
-        patcher.start()
-        self.addCleanup(patcher.stop)
         self.catalog_id = random.randint(2, 1000000)
         self.patch_enterprise_customer_user()
         self.addCleanup(self.unpatch_enterprise_customer_user)
@@ -158,22 +160,6 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
         Set the form to its original state.
         """
         delattr(EnterpriseCustomerAdminForm, 'user')  # pylint: disable=literal-used-as-attribute
-
-    @mock.patch('enterprise.admin.forms.get_all_catalogs')
-    def test_no_idp_choices(self, mocked_method):
-        mocked_method.return_value = []
-        self.idp_choices_mock.return_value = None
-        form = EnterpriseCustomerAdminForm()
-        assert not hasattr(form.fields['identity_provider'], 'choices')
-
-    @mock.patch('enterprise.admin.forms.get_all_catalogs')
-    def test_with_idp_choices(self, mocked_method):
-        mocked_method.return_value = []
-        choices = (('idp1', 'idp1'), ('idp2', 'idp2'))
-        self.idp_choices_mock.return_value = choices
-        form = EnterpriseCustomerAdminForm()
-        assert hasattr(form.fields['identity_provider'], 'choices')
-        assert form.fields['identity_provider'].choices == list(choices)
 
     @mock.patch('enterprise.admin.forms.get_all_catalogs')
     def test_interface_displays_selected_option(self, mock_method):
@@ -240,3 +226,117 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
         with raises(NotConnectedToOpenEdX) as excinfo:
             get_all_catalogs(None)
         assert message == str(excinfo.value)
+
+
+@mark.django_db
+class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
+    """
+    Tests for EnterpriseCustomerIdentityProviderAdminForm.
+    """
+
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super(TestEnterpriseCustomerIdentityProviderAdminForm, self).setUp()
+        self.idp_choices = (("saml-idp1", "SAML IdP 1"), ('saml-idp2', "SAML IdP 2"))
+
+        self.first_site = SiteFactory(domain="first.localhost.com")
+        self.second_site = SiteFactory(domain="second.localhost.com")
+        self.enterprise_customer = EnterpriseCustomerFactory(site=self.first_site)
+        self.provider_id = FAKER.slug()
+
+    def test_no_idp_choices(self):
+        """
+        Test that a CharField is displayed when get_idp_choices returns None.
+        """
+        with mock.patch("enterprise.admin.forms.utils.get_idp_choices", mock.Mock(return_value=None)):
+            form = EnterpriseCustomerIdentityProviderAdminForm()
+            assert not hasattr(form.fields['provider_id'], 'choices')
+
+    def test_with_idp_choices(self):
+        """
+        Test that a TypedChoiceField is displayed when get_idp_choices returns choice tuples.
+        """
+        with mock.patch("enterprise.admin.forms.utils.get_idp_choices", mock.Mock(return_value=self.idp_choices)):
+            form = EnterpriseCustomerIdentityProviderAdminForm()
+            assert hasattr(form.fields['provider_id'], 'choices')
+            assert form.fields['provider_id'].choices == list(self.idp_choices)
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_error_if_ec_and_idp_site_does_not_match(self, mock_method):
+        """
+        Test error message when enterprise customer's site and identity provider's site are not same.
+
+        Test validation error message when the site of selected identity provider does not match with
+        enterprise customer's site.
+        """
+        mock_method.return_value = mock.Mock(site=self.second_site)
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid},
+        )
+
+        error_message = "Site ({identity_provider_site}) of selected identity provider does not match with " \
+                        "enterprise customer's site ({enterprise_customer_site}).Please either select site with " \
+                        "domain '{identity_provider_site}' or update identity provider's site to " \
+                        "'{enterprise_customer_site}'.".format(
+                            enterprise_customer_site=self.first_site,
+                            identity_provider_site=self.second_site,
+                        )
+        # Validate and clean form data
+        assert not form.is_valid()
+        assert error_message in form.errors["__all__"]
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_error_if_identity_provider_does_not_exist(self, mock_method):
+        """
+        Test error message when identity provider does not exist.
+
+        Test validation error when selected identity provider does not exists in the system.
+        """
+        mock_method.side_effect = ObjectDoesNotExist
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid},
+        )
+        error_message = "Selected Identity Provider does not exist, please contact system administrator for more info."
+
+        # Validate and clean form data
+        assert not form.is_valid()
+        assert error_message in form.errors["__all__"]
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_clean_runs_without_errors(self, mock_method):
+        """
+        Test clean method on form runs without any errors.
+
+        Test that form's clean method runs fine in situations where a previous error on some field has already
+        raised validation errors.
+        """
+        mock_method.return_value = mock.Mock(site=self.first_site)
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id},
+        )
+        error_message = "This field is required."
+
+        # Validate and clean form data
+        assert not form.is_valid()
+        assert error_message in form.errors['enterprise_customer']
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_no_errors(self, mock_method):
+        """
+        Test clean method on form runs without any errors.
+
+        Test that form's clean method runs fine when there are not errors or missing fields.
+        """
+        mock_method.return_value = mock.Mock(site=self.first_site)
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid},
+        )
+
+        # Validate and clean form data
+        assert form.is_valid()

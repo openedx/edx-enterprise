@@ -11,7 +11,9 @@ from faker import Factory as FakerFactory
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser,
+                               PendingEnterpriseCustomerUser)
 
 FAKER = FakerFactory.create()
 
@@ -48,7 +50,6 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     name = factory.LazyAttribute(lambda x: FAKER.company())
     active = True
     site = factory.SubFactory(SiteFactory)
-    identity_provider = factory.LazyAttribute(lambda x: FAKER.slug())
     catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
 
 
@@ -113,3 +114,35 @@ class UserFactory(factory.DjangoModelFactory):
     is_staff = False
     is_active = False
     date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year())
+
+
+class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactory):
+    """
+    Factory class for EnterpriseCustomerIdentityProvider model.
+    """
+
+    class Meta(object):
+        model = EnterpriseCustomerIdentityProvider
+        django_get_or_create = ("provider_id",)
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    provider_id = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class EnterpriseCustomerBrandingFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerBrandingFactory factory.
+
+    Creates an instance of EnterpriseCustomerBrandingFactory with minimal boilerplate - uses this class' attributes as
+    default parameters for EnterpriseCustomerBrandingFactory constructor.
+    """
+
+    class Meta(object):
+        """
+        Meta for EnterpriseCustomerBrandingFactory.
+        """
+
+        model = EnterpriseCustomerBrandingConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)

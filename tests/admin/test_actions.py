@@ -15,7 +15,7 @@ from six import BytesIO
 from enterprise.admin import EnterpriseCustomerAdmin
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
 from enterprise.models import EnterpriseCustomer
-from test_utils.factories import EnterpriseCustomerFactory
+from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory
 
 
 class DummyModel(object):
@@ -279,6 +279,9 @@ class TestCSVExportAction(unittest.TestCase):
             EnterpriseCustomerFactory(),
             EnterpriseCustomerFactory(),
         ]
+
+        for item in collection:
+            EnterpriseCustomerIdentityProviderFactory(enterprise_customer=item)
 
         expected_rows = [fields] + [[getattr(customer, field) for field in fields] for customer in collection]
 
