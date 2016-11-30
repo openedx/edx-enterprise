@@ -14,6 +14,8 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+Fixed EnterpriseCustomer form to make Catalog field optional
+
 [0.5.0] - 2016-11-28
 ~~~~~~~~~~~~~~~~~~~~
 
