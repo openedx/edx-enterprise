@@ -25,17 +25,18 @@ class ValidationMessages(object):
     """
     Namespace class for validation messages.
     """
-    INVALID_EMAIL_OR_USERNAME = _("{argument} does not appear to be a valid email or known username")
+    BOTH_FIELDS_SPECIFIED = _("Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but both were.")
+    BULK_LINK_FAILED = _("Bulk operation failed - no users were linked. Please correct the errors listed below.")
+    COURSE_MODE_INVALID_FOR_COURSE = _("Enrollment mode {course_mode} not available for course {course_id}.")
+    COURSE_WITHOUT_COURSE_MODE = _("Please select a course enrollment mode for the given course.")
+    INVALID_COURSE_ID = _("Could not retrieve details for the course ID {course_id}. Please specify a valid ID.")
     INVALID_EMAIL = _("{argument} does not appear to be a valid email")
-    USER_ALREADY_REGISTERED = _("User with email {email} is already registered with Enterprise Customer {ec_name}")
+    INVALID_EMAIL_OR_USERNAME = _("{argument} does not appear to be a valid email or known username")
     MISSING_EXPECTED_COLUMNS = _(
         "Expected a CSV file with [{expected_columns}] columns, but found [{actual_columns}] columns instead."
     )
-
     NO_FIELDS_SPECIFIED = _("Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but neither were.")
-    BOTH_FIELDS_SPECIFIED = _("Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but both were.")
-
-    BULK_LINK_FAILED = _("Bulk operation failed - no users were linked. Please correct the errors listed below.")
+    USER_ALREADY_REGISTERED = _("User with email {email} is already registered with Enterprise Customer {ec_name}")
 
 
 def parse_csv(file_stream, expected_columns=None):

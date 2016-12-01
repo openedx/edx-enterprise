@@ -20,6 +20,7 @@ from enterprise.admin.forms import (EnterpriseCustomerAdminForm, EnterpriseCusto
                                     ManageLearnersForm)
 from enterprise.admin.utils import ValidationMessages
 from enterprise.course_catalog_api import NotConnectedToOpenEdX, get_all_catalogs
+from test_utils import fake_enrollment_api
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
                                   PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
 
@@ -34,11 +35,15 @@ class TestManageLearnersForm(unittest.TestCase):
     """
 
     @staticmethod
-    def _make_bound_form(email, file_attached=False):
+    def _make_bound_form(email, file_attached=False, course="", course_mode=""):
         """
         Builds bound ManageLearnersForm.
         """
-        form_data = {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email}
+        form_data = {
+            ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email,
+            ManageLearnersForm.Fields.COURSE: course,
+            ManageLearnersForm.Fields.COURSE_MODE: course_mode,
+        }
         file_data = {}
         if file_attached:
             mock_file = mock.Mock(spec=File)
@@ -165,6 +170,49 @@ class TestManageLearnersForm(unittest.TestCase):
         form = self._make_bound_form(empty, file_attached=True)
         assert form.is_valid()
         assert form.cleaned_data[form.Fields.MODE] == form.Modes.MODE_BULK
+
+    @ddt.data(None, "")
+    def test_clean_course_empty(self, value):
+        form = self._make_bound_form("irrelevant@example.com", course=value)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.COURSE] is None
+
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_clean_course_valid(self):
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        course_details = fake_enrollment_api.COURSE_DETAILS[course_id]
+        course_mode = "audit"
+        form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode=course_mode)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.COURSE] == course_details
+
+    @ddt.data("course-v1:does+not+exist", "invalid_course_id")
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_clean_course_invalid(self, course_id):
+        form = self._make_bound_form("irrelevant@example.com", course=course_id)
+        assert not form.is_valid()
+        assert form.errors == {
+            form.Fields.COURSE: [ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)],
+        }
+
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_clean_valid_course_empty_mode(self):
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode="")
+        assert not form.is_valid()
+        assert form.errors == {"__all__": [ValidationMessages.COURSE_WITHOUT_COURSE_MODE]}
+
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_clean_valid_course_invalid_mode(self):
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        course_mode = "verified"
+        form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode=course_mode)
+        assert not form.is_valid()
+        assert form.errors == {
+            form.Fields.COURSE_MODE: [ValidationMessages.COURSE_MODE_INVALID_FOR_COURSE.format(
+                course_mode=course_mode, course_id=course_id
+            )],
+        }
 
 
 @mark.django_db

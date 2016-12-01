@@ -14,15 +14,26 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+
+[0.7.0] - 2016-12-07
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Added a feature to enroll users in a course while linking them to an
+  enterprise customer.
+
+
 [0.6.0] - 2016-12-04
 ~~~~~~~~~~~~~~~~~~~~
 
 Added
 _____
 
-Fixed EnterpriseCustomer form to make Catalog field optional
-Added user bulk linking option
-Added Data Sharing Consent feature
+* Fixed EnterpriseCustomer form to make Catalog field optional
+* Added user bulk linking option
+* Added Data Sharing Consent feature
 
 
 [0.5.0] - 2016-11-28
@@ -31,8 +42,8 @@ Added Data Sharing Consent feature
 Added
 _____
 
-Added checks to make sure enterprise customer and identity provider has one-to-one relation.
-Added a helper method to retrieve enterprise customer branding information
+* Added checks to make sure enterprise customer and identity provider has one-to-one relation.
+* Added a helper method to retrieve enterprise customer branding information
 
 
 [0.4.1] - 2016-11-24
@@ -41,7 +52,7 @@ Added a helper method to retrieve enterprise customer branding information
 Added
 _____
 
-Fixed User.post_save handler causing initial migrations to fail
+* Fixed User.post_save handler causing initial migrations to fail
 
 [0.4.0] - 2016-11-21
 ~~~~~~~~~~~~~~~~~~~~
@@ -55,7 +66,7 @@ _____
 [0.3.1] - 2016-11-21
 ~~~~~~~~~~~~~~~~~~~~
 
-Fixed missing migration.
+* Fixed missing migration.
 
 [0.3.0] - 2016-11-16
 ~~~~~~~~~~~~~~~~~~~~

@@ -6,13 +6,17 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
+
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import ugettext as _
 
 from enterprise import utils
 from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, validate_email_to_link
 from enterprise.course_catalog_api import get_all_catalogs
+from enterprise.enrollment_api import get_course_details
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -26,6 +30,18 @@ class ManageLearnersForm(forms.Form):
     bulk_upload_csv = forms.FileField(
         label=_("Or upload a CSV to enroll multiple users at once"), required=False,
         help_text=_("The CSV must have a column of email addresses, indicated by the heading 'email' in the first row.")
+    )
+    course = forms.CharField(
+        label=_("Also enroll these learners in this course"), required=False,
+        help_text=_("Provide a course ID if enrollment is desired."),
+    )
+    course_mode = forms.ChoiceField(
+        label=_("Course enrollment mode"), required=False,
+        choices=BLANK_CHOICE_DASH + [
+            ("audit", _("Audit")),
+            ("verified", _("Verified")),
+            ("professional", _("Professsional Education")),
+        ],
     )
 
     class Modes(object):
@@ -44,6 +60,8 @@ class ManageLearnersForm(forms.Form):
         EMAIL_OR_USERNAME = "email_or_username"
         BULK_UPLOAD = "bulk_upload_csv"
         MODE = "mode"
+        COURSE = "course"
+        COURSE_MODE = "course_mode"
 
     class CsvColumns(object):
         """
@@ -68,6 +86,18 @@ class ManageLearnersForm(forms.Form):
         validate_email_to_link(email, email_or_username, ValidationMessages.INVALID_EMAIL_OR_USERNAME)
 
         return email
+
+    def clean_course(self):
+        """
+        Verify course ID and retrieve course details.
+        """
+        course_id = self.cleaned_data[self.Fields.COURSE].strip()
+        if not course_id:
+            return None
+        try:
+            return get_course_details(course_id)
+        except (HttpClientError, HttpServerError):
+            raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
 
     def clean(self):
         """
@@ -95,6 +125,20 @@ class ManageLearnersForm(forms.Form):
             mode = self.Modes.MODE_BULK
 
         cleaned_data[self.Fields.MODE] = mode
+
+        # Verify that the selected mode is valid for the given course .
+        course_details = self.cleaned_data.get(self.Fields.COURSE)
+        if course_details:
+            course_mode = self.cleaned_data.get(self.Fields.COURSE_MODE)
+            if not course_mode:
+                raise ValidationError(ValidationMessages.COURSE_WITHOUT_COURSE_MODE)
+            valid_course_modes = course_details["course_modes"]
+            if all(course_mode != mode["slug"] for mode in valid_course_modes):
+                error = ValidationError(ValidationMessages.COURSE_MODE_INVALID_FOR_COURSE.format(
+                    course_mode=course_mode,
+                    course_id=course_details["course_id"],
+                ))
+                raise ValidationError({self.Fields.COURSE_MODE: error})
 
         return cleaned_data
 
