@@ -19,7 +19,8 @@ from django.core.files.storage import Storage
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser,
                                PendingEnterpriseCustomerUser, logo_path)
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
-                                  EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory)
+                                  EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory,
+                                  UserDataSharingConsentAuditFactory, UserFactory)
 
 
 @mark.django_db
@@ -47,6 +48,27 @@ class TestEnterpriseCustomerManager(unittest.TestCase):
         self.assertIn(customer1, active_customers)
         self.assertIn(customer2, active_customers)
         self.assertNotIn(inactive_customer, active_customers)
+
+
+@mark.django_db
+@ddt.ddt
+class TestUserDataSharingConsentAudit(unittest.TestCase):
+    """
+    Tests of the UserDataSharingConsent model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``UserDataSharingConsentAudit`` conversion to string
+        """
+        user = UserFactory(email='bob@jones.com')
+        enterprise_customer = EnterpriseCustomerFactory(name='EvilCorp')
+        ec_user = EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
+        audit = UserDataSharingConsentAuditFactory(user=ec_user)
+        expected_to_str = "<UserDataSharingConsentAudit for bob@jones.com and EvilCorp: not_set>"
+        assert expected_to_str == method(audit)
 
 
 @mark.django_db

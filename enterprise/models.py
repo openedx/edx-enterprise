@@ -63,7 +63,7 @@ class EnterpriseCustomer(TimeStampedModel):
             "soft delete" pattern.
     """
 
-    class Meta(object):
+    class Meta:
         verbose_name = _("Enterprise Customer")
         verbose_name_plural = _("Enterprise Customers")
 
@@ -76,6 +76,35 @@ class EnterpriseCustomer(TimeStampedModel):
     active = models.BooleanField(default=True)
     history = HistoricalRecords()
     site = models.ForeignKey(Site, related_name="enterprise_customers")
+
+    DATA_CONSENT_OPTIONAL = 'optional'
+    AT_LOGIN = 'at_login'
+    AT_ENROLLMENT = 'at_enrollment'
+    DATA_SHARING_CONSENT_CHOICES = (
+        (DATA_CONSENT_OPTIONAL, 'Optional'),
+        (AT_LOGIN, 'At Login'),
+        (AT_ENROLLMENT, 'At Enrollment'),
+    )
+
+    enable_data_sharing_consent = models.BooleanField(
+        default=False,
+        help_text=_(
+            "This field is used to determine whether data sharing consent is enabled or "
+            "disabled for users signing in using this enterprise customer. If disabled, consent "
+            "will not be requested, and eligible data will not be shared."
+        )
+    )
+
+    enforce_data_sharing_consent = models.CharField(
+        max_length=25,
+        blank=False,
+        choices=DATA_SHARING_CONSENT_CHOICES,
+        default=DATA_CONSENT_OPTIONAL,
+        help_text=_(
+            "This field determines if data sharing consent is optional, if it's required at login, "
+            "or if it's required when registering for eligible courses."
+        )
+    )
 
     @property
     def identity_provider(self):
@@ -100,6 +129,23 @@ class EnterpriseCustomer(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    def enforces_data_sharing_consent(self, enforcement_location):
+        """
+        Determine whether the enterprise customer enforce data sharing consent at the given point.
+
+        Args:
+            enforcement_location (str): the point where to see data sharing consent state.
+            argument can either be "optional", 'at_login' or 'at_enrollment'
+        """
+        return self.requests_data_sharing_consent and self.enforce_data_sharing_consent == enforcement_location
+
+    @property
+    def requests_data_sharing_consent(self):
+        """
+        Determine whether the enterprise customer has enabled the data sharing consent request.
+        """
+        return self.enable_data_sharing_consent
 
 
 class EnterpriseCustomerUserManager(models.Manager):
@@ -383,3 +429,66 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         """
         identity_provider = utils.get_identity_provider(self.provider_id)
         return identity_provider and identity_provider.name
+
+
+@python_2_unicode_compatible
+class UserDataSharingConsentAudit(TimeStampedModel):
+    """
+    Store consent information for an EnterpriseCustomerUser.
+
+    Object that exists to store the canonical state of whether a particular
+    user has given consent for their course data to be shared with a particular
+    enterprise customer.
+    """
+
+    class Meta(object):
+        app_label = 'enterprise'
+        verbose_name = "Data Sharing Consent Audit State"
+        verbose_name_plural = "Data Sharing Consent Audit States"
+
+    NOT_SET = 'not_set'
+    ENABLED = 'enabled'
+    DISABLED = 'disabled'
+    STATE_CHOICES = (
+        (NOT_SET, 'Not set'),
+        (ENABLED, 'Enabled'),
+        (DISABLED, 'Disabled'),
+    )
+
+    user = models.ForeignKey(EnterpriseCustomerUser)
+
+    state = models.CharField(
+        max_length=8,
+        blank=False,
+        choices=STATE_CHOICES,
+        default=NOT_SET,
+        help_text=_(
+            "Stores whether the user linked to this model has consented to have "
+            "their information shared with the linked EnterpriseCustomer."
+        )
+    )
+
+    history = HistoricalRecords()
+
+    @property
+    def enabled(self):
+        """
+        Determine whether the user has enabled data sharing.
+        """
+        return self.state == self.ENABLED
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<UserDataSharingConsentAudit for {} and {}: {}>'.format(
+            self.user.user_email,
+            self.user.enterprise_customer.name,
+            self.state,
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
