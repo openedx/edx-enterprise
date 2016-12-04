@@ -7,7 +7,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.apps import AppConfig, apps
 
-from enterprise.utils import USER_POST_SAVE_DISPATCH_UID
+from enterprise.constants import USER_POST_SAVE_DISPATCH_UID
 
 
 class EnterpriseConfig(AppConfig):

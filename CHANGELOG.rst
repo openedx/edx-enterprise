@@ -14,7 +14,9 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
-Fixed EnterpriseCustomer form to make Catalog field optional
+* Added user bulk linking option
+* Fixed EnterpriseCustomer form to make Catalog field optional
+
 
 [0.5.0] - 2016-11-28
 ~~~~~~~~~~~~~~~~~~~~

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-11-23 10:42-0600\n"
+"POT-Creation-Date: 2016-12-04 17:24-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,80 +21,150 @@ msgstr ""
 msgid "Unlink selected objects from existing course catalogs"
 msgstr ""
 
-#: enterprise/admin/forms.py:22
-msgid "Email or Username"
+#: enterprise/admin/forms.py:25
+msgid "Type in Email or Username to link single user"
 msgstr ""
 
-#: enterprise/admin/forms.py:41
+#: enterprise/admin/forms.py:27
+msgid "Or upload a CSV to enroll multiple users at once"
+msgstr ""
+
+#: enterprise/admin/forms.py:28
 msgid ""
-"{email_or_username} does not appear to be a valid email or known username"
+"The CSV must have a column of email addresses, indicated by the heading "
+"'email' in the first row."
 msgstr ""
 
-#: enterprise/admin/forms.py:48
+#: enterprise/admin/forms.py:129
+msgid "None"
+msgstr ""
+
+#: enterprise/admin/forms.py:177
+msgid ""
+"Selected Identity Provider does not exist, please contact system "
+"administrator for more info."
+msgstr ""
+
+#: enterprise/admin/forms.py:187
+msgid ""
+"Site ({identity_provider_site}) of selected identity provider does not match "
+"with enterprise customer's site ({enterprise_customer_site}).Please either "
+"select site with domain '{identity_provider_site}' or update identity "
+"provider's site to '{enterprise_customer_site}'."
+msgstr ""
+
+#: enterprise/admin/utils.py:28
+msgid "{argument} does not appear to be a valid email or known username"
+msgstr ""
+
+#: enterprise/admin/utils.py:29
+msgid "{argument} does not appear to be a valid email"
+msgstr ""
+
+#: enterprise/admin/utils.py:30
 msgid ""
 "User with email {email} is already registered with Enterprise Customer "
 "{ec_name}"
 msgstr ""
 
-#: enterprise/admin/forms.py:86
-msgid "None"
+#: enterprise/admin/utils.py:32
+msgid ""
+"Expected a CSV file with [{expected_columns}] columns, but found "
+"[{actual_columns}] columns instead."
 msgstr ""
 
-#: enterprise/admin/views.py:129
+#: enterprise/admin/utils.py:35
+msgid ""
+"Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
+"neither were."
+msgstr ""
+
+#: enterprise/admin/utils.py:36
+msgid ""
+"Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
+"both were."
+msgstr ""
+
+#: enterprise/admin/utils.py:38
+msgid ""
+"Bulk operation failed - no users were linked. Please correct the errors "
+"listed below."
+msgstr ""
+
+#: enterprise/admin/views.py:161
+msgid "Error at line {line}: {message}\n"
+msgstr ""
+
+#: enterprise/admin/views.py:188
+msgid "{count} new user was linked to {enterprise_customer_name}."
+msgid_plural "{count} new users were linked to {enterprise_customer_name}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: enterprise/admin/views.py:195
+msgid ""
+"Some users were already linked to this Enterprise Customer: {list_of_emails}"
+msgstr ""
+
+#: enterprise/admin/views.py:202
+msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
+msgstr ""
+
+#: enterprise/admin/views.py:226
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
 
-#: enterprise/course_catalog_api.py:45
+#: enterprise/course_catalog_api.py:47
 msgid ""
 "To get a catalog API client, this package must be installed in an OpenEdX "
 "environment."
 msgstr ""
 
-#: enterprise/course_catalog_api.py:58
+#: enterprise/course_catalog_api.py:60
 msgid ""
 "To get a CatalogIntegration object, this package must be installed in an "
 "OpenEdX environment."
 msgstr ""
 
-#: enterprise/course_catalog_api.py:62
+#: enterprise/course_catalog_api.py:64
 msgid ""
 "To parse a catalog API response, this package must be installed in an "
 "OpenEdX environment."
 msgstr ""
 
-#: enterprise/models.py:68
+#: enterprise/models.py:67
 msgid "Enterprise Customer"
 msgstr ""
 
-#: enterprise/models.py:69
+#: enterprise/models.py:68
 msgid "Enterprise Customers"
 msgstr ""
 
-#: enterprise/models.py:75
+#: enterprise/models.py:74
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:76
+#: enterprise/models.py:75
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:178
+#: enterprise/models.py:188
 msgid "Enterprise Customer User"
 msgstr ""
 
-#: enterprise/models.py:179
+#: enterprise/models.py:189
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:288
+#: enterprise/models.py:298
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:296
+#: enterprise/models.py:306
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:297
+#: enterprise/models.py:307
 msgid "Branding Configurations"
 msgstr ""
 
@@ -121,7 +191,7 @@ msgid "Linked Date"
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:103
-msgid "Link learner"
+msgid "Link learners"
 msgstr ""
 
 #: enterprise/validators.py:28

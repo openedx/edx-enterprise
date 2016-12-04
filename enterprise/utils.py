@@ -12,8 +12,6 @@ try:
 except ImportError:
     Registry = None
 
-USER_POST_SAVE_DISPATCH_UID = "user_post_save_upgrade_pending_enterprise_customer_user"
-
 
 def get_identity_provider(provider_id):
     """
