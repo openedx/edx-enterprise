@@ -17,7 +17,7 @@ from enterprise.admin.views import EnterpriseCustomerManageLearnersView
 from enterprise.django_compatibility import reverse
 from enterprise.models import (
     EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerIdentityProvider, EnterpriseCustomerEntitlement
 )
 from enterprise.utils import get_all_field_names
 
@@ -144,3 +144,16 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         if obj:  # editing an existing object
             return get_all_field_names(self.model)
         return tuple()
+
+
+@admin.register(EnterpriseCustomerEntitlement)
+class EnterpriseCustomerEntitlementAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerEntitlement.
+    """
+
+    class Meta(object):
+        model = EnterpriseCustomerEntitlement
+
+    fields = ('enterprise_customer', 'entitlement_id')
+    search_fields = ('enterprise_customer', 'entitlement_id',)

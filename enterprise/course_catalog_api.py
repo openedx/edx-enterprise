@@ -54,7 +54,10 @@ def get_all_catalogs(user):
     """
     Return a list of all course catalogs, including name and ID.
     """
+    print "catalog user =========>  ", user
     client = get_catalog_api_client(user)
+    print "catalog client =========>  ", client.__dict__
+
     if CatalogIntegration is None:
         raise NotConnectedToOpenEdX(
             _('To get a CatalogIntegration object, this package must be installed in an OpenEdX environment.')
