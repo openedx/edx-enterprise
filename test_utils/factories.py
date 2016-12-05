@@ -13,7 +13,8 @@ from django.contrib.sites.models import Site
 
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
                                EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser,
-                               PendingEnterpriseCustomerUser)
+                               PendingEnterpriseCustomerUser, UserDataSharingConsentAudit)
+
 
 FAKER = FakerFactory.create()
 
@@ -51,6 +52,8 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     active = True
     site = factory.SubFactory(SiteFactory)
     catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
+    enable_data_sharing_consent = True
+    enforce_data_sharing_consent = EnterpriseCustomer.AT_LOGIN
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
@@ -70,6 +73,21 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+
+
+class UserDataSharingConsentAuditFactory(factory.django.DjangoModelFactory):
+    """
+    UserDataSharingConsentAuditFactory.
+
+    Creates an instance of UserDataSharingConsentAudit with minimal boilerplate.
+    """
+
+    class Meta(object):
+
+        model = UserDataSharingConsentAudit
+
+    user = factory.SubFactory(EnterpriseCustomerUserFactory)
+    state = 'not_set'
 
 
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):

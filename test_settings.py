@@ -52,6 +52,10 @@ LOCALE_PATHS = [
     root("enterprise", "conf", "locale"),
 ]
 
+MAKO_TEMPLATES = {
+    "main": []
+}
+
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -64,6 +68,8 @@ TEMPLATES = [
         }
     },
 ]
+
+PLATFORM_NAME = "Test platform"
 
 ROOT_URLCONF = "enterprise.urls"
 

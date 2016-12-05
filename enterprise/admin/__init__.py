@@ -135,6 +135,8 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     class Meta(object):
         model = EnterpriseCustomerUser
 
+    fields = ('user_id', 'enterprise_customer')
+
     def get_readonly_fields(self, request, obj=None):
         """
         Make all fields readonly when editing existing model.

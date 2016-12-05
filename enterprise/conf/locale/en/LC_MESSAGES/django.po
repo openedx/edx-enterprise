@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-04 17:24-0600\n"
+"POT-Creation-Date: 2016-12-04 18:01-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: enterprise/admin/actions.py:68
+#: enterprise/admin/actions.py:69
 msgid "Unlink selected objects from existing course catalogs"
 msgstr ""
 
@@ -148,24 +148,43 @@ msgstr ""
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:188
+#: enterprise/models.py:92
+msgid ""
+"This field is used to determine whether data sharing consent is enabled or "
+"disabled for users signing in using this enterprise customer. If disabled, "
+"consent will not be requested, and eligible data will not be shared."
+msgstr ""
+
+#: enterprise/models.py:104
+msgid ""
+"This field determines if data sharing consent is optional, if it's required "
+"at login, or if it's required when registering for eligible courses."
+msgstr ""
+
+#: enterprise/models.py:234
 msgid "Enterprise Customer User"
 msgstr ""
 
-#: enterprise/models.py:189
+#: enterprise/models.py:235
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:298
+#: enterprise/models.py:344
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:306
+#: enterprise/models.py:352
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:307
+#: enterprise/models.py:353
 msgid "Branding Configurations"
+msgstr ""
+
+#: enterprise/models.py:466
+msgid ""
+"Stores whether the user linked to this model has consented to have their "
+"information shared with the linked EnterpriseCustomer."
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:39
@@ -194,10 +213,45 @@ msgstr ""
 msgid "Link learners"
 msgstr ""
 
+#: enterprise/tpa_pipeline.py:38
+msgid ""
+"This package must be installed in an EdX environment to look up third-party "
+"auth providers."
+msgstr ""
+
 #: enterprise/validators.py:28
 msgid "Unsupported file extension."
 msgstr ""
 
 #: enterprise/validators.py:37
 msgid "The logo image file size must be less than 250KB."
+msgstr ""
+
+#: enterprise/views.py:51
+msgid ""
+"Methods in the OpenEdX platform necessary for this view are not available."
+msgstr ""
+
+#: enterprise/views.py:84
+msgid ""
+"Are you sure? If you do not agree to share your data, you will have to use "
+"another account to access {platform}."
+msgstr ""
+
+#: enterprise/views.py:89
+msgid ""
+"Are you sure? If you do not agree to share your data, you will not get any "
+"discounts from {provider}."
+msgstr ""
+
+#: enterprise/views.py:100
+msgid ""
+"{provider} requires data sharing consent; if consent is not provided, you "
+"will be redirected to log in page."
+msgstr ""
+
+#: enterprise/views.py:105
+msgid ""
+"{provider} requests data sharing consent; if consent is not provided, you "
+"will not be able to get any discounts from {provider}."
 msgstr ""

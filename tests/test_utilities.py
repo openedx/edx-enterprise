@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` utility functions.
 """
 from __future__ import absolute_import, unicode_literals
 
+import os
 import unittest
 
 import ddt
@@ -90,15 +91,55 @@ class TestUtils(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        (EnterpriseCustomer, [
-            "enterprisecustomeruser", "pendingenterprisecustomeruser", "branding_configuration",
-            "enterprise_customer_identity_provider", "created", "modified", "uuid", "name", "catalog", "active", "site"
-        ]),
-        (EnterpriseCustomerUser, ["id", "created", "modified", "enterprise_customer", "user_id"]),
-        (EnterpriseCustomerBrandingConfiguration, ["id", "created", "modified", "enterprise_customer", "logo"]),
-        (EnterpriseCustomerIdentityProvider, [
-            "id", "created", "modified", "enterprise_customer", "provider_id"
-        ]),
+        (
+            EnterpriseCustomer,
+            [
+                "enterprisecustomeruser",
+                "pendingenterprisecustomeruser",
+                "branding_configuration",
+                "enterprise_customer_identity_provider",
+                "created",
+                "modified",
+                "uuid",
+                "name",
+                "catalog",
+                "active",
+                "site",
+                "enable_data_sharing_consent",
+                "enforce_data_sharing_consent",
+            ]
+        ),
+        (
+            EnterpriseCustomerUser,
+            [
+                "userdatasharingconsentaudit",
+                "id",
+                "created",
+                "modified",
+                "enterprise_customer",
+                "user_id"
+            ]
+        ),
+        (
+            EnterpriseCustomerBrandingConfiguration,
+            [
+                "id",
+                "created",
+                "modified",
+                "enterprise_customer",
+                "logo"
+            ]
+        ),
+        (
+            EnterpriseCustomerIdentityProvider,
+            [
+                "id",
+                "created",
+                "modified",
+                "enterprise_customer",
+                "provider_id"
+            ]
+        ),
     )
     def test_get_all_field_names(self, model, expected_fields):
         actual_field_names = get_all_field_names(model)
@@ -113,3 +154,10 @@ class TestUtils(unittest.TestCase):
         wrapped_handler(raw=raw)
 
         assert signal_handler_mock.called != raw
+
+    @mock.patch('enterprise.utils.add_lookup')
+    def test_patch_path(self, lookup_patch):
+        utils.patch_mako_lookup()
+        assert lookup_patch.call_args[0][0] == 'main'
+        assert os.path.isdir(lookup_patch.call_args[0][1])
+        assert lookup_patch.call_args[1] == {}

@@ -4,13 +4,41 @@ Utility functions for enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+import logging
+import os
 from functools import wraps
+
+from django.conf import settings
+
+try:
+    from edxmako.paths import add_lookup
+except ImportError:
+    add_lookup = None
 
 try:
     # Try to import identity provider registry if third_party_auth is present
     from third_party_auth.provider import Registry
 except ImportError:
     Registry = None
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+class NotConnectedToEdX(Exception):
+    """
+    Exception to raise when not connected to OpenEdX.
+
+    In general, this exception shouldn't be raised, because this package is
+    designed to be installed directly inside an existing OpenEdX platform.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Log a warning and initialize the exception.
+        """
+        LOGGER.warning('edx-enterprise unexpectedly failed as if not installed in an OpenEdX platform')
+        super(NotConnectedToEdX, self).__init__(*args, **kwargs)
 
 
 def get_identity_provider(provider_id):
@@ -69,3 +97,29 @@ def disable_for_loaddata(signal_handler):
             return
         signal_handler(*args, **kwargs)
     return wrapper
+
+
+def null_decorator(func):
+    """
+    Decorator that does nothing to the wrapped function.
+
+    If we're unable to import social.pipeline.partial, which is the case in our CI platform,
+    we need to be able to wrap the function with something.
+    """
+    return func
+
+
+def patch_mako_lookup():
+    """
+    Update the EdX Mako paths to point to our consent template.
+
+    Do nothing if we're not connected to OpenEdX.
+    """
+    if add_lookup is None:
+        return
+    full_location = os.path.realpath(__file__)
+    directory = os.path.dirname(full_location)
+    template_location = os.path.join(directory, 'templates', 'enterprise')
+    # Both add an item to the setting AND insert the lookup for immediate use
+    settings.MAKO_TEMPLATES['main'].insert(0, template_location)
+    add_lookup('main', template_location)

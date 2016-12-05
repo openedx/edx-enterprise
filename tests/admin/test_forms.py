@@ -167,6 +167,7 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.cleaned_data[form.Fields.MODE] == form.Modes.MODE_BULK
 
 
+@mark.django_db
 class TestEnterpriseCustomerAdminForm(unittest.TestCase):
     """
     Tests for EnterpriseCustomerAdminForm.
@@ -180,6 +181,20 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
         self.catalog_id = random.randint(2, 1000000)
         self.patch_enterprise_customer_user()
         self.addCleanup(self.unpatch_enterprise_customer_user)
+
+    @staticmethod
+    def _make_bound_form(identity_provider):
+        """
+        Builds bound EnterpriseCustomerAdminForm.
+        """
+        form_data = {
+            "name": "New EnterpriseCustomer",
+            "identity_provider": identity_provider,
+            "catalog": 1,
+            "site": 1,
+            "enforce_data_sharing_consent": "optional",
+        }
+        return EnterpriseCustomerAdminForm(form_data)
 
     @staticmethod
     def patch_enterprise_customer_user():

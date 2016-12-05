@@ -1,0 +1,56 @@
+<%page expression_filter="h"/>
+
+<%!
+from django.core.urlresolvers import reverse
+from django.utils.translation import ugettext as _
+from openedx.core.djangolib.js_utils import dump_js_escaped_json
+%>
+
+<%inherit file="/main.html" />
+<%namespace name='static' file='/static_content.html'/>
+
+<script type="text/javascript" src="${static.url('enterprise/grant_data_sharing_permissions.js')}"></script>
+
+<%block name="pagetitle">${_("Additional permissions required")}</%block>
+<main id="main" aria-label="Content" tabindex="-1">
+    <div id="data-sharing-consent-form" class="login-register">
+        <section class="form-type">
+            <div class="form-wrapper">
+                <form
+                    id="data-sharing"
+                    class="register-form"
+                    autocomplete="off"
+                    action="${ reverse('grant_data_sharing_permissions') }",
+                    method="POST"
+                >
+                    <div class="section-title lines">
+                        <h2>
+                            <span class="text">
+                                ${_("Data Sharing Consent")}
+                            </span>
+                        </h2>
+                    </div>
+                    <span class="text">
+                        ${_("In order to link your account, we need consent to share your course data with {provider}.").format(provider=sso_provider)}
+                    </span>
+                    <div class="form-field data-sharing-consent">
+                        <input
+                            id="register-data_sharing_consent"
+                            type="checkbox"
+                            name="data_sharing_consent"
+                            class="input-block checkbox"
+                            data-consent="${data_sharing_consent}"
+                            data-warning-message="${ messages['warning'] }"
+                        />
+                        <label for="register-data_sharing_consent">
+                            ${_("I agree to allow {platform_name} to share data about my enrollment, completion and performance in all {platform_name} courses and programs where my enrollment is sponsored by {provider}.*").format(provider=sso_provider, platform_name=platform_name)}
+                        </label>
+                    </div>
+                    <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }" />
+                    <button type="submit" class="action-primary action">Submit</button>
+                    <p class="note">*${ messages['note'] }
+                </form>
+            </div>
+        </section>
+    </div>
+</main>

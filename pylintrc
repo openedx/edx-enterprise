@@ -56,6 +56,7 @@
 ignore = migrations
 persistent = yes
 load-plugins = caniusepython3.pylint_checker,edx_lint.pylint,pylint_django,pylint_celery
+no-docstring-rgx = (__.*__)|Meta
 
 [MESSAGES CONTROL]
 disable = 
@@ -180,4 +181,4 @@ int-import-graph =
 [EXCEPTIONS]
 overgeneral-exceptions = Exception
 
-# 1a67033d4799199101eddf63b8ed0bef3e61bda7
+# 327b2092771e0cfe3693ef4e17c0b9891dcc8fab

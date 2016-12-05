@@ -2,3 +2,4 @@
 [MASTER]
 ignore = migrations
 load-plugins = caniusepython3.pylint_checker,edx_lint.pylint,pylint_django,pylint_celery
+no-docstring-rgx=(__.*__)|Meta
