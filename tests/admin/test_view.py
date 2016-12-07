@@ -9,6 +9,7 @@ import json
 import ddt
 import mock
 import six
+from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
 
 from django.conf import settings
@@ -22,6 +23,7 @@ from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages
 from enterprise.django_compatibility import reverse
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from test_utils import fake_enrollment_api
 from test_utils.factories import (FAKER, EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
                                   PendingEnterpriseCustomerUserFactory, UserFactory)
 from test_utils.file_helpers import MakeCsvStreamContextManager
@@ -37,10 +39,9 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         Test set up - installs common dependencies.
         """
         super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
-        self.user = UserFactory(is_staff=True, is_active=True)
-        # TODO: remove suppressions when https://github.com/landscapeio/pylint-django/issues/78 is fixed
-        self.user.set_password("QWERTY")  # pylint: disable=no-member
-        self.user.save()  # pylint: disable=no-member
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
         self.enterprise_customer = EnterpriseCustomerFactory()
         self.default_context = {
             "has_permission": True,
@@ -82,6 +83,17 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         Log user in.
         """
         assert self.client.login(username=self.user.username, password="QWERTY")  # make sure we've logged in
+
+    def _assert_django_messages(self, post_response, expected_messages):
+        """
+        Verify that the expected_messages are included in the context of the next response.
+        """
+        self.assertRedirects(post_response, self.view_url, fetch_redirect_response=False)
+        get_response = self.client.get(self.view_url)
+        response_messages = set(
+            (m.level, m.message) for m in get_response.context['messages']  # pylint: disable=no-member
+        )
+        assert response_messages == expected_messages
 
 
 @ddt.ddt
@@ -268,6 +280,48 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
 
+    def _enroll_user_request(self, user, course_id, mode):
+        """
+        Perform post request to log in and submit the form to enroll a user.
+        """
+        self._login()
+        response = self.client.post(self.view_url, data={
+            ManageLearnersForm.Fields.EMAIL_OR_USERNAME: user.username,
+            ManageLearnersForm.Fields.COURSE: course_id,
+            ManageLearnersForm.Fields.COURSE_MODE: mode,
+        })
+        return response
+
+    @mock.patch("enterprise.admin.views.enroll_user_in_course", side_effect=fake_enrollment_api.enroll_user_in_course)
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_post_enroll_user(self, mock_enroll_user_in_course):
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, course_id, mode)
+        mock_enroll_user_in_course.assert_called_once()
+        actual_username, actual_course_details, actual_mode = mock_enroll_user_in_course.call_args[0]
+        assert actual_username == user.username
+        assert actual_course_details["course_id"] == course_id
+        assert actual_mode == mode
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+        ]))
+
+    @mock.patch("enterprise.admin.views.enroll_user_in_course")
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_post_enrollment_error(self, mock_enroll_user_in_course):
+        mock_enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content=json.dumps({"message": "test"}).encode()
+        )
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, course_id, mode)
+        self._assert_django_messages(response, set([
+            (messages.ERROR, "Enrollment of some users failed: {}".format(user.email)),
+        ]))
+
 
 @ddt.ddt
 @mark.django_db
@@ -305,19 +359,26 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert "Error at line {}".format(lineno) in actual_message
         assert expected_message in actual_message
 
-    def _perform_request(self, columns, data):
+    def _perform_request(self, columns, data, course=None, course_mode=None):
         """
         Perform bulk upload request with specified columns and data.
 
         Arguments:
             columns (list): CSV column header
             data (list): CSV contents.
+            course (str): The course ID entered in the form.
+            course_mode (str): The enrollment mode entered in the form.
 
         Returns:
             HttpResponse: View response.
         """
         with MakeCsvStreamContextManager(columns, data) as stream:
-            response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.BULK_UPLOAD: stream})
+            post_data = {ManageLearnersForm.Fields.BULK_UPLOAD: stream}
+            if course is not None:
+                post_data[ManageLearnersForm.Fields.COURSE] = course
+            if course_mode is not None:
+                post_data[ManageLearnersForm.Fields.COURSE_MODE] = course_mode
+            response = self.client.post(self.view_url, data=post_data)
         return response
 
     def test_post_not_logged_in(self):
@@ -401,21 +462,14 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
         assert PendingEnterpriseCustomerUser.objects.count() == 1, "One pending linked users should be created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=new_email).exists()
-
-        self.assertRedirects(response, self.view_url, fetch_redirect_response=False)
-        result_response = self.client.get(self.view_url)
-        response_messages = set(
-            (m.level, m.message) for m in result_response.context['messages']  # pylint: disable=no-member
-        )
-        expected_messages = set([
+        self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (
                 messages.WARNING,
                 "Some users were already linked to this Enterprise Customer: {}".format(linked_user.email)
             ),
             (messages.WARNING, "Some duplicate emails in the CSV were ignored: {}".format(user.email)),
-        ])
-        assert response_messages == expected_messages
+        ]))
 
     def test_post_successful_test(self):
         """
@@ -441,16 +495,37 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "it should create EnterpriseCustomerRecord by email"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=previously_not_seen_email).exists(), \
             "it should create EnterpriseCustomerRecord by email"
-
-        self.assertRedirects(response, self.view_url, fetch_redirect_response=False)
-        result_response = self.client.get(self.view_url)
-        response_messages = set(
-            (m.level, m.message) for m in result_response.context['messages']  # pylint: disable=no-member
-        )
-        expected_messages = set([
+        self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
-        ])
-        assert response_messages == expected_messages
+        ]))
+
+    @mock.patch("enterprise.admin.views.enroll_user_in_course", side_effect=fake_enrollment_api.enroll_user_in_course)
+    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
+    def test_post_link_and_enroll(self, mock_enroll_user_in_course):
+        """
+        Test bulk upload with linking and enrolling
+        """
+        self._login()
+        user = UserFactory.create()
+        unknown_email = FAKER.email()
+        columns = [ManageLearnersForm.CsvColumns.EMAIL]
+        data = [(user.email,), (unknown_email,)]
+        course_id = "course-v1:EnterpriseX+Training+2017"
+        course_mode = "professional"
+
+        response = self._perform_request(columns, data, course_id, course_mode)
+
+        mock_enroll_user_in_course.assert_called_once()
+        actual_username, actual_course_details, actual_mode = mock_enroll_user_in_course.call_args[0]
+        assert actual_username == user.username
+        assert actual_course_details["course_id"] == course_id
+        assert actual_mode == course_mode
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.WARNING,
+             "The following users do not have accounts yet and were not enrolled: {}".format(unknown_email)),
+        ]))
 
 
 @mark.django_db

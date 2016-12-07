@@ -7,3 +7,4 @@ Pillow                    # Image manipulation module, required to use ImageFiel
 django_extensions         # Required to use TimeStampedModel
 django-simple-history     # History for Django models
 django-object-actions     # Object actions in Django admin
+edx-rest-api-client       # For accessing the Enrollment API (and possibly other edX APIs)

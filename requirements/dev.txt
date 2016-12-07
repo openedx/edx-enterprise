@@ -41,7 +41,7 @@ pylint==1.5.4             # via edx-lint, pylint-celery, pylint-django, pylint-p
 pyparsing==2.1.10         # via packaging
 pyYaml==3.12              # via edx-i18n-tools
 requests-toolbelt==0.7.0  # via twine
-requests==2.12.0          # via caniusepython3, requests-toolbelt, twine
+requests==2.12.3          # via caniusepython3, requests-toolbelt, twine
 six==1.10.0               # via astroid, diff-cover, edx-i18n-tools, edx-lint, packaging, pip-tools, pylint
 tox-battery==0.2
 tox==2.4.1

@@ -4,9 +4,13 @@ Custom Django Admin views used in enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import json
+import logging
+
+from edx_rest_api_client.exceptions import HttpClientError
 
 from django.contrib import admin, messages
 from django.contrib.auth import get_permission_codename
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
@@ -16,7 +20,10 @@ from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, parse_csv, validate_email_to_link
+from enterprise.enrollment_api import enroll_user_in_course
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+
+logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class EnterpriseCustomerManageLearnersView(View):
@@ -69,56 +76,6 @@ class EnterpriseCustomerManageLearnersView(View):
         context.update(self._build_admin_context(request, enterprise_customer))
         return context
 
-    def get(self, request, customer_uuid):
-        """
-        Handle GET request - render linked learners list and "Link learner" form.
-
-        Arguments:
-            request (django.http.request.HttpRequest): Request instance
-            customer_uuid (str): Enterprise Customer UUID
-
-        Returns:
-            django.http.response.HttpResponse: HttpResponse
-        """
-        context = self._build_context(request, customer_uuid)
-        manage_learners_form = ManageLearnersForm()
-        context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
-
-        return render(request, self.template, context)
-
-    def post(self, request, customer_uuid):
-        """
-        Handle POST request - handle form submissions.
-
-        Arguments:
-            request (django.http.request.HttpRequest): Request instance
-            customer_uuid (str): Enterprise Customer UUID
-
-        Returns:
-            django.http.response.HttpResponse: HttpResponse
-        """
-        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
-        manage_learners_form = ManageLearnersForm(request.POST, request.FILES)
-
-        # initial form validation - check that form data is well-formed
-        if manage_learners_form.is_valid():
-            # The form is valid. Call the appropriate helper depending on the mode:
-            mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.MODE]
-            if mode == ManageLearnersForm.Modes.MODE_SINGULAR:
-                self._handle_singular(enterprise_customer, manage_learners_form)
-            else:
-                self._handle_bulk_upload(enterprise_customer, manage_learners_form, request)
-
-        # _handle_form might add form errors, so we check if it is still valid
-        if manage_learners_form.is_valid():
-            # Redirect to GET if everything went smooth.
-            return HttpResponseRedirect("")
-
-        # if something went wrong - display bound form on the page
-        context = self._build_context(request, customer_uuid)
-        context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
-        return render(request, self.template, context)
-
     @classmethod
     def _handle_singular(cls, enterprise_customer, manage_learners_form):
         """
@@ -132,9 +89,11 @@ class EnterpriseCustomerManageLearnersView(View):
         email = email_or_username__to__email(form_field_value)
         try:
             validate_email_to_link(email, form_field_value, ValidationMessages.INVALID_EMAIL_OR_USERNAME)
-            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
         except ValidationError as exc:
             manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc.message)
+        else:
+            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+            return [email]
 
     @classmethod
     def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request):
@@ -203,6 +162,107 @@ class EnterpriseCustomerManageLearnersView(View):
                     list_of_emails=", ".join(duplicate_emails)
                 )
             )
+        return list(emails) + already_linked_emails
+
+    @classmethod
+    def _enroll_users(cls, emails, course_details, mode, request):
+        """
+        Enroll the users with the given email addresses to the course specified by course_details.
+        """
+        enrolled = []
+        non_existing = []
+        failed = []
+        for email in emails:
+            try:
+                username = User.objects.get(email=email).username
+            except User.DoesNotExist:
+                non_existing.append(email)
+                continue
+            try:
+                enroll_user_in_course(username, course_details, mode)
+            except HttpClientError as exc:
+                failed.append(email)
+                error_message = json.loads(exc.content.decode()).get("message", "No error message provided.")
+                logging.error(
+                    "Error while enrolling user %(user)s: %(message)s",
+                    dict(user=username, message=error_message),
+                )
+            else:
+                enrolled.append(email)
+        enrolled_count = len(enrolled)
+        if enrolled_count:
+            course_id = course_details["course_id"]
+            messages.success(request, ungettext(
+                "{enrolled_count} user was enrolled to {course_id}.",
+                "{enrolled_count} users were enrolled to {course_id}.",
+                enrolled_count,
+            ).format(enrolled_count=enrolled_count, course_id=course_id))
+        if non_existing:
+            messages.warning(request, _(
+                "The following users do not have accounts yet and were not enrolled: {}"
+            ).format(", ".join(non_existing)))
+        if failed:
+            messages.error(
+                request,
+                _("Enrollment of some users failed: {}").format(", ".join(failed)),
+            )
+
+    def get(self, request, customer_uuid):
+        """
+        Handle GET request - render linked learners list and "Link learner" form.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        context = self._build_context(request, customer_uuid)
+        manage_learners_form = ManageLearnersForm()
+        context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
+
+        return render(request, self.template, context)
+
+    def post(self, request, customer_uuid):
+        """
+        Handle POST request - handle form submissions.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        manage_learners_form = ManageLearnersForm(request.POST, request.FILES)
+
+        # initial form validation - check that form data is well-formed
+        if manage_learners_form.is_valid():
+            # The form is valid. Call the appropriate helper depending on the mode:
+            mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.MODE]
+            if mode == ManageLearnersForm.Modes.MODE_SINGULAR:
+                linked_learners = self._handle_singular(enterprise_customer, manage_learners_form)
+            else:
+                linked_learners = self._handle_bulk_upload(enterprise_customer, manage_learners_form, request)
+
+        # _handle_form might add form errors, so we check if it is still valid
+        if manage_learners_form.is_valid():
+
+            # Enroll linked users in a course if requested
+            course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
+            if course_details:
+                course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
+                self._enroll_users(linked_learners, course_details, course_mode, request)
+
+            # Redirect to GET if everything went smooth.
+            return HttpResponseRedirect("")
+
+        # if something went wrong - display bound form on the page
+        context = self._build_context(request, customer_uuid)
+        context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
+        return render(request, self.template, context)
 
     def delete(self, request, customer_uuid):
         """

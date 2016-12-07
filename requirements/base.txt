@@ -4,11 +4,15 @@
 #
 #    pip-compile --output-file requirements/base.txt requirements/base.in
 #
-django-extensions==1.7.4
+django-extensions==1.7.5
 django-model-utils==2.6
 django-object-actions==0.8.2
 django-simple-history==1.8.1
-Django==1.10.3            # via django-model-utils
-Pillow==3.4.2
+django==1.10.3
+edx-rest-api-client==1.6.0
+pillow==3.4.2
+PyJWT==1.4.2              # via edx-rest-api-client
+requests==2.12.3          # via slumber
 six==1.10.0               # via django-extensions
+slumber==0.7.1            # via edx-rest-api-client
 unicodecsv==0.14.1

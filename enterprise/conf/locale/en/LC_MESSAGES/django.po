@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-04 18:01-0600\n"
+"POT-Creation-Date: 2016-12-07 14:59-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,31 +21,56 @@ msgstr ""
 msgid "Unlink selected objects from existing course catalogs"
 msgstr ""
 
-#: enterprise/admin/forms.py:25
+#: enterprise/admin/forms.py:29
 msgid "Type in Email or Username to link single user"
 msgstr ""
 
-#: enterprise/admin/forms.py:27
+#: enterprise/admin/forms.py:31
 msgid "Or upload a CSV to enroll multiple users at once"
 msgstr ""
 
-#: enterprise/admin/forms.py:28
+#: enterprise/admin/forms.py:32
 msgid ""
 "The CSV must have a column of email addresses, indicated by the heading "
 "'email' in the first row."
 msgstr ""
 
-#: enterprise/admin/forms.py:129
+#: enterprise/admin/forms.py:35
+msgid "Also enroll these learners in this course"
+msgstr ""
+
+#: enterprise/admin/forms.py:36
+msgid "Provide a course ID if enrollment is desired."
+msgstr ""
+
+#: enterprise/admin/forms.py:39
+msgid "Course enrollment mode"
+msgstr ""
+
+#: enterprise/admin/forms.py:41
+msgid "Audit"
+msgstr ""
+
+#: enterprise/admin/forms.py:42
+msgid "Verified"
+msgstr ""
+
+#: enterprise/admin/forms.py:43
+msgid "Professsional Education"
+msgstr ""
+
+#: enterprise/admin/forms.py:173
 msgid "None"
 msgstr ""
 
-#: enterprise/admin/forms.py:177
+#: enterprise/admin/forms.py:221
 msgid ""
 "Selected Identity Provider does not exist, please contact system "
 "administrator for more info."
 msgstr ""
 
-#: enterprise/admin/forms.py:187
+#: enterprise/admin/forms.py:231
+#, python-brace-format
 msgid ""
 "Site ({identity_provider_site}) of selected identity provider does not match "
 "with enterprise customer's site ({enterprise_customer_site}).Please either "
@@ -54,63 +79,103 @@ msgid ""
 msgstr ""
 
 #: enterprise/admin/utils.py:28
-msgid "{argument} does not appear to be a valid email or known username"
-msgstr ""
-
-#: enterprise/admin/utils.py:29
-msgid "{argument} does not appear to be a valid email"
-msgstr ""
-
-#: enterprise/admin/utils.py:30
-msgid ""
-"User with email {email} is already registered with Enterprise Customer "
-"{ec_name}"
-msgstr ""
-
-#: enterprise/admin/utils.py:32
-msgid ""
-"Expected a CSV file with [{expected_columns}] columns, but found "
-"[{actual_columns}] columns instead."
-msgstr ""
-
-#: enterprise/admin/utils.py:35
-msgid ""
-"Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
-"neither were."
-msgstr ""
-
-#: enterprise/admin/utils.py:36
 msgid ""
 "Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
 "both were."
 msgstr ""
 
-#: enterprise/admin/utils.py:38
+#: enterprise/admin/utils.py:29
 msgid ""
 "Bulk operation failed - no users were linked. Please correct the errors "
 "listed below."
 msgstr ""
 
-#: enterprise/admin/views.py:161
+#: enterprise/admin/utils.py:30
+#, python-brace-format
+msgid "Enrollment mode {course_mode} not available for course {course_id}."
+msgstr ""
+
+#: enterprise/admin/utils.py:31
+msgid "Please select a course enrollment mode for the given course."
+msgstr ""
+
+#: enterprise/admin/utils.py:32
+#, python-brace-format
+msgid ""
+"Could not retrieve details for the course ID {course_id}. Please specify a "
+"valid ID."
+msgstr ""
+
+#: enterprise/admin/utils.py:33
+#, python-brace-format
+msgid "{argument} does not appear to be a valid email"
+msgstr ""
+
+#: enterprise/admin/utils.py:34
+#, python-brace-format
+msgid "{argument} does not appear to be a valid email or known username"
+msgstr ""
+
+#: enterprise/admin/utils.py:36
+#, python-brace-format
+msgid ""
+"Expected a CSV file with [{expected_columns}] columns, but found "
+"[{actual_columns}] columns instead."
+msgstr ""
+
+#: enterprise/admin/utils.py:38
+msgid ""
+"Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
+"neither were."
+msgstr ""
+
+#: enterprise/admin/utils.py:39
+#, python-brace-format
+msgid ""
+"User with email {email} is already registered with Enterprise Customer "
+"{ec_name}"
+msgstr ""
+
+#: enterprise/admin/views.py:120
+#, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:188
+#: enterprise/admin/views.py:147
+#, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:195
+#: enterprise/admin/views.py:154
+#, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:202
+#: enterprise/admin/views.py:161
+#, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:226
+#: enterprise/admin/views.py:196
+#, python-brace-format
+msgid "{enrolled_count} user was enrolled to {course_id}."
+msgid_plural "{enrolled_count} users were enrolled to {course_id}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: enterprise/admin/views.py:202
+msgid "The following users do not have accounts yet and were not enrolled: {}"
+msgstr ""
+
+#: enterprise/admin/views.py:207
+msgid "Enrollment of some users failed: {}"
+msgstr ""
+
+#: enterprise/admin/views.py:286
+#, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
 
@@ -233,24 +298,28 @@ msgid ""
 msgstr ""
 
 #: enterprise/views.py:84
+#, python-brace-format
 msgid ""
 "Are you sure? If you do not agree to share your data, you will have to use "
 "another account to access {platform}."
 msgstr ""
 
 #: enterprise/views.py:89
+#, python-brace-format
 msgid ""
 "Are you sure? If you do not agree to share your data, you will not get any "
 "discounts from {provider}."
 msgstr ""
 
 #: enterprise/views.py:100
+#, python-brace-format
 msgid ""
 "{provider} requires data sharing consent; if consent is not provided, you "
 "will be redirected to log in page."
 msgstr ""
 
 #: enterprise/views.py:105
+#, python-brace-format
 msgid ""
 "{provider} requests data sharing consent; if consent is not provided, you "
 "will not be able to get any discounts from {provider}."
