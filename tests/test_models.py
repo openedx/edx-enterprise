@@ -391,13 +391,14 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         (False, 350 * 1024),
         (False, 251 * 1024),
         (False, 250 * 1024),
+        (False, 4 * 1024),
         (True, 2 * 1024),
-        (True, 249 * 1024),
+        (True, 3 * 1024),
     )
     @ddt.unpack
     def test_image_size(self, valid_image, image_size):
         """
-        Test image size, image_size < (250 * 1024) e.g. 250kb. See apps.py.
+        Test image size, image_size < (4 * 1024) e.g. 4kb. See apps.py.
         """
         file_mock = mock.MagicMock(spec=File, name="FileMock")
         file_mock.name = "test1.png"
@@ -426,7 +427,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         """
         file_mock = mock.MagicMock(spec=File, name="FileMock")
         file_mock.name = "test1" + image_extension
-        file_mock.size = 240 * 1024
+        file_mock.size = 2 * 1024
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
             enterprise_customer=EnterpriseCustomerFactory(),
             logo=file_mock
