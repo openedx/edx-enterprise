@@ -34,4 +34,4 @@ def validate_image_size(image):
     """
     config = get_app_config()
     if config and not image.size < getattr(config, "image_size", 0):
-        raise ValidationError(_("The logo image file size must be less than 250KB."))
+        raise ValidationError(_("The logo image file size must be less than 4KB."))

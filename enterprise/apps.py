@@ -6,6 +6,7 @@ Enterprise Django application initialization.
 from __future__ import absolute_import, unicode_literals
 
 from django.apps import AppConfig, apps
+from django.conf import settings
 
 from enterprise.constants import USER_POST_SAVE_DISPATCH_UID
 
@@ -17,7 +18,7 @@ class EnterpriseConfig(AppConfig):
 
     name = "enterprise"
     valid_extensions = [".png", ]
-    image_size = 250 * 1024
+    image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 4 * 1024)
 
     @property
     def auth_user_model(self):

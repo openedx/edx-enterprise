@@ -14,6 +14,14 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.8.0] - 2016-12-08
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* added the branding information api methods to return the enterprise customer logo on the basis of provider_id or uuid.
+* Updated the logo image validator to take an image of size maximum of 4kb.
 
 [0.7.0] - 2016-12-07
 ~~~~~~~~~~~~~~~~~~~~
