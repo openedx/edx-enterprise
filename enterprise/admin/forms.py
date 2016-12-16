@@ -170,9 +170,12 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         Once retrieved, these name pairs can be used directly as a value
         for the `choices` argument to a ChoiceField.
         """
+        all_user_catalogs = get_all_catalogs(self.user)
+        print "all_user_catalogs ======> ", all_user_catalogs
+
         return ((None, _('None'),),) + tuple(
             (catalog['id'], catalog['name'],)
-            for catalog in get_all_catalogs(self.user)
+            for catalog in all_user_catalogs
         )
 
 

@@ -6,7 +6,9 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.contrib.auth import settings
 from django.http import HttpResponseRedirect
+from django.utils.html import format_html
 from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
@@ -17,7 +19,7 @@ from enterprise.admin.views import EnterpriseCustomerManageLearnersView
 from enterprise.django_compatibility import reverse
 from enterprise.models import (
     EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerIdentityProvider, EnterpriseCustomerEntitlement
 )
 from enterprise.utils import get_all_field_names
 
@@ -46,6 +48,30 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
     form = EnterpriseCustomerIdentityProviderAdminForm
 
 
+class EnterpriseCustomerEntitlementInline(admin.StackedInline):
+    """
+    Django admin model for EnterpriseCustomerEntitlement.
+
+    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
+    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
+    """
+    model = EnterpriseCustomerEntitlement
+    extra = 0
+    can_delete = True
+
+    fields = ('enterprise_customer', 'entitlement_id', 'ecommerce_coupon_url',)
+    readonly_fields = ('ecommerce_coupon_url',)
+
+    def ecommerce_coupon_url(self, obj):
+        return format_html(
+            '<a href="{base_url}/coupons/{id}" target="_blank">View coupon "{id}" details</a>',
+            base_url=settings.ECOMMERCE_PUBLIC_URL_ROOT, id=obj.entitlement_id
+        )
+
+    ecommerce_coupon_url.allow_tags = True
+    ecommerce_coupon_url.short_description = 'Coupon URL'
+
+
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
@@ -56,7 +82,11 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
-    inlines = [EnterpriseCustomerBrandingConfigurationInline, EnterpriseCustomerIdentityProviderInline]
+    inlines = [
+        EnterpriseCustomerBrandingConfigurationInline,
+        EnterpriseCustomerIdentityProviderInline,
+        EnterpriseCustomerEntitlementInline,
+    ]
 
     EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider", "catalog"]
 
@@ -144,3 +174,26 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         if obj:  # editing an existing object
             return get_all_field_names(self.model)
         return tuple()
+
+
+@admin.register(EnterpriseCustomerEntitlement)
+class EnterpriseCustomerEntitlementAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerEntitlement.
+    """
+
+    class Meta(object):
+        model = EnterpriseCustomerEntitlement
+
+    list_display = ('enterprise_customer', 'entitlement_id', 'ecommerce_coupon_url',)
+    fields = ('enterprise_customer', 'entitlement_id',)
+    search_fields = ('enterprise_customer', 'entitlement_id',)
+
+    def ecommerce_coupon_url(self, obj):
+        return format_html(
+            '<a href="{base_url}/coupons/{id}" target="_blank">View coupon "{id}" details</a>',
+            base_url=settings.ECOMMERCE_PUBLIC_URL_ROOT, id=obj.entitlement_id
+        )
+
+    ecommerce_coupon_url.allow_tags = True
+    ecommerce_coupon_url.short_description = 'Coupon URL'
