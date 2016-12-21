@@ -81,3 +81,4 @@ SITE_ID = 1
 EDX_API_KEY = "PUT_YOUR_API_KEY_HERE"
 
 ENTERPRISE_ENROLLMENT_API_URL = "http://localhost:8000/api/enrollment/v1/"
+COURSE_CATALOG_API_URL = "http://localhost:18381/api/v1/"

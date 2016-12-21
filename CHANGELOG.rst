@@ -14,6 +14,16 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.9.0] - 2016-12-29
+~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* In django admin page for enterprise customer added alphabetical ordering for
+  catalog drop down and displayed catalog details link next to selected catalog.
+
+
 [0.8.0] - 2016-12-08
 ~~~~~~~~~~~~~~~~~~~~
 
