@@ -19,7 +19,7 @@ from enterprise.models import (
     EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerIdentityProvider,
 )
-from enterprise.utils import get_all_field_names
+from enterprise.utils import get_all_field_names, get_catalog_admin_url, get_catalog_admin_url_template
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -52,7 +52,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
 
-    list_display = ("name", "uuid", "site", "active", "logo", "identity_provider", "catalog")
+    list_display = ("name", "uuid", "site", "active", "logo", "identity_provider", "enterprise_catalog")
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
@@ -100,6 +100,30 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         """
         ec_idp = instance.enterprise_customer_identity_provider
         return ec_idp and ec_idp.provider_name or ec_idp.provider_id
+
+    def enterprise_catalog(self, instance):
+        """
+        Enterprise catalog id with a link to catalog details page.
+
+        Arguments:
+            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
+
+        Returns:
+            catalog id with catalog details link to display in enterprise customer list view.
+        """
+        # Return None if EnterpriseCustomer does not have an associated catalog.
+        if not instance.catalog:
+            return None
+
+        catalog_url = get_catalog_admin_url(instance.catalog)
+        return "{catalog_id}: <a href='{catalog_url}' target='_blank'>View catalog details.</a>".format(
+            catalog_id=instance.catalog,
+            catalog_url=catalog_url,
+        )
+
+    # Allow html tags in enterprise_catalog column,
+    # we need to set it true so that anchor tag is not escaped.
+    enterprise_catalog.allow_tags = True
 
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """

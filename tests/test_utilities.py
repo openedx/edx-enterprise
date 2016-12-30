@@ -10,8 +10,9 @@ import unittest
 import ddt
 import mock
 import six
-
 from faker import Factory as FakerFactory
+
+from django.test import override_settings
 
 from enterprise import utils
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
@@ -161,3 +162,73 @@ class TestUtils(unittest.TestCase):
         assert lookup_patch.call_args[0][0] == 'main'
         assert os.path.isdir(lookup_patch.call_args[0][1])
         assert lookup_patch.call_args[1] == {}
+
+    @ddt.data(
+        ("", ""),
+        (
+            "localhost:18387/api/v1/",
+            "localhost:18387/admin/catalogs/catalog/{catalog_id}/change/",
+        ),
+        (
+            "http://localhost:18387/api/v1/",
+            "http://localhost:18387/admin/catalogs/catalog/{catalog_id}/change/",
+        ),
+        (
+            "https://prod-site-discovery.example.com/api/v1/",
+            "https://prod-site-discovery.example.com/admin/catalogs/catalog/{catalog_id}/change/",
+        ),
+        (
+            "https://discovery-site.subdomain.example.com/api/v1/",
+            "https://discovery-site.subdomain.example.com/admin/catalogs/catalog/{catalog_id}/change/",
+        ),
+    )
+    @ddt.unpack
+    def test_catalog_admin_url_template(self, catalog_api_url, expected_url):
+        """
+        Validate that `get_catalog_admin_url_template` utility functions
+        returns catalog admin page url template.
+
+        Arguments:
+            catalog_api_url (str): course catalog api url coming from DDT data decorator.
+            expected_url (str): django admin catalog details page url coming from DDT data decorator.
+        """
+        with override_settings(COURSE_CATALOG_API_URL=catalog_api_url):
+            url = utils.get_catalog_admin_url_template()
+            assert url == expected_url
+
+    @ddt.data(
+        (7, "", ""),
+        (
+            7,
+            "localhost:18387/api/v1/",
+            "localhost:18387/admin/catalogs/catalog/7/change/",
+        ),
+        (
+            7,
+            "http://localhost:18387/api/v1/",
+            "http://localhost:18387/admin/catalogs/catalog/7/change/",
+        ),
+        (
+            7,
+            "https://prod-site-discovery.example.com/api/v1/",
+            "https://prod-site-discovery.example.com/admin/catalogs/catalog/7/change/",
+        ),
+        (
+            7,
+            "https://discovery-site.subdomain.example.com/api/v1/",
+            "https://discovery-site.subdomain.example.com/admin/catalogs/catalog/7/change/",
+        ),
+    )
+    @ddt.unpack
+    def test_catalog_admin_url(self, catalog_id, catalog_api_url, expected_url):
+        """
+        Validate that `get_catalog_admin_url` utility functions returns catalog admin page url.
+
+        Arguments:
+            catalog_id (int): catalog id coming from DDT data decorator.
+            catalog_api_url (str): course catalog api url coming from DDT data decorator.
+            expected_url (str): django admin catalog details page url coming from DDT data decorator.
+        """
+        with override_settings(COURSE_CATALOG_API_URL=catalog_api_url):
+            url = utils.get_catalog_admin_url(catalog_id)
+            assert url == expected_url

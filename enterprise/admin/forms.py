@@ -153,6 +153,9 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         model = EnterpriseCustomer
         fields = "__all__"
 
+    class Media:
+        js = ('enterprise/admin/enterprise_customer.js', )
+
     def __init__(self, *args, **kwargs):
         """
         Initialize the form.
@@ -161,7 +164,15 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         normally be set up as a plain number entry field.
         """
         super(EnterpriseCustomerAdminForm, self).__init__(*args, **kwargs)
-        self.fields['catalog'] = forms.ChoiceField(choices=self.get_catalog_options(), required=False)
+
+        self.fields['catalog'] = forms.ChoiceField(
+            choices=self.get_catalog_options(),
+            required=False,
+            help_text="<a id='catalog-details-link' href='#' target='_blank'"
+                      "data-url-template='{catalog_admin_url}'> View catalog details.</a>".format(
+                          catalog_admin_url=utils.get_catalog_admin_url_template(),
+                      )
+        )
 
     def get_catalog_options(self):
         """
@@ -170,9 +181,13 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         Once retrieved, these name pairs can be used directly as a value
         for the `choices` argument to a ChoiceField.
         """
+        catalogs = get_all_catalogs(self.user)
+        # order catalogs by name.
+        catalogs = sorted(catalogs, key=lambda catalog: catalog.get('name', '').lower())
+
         return ((None, _('None'),),) + tuple(
             (catalog['id'], catalog['name'],)
-            for catalog in get_all_catalogs(self.user)
+            for catalog in catalogs
         )
 
 

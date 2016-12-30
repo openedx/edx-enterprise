@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
+import re
 from functools import wraps
 
 from django.conf import settings
@@ -123,3 +124,45 @@ def patch_mako_lookup():
     # Both add an item to the setting AND insert the lookup for immediate use
     settings.MAKO_TEMPLATES['main'].insert(0, template_location)
     add_lookup('main', template_location)
+
+
+def get_catalog_admin_url(catalog_id):
+    """
+    Get url to catalog details admin page.
+
+    Arguments:
+        catalog_id (int): Catalog id for which to return catalog details url.
+
+    Returns:
+         URL pointing to catalog details admin page for the give catalog id.
+
+    Example:
+        >>> get_catalog_admin_url_template(2)
+        "http://localhost:18381/admin/catalogs/catalog/2/change/"
+    """
+    return get_catalog_admin_url_template().format(catalog_id=catalog_id)
+
+
+def get_catalog_admin_url_template():
+    """
+    Get template of catalog admin url.
+
+    URL template will contain a placeholder '{catalog_id}' for catalog id.
+
+    Returns:
+        A string containing template for catalog url.
+
+    Example:
+        >>> get_catalog_admin_url_template()
+        "http://localhost:18381/admin/catalogs/catalog/{catalog_id}/change/"
+    """
+    api_base_url = getattr(settings, "COURSE_CATALOG_API_URL", "")
+
+    # Extract FQDN (Fully Qualified Domain Name) from API URL.
+    match = re.match(r"^(?P<fqdn>(?:https?://)?[^/]+)", api_base_url)
+
+    if not match:
+        return ""
+
+    # Return matched FQDN from catalog api url appended with catalog admin path
+    return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/{catalog_id}/change/"
