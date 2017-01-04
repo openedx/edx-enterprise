@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2016-12-07 14:59-0600\n"
+"POT-Creation-Date: 2017-01-04 10:24-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -136,45 +136,45 @@ msgid ""
 "{ec_name}"
 msgstr ""
 
-#: enterprise/admin/views.py:120
+#: enterprise/admin/views.py:168
 #, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:147
+#: enterprise/admin/views.py:195
 #, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:154
+#: enterprise/admin/views.py:202
 #, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:161
+#: enterprise/admin/views.py:209
 #, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:196
+#: enterprise/admin/views.py:244
 #, python-brace-format
 msgid "{enrolled_count} user was enrolled to {course_id}."
 msgid_plural "{enrolled_count} users were enrolled to {course_id}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:202
+#: enterprise/admin/views.py:250
 msgid "The following users do not have accounts yet and were not enrolled: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:207
+#: enterprise/admin/views.py:255
 msgid "Enrollment of some users failed: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:286
+#: enterprise/admin/views.py:334
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
@@ -252,29 +252,37 @@ msgid ""
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:39
+#: enterprise/templates/enterprise/admin/manage_learners.html:40
 msgid "Home"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:53
+#: enterprise/templates/enterprise/admin/manage_learners.html:58
 msgid "Manage Learners"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:63
-#: enterprise/templates/enterprise/admin/manage_learners.html:85
+#: enterprise/templates/enterprise/admin/manage_learners.html:61
+msgid "Search Term: "
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:80
+msgid "Search email address or username"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:91
+#: enterprise/templates/enterprise/admin/manage_learners.html:113
 msgid "User Email"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:64
+#: enterprise/templates/enterprise/admin/manage_learners.html:92
 msgid "Username"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:65
-#: enterprise/templates/enterprise/admin/manage_learners.html:86
+#: enterprise/templates/enterprise/admin/manage_learners.html:93
+#: enterprise/templates/enterprise/admin/manage_learners.html:114
 msgid "Linked Date"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:103
+#: enterprise/templates/enterprise/admin/manage_learners.html:131
 msgid "Link learners"
 msgstr ""
 
@@ -289,7 +297,7 @@ msgid "Unsupported file extension."
 msgstr ""
 
 #: enterprise/validators.py:37
-msgid "The logo image file size must be less than 250KB."
+msgid "The logo image file size must be less than 4KB."
 msgstr ""
 
 #: enterprise/views.py:51

@@ -12,6 +12,7 @@ from django.contrib import admin, messages
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
@@ -42,6 +43,7 @@ class EnterpriseCustomerManageLearnersView(View):
         LEARNERS = "learners"
         PENDING_LEARNERS = "pending_learners"
         MANAGE_LEARNERS_FORM = "manage_learners_form"
+        SEARCH_KEYWORD = "search_keyword"
 
     @staticmethod
     def _build_admin_context(request, customer):
@@ -62,19 +64,65 @@ class EnterpriseCustomerManageLearnersView(View):
         """
         # TODO: pylint acts stupid - find a way around it without suppressing
         enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
-        linked_learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=enterprise_customer.uuid)
-        pending_linked_learners = PendingEnterpriseCustomerUser.objects.filter(
-            enterprise_customer__uuid=enterprise_customer.uuid
-        )
+        search_keyword = self.get_search_keyword(request)
+        linked_learners = self.get_enterprise_customer_user_queryset(search_keyword, customer_uuid)
+        pending_linked_learners = self.get_pending_users_queryset(search_keyword, customer_uuid)
 
         context = {
             self.ContextParameters.ENTERPRISE_CUSTOMER: enterprise_customer,
             self.ContextParameters.PENDING_LEARNERS: pending_linked_learners,
             self.ContextParameters.LEARNERS: linked_learners,
+            self.ContextParameters.SEARCH_KEYWORD: search_keyword or '',
         }
         context.update(admin.site.each_context(request))
         context.update(self._build_admin_context(request, enterprise_customer))
         return context
+
+    def get_search_keyword(self, request):
+        """
+        Retrieve the search querystring from the GET parameters.
+        """
+        return request.GET.get('q', None)
+
+    def get_enterprise_customer_user_queryset(self, search_keyword, customer_uuid):
+        """
+        Get the list of EnterpriseCustomerUsers we want to render.
+
+        Args:
+            search_keyword (str): The keyword to search for in users' email addresses and usernames.
+            customer_uuid (str): A unique identifier to filter down to only users linked to a
+            particular EnterpriseCustomer.
+        """
+        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
+
+        if search_keyword is not None:
+            user_ids = learners.values_list('user_id', flat=True)
+            matching_users = User.objects.filter(
+                Q(pk__in=user_ids),
+                Q(email__icontains=search_keyword) | Q(username__icontains=search_keyword)
+            )
+            matching_user_ids = matching_users.values_list('pk', flat=True)
+            learners = learners.filter(user_id__in=matching_user_ids)
+
+        return learners
+
+    def get_pending_users_queryset(self, search_keyword, customer_uuid):
+        """
+        Get the list of PendingEnterpriseCustomerUsers we want to render.
+
+        Args:
+            search_keyword (str): The keyword to search for in pending users' email addresses.
+            customer_uuid (str): A unique identifier to filter down to only pending users
+            linked to a particular EnterpriseCustomer.
+        """
+        queryset = PendingEnterpriseCustomerUser.objects.filter(
+            enterprise_customer__uuid=customer_uuid
+        )
+
+        if search_keyword is not None:
+            queryset = queryset.filter(user_email__icontains=search_keyword)
+
+        return queryset
 
     @classmethod
     def _handle_singular(cls, enterprise_customer, manage_learners_form):

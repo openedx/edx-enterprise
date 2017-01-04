@@ -156,6 +156,52 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         response = self.client.get(self.view_url)
         self._test_get_response(response, linked_learners, pending_linked_learners)
 
+    def test_get_with_search_param(self):
+        self._login()
+
+        linked_learners = [
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory(
+                    username='bob',
+                    email='bob@thing.com',
+                ).id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory(
+                    username='frank',
+                    email='iloveschool@example.com',
+                ).id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory(
+                    username='angela',
+                    email='cats@cats.org',
+                ).id,
+            ),
+        ]
+        pending_linked_learners = [
+            PendingEnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_email='schoolisfun@example.com',
+            ),
+            PendingEnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_email='joebob@wherever.com',
+            ),
+        ]
+
+        response = self.client.get(self.view_url + '?q=bob')
+        self._test_get_response(response, [linked_learners[0]], [pending_linked_learners[1]])
+
+        response = self.client.get(self.view_url + '?q=SCHOOL')
+        self._test_get_response(response, [linked_learners[1]], [pending_linked_learners[0]])
+
+        response = self.client.get(self.view_url + '?q=longstringthatdoesnthappen')
+        self._test_get_response(response, [], [])
+
 
 @ddt.ddt
 @mark.django_db

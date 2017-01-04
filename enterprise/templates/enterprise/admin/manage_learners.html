@@ -3,6 +3,7 @@
 
 {% block extrastyle %}
 <link rel="stylesheet" type="text/css" href="{% static 'enterprise/admin/manage_learners.css' %}"/>
+<link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}"/>
 {% endblock %}
 
 {% block extrahead %}
@@ -50,63 +51,91 @@ just three "vendor" files here and one app file in footer and avoid going into t
   {% else %}
     {{ enterprise_customer|capfirst }}
   {% endif %}
-  &rsaquo; {% trans "Manage Learners" %}
+  &rsaquo;
+  {% if search_keyword %}
+    <a href="{% url 'admin:enterprise_manage_learners' enterprise_customer.uuid %}">
+  {% endif %}
+  {% trans "Manage Learners" %}
+  {% if search_keyword %}
+    </a>
+    &rsaquo; {% trans "Search Term: " %}"{{ search_keyword }}"
+  {% endif %}
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="learners-panel">
-  <h1>Linked learners</h1>
-  <table class="learners-table linked-learners">
-    <thead>
-    <tr>
-      <th>{% trans "User Email" %}</th>
-      <th>{% trans "Username" %}</th>
-      <th>{% trans "Linked Date" %}</th>
-      <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for learner in learners %}
-    <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
-      <td>{{ learner.user_email }}</td>
-      <td>{{ learner.user.username }}</td>
-      <td>{{ learner.created }}</td>
-      <td class="delete-cell"><input type="button" value="Unlink"></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
+<div id="content-main">
+  <div class="module" id="changelist">
+    <div id="toolbar">
+      <form id="changelist-search" action="" method="get">
+        <div id="searchbar-container"><!-- DIV needed for valid HTML -->
+          <label for="searchbar">
+            <img src="/static/admin/img/icon_searchbox.png" alt="Search">
+          </label>
+          <input type="text"
+                 size="40"
+                 name="q"
+                 value="{{ search_keyword }}"
+                 id="searchbar"
+                 placeholder="{% trans 'Search email address or username' %}">
+          <input type="submit" value="Search">
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="learners-panel">
+    <h1>Linked learners</h1>
+    <table class="learners-table linked-learners">
+      <thead>
+      <tr>
+        <th>{% trans "User Email" %}</th>
+        <th>{% trans "Username" %}</th>
+        <th>{% trans "Linked Date" %}</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for learner in learners %}
+      <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
+        <td>{{ learner.user_email }}</td>
+        <td>{{ learner.user.username }}</td>
+        <td>{{ learner.created }}</td>
+        <td class="delete-cell"><input type="button" value="Unlink"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
 
-  <h1>Pending linked learners</h1>
-  <table class="learners-table pending-linked-learners">
-    <thead>
-    <tr>
-      <th>{% trans "User Email" %}</th>
-      <th>{% trans "Linked Date" %}</th>
-      <th></th>
-    </tr>
-    </thead>
-    <tbody>
-    {% for learner in pending_learners %}
-    <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
-      <td>{{ learner.user_email }}</td>
-      <td>{{ learner.created }}</td>
-      <td class="delete-cell"><input type="button" value="Unlink"></td>
-    </tr>
-    {% endfor %}
-    </tbody>
-  </table>
-</div>
+    <h1>Pending linked learners</h1>
+    <table class="learners-table pending-linked-learners">
+      <thead>
+      <tr>
+        <th>{% trans "User Email" %}</th>
+        <th>{% trans "Linked Date" %}</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for learner in pending_learners %}
+      <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
+        <td>{{ learner.user_email }}</td>
+        <td>{{ learner.created }}</td>
+        <td class="delete-cell"><input type="button" value="Unlink"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-<div class="forms-panel">
-  <h1>{% trans "Link learners" %}</h1>
-  <form action="" method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    {# as_p will render the form fields wrapped in <p> tags: #}
-    {{ manage_learners_form.as_p }}
-    <input type="submit" value="Submit"/>
-  </form>
+  <div class="forms-panel">
+    <h1>{% trans "Link learners" %}</h1>
+    <form action="" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {# as_p will render the form fields wrapped in <p> tags: #}
+      {{ manage_learners_form.as_p }}
+      <input type="submit" value="Submit"/>
+    </form>
+  </div>
 </div>
 {% endblock %}
 
