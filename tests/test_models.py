@@ -19,8 +19,43 @@ from django.core.files.storage import Storage
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser,
                                PendingEnterpriseCustomerUser, logo_path)
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
-                                  EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory,
-                                  UserDataSharingConsentAuditFactory, UserFactory)
+                                  EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
+                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory,
+                                  UserFactory)
+
+
+@mark.django_db
+@ddt.ddt
+class TestPendingEnrollment(unittest.TestCase):
+    """
+    Test for pending enrollment
+    """
+    def setUp(self):
+        email = 'bob@jones.com'
+        course_id = 'course-v1:edX+DemoX+DemoCourse'
+        pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+        self.enrollment = PendingEnrollmentFactory(user=pending_link, course_id=course_id)
+        self.user = UserFactory(email=email)
+        super(TestPendingEnrollment, self).setUp()
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test conversion to string.
+        """
+        expected_str = '<PendingEnrollment for email bob@jones.com in course with ID course-v1:edX+DemoX+DemoCourse>'
+        assert expected_str == method(self.enrollment)
+
+    @mock.patch('enterprise.lms_api.CourseKey')
+    @mock.patch('enterprise.lms_api.CourseEnrollment')
+    def test_complete_enrollment(self, mock_course_enrollment, mock_course_key):
+        mock_course_key.from_string.return_value = None
+        mock_course_enrollment.enroll.return_value = None
+        self.enrollment.complete_enrollment()  # pylint: disable=no-member
+        mock_course_enrollment.enroll.assert_called_once_with(self.user, None, mode='audit', check_access=True)
+        mock_course_key.from_string.assert_called_once_with(self.enrollment.course_id)
 
 
 @mark.django_db

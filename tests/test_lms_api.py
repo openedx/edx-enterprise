@@ -7,11 +7,13 @@ from __future__ import absolute_import, unicode_literals, with_statement
 import json
 
 import responses
+from pytest import raises
 from requests.compat import urljoin
 
 from django.conf import settings
 
 from enterprise import lms_api
+from enterprise.utils import NotConnectedToEdX
 
 URL_BASE_NAMES = {
     'enrollment': settings.ENTERPRISE_ENROLLMENT_API_URL,
@@ -116,3 +118,8 @@ def test_get_full_course_details():
     client = lms_api.CourseApiClient()
     actual_response = client.get_course_details(course_id)
     assert actual_response == expected_response
+
+
+def test_enroll_locally_raises():
+    with raises(NotConnectedToEdX):
+        lms_api.enroll_user_in_course_locally(None, None, None)

@@ -579,12 +579,16 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_id,
             course_mode
         )
+        pending_user_message = (
+            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
+            "When these users create an account, they will be enrolled in the course automatically: {}"
+        )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
-            (messages.WARNING,
-             "The following users do not have accounts yet and were not enrolled: {}".format(unknown_email)),
+            (messages.WARNING, pending_user_message.format(unknown_email)),
         ]))
+        assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
 
 
 @mark.django_db

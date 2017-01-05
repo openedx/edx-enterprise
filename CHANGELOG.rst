@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.12.0] - 2017-01-05
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Create pending enrollment for users who don't yet have an account.
+
+
 [0.11.0] - 2017-01-05
 ~~~~~~~~~~~~~~~~~~~~~
 
