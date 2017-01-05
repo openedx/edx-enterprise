@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.11.0] - 2017-01-05
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Added links from the Manage Learners admin panel to individual learners.
+
+
 [0.10.0] - 2017-01-04
 ~~~~~~~~~~~~~~~~~~~~~
 

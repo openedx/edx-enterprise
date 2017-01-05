@@ -21,7 +21,7 @@ from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, parse_csv, validate_email_to_link
-from enterprise.enrollment_api import enroll_user_in_course
+from enterprise.lms_api import EnrollmentApiClient
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
@@ -64,6 +64,7 @@ class EnterpriseCustomerManageLearnersView(View):
         """
         # TODO: pylint acts stupid - find a way around it without suppressing
         enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+
         search_keyword = self.get_search_keyword(request)
         linked_learners = self.get_enterprise_customer_user_queryset(search_keyword, customer_uuid)
         pending_linked_learners = self.get_pending_users_queryset(search_keyword, customer_uuid)
@@ -213,13 +214,14 @@ class EnterpriseCustomerManageLearnersView(View):
         return list(emails) + already_linked_emails
 
     @classmethod
-    def _enroll_users(cls, emails, course_details, mode, request):
+    def _enroll_users(cls, emails, course_id, mode, request):
         """
-        Enroll the users with the given email addresses to the course specified by course_details.
+        Enroll the users with the given email addresses to the course specified by course_id.
         """
         enrolled = []
         non_existing = []
         failed = []
+        enrollment_client = EnrollmentApiClient()
         for email in emails:
             try:
                 username = User.objects.get(email=email).username
@@ -227,7 +229,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 non_existing.append(email)
                 continue
             try:
-                enroll_user_in_course(username, course_details, mode)
+                enrollment_client.enroll_user_in_course(username, course_id, mode)
             except HttpClientError as exc:
                 failed.append(email)
                 error_message = json.loads(exc.content.decode()).get("message", "No error message provided.")
@@ -239,7 +241,6 @@ class EnterpriseCustomerManageLearnersView(View):
                 enrolled.append(email)
         enrolled_count = len(enrolled)
         if enrolled_count:
-            course_id = course_details["course_id"]
             messages.success(request, ungettext(
                 "{enrolled_count} user was enrolled to {course_id}.",
                 "{enrolled_count} users were enrolled to {course_id}.",
@@ -302,7 +303,8 @@ class EnterpriseCustomerManageLearnersView(View):
             course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
             if course_details:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
-                self._enroll_users(linked_learners, course_details, course_mode, request)
+                course_id = course_details['course_id']
+                self._enroll_users(linked_learners, course_id, course_mode, request)
 
             # Redirect to GET if everything went smooth.
             return HttpResponseRedirect("")

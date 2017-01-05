@@ -177,8 +177,10 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.is_valid()
         assert form.cleaned_data[form.Fields.COURSE] is None
 
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_clean_course_valid(self):
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_clean_course_valid(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_details = fake_enrollment_api.COURSE_DETAILS[course_id]
         course_mode = "audit"
@@ -187,23 +189,29 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.cleaned_data[form.Fields.COURSE] == course_details
 
     @ddt.data("course-v1:does+not+exist", "invalid_course_id")
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_clean_course_invalid(self, course_id):
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_clean_course_invalid(self, course_id, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         form = self._make_bound_form("irrelevant@example.com", course=course_id)
         assert not form.is_valid()
         assert form.errors == {
             form.Fields.COURSE: [ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)],
         }
 
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_clean_valid_course_empty_mode(self):
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_clean_valid_course_empty_mode(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         course_id = "course-v1:edX+DemoX+Demo_Course"
         form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode="")
         assert not form.is_valid()
         assert form.errors == {"__all__": [ValidationMessages.COURSE_WITHOUT_COURSE_MODE]}
 
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_clean_valid_course_invalid_mode(self):
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_clean_valid_course_invalid_mode(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_mode = "verified"
         form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode=course_mode)
