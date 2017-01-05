@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.10.0] - 2017-01-04
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Added the ability to search the Manage Learners admin panel by username and email address.
+
+
 [0.9.0] - 2016-12-29
 ~~~~~~~~~~~~~~~~~~~~
 
