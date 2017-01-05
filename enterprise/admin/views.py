@@ -8,6 +8,7 @@ import logging
 
 from edx_rest_api_client.exceptions import HttpClientError
 
+from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
@@ -22,7 +23,8 @@ from django.views.generic import View
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, parse_csv, validate_email_to_link
 from enterprise.lms_api import EnrollmentApiClient
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerUser, PendingEnrollment,
+                               PendingEnterpriseCustomerUser)
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -214,9 +216,17 @@ class EnterpriseCustomerManageLearnersView(View):
         return list(emails) + already_linked_emails
 
     @classmethod
-    def _enroll_users(cls, emails, course_id, mode, request):
+    def _enroll_users(cls, enterprise_customer, emails, course_id, mode, request):
         """
         Enroll the users with the given email addresses to the course specified by course_id.
+
+        Args:
+            cls (type): The EnterpriseCustomerManageLearnersView class itself
+            enterprise_customer: The instance of EnterpriseCustomer whose attached users we're enrolling
+            emails: An iterable of strings containing email addresses to enroll in a course
+            course_id: The ID of the course in which we want to enroll
+            mode: The enrollment mode the users will be enrolled in the course with
+            request: The HTTP request the enrollment is being created by
         """
         enrolled = []
         non_existing = []
@@ -248,8 +258,20 @@ class EnterpriseCustomerManageLearnersView(View):
             ).format(enrolled_count=enrolled_count, course_id=course_id))
         if non_existing:
             messages.warning(request, _(
-                "The following users do not have accounts yet and were not enrolled: {}"
-            ).format(", ".join(non_existing)))
+                "The following users do not have an account on {}. They have not been enrolled in the course."
+                " When these users create an account, they will be enrolled in the course automatically: {}"
+            ).format(settings.PLATFORM_NAME, ", ".join(non_existing)))
+            for email in non_existing:
+                pending_user = PendingEnterpriseCustomerUser.objects.get(
+                    enterprise_customer=enterprise_customer,
+                    user_email=email
+                )
+                PendingEnrollment.objects.update_or_create(
+                    user=pending_user,
+                    course_id=course_id,
+                    course_mode=mode
+                )
+
         if failed:
             messages.error(
                 request,
@@ -304,7 +326,7 @@ class EnterpriseCustomerManageLearnersView(View):
             if course_details:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
                 course_id = course_details['course_id']
-                self._enroll_users(linked_learners, course_id, course_mode, request)
+                self._enroll_users(enterprise_customer, linked_learners, course_id, course_mode, request)
 
             # Redirect to GET if everything went smooth.
             return HttpResponseRedirect("")

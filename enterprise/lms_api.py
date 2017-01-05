@@ -9,6 +9,18 @@ from edx_rest_api_client.client import EdxRestApiClient
 
 from django.conf import settings
 
+from enterprise.utils import NotConnectedToEdX
+
+try:
+    from opaque_keys.edx.keys import CourseKey
+except ImportError:
+    CourseKey = None
+
+try:
+    from student.models import CourseEnrollment
+except ImportError:
+    CourseEnrollment = None
+
 
 class EnrollmentApiClient(object):
     """
@@ -98,3 +110,21 @@ class CourseApiClient(object):
             dict: Contains keys identifying those course details available from the courses API (e.g., name).
         """
         return self.client.courses(course_id).get()
+
+
+def enroll_user_in_course_locally(user, course_id, mode):
+    """
+    Enroll a user in a course, using local database methods.
+
+    This is only used in one place; in models.py. It is necessary
+    because the enrollment API can't enroll a user before it exists, and
+    the post_save signal for users results in a user not actually being
+    saved until after the API call is made.
+
+    In Django 1.9 and later, there's a transaction.on_commit hook that we can
+    use to create a callback. Once we're able to depend on having Django 1.9, we
+    can shift over to that, but for right now, we have to do it this way.
+    """
+    if CourseKey is None and CourseEnrollment is None:
+        raise NotConnectedToEdX("This package must be installed in an OpenEdX environment.")
+    CourseEnrollment.enroll(user, CourseKey.from_string(course_id), mode=mode, check_access=True)

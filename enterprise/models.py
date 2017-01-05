@@ -21,6 +21,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
+from enterprise.lms_api import enroll_user_in_course_locally
 from enterprise.validators import validate_image_extension, validate_image_size
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -300,6 +301,54 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     def __repr__(self):
         """
         Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class PendingEnrollment(TimeStampedModel):
+    """
+    Track future enrollments for PendingEnterpriseCustomerUser.
+
+    Store a course ID, an intended enrollment mode, and a link to a PendingEnterpriseCustomerUser;
+    when the PendingEnterpriseCustomerUser is converted to a full EnterpriseCustomerUser, API
+    calls will be made to enroll the newly-created user in whatever courses have been added.
+    """
+
+    user = models.ForeignKey(
+        PendingEnterpriseCustomerUser,
+        null=False,
+    )
+    course_id = models.CharField(
+        max_length=255,
+        blank=False,
+    )
+    course_mode = models.CharField(
+        max_length=25,
+        blank=False
+    )
+
+    class Meta(object):
+        unique_together = (("user", "course_id"),)
+
+    def complete_enrollment(self):
+        """
+        Enroll the linked user in the linked course.
+        """
+        user = User.objects.get(email=self.user.user_email)
+        course_id = self.course_id
+        course_mode = self.course_mode
+        enroll_user_in_course_locally(user, course_id, course_mode)
+
+    def __str__(self):
+        """
+        Create string representation of the enrollment.
+        """
+        return '<PendingEnrollment for email {} in course with ID {}>'.format(self.user.user_email, self.course_id)
+
+    def __repr__(self):
+        """
+        Return string representation of the enrollment.
         """
         return self.__str__()
 

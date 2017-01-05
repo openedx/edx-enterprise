@@ -11,11 +11,10 @@ import ddt
 import mock
 from pytest import mark
 
-from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser
 from enterprise.signals import handle_user_post_save
-from test_utils.factories import (
-    EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
-)
+from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
+                                  PendingEnterpriseCustomerUserFactory, UserFactory)
 
 
 @mark.django_db
@@ -81,6 +80,32 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         assert len(EnterpriseCustomerUser.objects.filter(
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
         )) == 1
+
+    @mock.patch('enterprise.lms_api.CourseKey')
+    @mock.patch('enterprise.lms_api.CourseEnrollment')
+    def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment, mock_course_key):
+        mock_course_key.from_string.return_value = None
+        mock_course_enrollment.enroll.return_value = None
+        email = "fake_email@edx.org"
+        user = UserFactory(id=1, email=email)
+        pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+        pending_enrollment = PendingEnrollmentFactory(user=pending_link)
+
+        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
+        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+            "Precondition check: pending link exists"
+        assert len(PendingEnrollment.objects.filter(user=pending_link)) == 1, 'Check that only one enrollment exists.'
+
+        parameters = {'instance': user, "created": False}
+        handle_user_post_save(mock.Mock(), **parameters)
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert len(EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=pending_link.enterprise_customer, user_id=user.id
+        )) == 1
+        assert len(PendingEnrollment.objects.all()) == 0
+
+        mock_course_enrollment.enroll.assert_called_once_with(user, None, mode='audit', check_access=True)
+        mock_course_key.from_string.assert_called_once_with(pending_enrollment.course_id)
 
     def test_handle_user_post_save_modified_user_already_linked(self):
         email = "jackie.chan@hollywood.com"

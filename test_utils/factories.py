@@ -12,9 +12,8 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
-                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser,
+                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, PendingEnrollment,
                                PendingEnterpriseCustomerUser, UserDataSharingConsentAudit)
-
 
 FAKER = FakerFactory.create()
 
@@ -164,3 +163,18 @@ class EnterpriseCustomerBrandingFactory(factory.django.DjangoModelFactory):
 
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+
+class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
+    """
+    PendingEnrollment factory.
+
+    Create an instance of PendingEnrollment with minimal boilerplate
+    """
+
+    class Meta(object):
+        model = PendingEnrollment
+
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    course_mode = 'audit'
+    user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)
