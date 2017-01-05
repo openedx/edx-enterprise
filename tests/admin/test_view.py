@@ -338,28 +338,36 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         })
         return response
 
-    @mock.patch("enterprise.admin.views.enroll_user_in_course", side_effect=fake_enrollment_api.enroll_user_in_course)
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_post_enroll_user(self, mock_enroll_user_in_course):
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enroll_user(self, forms_client, views_client):
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, course_id, mode)
-        mock_enroll_user_in_course.assert_called_once()
-        actual_username, actual_course_details, actual_mode = mock_enroll_user_in_course.call_args[0]
-        assert actual_username == user.username
-        assert actual_course_details["course_id"] == course_id
-        assert actual_mode == mode
+        views_instance.enroll_user_in_course.assert_called_once()
+        views_instance.enroll_user_in_course.assert_called_with(
+            user.username,
+            course_id,
+            mode,
+        )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
         ]))
 
-    @mock.patch("enterprise.admin.views.enroll_user_in_course")
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_post_enrollment_error(self, mock_enroll_user_in_course):
-        mock_enroll_user_in_course.side_effect = HttpClientError(
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enrollment_error(self, forms_client, views_client):
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "test"}).encode()
         )
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
@@ -545,12 +553,16 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
         ]))
 
-    @mock.patch("enterprise.admin.views.enroll_user_in_course", side_effect=fake_enrollment_api.enroll_user_in_course)
-    @mock.patch("enterprise.admin.forms.get_course_details", fake_enrollment_api.get_course_details)
-    def test_post_link_and_enroll(self, mock_enroll_user_in_course):
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_link_and_enroll(self, forms_client, views_client):
         """
         Test bulk upload with linking and enrolling
         """
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         self._login()
         user = UserFactory.create()
         unknown_email = FAKER.email()
@@ -561,11 +573,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course_id, course_mode)
 
-        mock_enroll_user_in_course.assert_called_once()
-        actual_username, actual_course_details, actual_mode = mock_enroll_user_in_course.call_args[0]
-        assert actual_username == user.username
-        assert actual_course_details["course_id"] == course_id
-        assert actual_mode == course_mode
+        views_instance.enroll_user_in_course.assert_called_once()
+        views_instance.enroll_user_in_course.assert_called_with(
+            user.username,
+            course_id,
+            course_mode
+        )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),

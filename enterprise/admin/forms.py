@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _
 from enterprise import utils
 from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, validate_email_to_link
 from enterprise.course_catalog_api import get_all_catalogs
-from enterprise.enrollment_api import get_course_details
+from enterprise.lms_api import EnrollmentApiClient
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -95,7 +95,8 @@ class ManageLearnersForm(forms.Form):
         if not course_id:
             return None
         try:
-            return get_course_details(course_id)
+            client = EnrollmentApiClient()
+            return client.get_course_details(course_id)
         except (HttpClientError, HttpServerError):
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
 

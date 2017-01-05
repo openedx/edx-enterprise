@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 from django.conf.urls import url
 from django.contrib import admin
 from django.http import HttpResponseRedirect
+from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
@@ -15,9 +16,10 @@ from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustom
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView
 from enterprise.django_compatibility import reverse
-from enterprise.models import (
+from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
+from enterprise.models import (  # pylint:disable=no-name-in-module
     EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerIdentityProvider, HistoricalUserDataSharingConsentAudit, PendingEnterpriseCustomerUser,
 )
 from enterprise.utils import get_all_field_names, get_catalog_admin_url, get_catalog_admin_url_template
 
@@ -150,6 +152,36 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return customer_urls + super(EnterpriseCustomerAdmin, self).get_urls()
 
 
+class HistoricalUserDataSharingConsentAuditInlineAdmin(admin.TabularInline):
+    """
+    Inline admin view for UserDataSharingConsentAudit
+    """
+
+    model = HistoricalUserDataSharingConsentAudit
+
+    fields = (
+        'state',
+        'history_date',
+    )
+
+    readonly_fields = (
+        'state',
+        'history_date',
+    )
+
+    def has_add_permission(self, request):
+        """
+        Disable add permission for HistoricalUserDataSharingConsentAudit.
+        """
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Disable deletability for HistoricalUserDataSharingConsentAudit.
+        """
+        return False
+
+
 @admin.register(EnterpriseCustomerUser)
 class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     """
@@ -159,12 +191,99 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     class Meta(object):
         model = EnterpriseCustomerUser
 
-    fields = ('user_id', 'enterprise_customer')
+    fields = (
+        'user_id',
+        'enterprise_customer',
+        'user_email',
+        'username',
+        'created',
+        'enrolled_courses',
+    )
+
+    # Only include fields that are not database-backed; DB-backed fields
+    # are dynamically set as read only.
+    readonly_fields = (
+        'user_email',
+        'username',
+        'created',
+        'enrolled_courses',
+    )
+
+    inlines = (
+        HistoricalUserDataSharingConsentAuditInlineAdmin,
+    )
+
+    def username(self, enterprise_customer_user):
+        """
+        Return the username for the attached user.
+
+        Args:
+            enterprise_customer_user: The instance of EnterpriseCustomerUser
+                being rendered with this admin form.
+        """
+        return enterprise_customer_user.user.username
+
+    def enrolled_courses(self, enterprise_customer_user):
+        """
+        Return a string representing the courses a given EnterpriseCustomerUser is enrolled in
+
+        Args:
+            enterprise_customer_user: The instance of EnterpriseCustomerUser
+                being rendered with this admin form.
+        """
+        courses_string = mark_safe(self.get_enrolled_course_string(enterprise_customer_user))
+        return courses_string or 'None'
 
     def get_readonly_fields(self, request, obj=None):
         """
         Make all fields readonly when editing existing model.
         """
+        readonly_fields = super(EnterpriseCustomerUserAdmin, self).get_readonly_fields(request, obj=obj)
         if obj:  # editing an existing object
-            return get_all_field_names(self.model)
-        return tuple()
+            return readonly_fields + tuple(get_all_field_names(self.model))
+        return readonly_fields
+
+    def get_enrolled_course_string(self, enterprise_customer_user):
+        """
+        Get an HTML string representing the courses the user is enrolled in.
+        """
+        enrollment_client = EnrollmentApiClient()
+        enrolled_courses = enrollment_client.get_enrolled_courses(self.username(enterprise_customer_user))
+        course_details = []
+        courses_client = CourseApiClient()
+        for course in enrolled_courses:
+            course_id = course['course_details']['course_id']
+            name = courses_client.get_course_details(course_id)['name']
+            course_details.append({'course_id': course_id, 'course_name': name})
+
+        template = '<a href="{url}">{course_name}</a>'
+        joiner = '<br/>'
+        return joiner.join(
+            template.format(
+                url=reverse('about_course', args=[course['course_id']]),
+                course_name=course['course_name'],
+            )
+            for course in course_details
+        )
+
+
+@admin.register(PendingEnterpriseCustomerUser)
+class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
+    """
+    Django admin model for PendingEnterpriseCustomerUser
+    """
+
+    class Meta(object):
+        model = PendingEnterpriseCustomerUser
+
+    fields = (
+        'user_email',
+        'enterprise_customer',
+        'created'
+    )
+
+    readonly_fields = (
+        'user_email',
+        'enterprise_customer',
+        'created'
+    )

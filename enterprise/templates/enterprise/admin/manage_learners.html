@@ -64,6 +64,7 @@ just three "vendor" files here and one app file in footer and avoid going into t
 {% endblock %}
 
 {% block content %}
+<<<<<<< HEAD
 <div id="content-main">
   <div class="module" id="changelist">
     <div id="toolbar">
@@ -97,7 +98,11 @@ just three "vendor" files here and one app file in footer and avoid going into t
       <tbody>
       {% for learner in learners %}
       <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
-        <td>{{ learner.user_email }}</td>
+        <td>
+          <a href="{% url 'admin:enterprise_enterprisecustomeruser_change' learner.id %}">
+            {{ learner.user_email }}
+          </a>
+        </td>
         <td>{{ learner.user.username }}</td>
         <td>{{ learner.created }}</td>
         <td class="delete-cell"><input type="button" value="Unlink"></td>
@@ -118,7 +123,11 @@ just three "vendor" files here and one app file in footer and avoid going into t
       <tbody>
       {% for learner in pending_learners %}
       <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
-        <td>{{ learner.user_email }}</td>
+        <td>
+          <a href = "{% url 'admin:enterprise_pendingenterprisecustomeruser_change' learner.id %}">
+            {{ learner.user_email }}
+          </a>
+        </td>
         <td>{{ learner.created }}</td>
         <td class="delete-cell"><input type="button" value="Unlink"></td>
       </tr>
@@ -126,7 +135,6 @@ just three "vendor" files here and one app file in footer and avoid going into t
       </tbody>
     </table>
   </div>
-
   <div class="forms-panel">
     <h1>{% trans "Link learners" %}</h1>
     <form action="" method="post" enctype="multipart/form-data">

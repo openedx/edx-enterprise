@@ -101,16 +101,10 @@ def get_course_details(course_id):
         )
 
 
-def enroll_user_in_course(user, course_details, mode):
+def enroll_user_in_course(user, course_id, mode):
     """
     Fake implementation.
     """
-    try:
-        course_id = course_details["course_id"]
-    except KeyError:
-        _raise_client_error(
-            "enrollment", "Course ID must be specified to create a new enrollment."
-        )
     try:
         course_details = COURSE_DETAILS[course_id]
     except KeyError:
