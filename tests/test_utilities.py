@@ -18,11 +18,13 @@ from django.core import mail
 from django.test import override_settings
 
 from enterprise import utils
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCourseEnrollment,
                                EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, UserDataSharingConsentAudit)
 from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
-from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
+from test_utils.factories import (EnterpriseCustomerBrandingFactory, EnterpriseCustomerFactory,
+                                  EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
+                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory,
+                                  UserFactory)
 
 
 def mock_get_available_idps(idps):
@@ -49,6 +51,17 @@ class TestUtils(unittest.TestCase):
     """
     Tests for utility functions.
     """
+    def setUp(self):
+        """
+        Set up test environment.
+        """
+        super(TestUtils, self).setUp()
+        faker = FakerFactory.create()
+        self.provider_id = faker.slug()
+        self.uuid = faker.uuid4()
+        self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
+
     @staticmethod
     def get_magic_name(value):
         """
@@ -761,3 +774,46 @@ class TestUtils(unittest.TestCase):
             for field, val in expected_fields.items():
                 assert getattr(mail.outbox[0], field) == val
             assert mail.outbox[0].connection is conn
+
+    def test_enterprise_branding_info_by_provider_id(self):
+        """
+        Test `get_enterprise_branding_info_by_provider_id` helper method.
+        """
+        EnterpriseCustomerBrandingFactory(
+            enterprise_customer=self.customer,
+            logo='/test_1.png/'
+        )
+        self.assertEqual(
+            utils.get_enterprise_branding_info_by_provider_id(),
+            None,
+        )
+        self.assertEqual(
+            utils.get_enterprise_branding_info_by_provider_id(provider_id=self.provider_id).logo,
+            '/test_1.png/',
+        )
+        self.assertEqual(
+            utils.get_enterprise_branding_info_by_provider_id(provider_id='fake'),
+            None,
+        )
+
+    def test_enterprise_branding_info_by_ec_uuid(self):
+        """
+        Test `get_enterprise_branding_info_by_ec_uuid` helper method.
+        """
+        EnterpriseCustomerBrandingFactory(
+            enterprise_customer=self.customer,
+            logo='/test_2.png/'
+        )
+
+        self.assertEqual(
+            utils.get_enterprise_branding_info_by_ec_uuid(),
+            None,
+        )
+        self.assertEqual(
+            utils.get_enterprise_branding_info_by_ec_uuid(ec_uuid=self.uuid).logo,
+            '/test_2.png/',
+        )
+        self.assertEqual(
+            utils.get_enterprise_branding_info_by_ec_uuid(ec_uuid=FakerFactory.create().uuid4()),
+            None,
+        )

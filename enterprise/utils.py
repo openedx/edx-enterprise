@@ -19,6 +19,8 @@ from django.utils.translation import ugettext as _
 from enterprise.django_compatibility import reverse
 from six.moves.urllib.parse import urlparse, urlunparse  # pylint: disable=import-error,wrong-import-order
 
+import enterprise
+
 try:
     from edxmako.paths import add_lookup
 except ImportError:
@@ -421,3 +423,22 @@ def get_reversed_url_by_site(request, site, *args, **kwargs):
         parsed._replace(netloc=domain)
     )
     return final_url
+
+def get_enterprise_branding_info_by_provider_id(provider_id=None):  # pylint: disable=invalid-name
+    """
+    Return the EnterpriseCustomer branding information based on provider_id.
+
+    Provider_id: There is 1:1 relation b/w EnterpriseCustomer and Identity provider.
+    """
+    return enterprise.models.EnterpriseCustomerBrandingConfiguration.objects.filter(
+        enterprise_customer__enterprise_customer_identity_provider__provider_id=provider_id
+    ).first()
+
+
+def get_enterprise_branding_info_by_ec_uuid(ec_uuid=None):  # pylint: disable=invalid-name
+    """
+    Return the EnterpriseCustomer branding information based on enterprise customer uuid.
+    """
+    return enterprise.models.EnterpriseCustomerBrandingConfiguration.objects.filter(
+        enterprise_customer__uuid=ec_uuid
+    ).first()
