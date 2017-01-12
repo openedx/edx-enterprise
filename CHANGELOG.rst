@@ -14,6 +14,16 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.19.0] - 2017-01-30
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Added read-only enterprise API endpoint for IDAs.
+* Moved utility functions from api.py to utils.py
+
+
 [0.18.0] - 2017-01-27
 ~~~~~~~~~~~~~~~~~~~~~
 

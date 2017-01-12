@@ -18,7 +18,7 @@ from django.core import mail
 from django.test import override_settings
 
 from enterprise import utils
-from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCourseEnrollment,
+from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
                                EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, UserDataSharingConsentAudit)
 from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
 from test_utils.factories import (EnterpriseCustomerBrandingFactory, EnterpriseCustomerFactory,
@@ -115,7 +115,7 @@ class TestUtils(unittest.TestCase):
         (
             EnterpriseCustomer,
             [
-                "enterprisecustomeruser",
+                "enterprise_customer_users",
                 "pendingenterprisecustomeruser",
                 "branding_configuration",
                 "enterprise_customer_identity_provider",
@@ -134,7 +134,7 @@ class TestUtils(unittest.TestCase):
         (
             EnterpriseCustomerUser,
             [
-                "userdatasharingconsentaudit",
+                "data_sharing_consent",
                 "enterprise_enrollments",
                 "id",
                 "created",
@@ -788,11 +788,11 @@ class TestUtils(unittest.TestCase):
             None,
         )
         self.assertEqual(
-            utils.get_enterprise_branding_info_by_provider_id(provider_id=self.provider_id).logo,
+            utils.get_enterprise_branding_info_by_provider_id(identity_provider_id=self.provider_id).logo,
             '/test_1.png/',
         )
         self.assertEqual(
-            utils.get_enterprise_branding_info_by_provider_id(provider_id='fake'),
+            utils.get_enterprise_branding_info_by_provider_id(identity_provider_id='fake'),
             None,
         )
 
