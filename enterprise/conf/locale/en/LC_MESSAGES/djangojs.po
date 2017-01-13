@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-05 14:09-0600\n"
+"POT-Creation-Date: 2017-01-13 10:08-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,6 +17,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: enterprise/static/enterprise/admin/manage_learners.js:6
+#: enterprise/static/enterprise/admin/manage_learners.js:4
+msgid "Enter a valid course ID"
+msgstr ""
+
+#: enterprise/static/enterprise/admin/manage_learners.js:58
 msgid "Are you sure you want to unlink %(email)s?"
 msgstr ""

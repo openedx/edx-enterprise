@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-05 14:09-0600\n"
+"POT-Creation-Date: 2017-01-13 10:08-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -57,20 +57,32 @@ msgid "Verified"
 msgstr ""
 
 #: enterprise/admin/forms.py:43
-msgid "Professsional Education"
+msgid "Professional Education"
 msgstr ""
 
-#: enterprise/admin/forms.py:189
+#: enterprise/admin/forms.py:44
+msgid "Professional Education (no ID)"
+msgstr ""
+
+#: enterprise/admin/forms.py:45
+msgid "Credit"
+msgstr ""
+
+#: enterprise/admin/forms.py:46
+msgid "Honor"
+msgstr ""
+
+#: enterprise/admin/forms.py:192
 msgid "None"
 msgstr ""
 
-#: enterprise/admin/forms.py:237
+#: enterprise/admin/forms.py:240
 msgid ""
 "Selected Identity Provider does not exist, please contact system "
 "administrator for more info."
 msgstr ""
 
-#: enterprise/admin/forms.py:247
+#: enterprise/admin/forms.py:250
 #, python-brace-format
 msgid ""
 "Site ({identity_provider_site}) of selected identity provider does not match "
@@ -137,48 +149,48 @@ msgid ""
 "{ec_name}"
 msgstr ""
 
-#: enterprise/admin/views.py:171
+#: enterprise/admin/views.py:173
 #, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:198
+#: enterprise/admin/views.py:200
 #, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:205
+#: enterprise/admin/views.py:207
 #, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:212
+#: enterprise/admin/views.py:214
 #, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:255
+#: enterprise/admin/views.py:257
 #, python-brace-format
 msgid "{enrolled_count} user was enrolled to {course_id}."
 msgid_plural "{enrolled_count} users were enrolled to {course_id}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:261
+#: enterprise/admin/views.py:263
 msgid ""
 "The following users do not have an account on {}. They have not been "
 "enrolled in the course. When these users create an account, they will be "
 "enrolled in the course automatically: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:278
+#: enterprise/admin/views.py:280
 msgid "Enrollment of some users failed: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:358
+#: enterprise/admin/views.py:360
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
@@ -256,37 +268,37 @@ msgid ""
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:40
+#: enterprise/templates/enterprise/admin/manage_learners.html:46
 msgid "Home"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:58
+#: enterprise/templates/enterprise/admin/manage_learners.html:64
 msgid "Manage Learners"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:61
+#: enterprise/templates/enterprise/admin/manage_learners.html:67
 msgid "Search Term: "
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:81
+#: enterprise/templates/enterprise/admin/manage_learners.html:86
 msgid "Search email address or username"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:92
-#: enterprise/templates/enterprise/admin/manage_learners.html:118
+#: enterprise/templates/enterprise/admin/manage_learners.html:97
+#: enterprise/templates/enterprise/admin/manage_learners.html:123
 msgid "User Email"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:93
+#: enterprise/templates/enterprise/admin/manage_learners.html:98
 msgid "Username"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:94
-#: enterprise/templates/enterprise/admin/manage_learners.html:119
+#: enterprise/templates/enterprise/admin/manage_learners.html:99
+#: enterprise/templates/enterprise/admin/manage_learners.html:124
 msgid "Linked Date"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:139
+#: enterprise/templates/enterprise/admin/manage_learners.html:144
 msgid "Link learners"
 msgstr ""
 

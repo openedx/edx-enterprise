@@ -57,6 +57,7 @@ upgrade: ## update the requirements/*.txt files with the latest packages satisfy
 	pip-compile --upgrade -o requirements/quality.txt requirements/quality.in
 	pip-compile --upgrade -o requirements/test.txt requirements/base.in requirements/test.in
 	pip-compile --upgrade -o requirements/travis.txt requirements/travis.in
+	pip-compile --upgrade -o requirements/js_test.txt requirements/js_test.in
 	# Let tox control the Django version for tests
 	sed '/Django==/d' requirements/test.txt > requirements/test.tmp
 	mv requirements/test.tmp requirements/test.txt
@@ -70,6 +71,13 @@ push_translations: ## push source translation files (.po) from Transifex
 quality: ## check coding style with pycodestyle and pylint
 	tox -e quality
 
+jasmine: ## run Javascript tests
+	tox -e jasmine
+
+jshint: ## run Javascript linting
+	./node_modules/jshint/bin/jshint -v || npm install jshint
+	./node_modules/jshint/bin/jshint enterprise
+
 requirements: ## install development environment requirements
 	pip install -qr requirements/dev.txt --exists-action w
 	pip-sync requirements/base.txt requirements/dev.txt requirements/private.* requirements/test.txt
@@ -81,7 +89,9 @@ diff_cover: test
 	diff-cover coverage.xml
 
 test-all: ## run tests on every supported Python/Django combination
+	$(MAKE) jshint
 	tox -e quality
+	tox -e jasmine
 	tox
 
 validate: quality test ## run tests and quality checks

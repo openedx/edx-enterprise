@@ -40,7 +40,10 @@ class ManageLearnersForm(forms.Form):
         choices=BLANK_CHOICE_DASH + [
             ("audit", _("Audit")),
             ("verified", _("Verified")),
-            ("professional", _("Professsional Education")),
+            ("professional", _("Professional Education")),
+            ("no-id-professional", _("Professional Education (no ID)")),
+            ("credit", _("Credit")),
+            ("honor", _("Honor")),
         ],
     )
 
