@@ -20,12 +20,13 @@ from django.test import Client, TestCase, override_settings
 from enterprise import admin as enterprise_admin
 from enterprise.admin import EnterpriseCustomerManageLearnersView
 from enterprise.admin.forms import ManageLearnersForm
-from enterprise.admin.utils import ValidationMessages
+from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
 from enterprise.django_compatibility import reverse
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
-from test_utils import fake_enrollment_api
+from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (FAKER, EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
                                   PendingEnterpriseCustomerUserFactory, UserFactory)
+from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE2
 from test_utils.file_helpers import MakeCsvStreamContextManager
 
 
@@ -326,15 +327,16 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
 
-    def _enroll_user_request(self, user, course_id, mode):
+    def _enroll_user_request(self, user, mode, course_id="", program_id=""):
         """
         Perform post request to log in and submit the form to enroll a user.
         """
         self._login()
         response = self.client.post(self.view_url, data={
             ManageLearnersForm.Fields.EMAIL_OR_USERNAME: user.username,
-            ManageLearnersForm.Fields.COURSE: course_id,
             ManageLearnersForm.Fields.COURSE_MODE: mode,
+            ManageLearnersForm.Fields.COURSE: course_id,
+            ManageLearnersForm.Fields.PROGRAM: program_id,
         })
         return response
 
@@ -348,7 +350,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
-        response = self._enroll_user_request(user, course_id, mode)
+        response = self._enroll_user_request(user, mode, course_id=course_id)
         views_instance.enroll_user_in_course.assert_called_once()
         views_instance.enroll_user_in_course.assert_called_with(
             user.username,
@@ -371,7 +373,48 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
-        response = self._enroll_user_request(user, course_id, mode)
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        self._assert_django_messages(response, set([
+            (messages.ERROR, "Enrollment of some users failed: {}".format(user.email)),
+        ]))
+
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
+    def test_post_enroll_user_into_program(self, catalog_client, views_client):
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        catalog_api_instance = catalog_client.return_value
+        catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
+        user = UserFactory()
+        program = FAKE_PROGRAM_RESPONSE2
+        expected_courses = get_course_runs_from_program(program)
+        mode = "professional"
+        response = self._enroll_user_request(user, mode, program_id=program["uuid"])
+        assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
+        self._assert_django_messages(response, set(
+            [
+                (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id))
+                for course_id in expected_courses
+            ]
+        ))
+
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
+    def test_post_enroll_user_into_program_error(self, catalog_client, views_client):
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content=json.dumps({"message": "test"}).encode()
+        )
+        catalog_api_instance = catalog_client.return_value
+        catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
+        user = UserFactory()
+        program = FAKE_PROGRAM_RESPONSE2
+        expected_courses = get_course_runs_from_program(program)
+        mode = "professional"
+        response = self._enroll_user_request(user, mode, program_id=program["uuid"])
+        assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         self._assert_django_messages(response, set([
             (messages.ERROR, "Enrollment of some users failed: {}".format(user.email)),
         ]))
@@ -413,7 +456,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert "Error at line {}".format(lineno) in actual_message
         assert expected_message in actual_message
 
-    def _perform_request(self, columns, data, course=None, course_mode=None):
+    def _perform_request(self, columns, data, course=None, program=None, course_mode=None):
         """
         Perform bulk upload request with specified columns and data.
 
@@ -428,6 +471,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         """
         with MakeCsvStreamContextManager(columns, data) as stream:
             post_data = {ManageLearnersForm.Fields.BULK_UPLOAD: stream}
+            if program is not None:
+                post_data[ManageLearnersForm.Fields.PROGRAM] = program
             if course is not None:
                 post_data[ManageLearnersForm.Fields.COURSE] = course
             if course_mode is not None:
@@ -571,7 +616,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         course_id = "course-v1:EnterpriseX+Training+2017"
         course_mode = "professional"
 
-        response = self._perform_request(columns, data, course_id, course_mode)
+        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
         views_instance.enroll_user_in_course.assert_called_once()
         views_instance.enroll_user_in_course.assert_called_with(
@@ -589,6 +634,48 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.WARNING, pending_user_message.format(unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
+
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
+    def test_post_link_and_enroll_into_program(self, catalog_client, views_client):
+        """
+        Test bulk upload with linking and enrolling
+        """
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        catalog_api_instance = catalog_client.return_value
+        catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
+        self._login()
+        user = UserFactory.create()
+        unknown_email = FAKER.email()
+        columns = [ManageLearnersForm.CsvColumns.EMAIL]
+        data = [(user.email,), (unknown_email,)]
+        program = FAKE_PROGRAM_RESPONSE2
+        course_mode = "professional"
+        expected_courses = get_course_runs_from_program(program)
+        response = self._perform_request(columns, data, program=program["uuid"], course_mode=course_mode)
+
+        assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
+        for course_id in expected_courses:
+            views_instance.enroll_user_in_course.assert_any_call(
+                user.username,
+                course_id,
+                course_mode
+            )
+        pending_user_message = (
+            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
+            "When these users create an account, they will be enrolled in the course automatically: {}"
+        )
+        expected_messages = {
+            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.WARNING, pending_user_message.format(unknown_email))
+        } | set([
+            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id))
+            for course_id in expected_courses
+        ])
+
+        self._assert_django_messages(response, expected_messages)
 
 
 @mark.django_db

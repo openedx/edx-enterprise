@@ -1,54 +1,67 @@
-function disableMode() {
-    $("#id_course_mode").each(function (index, dropdown) {
-        dropdown.options.length = 0;
-        dropdown.options[0] = new Option(gettext('Enter a valid course ID'), '');
-        dropdown.disabled = true;
-    });
+function disableMode(reason) {
+    var $course_mode = $("#id_course_mode");
+    $course_mode.empty();
+    $course_mode.append(makeOption(reason, ''));
+    $course_mode.prop("disabled", true);
+}
+
+function makeOption(name, value) {
+    return $("<option></option>").text(name).val(value);
 }
 
 function fillModeDropdown(data) {
     /*
-    Given a set of data fetched from the enrollment API, populate the Course Mode
-    dropdown with those options that are valid for the course entered in the
-    Course ID text box.
-    */ 
-    $("#id_course_mode").each(function (index, dropdown) {
-        previous_value = dropdown.value;
-        dropdown.options.length = 0;
-        data.course_modes.forEach(function (el) {
-            dropdown.options[dropdown.options.length] = new Option(el.name, el.slug);
-            dropdown.disabled = false;
-            if(previous_value === el.slug) {
-                /*
-                If there was a valid value in the box _before_ we did our AJAX call,
-                try setting the box to that previous value. Note that this might result
-                in a different string value in the box; admins can set different names
-                for the course modes available for a particular course.
-                */
-                dropdown.value = previous_value;
-            }
-        });
+     Given a set of data fetched from the enrollment API, populate the Course Mode
+     dropdown with those options that are valid for the course entered in the
+     Course ID text box.
+     */
+    var $course_mode = $("#id_course_mode");
+    var previous_value = $course_mode.val();
+    applyModes(data.course_modes);
+    $course_mode.val(previous_value);
+}
+
+function applyModes(modes) {
+    var $course_mode = $("#id_course_mode");
+    $course_mode.empty();
+    modes.forEach(function(el) {
+        $course_mode.append(makeOption(el.name, el.slug));
     });
+    $course_mode.prop("disabled", false);
 }
 
 function loadCourseModes(success, failure) {
     /*
-    Make an API call to the enrollment API to get details about the course
-    whose ID is currently in the Course ID text box.
-    */
+     Make an API call to the enrollment API to get details about the course
+     whose ID is currently in the Course ID text box.
+     */
+    var disableReason = gettext('Enter a valid course ID');
     $("#id_course").each(function (index, entry) {
-        courseId = entry.value;
+        var courseId = entry.value;
         if (courseId === '') {
-            disableMode();
+            disableMode(disableReason);
             return;
         }
-        $.ajax({
-            method: 'get',
-            url: enrollmentApiRoot + "course/" + courseId,
-            success: success || fillModeDropdown,
-            error: failure || disableMode
-        });
+        $.ajax({method: 'get', url: enrollmentApiRoot + "course/" + courseId})
+            .done(success || fillModeDropdown)
+            .fail(failure || function (err, jxHR, errstat) { disableMode(disableReason); });
     });
+}
+
+function switchTo(newEnrollmentMode, otherEnrollmentMode) {
+    var newVal = newEnrollmentMode.$control.val();
+    if (newVal == newEnrollmentMode.oldValue)
+        return;
+    if (newVal) {
+        otherEnrollmentMode.$control.val("").prop("disabled", true);
+    } else {
+        otherEnrollmentMode.$control.val(otherEnrollmentMode.oldValue).prop("disabled", false);
+    }
+    newEnrollmentMode.oldValue = newVal;
+    if (newEnrollmentMode.timeout) {
+        clearTimeout(newEnrollmentMode.timeout);
+    }
+    newEnrollmentMode.timeout = setTimeout(newEnrollmentMode.apply, 300);
 }
 
 function loadPage() {
@@ -70,24 +83,52 @@ function loadPage() {
             });
         }
     });
-    $("#id_course").on('input', function (event) {
-        /*
-        We have to do two-step input/blur because some browsers (looking at you, Safari)
-        don't properly send the .change() event when the input is filled with autocomplete.
-        */
-        event.target.dirty = true;
+
+    var courseEnrollment = {
+        $control: $("#id_course"),
+        oldValue: null,
+        timeout: null,
+        apply: loadCourseModes
+    };
+
+    var programEnrollment = {
+        $control: $("#id_program"),
+        oldValue: null,
+        timeout: null,
+        // TODO: pull data from edx-enterprise endpoint (to be created) or course catalog API
+        apply: function() { applyModes(defaultModes); }
+    };
+    
+    var defaultModes = [
+        {slug: "", name: gettext("---------")},
+        {slug: "audit", name: gettext("Audit")},
+        {slug: "verified", name: gettext("Verified")},
+        {slug: "professional", name: gettext("Professional Education")},
+        {slug: "no-id-professional", name: gettext("Professional Education (no ID)")},
+        {slug: "credit", name: gettext("Credit")},
+        {slug: "honor", name: gettext("Honor")}
+    ];
+
+    courseEnrollment.$control.on("input blur paste", function (evt) {
+        console.log("Handling "+evt.type+" on course ID input");
+        switchTo(courseEnrollment, programEnrollment);
     });
-    $("#id_course").blur(function (event) {
-        /*
-        Only call loadCourseModes if the Course ID text box is marked as "dirty"; this is
-        to avoid making excessive numbers of redundant AJAX calls when it hasn't changed.
-        */
-        var target = event.target;
-        if (target.dirty) {
-            loadCourseModes();
-            target.dirty = false;
-        }
+    
+    programEnrollment.$control.on("input blur paste", function(evt) {
+        console.log("Handling "+evt.type+" on program ID input");
+        switchTo(programEnrollment, courseEnrollment);
     });
-    loadCourseModes();
+
+    courseEnrollment.$control.parents("form").on("submit", function() {
+       courseEnrollment.$control.oldValue = null;
+       programEnrollment.$control.oldValue = null;
+    });
+
+    if (courseEnrollment.$control.val()) {
+        courseEnrollment.$control.trigger("input");
+    } else if (programEnrollment.$control.val()) {
+        programEnrollment.$control.trigger("input");
+    }
 }
+
 $(loadPage());

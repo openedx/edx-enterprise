@@ -11,7 +11,8 @@ from pytest import mark, raises
 
 from django.core.exceptions import ValidationError
 
-from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, parse_csv, validate_email_to_link
+from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
+                                    parse_csv, validate_email_to_link)
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
 from test_utils.file_helpers import MakeCsvStreamContextManager
@@ -171,3 +172,43 @@ class TestValidateEmailToLink(unittest.TestCase):
 
             with raises(ValidationError, message=expected_message):
                 exists = validate_email_to_link(email)
+
+
+class TestGetCourseRunsFromProgram(unittest.TestCase):
+    """
+    Tests for :method:`get_course_runs_from_program`.
+    """
+    def test_get_course_runs_from_program_no_courses(self):
+        program = {}
+        result = get_course_runs_from_program(program)
+        assert result == set()
+
+    def test_get_course_runs_from_program_no_runs(self):
+        program = {"courses": [{}, {}, {}]}
+        result = get_course_runs_from_program(program)
+        assert result == set()
+
+    def test_get_course_runs_from_program_no_keys(self):
+        program = {
+            "courses": [
+                {"course_runs": []},
+                {"course_runs": []},
+            ]
+        }
+        result = get_course_runs_from_program(program)
+        assert result == set()
+
+    def test_get_course_runs_from_program_normal(self):
+        program = {
+            "courses": [
+                {"course_runs": [
+                    {"key": "1"},
+                    {"key": None}
+                ]},
+                {"course_runs": [
+                    {"key": "CourseRunKey"}
+                ]},
+            ]
+        }
+        result = get_course_runs_from_program(program)
+        assert result == {"1", "CourseRunKey"}

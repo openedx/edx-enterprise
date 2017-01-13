@@ -1,0 +1,33 @@
+<div class="forms-panel">
+  <h1>Link learners</h1>
+  <form action="" method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrfmiddlewaretoken" value="KEoPbw3KFWLw29OLRr7GgTFStuy0jwv6">
+
+    <p>
+      <label for="id_email_or_username">Type in Email or Username to link single user:</label>
+      <input id="id_email_or_username" name="email_or_username" type="text">
+    </p>
+    <p>
+      <label for="id_bulk_upload_csv">Or upload a CSV to enroll multiple users at once:</label>
+      <input id="id_bulk_upload_csv" name="bulk_upload_csv" type="file">
+      <span class="helptext">The CSV must have a column of email addresses, indicated by the heading 'email' in the first row.</span>
+    </p>
+    <p>
+      <label for="id_course">Also enroll these learners in this course:</label>
+      <input id="id_course" name="course" type="text">
+      <span class="helptext">Provide a course ID if enrollment is desired.</span>
+    </p>
+    <p>
+      <label for="id_program">Or enroll these learners in this program:</label>
+      <input id="id_program" name="program" type="text">
+      <span  class="helptext">Provide a program name or ID if enrollment is desired.</span>
+    </p>
+    <p>
+      <label for="id_course_mode">Course enrollment mode:</label>
+      <select id="id_course_mode" name="course_mode" disabled="">
+        <option value="">Enter a valid course ID</option>
+      </select>
+    </p>
+    <input type="submit" value="Submit">
+  </form>
+</div>

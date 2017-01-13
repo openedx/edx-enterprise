@@ -21,7 +21,8 @@ from django.utils.translation import ungettext
 from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm
-from enterprise.admin.utils import ValidationMessages, email_or_username__to__email, parse_csv, validate_email_to_link
+from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
+                                    parse_csv, validate_email_to_link)
 from enterprise.lms_api import EnrollmentApiClient
 from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerUser, PendingEnrollment,
                                PendingEnterpriseCustomerUser)
@@ -292,7 +293,7 @@ class EnterpriseCustomerManageLearnersView(View):
             django.http.response.HttpResponse: HttpResponse
         """
         context = self._build_context(request, customer_uuid)
-        manage_learners_form = ManageLearnersForm()
+        manage_learners_form = ManageLearnersForm(user=request.user)
         context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
 
         return render(request, self.template, context)
@@ -309,7 +310,7 @@ class EnterpriseCustomerManageLearnersView(View):
             django.http.response.HttpResponse: HttpResponse
         """
         enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
-        manage_learners_form = ManageLearnersForm(request.POST, request.FILES)
+        manage_learners_form = ManageLearnersForm(request.POST, request.FILES, user=request.user)
 
         # initial form validation - check that form data is well-formed
         if manage_learners_form.is_valid():
@@ -322,13 +323,19 @@ class EnterpriseCustomerManageLearnersView(View):
 
         # _handle_form might add form errors, so we check if it is still valid
         if manage_learners_form.is_valid():
-
-            # Enroll linked users in a course if requested
+            course_ids = []
             course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
+            program_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.PROGRAM)
+
             if course_details:
+                course_ids.append(course_details['course_id'])
+            elif program_details:
+                course_ids.extend(get_course_runs_from_program(program_details))
+
+            if course_ids:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
-                course_id = course_details['course_id']
-                self._enroll_users(enterprise_customer, linked_learners, course_id, course_mode, request)
+                for course_id in course_ids:
+                    self._enroll_users(enterprise_customer, linked_learners, course_id, course_mode, request)
 
             # Redirect to GET if everything went smooth.
             return HttpResponseRedirect("")

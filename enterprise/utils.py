@@ -42,6 +42,42 @@ class NotConnectedToEdX(Exception):
         super(NotConnectedToEdX, self).__init__(*args, **kwargs)
 
 
+class NotConnectedToOpenEdX(Exception):
+    """
+    Exception to raise when we weren't able to import needed resources.
+
+    This is raised when we try to use the resources, rather than on
+    import, so that during testing we can load the module
+    and mock out the resources we need.
+    """
+
+    pass
+
+
+class CourseCatalogApiError(Exception):
+    """
+    Exception to raise when we we received data from Course Catalog but it contained an error.
+    """
+
+
+class MultipleProgramMatchError(CourseCatalogApiError):
+    """
+    Exception to raise when Course Catalog api returned multiple programs, while single program was expected.
+    """
+
+    def __init__(self, programs_matched, *args, **kwargs):
+        """
+        Initialize :class:`MultipleProgramMatchError`.
+
+        Arguments:
+            programs_matched (int): number of programs matched where one  proram was expected.
+            args (iterable): variable arguments
+            kwargs (dict): keyword arguments
+        """
+        super(MultipleProgramMatchError, self).__init__(*args, **kwargs)
+        self.programs_matched = programs_matched
+
+
 def get_identity_provider(provider_id):
     """
     Get Identity Provider with given id.
