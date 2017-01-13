@@ -19,6 +19,18 @@ matrix:
       env: TOXENV=quality
     - python: 3.5
       env: TOXENV=docs
+    - python: 2.7
+      env:
+        - TOXENV=jasmine
+      before_script:
+        - "export DISPLAY=:99.0"
+        - "sh -e /etc/init.d/xvfb start"
+        - sleep 3 # give xvfb some time to start
+      addons:
+        firefox: "45.0"
+    - python: 2.7
+      env:
+        - RUNJSHINT=true
 
 cache:
   - pip
@@ -27,7 +39,7 @@ install:
   - pip install -r requirements/travis.txt
 
 script:
-  - tox
+  - if env | grep RUNJSHINT; then make jshint; else tox; fi
 
 after_success:
   - codecov

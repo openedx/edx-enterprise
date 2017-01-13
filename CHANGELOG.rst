@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.13.0] - 2017-01-06
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Dynamically fetch available course modes in the Manage learners admin
+
+
 [0.12.0] - 2017-01-05
 ~~~~~~~~~~~~~~~~~~~~~
 

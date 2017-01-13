@@ -46,6 +46,7 @@ class EnterpriseCustomerManageLearnersView(View):
         PENDING_LEARNERS = "pending_learners"
         MANAGE_LEARNERS_FORM = "manage_learners_form"
         SEARCH_KEYWORD = "search_keyword"
+        ENROLLMENT_URL = 'ENROLLMENT_API_ROOT_URL'
 
     @staticmethod
     def _build_admin_context(request, customer):
@@ -76,6 +77,7 @@ class EnterpriseCustomerManageLearnersView(View):
             self.ContextParameters.PENDING_LEARNERS: pending_linked_learners,
             self.ContextParameters.LEARNERS: linked_learners,
             self.ContextParameters.SEARCH_KEYWORD: search_keyword or '',
+            self.ContextParameters.ENROLLMENT_URL: settings.ENTERPRISE_ENROLLMENT_API_URL,
         }
         context.update(admin.site.each_context(request))
         context.update(self._build_admin_context(request, enterprise_customer))

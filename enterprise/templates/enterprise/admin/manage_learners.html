@@ -29,7 +29,13 @@ But it is not possible:
 
 We're back to including some files using `static` template tag again. So it is just simpler to directly include
 just three "vendor" files here and one app file in footer and avoid going into that much trouble.
+
+Additionally, before loading those three scripts, we declare a block where we can use Django templating to declare
+global Javascript variables that can be used in any of the loaded packages.
 -->
+<script type="text/javascript">
+  var enrollmentApiRoot = "{{ ENROLLMENT_API_ROOT_URL }}";
+</script>
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
 <script type="text/javascript" src="{% static 'common/js/vendor/jquery.js' %}"></script>
 <script type="text/javascript" src="{% static 'js/vendor/jquery.cookie.js' %}"></script>
@@ -64,7 +70,6 @@ just three "vendor" files here and one app file in footer and avoid going into t
 {% endblock %}
 
 {% block content %}
-<<<<<<< HEAD
 <div id="content-main">
   <div class="module" id="changelist">
     <div id="toolbar">
