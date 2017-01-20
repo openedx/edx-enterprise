@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.14.0] - 2017-01-20
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Added view of seat entitlements on enterprise admin screen
+
+
 [0.13.0] - 2017-01-06
 ~~~~~~~~~~~~~~~~~~~~~
 

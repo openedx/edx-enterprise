@@ -541,3 +541,41 @@ class UserDataSharingConsentAudit(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+@python_2_unicode_compatible
+class EnterpriseCustomerEntitlement(TimeStampedModel):
+    """
+    Enterprise Customer Entitlement is a relationship between and Enterprise customer and its entitlements.
+
+    Users associated with an Enterprise Customer could be eligible for these entitlements resulting in partial or full
+    discounts while taking paid courses on the edX platform.
+    """
+
+    class Meta(object):
+        verbose_name = _("Enterprise Customer Entitlement")
+        verbose_name_plural = _("Enterprise Customer Entitlements")
+
+    enterprise_customer = models.ForeignKey(EnterpriseCustomer, related_name="enterprise_customer_entitlements")
+    entitlement_id = models.PositiveIntegerField(
+        blank=False,
+        null=False,
+        unique=True,
+        help_text=_("Enterprise customer's entitlement id for relationship with e-commerce coupon.")
+    )
+    history = HistoricalRecords()
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<EnterpriseCustomerEntitlement {customer}: {id}>".format(
+            customer=self.enterprise_customer,
+            id=self.entitlement_id
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
