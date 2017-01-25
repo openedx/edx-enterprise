@@ -99,6 +99,7 @@ class TestUtils(unittest.TestCase):
                 "pendingenterprisecustomeruser",
                 "branding_configuration",
                 "enterprise_customer_identity_provider",
+                "enterprise_customer_entitlements",
                 "created",
                 "modified",
                 "uuid",

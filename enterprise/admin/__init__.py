@@ -6,6 +6,8 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf.urls import url
 from django.contrib import admin
+from django.utils.html import format_html
+from django.contrib.auth import settings
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django_object_actions import DjangoObjectActions
@@ -20,6 +22,7 @@ from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (  # pylint:disable=no-name-in-module
     EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerIdentityProvider, HistoricalUserDataSharingConsentAudit, PendingEnterpriseCustomerUser,
+    EnterpriseCustomerEntitlement
 )
 from enterprise.utils import get_all_field_names, get_catalog_admin_url, get_catalog_admin_url_template
 
@@ -48,17 +51,58 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
     form = EnterpriseCustomerIdentityProviderAdminForm
 
 
+class EnterpriseCustomerEntitlementInline(admin.StackedInline):
+    """
+    Django admin model for EnterpriseCustomerEntitlement.
+    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
+    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
+    """
+
+    model = EnterpriseCustomerEntitlement
+    extra = 0
+    can_delete = True
+    fields = ('enterprise_customer', 'entitlement_id', 'ecommerce_coupon_url',)
+
+    def ecommerce_coupon_url(self, instance):
+        """
+        Instance is EnterpriseCustomer. Return e-commerce coupon urls.
+        """
+        if not instance.entitlement_id:
+            return "N/A"
+
+        return format_html(
+            '<a href="{base_url}/coupons/{id}" target="_blank">View coupon "{id}" details</a>',
+            base_url=settings.ECOMMERCE_PUBLIC_URL_ROOT, id=instance.entitlement_id
+        )
+
+    readonly_fields = ('ecommerce_coupon_url',)
+    ecommerce_coupon_url.allow_tags = True
+    ecommerce_coupon_url.short_description = 'Coupon URL'
+
+
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
     Django admin model for EnterpriseCustomer.
     """
-
-    list_display = ("name", "uuid", "site", "active", "logo", "identity_provider", "enterprise_catalog")
+    list_display = (
+        "name",
+        "uuid",
+        "site",
+        "active",
+        "logo",
+        "identity_provider",
+        "enterprise_catalog",
+        "ecommerce_coupon_url"
+    )
 
     list_filter = ("active",)
     search_fields = ("name", "uuid",)
-    inlines = [EnterpriseCustomerBrandingConfigurationInline, EnterpriseCustomerIdentityProviderInline]
+    inlines = [
+        EnterpriseCustomerBrandingConfigurationInline,
+        EnterpriseCustomerIdentityProviderInline,
+        EnterpriseCustomerEntitlementInline
+    ]
 
     EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider", "catalog"]
 
@@ -73,6 +117,28 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     class Meta(object):
         model = EnterpriseCustomer
+
+    def ecommerce_coupon_url(self, instance):
+        """
+        Instance is EnterpriseCustomer. Return e-commerce coupon urls.
+        """
+        coupon_urls = ''
+        entitlements = instance.enterprise_customer_entitlements.all()
+
+        # Return None if EnterpriseCustomer does not have an associated entitlements.
+        if not entitlements:
+            return None
+
+        for entitlement in entitlements:
+            coupon_urls += format_html(
+                '<div><a href="{base_url}/coupons/{id}" target="_blank">View coupon "{id}"</a></div>',
+                base_url=settings.ECOMMERCE_PUBLIC_URL_ROOT, id=entitlement.entitlement_id
+            )
+
+        return coupon_urls
+
+    ecommerce_coupon_url.allow_tags = True
+    ecommerce_coupon_url.short_description = 'Ecommerce coupons'
 
     def get_form(self, request, obj=None, **kwargs):
         """

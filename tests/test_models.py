@@ -16,12 +16,12 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 
-from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerUser,
-                               PendingEnterpriseCustomerUser, logo_path)
+from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+                               EnterpriseCustomerEntitlement, EnterpriseCustomerUser, PendingEnterpriseCustomerUser,
+                               logo_path)
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
                                   EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory,
-                                  UserFactory)
+                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
 
 
 @mark.django_db
@@ -513,3 +513,31 @@ class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
         ec_idp = EnterpriseCustomerIdentityProviderFactory()
 
         assert ec_idp.provider_name == provider_name  # pylint: disable=no-member
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerEntitlements(unittest.TestCase):
+    """
+    Tests of the TestEnterpriseCustomerEntitlements model.
+    """
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``TestEnterpriseCustomerEntitlements`` conversion to string.
+        """
+        entitlement_id, enterprise_customer_name = 1234, "TestShib"
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        ec_entitlements = EnterpriseCustomerEntitlement(
+            enterprise_customer=enterprise_customer,
+            entitlement_id=entitlement_id,
+        )
+
+        expected_to_str = "<EnterpriseCustomerEntitlement {customer}: {id}>".format(
+            customer=enterprise_customer,
+            id=entitlement_id,
+        )
+        self.assertEqual(method(ec_entitlements), expected_to_str)
