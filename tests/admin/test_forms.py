@@ -9,8 +9,9 @@ import unittest
 
 import ddt
 import mock
+from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 from faker import Factory as FakerFactory
-from pytest import mark, raises
+from pytest import mark
 
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
@@ -19,29 +20,47 @@ from django.core.files import File
 from enterprise.admin.forms import (EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm,
                                     ManageLearnersForm)
 from enterprise.admin.utils import ValidationMessages
-from enterprise.course_catalog_api import NotConnectedToOpenEdX, get_all_catalogs
-from test_utils import fake_enrollment_api
+from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.utils import MultipleProgramMatchError
+from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
                                   PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
+from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE1, FAKE_PROGRAM_RESPONSE2
 
 FAKER = FakerFactory.create()
 
 
+class TestWithCourseCatalogApiMixin(object):
+    """
+    Mixin class to provide CourseCatalogApiClient mock.
+    """
+    def setUp(self):
+        """
+        Build CourseCatalogApiClient mock and register it for deactivation at cleanup.
+        """
+        super(TestWithCourseCatalogApiMixin, self).setUp()
+        self.catalog_api = mock.Mock(CourseCatalogApiClient)
+        patcher = mock.patch('enterprise.admin.forms.CourseCatalogApiClient', mock.Mock(return_value=self.catalog_api))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
 @mark.django_db
 @ddt.ddt
-class TestManageLearnersForm(unittest.TestCase):
+class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     """
     Tests for ManageLearnersForm.
     """
 
     @staticmethod
-    def _make_bound_form(email, file_attached=False, course="", course_mode=""):
+    def _make_bound_form(email, file_attached=False, course="", program="", course_mode=""):
         """
         Builds bound ManageLearnersForm.
         """
         form_data = {
             ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email,
             ManageLearnersForm.Fields.COURSE: course,
+            ManageLearnersForm.Fields.PROGRAM: program,
             ManageLearnersForm.Fields.COURSE_MODE: course_mode,
         }
         file_data = {}
@@ -222,9 +241,145 @@ class TestManageLearnersForm(unittest.TestCase):
             )],
         }
 
+    @ddt.data(None, "")
+    def test_clean_program_empty(self, value):
+        form = self._make_bound_form("irrelevant@example.com", program=value)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.PROGRAM] is None
+
+    def test_clean_program_valid_by_uuid(self):
+        course_mode = "professional"
+        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        self.catalog_api.get_common_course_modes.return_value = {course_mode}
+        program_uuid = FAKE_PROGRAM_RESPONSE1.get("uuid")
+        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.PROGRAM] == FAKE_PROGRAM_RESPONSE1
+
+    def test_clean_program_valid_by_title(self):
+        course_mode = "professional"
+        self.catalog_api.get_program_by_uuid.return_value = None
+        self.catalog_api.get_program_by_title.side_effect = fake_catalog_api.get_program_by_title
+        self.catalog_api.get_common_course_modes.return_value = {course_mode}
+        program_title = FAKE_PROGRAM_RESPONSE1.get("title")
+        program_details = FAKE_PROGRAM_RESPONSE1
+        form = self._make_bound_form("irrelevant@example.com", program=program_title, course_mode=course_mode)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.PROGRAM] == program_details
+
+    @ddt.data(2, 4, 5, 7, 12, 42, 3e5)
+    def test_clean_program_course_api_exception(self, program_count):
+        course_mode = "professional"
+        self.catalog_api.get_program_by_uuid.return_value = None
+        self.catalog_api.get_program_by_title.side_effect = MultipleProgramMatchError(program_count)
+
+        form = self._make_bound_form("irrelevant@example.com", program="irrelevant", course_mode=course_mode)
+        assert not form.is_valid()
+        assert form.errors == {
+            form.Fields.PROGRAM: [ValidationMessages.MULTIPLE_PROGRAM_MATCH.format(program_count=program_count)],
+        }
+
+    def test_clean_program_invalid(self):
+        program_id = "non-existing"
+        self.catalog_api.get_program_by_uuid.return_value = None
+        self.catalog_api.get_program_by_title.return_value = None
+        form = self._make_bound_form("irrelevant@example.com", program=program_id)
+        assert not form.is_valid()
+        assert form.errors == {
+            form.Fields.PROGRAM: [ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_id)],
+        }
+
+    @ddt.data("disabled", "unpublished", "deleted")
+    def test_clean_program_inactive(self, program_status):
+        program = FAKE_PROGRAM_RESPONSE1.copy()
+        program["status"] = program_status
+        program_id = program["uuid"]
+        self.catalog_api.get_program_by_uuid.return_value = program
+        form = self._make_bound_form("irrelevant@example.com", program=program_id)
+        assert not form.is_valid()
+        assert form.errors == {
+            form.Fields.PROGRAM: [
+                ValidationMessages.PROGRAM_IS_INACTIVE.format(program_id=program_id, status=program['status'])
+            ]
+        }
+
+    @ddt.data(HttpClientError, HttpServerError)
+    def test_clean_program_http_error(self, exception):
+        course_mode = "professional"
+        self.catalog_api.get_program_by_uuid.side_effect = exception
+        program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
+        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
+        assert not form.is_valid()
+        assert form.errors == {
+            form.Fields.PROGRAM: [ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_uuid)]
+        }
+
+    def test_validate_program_and_course_mode_missing(self):
+        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        self.catalog_api.get_common_course_modes.return_value = {"prof"}
+        program_uuid = FAKE_PROGRAM_RESPONSE1.get("uuid")
+        form = self._make_bound_form("irrelevant@example.com", program=program_uuid)
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": [ValidationMessages.COURSE_WITHOUT_COURSE_MODE]
+        }
+
+    @ddt.data(HttpClientError, HttpServerError)
+    def test_validate_program_and_course_mode_http_error(self, exception):
+        course_mode = "professional"
+        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        self.catalog_api.get_common_course_modes.side_effect = exception
+        program = FAKE_PROGRAM_RESPONSE2
+        form = self._make_bound_form("irrelevant@example.com", program=program["uuid"], course_mode=course_mode)
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": [ValidationMessages.FAILED_TO_OBTAIN_COURSE_MODES.format(program_title=program.get("title"))]
+        }
+
+    def test_validate_program_and_course_mode_valid(self):
+        course_mode = "professional"
+        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        self.catalog_api.get_common_course_modes.side_effect = fake_catalog_api.get_common_course_modes
+        program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
+        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
+        assert form.is_valid()
+        assert form.cleaned_data[form.Fields.PROGRAM] == FAKE_PROGRAM_RESPONSE2
+
+    def test_validate_program_and_course_mode_invalid(self):
+        course_mode = "audit"
+        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        self.catalog_api.get_common_course_modes.side_effect = fake_catalog_api.get_common_course_modes
+        program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
+        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": [ValidationMessages.COURSE_MODE_NOT_AVAILABLE.format(
+                mode=course_mode, program_title=FAKE_PROGRAM_RESPONSE2.get("title"), modes=", ".join({"professional"})
+            )]
+        }
+
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_clean_both_course_and_program_passed(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        self.catalog_api.get_common_course_modes.return_value = {"audit"}
+
+        program_id = FAKE_PROGRAM_RESPONSE2.get("uuid")
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+
+        form = self._make_bound_form(
+            "irrelevant@example.com", program=program_id, course=course_id, course_mode="audit"
+        )
+
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": [ValidationMessages.COURSE_AND_PROGRAM_ERROR]
+        }
+
 
 @mark.django_db
-class TestEnterpriseCustomerAdminForm(unittest.TestCase):
+class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     """
     Tests for EnterpriseCustomerAdminForm.
     """
@@ -266,9 +421,8 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
         """
         delattr(EnterpriseCustomerAdminForm, 'user')  # pylint: disable=literal-used-as-attribute
 
-    @mock.patch('enterprise.admin.forms.get_all_catalogs')
-    def test_interface_displays_selected_option(self, mock_method):
-        mock_method.return_value = [
+    def test_interface_displays_selected_option(self):
+        self.catalog_api.get_all_catalogs.return_value = [
             {
                 "id": self.catalog_id,
                 "name": "My Catalog"
@@ -286,11 +440,8 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
             (1, 'Other catalog!'),
         ]
 
-    @mock.patch('enterprise.course_catalog_api.get_catalog_api_client')
-    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
-    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
-    def test_with_mocked_get_edx_data(self, mocked_get_edx_data, *args):  # pylint: disable=unused-argument
-        mocked_get_edx_data.return_value = [
+    def test_with_mocked_get_edx_data(self):
+        self.catalog_api.get_all_catalogs.return_value = [
             {
                 "id": self.catalog_id,
                 "name": "My Catalog"
@@ -307,30 +458,6 @@ class TestEnterpriseCustomerAdminForm(unittest.TestCase):
             (self.catalog_id, 'My Catalog'),
             (1, 'Other catalog!'),
         ]
-
-    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
-    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
-    def test_raise_error_missing_course_discovery_api(self, *args):  # pylint: disable=unused-argument
-        message = 'To get a catalog API client, this package must be installed in an OpenEdX environment.'
-        with raises(NotConnectedToOpenEdX) as excinfo:
-            get_all_catalogs(None)
-        assert message == str(excinfo.value)
-
-    @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
-    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
-    def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
-        message = 'To get a CatalogIntegration object, this package must be installed in an OpenEdX environment.'
-        with raises(NotConnectedToOpenEdX) as excinfo:
-            get_all_catalogs(None)
-        assert message == str(excinfo.value)
-
-    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
-    @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
-    def test_raise_error_missing_get_edx_api_data(self, *args):  # pylint: disable=unused-argument
-        message = 'To parse a catalog API response, this package must be installed in an OpenEdX environment.'
-        with raises(NotConnectedToOpenEdX) as excinfo:
-            get_all_catalogs(None)
-        assert message == str(excinfo.value)
 
 
 @mark.django_db
