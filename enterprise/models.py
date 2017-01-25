@@ -583,3 +583,97 @@ class EnterpriseCustomerEntitlement(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+
+@python_2_unicode_compatible
+class EnterpriseCourseEnrollment(TimeStampedModel):
+    """
+    Store information about the enrollment of a user in a course.
+
+    This model is the central source of truth for information about
+    whether a particular user, linked to a particular EnterpriseCustomer,
+    has been enrolled in a course, and is the repository for any other
+    relevant metadata about such an enrollment.
+    """
+
+    class Meta(object):
+        unique_together = (('enterprise_customer_user', 'course_id',),)
+        app_label = 'enterprise'
+
+    enterprise_customer_user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        blank=False,
+        null=False,
+        related_name='enterprise_enrollments',
+        help_text=_(
+            "The enterprise learner to which this enrollment is attached."
+        )
+    )
+    consent_granted = models.NullBooleanField(
+        help_text=_(
+            "Whether the learner has granted consent for this particular course."
+        )
+    )
+    course_id = models.CharField(
+        max_length=255,
+        blank=False,
+        help_text=_(
+            "The course ID in which the learner was enrolled."
+        )
+    )
+    history = HistoricalRecords()
+
+    def consent_available(self):
+        """
+        Determine whether we have consent to share details about this enrollment.
+
+        If we have a definitive consent state stored on this enrollment directly
+        (that is, if at enrollment the user explicitly chose to grant or deny consent
+        at enrollment), then we'll use that value and not go any further. However, if
+        the user did not do so, then we'll check to see if we have an account-wide
+        consent state that we can use to make that determination.
+        """
+        if self.consent_granted is not None:
+            # If the state isn't indeterminate, return immediately.
+            return self.consent_granted
+        else:
+            # If it is indeterminate...
+
+            # Check for an account-wide value and use that.
+            consent_state = self.enterprise_customer_user.userdatasharingconsentaudit_set.first()
+            if consent_state is not None:
+                return consent_state.enabled
+            else:
+                # If there isn't an account-wide value, act as though we do not have consent.
+                return False
+
+    @property
+    def consent_needed(self):
+        """
+        Determine if consent is necessary, but has not been provided yet.
+        """
+        if self.consent_available():
+            return False
+        else:
+            enterprise_customer = self.enterprise_customer_user.enterprise_customer
+            return any(
+                [
+                    enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT),
+                    enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN),
+                ]
+            )
+
+    def __str__(self):
+        """
+        Create string representation of the enrollment.
+        """
+        return '<EnterpriseCourseEnrollment for user {} in course with ID {}>'.format(
+            self.enterprise_customer_user.user.username,
+            self.course_id
+        )
+
+    def __repr__(self):
+        """
+        Return string representation of the enrollment.
+        """
+        return self.__str__()

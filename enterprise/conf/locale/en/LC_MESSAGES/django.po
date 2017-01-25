@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-25 09:42-0600\n"
+"POT-Creation-Date: 2017-01-25 15:50-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -212,25 +212,25 @@ msgstr ""
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:258
+#: enterprise/admin/views.py:263
 #, python-brace-format
 msgid "{enrolled_count} user was enrolled to {course_id}."
 msgid_plural "{enrolled_count} users were enrolled to {course_id}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:264
+#: enterprise/admin/views.py:269
 msgid ""
 "The following users do not have an account on {}. They have not been "
 "enrolled in the course. When these users create an account, they will be "
 "enrolled in the course automatically: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:281
+#: enterprise/admin/views.py:286
 msgid "Enrollment of some users failed: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:367
+#: enterprise/admin/views.py:372
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
@@ -319,6 +319,18 @@ msgstr ""
 #: enterprise/models.py:568
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
+msgstr ""
+
+#: enterprise/models.py:609
+msgid "The enterprise learner to which this enrollment is attached."
+msgstr ""
+
+#: enterprise/models.py:614
+msgid "Whether the learner has granted consent for this particular course."
+msgstr ""
+
+#: enterprise/models.py:621
+msgid "The course ID in which the learner was enrolled."
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:46
