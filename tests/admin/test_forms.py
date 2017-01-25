@@ -16,6 +16,7 @@ from pytest import mark
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
+from django.db.models.fields import BLANK_CHOICE_DASH
 
 from enterprise.admin.forms import (EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm,
                                     ManageLearnersForm)
@@ -434,8 +435,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         ]
         form = EnterpriseCustomerAdminForm()
         assert isinstance(form.fields['catalog'], forms.ChoiceField)
-        assert form.fields['catalog'].choices == [
-            (None, 'None'),
+        assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
             (self.catalog_id, 'My Catalog'),
             (1, 'Other catalog!'),
         ]
@@ -453,11 +453,104 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         ]
         form = EnterpriseCustomerAdminForm()
         assert isinstance(form.fields['catalog'], forms.ChoiceField)
-        assert form.fields['catalog'].choices == [
-            (None, 'None'),
+        assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
             (self.catalog_id, 'My Catalog'),
             (1, 'Other catalog!'),
         ]
+
+    def test_empty_catalog_value(self):
+        """
+        Test that when we pass an empty string to the form, it gets saved to the database
+        as a null value, rather than being ignored or raising an error.
+        """
+        self.catalog_api.get_all_catalogs.return_value = [
+            {
+                "id": 99,
+                "name": "My Catalog"
+            },
+            {
+                "id": 1,
+                "name": "Other catalog!"
+            }
+        ]
+        customer = EnterpriseCustomerFactory(
+            catalog=99,
+        )
+        form = EnterpriseCustomerAdminForm(
+            {
+                'catalog': '',
+                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
+                'site': customer.site.id,
+                'name': customer.name,
+                'active': customer.active
+            },
+            instance=customer,
+        )
+        assert form.is_valid()
+        form.save()
+        assert customer.catalog is None
+
+    def test_real_catalog_value(self):
+        """
+        Test that when we pass an empty string to the form, it gets saved to the database
+        as a null value, rather than being ignored or raising an error.
+        """
+        self.catalog_api.get_all_catalogs.return_value = [
+            {
+                "id": 99,
+                "name": "My Catalog"
+            },
+            {
+                "id": 1,
+                "name": "Other catalog!"
+            }
+        ]
+        customer = EnterpriseCustomerFactory(
+            catalog=99,
+        )
+        form = EnterpriseCustomerAdminForm(
+            {
+                'catalog': 1,
+                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
+                'site': customer.site.id,
+                'name': customer.name,
+                'active': customer.active
+            },
+            instance=customer,
+        )
+        assert form.is_valid()
+        form.save()
+        assert customer.catalog == 1
+
+    def test_invalid_catalog_value(self):
+        """
+        Test that when we pass an empty string to the form, it gets saved to the database
+        as a null value, rather than being ignored or raising an error.
+        """
+        self.catalog_api.get_all_catalogs.return_value = [
+            {
+                "id": 99,
+                "name": "My Catalog"
+            },
+            {
+                "id": 1,
+                "name": "Other catalog!"
+            }
+        ]
+        customer = EnterpriseCustomerFactory(
+            catalog=99,
+        )
+        form = EnterpriseCustomerAdminForm(
+            {
+                'catalog': 5,
+                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
+                'site': customer.site.id,
+                'name': customer.name,
+                'active': customer.active
+            },
+            instance=customer,
+        )
+        assert not form.is_valid()
 
 
 @mark.django_db

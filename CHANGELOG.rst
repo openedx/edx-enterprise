@@ -14,6 +14,14 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.16.0] - 2017-01-25
+~~~~~~~~~~~~~~~~~~~~~
+
+Fixed
+-----
+
+* Fix a bug preventing a course catalog from being unlinked from an EnterpriseCustomer
+
 [0.15.0] - 2017-01-25
 ~~~~~~~~~~~~~~~~~~~~~
 

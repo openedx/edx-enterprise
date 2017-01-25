@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-25 06:07-0600\n"
+"POT-Creation-Date: 2017-01-25 09:42-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -80,17 +80,13 @@ msgstr ""
 msgid "Honor"
 msgstr ""
 
-#: enterprise/admin/forms.py:276
-msgid "None"
-msgstr ""
-
-#: enterprise/admin/forms.py:324
+#: enterprise/admin/forms.py:336
 msgid ""
 "Selected Identity Provider does not exist, please contact system "
 "administrator for more info."
 msgstr ""
 
-#: enterprise/admin/forms.py:334
+#: enterprise/admin/forms.py:346
 #, python-brace-format
 msgid ""
 "Site ({identity_provider_site}) of selected identity provider does not match "
@@ -269,58 +265,58 @@ msgstr ""
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:76
+#: enterprise/models.py:79
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:93
+#: enterprise/models.py:97
 msgid ""
 "This field is used to determine whether data sharing consent is enabled or "
 "disabled for users signing in using this enterprise customer. If disabled, "
 "consent will not be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:105
+#: enterprise/models.py:109
 msgid ""
 "This field determines if data sharing consent is optional, if it's required "
 "at login, or if it's required when registering for eligible courses."
 msgstr ""
 
-#: enterprise/models.py:235
+#: enterprise/models.py:239
 msgid "Enterprise Customer User"
 msgstr ""
 
-#: enterprise/models.py:236
+#: enterprise/models.py:240
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:393
+#: enterprise/models.py:397
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:401
+#: enterprise/models.py:405
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:402
+#: enterprise/models.py:406
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:515
+#: enterprise/models.py:519
 msgid ""
 "Stores whether the user linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:556
+#: enterprise/models.py:560
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:557
+#: enterprise/models.py:561
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:564
+#: enterprise/models.py:568
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
