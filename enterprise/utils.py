@@ -9,6 +9,7 @@ import os
 import re
 from functools import wraps
 
+from django.apps import apps
 from django.conf import settings
 
 try:
@@ -202,3 +203,26 @@ def get_catalog_admin_url_template():
 
     # Return matched FQDN from catalog api url appended with catalog admin path
     return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/{catalog_id}/change/"
+
+
+def consent_necessary_for_course(user, course_id):
+    """
+    Determine if consent is necessary before a user can access a course they've enrolled in.
+
+    Args:
+        user: The user attempting to access the course
+        course_id: The string ID of the course in question
+    """
+    # Get the model on demand, since we can't have a circular dependency
+    EnterpriseCourseEnrollment = apps.get_model(  # pylint: disable=invalid-name
+        app_label='enterprise',
+        model_name='EnterpriseCourseEnrollment'
+    )
+    try:
+        enrollment = EnterpriseCourseEnrollment.objects.get(
+            enterprise_customer_user__user_id=user.id,
+            course_id=course_id
+        )
+    except EnterpriseCourseEnrollment.DoesNotExist:
+        return False
+    return enrollment.consent_needed

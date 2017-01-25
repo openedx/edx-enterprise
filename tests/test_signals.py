@@ -11,7 +11,8 @@ import ddt
 import mock
 from pytest import mark
 
-from enterprise.models import EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser
+from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomerUser,
+                               PendingEnrollment, PendingEnterpriseCustomerUser)
 from enterprise.signals import handle_user_post_save
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
                                   PendingEnterpriseCustomerUserFactory, UserFactory)
@@ -103,7 +104,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
         )) == 1
         assert len(PendingEnrollment.objects.all()) == 0
-
+        assert len(EnterpriseCourseEnrollment.objects.all()) == 1
         mock_course_enrollment.enroll.assert_called_once_with(user, None, mode='audit', check_access=True)
         mock_course_key.from_string.assert_called_once_with(pending_enrollment.course_id)
 

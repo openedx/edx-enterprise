@@ -11,13 +11,16 @@ import ddt
 import mock
 import six
 from faker import Factory as FakerFactory
+from pytest import mark
 
 from django.test import override_settings
 
 from enterprise import utils
-from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
-                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser)
-from enterprise.utils import disable_for_loaddata, get_all_field_names
+from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, UserDataSharingConsentAudit)
+from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
+from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
+                                  UserDataSharingConsentAuditFactory, UserFactory)
 
 
 def mock_get_available_idps(idps):
@@ -38,6 +41,7 @@ def mock_get_available_idps(idps):
 
 
 @ddt.ddt
+@mark.django_db
 class TestUtils(unittest.TestCase):
     """
     Tests for utility functions.
@@ -115,11 +119,12 @@ class TestUtils(unittest.TestCase):
             EnterpriseCustomerUser,
             [
                 "userdatasharingconsentaudit",
+                "enterprise_enrollments",
                 "id",
                 "created",
                 "modified",
                 "enterprise_customer",
-                "user_id"
+                "user_id",
             ]
         ),
         (
@@ -233,3 +238,44 @@ class TestUtils(unittest.TestCase):
         with override_settings(COURSE_CATALOG_API_URL=catalog_api_url):
             url = utils.get_catalog_admin_url(catalog_id)
             assert url == expected_url
+
+    @ddt.data(
+        (True, True, EnterpriseCustomer.AT_ENROLLMENT, False),
+        (None, True, EnterpriseCustomer.AT_ENROLLMENT, True),
+        (True, False, EnterpriseCustomer.AT_ENROLLMENT, False),
+        (False, False, EnterpriseCustomer.AT_ENROLLMENT, False),
+        (None, True, EnterpriseCustomer.AT_LOGIN, True),
+        (False, False, EnterpriseCustomer.AT_LOGIN, False),
+    )
+    @ddt.unpack
+    def test_consent_necessary_for_course(
+            self,
+            consent_provided_state,
+            ec_consent_enabled,
+            ec_consent_enforcement,
+            expected_result
+    ):
+        user = UserFactory()
+        enterprise_customer = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=ec_consent_enabled,
+            enforce_data_sharing_consent=ec_consent_enforcement,
+        )
+        enterprise_user = EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=enterprise_user,
+            consent_granted=consent_provided_state,
+            course_id=course_id
+        )
+        assert consent_necessary_for_course(user, course_id) is expected_result
+        account_consent = UserDataSharingConsentAuditFactory(
+            user=enterprise_user,
+            state=UserDataSharingConsentAudit.ENABLED,
+        )
+        assert consent_necessary_for_course(user, course_id) is False
+        account_consent.delete()  # pylint: disable=no-member
+        enrollment.delete()
+        assert consent_necessary_for_course(user, course_id) is False

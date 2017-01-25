@@ -16,7 +16,7 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 
-from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
                                EnterpriseCustomerEntitlement, EnterpriseCustomerUser, PendingEnterpriseCustomerUser,
                                logo_path)
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
@@ -56,6 +56,62 @@ class TestPendingEnrollment(unittest.TestCase):
         self.enrollment.complete_enrollment()  # pylint: disable=no-member
         mock_course_enrollment.enroll.assert_called_once_with(self.user, None, mode='audit', check_access=True)
         mock_course_key.from_string.assert_called_once_with(self.enrollment.course_id)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCourseEnrollment(unittest.TestCase):
+    """
+    Test for EnterpriseCourseEnrollment
+    """
+    def setUp(self):
+        self.username = 'DarthVader'
+        self.user = UserFactory(username=self.username)
+        self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=self.user.id)
+        self.enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        super(TestEnterpriseCourseEnrollment, self).setUp()
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test conversion to string.
+        """
+        expected_str = (
+            '<EnterpriseCourseEnrollment for user DarthVader in '
+            'course with ID course-v1:edX+DemoX+DemoCourse>'
+        )
+        assert expected_str == method(self.enrollment)
+
+    def test_consent_available_consent_stored(self):
+        self.enrollment.consent_granted = True
+        assert self.enrollment.consent_available() is True
+
+    def test_consent_denied_consent_stored(self):
+        self.enrollment.consent_granted = False
+        assert self.enrollment.consent_available() is False
+
+    def test_consent_not_stored_audit_available(self):
+        UserDataSharingConsentAuditFactory(
+            user=self.enterprise_customer_user,
+            state='enabled',
+        )
+        assert self.enrollment.consent_available() is True
+
+    def test_consent_not_stored_audit_available_denied(self):
+        UserDataSharingConsentAuditFactory(
+            user=self.enterprise_customer_user,
+            state='disabled',
+        )
+        assert self.enrollment.consent_available() is False
+
+    def test_consent_not_stored_no_audit_available(self):
+        assert self.enrollment.consent_available() is False
 
 
 @mark.django_db

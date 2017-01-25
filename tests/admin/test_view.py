@@ -22,7 +22,7 @@ from enterprise.admin import EnterpriseCustomerManageLearnersView
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
 from enterprise.django_compatibility import reverse
-from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (FAKER, EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
                                   PendingEnterpriseCustomerUserFactory, UserFactory)
@@ -360,6 +360,11 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
         ]))
+        all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
+        assert len(all_enterprise_enrollments) == 1
+        enrollment = all_enterprise_enrollments[0]
+        assert enrollment.enterprise_customer_user.user == user
+        assert enrollment.course_id == course_id
 
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")

@@ -24,8 +24,8 @@ from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
                                     parse_csv, validate_email_to_link)
 from enterprise.lms_api import EnrollmentApiClient
-from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerUser, PendingEnrollment,
-                               PendingEnterpriseCustomerUser)
+from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser,
+                               PendingEnrollment, PendingEnterpriseCustomerUser)
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -251,6 +251,11 @@ class EnterpriseCustomerManageLearnersView(View):
                     dict(user=username, message=error_message),
                 )
             else:
+                ecu = EnterpriseCustomerUser.objects.get_link_by_email(email)
+                EnterpriseCourseEnrollment.objects.get_or_create(
+                    enterprise_customer_user=ecu,
+                    course_id=course_id
+                )
                 enrolled.append(email)
         enrolled_count = len(enrolled)
         if enrolled_count:

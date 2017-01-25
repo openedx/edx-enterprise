@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.17.0] - 2017-01-25
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Add the EnterpriseCourseEnrollment model and related methods
+
+
 [0.16.0] - 2017-01-25
 ~~~~~~~~~~~~~~~~~~~~~
 

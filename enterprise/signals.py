@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.utils import disable_for_loaddata
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -46,7 +46,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         except EnterpriseCustomerUser.DoesNotExist:
             pass  # everything ok - current user is not linked to other ECs
 
-    EnterpriseCustomerUser.objects.create(
+    enterprise_customer_user = EnterpriseCustomerUser.objects.create(
         enterprise_customer=pending_ecu.enterprise_customer,
         user_id=user_instance.id
     )
@@ -55,4 +55,8 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         # actually exist in the system; in such a case, the enrollment for each such
         # course is finalized when the user registers with the OpenEdX platform.
         enrollment.complete_enrollment()
+        EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=enrollment.course_id
+        )
     pending_ecu.delete()
