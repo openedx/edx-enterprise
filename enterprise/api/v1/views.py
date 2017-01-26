@@ -4,7 +4,7 @@ Views for enterprise api version 1 endpoint.
 from __future__ import absolute_import, unicode_literals
 
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, mixins, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework_oauth.authentication import OAuth2Authentication
 
@@ -25,6 +25,14 @@ class EnterpriseReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (OAuth2Authentication, SessionAuthentication, BearerAuthentication, JwtAuthentication)
     throttle_classes = (ServiceUserThrottle,)
+
+
+class EnterpriseCreateListRetrieveUpdateModelViewSet(
+        mixins.CreateModelMixin, mixins.UpdateModelMixin, EnterpriseReadOnlyModelViewSet
+):
+    """
+    Base class for view sets that allow creating and updating models in addition to reading.
+    """
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
@@ -78,6 +86,20 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadOnlyModelViewSet):
 
     FIELDS = (
         'enterprise_customer', 'user_id',
+    )
+    filter_fields = FIELDS
+    ordering_fields = FIELDS
+
+
+class EnterpriseCourseEnrollmentViewSet(EnterpriseCreateListRetrieveUpdateModelViewSet):
+    """
+    API views for `enterprise customer enrollment` api endpoint.
+    """
+    queryset = models.EnterpriseCourseEnrollment.objects.all()
+    serializer_class = serializers.EnterpriseCourseEnrollmentSerializer
+
+    FIELDS = (
+        'enterprise_customer_user', 'course_id', 'consent_granted',
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
