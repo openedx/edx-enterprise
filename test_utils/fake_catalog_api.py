@@ -28,7 +28,8 @@ FAKE_PROGRAM_RESPONSE1 = {
                     "title": "Drag and Drop Demos",
                     "image": {},  # skipped
                     "short_description": None,
-                    "marketing_url": None
+                    "marketing_url": None,
+                    "start": "2015-01-01T00:00:00Z",
                 }
             ],
             "owners": [
@@ -51,7 +52,8 @@ FAKE_PROGRAM_RESPONSE1 = {
                     "title": "VectorDraw",
                     "image": {},  # skipped
                     "short_description": None,
-                    "marketing_url": None
+                    "marketing_url": None,
+                    "start": "2030-01-01T00:00:00Z",
                 }
             ],
         },
@@ -94,7 +96,8 @@ FAKE_PROGRAM_RESPONSE2 = {
                     "title": "VectorDraw",
                     "image": {},  # skipped
                     "short_description": None,
-                    "marketing_url": None
+                    "marketing_url": None,
+                    "start": "2030-01-01T00:00:00Z",
                 }
             ],
         },
@@ -243,7 +246,7 @@ def get_program_by_uuid(program_uuid):
     Returns:
         dict: Program data provided by Course Catalog API
     """
-    return FAKE_PROGRAM_RESPONSES.get(program_uuid)
+    return FAKE_PROGRAM_RESPONSES.get(program_uuid).copy()
 
 
 def get_program_by_title(program_title):

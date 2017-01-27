@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` utility functions.
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import os
 import unittest
 
@@ -11,8 +12,9 @@ import ddt
 import mock
 import six
 from faker import Factory as FakerFactory
-from pytest import mark
+from pytest import mark, raises
 
+from django.core import mail
 from django.test import override_settings
 
 from enterprise import utils
@@ -20,7 +22,7 @@ from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, E
                                EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, UserDataSharingConsentAudit)
 from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
-                                  UserDataSharingConsentAuditFactory, UserFactory)
+                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
 
 
 def mock_get_available_idps(idps):
@@ -40,6 +42,7 @@ def mock_get_available_idps(idps):
     return _
 
 
+@mark.django_db
 @ddt.ddt
 @mark.django_db
 class TestUtils(unittest.TestCase):
@@ -279,3 +282,482 @@ class TestUtils(unittest.TestCase):
         account_consent.delete()  # pylint: disable=no-member
         enrollment.delete()
         assert consent_necessary_for_course(user, course_id) is False
+
+    @ddt.data(
+        (
+            {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
+            {
+                'name': 'Demo Course',
+                'url': 'http://localhost:8000/courses',
+                'type': 'course',
+                'start': '2017-01-01'
+            },
+            'EdX',
+            {
+                'subject': 'You\'ve been enrolled in Demo Course!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'Hi!\n\nYou have been enrolled in Demo Course, a course offered by EdX. '
+                    'This course begins Jan. 1, 2017. For more information, see the following'
+                    ' link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Demo Course team\n'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://localhost'
+                            ':8000/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
+                            '2017. For more information, see <a href="http://localhost:8000/courses">Demo Course'
+                            '</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Demo Course team\n</p>\n</body>\n</html>\n'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
+            {
+                'name': 'Enterprise Learning',
+                'url': 'http://localhost:8000/courses',
+                'type': 'course',
+                'start': '2017-06-23'
+            },
+            'Widgets, Inc',
+            {
+                'subject': 'You\'ve been enrolled in Enterprise Learning!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    u'Dear John,\n\nYou have been enrolled in Enterprise Learning, a course offered by Widgets, Inc. '
+                    'This course begins June 23, 2017. For more information, see the following link:'
+                    '\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<html>\n<body>\n<p>Dear John,</p>\n<p>\nYou have been enrolled in <a href="http://'
+                            'localhost:8000/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
+                            'This course begins June 23, 2017. For more information, see <a href="http://localhost'
+                            ':8000/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\n'
+                            'The Enterprise Learning team\n</p>\n</body>\n</html>\n'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
+            {
+                "name": "Master of Awesomeness",
+                "url": "http://localhost:8000/courses",
+                "type": "program",
+                "branding": "MicroMaster",
+                "start": "2017-04-15",
+            },
+            'MIT',
+            {
+                'subject': 'You\'ve been enrolled in Master of Awesomeness!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'Dear johnny_boy,\n\nYou have been enrolled in Master of Awesomeness, a MicroMaster program '
+                    'offered by MIT. This program begins April 15, 2017. For more information, see the '
+                    'following link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<html>\n<body>\n<p>Dear johnny_boy,</p>\n<p>\nYou have been enrolled in '
+                            '<a href="http://localhost:8000/courses">Master of Awesomeness</a>, a MicroMaster '
+                            'program offered by MIT. This program begins April 15, 2017. For more information, '
+                            'see <a href="http://localhost:8000/courses">Master of Awesomeness</a>.\n</p>\n<p>\n'
+                            'Thanks,\n</p>\n<p>\nThe Master of Awesomeness team\n</p>\n</body>\n</html>\n'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            None,
+            {
+                'name': 'coursename',
+                'url': 'localhost:8000/courses',
+                'type': 'program',
+                'branding': 'MicroMaster',
+                'start': '2017-01-01',
+            },
+            'EdX',
+            {},
+        ),
+    )
+    @ddt.unpack
+    def test_send_email_notification_message(
+            self,
+            user,
+            enrolled_in,
+            enterprise_customer_name,
+            expected_fields,
+    ):
+        """
+        Test that we can successfully render and send an email message.
+        """
+        enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
+        enterprise_customer = mock.MagicMock(
+            site=mock.MagicMock(spec=[])
+        )
+        enterprise_customer.name = enterprise_customer_name
+        if user is None:
+            with raises(TypeError):
+                utils.send_email_notification_message(
+                    user,
+                    enrolled_in,
+                    enterprise_customer
+                )
+        else:
+            conn = mail.get_connection()
+            user_cls = user.pop('class')
+            user = user_cls(**user)
+            utils.send_email_notification_message(
+                user,
+                enrolled_in,
+                enterprise_customer,
+                email_connection=conn,
+            )
+            assert len(mail.outbox) == 1
+            for field, val in expected_fields.items():
+                assert getattr(mail.outbox[0], field) == val
+            assert mail.outbox[0].connection is conn
+
+    @ddt.data(
+        (
+            {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
+            {
+                'name': 'Demo Course',
+                'url': 'http://localhost:8000/courses',
+                'type': 'course',
+                'start': '2017-01-01'
+            },
+            'EdX',
+            {
+                'subject': 'New course! Demo Course!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'plaintext_value'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<b>HTML value</b>'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
+            {
+                'name': 'Enterprise Learning',
+                'url': 'http://localhost:8000/courses',
+                'type': 'course',
+                'start': '2017-06-23'
+            },
+            'Widgets, Inc',
+            {
+                'subject': 'New course! Enterprise Learning!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'plaintext_value'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<b>HTML value</b>'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
+            {
+                "name": "Master of Awesomeness",
+                "url": "http://localhost:8000/courses",
+                "type": "program",
+                "branding": "MicroMaster",
+                "start": "2017-04-15",
+            },
+            'MIT',
+            {
+                'subject': 'New course! Master of Awesomeness!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'plaintext_value'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<b>HTML value</b>'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            None,
+            {
+                'name': 'coursename',
+                'url': 'localhost:8000/courses',
+                'type': 'program',
+                'branding': 'MicroMaster',
+                'start': '2017-01-01',
+            },
+            'EdX',
+            {}
+        ),
+    )
+    @ddt.unpack
+    def test_send_email_notification_message_with_site_defined_values(
+            self,
+            user,
+            enrolled_in,
+            enterprise_customer_name,
+            expected_fields,
+    ):
+        """
+        Test that we can successfully render and send an email message.
+        """
+        enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
+        enterprise_customer = mock.MagicMock(
+            site=mock.MagicMock(
+                enterprise_enrollment_template=mock.MagicMock(
+                    render_all_templates=mock.MagicMock(
+                        return_value=(('plaintext_value', '<b>HTML value</b>', ))
+                    ),
+                    subject_line='New course! {course_name}!'
+                )
+            )
+        )
+        enterprise_customer.name = enterprise_customer_name
+        if user is None:
+            with raises(TypeError):
+                utils.send_email_notification_message(
+                    user,
+                    enrolled_in,
+                    enterprise_customer
+                )
+        else:
+            conn = mail.get_connection()
+            user_cls = user.pop('class')
+            user = user_cls(**user)
+            utils.send_email_notification_message(
+                user,
+                enrolled_in,
+                enterprise_customer,
+                email_connection=conn,
+            )
+            assert len(mail.outbox) == 1
+            for field, val in expected_fields.items():
+                assert getattr(mail.outbox[0], field) == val
+            assert mail.outbox[0].connection is conn
+
+    @ddt.data(
+        (
+            {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
+            {
+                'name': 'Demo Course',
+                'url': 'http://localhost:8000/courses',
+                'type': 'course',
+                'start': '2017-01-01'
+            },
+            'EdX',
+            'Course! {course_name}',
+            {
+                'subject': 'Course! Demo Course',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'Hi!\n\nYou have been enrolled in Demo Course, a course offered by EdX. '
+                    'This course begins Jan. 1, 2017. For more information, see the following'
+                    ' link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Demo Course team\n'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://localhost:'
+                            '8000/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
+                            '2017. For more information, see <a href="http://localhost:8000/courses">Demo Course'
+                            '</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Demo Course team\n</p>\n</body>\n</html>\n'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
+            {
+                'name': 'Enterprise Learning',
+                'url': 'http://localhost:8000/courses',
+                'type': 'course',
+                'start': '2017-06-23'
+            },
+            'Widgets, Inc',
+            '{bad_format_val} is a course!',  # Test that a string we can't format results in fallback to defaults
+            {
+                'subject': 'You\'ve been enrolled in Enterprise Learning!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    u'Dear John,\n\nYou have been enrolled in Enterprise Learning, a course offered by Widgets, Inc. '
+                    'This course begins June 23, 2017. For more information, see the following link:'
+                    '\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<html>\n<body>\n<p>Dear John,</p>\n<p>\nYou have been enrolled in <a href="http://'
+                            'localhost:8000/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
+                            'This course begins June 23, 2017. For more information, see <a href="http://localhost'
+                            ':8000/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Enterprise'
+                            ' Learning team\n</p>\n</body>\n</html>\n'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
+            {
+                "name": "Master of Awesomeness",
+                "url": "http://localhost:8000/courses",
+                "type": "program",
+                "start": "2017-04-15",
+            },
+            'MIT',
+            '',  # Test that an empty format string results in fallback to defaults
+            {
+                'subject': 'You\'ve been enrolled in Master of Awesomeness!',
+                'from_email': 'course_staff@example.com',
+                'to': [
+                    'john@smith.com'
+                ],
+                'body': (
+                    'Dear johnny_boy,\n\nYou have been enrolled in Master of Awesomeness, a  program '
+                    'offered by MIT. This program begins April 15, 2017. For more information, see the '
+                    'following link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
+                ),
+                'alternatives': [
+                    (
+                        (
+                            '<html>\n<body>\n<p>Dear johnny_boy,</p>\n<p>\nYou have been '
+                            'enrolled in <a href="http://localhost:8000/'
+                            'courses">Master of Awesomeness</a>, a  program offered by MIT. This program '
+                            'begins April 15, 2017. For more information, see <a href="http://localhost:8000/courses">'
+                            'Master of Awesomeness</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Master of Awesomeness'
+                            ' team\n</p>\n</body>\n</html>\n'
+                        ),
+                        'text/html'
+                    )
+                ],
+                'attachments': [],
+            }
+        ),
+        (
+            None,
+            {
+                'name': 'coursename',
+                'url': 'localhost:8000/courses',
+                'type': 'program',
+                'branding': 'MicroMaster',
+                'start': '2017-01-01',
+            },
+            'EdX',
+            '',
+            {},
+        ),
+    )
+    @ddt.unpack
+    @override_settings(ENTERPRISE_ENROLLMENT_EMAIL_DEFAULT_SUBJECT_LINE='{bad_format} string')
+    def test_send_email_notification_message_with_site_partially_defined_values(
+            self,
+            user,
+            enrolled_in,
+            enterprise_customer_name,
+            subject_line,
+            expected_fields,
+    ):
+        """
+        Test ensures that, if only one of the templates has a defined value, we use
+        the stock templates to avoid any confusion. Additionally, has some modifications
+        to the stock values used elsewhere to make sure we hit other branches related
+        to template string selection.
+        """
+        enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
+        enterprise_customer = mock.MagicMock(
+            site=mock.MagicMock(
+                enterprise_enrollment_template=mock.MagicMock(
+                    plaintext_template='',
+                    html_template='<b>hi there</b>',
+                    render_all_templates=mock.MagicMock(
+                        return_value=(('plaintext_value', '<b>HTML value</b>', ))
+                    ),
+                    subject_line=subject_line
+                )
+            )
+        )
+        enterprise_customer.name = enterprise_customer_name
+        if user is None:
+            with raises(TypeError):
+                utils.send_email_notification_message(
+                    user,
+                    enrolled_in,
+                    enterprise_customer
+                )
+        else:
+            conn = mail.get_connection()
+            user_cls = user.pop('class')
+            user = user_cls(**user)
+            utils.send_email_notification_message(
+                user,
+                enrolled_in,
+                enterprise_customer,
+                email_connection=conn,
+            )
+            assert len(mail.outbox) == 1
+            for field, val in expected_fields.items():
+                assert getattr(mail.outbox[0], field) == val
+            assert mail.outbox[0].connection is conn

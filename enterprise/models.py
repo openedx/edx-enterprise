@@ -8,6 +8,7 @@ import os
 from logging import getLogger
 from uuid import uuid4
 
+import six
 from simple_history.models import HistoricalRecords
 
 from django.contrib.auth.models import User
@@ -15,7 +16,10 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
 from django.db import models
+from django.template import Context, Template
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.functional import lazy
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
@@ -25,6 +29,8 @@ from enterprise.lms_api import enroll_user_in_course_locally
 from enterprise.validators import validate_image_extension, validate_image_size
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+
+mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
 
 
 class EnterpriseCustomerManager(models.Manager):
@@ -675,5 +681,84 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     def __repr__(self):
         """
         Return string representation of the enrollment.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class EnrollmentNotificationEmailTemplate(TimeStampedModel):
+    """
+    Store optional templates to use when emailing users about course enrollment events.
+    """
+
+    class Meta(object):
+        app_label = 'enterprise'
+
+    BODY_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a standard Django template that, when rendered, produces the email you want '
+        'sent to newly-enrolled Enterprise Customer users. The following variables may be available:\n'
+        '<ul><li>user_name: A human-readable name for the person being emailed. Be sure to '
+        'handle the case where this is not defined, as it may be missing in some cases. '
+        'It may also be a username, if the user hasn\'t configured their "real" name in the system.</li>'
+        '    <li>organization_name: The name of the organization sponsoring the enrollment.</li>'
+        '    <li>enrolled_in: Details of the course or program that was enrolled in. Possible items it contains:'
+        '    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>'
+        '        <li>url: A link to the homepage of the enrolled-in item.</li>'
+        '        <li>branding: A custom branding name for the enrolled-in item. For example, '
+        'the branding of a MicroMasters program would be "MicroMasters".</li>'
+        '     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date`'
+        ' template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/'
+        'builtins/#date">the Django documentation</a>).</li>'
+        '<li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>'
+    ))
+
+    SUBJECT_HELP_TEXT = _(
+        'Fill in a string that can be used to generate a dynamic subject line for notification emails. The '
+        'placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.'
+    )
+
+    plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
+    html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
+    subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
+    site = models.OneToOneField(Site, related_name="enterprise_enrollment_template")
+    history = HistoricalRecords()
+
+    def render_html_template(self, kwargs):
+        """
+        Render just the HTML template and return it as a string.
+        """
+        return self.render_template(mark_safe(self.html_template), kwargs)
+
+    def render_plaintext_template(self, kwargs):
+        """
+        Render just the plaintext template and return it as a string.
+        """
+        return self.render_template(self.plaintext_template, kwargs)
+
+    def render_all_templates(self, kwargs):
+        """
+        Render both templates and return both.
+        """
+        return self.render_plaintext_template(kwargs), self.render_html_template(kwargs)
+
+    def render_template(self, template_text, kwargs):
+        """
+        Create a template from the DB-backed text and render it.
+        """
+        template = Template(template_text)
+        context = Context(kwargs)
+        return template.render(context)
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return '<EnrollmentNotificationEmailTemplate for site with ID {}>'.format(
+            self.site.id
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
         """
         return self.__str__()

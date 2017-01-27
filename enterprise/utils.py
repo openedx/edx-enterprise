@@ -11,6 +11,13 @@ from functools import wraps
 
 from django.apps import apps
 from django.conf import settings
+from django.core import mail
+from django.core.exceptions import ObjectDoesNotExist
+from django.template.loader import render_to_string
+from django.utils.translation import ugettext as _
+
+from enterprise.django_compatibility import reverse
+from six.moves.urllib.parse import urlparse, urlunparse  # pylint: disable=import-error,wrong-import-order
 
 try:
     from edxmako.paths import add_lookup
@@ -77,6 +84,39 @@ class MultipleProgramMatchError(CourseCatalogApiError):
         """
         super(MultipleProgramMatchError, self).__init__(*args, **kwargs)
         self.programs_matched = programs_matched
+
+
+class ConditionalEmailConnection(object):
+    """
+    Conditionally open an email connection as a context manager.
+    """
+
+    def __init__(self, open_conn=False):
+        """
+        Save the preference of whether to open a connection.
+
+        Args:
+            open_conn (bool): Whether the context manager should create and open an email
+            connection when entering a `with` statement.
+        """
+        self.open_conn = open_conn
+        self.conn = None
+
+    def __enter__(self):
+        """
+        Create and open the mail connection if necessary.
+        """
+        if self.open_conn:
+            self.conn = mail.get_connection()
+            self.conn.open()
+        return self.conn
+
+    def __exit__(self, *excinfo):
+        """
+        Close the email connection if it was opened.
+        """
+        if self.conn:
+            self.conn.close()
 
 
 def get_identity_provider(provider_id):
@@ -226,3 +266,158 @@ def consent_necessary_for_course(user, course_id):
     except EnterpriseCourseEnrollment.DoesNotExist:
         return False
     return enrollment.consent_needed
+
+
+def build_notification_message(template_context, template_configuration=None):
+    """
+    Create HTML and plaintext message bodies for a notification.
+
+    We receive a context with data we can use to render, as well as an optional site
+    template configration - if we don't get a template configuration, we'll use the
+    standard, built-in template.
+
+    Arguments:
+        template_context (dict): A set of data to render
+        template_configuration: A database-backed object with templates
+            stored that can be used to render a notification.
+    """
+    if (
+            template_configuration is not None and
+            template_configuration.html_template and
+            template_configuration.plaintext_template
+    ):
+        plain_msg, html_msg = template_configuration.render_all_templates(template_context)
+    else:
+        plain_msg = render_to_string(
+            'enterprise/emails/user_notification.txt',
+            template_context
+        )
+        html_msg = render_to_string(
+            'enterprise/emails/user_notification.html',
+            template_context
+        )
+
+    return plain_msg, html_msg
+
+
+def get_notification_subject_line(course_name, template_configuration=None):
+    """
+    Get a subject line for a notification email.
+
+    The method is designed to fail in a "smart" way; if we can't render a
+    database-backed subject line template, then we'll fall back to a template
+    saved in the Django settings; if we can't render _that_ one, then we'll
+    fall through to a friendly string written into the code.
+
+    One example of a failure case in which we want to fall back to a stock template
+    would be if a site admin entered a subject line string that contained a template
+    tag that wasn't available, causing a KeyError to be raised.
+
+    Arguments:
+        course_name (str): Course name to be rendered into the string
+        template_configuration: A database-backed object with a stored subject line template
+    """
+    stock_subject_template = _('You\'ve been enrolled in {course_name}!')
+    default_subject_template = getattr(
+        settings,
+        'ENTERPRISE_ENROLLMENT_EMAIL_DEFAULT_SUBJECT_LINE',
+        stock_subject_template,
+    )
+    if template_configuration is not None and template_configuration.subject_line:
+        final_subject_template = template_configuration.subject_line
+    else:
+        final_subject_template = default_subject_template
+
+    try:
+        return final_subject_template.format(course_name=course_name)
+    except KeyError:
+        pass
+
+    try:
+        return default_subject_template.format(course_name=course_name)
+    except KeyError:
+        return stock_subject_template.format(course_name=course_name)
+
+
+def send_email_notification_message(user, enrolled_in, enterprise_customer, email_connection=None):
+    """
+    Send an email notifying a user about their enrollment in a course.
+
+    Arguments:
+        user: Either a User object or a PendingEnterpriseCustomerUser that we can use
+            to get details for the email
+        enrolled_in (dict): The dictionary contains details of the enrollable object
+            (either course or program) that the user enrolled in. This MUST contain
+            a `name` key, and MAY contain the other following keys:
+                - url: A human-friendly link to the enrollable's home page
+                - type: Either `course` or `program` at present
+                - branding: A special name for what the enrollable "is"; for example,
+                    "MicroMasters" would be the branding for a "MicroMasters Program"
+                - start: A datetime object indicating when the enrollable will be available.
+        enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
+        email_connection: An existing Django email connection that can be used without
+            creating a new connection for each individual message
+    """
+    if hasattr(user, 'first_name') and hasattr(user, 'username'):
+        # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
+        # template slightly differently to make sure weird stuff doesn't happen.
+        user_name = user.first_name
+        if not user_name:
+            user_name = user.username
+    else:
+        user_name = None
+
+    # Users have an `email` attribute; PendingEnterpriseCustomerUsers have `user_email`.
+    if hasattr(user, 'email'):
+        user_email = user.email
+    elif hasattr(user, 'user_email'):
+        user_email = user.user_email
+    else:
+        raise TypeError(_('`user` must have one of either `email` or `user_email`.'))
+
+    msg_context = {
+        'user_name': user_name,
+        'enrolled_in': enrolled_in,
+        'organization_name': enterprise_customer.name,
+    }
+    try:
+        site_template_configuration = enterprise_customer.site.enterprise_enrollment_template
+    except (ObjectDoesNotExist, AttributeError):
+        site_template_configuration = None
+
+    plain_msg, html_msg = build_notification_message(msg_context, site_template_configuration)
+
+    subject_line = get_notification_subject_line(enrolled_in['name'], site_template_configuration)
+
+    return mail.send_mail(
+        subject_line,
+        plain_msg,
+        settings.DEFAULT_FROM_EMAIL,
+        [user_email],
+        html_message=html_msg,
+        connection=email_connection
+    )
+
+
+def get_reversed_url_by_site(request, site, *args, **kwargs):
+    """
+    Get a function to do a standard Django `reverse`, and then apply that path to another site's domain.
+
+    We use urlparse to split the url into its individual components, and then replace
+    the netloc with the domain for the site in question. We then unparse the result
+    into a URL string.
+
+    Arguments:
+        request: The Django request currently being processed
+        site (site): The site we want to apply to the URL created
+        *args: Pass to the standard reverse function
+        **kwargs: Pass to the standard reverse function
+    """
+    domain = site.domain
+    reversed_url = reverse(*args, **kwargs)
+    full_url = request.build_absolute_uri(reversed_url)
+    parsed = urlparse(full_url)
+    final_url = urlunparse(
+        parsed._replace(netloc=domain)
+    )
+    return final_url

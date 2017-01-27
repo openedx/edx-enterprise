@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-25 15:50-0600\n"
+"POT-Creation-Date: 2017-01-26 19:12-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,75 +18,105 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
+#: enterprise/admin/__init__.py:397
+msgid "Preview (course)"
+msgstr ""
+
+#: enterprise/admin/__init__.py:399
+msgid ""
+"Preview the HTML template rendered in the context of a course enrollment."
+msgstr ""
+
+#: enterprise/admin/__init__.py:408
+msgid "Preview (program)"
+msgstr ""
+
+#: enterprise/admin/__init__.py:410
+msgid ""
+"Preview the HTML template rendered in the context of a program enrollment."
+msgstr ""
+
 #: enterprise/admin/actions.py:69
 msgid "Unlink selected objects from existing course catalogs"
 msgstr ""
 
-#: enterprise/admin/forms.py:31
+#: enterprise/admin/forms.py:32
 msgid "Type in Email or Username to link single user"
 msgstr ""
 
-#: enterprise/admin/forms.py:33
+#: enterprise/admin/forms.py:34
 msgid "Or upload a CSV to enroll multiple users at once"
 msgstr ""
 
-#: enterprise/admin/forms.py:34
+#: enterprise/admin/forms.py:35
 msgid ""
 "The CSV must have a column of email addresses, indicated by the heading "
 "'email' in the first row."
 msgstr ""
 
-#: enterprise/admin/forms.py:37
+#: enterprise/admin/forms.py:38
 msgid "Also enroll these learners in this course"
 msgstr ""
 
-#: enterprise/admin/forms.py:38
+#: enterprise/admin/forms.py:39
 msgid "Provide a course ID if enrollment is desired."
 msgstr ""
 
-#: enterprise/admin/forms.py:41
+#: enterprise/admin/forms.py:42
 msgid "Or enroll these learners in this program"
 msgstr ""
 
-#: enterprise/admin/forms.py:42
+#: enterprise/admin/forms.py:43
 msgid "Provide a program name or ID if enrollment is desired."
 msgstr ""
 
-#: enterprise/admin/forms.py:45
+#: enterprise/admin/forms.py:46
 msgid "Course enrollment mode"
 msgstr ""
 
-#: enterprise/admin/forms.py:47
+#: enterprise/admin/forms.py:48
 msgid "Audit"
 msgstr ""
 
-#: enterprise/admin/forms.py:48
+#: enterprise/admin/forms.py:49
 msgid "Verified"
 msgstr ""
 
-#: enterprise/admin/forms.py:49
+#: enterprise/admin/forms.py:50
 msgid "Professional Education"
 msgstr ""
 
-#: enterprise/admin/forms.py:50
+#: enterprise/admin/forms.py:51
 msgid "Professional Education (no ID)"
 msgstr ""
 
-#: enterprise/admin/forms.py:51
+#: enterprise/admin/forms.py:52
 msgid "Credit"
 msgstr ""
 
-#: enterprise/admin/forms.py:52
+#: enterprise/admin/forms.py:53
 msgid "Honor"
 msgstr ""
 
-#: enterprise/admin/forms.py:336
+#: enterprise/admin/forms.py:66
+msgid "Notify learners of enrollment"
+msgstr ""
+
+#: enterprise/admin/forms.py:68
+msgid "Send email"
+msgstr ""
+
+#: enterprise/admin/forms.py:69
+msgid "Do not notify"
+msgstr ""
+
+#: enterprise/admin/forms.py:364
 msgid ""
 "Selected Identity Provider does not exist, please contact system "
 "administrator for more info."
 msgstr ""
 
-#: enterprise/admin/forms.py:346
+#: enterprise/admin/forms.py:374
 #, python-brace-format
 msgid ""
 "Site ({identity_provider_site}) of selected identity provider does not match "
@@ -95,142 +125,142 @@ msgid ""
 "provider's site to '{enterprise_customer_site}'."
 msgstr ""
 
-#: enterprise/admin/utils.py:40
+#: enterprise/admin/utils.py:42
 msgid ""
 "Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
 "both were."
 msgstr ""
 
-#: enterprise/admin/utils.py:41
+#: enterprise/admin/utils.py:43
 msgid ""
 "Bulk operation failed - no users were linked. Please correct the errors "
 "listed below."
 msgstr ""
 
-#: enterprise/admin/utils.py:42
+#: enterprise/admin/utils.py:44
 msgid "Either \"Course ID\" or \"Program ID\" can be specified, both were."
 msgstr ""
 
-#: enterprise/admin/utils.py:43
+#: enterprise/admin/utils.py:45
 #, python-brace-format
 msgid "Enrollment mode {course_mode} not available for course {course_id}."
 msgstr ""
 
-#: enterprise/admin/utils.py:45
+#: enterprise/admin/utils.py:47
 #, python-brace-format
 msgid ""
 "Course mode {mode} is not available for all courses in program "
 "{program_title}. Available modes are {modes}."
 msgstr ""
 
-#: enterprise/admin/utils.py:47
+#: enterprise/admin/utils.py:49
 msgid "Please select a course enrollment mode for the given course/program."
 msgstr ""
 
-#: enterprise/admin/utils.py:48
+#: enterprise/admin/utils.py:50
 #, python-brace-format
 msgid "Failed to obtain available course modes for program {program_title}"
 msgstr ""
 
-#: enterprise/admin/utils.py:49
+#: enterprise/admin/utils.py:51
 #, python-brace-format
 msgid ""
 "Could not retrieve details for the course ID {course_id}. Please specify a "
 "valid ID."
 msgstr ""
 
-#: enterprise/admin/utils.py:50
+#: enterprise/admin/utils.py:52
 #, python-brace-format
 msgid "{argument} does not appear to be a valid email"
 msgstr ""
 
-#: enterprise/admin/utils.py:51
+#: enterprise/admin/utils.py:53
 #, python-brace-format
 msgid "{argument} does not appear to be a valid email or known username"
 msgstr ""
 
-#: enterprise/admin/utils.py:53
+#: enterprise/admin/utils.py:55
 #, python-brace-format
 msgid ""
 "Could not retrieve details for the program {program_id}. Please specify a "
 "valid ID or program name."
 msgstr ""
 
-#: enterprise/admin/utils.py:56
+#: enterprise/admin/utils.py:58
 #, python-brace-format
 msgid ""
 "Expected a CSV file with [{expected_columns}] columns, but found "
 "[{actual_columns}] columns instead."
 msgstr ""
 
-#: enterprise/admin/utils.py:59
+#: enterprise/admin/utils.py:61
 #, python-brace-format
 msgid ""
 "Searching programs by title returned {program_count} programs. Please try "
 "using program UUID"
 msgstr ""
 
-#: enterprise/admin/utils.py:61
+#: enterprise/admin/utils.py:63
 msgid ""
 "Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
 "neither were."
 msgstr ""
 
-#: enterprise/admin/utils.py:62
+#: enterprise/admin/utils.py:64
 #, python-brace-format
 msgid ""
 "Enrollment in program {program_id} is closed as it is in {status} status."
 msgstr ""
 
-#: enterprise/admin/utils.py:63
+#: enterprise/admin/utils.py:65
 #, python-brace-format
 msgid ""
 "User with email {email} is already registered with Enterprise Customer "
 "{ec_name}"
 msgstr ""
 
-#: enterprise/admin/views.py:174
+#: enterprise/admin/views.py:220
 #, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:201
+#: enterprise/admin/views.py:247
 #, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:208
+#: enterprise/admin/views.py:254
 #, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:215
+#: enterprise/admin/views.py:261
 #, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:263
+#: enterprise/admin/views.py:340
 #, python-brace-format
 msgid "{enrolled_count} user was enrolled to {course_id}."
 msgid_plural "{enrolled_count} users were enrolled to {course_id}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:269
+#: enterprise/admin/views.py:346
 msgid ""
 "The following users do not have an account on {}. They have not been "
 "enrolled in the course. When these users create an account, they will be "
 "enrolled in the course automatically: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:286
+#: enterprise/admin/views.py:375
 msgid "Enrollment of some users failed: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:372
+#: enterprise/admin/views.py:501
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
@@ -253,84 +283,114 @@ msgid ""
 "environment."
 msgstr ""
 
-#: enterprise/models.py:68
+#: enterprise/models.py:74
 msgid "Enterprise Customer"
 msgstr ""
 
-#: enterprise/models.py:69
+#: enterprise/models.py:75
 msgid "Enterprise Customers"
 msgstr ""
 
-#: enterprise/models.py:75
+#: enterprise/models.py:81
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:79
+#: enterprise/models.py:85
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:97
+#: enterprise/models.py:103
 msgid ""
 "This field is used to determine whether data sharing consent is enabled or "
 "disabled for users signing in using this enterprise customer. If disabled, "
 "consent will not be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:109
+#: enterprise/models.py:115
 msgid ""
 "This field determines if data sharing consent is optional, if it's required "
 "at login, or if it's required when registering for eligible courses."
 msgstr ""
 
-#: enterprise/models.py:239
+#: enterprise/models.py:245
 msgid "Enterprise Customer User"
 msgstr ""
 
-#: enterprise/models.py:240
+#: enterprise/models.py:246
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:397
+#: enterprise/models.py:403
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:405
+#: enterprise/models.py:411
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:406
+#: enterprise/models.py:412
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:519
+#: enterprise/models.py:525
 msgid ""
 "Stores whether the user linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:560
+#: enterprise/models.py:566
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:561
+#: enterprise/models.py:567
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:568
+#: enterprise/models.py:574
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:609
+#: enterprise/models.py:615
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:614
+#: enterprise/models.py:620
 msgid "Whether the learner has granted consent for this particular course."
 msgstr ""
 
-#: enterprise/models.py:621
+#: enterprise/models.py:627
 msgid "The course ID in which the learner was enrolled."
+msgstr ""
+
+#: enterprise/models.py:698
+msgid ""
+"Fill in a standard Django template that, when rendered, produces the email "
+"you want sent to newly-enrolled Enterprise Customer users. The following "
+"variables may be available:\n"
+"<ul><li>user_name: A human-readable name for the person being emailed. Be "
+"sure to handle the case where this is not defined, as it may be missing in "
+"some cases. It may also be a username, if the user hasn't configured their "
+"\"real\" name in the system.</li>    <li>organization_name: The name of the "
+"organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of "
+"the course or program that was enrolled in. Possible items it contains:    "
+"<ul><li>name: The name of the enrollable item (e.g., \"Demo Course\").</"
+"li>        <li>url: A link to the homepage of the enrolled-in item.</"
+"li>        <li>branding: A custom branding name for the enrolled-in item. "
+"For example, the branding of a MicroMasters program would be \"MicroMasters"
+"\".</li>     <li>start: The date the enrolled-in item becomes available. "
+"Render this to text using the Django `date` template filter (see <a href="
+"\"https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date\">the "
+"Django documentation</a>).</li><li>type: Whether the enrolled-in item is a "
+"course, a program, or something else.</li></ul></ul>"
+msgstr ""
+
+#: enterprise/models.py:716
+#, python-brace-format
+msgid ""
+"Fill in a string that can be used to generate a dynamic subject line for "
+"notification emails. The placeholder {course_name} will be replaced with the "
+"name of the course or program that was enrolled in."
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:46
@@ -367,10 +427,87 @@ msgstr ""
 msgid "Link learners"
 msgstr ""
 
+#: enterprise/templates/enterprise/emails/user_notification.html:3
+#: enterprise/templates/enterprise/emails/user_notification.txt:1
+#, python-format
+msgid "Dear %(user_name)s,"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:3
+#: enterprise/templates/enterprise/emails/user_notification.txt:1
+msgid "Hi!"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:5
+#, python-format
+msgid ""
+"You have been enrolled in <a href=\"%(program_url)s\">%(program_name)s</a>, "
+"a %(program_branding)s program offered by %(organization_name)s. This "
+"program begins %(start_date)s. For more information, see <a href="
+"\"%(program_url)s\">%(program_name)s</a>."
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:6
+#, python-format
+msgid ""
+"You have been enrolled in <a href=\"%(course_url)s\">%(course_name)s</a>, a "
+"course offered by %(organization_name)s. This course begins %(start_date)s. "
+"For more information, see <a href=\"%(course_url)s\">%(course_name)s</a>."
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:8
+#, python-format
+msgid ""
+"<p>\n"
+"Thanks,\n"
+"</p>\n"
+"<p>\n"
+"The %(enrolled_in_name)s team\n"
+"</p>"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.txt:3
+#, python-format
+msgid ""
+"You have been enrolled in %(program_name)s, a %(program_branding)s program "
+"offered by %(organization_name)s. This program begins %(start_date)s. For "
+"more information, see the following link:\n"
+"\n"
+"%(program_url)s"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.txt:6
+#, python-format
+msgid ""
+"You have been enrolled in %(course_name)s, a course offered by "
+"%(organization_name)s. This course begins %(start_date)s. For more "
+"information, see the following link:\n"
+"\n"
+"%(course_url)s"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.txt:9
+#, python-format
+msgid ""
+"\n"
+"Thanks,\n"
+"\n"
+"The %(enrolled_in_name)s team"
+msgstr ""
+
 #: enterprise/tpa_pipeline.py:38
 msgid ""
 "This package must be installed in an EdX environment to look up third-party "
 "auth providers."
+msgstr ""
+
+#: enterprise/utils.py:320
+#, python-brace-format
+msgid "You've been enrolled in {course_name}!"
+msgstr ""
+
+#: enterprise/utils.py:376
+msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 
 #: enterprise/validators.py:28

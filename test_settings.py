@@ -85,3 +85,7 @@ ENTERPRISE_ENROLLMENT_API_URL = "http://localhost:8000/api/enrollment/v1/"
 COURSE_CATALOG_API_URL = "http://localhost:18381/api/v1/"
 
 LMS_ROOT_URL = "http://localhost:8000"
+
+EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+
+DEFAULT_FROM_EMAIL = 'course_staff@example.com'

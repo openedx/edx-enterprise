@@ -10,18 +10,20 @@ from django.utils.html import format_html
 from django.contrib.auth import settings
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
 from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
 from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm
 from enterprise.admin.utils import UrlNames
-from enterprise.admin.views import EnterpriseCustomerManageLearnersView
+from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
 from enterprise.django_compatibility import reverse
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (  # pylint:disable=no-name-in-module
-    EnterpriseCustomer, EnterpriseCustomerUser, EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerIdentityProvider, HistoricalUserDataSharingConsentAudit, PendingEnterpriseCustomerUser,
+    EnrollmentNotificationEmailTemplate, EnterpriseCustomer, EnterpriseCustomerUser,
+    EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerIdentityProvider,
+    HistoricalUserDataSharingConsentAudit, PendingEnterpriseCustomerUser,
     EnterpriseCustomerEntitlement
 )
 from enterprise.utils import get_all_field_names, get_catalog_admin_url, get_catalog_admin_url_template
@@ -352,4 +354,58 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'user_email',
         'enterprise_customer',
         'created'
+    )
+
+
+@admin.register(EnrollmentNotificationEmailTemplate)
+class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelAdmin):
+    """
+    Django admin for EnrollmentNotificationEmailTemplate model
+    """
+    change_actions = ("preview_as_course", "preview_as_program")
+
+    class Meta(object):
+        model = EnrollmentNotificationEmailTemplate
+
+    def get_urls(self):
+        """
+        Returns the additional urls used by the custom object tools.
+        """
+        preview_urls = [
+            url(
+                r"^([^/]+)/preview/([a-z]+)/$",
+                self.admin_site.admin_view(TemplatePreviewView.as_view()),
+                name=UrlNames.PREVIEW_EMAIL_TEMPLATE
+            )
+        ]
+        return preview_urls + super(EnrollmentNotificationEmailTemplateAdmin, self).get_urls()
+
+    def preview(self, obj, preview_type):
+        """
+        Object tool handler method - redirects to "Preview" view
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        preview_url = reverse("admin:" + UrlNames.PREVIEW_EMAIL_TEMPLATE, args=(obj.pk, preview_type))
+        return HttpResponseRedirect(preview_url)
+
+    def preview_as_course(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Redirect to preview the HTML template in the context of a course.
+        """
+        return self.preview(obj, 'course')
+
+    preview_as_course.label = _("Preview (course)")
+    preview_as_course.short_description = _(
+        "Preview the HTML template rendered in the context of a course enrollment."
+    )
+
+    def preview_as_program(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Redirect to preview the HTML template in the context of a program.
+        """
+        return self.preview(obj, 'program')
+
+    preview_as_program.label = _("Preview (program)")
+    preview_as_program.short_description = _(
+        "Preview the HTML template rendered in the context of a program enrollment."
     )
