@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.18.0] - 2017-01-27
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Add the ability to notify manually-enrolled learners via email.
+
+
 [0.17.0] - 2017-01-25
 ~~~~~~~~~~~~~~~~~~~~~
 

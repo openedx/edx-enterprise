@@ -15,19 +15,117 @@ from pytest import mark
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.messages import constants as messages
+from django.core import mail
 from django.test import Client, TestCase, override_settings
 
 from enterprise import admin as enterprise_admin
-from enterprise.admin import EnterpriseCustomerManageLearnersView
+from enterprise.admin import EnterpriseCustomerManageLearnersView, TemplatePreviewView
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
 from enterprise.django_compatibility import reverse
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomerUser,
+                               PendingEnrollment, PendingEnterpriseCustomerUser)
 from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (FAKER, EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserFactory)
+                                  PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
 from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE2
 from test_utils.file_helpers import MakeCsvStreamContextManager
+
+
+@ddt.ddt
+@mark.django_db
+@override_settings(ROOT_URLCONF="test_utils.admin_urls")
+class TestPreviewTemplateView(TestCase):
+    """
+    Test the Preview Template view
+    """
+    def setUp(self):
+        """
+        Set up testing variables
+        """
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.client = Client()
+        self.template = EnrollmentNotificationEmailTemplate.objects.create(
+            plaintext_template='',
+            html_template=(
+                '<html><body>You\'ve been enrolled in {{ enrolled_in.name }}!{% if enrolled_in.type == "program" %}'
+                ' Program Variant{% endif %}</body></html>'
+            ),
+            subject_line='Enrollment Notification',
+            site=SiteFactory(),
+        )
+        super(TestPreviewTemplateView, self).setUp()
+
+    @ddt.unpack
+    @ddt.data(
+        ('', 'jsmith', 'jsmith'),
+        ('John', 'jsmith', 'John'),
+    )
+    def test_get_user_name(self, first_name, username, expected_name):
+        """
+        Test that the get_user_name method returns the name we expect.
+        """
+        request = mock.MagicMock(
+            user=mock.MagicMock(
+                first_name=first_name,
+                username=username
+            )
+        )
+        assert TemplatePreviewView.get_user_name(request) == expected_name
+
+    def test_preview_course(self):
+        """
+        Test that we render the template for a course correctly.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
+            args=((self.template.pk, 'course'))
+        )
+        result = self.client.get(url)
+        assert result.content.decode('utf-8') == (
+            '<html><body>You\'ve been enrolled in OpenEdX Demo Course!</body></html>'
+        )
+
+    def test_preview_program(self):
+        """
+        Test that we render the template for a program correctly.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
+            args=((self.template.pk, 'program'))
+        )
+        result = self.client.get(url)
+        assert result.content.decode('utf-8') == (
+            '<html><body>You\'ve been enrolled in OpenEdX Demo Program! Program Variant</body></html>'
+        )
+
+    def test_bad_preview_mode(self):
+        """
+        Test that a non-standard preview mode causes a 404.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
+            args=((self.template.pk, 'faketype'))
+        )
+        result = self.client.get(url)
+        assert result.status_code == 404
+
+    def test_missing_object(self):
+        """
+        Test that a missing template object causes a 404.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+        url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
+            args=((self.template.pk + 1, 'course'))
+        )
+        result = self.client.get(url)
+        assert result.status_code == 404
 
 
 class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
@@ -327,22 +425,41 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
 
-    def _enroll_user_request(self, user, mode, course_id="", program_id=""):
+    def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True):
         """
         Perform post request to log in and submit the form to enroll a user.
         """
+        notify = (
+            ManageLearnersForm.NotificationTypes.BY_EMAIL if notify
+            else ManageLearnersForm.NotificationTypes.NO_NOTIFICATION
+        )
         self._login()
+
+        if isinstance(user, six.string_types):
+            email_or_username = user
+        else:
+            # Allow us to send forms involving pending users
+            email_or_username = getattr(user, 'username', getattr(user, 'user_email', None))
+
         response = self.client.post(self.view_url, data={
-            ManageLearnersForm.Fields.EMAIL_OR_USERNAME: user.username,
+            ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email_or_username,
             ManageLearnersForm.Fields.COURSE_MODE: mode,
             ManageLearnersForm.Fields.COURSE: course_id,
             ManageLearnersForm.Fields.PROGRAM: program_id,
+            ManageLearnersForm.Fields.NOTIFY: notify
         })
         return response
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enroll_user(self, forms_client, views_client):
+    def test_post_enroll_user(self, forms_client, views_client, course_catalog_client):
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {
+            "title": "Cool Science",
+            "start": "2017-01-01T12:00:00Z",
+            "marketing_url": "http://localhost:8000/courses/course-v1:HarvardX+CoolScience+2016"
+        }
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         forms_instance = forms_client.return_value
@@ -365,10 +482,19 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
+        assert len(mail.outbox) == 1
 
+    @mock.patch("enterprise.utils.reverse")
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enrollment_error(self, forms_client, views_client):
+    def test_post_enrollment_error(self, forms_client, views_client, course_catalog_client, reverse_mock):
+        reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {
+            "name": "Cool Science",
+            "start": "2017-01-01T12:00:00Z",
+        }
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "test"}).encode()
@@ -383,9 +509,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "Enrollment of some users failed: {}".format(user.email)),
         ]))
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
-    def test_post_enroll_user_into_program(self, catalog_client, views_client):
+    def test_post_enroll_user_into_program(self, catalog_client, views_client, views_catalog_client):
+        views_catalog_instance = views_catalog_client.return_value
+        views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         catalog_api_instance = catalog_client.return_value
@@ -395,7 +524,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         program = FAKE_PROGRAM_RESPONSE2
         expected_courses = get_course_runs_from_program(program)
         mode = "professional"
-        response = self._enroll_user_request(user, mode, program_id=program["uuid"])
+        response = self._enroll_user_request(user, mode, program_id=program["uuid"], notify=True)
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         self._assert_django_messages(response, set(
             [
@@ -403,10 +532,31 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 for course_id in expected_courses
             ]
         ))
+        assert len(mail.outbox) == 1
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
+    def test_post_enroll_pending_user_into_program(self, catalog_client, views_catalog_client):
+        views_catalog_instance = views_catalog_client.return_value
+        views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance = catalog_client.return_value
+        catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
+        user_email = FAKER.email()
+        program = FAKE_PROGRAM_RESPONSE2
+        expected_courses = get_course_runs_from_program(program)
+        mode = "professional"
+        self._enroll_user_request(user_email, mode, program_id=program["uuid"], notify=True)
+        assert len(mail.outbox) == 1
+        assert PendingEnrollment.objects.count() == len(expected_courses)
+        assert PendingEnterpriseCustomerUser.objects.count() == 1
+
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
-    def test_post_enroll_user_into_program_error(self, catalog_client, views_client):
+    def test_post_enroll_user_into_program_error(self, catalog_client, views_client, views_catalog_client):
+        views_catalog_instance = views_catalog_client.return_value
+        views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "test"}).encode()
@@ -461,7 +611,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert "Error at line {}".format(lineno) in actual_message
         assert expected_message in actual_message
 
-    def _perform_request(self, columns, data, course=None, program=None, course_mode=None):
+    def _perform_request(self, columns, data, course=None, program=None, course_mode=None, notify=True):
         """
         Perform bulk upload request with specified columns and data.
 
@@ -482,6 +632,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 post_data[ManageLearnersForm.Fields.COURSE] = course
             if course_mode is not None:
                 post_data[ManageLearnersForm.Fields.COURSE_MODE] = course_mode
+            post_data[ManageLearnersForm.Fields.NOTIFY] = 'by_email' if notify else 'do_not_notify'
             response = self.client.post(self.view_url, data=post_data)
         return response
 
@@ -603,12 +754,19 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
         ]))
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_link_and_enroll(self, forms_client, views_client):
+    def test_post_link_and_enroll(self, forms_client, views_client, course_catalog_client):
         """
         Test bulk upload with linking and enrolling
         """
+        course_catalog_instance = course_catalog_client.return_value
+        course_catalog_instance.get_course_run.return_value = {
+            "name": "Enterprise Training",
+            "start": "2017-01-01T12:00:00Z",
+            "marketing_url": "http://localhost/course-v1:EnterpriseX+Training+2017"
+        }
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         forms_instance = forms_client.return_value
@@ -639,13 +797,68 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.WARNING, pending_user_message.format(unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
+        assert len(mail.outbox) == 2
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
-    def test_post_link_and_enroll_into_program(self, catalog_client, views_client):
+    def test_post_link_and_enroll_no_notification(
+            self,
+            catalog_client,
+            forms_client,
+            views_client,
+            views_catalog_client,
+    ):
         """
         Test bulk upload with linking and enrolling
         """
+        views_catalog_instance = views_catalog_client.return_value
+        views_catalog_instance.get_program_by_uuid.return_value = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance = catalog_client.return_value
+        catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
+        catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        self._login()
+        user = UserFactory.create()
+        unknown_email = FAKER.email()
+        columns = [ManageLearnersForm.CsvColumns.EMAIL]
+        data = [(user.email,), (unknown_email,)]
+        course_id = "course-v1:EnterpriseX+Training+2017"
+        course_mode = "professional"
+
+        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode, notify=False)
+
+        views_instance.enroll_user_in_course.assert_called_once()
+        views_instance.enroll_user_in_course.assert_called_with(
+            user.username,
+            course_id,
+            course_mode
+        )
+        pending_user_message = (
+            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
+            "When these users create an account, they will be enrolled in the course automatically: {}"
+        )
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.WARNING, pending_user_message.format(unknown_email)),
+        ]))
+        assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
+        assert len(mail.outbox) == 0
+
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
+    def test_post_link_and_enroll_into_program(self, catalog_client, views_client, views_catalog_client):
+        """
+        Test bulk upload with linking and enrolling
+        """
+        views_catalog_instance = views_catalog_client.return_value
+        views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         catalog_api_instance = catalog_client.return_value
@@ -659,7 +872,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         program = FAKE_PROGRAM_RESPONSE2
         course_mode = "professional"
         expected_courses = get_course_runs_from_program(program)
-        response = self._perform_request(columns, data, program=program["uuid"], course_mode=course_mode)
+        response = self._perform_request(columns, data, program=program["uuid"], course_mode=course_mode, notify=False)
 
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         for course_id in expected_courses:

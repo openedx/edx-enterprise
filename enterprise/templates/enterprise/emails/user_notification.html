@@ -1,0 +1,15 @@
+{% load i18n %}<html>
+<body>
+<p>{% if user_name %}{% blocktrans %}Dear {{ user_name }},{% endblocktrans %}{% else %}{% blocktrans %}Hi!{% endblocktrans %}{% endif %}</p>
+<p>{% if enrolled_in.type == "program" %}
+{% blocktrans with program_url=enrolled_in.url program_name=enrolled_in.name program_branding=enrolled_in.branding start_date=enrolled_in.start|date:"DATE_FORMAT" %}You have been enrolled in <a href="{{ program_url }}">{{ program_name }}</a>, a {{ program_branding }} program offered by {{ organization_name }}. This program begins {{ start_date }}. For more information, see <a href="{{ program_url }}">{{ program_name }}</a>.{% endblocktrans %}{% else %}
+{% blocktrans with course_url=enrolled_in.url course_name=enrolled_in.name start_date=enrolled_in.start|date:"DATE_FORMAT" %}You have been enrolled in <a href="{{ course_url }}">{{ course_name }}</a>, a course offered by {{ organization_name }}. This course begins {{ start_date }}. For more information, see <a href="{{ course_url }}">{{ course_name }}</a>.{% endblocktrans %}{% endif %}
+</p>
+{% blocktrans with enrolled_in_name=enrolled_in.name %}<p>
+Thanks,
+</p>
+<p>
+The {{enrolled_in_name}} team
+</p>{% endblocktrans %}
+</body>
+</html>

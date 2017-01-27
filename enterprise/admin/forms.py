@@ -9,6 +9,7 @@ from logging import getLogger
 from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import ugettext as _
@@ -53,6 +54,24 @@ class ManageLearnersForm(forms.Form):
         ],
     )
 
+    class NotificationTypes(object):
+        """
+        Namespace class for notification types
+        """
+        BY_EMAIL = 'by_email'
+        NO_NOTIFICATION = 'do_not_notify'
+        DEFAULT = getattr(settings, 'DEFAULT_ENTERPRISE_NOTIFICATION_MECHANISM', BY_EMAIL)
+
+    notify_on_enrollment = forms.ChoiceField(
+        label=_("Notify learners of enrollment"),
+        choices=[
+            (NotificationTypes.BY_EMAIL, _("Send email")),
+            (NotificationTypes.NO_NOTIFICATION, _("Do not notify")),
+        ],
+        initial=NotificationTypes.DEFAULT,
+        required=False,
+    )
+
     class Modes(object):
         """
         Namespace class for form modes.
@@ -72,6 +91,7 @@ class ManageLearnersForm(forms.Form):
         COURSE = "course"
         COURSE_MODE = "course_mode"
         PROGRAM = "program"
+        NOTIFY = "notify_on_enrollment"
 
     class CsvColumns(object):
         """
@@ -152,6 +172,12 @@ class ManageLearnersForm(forms.Form):
 
         return program
 
+    def clean_notify(self):
+        """
+        Clean the notify_on_enrollment field.
+        """
+        return self.cleaned_data.get(self.Fields.NOTIFY, self.NotificationTypes.DEFAULT)
+
     def clean(self):
         """
         Clean fields that depend on each other.
@@ -178,6 +204,7 @@ class ManageLearnersForm(forms.Form):
             mode = self.Modes.MODE_BULK
 
         cleaned_data[self.Fields.MODE] = mode
+        cleaned_data[self.Fields.NOTIFY] = self.clean_notify()
 
         self._validate_course()
         self._validate_program()
@@ -191,6 +218,7 @@ class ManageLearnersForm(forms.Form):
         """
         Verify that the selected mode is valid for the given course .
         """
+        # Verify that the selected mode is valid for the given course .
         course_details = self.cleaned_data.get(self.Fields.COURSE)
         if course_details:
             course_mode = self.cleaned_data.get(self.Fields.COURSE_MODE)

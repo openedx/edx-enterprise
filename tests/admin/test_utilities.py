@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` utility functions.
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import unittest
 
 import ddt
@@ -12,7 +13,7 @@ from pytest import mark, raises
 from django.core.exceptions import ValidationError
 
 from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
-                                    parse_csv, validate_email_to_link)
+                                    get_earliest_start_date_from_program, parse_csv, validate_email_to_link)
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
 from test_utils.file_helpers import MakeCsvStreamContextManager
@@ -212,3 +213,33 @@ class TestGetCourseRunsFromProgram(unittest.TestCase):
         }
         result = get_course_runs_from_program(program)
         assert result == {"1", "CourseRunKey"}
+
+
+class TestGetEarliestStartDateFromProgram(unittest.TestCase):
+    """
+    Tests for :method:`get_earliest_start_date_from_program`.
+    """
+    def test_earliest_start_date_no_courses(self):
+        program = {}
+        assert get_earliest_start_date_from_program(program) is None
+
+    def test_earliest_start_date_no_course_runs(self):
+        program = {"courses": [{"course_runs": []}]}
+        assert get_earliest_start_date_from_program(program) is None
+
+    def test_earliest_start_date(self):
+        program = {
+            "courses": [
+                {
+                    "course_runs": [
+                        {
+                            "start": "2016-01-01T00:00:00Z",
+                        },
+                        {
+                            "start": "2017-01-01T00:00:00Z",
+                        }
+                    ]
+                }
+            ]
+        }
+        assert get_earliest_start_date_from_program(program) == datetime.datetime.strptime('2016-01-01', '%Y-%m-%d')

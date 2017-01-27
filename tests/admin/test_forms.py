@@ -54,7 +54,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     """
 
     @staticmethod
-    def _make_bound_form(email, file_attached=False, course="", program="", course_mode=""):
+    def _make_bound_form(email, file_attached=False, course="", program="", course_mode="", notify=""):
         """
         Builds bound ManageLearnersForm.
         """
@@ -63,6 +63,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             ManageLearnersForm.Fields.COURSE: course,
             ManageLearnersForm.Fields.PROGRAM: program,
             ManageLearnersForm.Fields.COURSE_MODE: course_mode,
+            ManageLearnersForm.Fields.NOTIFY: notify,
         }
         file_data = {}
         if file_attached:

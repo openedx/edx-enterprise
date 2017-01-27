@@ -4,6 +4,8 @@ Utilities to get details from the course catalog API.
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime
+
 import requests
 from edx_rest_api_client.client import EdxRestApiClient
 
@@ -20,6 +22,9 @@ try:
     from student.models import CourseEnrollment
 except ImportError:
     CourseEnrollment = None
+
+
+LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 class EnrollmentApiClient(object):
@@ -128,3 +133,14 @@ def enroll_user_in_course_locally(user, course_id, mode):
     if CourseKey is None and CourseEnrollment is None:
         raise NotConnectedToEdX("This package must be installed in an OpenEdX environment.")
     CourseEnrollment.enroll(user, CourseKey.from_string(course_id), mode=mode, check_access=True)
+
+
+def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):
+    """
+    Parse a received datetime string into a Python datetime object.
+
+    Arguments:
+        datetime_string: A string to be parsed.
+        datetime_format: A datetime format string to be used for parsing
+    """
+    return datetime.datetime.strptime(datetime_string, datetime_format)

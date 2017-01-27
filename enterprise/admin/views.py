@@ -3,6 +3,7 @@ Custom Django Admin views used in enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import json
 import logging
 
@@ -15,19 +16,64 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
-                                    parse_csv, validate_email_to_link)
-from enterprise.lms_api import EnrollmentApiClient
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser,
-                               PendingEnrollment, PendingEnterpriseCustomerUser)
+                                    get_earliest_start_date_from_program, parse_csv, validate_email_to_link)
+from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.lms_api import EnrollmentApiClient, parse_lms_api_datetime
+from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
+                               EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser)
+from enterprise.utils import ConditionalEmailConnection, get_reversed_url_by_site, send_email_notification_message
 
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+
+class TemplatePreviewView(View):
+    """
+    Renders a given NotificationTemplate object to HTML for online viewing.
+    """
+    view_type_contexts = {
+        "course": {
+            "enrolled_in": {
+                "name": "OpenEdX Demo Course",
+                "url": "http://example.com/courses/edx-demo-course",
+                "type": "course",
+                "start": datetime.datetime.strptime('2016-01-01', '%Y-%m-%d')
+            },
+            "organization_name": "OpenEdX",
+        },
+        "program": {
+            "enrolled_in": {
+                "name": "OpenEdX Demo Program",
+                "url": "http://example.com/programs/edx-demo-program",
+                "type": "program",
+                "branding": "MicroMasters",
+                "start": datetime.datetime.strptime('2016-01-01', '%Y-%m-%d')
+            },
+            "organization_name": "OpenEdX",
+        },
+    }
+
+    def get(self, request, template_id, view_type):
+        """
+        Render the given template with the stock data.
+        """
+        template = get_object_or_404(EnrollmentNotificationEmailTemplate, pk=template_id)
+        if view_type not in self.view_type_contexts:
+            return HttpResponse(status=404)
+        base_context = self.view_type_contexts[view_type].copy()
+        base_context.update({'user_name': self.get_user_name(request)})
+        return HttpResponse(template.render_html_template(base_context), content_type='text/html')
+
+    @staticmethod
+    def get_user_name(request):
+        """
+        Get a human-readable name for the user.
+        """
+        return request.user.first_name or request.user.username
 
 
 class EnterpriseCustomerManageLearnersView(View):
@@ -219,7 +265,7 @@ class EnterpriseCustomerManageLearnersView(View):
         return list(emails) + already_linked_emails
 
     @classmethod
-    def _enroll_users(cls, enterprise_customer, emails, course_id, mode, request):
+    def _enroll_users(cls, enterprise_customer, emails, course_id, mode, request, notify=True):
         """
         Enroll the users with the given email addresses to the course specified by course_id.
 
@@ -230,33 +276,64 @@ class EnterpriseCustomerManageLearnersView(View):
             course_id: The ID of the course in which we want to enroll
             mode: The enrollment mode the users will be enrolled in the course with
             request: The HTTP request the enrollment is being created by
+            notify: Whether to notify (by email) the users that have been enrolled
         """
         enrolled = []
         non_existing = []
         failed = []
         enrollment_client = EnrollmentApiClient()
-        for email in emails:
-            try:
-                username = User.objects.get(email=email).username
-            except User.DoesNotExist:
-                non_existing.append(email)
-                continue
-            try:
-                enrollment_client.enroll_user_in_course(username, course_id, mode)
-            except HttpClientError as exc:
-                failed.append(email)
-                error_message = json.loads(exc.content.decode()).get("message", "No error message provided.")
-                logging.error(
-                    "Error while enrolling user %(user)s: %(message)s",
-                    dict(user=username, message=error_message),
+        course_details = CourseCatalogApiClient(request.user).get_course_run(course_id)
+
+        if notify:
+            # Prefetch course metadata for drafting an email if we're going to send a notification
+            course_url = course_details.get('marketing_url')
+            if course_url is None:
+                # If we didn't get a useful path to the course on a marketing site from the catalog API,
+                # then we should build a path to the course on the LMS directly.
+                course_url = get_reversed_url_by_site(
+                    request,
+                    enterprise_customer.site,
+                    'about_course',
+                    args=(course_id,),
                 )
-            else:
-                ecu = EnterpriseCustomerUser.objects.get_link_by_email(email)
-                EnterpriseCourseEnrollment.objects.get_or_create(
-                    enterprise_customer_user=ecu,
-                    course_id=course_id
-                )
-                enrolled.append(email)
+            course_name = course_details.get('title')
+            course_start = course_details.get('start')
+
+        with ConditionalEmailConnection(open_conn=notify) as email_conn:
+            for email in emails:
+                try:
+                    user = User.objects.get(email=email)
+                except User.DoesNotExist:
+                    non_existing.append(email)
+                    continue
+                try:
+                    enrollment_client.enroll_user_in_course(user.username, course_id, mode)
+                except HttpClientError as exc:
+                    failed.append(email)
+                    error_message = json.loads(exc.content.decode()).get("message", "No error message provided.")
+                    logging.error(
+                        "Error while enrolling user %(user)s: %(message)s",
+                        dict(user=user.username, message=error_message),
+                    )
+                else:
+                    ecu = EnterpriseCustomerUser.objects.get_link_by_email(email)
+                    EnterpriseCourseEnrollment.objects.get_or_create(
+                        enterprise_customer_user=ecu,
+                        course_id=course_id
+                    )
+                    enrolled.append(email)
+                    if notify:
+                        send_email_notification_message(
+                            user=user,
+                            enrolled_in={
+                                'name': course_name,
+                                'url': course_url,
+                                'type': 'course',
+                                'start': parse_lms_api_datetime(course_start),
+                            },
+                            enterprise_customer=enterprise_customer,
+                            email_connection=email_conn,
+                        )
         enrolled_count = len(enrolled)
         if enrolled_count:
             messages.success(request, ungettext(
@@ -279,6 +356,18 @@ class EnterpriseCustomerManageLearnersView(View):
                     course_id=course_id,
                     course_mode=mode
                 )
+                if notify:
+                    send_email_notification_message(
+                        user=pending_user,
+                        enrolled_in={
+                            'name': course_name,
+                            'url': course_url,
+                            'type': 'course',
+                            'start': parse_lms_api_datetime(course_start),
+                        },
+                        enterprise_customer=enterprise_customer,
+                        email_connection=email_conn,
+                    )
 
         if failed:
             messages.error(
@@ -332,15 +421,55 @@ class EnterpriseCustomerManageLearnersView(View):
             course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
             program_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.PROGRAM)
 
+            notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
+            notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
+
             if course_details:
                 course_ids.append(course_details['course_id'])
             elif program_details:
+
                 course_ids.extend(get_course_runs_from_program(program_details))
+                program_notify = notify
+                notify = False
+                if program_notify:
+                    program_name = program_details.get('title')
+                    program_branding = program_details.get('type')
+                    program_url = program_details.get('marketing_url')
+                    program_type = 'program'
+                    program_start = get_earliest_start_date_from_program(program_details)
+                    with ConditionalEmailConnection(program_notify) as email_conn:
+                        for email in linked_learners:
+                            try:
+                                user = User.objects.get(email=email)
+                            except User.DoesNotExist:
+                                user = PendingEnterpriseCustomerUser.objects.get(
+                                    enterprise_customer=enterprise_customer,
+                                    user_email=email,
+                                )
+                            send_email_notification_message(
+                                user=user,
+                                enrolled_in={
+                                    'name': program_name,
+                                    'url': program_url,
+                                    'type': program_type,
+                                    'start': program_start,
+                                    'branding': program_branding,
+                                },
+                                enterprise_customer=enterprise_customer,
+                                email_connection=email_conn,
+                            )
 
             if course_ids:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
                 for course_id in course_ids:
-                    self._enroll_users(enterprise_customer, linked_learners, course_id, course_mode, request)
+                    self._enroll_users(
+                        enterprise_customer,
+                        linked_learners,
+                        course_id,
+                        course_mode,
+                        request,
+                        notify=notify,
+                    )
 
             # Redirect to GET if everything went smooth.
             return HttpResponseRedirect("")

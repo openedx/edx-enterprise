@@ -12,13 +12,14 @@ import mock
 from faker import Factory as FakerFactory
 from pytest import mark, raises
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
-                               EnterpriseCustomerEntitlement, EnterpriseCustomerUser, PendingEnterpriseCustomerUser,
-                               logo_path)
+from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
+                               EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerEntitlement,
+                               EnterpriseCustomerUser, PendingEnterpriseCustomerUser, logo_path)
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
                                   EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
                                   PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
@@ -577,7 +578,6 @@ class TestEnterpriseCustomerEntitlements(unittest.TestCase):
     """
     Tests of the TestEnterpriseCustomerEntitlements model.
     """
-
     @ddt.data(
         str, repr
     )
@@ -597,3 +597,43 @@ class TestEnterpriseCustomerEntitlements(unittest.TestCase):
             id=entitlement_id,
         )
         self.assertEqual(method(ec_entitlements), expected_to_str)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
+    """
+    Tests of the EnrollmentNotificationEmailTemplate model.
+    """
+
+    def setUp(self):
+        self.template = EnrollmentNotificationEmailTemplate.objects.create(
+            site=Site.objects.get(id=1),
+            plaintext_template=(
+                'This is a template - testing {{ course_name }}, {{ other_value }}'
+            ),
+            html_template=(
+                '<b>This is an HTML template! {{ course_name }}!!!</b>'
+            ),
+        )
+        super(TestEnrollmentNotificationEmailTemplate, self).setUp()
+
+    def test_render_all_templates(self):
+        plain, html = self.template.render_all_templates(
+            {
+                "course_name": "real course",
+                "other_value": "filled in",
+            }
+        )
+        assert plain == 'This is a template - testing real course, filled in'
+        assert html == '<b>This is an HTML template! real course!!!</b>'
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test conversion to string.
+        """
+        expected_str = '<EnrollmentNotificationEmailTemplate for site with ID 1>'
+        assert expected_str == method(self.template)
