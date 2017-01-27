@@ -1,3 +1,5 @@
+.. _tests-section:
+
 Testing
 =======
 
@@ -40,3 +42,22 @@ test cases:
 .. code-block:: bash
 
     $ make coverage
+
+To run all tests under certain python and django versions:
+
+.. code-block:: bash
+
+    $ tox -e py27-django10          # run all tests under python 2.7 and django 1.10
+
+Finally, various options to run only subset of tests:
+
+.. code-block:: bash
+
+    $ pytest tests/admin            # run all tests in tests/admin folder
+    $ pytest tests/test_api.py      # run all tests in tests/test_api file
+
+    # run all tests in TestEnterpriseCustomer test suite file
+    $ pytest tests/test_api.py::TestEnterpriseCustomer
+
+    # run only `test_ready_connects_user_post_save_handler` in `TestEnterpriseConfig` suite
+    $ pytest tests/test_apps.py::TestEnterpriseConfig::test_ready_connects_user_post_save_handler

@@ -14,9 +14,11 @@ Contents:
 
    readme
    getting_started
-   modules
+   configuration_and_usage
+   development
    testing
    internationalization
+   modules
    changelog
 
 
