@@ -25,6 +25,7 @@ instructions.
 - [ ] CI build is green
 - [ ] Version bumped
 - [ ] Changelog record added
+- [ ] Documentation updated (not only docstrings)
 - [ ] Commits are (reasonably) squashed
 - [ ] Translations are updated
 - [ ] PR author is listed in AUTHORS
