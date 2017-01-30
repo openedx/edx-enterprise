@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.21.0] - 2017-01-30
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Add UI handling for course-specific data sharing consent
+
+
 [0.20.0] - 2017-01-30
 ~~~~~~~~~~~~~~~~~~~~~
 
