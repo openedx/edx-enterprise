@@ -97,19 +97,21 @@ global Javascript variables that can be used in any of the loaded packages.
         <th>{% trans "User Email" %}</th>
         <th>{% trans "Username" %}</th>
         <th>{% trans "Linked Date" %}</th>
+        <th>{% trans "Enroll" %}</th>
         <th></th>
       </tr>
       </thead>
       <tbody>
       {% for learner in learners %}
       <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
-        <td>
+        <td class="email-container">
           <a href="{% url 'admin:enterprise_enterprisecustomeruser_change' learner.id %}">
             {{ learner.user_email }}
           </a>
         </td>
         <td>{{ learner.user.username }}</td>
         <td>{{ learner.created }}</td>
+        <td><input type="checkbox" class="enroll-checkbox"></td>
         <td class="delete-cell"><input type="button" value="Unlink"></td>
       </tr>
       {% endfor %}
@@ -122,18 +124,20 @@ global Javascript variables that can be used in any of the loaded packages.
       <tr>
         <th>{% trans "User Email" %}</th>
         <th>{% trans "Linked Date" %}</th>
+        <th>{% trans "Enroll" %}</th>
         <th></th>
       </tr>
       </thead>
       <tbody>
       {% for learner in pending_learners %}
       <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
-        <td>
+        <td class="email-container">
           <a href = "{% url 'admin:enterprise_pendingenterprisecustomeruser_change' learner.id %}">
             {{ learner.user_email }}
           </a>
         </td>
         <td>{{ learner.created }}</td>
+        <td><input type="checkbox" class="enroll-checkbox"></td>
         <td class="delete-cell"><input type="button" value="Unlink"></td>
       </tr>
       {% endfor %}
@@ -142,7 +146,7 @@ global Javascript variables that can be used in any of the loaded packages.
   </div>
   <div class="forms-panel">
     <h1>{% trans "Link learners" %}</h1>
-    <form action="" method="post" enctype="multipart/form-data">
+    <form action="" method="post" enctype="multipart/form-data" id="learner-management-form">
       {% csrf_token %}
       {# as_p will render the form fields wrapped in <p> tags: #}
       {{ manage_learners_form.as_p }}

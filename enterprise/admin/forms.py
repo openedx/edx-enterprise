@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _
 
 from enterprise import utils
 from enterprise.admin.utils import (ProgramStatuses, ValidationMessages, email_or_username__to__email,
-                                    get_course_runs_from_program, validate_email_to_link)
+                                    get_course_runs_from_program, split_usernames_and_emails, validate_email_to_link)
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.lms_api import EnrollmentApiClient
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
@@ -124,7 +124,22 @@ class ManageLearnersForm(forms.Form):
             return email_or_username
 
         email = email_or_username__to__email(email_or_username)
-        validate_email_to_link(email, email_or_username, ValidationMessages.INVALID_EMAIL_OR_USERNAME)
+        bulk_entry = len(split_usernames_and_emails(email)) > 1
+        if bulk_entry:
+            for email in split_usernames_and_emails(email):
+                validate_email_to_link(
+                    email,
+                    None,
+                    ValidationMessages.INVALID_EMAIL_OR_USERNAME,
+                    ignore_existing=True
+                )
+            email = email_or_username
+        else:
+            validate_email_to_link(
+                email,
+                email_or_username,
+                ValidationMessages.INVALID_EMAIL_OR_USERNAME,
+            )
 
         return email
 

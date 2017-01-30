@@ -197,3 +197,35 @@ describe("Manage Learners form", function () {
         });
     })
 });
+
+describe("Enroll checkboxes", function () {
+
+    beforeEach(function () {
+        jasmine.getFixtures().fixturesPath = '__spec__/fixtures';
+        loadFixtures('manage_learners_form.html');
+        loadPage();
+    });
+
+    describe("when submitting the form and there is no value in the email box", function () {
+        beforeEach(function (done) {
+            result = addCheckedLearnersToEnrollBox();
+            done();
+        }, 5000);
+
+        it("fills in the email box with the emails of checked users", function () {
+            expect($("#id_email_or_username").val()).toBe('peter@yarrow.com, mary@travers.com');
+        });
+    });
+
+    describe("when submitting the form and there is a value in the email box", function () {
+        beforeEach(function (done) {
+            $("#id_email_or_username").val('john@smith.com')
+            result = addCheckedLearnersToEnrollBox();
+            done();
+        }, 5000);
+
+        it("keeps the value that was already in the box", function () {
+            expect($("#id_email_or_username").val()).toBe("john@smith.com")
+        });
+    })
+});

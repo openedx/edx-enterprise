@@ -412,6 +412,33 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1
 
+    def test_post_one_existing_one_new_record(self):
+        """
+        Test that we can submit a comma-separated string value directly in the form.
+
+        Once we make a submission with one existing user and one new user, verify
+        that a new EnterpriseCustomerUser doesn't get created for the existing record,
+        but that a PendingEnterpriseCustomerUser is created for the email address
+        that wasn't previously linked.
+        """
+        # precondition checks:
+        self._login()
+
+        email = FAKER.email()
+
+        user = UserFactory(email=email)
+        EnterpriseCustomerUserFactory(user_id=user.id)
+        assert len(EnterpriseCustomerUser.objects.all()) == 1
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        self.client.post(
+            self.view_url,
+            data={
+                ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email + ', john@smith.com'
+            }
+        )
+        assert len(EnterpriseCustomerUser.objects.all()) == 1
+        assert len(PendingEnterpriseCustomerUser.objects.all()) == 1
+
     def test_post_existing_pending_record(self):
         # precondition checks:
         self._login()
@@ -692,14 +719,26 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         self._assert_line_message(bulk_upload_errors[0], 3, line_error_message)
 
     def test_post_existing_and_duplicates(self):
+        """
+        Test that duplicates and existing links are handled correctly.
+
+        1. Users already linked to an EnterpriseCustomer should cause a warning message, and an
+            additional link won't be created, but otherwise will behave normally.
+        2. Users that appear in a CSV twice will be ignored and a message will be created.
+        3. Users that are attached to a different EnterpriseCustomer will be ignored, and
+            a message will be created.
+        """
         self._login()
         user = UserFactory()
         linked_user = UserFactory()
-        EnterpriseCustomerUserFactory(user_id=linked_user.id)
+        user_linked_to_other_ec = UserFactory()
+        EnterpriseCustomerUserFactory(user_id=user_linked_to_other_ec.id)
+        EnterpriseCustomerUserFactory(user_id=linked_user.id, enterprise_customer=self.enterprise_customer)
         new_email = FAKER.email()
 
-        assert EnterpriseCustomerUser.objects.count() == 1, "Precondition check: Single linked user"
+        assert EnterpriseCustomerUser.objects.count() == 2, "Precondition check: Two linked users"
         assert EnterpriseCustomerUser.objects.filter(user_id=linked_user.id).exists()
+        assert EnterpriseCustomerUser.objects.filter(user_id=user_linked_to_other_ec.id).exists()
         assert not PendingEnterpriseCustomerUser.objects.exists(), "Precondition check: no pending user links"
 
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
@@ -708,11 +747,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (new_email,),  # valid not previously seen email
             (user.email,),  # valid user email
             (user.email,),  # valid user email repeated
+            (user_linked_to_other_ec.email,),  # valid user email linked to a different EC
         ]
         response = self._perform_request(columns, data)
 
-        assert EnterpriseCustomerUser.objects.count() == 2, \
-            "Single linked user remains, and one new link is created"
+        assert EnterpriseCustomerUser.objects.count() == 3, \
+            "Two linked users remain, and one new link is created"
         assert EnterpriseCustomerUser.objects.filter(user_id=linked_user.id).exists()
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
         assert PendingEnterpriseCustomerUser.objects.count() == 1, "One pending linked users should be created"
@@ -724,6 +764,14 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 "Some users were already linked to this Enterprise Customer: {}".format(linked_user.email)
             ),
             (messages.WARNING, "Some duplicate emails in the CSV were ignored: {}".format(user.email)),
+            (
+                messages.WARNING,
+                "The following learners are already associated with another Enterprise Customer. "
+                "These learners were not added to {}: {}".format(
+                    self.enterprise_customer.name,
+                    user_linked_to_other_ec.email
+                )
+            )
         ]))
 
     def test_post_successful_test(self):
