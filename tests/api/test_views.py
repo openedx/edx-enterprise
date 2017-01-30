@@ -33,7 +33,7 @@ class TestEnterpriseAPIViews(APITest):
     @ddt.data(
         (
             factories.UserFactory,
-            reverse('user-list'),
+            reverse('auth-user-list'),
             itemgetter('username'),
             [
                 {
