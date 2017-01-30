@@ -11,7 +11,7 @@ from openedx.core.djangolib.js_utils import dump_js_escaped_json
 
 <script type="text/javascript" src="${static.url('enterprise/grant_data_sharing_permissions.js')}"></script>
 
-<%block name="pagetitle">${_("Additional permissions required")}</%block>
+<%block name="pagetitle">${_("Data sharing consent required")}</%block>
 <main id="main" aria-label="Content" tabindex="-1">
     <div id="data-sharing-consent-form" class="login-register">
         <section class="form-type">
@@ -31,7 +31,11 @@ from openedx.core.djangolib.js_utils import dump_js_escaped_json
                         </h2>
                     </div>
                     <span class="text">
-                        ${_("In order to link your account, we need consent to share your course data with {provider}.").format(provider=sso_provider)}
+                        % if not course_specific:
+                            ${_("Before your account can be linked, you must agree to share your course data with {provider}.").format(provider=enterprise_customer_name)}
+                        % else:
+                            ${_("Before you can access {course_name}, you must agree to share your course data with {provider}.").format(provider=enterprise_customer_name, course_name=course_name)}
+                        % endif
                     </span>
                     <div class="form-field data-sharing-consent">
                         <input
@@ -43,10 +47,20 @@ from openedx.core.djangolib.js_utils import dump_js_escaped_json
                             data-warning-message="${ messages['warning'] }"
                         />
                         <label for="register-data_sharing_consent">
-                            ${_("I agree to allow {platform_name} to share data about my enrollment, completion and performance in all {platform_name} courses and programs where my enrollment is sponsored by {provider}.*").format(provider=sso_provider, platform_name=platform_name)}
+                            % if not course_specific:
+                                ${_("I agree to allow {platform_name} to share data about my enrollment, completion and performance in all {platform_name} courses and programs where my enrollment is sponsored by {provider}.*").format(provider=enterprise_customer_name, platform_name=platform_name)}
+                            % else:
+                                ${_("I agree to allow {platform_name} to share data about my enrollment, completion and performance in {course_name} with {provider}.*").format(provider=enterprise_customer_name, course_name=course_name, platform_name=platform_name)}
+                            % endif
                         </label>
                     </div>
                     <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }" />
+                    % if course_specific and course_id:
+                        <input type="hidden" name="course_id" value="${ course_id }" />
+                    % endif
+                    % if redirect_url:
+                        <input type="hidden" name="redirect_url" value="${redirect_url}" />
+                    % endif
                     <button type="submit" class="action-primary action">Submit</button>
                     <p class="note">*${ messages['note'] }
                 </form>

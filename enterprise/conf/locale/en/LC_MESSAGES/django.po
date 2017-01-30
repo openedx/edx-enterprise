@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-30 09:14-0600\n"
+"POT-Creation-Date: 2017-01-30 09:53-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -531,35 +531,49 @@ msgstr ""
 msgid "The logo image file size must be less than 4KB."
 msgstr ""
 
-#: enterprise/views.py:51
+#: enterprise/views.py:55
 msgid ""
-"Methods in the OpenEdX platform necessary for this view are not available."
+"Methods in the Open edX platform necessary for this view are not available."
 msgstr ""
 
-#: enterprise/views.py:84
+#: enterprise/views.py:88
 #, python-brace-format
 msgid ""
 "Are you sure? If you do not agree to share your data, you will have to use "
 "another account to access {platform}."
 msgstr ""
 
-#: enterprise/views.py:89
+#: enterprise/views.py:93
 #, python-brace-format
 msgid ""
-"Are you sure? If you do not agree to share your data, you will not get any "
+"Are you sure? If you do not agree to share your data, you will not receive "
 "discounts from {provider}."
 msgstr ""
 
-#: enterprise/views.py:100
+#: enterprise/views.py:107
+#, python-brace-format
+msgid ""
+"Are you sure? If you do not agree to share your data with {provider}, you "
+"cannot access {course_name}."
+msgstr ""
+
+#: enterprise/views.py:118
 #, python-brace-format
 msgid ""
 "{provider} requires data sharing consent; if consent is not provided, you "
 "will be redirected to log in page."
 msgstr ""
 
-#: enterprise/views.py:105
+#: enterprise/views.py:123
 #, python-brace-format
 msgid ""
 "{provider} requests data sharing consent; if consent is not provided, you "
 "will not be able to get any discounts from {provider}."
+msgstr ""
+
+#: enterprise/views.py:137
+#, python-brace-format
+msgid ""
+"Courses from {provider} require data sharing consent. If you do not agree to "
+"share your data, you will be redirected to your dashboard."
 msgstr ""

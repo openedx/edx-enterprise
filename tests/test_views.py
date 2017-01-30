@@ -12,10 +12,10 @@ from django.core.urlresolvers import NoReverseMatch, reverse
 from django.shortcuts import render_to_response
 from django.test import Client
 
-from enterprise.models import EnterpriseCustomerUser, UserDataSharingConsentAudit
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.utils import NotConnectedToEdX
-from enterprise.views import GrantDataSharingPermissions
-from test_utils.factories import EnterpriseCustomerFactory, UserFactory
+from enterprise.views import GrantDataSharingPermissions, HttpClientError
+from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
 def fake_render(template, context, request):  # pylint: disable=unused-argument
@@ -30,6 +30,13 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
     """
     Test GrantDataSharingPermissions.
     """
+
+    def setUp(self):
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.client = Client()
+        super(TestGrantDataSharingPermissions, self).setUp()
 
     url = reverse('grant_data_sharing_permissions')
 
@@ -62,7 +69,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             "another account to access my platform."
         )
         assert GrantDataSharingPermissions.get_warning(provider, platform, False) == (
-            "Are you sure? If you do not agree to share your data, you will not get any "
+            "Are you sure? If you do not agree to share your data, you will not receive "
             "discounts from your provider."
         )
 
@@ -87,7 +94,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         client = Client()
         with raises(NotConnectedToEdX) as excinfo:
             client.get(self.url)
-        assert str(excinfo.value) == 'Methods in the OpenEdX platform necessary for this view are not available.'
+        assert str(excinfo.value) == 'Methods in the Open edX platform necessary for this view are not available.'
 
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.quarantine_session')
@@ -153,7 +160,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         )
         expected_context = {
             'platform_name': 'This Platform',
-            'sso_provider': 'Fake Customer Name',
+            'enterprise_customer_name': 'Fake Customer Name',
             'data_sharing_consent': 'required',
             'messages': {
                 'warning': expected_warning,
@@ -192,7 +199,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         client = Client()
         response = client.get(self.url)
         expected_warning = (
-            "Are you sure? If you do not agree to share your data, you will not get any "
+            "Are you sure? If you do not agree to share your data, you will not receive "
             "discounts from Fake Customer Name."
         )
         expected_note = (
@@ -201,7 +208,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         )
         expected_context = {
             'platform_name': 'This Platform',
-            'sso_provider': 'Fake Customer Name',
+            'enterprise_customer_name': 'Fake Customer Name',
             'data_sharing_consent': 'optional',
             'messages': {
                 'warning': expected_warning,
@@ -352,3 +359,307 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         assert EnterpriseCustomerUser.objects.all().count() == 1
         assert UserDataSharingConsentAudit.objects.all()[0].enabled
         assert response.status_code == 302
+
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent(
+            self,
+            course_api_client_mock,
+            render_mock,  # pylint: disable=unused-argument
+            mock_config,
+            *args  # pylint: disable=unused-argument
+    ):
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        mock_config.get_value.return_value = 'My Platform'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        response = self.client.get(
+            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
+        )
+        assert response.status_code == 200
+        for key, value in {
+                "platform_name": "My Platform",
+                "data_sharing_consent": "required",
+                "messages": {
+                    "note": (
+                        "Courses from Starfleet Academy require data sharing consent. If you do not agree to "
+                        "share your data, you will be redirected to your dashboard."
+                    ),
+                    "warning": (
+                        "Are you sure? If you do not agree to share your data "
+                        "with Starfleet Academy, you cannot access edX Demo Course."
+                    ),
+                },
+                "course_id": "course-v1:edX+DemoX+Demo_Course",
+                "course_name": "edX Demo Course",
+                "redirect_url": "https://google.com",
+                "enterprise_customer_name": ecu.enterprise_customer.name,
+                "course_specific": True
+        }.items():
+            assert response.context[key] == value  # pylint:disable=no-member
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_unauthenticated_user(
+            self,
+            course_api_client_mock,
+            render_mock,  # pylint: disable=unused-argument
+            mock_config,
+            *args  # pylint: disable=unused-argument
+    ):
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        mock_config.get_value.return_value = 'My Platform'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        response = self.client.get(
+            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
+        )
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_bad_api_response(
+            self,
+            course_api_client_mock,
+            render_mock,  # pylint: disable=unused-argument
+            mock_config,
+            *args  # pylint: disable=unused-argument
+    ):
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        mock_config.get_value.return_value = 'My Platform'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        client = course_api_client_mock.return_value
+        client.get_course_details.side_effect = HttpClientError
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        response = self.client.get(
+            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
+        )
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_not_needed(
+            self,
+            course_api_client_mock,
+            render_mock,  # pylint: disable=unused-argument
+            mock_config,
+            *args  # pylint: disable=unused-argument
+    ):
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        mock_config.get_value.return_value = 'My Platform'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id,
+            consent_granted=True,
+        )
+        response = self.client.get(
+            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
+        )
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.reverse')
+    def test_post_course_specific_consent(self, reverse_mock, *args):  # pylint: disable=unused-argument
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        data_sharing_consent = True
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        reverse_mock.return_value = '/dashboard'
+        resp = self.client.post(
+            self.url,
+            data={
+                'course_id': course_id,
+                'data_sharing_consent': data_sharing_consent,
+                'redirect_url': '/successful_enrollment'
+            },
+        )
+        assert resp.url.endswith('/successful_enrollment')  # pylint: disable=no-member
+        assert resp.status_code == 302
+        enrollment.refresh_from_db()
+        assert enrollment.consent_granted is True
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.reverse')
+    def test_post_course_specific_consent_not_provided(self, reverse_mock, *args):  # pylint: disable=unused-argument
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        reverse_mock.return_value = '/dashboard'
+        resp = self.client.post(
+            self.url,
+            data={
+                'course_id': course_id,
+                'redirect_url': '/successful_enrollment'
+            },
+        )
+        assert resp.url.endswith('/dashboard')  # pylint: disable=no-member
+        assert resp.status_code == 302
+        enrollment.refresh_from_db()
+        assert enrollment.consent_granted is False
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.reverse')
+    def test_post_course_specific_consent_no_user(self, reverse_mock, *args):  # pylint: disable=unused-argument
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        data_sharing_consent = True
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        reverse_mock.return_value = '/dashboard'
+        resp = self.client.post(
+            self.url,
+            data={
+                'course_id': course_id,
+                'data_sharing_consent': data_sharing_consent,
+                'redirect_url': '/successful_enrollment'
+            },
+        )
+        assert resp.status_code == 404
+        enrollment.refresh_from_db()
+        assert enrollment.consent_granted is None
