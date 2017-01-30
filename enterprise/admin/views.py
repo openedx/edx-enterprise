@@ -23,7 +23,8 @@ from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
-                                    get_earliest_start_date_from_program, parse_csv, validate_email_to_link)
+                                    get_earliest_start_date_from_program, parse_csv, split_usernames_and_emails,
+                                    validate_email_to_link)
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.lms_api import EnrollmentApiClient, parse_lms_api_datetime
 from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
@@ -196,7 +197,7 @@ class EnterpriseCustomerManageLearnersView(View):
             return [email]
 
     @classmethod
-    def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request):
+    def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request, email_list=None):
         """
         Bulk link users by email.
 
@@ -204,14 +205,19 @@ class EnterpriseCustomerManageLearnersView(View):
             enterprise_customer (EnterpriseCustomer): learners will be linked to this Enterprise Customer instance
             manage_learners_form (ManageLearnersForm): bound ManageLearners form instance
             request (django.http.request.HttpRequest): HTTP Request instance
+            email_list (iterable): A list of pre-processed email addresses to handle using the form
         """
         errors = []
         emails = set()
         already_linked_emails = []
         duplicate_emails = []
         csv_file = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.BULK_UPLOAD]
-        try:
+        if email_list:
+            parsed_csv = [{ManageLearnersForm.CsvColumns.EMAIL: email} for email in email_list]
+        else:
             parsed_csv = parse_csv(csv_file, expected_columns={ManageLearnersForm.CsvColumns.EMAIL})
+
+        try:
             for index, row in enumerate(parsed_csv):
                 email = row[ManageLearnersForm.CsvColumns.EMAIL]
                 try:
@@ -221,7 +227,7 @@ class EnterpriseCustomerManageLearnersView(View):
                     errors.append(message)
                 else:
                     if already_linked:
-                        already_linked_emails.append(email)
+                        already_linked_emails.append((email, already_linked.enterprise_customer))
                     elif email in emails:
                         duplicate_emails.append(email)
                     else:
@@ -248,11 +254,28 @@ class EnterpriseCustomerManageLearnersView(View):
             "{count} new users were linked to {enterprise_customer_name}.",
             count
         ).format(count=count, enterprise_customer_name=enterprise_customer.name))
-        if already_linked_emails:
+        this_customer_linked_emails = [
+            email for email, customer in already_linked_emails if customer == enterprise_customer
+        ]
+        other_customer_linked_emails = [
+            email for email, __ in already_linked_emails if email not in this_customer_linked_emails
+        ]
+        if this_customer_linked_emails:
             messages.warning(
                 request,
                 _("Some users were already linked to this Enterprise Customer: {list_of_emails}").format(
-                    list_of_emails=", ".join(already_linked_emails)
+                    list_of_emails=", ".join(this_customer_linked_emails)
+                )
+            )
+        if other_customer_linked_emails:
+            messages.warning(
+                request,
+                _(
+                    "The following learners are already associated with another Enterprise Customer. "
+                    "These learners were not added to {enterprise_customer_name}: {list_of_emails}"
+                ).format(
+                    enterprise_customer_name=enterprise_customer.name,
+                    list_of_emails=", ".join(other_customer_linked_emails),
                 )
             )
         if duplicate_emails:
@@ -262,7 +285,11 @@ class EnterpriseCustomerManageLearnersView(View):
                     list_of_emails=", ".join(duplicate_emails)
                 )
             )
-        return list(emails) + already_linked_emails
+        # Build a list of all the emails that we can act on further; that is,
+        # emails that we either linked to this customer, or that were linked already.
+        all_processable_emails = list(emails) + this_customer_linked_emails
+
+        return all_processable_emails
 
     @classmethod
     def _enroll_users(cls, enterprise_customer, emails, course_id, mode, request, notify=True):
@@ -408,10 +435,21 @@ class EnterpriseCustomerManageLearnersView(View):
 
         # initial form validation - check that form data is well-formed
         if manage_learners_form.is_valid():
+            email_field_as_bulk_input = split_usernames_and_emails(
+                manage_learners_form.cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME]
+            )
+            is_bulk_entry = len(email_field_as_bulk_input) > 1
             # The form is valid. Call the appropriate helper depending on the mode:
             mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.MODE]
-            if mode == ManageLearnersForm.Modes.MODE_SINGULAR:
+            if mode == ManageLearnersForm.Modes.MODE_SINGULAR and not is_bulk_entry:
                 linked_learners = self._handle_singular(enterprise_customer, manage_learners_form)
+            elif mode == ManageLearnersForm.Modes.MODE_SINGULAR:
+                linked_learners = self._handle_bulk_upload(
+                    enterprise_customer,
+                    manage_learners_form,
+                    request,
+                    email_list=email_field_as_bulk_input
+                )
             else:
                 linked_learners = self._handle_bulk_upload(enterprise_customer, manage_learners_form, request)
 

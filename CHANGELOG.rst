@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.20.0] - 2017-01-30
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Add ability to select existing learners to be enrolled in courses from admin
+
+
 [0.19.1] - 2017-01-30
 ~~~~~~~~~~~~~~~~~~~~~
 

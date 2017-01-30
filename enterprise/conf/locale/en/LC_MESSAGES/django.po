@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-26 19:12-0600\n"
+"POT-Creation-Date: 2017-01-30 09:14-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -110,13 +110,13 @@ msgstr ""
 msgid "Do not notify"
 msgstr ""
 
-#: enterprise/admin/forms.py:364
+#: enterprise/admin/forms.py:379
 msgid ""
 "Selected Identity Provider does not exist, please contact system "
 "administrator for more info."
 msgstr ""
 
-#: enterprise/admin/forms.py:374
+#: enterprise/admin/forms.py:389
 #, python-brace-format
 msgid ""
 "Site ({identity_provider_site}) of selected identity provider does not match "
@@ -219,48 +219,56 @@ msgid ""
 "{ec_name}"
 msgstr ""
 
-#: enterprise/admin/views.py:220
+#: enterprise/admin/views.py:226
 #, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:247
+#: enterprise/admin/views.py:253
 #, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:254
+#: enterprise/admin/views.py:266
 #, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:261
+#: enterprise/admin/views.py:274
+#, python-brace-format
+msgid ""
+"The following learners are already associated with another Enterprise "
+"Customer. These learners were not added to {enterprise_customer_name}: "
+"{list_of_emails}"
+msgstr ""
+
+#: enterprise/admin/views.py:284
 #, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:340
+#: enterprise/admin/views.py:367
 #, python-brace-format
 msgid "{enrolled_count} user was enrolled to {course_id}."
 msgid_plural "{enrolled_count} users were enrolled to {course_id}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:346
+#: enterprise/admin/views.py:373
 msgid ""
 "The following users do not have an account on {}. They have not been "
 "enrolled in the course. When these users create an account, they will be "
 "enrolled in the course automatically: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:375
+#: enterprise/admin/views.py:402
 msgid "Enrollment of some users failed: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:501
+#: enterprise/admin/views.py:539
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
@@ -312,58 +320,58 @@ msgid ""
 "at login, or if it's required when registering for eligible courses."
 msgstr ""
 
-#: enterprise/models.py:245
+#: enterprise/models.py:247
 msgid "Enterprise Customer User"
 msgstr ""
 
-#: enterprise/models.py:246
+#: enterprise/models.py:248
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:403
+#: enterprise/models.py:405
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:411
+#: enterprise/models.py:413
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:412
+#: enterprise/models.py:414
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:525
+#: enterprise/models.py:527
 msgid ""
 "Stores whether the user linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:566
+#: enterprise/models.py:568
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:567
+#: enterprise/models.py:569
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:574
+#: enterprise/models.py:576
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:615
+#: enterprise/models.py:617
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:620
+#: enterprise/models.py:622
 msgid "Whether the learner has granted consent for this particular course."
 msgstr ""
 
-#: enterprise/models.py:627
+#: enterprise/models.py:629
 msgid "The course ID in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:698
+#: enterprise/models.py:700
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer users. The following "
@@ -385,7 +393,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:716
+#: enterprise/models.py:718
 #, python-brace-format
 msgid ""
 "Fill in a string that can be used to generate a dynamic subject line for "
@@ -410,7 +418,7 @@ msgid "Search email address or username"
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:97
-#: enterprise/templates/enterprise/admin/manage_learners.html:123
+#: enterprise/templates/enterprise/admin/manage_learners.html:125
 msgid "User Email"
 msgstr ""
 
@@ -419,11 +427,16 @@ msgid "Username"
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:99
-#: enterprise/templates/enterprise/admin/manage_learners.html:124
+#: enterprise/templates/enterprise/admin/manage_learners.html:126
 msgid "Linked Date"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:144
+#: enterprise/templates/enterprise/admin/manage_learners.html:100
+#: enterprise/templates/enterprise/admin/manage_learners.html:127
+msgid "Enroll"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:148
 msgid "Link learners"
 msgstr ""
 
@@ -501,12 +514,12 @@ msgid ""
 "auth providers."
 msgstr ""
 
-#: enterprise/utils.py:320
+#: enterprise/utils.py:321
 #, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
-#: enterprise/utils.py:376
+#: enterprise/utils.py:377
 msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 

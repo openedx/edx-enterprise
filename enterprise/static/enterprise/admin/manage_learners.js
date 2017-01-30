@@ -64,6 +64,17 @@ function switchTo(newEnrollmentMode, otherEnrollmentMode) {
     newEnrollmentMode.timeout = setTimeout(newEnrollmentMode.apply, 300);
 }
 
+function addCheckedLearnersToEnrollBox() {
+    var checkedEmailContainers = $(".enroll-checkbox:checked").parent().siblings('.email-container');
+    var checked_emails = [];
+    $.each(checkedEmailContainers, function () {
+        checked_emails.push($.trim($(this).text()));
+    });
+    if ($("#id_email_or_username").val() === "") {
+        $("#id_email_or_username").val(checked_emails.join(", "));
+    }
+}
+
 function loadPage() {
     $("table.learners-table .delete-cell input[type='button']").click(function () {
         var $row = $(this).parents("tr");
@@ -118,7 +129,6 @@ function loadPage() {
         console.log("Handling "+evt.type+" on program ID input");
         switchTo(programEnrollment, courseEnrollment);
     });
-
     courseEnrollment.$control.parents("form").on("submit", function() {
        courseEnrollment.$control.oldValue = null;
        programEnrollment.$control.oldValue = null;
@@ -129,6 +139,7 @@ function loadPage() {
     } else if (programEnrollment.$control.val()) {
         programEnrollment.$control.trigger("input");
     }
+    $("#learner-management-form").submit(addCheckedLearnersToEnrollBox);
 }
 
 $(loadPage());

@@ -137,7 +137,7 @@ def validate_email_to_link(email, raw_email=None, message_template=None, ignore_
         raise ValidationError(ValidationMessages.USER_ALREADY_REGISTERED.format(
             email=email, ec_name=existing_record.enterprise_customer.name
         ))
-    return bool(existing_record)
+    return existing_record or False
 
 
 def get_course_runs_from_program(program):
@@ -178,3 +178,14 @@ def get_earliest_start_date_from_program(program):
     if not start_dates:
         return None
     return min(start_dates)
+
+
+def split_usernames_and_emails(email_field):
+    """
+    Split the contents of the email field into a list.
+
+    In some cases, a user could enter a comma-separated value inline in the
+    Manage Learners form. We should check to see if that's the case, and
+    provide a list of email addresses or usernames if it is.
+    """
+    return [name.strip() for name in email_field.split(',')]
