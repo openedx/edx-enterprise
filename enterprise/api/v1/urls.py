@@ -11,7 +11,7 @@ from enterprise.api.v1 import views
 # that is why we have disabled 'invalid-name' check for variable definition below.
 router = DefaultRouter()  # pylint: disable=invalid-name
 router.register("site", views.SiteViewSet, 'site')
-router.register("user", views.UserViewSet, 'user')
+router.register("auth-user", views.UserViewSet, 'auth-user')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')
 router.register("user-data-sharing-consent", views.UserDataSharingConsentAuditViewSet, 'user-data-sharing-consent')

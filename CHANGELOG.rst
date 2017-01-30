@@ -14,6 +14,14 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.19.1] - 2017-01-30
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Resolved conflicting urls for User API endpoint.
+
 [0.19.0] - 2017-01-30
 ~~~~~~~~~~~~~~~~~~~~~
 
