@@ -16,6 +16,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
+import enterprise
 from enterprise.django_compatibility import reverse
 from six.moves.urllib.parse import urlparse, urlunparse  # pylint: disable=import-error,wrong-import-order
 
@@ -421,3 +422,33 @@ def get_reversed_url_by_site(request, site, *args, **kwargs):
         parsed._replace(netloc=domain)
     )
     return final_url
+
+
+def get_enterprise_branding_info_by_provider_id(identity_provider_id=None):  # pylint: disable=invalid-name
+    """
+    Return the EnterpriseCustomer branding information based on provider_id.
+
+    Arguments:
+        identity_provider_id: There is 1:1 relation b/w EnterpriseCustomer and Identity provider.
+
+    Returns:
+        EnterpriseCustomerBrandingConfiguration instance associated with the customer of given identity provider.
+    """
+    return enterprise.models.EnterpriseCustomerBrandingConfiguration.objects.filter(
+        enterprise_customer__enterprise_customer_identity_provider__provider_id=identity_provider_id
+    ).first()
+
+
+def get_enterprise_branding_info_by_ec_uuid(ec_uuid=None):  # pylint: disable=invalid-name
+    """
+    Return the EnterpriseCustomer branding information based on enterprise customer uuid.
+
+    Arguments:
+        ec_uuid (UUID): a universally unique identifier for the enterprise customer.
+
+    Returns:
+        EnterpriseCustomerBrandingConfiguration instance associated with the given enterprise customer uuid.
+    """
+    return enterprise.models.EnterpriseCustomerBrandingConfiguration.objects.filter(
+        enterprise_customer__uuid=ec_uuid
+    ).first()

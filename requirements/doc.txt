@@ -37,3 +37,8 @@ sphinx==1.4.8
 sphinxcontrib-napoleon==0.5.3
 stevedore==1.18.0         # via doc8
 unicodecsv==0.14.1
+djangorestframework==3.5.3
+django-filter==1.0.1
+edx-django-oauth2-provider==1.1.4
+djangorestframework-oauth==1.1.0
+edx-drf-extensions==1.2.2

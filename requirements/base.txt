@@ -16,3 +16,8 @@ requests==2.12.3          # via slumber
 six==1.10.0               # via django-extensions
 slumber==0.7.1            # via edx-rest-api-client
 unicodecsv==0.14.1
+djangorestframework==3.5.3
+django-filter==1.0.1
+edx-django-oauth2-provider==1.1.4
+djangorestframework-oauth==1.1.0
+edx-drf-extensions==1.2.2
