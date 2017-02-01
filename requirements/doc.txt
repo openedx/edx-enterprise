@@ -8,6 +8,7 @@ alabaster==0.7.9          # via sphinx
 babel==2.3.4              # via sphinx
 bleach==1.5.0             # via readme-renderer
 chardet==2.3.0            # via doc8
+django-config-models==0.1.3
 django-extensions==1.7.5
 django-model-utils==2.6
 django-object-actions==0.8.2

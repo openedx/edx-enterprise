@@ -10,3 +10,4 @@ django-object-actions     # Object actions in Django admin
 edx-rest-api-client       # For accessing the Enrollment API (and possibly other edX APIs)
 djangorestframework       # For enterprise REST API endpoint
 django-filter             # For enterprise REST API
+django-config-models      # Provides ConfigurationModel abstract base class

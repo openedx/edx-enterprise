@@ -71,6 +71,7 @@ class EnterpriseCustomer(TimeStampedModel):
     """
 
     class Meta:
+        app_label = 'enterprise'
         verbose_name = _("Enterprise Customer")
         verbose_name_plural = _("Enterprise Customers")
 
@@ -244,6 +245,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     objects = EnterpriseCustomerUserManager()
 
     class Meta(object):
+        app_label = 'enterprise'
         verbose_name = _("Enterprise Customer User")
         verbose_name_plural = _("Enterprise Customer Users")
         unique_together = (("enterprise_customer", "user_id"),)
@@ -300,6 +302,9 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False)
     user_email = models.EmailField(null=False, blank=False, unique=True)
 
+    class Meta(object):
+        app_label = 'enterprise'
+
     def __str__(self):
         """
         Return human-readable string representation.
@@ -341,6 +346,7 @@ class PendingEnrollment(TimeStampedModel):
     )
 
     class Meta(object):
+        app_label = 'enterprise'
         unique_together = (("user", "course_id"),)
 
     def complete_enrollment(self):
@@ -410,6 +416,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
     class Meta:
         """Meta class for this Django model."""
 
+        app_label = 'enterprise'
         verbose_name = _("Branding Configuration")
         verbose_name_plural = _("Branding Configurations")
 
@@ -467,6 +474,9 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         unique=True,
         help_text="Slug field containing a unique identifier for the identity provider.",
     )
+
+    class Meta(object):
+        app_label = 'enterprise'
 
     def __str__(self):
         """
@@ -565,6 +575,7 @@ class EnterpriseCustomerEntitlement(TimeStampedModel):
     """
 
     class Meta(object):
+        app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Entitlement")
         verbose_name_plural = _("Enterprise Customer Entitlements")
 

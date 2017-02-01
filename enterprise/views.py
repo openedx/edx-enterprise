@@ -31,6 +31,7 @@ except ImportError:
     quarantine_session = None
     lift_quarantine = None
 
+
 # isort:imports-firstparty
 from enterprise.lms_api import CourseApiClient
 from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser,
