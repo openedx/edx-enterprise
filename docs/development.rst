@@ -3,22 +3,22 @@
 Development documentation
 =========================
 
-High-level architecture overview
+High-level Architecture Overview
 --------------------------------
 
 ``Edx-enterprise`` is a pluggable Django application designed to be run within edx-platform. It is shipped with any
-edx-platform install, but can be disabled or even removed from particular Open edX instance.
+edx-platform install, but can be disabled or even removed from a particular Open edX instance.
 
 General direction is to decouple ``edx-enterprise`` from the rest of the edx-platform as much as possible, since
 the overall goal is to eventually make it an independent application or a plugin for a separate admin site, and not be
 part of the edx-platform LMS.
 
-Hence the following must be taken into account:
+In order to maintain the separation of edx-enterprise from the edx-platform, follow these practices:
 
-* When integrating with existing edx-platform features, REST APIs should be preferred over python APIs.
-* In case API in question only exists as python API it should be encapsulated into a module/class on ``edx-enterprise``
-  side, to simplify future migration to REST API.
-* Both REST and python API clients must be covered with extensive unit tests.
+* When integrating with existing ``edx-platform features``, use REST APIs rather than Python APIs.
+* In cases where the API in question only exists as a Python API, it should be encapsulated into a module or class on
+  the ``edx-enterprise`` side, to simplify future migration to a REST API.
+* Both REST API and Python API clients must be covered with extensive unit tests.
 
 Other noteworthy points:
 
@@ -57,7 +57,7 @@ Dependencies can be installed via the command below.
 Run tests
 ^^^^^^^^^
 
-This application uses `tox`_ to run tests under multiple python and Django version. In addition, the following test
+This application uses `tox`_ to run tests under multiple Python and Django version. In addition, the following test
 utilities are used:
 
 * `pytest`_ framework and test runner to run test
@@ -69,14 +69,14 @@ utilities are used:
 .. _pytest-cov: https://pypi.python.org/pypi/pytest-cov
 .. _diff-cover: https://github.com/Bachmann1234/diff-cover
 
-`edx-enterprise` Makefile provide multiple shortcuts to running tests, the most noteable are:
+The `edx-enterprise` Makefile provides multiple shortcuts to running tests. The most noteable are:
 
 .. code-block:: bash
 
     $ make test                     # run all tests in current virtualenv
     $ make diff_cover               # run all tests in current virtualenv and report diff coverage
 
-    # run quality checks, all tests in every supported env (python and django versions) and jasmine JS tests
+    # run quality checks, all tests in every supported env (Python and Django versions) and jasmine JS tests
     $ make test-all
 
 More info about running tests is available in :ref:`tests-section` section.
@@ -124,7 +124,7 @@ is installed correctly. Three things need to happen:
 3. Migrations need to be run.
 
 All three should happen automatically if you use paver commands to upgrade your setup, but just in case something goes
-wrong with the setup, here're instructions to manually perform the upgrade.
+wrong with the setup, here are instructions to manually perform the upgrade.
 
 First, install ``edx-enterprise`` into virtualenv. In ``edxapp`` virtualenv (``$current_release`` is |release|)\ [#f1]_
 
@@ -134,8 +134,8 @@ First, install ``edx-enterprise`` into virtualenv. In ``edxapp`` virtualenv (``$
     $ pip install edx-enterprise==$current_release
 
 
-Than, make sure ``edx-enterprise`` to ``INSTALLED_APPS`` or ``OPTIONAL_APPS`` (see `lms/env/common.py`_ as an example)
-and run migrations:
+Than, make sure ``edx-enterprise`` is included in ``INSTALLED_APPS`` or ``OPTIONAL_APPS`` (see `lms/env/common.py`_
+as an example) and run migrations:
 
 .. code-block:: bash
 
