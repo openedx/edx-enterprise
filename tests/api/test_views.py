@@ -11,9 +11,10 @@ import ddt
 from rest_framework.reverse import reverse
 
 from django.conf import settings
+from django.test import override_settings
 
 from enterprise.models import EnterpriseCustomer, UserDataSharingConsentAudit
-from test_utils import APITest, factories
+from test_utils import TEST_USERNAME, APITest, factories
 
 
 @ddt.ddt
@@ -97,6 +98,9 @@ class TestEnterpriseAPIViews(APITest):
             'is_active': self.user.is_active,
             'date_joined': self.user.date_joined.isoformat(),
         })
+
+        for user in response['results']:
+            user.pop('id', None)
 
         assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
 
@@ -192,7 +196,21 @@ class TestEnterpriseAPIViews(APITest):
                 'entitlement_id': 1
             }],
         ),
-
+        (
+            factories.EnterpriseCourseEnrollmentFactory,
+            reverse('enterprise-course-enrollment-list'),
+            itemgetter('enterprise_customer_user'),
+            [{
+                'enterprise_customer_user__id': 1,
+                'consent_granted': True,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            }],
+            [{
+                'enterprise_customer_user': 1,
+                'consent_granted': True,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            }],
+        )
     )
     @ddt.unpack
     def test_api_views(self, factory, url, sorting_key, model_items, expected_json):
@@ -425,3 +443,140 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert sorted(response) == sorted(expected_json)
+
+    @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
+    @ddt.data(
+        (
+            # Test a valid request
+            [
+                factories.EnterpriseCustomerUserFactory,
+                [{
+                    'id': 1, 'user_id': 0,
+                    'enterprise_customer__uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f',
+                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
+                    'enterprise_customer__enforce_data_sharing_consent': 'at_login',
+                    'enterprise_customer__site__domain': 'example.com',
+                    'enterprise_customer__site__name': 'example.com',
+                }]
+            ],
+            {
+                'username': TEST_USERNAME,
+                'consent_granted': True,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            },
+            201
+        ),
+        (
+            # Test a bad request due to an invalid user
+            [
+                factories.EnterpriseCustomerUserFactory,
+                [{
+                    'id': 1, 'user_id': 0,
+                    'enterprise_customer__uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f',
+                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
+                    'enterprise_customer__enforce_data_sharing_consent': 'at_login',
+                    'enterprise_customer__site__domain': 'example.com',
+                    'enterprise_customer__site__name': 'example.com',
+                }]
+            ],
+            {
+                'username': 'does_not_exist',
+                'consent_granted': True,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            },
+            400
+        ),
+        (
+            # Test a bad request due to no existing EnterpriseCustomerUser
+            [
+                factories.EnterpriseCustomerFactory,
+                [{
+                    'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                    'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                    'enforce_data_sharing_consent': 'at_login',
+                    'site__domain': 'example.com', 'site__name': 'example.com',
+                }]
+            ],
+            {
+                'username': TEST_USERNAME,
+                'consent_granted': True,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            },
+            400
+        )
+    )
+    @ddt.unpack
+    def test_post_enterprise_course_enrollment(self, factory, request_data, status_code):
+        """
+        Make sure service users can post new EnterpriseCourseEnrollments.
+        """
+        factory_type, factory_data = factory
+        if factory_type == factories.EnterpriseCustomerUserFactory:
+            factory_data[0]['user_id'] = self.user.pk  # pylint: disable=no-member
+
+        self.create_items(*factory)
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('enterprise-course-enrollment-list'),
+            data=request_data
+        )
+
+        assert response.status_code == status_code
+        response = self.load_json(response.content)
+
+        if status_code == 200:
+            self.assertDictEqual(request_data, response)
+
+    @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
+    @ddt.data(
+        (TEST_USERNAME, 201),
+        ('does_not_exist', 400)
+    )
+    @ddt.unpack
+    def test_post_enterprise_customer_user(self, username, status_code):
+        """
+        Make sure service users can post new EnterpriseCustomerUsers.
+        """
+        self.create_items(
+            factories.EnterpriseCustomerFactory,
+            [{
+                'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_login',
+                'site__domain': 'example.com', 'site__name': 'example.com',
+            }]
+        )
+        data = {
+            'enterprise_customer': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f',
+            'username': username,
+        }
+        response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
+
+        assert response.status_code == status_code
+        response = self.load_json(response.content)
+
+        if status_code == 200:
+            self.assertDictEqual(data, response)
+
+    def test_post_enterprise_customer_user_logged_out(self):
+        """
+        Make sure users can't post EnterpriseCustomerUsers when logged out.
+        """
+        self.client.logout()
+        self.create_items(
+            factories.EnterpriseCustomerFactory,
+            [{
+                'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_login',
+                'site__domain': 'example.com', 'site__name': 'example.com',
+            }]
+        )
+        data = {
+            'enterprise_customer': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f',
+            'username': self.user.username
+        }
+        response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
+        assert response.status_code == 401

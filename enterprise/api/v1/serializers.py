@@ -29,7 +29,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'date_joined'
+            'id', 'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active', 'date_joined'
         )
 
 
@@ -73,6 +73,60 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     )
 
 
+class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCourseEnrollment model.
+    """
+    class Meta:
+        model = models.EnterpriseCourseEnrollment
+        fields = (
+            'enterprise_customer_user', 'consent_granted', 'course_id'
+        )
+
+
+class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for writing to the EnterpriseCourseEnrollment model.
+    """
+    class Meta:
+        model = models.EnterpriseCourseEnrollment
+        fields = (
+            'username', 'course_id', 'consent_granted'
+        )
+    username = serializers.CharField(max_length=30)
+    enterprise_customer_user = None
+
+    def validate_username(self, value):
+        """
+        Verify that the username has a matching user, and that the user has an associated EnterpriseCustomerUser.
+        """
+        try:
+            user = User.objects.get(username=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User does not exist")
+
+        try:
+            enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(user_id=user.pk)
+        except models.EnterpriseCustomerUser.DoesNotExist:
+            raise serializers.ValidationError("User has no EnterpriseCustomerUser")
+
+        self.enterprise_customer_user = enterprise_customer_user
+        return value
+
+    def save(self):
+        """
+        Save the model with the found EnterpriseCustomerUser.
+        """
+        course_id = self.validated_data['course_id']
+        consent_granted = self.validated_data['consent_granted']
+
+        models.EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=course_id,
+            consent_granted=consent_granted,
+        )
+
+
 class UserDataSharingConsentAuditSerializer(serializers.ModelSerializer):
     """
     Serializer for UserDataSharingConsentAudit model.
@@ -84,7 +138,7 @@ class UserDataSharingConsentAuditSerializer(serializers.ModelSerializer):
         )
 
 
-class EnterpriseCustomerUserSerializer(serializers.ModelSerializer):
+class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
     """
@@ -97,6 +151,42 @@ class EnterpriseCustomerUserSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     enterprise_customer = EnterpriseCustomerSerializer()
     data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True)
+
+
+class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
+    """
+    Serializer for writing to the EnterpriseCustomerUser model.
+    """
+    class Meta:
+        model = models.EnterpriseCustomerUser
+        fields = (
+            'enterprise_customer', 'username'
+        )
+    username = serializers.CharField(max_length=30)
+    user = None
+
+    def validate_username(self, value):
+        """
+        Verify that the username has a matching user.
+        """
+        try:
+            self.user = User.objects.get(username=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User does not exist")
+
+        return value
+
+    def save(self):
+        """
+        Save the EnterpriseCustomerUser.
+        """
+        enterprise_customer = self.validated_data['enterprise_customer']
+
+        ecu = models.EnterpriseCustomerUser(
+            user_id=self.user.pk,
+            enterprise_customer=enterprise_customer,
+        )
+        ecu.save()
 
 
 class EnterpriseCustomerUserEntitlementSerializer(serializers.Serializer):
@@ -121,3 +211,6 @@ class EnterpriseCustomerUserEntitlementSerializer(serializers.Serializer):
         Do not perform any operations for state changing requests.
         """
         pass
+    user = UserSerializer(read_only=True)
+    enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
+    data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True, read_only=True)
