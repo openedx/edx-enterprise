@@ -15,30 +15,22 @@ Unreleased
 ----------
 
 [0.21.0] - 2017-01-30
-~~~~~~~~~~~~~~~~~~~~~
-
-Added
------
+---------------------
 
 * Add UI handling for course-specific data sharing consent
 
 
 [0.20.0] - 2017-01-30
-~~~~~~~~~~~~~~~~~~~~~
-
-Added
------
+---------------------
 
 * Add ability to select existing learners to be enrolled in courses from admin
 
 
 [0.19.1] - 2017-01-30
-~~~~~~~~~~~~~~~~~~~~~
-
-Added
------
+---------------------
 
 * Resolved conflicting urls for User API endpoint.
+
 
 [0.19.0] - 2017-01-30
 ---------------------
