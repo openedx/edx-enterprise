@@ -182,7 +182,7 @@ def null_decorator(func):
     """
     Decorator that does nothing to the wrapped function.
 
-    If we're unable to import social.pipeline.partial, which is the case in our CI platform,
+    If we're unable to import social_core.pipeline.partial, which is the case in our CI platform,
     we need to be able to wrap the function with something.
     """
     return func

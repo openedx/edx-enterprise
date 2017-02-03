@@ -11,21 +11,39 @@ from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDa
 from enterprise.utils import NotConnectedToEdX
 
 try:
-    from social.pipeline.partial import partial
+    from social_core.pipeline.partial import partial
 except ImportError:
     from enterprise.utils import null_decorator as partial  # pylint:disable=ungrouped-imports
 
 try:
     from third_party_auth.provider import Registry
+    from third_party_auth.pipeline import get as get_pipeline_partial
 except ImportError:
     Registry = None
+    get_pipeline_partial = None
+
+
+def verify_third_party_auth_dependencies():
+    """
+    Ensure that all necessary third_party_auth dependencies are present.
+    """
+    third_party_dependencies = (
+        Registry,
+        get_pipeline_partial,
+    )
+
+    if any(third_party_dependency is None for third_party_dependency in third_party_dependencies):
+        raise NotConnectedToEdX(
+            _("This package must be installed in an EdX environment to look up third-party auth dependencies.")
+        )
 
 
 def get_enterprise_customer_for_request(request):
     """
     Get the EnterpriseCustomer associated with a particular request.
     """
-    pipeline = request.session.get('partial_pipeline')
+    verify_third_party_auth_dependencies()
+    pipeline = get_pipeline_partial(request)
     return get_ec_for_running_pipeline(pipeline)
 
 
@@ -33,11 +51,7 @@ def get_ec_for_running_pipeline(pipeline):
     """
     Get the EnterpriseCustomer associated with a running pipeline.
     """
-    if Registry is None:
-        raise NotConnectedToEdX(
-            _("This package must be installed in an EdX environment to look up third-party auth providers.")
-        )
-
+    verify_third_party_auth_dependencies()
     if pipeline is None:
         return None
     provider = Registry.get_from_pipeline(pipeline)
@@ -71,7 +85,7 @@ def active_provider_enforces_data_sharing(request, enforcement_location):
         enforcement_location (str): the point where to see data sharing consent state.
         argument can either be "optional", 'at_login' or 'at_enrollment'
     """
-    running_pipeline = request.session.get('partial_pipeline')
+    running_pipeline = request.session.get('partial_pipeline_token')
     if running_pipeline:
         customer = get_enterprise_customer_for_request(request)
         return customer and customer.enforces_data_sharing_consent(enforcement_location)
@@ -82,7 +96,7 @@ def active_provider_requests_data_sharing(request):
     """
     Determine if the active EnterpriseCustomer requests data sharing consent.
     """
-    running_pipeline = request.session.get('partial_pipeline')
+    running_pipeline = request.session.get('partial_pipeline_token')
     if running_pipeline:
         customer = get_enterprise_customer_for_request(request)
         return customer and customer.requests_data_sharing_consent

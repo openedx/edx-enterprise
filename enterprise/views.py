@@ -24,12 +24,13 @@ except ImportError:
 
 try:
     from third_party_auth.pipeline import (get_complete_url, get_real_social_auth_object, quarantine_session,
-                                           lift_quarantine)
+                                           lift_quarantine, get as get_pipeline_partial)
 except ImportError:
     get_complete_url = None
     get_real_social_auth_object = None
     quarantine_session = None
     lift_quarantine = None
+    get_pipeline_partial = None
 
 
 # isort:imports-firstparty
@@ -50,7 +51,8 @@ def verify_edx_resources():
         get_complete_url,
         get_real_social_auth_object,
         quarantine_session,
-        lift_quarantine
+        lift_quarantine,
+        get_pipeline_partial,
     )
     if any(method is None for method in required_methods):
         raise NotConnectedToEdX(_('Methods in the Open edX platform necessary for this view are not available.'))
@@ -314,7 +316,7 @@ class GrantDataSharingPermissions(View):
         )
 
         # Resume auth pipeline
-        backend_name = request.session.get('partial_pipeline', {}).get('backend')
+        backend_name = get_pipeline_partial(request).get('backend')
         return redirect(get_complete_url(backend_name))
 
     def post(self, request):

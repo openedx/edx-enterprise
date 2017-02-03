@@ -32,19 +32,21 @@ class TestTpaPipeline(unittest.TestCase):
         self.user = UserFactory(is_active=True)
         super(TestTpaPipeline, self).setUp()
 
-    def test_get_ec_for_request(self):
+    @mock.patch('enterprise.tpa_pipeline.get_pipeline_partial')
+    def test_get_ec_for_request(self, fake_pipeline):
         """
         Test that get_ec_for_request works.
         """
-        request = mock.MagicMock(session={'partial_pipeline': 'pipeline_key'})
+        request = mock.MagicMock()
+        fake_provider = mock.MagicMock()
+        fake_provider.provider_id = 'provider_slug'
+        fake_pipeline.return_value = {'kwargs': {'access_token': 'dummy'}, 'backend': 'fake_backend'}
         with mock.patch('enterprise.tpa_pipeline.Registry') as fake_registry:
-            fake_provider = mock.MagicMock()
-            fake_provider.provider_id = 'provider_slug'
             fake_registry.get_from_pipeline.return_value = fake_provider
             assert get_enterprise_customer_for_request(request) == self.customer
         with raises(NotConnectedToEdX) as excinfo:
             get_enterprise_customer_for_request(request)
-        expected_msg = "This package must be installed in an EdX environment to look up third-party auth providers."
+        expected_msg = "This package must be installed in an EdX environment to look up third-party auth dependencies."
         assert str(excinfo.value) == expected_msg
 
     def test_get_ec_for_sso(self):
@@ -58,31 +60,34 @@ class TestTpaPipeline(unittest.TestCase):
             get_mock.side_effect = EnterpriseCustomer.DoesNotExist
             assert get_enterprise_customer_for_sso(provider) is None
 
-    def test_get_ec_for_pipeline(self):
+    @mock.patch('enterprise.tpa_pipeline.get_pipeline_partial')
+    def test_get_ec_for_pipeline(self, fake_pipeline):
         """
         Test that we get the correct enterprise custoemr for a given running pipeline.
         """
+        fake_pipeline.return_value = {'kwargs': {'access_token': 'dummy'}, 'backend': 'fake_backend'}
         with mock.patch('enterprise.tpa_pipeline.Registry') as fake_registry:
             provider = mock.MagicMock(provider_id='provider_slug')
             fake_registry.get_from_pipeline.return_value = provider
             assert get_ec_for_running_pipeline('pipeline') == self.customer
         with raises(NotConnectedToEdX) as excinfo:
             get_ec_for_running_pipeline('pipeline')
-        expected_msg = "This package must be installed in an EdX environment to look up third-party auth providers."
+        expected_msg = "This package must be installed in an EdX environment to look up third-party auth dependencies."
         assert str(excinfo.value) == expected_msg
 
-    def test_get_ec_for_null_pipeline(self):
+    @mock.patch('enterprise.tpa_pipeline.Registry')
+    @mock.patch('enterprise.tpa_pipeline.get_pipeline_partial')
+    def test_get_ec_for_null_pipeline(self, fake_pipeline, fake_registry):  # pylint: disable=unused-argument
         """
         Test that if we pass in an empty pipeline, we return early and don't try to use it.
         """
-        with mock.patch('enterprise.tpa_pipeline.Registry'):
-            assert get_ec_for_running_pipeline(None) is None
+        assert get_ec_for_running_pipeline(None) is None
 
     def test_active_provider_enforces_data_sharing(self):
         """
         Test that we can correctly check whether data sharing is enforced.
         """
-        request = mock.MagicMock(session={'partial_pipeline': True})
+        request = mock.MagicMock(session={'partial_pipeline_token': True})
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request') as fake_ec_getter:
             fake_ec_getter.return_value = self.customer
             assert active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN)
@@ -95,7 +100,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that we can correctly check whether data sharing is requested.
         """
-        request = mock.MagicMock(session={'partial_pipeline': True})
+        request = mock.MagicMock(session={'partial_pipeline_token': True})
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request') as fake_ec_getter:
             fake_ec_getter.return_value = self.customer
             assert active_provider_requests_data_sharing(request)
