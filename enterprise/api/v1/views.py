@@ -6,6 +6,8 @@ from __future__ import absolute_import, unicode_literals
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
 from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.decorators import detail_route
+from rest_framework.response import Response
 from rest_framework_oauth.authentication import OAuth2Authentication
 
 from django.contrib.auth.models import User
@@ -81,6 +83,26 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+    @detail_route()
+    def entitlements(self, request, pk=None):  # pylint: disable=invalid-name,unused-argument
+        """
+        Retrieve the list of entitlements available to this learner.
+
+        Only those entitlements are returned that satisfy enterprise customer's data sharing setting.
+
+        Arguments:
+            request (HttpRequest): Reference to in progress request instance.
+            pk (Int): Primary key value of the selected enterprise learner.
+
+        Returns:
+            (HttpResponse): Response object containing a list of learner's entitlements.
+        """
+        enterprise_customer_user = self.get_object()
+
+        instance = {"entitlements": enterprise_customer_user.entitlements}
+        serializer = serializers.EnterpriseCustomerUserEntitlementSerializer(instance, context={'request': request})
+        return Response(serializer.data)
 
 
 class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):

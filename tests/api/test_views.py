@@ -12,6 +12,7 @@ from rest_framework.reverse import reverse
 
 from django.conf import settings
 
+from enterprise.models import EnterpriseCustomer, UserDataSharingConsentAudit
 from test_utils import APITest, factories
 
 
@@ -199,8 +200,228 @@ class TestEnterpriseAPIViews(APITest):
         Make sure API end point returns all of the expected fields.
         """
         self.create_items(factory, model_items)
-        # import pdb; pdb.set_trace()
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
 
         assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
+
+    @ddt.data(
+        (
+            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED,
+            [1, 2, 3],
+            {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED,
+            [1, 2, 3], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET,
+            [1, 2, 3], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": True},
+                {"entitlement_id": 2, "requires_consent": True},
+                {"entitlement_id": 3, "requires_consent": True},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": True},
+                {"entitlement_id": 2, "requires_consent": True},
+                {"entitlement_id": 3, "requires_consent": True},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
+            [1, 2, 3], {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
+        (
+            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED,
+            [], {"entitlements": []},
+        ),
+        (
+            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
+            [], {"entitlements": []},
+        ),
+    )
+    @ddt.unpack
+    def test_enterprise_learner_entitlements(
+            self, enable_data_sharing_consent, enforce_data_sharing_consent,
+            learner_consent_state, entitlements, expected_json
+    ):
+        """
+        Test that entitlement details route on enterprise learner returns correct data.
+
+        This test verifies that entitlements returned by entitlement details route on enterprise learner
+        has the expected behavior as listed down.
+            1. Empty entitlements list if enterprise customer requires data sharing consent
+                (this includes enforcing data sharing consent at login and at enrollment) and enterprise learner
+                 does not consent to share data.
+            2. Full list of entitlements for all other cases.
+
+        Arguments:
+            enable_data_sharing_consent (bool): True if enterprise customer enables data sharing consent,
+                False it does not.
+            enforce_data_sharing_consent (str): string for the location at which enterprise customer enforces
+                data sharing consent, possible values are 'at_login', 'at_enrollment' and 'optional'.
+            learner_consent_state (str): string containing the state of learner consent on data sharing,
+                possible values are 'not_set', 'enabled' and 'disabled'.
+            entitlements (list): A list of integers pointing to voucher ids generated in E-Commerce CAT tool.
+            expected_json (dict): A dict with structure and values corresponding to
+                the expected json from API endpoint.
+        """
+        user_id = 1
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            enable_data_sharing_consent=enable_data_sharing_consent,
+            enforce_data_sharing_consent=enforce_data_sharing_consent,
+        )
+        factories.UserDataSharingConsentAuditFactory(
+            user__id=user_id,
+            user__enterprise_customer=enterprise_customer,
+            state=learner_consent_state,
+        )
+        for entitlement in entitlements:
+            factories.EnterpriseCustomerEntitlementFactory(
+                enterprise_customer=enterprise_customer,
+                entitlement_id=entitlement,
+            )
+        url = reverse('enterprise-learner-entitlements', (user_id, ))
+        response = self.client.get(settings.TEST_SERVER + url)
+        response = self.load_json(response.content)
+        assert sorted(response) == sorted(expected_json)
