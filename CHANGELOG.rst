@@ -14,6 +14,15 @@ Change Log
 Unreleased
 ~~~~~~~~~~
 
+[0.21.2] - 2017-02-07
+~~~~~~~~~~~~~~~~~~~~~
+
+Added
+-----
+
+* Add id in EnterpriseCustomerUserSerializer fields
+
+
 [0.21.0] - 2017-01-30
 ~~~~~~~~~~~~~~~~~~~~~
 
