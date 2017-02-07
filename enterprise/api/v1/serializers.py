@@ -91,7 +91,7 @@ class EnterpriseCustomerUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'enterprise_customer', 'user_id', 'user', 'data_sharing_consent'
+            'id', 'enterprise_customer', 'user_id', 'user', 'data_sharing_consent'
         )
 
     user = UserSerializer()

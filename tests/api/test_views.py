@@ -166,7 +166,7 @@ class TestEnterpriseAPIViews(APITest):
 
             }],
             [{
-                'user_id': 0, 'user': None, 'data_sharing_consent': [],
+                'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent': [],
                 'enterprise_customer': {
                     'uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
