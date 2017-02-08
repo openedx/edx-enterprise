@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-01-30 09:53-0600\n"
+"POT-Creation-Date: 2017-02-12 18:44-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -250,42 +250,48 @@ msgstr ""
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:367
+#: enterprise/admin/views.py:324
+msgid ""
+"Course details were not found for course key {} - Course Catalog API "
+"returned nothing. Proceeding with enrollment, but notifications won't be sent"
+msgstr ""
+
+#: enterprise/admin/views.py:383
 #, python-brace-format
 msgid "{enrolled_count} user was enrolled to {course_id}."
 msgid_plural "{enrolled_count} users were enrolled to {course_id}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:373
+#: enterprise/admin/views.py:389
 msgid ""
 "The following users do not have an account on {}. They have not been "
 "enrolled in the course. When these users create an account, they will be "
 "enrolled in the course automatically: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:402
+#: enterprise/admin/views.py:418
 msgid "Enrollment of some users failed: {}"
 msgstr ""
 
-#: enterprise/admin/views.py:539
+#: enterprise/admin/views.py:555
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
 
-#: enterprise/course_catalog_api.py:42
+#: enterprise/course_catalog_api.py:44
 msgid ""
 "To get a CatalogIntegration object, this package must be installed in an "
 "OpenEdX environment."
 msgstr ""
 
-#: enterprise/course_catalog_api.py:46
+#: enterprise/course_catalog_api.py:48
 msgid ""
 "To parse a catalog API response, this package must be installed in an "
 "OpenEdX environment."
 msgstr ""
 
-#: enterprise/course_catalog_api.py:50
+#: enterprise/course_catalog_api.py:52
 msgid ""
 "To get a catalog API client, this package must be installed in an OpenEdX "
 "environment."

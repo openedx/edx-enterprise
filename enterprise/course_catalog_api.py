@@ -29,6 +29,8 @@ class CourseCatalogApiClient(object):
     Object builds an API client to make calls to the Catalog API.
     """
 
+    DEFAULT_VALUE_SAFEGUARD = object()
+
     def __init__(self, user):
         """
         Create an Course Catalog API client, authenticated with the API token from Django settings.
@@ -60,14 +62,14 @@ class CourseCatalogApiClient(object):
         Returns:
             list: List of catalogs available for the user.
         """
-        return self._load_data('catalogs')
+        return self._load_data('catalogs', default=[])
 
     def get_course_run(self, course_run_id):
         """
         Return course_run data, including name, ID and seats.
 
         Args:
-            course_run_id(str): Course run ID (aka Course Key) in string format.
+            course_run_id(string): Course run ID (aka Course Key) in string format.
 
         Returns:
             dict: Course run data provided by Course Catalog API.
@@ -79,12 +81,12 @@ class CourseCatalogApiClient(object):
         Return single program by name, or None if not found.
 
         Arguments:
-            program_title(str): Program title as seen by students and in Course Catalog Admin
+            program_title(string): Program title as seen by students and in Course Catalog Admin
 
         Returns:
             dict: Program data provided by Course Catalog API
         """
-        all_programs = self._load_data('programs')
+        all_programs = self._load_data('programs', default=[])
         matching_programs = [program for program in all_programs if program.get('title') == program_title]
         if len(matching_programs) > 1:
             raise MultipleProgramMatchError(len(matching_programs))
@@ -103,7 +105,7 @@ class CourseCatalogApiClient(object):
         Returns:
             dict: Program data provided by Course Catalog API
         """
-        return self._load_data('programs', resource_id=program_uuid)
+        return self._load_data('programs', resource_id=program_uuid, default=None)
 
     def get_common_course_modes(self, course_run_ids):
         """
@@ -158,20 +160,23 @@ class CourseCatalogApiClient(object):
 
         return available_course_modes
 
-    def _load_data(self, resource, **kwargs):
+    def _load_data(self, resource, default=DEFAULT_VALUE_SAFEGUARD, **kwargs):
         """
         Load data from API client.
 
         Arguments:
-            resource(str): type of resource to load
+            resource(string): type of resource to load
+            default(any): value to return if API query returned empty result. Sensible values: [], {}, None etc.
 
         Returns:
             dict: Deserialized response from Course Catalog API
         """
-        return get_edx_api_data(
+        default_val = default if default != self.DEFAULT_VALUE_SAFEGUARD else {}
+        result = get_edx_api_data(
             CatalogIntegration.current(),
             self.user,
             resource,
             api=self.client,
             **kwargs
         )
+        return result or default_val

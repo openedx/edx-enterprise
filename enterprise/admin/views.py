@@ -291,6 +291,13 @@ class EnterpriseCustomerManageLearnersView(View):
 
         return all_processable_emails
 
+    # TODO: this method is HUGE (> 100 lines) and complicated. Refactor it.
+    # Potential improvements:
+    # 1. Restructure flow so that notifications are sent after users and pending users are enrolled
+    #    FIXME: `send_email_notification_message` for pending users are executed OUTSIDE of ConditionalEmailConnection
+    #    context manager.
+    # 2. Split enrolling existing users and non-existing (pending) users into methods.
+    # 3. Extract notifications into dedicated method
     @classmethod
     def _enroll_users(cls, enterprise_customer, emails, course_id, mode, request, notify=True):
         """
@@ -310,6 +317,15 @@ class EnterpriseCustomerManageLearnersView(View):
         failed = []
         enrollment_client = EnrollmentApiClient()
         course_details = CourseCatalogApiClient(request.user).get_course_run(course_id)
+
+        if not course_details:
+            logging.warning(
+                _(
+                    "Course details were not found for course key {} - Course Catalog API returned nothing. "
+                    "Proceeding with enrollment, but notifications won't be sent"
+                ).format(course_id)
+            )
+            notify = False
 
         if notify:
             # Prefetch course metadata for drafting an email if we're going to send a notification

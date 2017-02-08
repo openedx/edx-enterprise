@@ -511,6 +511,37 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert enrollment.course_id == course_id
         assert len(mail.outbox) == 1
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enroll_no_course_detail(self, forms_client, views_client, course_catalog_client):
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {}
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        views_instance.enroll_user_in_course.assert_called_once()
+        views_instance.enroll_user_in_course.assert_called_with(
+            user.username,
+            course_id,
+            mode,
+        )
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+        ]))
+        all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
+        assert len(all_enterprise_enrollments) == 1
+        enrollment = all_enterprise_enrollments[0]
+        assert enrollment.enterprise_customer_user.user == user
+        assert enrollment.course_id == course_id
+        assert len(mail.outbox) == 0
+
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -846,6 +877,48 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         assert len(mail.outbox) == 2
+
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_link_and_enroll_no_course_details(self, forms_client, views_client, course_catalog_client):
+        """
+        Test bulk upload with linking and enrolling
+        """
+        course_catalog_instance = course_catalog_client.return_value
+        course_catalog_instance.get_course_run.return_value = {}
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        self._login()
+        user = UserFactory.create()
+        unknown_email = FAKER.email()
+        columns = [ManageLearnersForm.CsvColumns.EMAIL]
+        data = [(user.email,), (unknown_email,)]
+        course_id = "course-v1:EnterpriseX+Training+2017"
+        course_mode = "professional"
+
+        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
+
+        views_instance.enroll_user_in_course.assert_called_once()
+        views_instance.enroll_user_in_course.assert_called_with(
+            user.username,
+            course_id,
+            course_mode
+        )
+        pending_user_message = (
+            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
+            "When these users create an account, they will be enrolled in the course automatically: {}"
+        )
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.WARNING, pending_user_message.format(unknown_email)),
+        ]))
+        assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
+        assert len(mail.outbox) == 0
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
