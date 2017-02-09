@@ -88,10 +88,8 @@ test: clean ## run tests in the current virtualenv
 diff_cover: test
 	diff-cover coverage.xml
 
-test-all: ## run tests on every supported Python/Django combination
-	$(MAKE) jshint
-	tox -e quality
-	tox -e jasmine
+test-all: clean jshint quality jasmine
+	## run tests on every supported Python/Django combination
 	tox
 
 validate: quality test ## run tests and quality checks
