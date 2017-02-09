@@ -15,10 +15,7 @@ Unreleased
 ----------
 
 [0.21.2] - 2017-02-07
-~~~~~~~~~~~~~~~~~~~~~
-
-Added
------
+---------------------
 
 * Add id in EnterpriseCustomerUserSerializer fields
 
