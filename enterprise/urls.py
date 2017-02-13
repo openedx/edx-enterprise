@@ -18,5 +18,5 @@ urlpatterns = [
         r'^enterprise/api/',
         include('enterprise.api.urls'),
         name='enterprise_api'
-    )
+    ),
 ]

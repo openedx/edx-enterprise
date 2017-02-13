@@ -20,6 +20,11 @@ from django.core.files.storage import Storage
 from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
                                EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerEntitlement,
                                EnterpriseCustomerUser, PendingEnterpriseCustomerUser, logo_path)
+from integrated_channels.integrated_channel.models import (EnterpriseCustomerPluginConfiguration,
+                                                           EnterpriseIntegratedChannel)
+from integrated_channels.sap_success_factors.models import (CatalogTransmissionAudit, LearnerDataTransmissionAudit,
+                                                            SAPSuccessFactorsEnterpriseCustomerConfiguration,
+                                                            SAPSuccessFactorsGlobalConfiguration)
 from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
                                   EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
                                   PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
@@ -637,3 +642,152 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         """
         expected_str = '<EnrollmentNotificationEmailTemplate for site with ID 1>'
         assert expected_str == method(self.template)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseIntegratedChannel(unittest.TestCase):
+    """
+    Tests of the EnterpriseIntegratedChannel model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseIntegratedChannel`` conversion to string
+        """
+        channel = EnterpriseIntegratedChannel(
+            id=1, name='CorporateLMS', data_type='course'
+        )
+        expected_to_str = "<EnterpriseIntegratedChannel CorporateLMS for course data with id 1>"
+        assert expected_to_str == method(channel)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
+    """
+    Tests of the EnterpriseCustomerPluginConfiguration model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseCustomerPluginConfiguration`` conversion to string
+        """
+        channel = EnterpriseIntegratedChannel(
+            id=1, name='CorporateLMS', data_type='course'
+        )
+        faker = FakerFactory.create()
+        customer_uuid = faker.uuid4()
+        plugin_config = EnterpriseCustomerPluginConfiguration(
+            enterprise_customer_uuid=customer_uuid, enterprise_integrated_channel=channel, active=False
+        )
+        expected_to_str = "<EnterpriseCustomerPluginConfiguration for enterprise {uuid} using channel CorporateLMS>"\
+            .format(uuid=customer_uuid)
+        assert expected_to_str == method(plugin_config)
+
+
+@mark.django_db
+@ddt.ddt
+class TestCatalogTransmissionAudit(unittest.TestCase):
+    """
+    Tests of the CatalogTransmissionAudit model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``CatalogTransmissionAudit`` conversion to string
+        """
+        faker = FakerFactory.create()
+        customer_uuid = faker.uuid4()
+        course_audit = CatalogTransmissionAudit(
+            id=1, enterprise_customer_uuid=customer_uuid, total_courses=50, status='success', error_message=None
+        )
+        expected_to_str = "<CatalogTransmissionAudit 1 for Enterprise {}> for 50 courses>".format(
+            customer_uuid
+        )
+        assert expected_to_str == method(course_audit)
+
+
+@mark.django_db
+@ddt.ddt
+class TestLearnerDataTransmissionAudit(unittest.TestCase):
+    """
+    Tests of the LearnerDataTransmissionAudit model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``LearnerDataTransmissionAudit`` conversion to string
+        """
+        learner_audit = LearnerDataTransmissionAudit(
+            id=1,
+            enterprise_course_enrollment_id=5,
+            sapsf_user_id='sap_user',
+            course_id='course-v1:edX+DemoX+DemoCourse',
+            course_completed=True,
+            completed_timestamp=1486755998,
+            instructor_name='Professor Professorson',
+            grade='Pass',
+            error_message=None
+        )
+        expected_to_str = "<LearnerDataTransmissionAudit 1 for enterprise enrollment 5, SAP user sap_user," \
+                          " and course course-v1:edX+DemoX+DemoCourse>"
+        assert expected_to_str == method(learner_audit)
+
+
+@mark.django_db
+@ddt.ddt
+class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
+    """
+    Tests of the SAPSuccessFactorsEnterpriseCustomerConfiguration model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` conversion to string
+        """
+        faker = FakerFactory.create()
+        customer_uuid = faker.uuid4()
+        config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer_uuid=customer_uuid,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret'
+        )
+        expected_to_str = "<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {}>".format(
+            customer_uuid
+        )
+        assert expected_to_str == method(config)
+
+
+@mark.django_db
+@ddt.ddt
+class TestSAPSuccessFactorsGlobalConfiguration(unittest.TestCase):
+    """
+    Tests of the SAPSuccessFactorsGlobalConfiguration model.
+    """
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``SAPSuccessFactorsGlobalConfiguration`` conversion to string
+        """
+        config = SAPSuccessFactorsGlobalConfiguration(
+            id=2,
+            completion_status_api_path='completion_status',
+            course_api_path='courses',
+            oauth_api_path='oauth'
+        )
+        expected_to_str = "<SAPSuccessFactorsGlobalConfiguration with id 2>"
+        assert expected_to_str == method(config)

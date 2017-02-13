@@ -34,6 +34,8 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.admin",  # only used in DEBUG mode
     "enterprise",
+    "integrated_channels.integrated_channel",
+    "integrated_channels.sap_success_factors",
 )
 
 MIDDLEWARE_CLASSES = [
