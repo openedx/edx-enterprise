@@ -97,3 +97,14 @@ class EnterpriseCustomerUserSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     enterprise_customer = EnterpriseCustomerSerializer()
     data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True)
+
+
+class EnterpriseCourseEnrollmentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCourseEnrollment model.
+    """
+    class Meta:
+        model = models.EnterpriseCourseEnrollment
+        fields = (
+            'id', 'enterprise_customer_user', 'course_id', 'consent_granted', 'consent_available', 'consent_needed'
+        )
