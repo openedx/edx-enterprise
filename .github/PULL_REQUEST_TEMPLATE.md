@@ -21,6 +21,9 @@ instructions.
 - [ ] tag reviewer 
 
 **Merge checklist:**
+
+- [ ] Regenerate requirements with `make upgrade && make requirements` (and make sure to fix any errors)
+      **DO NOT** just add dependencies to `requirements/*.txt` files.
 - [ ] All reviewers approved
 - [ ] CI build is green
 - [ ] Version bumped
