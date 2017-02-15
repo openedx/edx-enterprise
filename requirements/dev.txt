@@ -35,7 +35,7 @@ futures==3.0.5            # via caniusepython3
 inflect==0.2.5            # via jinja2-pluralize
 isort==4.2.5
 jinja2-pluralize==0.3.0   # via diff-cover
-jinja2==2.9.5             # via diff-cover, jinja2-pluralize
+Jinja2==2.9.5             # via diff-cover, jinja2-pluralize
 lazy-object-proxy==1.2.2  # via astroid
 MarkupSafe==0.23          # via jinja2
 mccabe==0.6.1             # via pylint
@@ -60,10 +60,11 @@ pyparsing==2.1.10         # via packaging
 python-dateutil==2.6.0    # via edx-drf-extensions
 pyYaml==3.12              # via edx-i18n-tools
 requests-toolbelt==0.7.1  # via twine
-requests==2.13.0          # via caniusepython3, edx-drf-extensions, requests-toolbelt, slumber, twine
+requests==2.13.0
 shortuuid==0.5.0          # via edx-django-oauth2-provider
+simplejson==3.10.0
 six==1.10.0               # via astroid, diff-cover, django-extensions, edx-i18n-tools, edx-lint, packaging, pip-tools, pylint, python-dateutil, setuptools
-slumber==0.7.1            # via edx-rest-api-client
+slumber==0.7.1
 tox-battery==0.2.0
 tox==2.6.0
 twine==1.8.1

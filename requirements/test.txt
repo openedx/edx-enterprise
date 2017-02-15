@@ -38,11 +38,12 @@ pytest-cov==2.4.0
 pytest-django==3.1.2
 pytest==3.0.6             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.0    # via edx-drf-extensions, faker, freezegun
-requests==2.13.0          # via edx-drf-extensions, responses, slumber
+requests==2.13.0
 responses==0.5.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
+simplejson==3.10.0
 six==1.10.0               # via django-extensions, faker, freezegun, mock, packaging, python-dateutil, responses, setuptools
-slumber==0.7.1            # via edx-rest-api-client
+slumber==0.7.1
 unicodecsv==0.14.1
 
 # The following packages are considered to be unsafe in a requirements file:
