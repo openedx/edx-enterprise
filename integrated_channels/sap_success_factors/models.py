@@ -2,12 +2,17 @@
 Database models for Enterprise Integrated Channel SAP SuccessFactors.
 """
 
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+
+from config_models.models import ConfigurationModel
+from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-from config_models.models import ConfigurationModel
+
 from model_utils.models import TimeFramedModel
+
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 
 @python_2_unicode_compatible
@@ -40,15 +45,16 @@ class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
 
 
 @python_2_unicode_compatible
-class SAPSuccessFactorsEnterpriseCustomerConfiguration(ConfigurationModel):
+class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise specific configuration we need for integrating with SuccessFactors.
     """
 
-    enterprise_customer_uuid = models.UUIDField(unique=True)
     sapsf_base_url = models.CharField(max_length=255)
     key = models.CharField(max_length=255, blank=True, verbose_name="Client ID")
     secret = models.CharField(max_length=255, blank=True, verbose_name="Client Secret")
+
+    history = HistoricalRecords()
 
     class Meta:
         app_label = 'sap_success_factors'
@@ -57,8 +63,8 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(ConfigurationModel):
         """
         Return human-readable string representation.
         """
-        return "<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {enterprise_uuid}>".format(
-            enterprise_uuid=self.enterprise_customer_uuid
+        return "<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {enterprise_name}>".format(
+            enterprise_name=self.enterprise_customer.name
         )
 
     def __repr__(self):

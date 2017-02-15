@@ -120,6 +120,7 @@ class TestUtils(unittest.TestCase):
                 "branding_configuration",
                 "enterprise_customer_identity_provider",
                 "enterprise_customer_entitlements",
+                "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
                 "modified",
                 "uuid",

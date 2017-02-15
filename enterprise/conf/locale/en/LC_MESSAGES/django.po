@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-28 09:36-0600\n"
+"POT-Creation-Date: 2017-02-28 10:13-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -590,26 +590,18 @@ msgid ""
 "share your data, you will be redirected to your dashboard."
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:22
+#: integrated_channels/integrated_channel/models.py:24
 msgid "Third Party name."
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:23
+#: integrated_channels/integrated_channel/models.py:25
 msgid "Data Type"
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:27
+#: integrated_channels/integrated_channel/models.py:29
 msgid "Enterprise Integrated Channel"
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:28
+#: integrated_channels/integrated_channel/models.py:30
 msgid "Enterprise Integrated Channels"
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:64
-msgid "Enterprise Customer Plugin Configuration"
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:65
-msgid "Enterprise Customer Plugin Configurations"
 msgstr ""
