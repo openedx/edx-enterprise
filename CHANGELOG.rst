@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.22.0] - 2017-02-14
+---------------------
+
+* Added API endpoint for fetching entitlements available to an enterprise learner
+
+
 [0.21.2] - 2017-02-07
 ---------------------
 

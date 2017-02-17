@@ -272,6 +272,58 @@ class EnterpriseCustomerUser(TimeStampedModel):
             return self.user.email
         return None
 
+    @property
+    def entitlements(self):
+        """
+        Return entitlement ids available to the learner along-with consent data.
+
+        Returns an empty list if enterprise customer requires data sharing consent and learner does not agree.
+
+        Returns:
+            (list): A list of entitlements that learner can avail. Each item in the list is a dict with two
+                key-value pairs,
+                {
+                    "requires_consent": True ,
+                    "entitlement_id": 1
+                }
+                "requires_consent": True if learner must consent to data
+                    sharing in order to get benefits of entitlement.
+                "entitlement_id: id of the entitlements available to the learner.
+        """
+        # Check if Enterprise Learner consents to data sharing and store the boolean result
+        learner_consent_state = self.data_sharing_consent.first()
+        learner_consent_enabled = learner_consent_state and learner_consent_state.enabled
+
+        entitlements = self.enterprise_customer.enterprise_customer_entitlements
+
+        # If Enterprise Customer requires account wide consent then we return either all or no entitlement
+        # depending on learner's consent state
+        if self.enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN):
+            return [
+                {
+                    "entitlement_id": entitlement.entitlement_id,
+                    "requires_consent": not learner_consent_enabled,
+                } for entitlement in entitlements.all() if learner_consent_enabled
+            ]
+
+        # If Enterprise Customer requires account course specific consent then we return all entitlements
+        # including whether or not to acquire learner's consent.
+        if self.enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT):
+            return [
+                {
+                    "entitlement_id": entitlement.entitlement_id,
+                    "requires_consent": not learner_consent_enabled,
+                } for entitlement in entitlements.all()
+            ]
+
+        # for all other cases learner is eligible to all entitlements.
+        return [
+            {
+                "entitlement_id": entitlement.entitlement_id,
+                "requires_consent": False,
+            } for entitlement in entitlements.all()
+            ]
+
     def __str__(self):
         """
         Return human-readable string representation.

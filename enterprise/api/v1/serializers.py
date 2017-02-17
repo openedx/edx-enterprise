@@ -97,3 +97,27 @@ class EnterpriseCustomerUserSerializer(serializers.ModelSerializer):
     user = UserSerializer()
     enterprise_customer = EnterpriseCustomerSerializer()
     data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True)
+
+
+class EnterpriseCustomerUserEntitlementSerializer(serializers.Serializer):
+    """
+    Serializer for the entitlements of EnterpriseCustomerUser.
+
+    This Serializer is for read only endpoint of enterprise learner's entitlements
+    It will ignore any state changing requests like POST, PUT and PATCH.
+    """
+    entitlements = serializers.ListField(
+        child=serializers.DictField()
+    )
+
+    def create(self, validated_data):
+        """
+        Do not perform any operations for state changing requests.
+        """
+        pass
+
+    def update(self, instance, validated_data):
+        """
+        Do not perform any operations for state changing requests.
+        """
+        pass
