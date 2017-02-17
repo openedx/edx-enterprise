@@ -95,6 +95,8 @@ class EnterpriseCustomerManageLearnersView(View):
         MANAGE_LEARNERS_FORM = "manage_learners_form"
         SEARCH_KEYWORD = "search_keyword"
         ENROLLMENT_URL = 'ENROLLMENT_API_ROOT_URL'
+        UNLINKED_LEARNERS = 'unlinked_learners'
+        BULK_UNLINK_SUBMIT = 'BULK_UNLINK_SUBMIT'
 
     @staticmethod
     def _build_admin_context(request, customer):
@@ -119,6 +121,7 @@ class EnterpriseCustomerManageLearnersView(View):
         search_keyword = self.get_search_keyword(request)
         linked_learners = self.get_enterprise_customer_user_queryset(search_keyword, customer_uuid)
         pending_linked_learners = self.get_pending_users_queryset(search_keyword, customer_uuid)
+        unlinked_learners = self.get_unlinked_users_queryset(search_keyword, customer_uuid)
 
         context = {
             self.ContextParameters.ENTERPRISE_CUSTOMER: enterprise_customer,
@@ -126,6 +129,8 @@ class EnterpriseCustomerManageLearnersView(View):
             self.ContextParameters.LEARNERS: linked_learners,
             self.ContextParameters.SEARCH_KEYWORD: search_keyword or '',
             self.ContextParameters.ENROLLMENT_URL: settings.ENTERPRISE_ENROLLMENT_API_URL,
+            self.ContextParameters.UNLINKED_LEARNERS: unlinked_learners,
+            self.ContextParameters.BULK_UNLINK_SUBMIT: ManageLearnersForm.Fields.BULK_UNLINK_SUBMIT,
         }
         context.update(admin.site.each_context(request))
         context.update(self._build_admin_context(request, enterprise_customer))
@@ -177,6 +182,28 @@ class EnterpriseCustomerManageLearnersView(View):
 
         return queryset
 
+    def get_unlinked_users_queryset(self, search_keyword, customer_uuid):
+        """
+        Get the list of unlinked EnterpriseCustomerUsers we want to render.
+
+        Args:
+            search_keyword (str): The keyword to search for in users' email addresses and usernames.
+            customer_uuid (str): A unique identifier to filter down to only users linked to a
+            particular EnterpriseCustomer.
+        """
+        learners = EnterpriseCustomerUser.deactivated.filter(
+            enterprise_customer__uuid=customer_uuid
+        )
+        if search_keyword is not None:
+            user_ids = learners.values_list('user_id', flat=True)
+            matching_users = User.objects.filter(
+                Q(pk__in=user_ids),
+                Q(email__icontains=search_keyword) | Q(username__icontains=search_keyword)
+            )
+            matching_user_ids = matching_users.values_list('pk', flat=True)
+            learners = learners.filter(user_id__in=matching_user_ids)
+        return learners
+
     @classmethod
     def _handle_singular(cls, enterprise_customer, manage_learners_form):
         """
@@ -195,6 +222,23 @@ class EnterpriseCustomerManageLearnersView(View):
         else:
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]
+
+    @classmethod
+    def _handle_bulk_unlink(cls, enterprise_customer, unlink_emails):
+        """
+        Bulk unlink users by email.
+
+        Arguments:
+            enterprise_customer (EnterpriseCustomer): learners will be linked to this Enterprise Customer instance
+            unlink_emails (iterable): A list of pre-processed email addresses to unlink
+        """
+        for email_to_unlink in unlink_emails:
+            try:
+                EnterpriseCustomerUser.objects.unlink_user(
+                    enterprise_customer=enterprise_customer, user_email=email_to_unlink
+                )
+            except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
+                pass
 
     @classmethod
     def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request, email_list=None):
@@ -435,6 +479,13 @@ class EnterpriseCustomerManageLearnersView(View):
 
         # initial form validation - check that form data is well-formed
         if manage_learners_form.is_valid():
+            if ManageLearnersForm.Fields.BULK_UNLINK_SUBMIT in manage_learners_form.data:
+                unlink_emails = split_usernames_and_emails(
+                    manage_learners_form.cleaned_data[ManageLearnersForm.Fields.UNLINK_EMAILS]
+                )
+                self._handle_bulk_unlink(enterprise_customer, unlink_emails)
+                return HttpResponseRedirect("")
+
             email_field_as_bulk_input = split_usernames_and_emails(
                 manage_learners_form.cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME]
             )

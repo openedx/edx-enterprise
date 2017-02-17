@@ -98,6 +98,7 @@ global Javascript variables that can be used in any of the loaded packages.
         <th>{% trans "Username" %}</th>
         <th>{% trans "Linked Date" %}</th>
         <th>{% trans "Enroll" %}</th>
+        <th>{% trans "Unlink" %}</th>
         <th></th>
       </tr>
       </thead>
@@ -112,6 +113,7 @@ global Javascript variables that can be used in any of the loaded packages.
         <td>{{ learner.user.username }}</td>
         <td>{{ learner.created }}</td>
         <td><input type="checkbox" class="enroll-checkbox"></td>
+        <td><input type="checkbox" class="unlink-checkbox"></td>
         <td class="delete-cell"><input type="button" value="Unlink"></td>
       </tr>
       {% endfor %}
@@ -125,6 +127,7 @@ global Javascript variables that can be used in any of the loaded packages.
         <th>{% trans "User Email" %}</th>
         <th>{% trans "Linked Date" %}</th>
         <th>{% trans "Enroll" %}</th>
+        <th>{% trans "Unlink" %}</th>
         <th></th>
       </tr>
       </thead>
@@ -138,19 +141,41 @@ global Javascript variables that can be used in any of the loaded packages.
         </td>
         <td>{{ learner.created }}</td>
         <td><input type="checkbox" class="enroll-checkbox"></td>
+        <td><input type="checkbox" class="unlink-checkbox"></td>
         <td class="delete-cell"><input type="button" value="Unlink"></td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <h1>Deactivated learners</h1>
+    <table class="learners-table deactivated-learners">
+      <thead>
+      <tr>
+        <th>{% trans "User Email" %}</th>
+        <th>{% trans "Username" %}</th>
+      </tr>
+      </thead>
+      <tbody>
+      {% for learner in unlinked_learners %}
+      <tr class="form-row {% cycle 'row1' 'row2' %}" data-email="{{ learner.user_email }}">
+        <td class="email-container">
+          {{ learner.user_email }}
+        </td>
+        <td>{{ learner.user.username }}</td>
       </tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
   <div class="forms-panel">
-    <h1>{% trans "Link learners" %}</h1>
     <form action="" method="post" enctype="multipart/form-data" id="learner-management-form">
+      <h1>{% trans "Link learners" %}</h1>
       {% csrf_token %}
       {# as_p will render the form fields wrapped in <p> tags: #}
       {{ manage_learners_form.as_p }}
       <input type="submit" value="Submit"/>
+      <h1>{% trans "Unlink learners" %}</h1>
+      <input type="submit" value="Submit" name="{{BULK_UNLINK_SUBMIT}}" />
     </form>
   </div>
 </div>
