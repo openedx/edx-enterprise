@@ -46,7 +46,7 @@ setup(
     ],
     include_package_data=True,
     install_requires=[
-        "Django>=1.8.15,<1.11",
+        "Django>=1.8.15,<1.10",
         "django-model-utils>=2.0",
         "unicodecsv>=0.14.1",
         "django-autoslug>=1.9.3",

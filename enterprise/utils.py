@@ -13,11 +13,11 @@ from django.apps import apps
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.urlresolvers import reverse
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 import enterprise
-from enterprise.django_compatibility import reverse
 from six.moves.urllib.parse import urlparse, urlunparse  # pylint: disable=import-error,wrong-import-order
 
 try:
