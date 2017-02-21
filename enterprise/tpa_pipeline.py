@@ -13,7 +13,7 @@ from enterprise.utils import NotConnectedToEdX
 try:
     from social.pipeline.partial import partial
 except ImportError:
-    from enterprise.utils import null_decorator as partial
+    from enterprise.utils import null_decorator as partial  # pylint:disable=ungrouped-imports
 
 try:
     from third_party_auth.provider import Registry

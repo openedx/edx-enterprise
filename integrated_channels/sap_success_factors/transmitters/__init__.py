@@ -10,4 +10,3 @@ class SuccessFactorsTransmitterBase(object):
     """
     def __init__(self):
         super(SuccessFactorsTransmitterBase, self).__init__()
-

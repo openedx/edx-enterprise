@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.22.1] - 2017-02-20
+---------------------
+
+* Course Catalog API degrades gracefully in absence of Course Catalog service.
+
+
 [0.22.0] - 2017-02-14
 ---------------------
 

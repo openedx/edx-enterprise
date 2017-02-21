@@ -18,7 +18,7 @@ from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_
 from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
-from enterprise.django_compatibility import reverse
+from django.core.urlresolvers import reverse
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (  # pylint:disable=no-name-in-module
     EnrollmentNotificationEmailTemplate, EnterpriseCustomer, EnterpriseCustomerUser,

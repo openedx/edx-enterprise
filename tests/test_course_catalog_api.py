@@ -53,6 +53,8 @@ class TestCourseCatalogApi(unittest.TestCase):
     """
     CATALOG_API_PATCH_PREFIX = "enterprise.course_catalog_api"
 
+    EMPTY_RESPONSES = (None, {}, [], set(), "")
+
     def _make_catalog_api_location(self, catalog_api_member):
         """
         Return path for `catalog_api_member` to mock.
@@ -111,6 +113,12 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert resource_id is None
         assert actual_result == response_dict
 
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_all_catalogs_empty_response(self, response):
+        self.get_data_mock.return_value = response
+
+        assert self.api.get_all_catalogs() == []
+
     @ddt.data(
         "course-v1:JediAcademy+AppliedTelekinesis+T1",
         "course-v1:TrantorAcademy+Psychohistory101+T1",
@@ -131,6 +139,12 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert resource_id is course_run_id
         assert actual_result == response_dict
 
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_course_run_empty_response(self, response):
+        self.get_data_mock.return_value = response
+
+        assert self.api.get_course_run("any") == {}
+
     @ddt.data("Apollo", "Star Wars", "mk Ultra")
     def test_get_program_by_uuid(self, program_id):
         response_dict = {"very": "complex", "json": {"with": " nested object"}}
@@ -144,6 +158,12 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert resource == "programs"
         assert resource_id is program_id
         assert actual_result == response_dict
+
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_program_by_uuid_empty_response(self, response):
+        self.get_data_mock.return_value = response
+
+        assert self.api.get_program_by_uuid("any") is None
 
     @ddt.unpack
     @ddt.data(
@@ -165,6 +185,12 @@ class TestCourseCatalogApi(unittest.TestCase):
 
         assert resource == "programs"
         assert actual_result == expected_result
+
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_program_by_title_empty_response(self, response):
+        self.get_data_mock.return_value = response
+
+        assert self.api.get_program_by_title("any") is None
 
     def test_get_program_by_title_raise_multiple_match(self):
         self.get_data_mock.return_value = [
