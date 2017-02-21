@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
+import ddt
 import mock
 from pytest import mark, raises
 
@@ -26,6 +27,7 @@ def fake_render(template, context, request):  # pylint: disable=unused-argument
 
 
 @mark.django_db
+@ddt.ddt
 class TestGrantDataSharingPermissions(unittest.TestCase):
     """
     Test GrantDataSharingPermissions.
@@ -375,7 +377,82 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
+    @ddt.data(
+        (False, False),
+        (True, True),
+    )
+    @ddt.unpack
     def test_get_course_specific_consent(
+            self,
+            enrollment_deferred,
+            supply_customer_uuid,
+            course_api_client_mock,
+            render_mock,  # pylint: disable=unused-argument
+            mock_config,
+            *args  # pylint: disable=unused-argument
+    ):
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        mock_config.get_value.return_value = 'My Platform'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        params = {
+            'course_id': 'course-v1:edX+DemoX+Demo_Course',
+            'next': 'https://google.com'
+        }
+        if enrollment_deferred:
+            params['enrollment_deferred'] = True
+        if supply_customer_uuid:
+            params['enterprise_id'] = str(enterprise_customer.uuid)
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 200
+        for key, value in {
+                "platform_name": "My Platform",
+                "data_sharing_consent": "required",
+                "messages": {
+                    "note": (
+                        "Courses from Starfleet Academy require data sharing consent. If you do not agree to "
+                        "share your data, you will be redirected to your dashboard."
+                    ),
+                    "warning": (
+                        "Are you sure? If you do not agree to share your data "
+                        "with Starfleet Academy, you cannot access edX Demo Course."
+                    ),
+                },
+                "course_id": "course-v1:edX+DemoX+Demo_Course",
+                "course_name": "edX Demo Course",
+                "redirect_url": "https://google.com",
+                "enterprise_customer_name": ecu.enterprise_customer.name,
+                "course_specific": True,
+                "enrollment_deferred": enrollment_deferred,
+        }.items():
+            assert response.context[key] == value  # pylint:disable=no-member
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_invalid_params(
             self,
             course_api_client_mock,
             render_mock,  # pylint: disable=unused-argument
@@ -402,30 +479,13 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             enterprise_customer_user=ecu,
             course_id=course_id
         )
-        response = self.client.get(
-            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
-        )
-        assert response.status_code == 200
-        for key, value in {
-                "platform_name": "My Platform",
-                "data_sharing_consent": "required",
-                "messages": {
-                    "note": (
-                        "Courses from Starfleet Academy require data sharing consent. If you do not agree to "
-                        "share your data, you will be redirected to your dashboard."
-                    ),
-                    "warning": (
-                        "Are you sure? If you do not agree to share your data "
-                        "with Starfleet Academy, you cannot access edX Demo Course."
-                    ),
-                },
-                "course_id": "course-v1:edX+DemoX+Demo_Course",
-                "course_name": "edX Demo Course",
-                "redirect_url": "https://google.com",
-                "enterprise_customer_name": ecu.enterprise_customer.name,
-                "course_specific": True
-        }.items():
-            assert response.context[key] == value  # pylint:disable=no-member
+        params = {
+            'course_id': 'course-v1:edX+DemoX+Demo_Course',
+            'next': 'https://google.com',
+            'enrollment_deferred': True,
+        }
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 404
 
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -556,8 +616,16 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
-    def test_post_course_specific_consent(self, reverse_mock, *args):  # pylint: disable=unused-argument
+    @ddt.data(True, False)
+    def test_post_course_specific_consent(
+            self,
+            enrollment_deferred,
+            reverse_mock,
+            course_api_client_mock,
+            *args  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         data_sharing_consent = True
@@ -574,19 +642,23 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             enterprise_customer_user=ecu,
             course_id=course_id
         )
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
         reverse_mock.return_value = '/dashboard'
-        resp = self.client.post(
-            self.url,
-            data={
-                'course_id': course_id,
-                'data_sharing_consent': data_sharing_consent,
-                'redirect_url': '/successful_enrollment'
-            },
-        )
+        post_data = {
+            'course_id': course_id,
+            'data_sharing_consent': data_sharing_consent,
+            'redirect_url': '/successful_enrollment',
+        }
+        if enrollment_deferred:
+            post_data['enrollment_deferred'] = True
+        resp = self.client.post(self.url, post_data)
         assert resp.url.endswith('/successful_enrollment')  # pylint: disable=no-member
         assert resp.status_code == 302
         enrollment.refresh_from_db()
-        assert enrollment.consent_granted is True
+        assert enrollment.consent_granted is not enrollment_deferred
 
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -596,8 +668,14 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
-    def test_post_course_specific_consent_not_provided(self, reverse_mock, *args):  # pylint: disable=unused-argument
+    def test_post_course_specific_consent_not_provided(
+            self,
+            reverse_mock,
+            course_api_client_mock,
+            *args  # pylint: disable=unused-argument
+    ):
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
@@ -613,6 +691,10 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             enterprise_customer_user=ecu,
             course_id=course_id
         )
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
         reverse_mock.return_value = '/dashboard'
         resp = self.client.post(
             self.url,
@@ -634,9 +716,60 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
-    def test_post_course_specific_consent_no_user(self, reverse_mock, *args):  # pylint: disable=unused-argument
+    def test_post_course_specific_consent_no_user(
+            self,
+            reverse_mock,
+            course_api_client_mock,
+            *args  # pylint: disable=unused-argument
+    ):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        reverse_mock.return_value = '/dashboard'
+        resp = self.client.post(
+            self.url,
+            data={
+                'course_id': course_id,
+                'redirect_url': '/successful_enrollment'
+            },
+        )
+        assert resp.status_code == 404
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.reverse')
+    def test_post_course_specific_consent_bad_api_response(
+            self,
+            reverse_mock,
+            course_api_client_mock,
+            *args  # pylint: disable=unused-argument
+    ):
+        self._login()
+        course_id = 'course-v1:does+not+exist'
         data_sharing_consent = True
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -651,6 +784,8 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             enterprise_customer_user=ecu,
             course_id=course_id
         )
+        client = course_api_client_mock.return_value
+        client.get_course_details.side_effect = HttpClientError
         reverse_mock.return_value = '/dashboard'
         resp = self.client.post(
             self.url,

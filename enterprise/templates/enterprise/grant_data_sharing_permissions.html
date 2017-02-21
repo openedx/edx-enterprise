@@ -61,6 +61,9 @@ from openedx.core.djangolib.js_utils import dump_js_escaped_json
                     % if redirect_url:
                         <input type="hidden" name="redirect_url" value="${redirect_url}" />
                     % endif
+                    % if enrollment_deferred:
+                        <input type="hidden" name="enrollment_deferred" value="true" />
+                    % endif
                     <button type="submit" class="action-primary action">Submit</button>
                     <p class="note">*${ messages['note'] }
                 </form>

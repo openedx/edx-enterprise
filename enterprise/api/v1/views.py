@@ -15,11 +15,12 @@ from django.contrib.sites.models import Site
 
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend
+from enterprise.api.permissions import IsServiceUserOrReadOnly
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 
 
-class EnterpriseReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
+class EnterpriseModelViewSet(object):
     """
     Base class for attribute and method definitions common to all view sets.
     """
@@ -27,6 +28,20 @@ class EnterpriseReadOnlyModelViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (OAuth2Authentication, SessionAuthentication, BearerAuthentication, JwtAuthentication)
     throttle_classes = (ServiceUserThrottle,)
+
+
+class EnterpriseReadOnlyModelViewSet(EnterpriseModelViewSet, viewsets.ReadOnlyModelViewSet):
+    """
+    Base class for all read only Enterprise model view sets.
+    """
+    pass
+
+
+class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelViewSet):
+    """
+    Base class for all read/write Enterprise model view sets.
+    """
+    permission_classes = (permissions.IsAuthenticated, IsServiceUserOrReadOnly,)
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
@@ -42,6 +57,27 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+
+class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
+    """
+    API views for `enterprise course enrollment` api endpoint.
+    """
+    queryset = models.EnterpriseCourseEnrollment.objects.all()
+
+    FIELDS = (
+        'enterprise_customer_user', 'consent_granted', 'course_id'
+    )
+    filter_fields = FIELDS
+    ordering_fields = FIELDS
+
+    def get_serializer_class(self):
+        """
+        Use a special serializer for any requests that aren't read-only.
+        """
+        if self.request.method in ('GET', ):
+            return serializers.EnterpriseCourseEnrollmentReadOnlySerializer
+        return serializers.EnterpriseCourseEnrollmentWriteSerializer
 
 
 class SiteViewSet(EnterpriseReadOnlyModelViewSet):
@@ -70,12 +106,11 @@ class UserViewSet(EnterpriseReadOnlyModelViewSet):
     ordering_fields = FIELDS
 
 
-class EnterpriseCustomerUserViewSet(EnterpriseReadOnlyModelViewSet):
+class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for `enterprise customer user` api endpoint.
     """
     queryset = models.EnterpriseCustomerUser.objects.all()
-    serializer_class = serializers.EnterpriseCustomerUserSerializer
     filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
 
     FIELDS = (
@@ -83,6 +118,14 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+    def get_serializer_class(self):
+        """
+        Use a flat serializer for any requests that aren't read-only.
+        """
+        if self.request.method in ('GET', ):
+            return serializers.EnterpriseCustomerUserReadOnlySerializer
+        return serializers.EnterpriseCustomerUserWriteSerializer
 
     @detail_route()
     def entitlements(self, request, pk=None):  # pylint: disable=invalid-name,unused-argument

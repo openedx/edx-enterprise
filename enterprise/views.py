@@ -146,6 +146,16 @@ class GrantDataSharingPermissions(View):
         This particular variant of the method is called when a `course_id` parameter
         is passed to the view. In this case, the form is rendered with information
         about the specific course that's being set up.
+
+        A 404 will be raised if any of the following conditions are met:
+            * Enrollment is not to be deferred, but there is no EnterpriseCourseEnrollment
+              associated with the current user.
+            * Enrollment is not to be deferred and there's an EnterpriseCourseEnrollment
+              associated with the current user, but the corresponding EnterpriseCustomer
+              does not require course-level consent for this course.
+            * Enrollment is to be deferred, but either no EnterpriseCustomer was
+              supplied (via the enrollment_deferred GET parameter) or the supplied
+              EnterpriseCustomer doesn't exist.
         """
         try:
             client = CourseApiClient()
@@ -154,13 +164,24 @@ class GrantDataSharingPermissions(View):
             raise Http404
         next_url = request.GET.get('next')
 
-        customer = get_object_or_404(
-            EnterpriseCourseEnrollment,
-            enterprise_customer_user__user_id=request.user.id,
-            course_id=course_id
-        ).enterprise_customer_user.enterprise_customer
-        if not consent_necessary_for_course(request.user, course_id):
-            raise Http404
+        enrollment_deferred = request.GET.get('enrollment_deferred')
+        if enrollment_deferred is None:
+            customer = get_object_or_404(
+                EnterpriseCourseEnrollment,
+                enterprise_customer_user__user_id=request.user.id,
+                course_id=course_id
+            ).enterprise_customer_user.enterprise_customer
+
+            if not consent_necessary_for_course(request.user, course_id):
+                raise Http404
+        else:
+            # For deferred enrollment, expect to receive the EnterpriseCustomer from the GET parameters,
+            # which is used for display purposes.
+            enterprise_uuid = request.GET.get('enterprise_id')
+            if not enterprise_uuid:
+                raise Http404
+            customer = get_object_or_404(EnterpriseCustomer, uuid=enterprise_uuid)
+
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
         course_name = course_details['name']
         data = {
@@ -175,6 +196,7 @@ class GrantDataSharingPermissions(View):
             'redirect_url': next_url,
             'enterprise_customer_name': customer.name,
             'course_specific': True,
+            'enrollment_deferred': enrollment_deferred is not None,
         }
         return render_to_response('grant_data_sharing_permissions.html', data, request=request)
 
@@ -208,6 +230,7 @@ class GrantDataSharingPermissions(View):
             },
             "course_id": None,
             "course_specific": False,
+            'enrollment_deferred': False,
         }
         return render_to_response('grant_data_sharing_permissions.html', data, request=request)
 
@@ -232,13 +255,21 @@ class GrantDataSharingPermissions(View):
         if not request.user.is_authenticated():
             raise Http404
 
-        EnterpriseCourseEnrollment.objects.update_or_create(
-            enterprise_customer_user__user_id=request.user.id,
-            course_id=course_id,
-            defaults={
-                'consent_granted': consent_provided,
-            }
-        )
+        try:
+            client = CourseApiClient()
+            client.get_course_details(course_id)
+        except HttpClientError:
+            raise Http404
+
+        enrollment_deferred = request.POST.get('enrollment_deferred')
+        if enrollment_deferred is None:
+            EnterpriseCourseEnrollment.objects.update_or_create(
+                enterprise_customer_user__user_id=request.user.id,
+                course_id=course_id,
+                defaults={
+                    'consent_granted': consent_provided,
+                }
+            )
         if not consent_provided:
             return redirect(reverse('dashboard'))
         return redirect(request.POST.get('redirect_url', reverse('dashboard')))

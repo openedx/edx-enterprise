@@ -11,7 +11,7 @@ from faker import Factory as FakerFactory
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
-from enterprise.models import (EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
+from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
                                EnterpriseCustomerEntitlement, EnterpriseCustomerIdentityProvider,
                                EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser,
                                UserDataSharingConsentAudit)
@@ -199,3 +199,23 @@ class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
     entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+
+class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCourseEnrollment factory.
+
+    Creates an instance of EnterpriseCourseEnrollment with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for EnterpriseCourseEnrollmentFactory.
+        """
+
+        model = EnterpriseCourseEnrollment
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    consent_granted = True
+    enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)

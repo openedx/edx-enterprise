@@ -5,7 +5,7 @@ from __future__ import absolute_import, unicode_literals
 
 from rest_framework.throttling import UserRateThrottle
 
-from django.conf import settings
+from enterprise.api.utils import get_service_usernames
 
 SERVICE_USER_SCOPE = 'service_user'
 
@@ -36,10 +36,7 @@ class ServiceUserThrottle(UserRateThrottle):
             }
             ```
         """
-        service_users = {
-            getattr(settings, 'ECOMMERCE_SERVICE_WORKER_USERNAME', None),
-            getattr(settings, 'ENTERPRISE_SERVICE_WORKER_USERNAME', None),
-        }
+        service_users = get_service_usernames()
 
         # User service user throttling rates for service user.
         if request.user.username in service_users:
