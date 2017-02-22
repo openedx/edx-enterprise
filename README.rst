@@ -59,8 +59,12 @@ Please read `How To Contribute <https://github.com/edx/edx-platform/blob/master/
 Even though they were written with ``edx-platform`` in mind, the guidelines
 should be followed for Open edX code in general.
 
-PR description template can be found at
-`PR_TEMPLATE.md <https://github.com/edx/edx-enterprise/blob/master/PR_TEMPLATE.md>`_
+PR description template can be found at`PULL_REQUEST_TEMPLATE.md`_ - it is automatially applied if you're sending a PR
+from GitHub, but please make sure to use it if sending PR via other channels.
+
+.. _PULL_REQUEST_TEMPLATE.md: https://github.com/edx/edx-enterprise/blob/master/.github/PULL_REQUEST_TEMPLATE_TEMPLATE.md
+
+After submitting Pull Request, please use "Reviewers" widget to add relevant reviewers and track review process.
 
 Reporting Security Issues
 -------------------------
