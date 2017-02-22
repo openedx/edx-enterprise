@@ -279,10 +279,25 @@ class GrantDataSharingPermissions(View):
         Interpret the account-wide form above, and save it to a UserDataSharingConsentAudit object for later retrieval.
         """
         self.lift_quarantine(request)
+
+        # Load the linked EnterpriseCustomer for this request. Return a 404 if no such EnterpriseCustomer exists
         customer = get_enterprise_customer_for_request(request)
         if customer is None:
             raise Http404
-        user = get_real_social_auth_object(request).user
+
+        # Attempt to retrieve a user being manipulated by the third-party auth
+        # pipeline. Return a 404 if no such user exists.
+        social_auth = get_real_social_auth_object(request)
+        user = getattr(social_auth, 'user', None)
+        if user is None:
+            raise Http404
+
+        if not consent_provided and active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN):
+            # Flush the session to avoid the possibility of accidental login and to abort the pipeline.
+            # pipeline is flushed only if data sharing is enforced, in other cases let the user to login.
+            request.session.flush()
+            return redirect(reverse('dashboard'))
+
         ec_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             user_id=user.id,
             enterprise_customer=customer,
@@ -297,12 +312,6 @@ class GrantDataSharingPermissions(View):
                 )
             }
         )
-        if not consent_provided:
-            # Flush the session to avoid the possibility of accidental login and to abort the pipeline.
-            # pipeline is flushed only if data sharing is enforced, in other cases let the user to login.
-            if active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN):
-                request.session.flush()
-                return redirect(reverse('dashboard'))
 
         # Resume auth pipeline
         backend_name = request.session.get('partial_pipeline', {}).get('backend')
