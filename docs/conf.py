@@ -13,6 +13,7 @@
 import datetime
 import os
 import sys
+from subprocess import check_call
 
 # on_rtd is whether we are on readthedocs.org
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
@@ -34,6 +35,7 @@ sys.path.append(REPO_ROOT)
 
 import django
 from django.conf import settings
+from django.utils import six
 settings.configure()
 django.setup()
 
@@ -45,11 +47,12 @@ django.setup()
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'enterprise'
+    'enterprise',
     'sphinx.ext.autodoc',
     'sphinx.ext.intersphinx',
     'sphinx.ext.napoleon'
 ]
+import enterprise
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -66,10 +69,11 @@ master_doc = 'index'
 # General information about the project.
 author = 'edX, Inc.'
 project = u'Open edX Enterprise Service'
-doc_title = project + u' Documentation'
-copyright = u'2016-{year}, {org}.'.format(
+title = project + u' Documentation'
+target = 'edx-enterprise'
+copyright = u'2016-{year}, {author}.'.format(
     year=datetime.date.today().year,
-    org=author
+    author=author
 )
 
 # The version info for the project you're documenting, acts as replacement for
@@ -212,7 +216,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ('index', 'enterprise.tex', doc_title, author, 'manual'),
+    (master_doc, '{target}.tex'.format(target=target), title, author, 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -241,7 +245,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', project, doc_title, [author], 1)
+    (master_doc, project, title, [author], 1)
 ]
 
 # If true, show URL addresses after external links.
@@ -254,8 +258,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    ('index', project, doc_title, author,
-     project, project, 'Miscellaneous'),
+    (master_doc, target, title, author, project, title, 'Miscellaneous'),
 ]
 
 
@@ -269,5 +272,119 @@ texinfo_documents = [
 # texinfo_show_urls = 'footnote'
 
 
+# -- Options for Epub output ----------------------------------------------
+
+# Bibliographic Dublin Core info.
+epub_title = title
+epub_author = author
+epub_publisher = author
+epub_copyright = copyright
+
+# The basename for the epub file. It defaults to the project name.
+# epub_basename = project
+
+# The HTML theme for the epub output. Since the default themes are not
+# optimized for small screen space, using the same theme for HTML and epub
+# output is usually not wise. This defaults to 'epub', a theme designed to save
+# visual space.
+#
+# epub_theme = 'epub'
+
+# The language of the text. It defaults to the language option
+# or 'en' if the language is not set.
+#
+# epub_language = ''
+
+# The scheme of the identifier. Typical schemes are ISBN or URL.
+# epub_scheme = ''
+
+# The unique identifier of the text. This can be a ISBN number
+# or the project homepage.
+#
+# epub_identifier = ''
+
+# A unique identification for the text.
+#
+# epub_uid = ''
+
+# A tuple containing the cover image and cover page html template filenames.
+#
+# epub_cover = ()
+
+# A sequence of (type, uri, title) tuples for the guide element of content.opf.
+#
+# epub_guide = ()
+
+# HTML files that should be inserted before the pages created by sphinx.
+# The format is a list of tuples containing the path and title.
+#
+# epub_pre_files = []
+
+# HTML files that should be inserted after the pages created by sphinx.
+# The format is a list of tuples containing the path and title.
+#
+# epub_post_files = []
+
+# A list of files that should not be packed into the epub file.
+epub_exclude_files = ['search.html']
+
+# The depth of the table of contents in toc.ncx.
+#
+# epub_tocdepth = 3
+
+# Allow duplicate toc entries.
+#
+# epub_tocdup = True
+
+# Choose between 'default' and 'includehidden'.
+#
+# epub_tocscope = 'default'
+
+# Fix unsupported image types using the Pillow.
+#
+# epub_fix_images = False
+
+# Scale large images.
+#
+# epub_max_image_width = 0
+
+# How to display URL addresses: 'footnote', 'no', or 'inline'.
+#
+# epub_show_urls = 'inline'
+
+# If false, no index is generated.
+#
+# epub_use_index = True
+
+
+# Example configuration for intersphinx: refer to the Python standard library.
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3.5', None),
+    'django': ('https://docs.djangoproject.com/en/1.10/', 'https://docs.djangoproject.com/en/1.10/_objects/'),
+    'model_utils': ('https://django-model-utils.readthedocs.io/en/latest/', None),
+}
+
+
+def on_init(app):  # pylint: disable=unused-argument
+    """
+    Run sphinx-apidoc after Sphinx initialization.
+
+    Read the Docs won't run tox or custom shell commands, so we need this to
+    avoid checking in the generated reStructuredText files.
+    """
+    docs_path = os.path.abspath(os.path.dirname(__file__))
+    root_path = os.path.abspath(os.path.join(docs_path, '..'))
+    apidoc_path = 'sphinx-apidoc'
+    if hasattr(sys, 'real_prefix'):  # Check to see if we are in a virtualenv
+        # If we are, assemble the path manually
+        bin_path = os.path.abspath(os.path.join(sys.prefix, 'bin'))
+        apidoc_path = os.path.join(bin_path, apidoc_path)
+    check_call([apidoc_path, '-o', docs_path, os.path.join(root_path, 'enterprise'),
+                os.path.join(root_path, 'enterprise/migrations')])
+
+
 def setup(app):
+    """Sphinx extension: run sphinx-apidoc."""
+    event = 'builder-inited' if six.PY3 else b'builder-inited'
     app.add_stylesheet('theme_overrides.css')
+    app.connect(event, on_init)
