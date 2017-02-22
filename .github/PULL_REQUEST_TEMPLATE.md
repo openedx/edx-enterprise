@@ -16,14 +16,10 @@ instructions.
 3. Expect C to happen
 4. If D happend instead - check failed.
 
-**Reviewers:**
-- [ ] tag reviewer 
-- [ ] tag reviewer 
-
 **Merge checklist:**
 
-- [ ] Regenerate requirements with `make upgrade && make requirements` (and make sure to fix any errors)
-      **DO NOT** just add dependencies to `requirements/*.txt` files.
+- [ ] Regenerate requirements with `make upgrade && make requirements` (and make sure to fix any errors).
+  **DO NOT** just add dependencies to `requirements/*.txt` files.
 - [ ] All reviewers approved
 - [ ] CI build is green
 - [ ] Version bumped
@@ -35,8 +31,7 @@ instructions.
 
 **Post merge:**
 - [ ] Create a tag
-- [ ] Check new version is pushed to PyPi after tag-triggered build is 
-      finished.
+- [ ] Check new version is pushed to PyPi after tag-triggered build is finished.
 - [ ] Delete working branch (if not needed anymore)
 
 **Author concerns:** List any concerns about this PR - inelegant 
