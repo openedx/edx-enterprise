@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-12 18:44-0600\n"
+"POT-Creation-Date: 2017-02-22 13:33-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -297,87 +297,87 @@ msgid ""
 "environment."
 msgstr ""
 
-#: enterprise/models.py:74
+#: enterprise/models.py:75
 msgid "Enterprise Customer"
 msgstr ""
 
-#: enterprise/models.py:75
+#: enterprise/models.py:76
 msgid "Enterprise Customers"
 msgstr ""
 
-#: enterprise/models.py:81
+#: enterprise/models.py:82
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:85
+#: enterprise/models.py:86
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:103
+#: enterprise/models.py:104
 msgid ""
 "This field is used to determine whether data sharing consent is enabled or "
 "disabled for users signing in using this enterprise customer. If disabled, "
 "consent will not be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:115
+#: enterprise/models.py:116
 msgid ""
 "This field determines if data sharing consent is optional, if it's required "
 "at login, or if it's required when registering for eligible courses."
 msgstr ""
 
-#: enterprise/models.py:247
+#: enterprise/models.py:249
 msgid "Enterprise Customer User"
 msgstr ""
 
-#: enterprise/models.py:248
+#: enterprise/models.py:250
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:405
+#: enterprise/models.py:463
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:413
+#: enterprise/models.py:472
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:414
+#: enterprise/models.py:473
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:527
+#: enterprise/models.py:589
 msgid ""
 "Stores whether the user linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:568
+#: enterprise/models.py:631
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:569
+#: enterprise/models.py:632
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:576
+#: enterprise/models.py:639
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:617
+#: enterprise/models.py:680
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:622
+#: enterprise/models.py:685
 msgid "Whether the learner has granted consent for this particular course."
 msgstr ""
 
-#: enterprise/models.py:629
+#: enterprise/models.py:692
 msgid "The course ID in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:700
+#: enterprise/models.py:763
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer users. The following "
@@ -399,7 +399,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:718
+#: enterprise/models.py:781
 #, python-brace-format
 msgid ""
 "Fill in a string that can be used to generate a dynamic subject line for "
@@ -537,49 +537,73 @@ msgstr ""
 msgid "The logo image file size must be less than 4KB."
 msgstr ""
 
-#: enterprise/views.py:55
+#: enterprise/views.py:56
 msgid ""
 "Methods in the Open edX platform necessary for this view are not available."
 msgstr ""
 
-#: enterprise/views.py:88
+#: enterprise/views.py:89
 #, python-brace-format
 msgid ""
 "Are you sure? If you do not agree to share your data, you will have to use "
 "another account to access {platform}."
 msgstr ""
 
-#: enterprise/views.py:93
+#: enterprise/views.py:94
 #, python-brace-format
 msgid ""
 "Are you sure? If you do not agree to share your data, you will not receive "
 "discounts from {provider}."
 msgstr ""
 
-#: enterprise/views.py:107
+#: enterprise/views.py:108
 #, python-brace-format
 msgid ""
 "Are you sure? If you do not agree to share your data with {provider}, you "
 "cannot access {course_name}."
 msgstr ""
 
-#: enterprise/views.py:118
+#: enterprise/views.py:119
 #, python-brace-format
 msgid ""
 "{provider} requires data sharing consent; if consent is not provided, you "
 "will be redirected to log in page."
 msgstr ""
 
-#: enterprise/views.py:123
+#: enterprise/views.py:124
 #, python-brace-format
 msgid ""
 "{provider} requests data sharing consent; if consent is not provided, you "
 "will not be able to get any discounts from {provider}."
 msgstr ""
 
-#: enterprise/views.py:137
+#: enterprise/views.py:138
 #, python-brace-format
 msgid ""
 "Courses from {provider} require data sharing consent. If you do not agree to "
 "share your data, you will be redirected to your dashboard."
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:22
+msgid "Third Party name."
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:23
+msgid "Data Type"
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:27
+msgid "Enterprise Integrated Channel"
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:28
+msgid "Enterprise Integrated Channels"
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:64
+msgid "Enterprise Customer Plugin Configuration"
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:65
+msgid "Enterprise Customer Plugin Configurations"
 msgstr ""

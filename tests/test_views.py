@@ -255,6 +255,34 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    def test_post_no_user_404(
+            self,
+            mock_get_ec,
+            mock_get_rsa,
+            mock_get_ec2,
+            mock_url,
+            mock_render,
+            mock_config,
+            mock_lift,
+            mock_quarantine,
+    ):  # pylint: disable=unused-argument
+        """
+        Test that when there's no customer for the request, POST gives a 404.
+        """
+        mock_get_ec.return_value = True
+        mock_get_rsa.return_value = None
+        client = Client()
+        response = client.post(self.url)
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
     def test_post_patch_real_social_auth_enforced(
             self,
             mock_get_ec,
@@ -284,9 +312,9 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             'arguments \'{}\' not found. 0 pattern(s) tried: []'
         )
         assert str(excinfo.value) == expected
-        assert UserDataSharingConsentAudit.objects.all().count() == 1
-        assert EnterpriseCustomerUser.objects.all().count() == 1
-        assert not UserDataSharingConsentAudit.objects.all()[0].enabled
+        # Ensure that when consent hasn't been provided, we don't link the user to the Enterprise Customer.
+        assert UserDataSharingConsentAudit.objects.all().count() == 0
+        assert EnterpriseCustomerUser.objects.all().count() == 0
 
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')

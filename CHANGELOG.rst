@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.23.2] - 2017-02-22
+---------------------
+
+* SSO users are not created as EnterpriseCustomerUsers until all consent requirements have been fulfilled.
+
+
 [0.22.1] - 2017-02-20
 ---------------------
 
