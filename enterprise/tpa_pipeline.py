@@ -17,9 +17,12 @@ except ImportError:
 
 try:
     from third_party_auth.provider import Registry
-    from third_party_auth.pipeline import get as get_pipeline_partial
 except ImportError:
     Registry = None
+
+try:
+    from third_party_auth.pipeline import get as get_pipeline_partial
+except ImportError:
     get_pipeline_partial = None
 
 
