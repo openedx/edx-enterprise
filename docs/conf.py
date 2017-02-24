@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=invalid-name
 """
-enterprise documentation build configuration file.
+Open edX Enterprise Service documentation build configuration file.
 
 This file is execfile()d with the current directory set to its
 containing dir.
@@ -18,14 +18,19 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 from subprocess import check_call
-import enterprise
 
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(REPO_ROOT)
+
+import enterprise
 import edx_theme
 
 import django
+from django.conf import settings
 from django.utils import six
 
 # Configure Django for autodoc usage
+settings.configure()
 django.setup()
 
 # If extensions (or modules to document with autodoc) are in another directory,
@@ -77,9 +82,10 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'enterprise'
+project = 'edx-enteprise'
 copyright = edx_theme.COPYRIGHT  # pylint: disable=redefined-builtin
 author = edx_theme.AUTHOR
+title = 'Open edX Enterprise Service Documentation'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -262,7 +268,7 @@ html_static_path = ['_static']
 # html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'edx-enterprisedoc'
+htmlhelp_basename = '{project}doc'.format(project=project)
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -287,8 +293,9 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
+latex_target = '{project}.tex'.format(project=project)
 latex_documents = [
-    (master_doc, 'edx-enterprise.tex', 'enterprise Documentation',
+    (master_doc, latex_target, title,
      author, 'manual'),
 ]
 
@@ -330,7 +337,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'enterprise', 'enterprise Documentation',
+    (master_doc, project, title,
      [author], 1)
 ]
 
@@ -345,8 +352,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'edx-enterprise', 'enterprise Documentation',
-     author, 'edx-enterprise', 'Your project description goes here',
+    (master_doc, project, title,
+     author, project, title,
      'Miscellaneous'),
 ]
 
