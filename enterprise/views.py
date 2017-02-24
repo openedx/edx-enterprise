@@ -38,7 +38,7 @@ from enterprise.lms_api import CourseApiClient
 from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser,
                                UserDataSharingConsentAudit)
 from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_enterprise_customer_for_request
-from enterprise.utils import NotConnectedToEdX, consent_necessary_for_course
+from enterprise.utils import NotConnectedToOpenEdx, consent_necessary_for_course
 
 
 def verify_edx_resources():
@@ -55,7 +55,7 @@ def verify_edx_resources():
         get_pipeline_partial,
     )
     if any(method is None for method in required_methods):
-        raise NotConnectedToEdX(_('Methods in the Open edX platform necessary for this view are not available.'))
+        raise NotConnectedToOpenEdx(_('Methods in the Open edX platform necessary for this view are not available.'))
 
 
 class GrantDataSharingPermissions(View):

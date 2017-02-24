@@ -35,7 +35,7 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 
-class NotConnectedToEdX(Exception):
+class NotConnectedToOpenEdx(Exception):
     """
     Exception to raise when not connected to OpenEdX.
 
@@ -48,7 +48,7 @@ class NotConnectedToEdX(Exception):
         Log a warning and initialize the exception.
         """
         LOGGER.warning('edx-enterprise unexpectedly failed as if not installed in an OpenEdX platform')
-        super(NotConnectedToEdX, self).__init__(*args, **kwargs)
+        super(NotConnectedToOpenEdx, self).__init__(*args, **kwargs)
 
 
 class NotConnectedToOpenEdX(Exception):

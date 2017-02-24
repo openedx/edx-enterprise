@@ -8,7 +8,7 @@ from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDataSharingConsentAudit
-from enterprise.utils import NotConnectedToEdX
+from enterprise.utils import NotConnectedToOpenEdx
 
 try:
     from social_core.pipeline.partial import partial
@@ -16,14 +16,14 @@ except ImportError:
     from enterprise.utils import null_decorator as partial  # pylint:disable=ungrouped-imports
 
 try:
-    from third_party_auth.provider import Registry
-except ImportError:
-    Registry = None
-
-try:
     from third_party_auth.pipeline import get as get_pipeline_partial
 except ImportError:
     get_pipeline_partial = None
+
+try:
+    from third_party_auth.provider import Registry
+except ImportError:
+    Registry = None
 
 
 def verify_third_party_auth_dependencies():
@@ -36,8 +36,8 @@ def verify_third_party_auth_dependencies():
     )
 
     if any(third_party_dependency is None for third_party_dependency in third_party_dependencies):
-        raise NotConnectedToEdX(
-            _("This package must be installed in an EdX environment to look up third-party auth dependencies.")
+        raise NotConnectedToOpenEdx(
+            _("This package must be installed in an Open edX environment to look up third-party auth dependencies.")
         )
 
 
@@ -47,10 +47,10 @@ def get_enterprise_customer_for_request(request):
     """
     verify_third_party_auth_dependencies()
     pipeline = get_pipeline_partial(request)
-    return get_ec_for_running_pipeline(pipeline)
+    return get_enterprise_customer_for_running_pipeline(pipeline)
 
 
-def get_ec_for_running_pipeline(pipeline):
+def get_enterprise_customer_for_running_pipeline(pipeline):  # pylint: disable=invalid-name
     """
     Get the EnterpriseCustomer associated with a running pipeline.
     """
@@ -110,7 +110,7 @@ def get_consent_status_for_pipeline(pipeline):
     """
     Get the consent object for the current pipeline.
     """
-    customer = get_ec_for_running_pipeline(pipeline)
+    customer = get_enterprise_customer_for_running_pipeline(pipeline)
     user = pipeline.kwargs['user']
     try:
         return UserDataSharingConsentAudit.objects.get(
@@ -139,7 +139,7 @@ def verify_data_sharing_consent(backend, user, **kwargs):
         """
         return redirect(reverse('grant_data_sharing_permissions'))
 
-    customer = get_ec_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
+    customer = get_enterprise_customer_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
     if customer is None:
         return
 
@@ -168,7 +168,7 @@ def set_data_sharing_consent_record(backend, user, data_sharing_consent=None, **
     if data_sharing_consent is None:
         return
 
-    customer = get_ec_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
+    customer = get_enterprise_customer_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
     if customer is None:
         return
 

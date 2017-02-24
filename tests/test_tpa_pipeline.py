@@ -13,10 +13,10 @@ from django.http import HttpResponseRedirect
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.tpa_pipeline import (active_provider_enforces_data_sharing, active_provider_requests_data_sharing,
-                                     get_consent_status_for_pipeline, get_ec_for_running_pipeline,
-                                     get_enterprise_customer_for_request, get_enterprise_customer_for_sso,
+                                     get_consent_status_for_pipeline, get_enterprise_customer_for_request,
+                                     get_enterprise_customer_for_running_pipeline, get_enterprise_customer_for_sso,
                                      set_data_sharing_consent_record, verify_data_sharing_consent)
-from enterprise.utils import NotConnectedToEdX
+from enterprise.utils import NotConnectedToOpenEdx
 from test_utils.factories import EnterpriseCustomerIdentityProviderFactory, UserFactory
 
 
@@ -44,9 +44,10 @@ class TestTpaPipeline(unittest.TestCase):
         with mock.patch('enterprise.tpa_pipeline.Registry') as fake_registry:
             fake_registry.get_from_pipeline.return_value = fake_provider
             assert get_enterprise_customer_for_request(request) == self.customer
-        with raises(NotConnectedToEdX) as excinfo:
+        with raises(NotConnectedToOpenEdx) as excinfo:
             get_enterprise_customer_for_request(request)
-        expected_msg = "This package must be installed in an EdX environment to look up third-party auth dependencies."
+        expected_msg = "This package must be installed in an Open edX " \
+                       "environment to look up third-party auth dependencies."
         assert str(excinfo.value) == expected_msg
 
     def test_get_ec_for_sso(self):
@@ -69,10 +70,11 @@ class TestTpaPipeline(unittest.TestCase):
         with mock.patch('enterprise.tpa_pipeline.Registry') as fake_registry:
             provider = mock.MagicMock(provider_id='provider_slug')
             fake_registry.get_from_pipeline.return_value = provider
-            assert get_ec_for_running_pipeline('pipeline') == self.customer
-        with raises(NotConnectedToEdX) as excinfo:
-            get_ec_for_running_pipeline('pipeline')
-        expected_msg = "This package must be installed in an EdX environment to look up third-party auth dependencies."
+            assert get_enterprise_customer_for_running_pipeline('pipeline') == self.customer
+        with raises(NotConnectedToOpenEdx) as excinfo:
+            get_enterprise_customer_for_running_pipeline('pipeline')
+        expected_msg = "This package must be installed in an Open edX " \
+                       "environment to look up third-party auth dependencies."
         assert str(excinfo.value) == expected_msg
 
     @mock.patch('enterprise.tpa_pipeline.Registry')
@@ -81,7 +83,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that if we pass in an empty pipeline, we return early and don't try to use it.
         """
-        assert get_ec_for_running_pipeline(None) is None
+        assert get_enterprise_customer_for_running_pipeline(None) is None
 
     def test_active_provider_enforces_data_sharing(self):
         """
@@ -117,7 +119,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that we can get the correct consent status.
         """
-        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer
             pipeline = mock.MagicMock(kwargs={'user': self.user})
             assert get_consent_status_for_pipeline(pipeline) is None
@@ -137,15 +139,15 @@ class TestTpaPipeline(unittest.TestCase):
         Test that we correctly verify consent status.
         """
         backend = mock.MagicMock(name=None)
-        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = None
             assert verify_data_sharing_consent(backend, self.user) is None
-        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = mock.MagicMock(
                 requests_data_sharing_consent=False
             )  # pylint: disable=redefined-variable-type
             assert verify_data_sharing_consent(backend, self.user) is None
-        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer  # pylint: disable=redefined-variable-type
             assert isinstance(verify_data_sharing_consent(backend, self.user), HttpResponseRedirect)
             ec_user = EnterpriseCustomerUser.objects.create(
@@ -168,7 +170,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         backend = mock.MagicMock(name=None)
         user = self.user
-        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer
             set_data_sharing_consent_record(backend, user)
             with raises(EnterpriseCustomerUser.DoesNotExist):

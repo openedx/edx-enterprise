@@ -14,7 +14,7 @@ from django.shortcuts import render_to_response
 from django.test import Client
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
-from enterprise.utils import NotConnectedToEdX
+from enterprise.utils import NotConnectedToOpenEdx
 from enterprise.views import GrantDataSharingPermissions, HttpClientError
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
@@ -94,7 +94,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         Test that we get the right exception when nothing is patched.
         """
         client = Client()
-        with raises(NotConnectedToEdX) as excinfo:
+        with raises(NotConnectedToOpenEdx) as excinfo:
             client.get(self.url)
         assert str(excinfo.value) == 'Methods in the Open edX platform necessary for this view are not available.'
 
