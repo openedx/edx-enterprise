@@ -274,6 +274,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
             mock_config,
             mock_lift,
             mock_quarantine,
+            mock_pipeline_partial,
     ):  # pylint: disable=unused-argument
         """
         Test that when there's no customer for the request, POST gives a 404.
@@ -284,6 +285,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         response = client.post(self.url)
         assert response.status_code == 404
 
+    @mock.patch('enterprise.views.get_pipeline_partial')
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
@@ -527,6 +529,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         response = self.client.get(self.url, data=params)
         assert response.status_code == 404
 
+    @mock.patch('enterprise.views.get_pipeline_partial')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -797,6 +800,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         )
         assert resp.status_code == 404
 
+    @mock.patch('enterprise.views.get_pipeline_partial')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
