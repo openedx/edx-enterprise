@@ -26,6 +26,20 @@ import django
 from django.conf import settings
 from django.utils import six
 
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# ones.
+extensions = [
+    'edx_theme',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.autodoc',
+    'sphinxcontrib.napoleon',
+]
+
+import edx_theme
 import enterprise
 
 # Configure Django for autodoc usage
@@ -45,20 +59,6 @@ django.setup()
 # If your documentation needs a minimal Sphinx version, state it here.
 #
 # needs_sphinx = '1.0'
-
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-extensions = [
-    'edx_theme',
-    'sphinx.ext.autodoc',
-    'sphinx.ext.doctest',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.ifconfig',
-    'sphinx.ext.autodoc',
-    'sphinxcontrib.napoleon'
-]
-import edx_theme
 
 # A list of warning types to suppress arbitrary warning messages.
 suppress_warnings = [
@@ -82,7 +82,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'edx-enteprise'
+project = 'edx-enterprise'
 copyright = edx_theme.COPYRIGHT  # pylint: disable=redefined-builtin
 author = edx_theme.AUTHOR
 title = 'Open edX Enterprise Service Documentation'
