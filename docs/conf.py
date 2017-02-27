@@ -22,12 +22,11 @@ from subprocess import check_call
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(REPO_ROOT)
 
-import enterprise
-import edx_theme
-
 import django
 from django.conf import settings
 from django.utils import six
+
+import enterprise
 
 # Configure Django for autodoc usage
 settings.configure()
@@ -59,6 +58,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinxcontrib.napoleon'
 ]
+import edx_theme
 
 # A list of warning types to suppress arbitrary warning messages.
 suppress_warnings = [
