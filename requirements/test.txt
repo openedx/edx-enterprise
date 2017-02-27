@@ -4,12 +4,12 @@
 #
 #    pip-compile --output-file requirements/test.txt requirements/base.in requirements/test.in
 #
-appdirs==1.4.0            # via setuptools
+appdirs==1.4.2            # via setuptools
 cookies==2.2.1            # via responses
 coverage==4.3.4           # via pytest-cov
 ddt==1.1.1
 django-config-models==0.1.5
-django-extensions==1.7.6
+django-extensions==1.7.7
 django-filter==0.15.3
 django-model-utils==2.6.1
 django-object-actions==0.9.0
@@ -21,7 +21,7 @@ edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.2
 edx-rest-api-client==1.7.1
 factory-boy==2.8.1
-Faker==0.7.7              # via factory-boy
+Faker==0.7.9              # via factory-boy
 freezegun==0.3.8
 funcsigs==1.0.2           # via mock
 ipaddress==1.0.18         # via faker

@@ -15,9 +15,9 @@ from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDa
 from enterprise.tpa_pipeline import (active_provider_enforces_data_sharing, active_provider_requests_data_sharing,
                                      get_consent_status_for_pipeline, get_ec_for_running_pipeline,
                                      get_enterprise_customer_for_request, get_enterprise_customer_for_sso,
-                                     set_data_sharing_consent_record, verify_data_sharing_consent)
+                                     handle_enterprise_logistration)
 from enterprise.utils import NotConnectedToEdX
-from test_utils.factories import EnterpriseCustomerIdentityProviderFactory, UserFactory
+from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 
 
 @mark.django_db
@@ -124,78 +124,91 @@ class TestTpaPipeline(unittest.TestCase):
                 user=ec_user
             )
             assert get_consent_status_for_pipeline(pipeline) == consent
-            consent.delete()
-            ec_user.delete()
 
-    def test_verify_data_sharing_consent(self):
+    def test_handle_enterprise_logistration_no_pipeline(self):
         """
-        Test that we correctly verify consent status.
+        Test that when there's no pipeline, we do nothing, then return.
         """
         backend = mock.MagicMock(name=None)
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = None
-            assert verify_data_sharing_consent(backend, self.user) is None
+            assert handle_enterprise_logistration(backend, self.user) is None
+            assert EnterpriseCustomerUser.objects.count() == 0
+
+    def test_handle_enterprise_logistration_consent_not_required(self):
+        """
+        Test that when consent isn't required, we create an EnterpriseCustomerUser, then return.
+        """
+        backend = mock.MagicMock(name=None)
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
-            fake_get_ec.return_value = mock.MagicMock(
-                requests_data_sharing_consent=False
-            )  # pylint: disable=redefined-variable-type
-            assert verify_data_sharing_consent(backend, self.user) is None
+            enterprise_customer = EnterpriseCustomerFactory(
+                enable_data_sharing_consent=False
+            )
+            fake_get_ec.return_value = enterprise_customer
+            assert handle_enterprise_logistration(backend, self.user) is None
+            assert EnterpriseCustomerUser.objects.filter(
+                enterprise_customer=enterprise_customer,
+                user_id=self.user.id
+            ).count() == 1
+
+    def test_handle_enterprise_logistration_consent_required(self):
+        """
+        Test that when consent is required, we redirect to the consent page.
+        """
+        backend = mock.MagicMock(name=None)
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
-            fake_get_ec.return_value = self.customer  # pylint: disable=redefined-variable-type
-            assert isinstance(verify_data_sharing_consent(backend, self.user), HttpResponseRedirect)
+            fake_get_ec.return_value = self.customer
+            assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
+
+    def test_handle_enterprise_logistration_consent_optional(self):
+        """
+        Test that when consent is optional, but requested, we redirect to the consent page.
+        """
+        backend = mock.MagicMock(name=None)
+        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+            self.customer.enforce_data_sharing_consent = EnterpriseCustomer.DATA_CONSENT_OPTIONAL
+            fake_get_ec.return_value = self.customer
+            assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
+
+    def test_handle_enterprise_logistration_consent_required_at_enrollment(self):
+        """
+        Test that when consent is required at enrollment, but optional at logistration, we redirect to the consent page.
+        """
+        backend = mock.MagicMock(name=None)
+        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+            self.customer.enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
+            fake_get_ec.return_value = self.customer
+            assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
+
+    def test_handle_enterprise_logistration_consent_previously_declined(self):
+        """
+        Test that when consent has been previously been declined, we redirect to the consent page.
+        """
+        backend = mock.MagicMock(name=None)
+        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+            fake_get_ec.return_value = self.customer
             ec_user = EnterpriseCustomerUser.objects.create(
                 user_id=self.user.id,  # pylint: disable=no-member
                 enterprise_customer=self.customer
             )
-            consent = UserDataSharingConsentAudit.objects.create(  # pylint: disable=no-member
+            UserDataSharingConsentAudit.objects.create(  # pylint: disable=no-member
                 user=ec_user
             )
-            assert isinstance(verify_data_sharing_consent(backend, self.user), HttpResponseRedirect)
-            consent.state = 'enabled'
-            consent.save()
-            assert verify_data_sharing_consent(backend, self.user) is None
-            consent.delete()
-            ec_user.delete()
+            assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
 
-    def test_set_data_sharing_consent(self):
+    def test_handle_enterprise_logistration_consent_provided(self):
         """
-        Test that the pipeline element correctly sets consent status.
+        Test that when consent has been provided, we return and allow the pipeline to proceed.
         """
         backend = mock.MagicMock(name=None)
-        user = self.user
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer
-            set_data_sharing_consent_record(backend, user)
-            with raises(EnterpriseCustomerUser.DoesNotExist):
-                EnterpriseCustomerUser.objects.get(
-                    user_id=user.id,  # pylint: disable=no-member
-                    enterprise_customer=self.customer
-                )
-            with raises(UserDataSharingConsentAudit.DoesNotExist):
-                UserDataSharingConsentAudit.objects.get(
-                    user__user_id=user.id,  # pylint: disable=no-member
-                    user__enterprise_customer=self.customer,
-                )
-
-            set_data_sharing_consent_record(backend, user, data_sharing_consent=False)
-            ec_user = EnterpriseCustomerUser.objects.get(
-                user_id=user.id,  # pylint: disable=no-member
+            ec_user = EnterpriseCustomerUser.objects.create(
+                user_id=self.user.id,  # pylint: disable=no-member
                 enterprise_customer=self.customer
             )
-            consent = UserDataSharingConsentAudit.objects.get(user=ec_user)
-            assert not consent.enabled
-
-            set_data_sharing_consent_record(backend, user, data_sharing_consent=True)
-            ec_user = EnterpriseCustomerUser.objects.get(
-                user_id=user.id,  # pylint: disable=no-member
-                enterprise_customer=self.customer
+            UserDataSharingConsentAudit.objects.create(  # pylint: disable=no-member
+                user=ec_user,
+                state='enabled',
             )
-            consent = UserDataSharingConsentAudit.objects.get(user=ec_user)
-            assert consent.enabled
-
-            consent.delete()
-            ec_user.delete()
-
-            fake_get_ec.return_value = None  # pylint: disable=redefined-variable-type
-            assert set_data_sharing_consent_record(backend, user, data_sharing_consent=True) is None
-            assert UserDataSharingConsentAudit.objects.all().count() == 0
+            assert handle_enterprise_logistration(backend, self.user) is None
