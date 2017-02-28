@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file requirements/quality.txt requirements/quality.in
 #
-appdirs==1.4.0            # via setuptools
+appdirs==1.4.2            # via setuptools
 argparse==1.4.0           # via caniusepython3
 astroid==1.4.9            # via pylint, pylint-celery, pylint-plugin-utils
 backports.functools-lru-cache==1.3  # via caniusepython3, pylint

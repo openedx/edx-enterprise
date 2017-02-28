@@ -105,13 +105,25 @@ def get_consent_status_for_pipeline(pipeline):
 
 
 @partial
-def verify_data_sharing_consent(backend, user, **kwargs):
+def handle_enterprise_logistration(backend, user, **kwargs):
     """
-    Verify that the data sharing consent state matches what's required.
+    Perform tasks related to Enterprise-owned SSO signin requests.
 
     Checks to ensure that the user has provided data sharing consent
     if the active SSO provider requires it; if not, then the user will
     be redirected to a page from which they can provide consent.
+
+    If consent is not required, then the user in the process of logging
+    in is linked to the Enterprise Customer.
+
+    Args:
+        backend: The class handling the SSO interaction (SAML, OAuth, etc)
+        user: The user object in the process of being logged in with
+        **kwargs: Any remaining pipeline variables
+
+    Returns:
+        redirect: If consent is required, but has not been provided, the user
+            is redirected to a page where they can provide consent.
     """
     def redirect_to_consent():
         """
@@ -122,45 +134,29 @@ def verify_data_sharing_consent(backend, user, **kwargs):
         """
         return redirect(reverse('grant_data_sharing_permissions'))
 
-    customer = get_ec_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
-    if customer is None:
+    enterprise_customer = get_ec_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
+    if enterprise_customer is None:
+        # This pipeline element is not being activated as a part of an Enterprise logistration
         return
 
-    if not customer.requests_data_sharing_consent:
+    if not enterprise_customer.requests_data_sharing_consent:
+        # This enterprise customer attached to this pipeline element does not request data sharing consent;
+        # proceed with the creation of a link between the user and the enterprise customer, then exit.
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=enterprise_customer,
+            user_id=user.id
+        )
         return
 
     try:
+        # Find an existing account-level consent record for the user
         consent = UserDataSharingConsentAudit.objects.get(
             user__user_id=user.id,
-            user__enterprise_customer=customer,
+            user__enterprise_customer=enterprise_customer,
         )
     except UserDataSharingConsentAudit.DoesNotExist:
         return redirect_to_consent()
 
-    if (not consent.enabled) and customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN):
+    if (not consent.enabled) and enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN):
+        # If consent has been declined, and the enterprise customer requires it, redirect to get it.
         return redirect_to_consent()
-
-
-def set_data_sharing_consent_record(backend, user, data_sharing_consent=None, **kwargs):
-    """
-    Set the data sharing consent record as required.
-
-    If the pipeline produced a command to explicitly set the data sharing consent
-    record a particular way, set it that way.
-    """
-    if data_sharing_consent is None:
-        return
-
-    customer = get_ec_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
-    if customer is None:
-        return
-
-    ec_user, _ = EnterpriseCustomerUser.objects.get_or_create(
-        user_id=user.id,
-        enterprise_customer=customer,
-    )
-
-    UserDataSharingConsentAudit.objects.update_or_create(
-        user=ec_user,
-        defaults={'state': 'enabled' if data_sharing_consent else 'disabled'}
-    )

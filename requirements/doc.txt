@@ -9,7 +9,7 @@ babel==2.3.4              # via sphinx
 bleach==1.5.0             # via readme-renderer
 chardet==2.3.0            # via doc8
 django-config-models==0.1.5
-django-extensions==1.7.6
+django-extensions==1.7.7
 django-filter==0.15.3
 django-model-utils==2.6.1
 django-object-actions==0.9.0
@@ -38,12 +38,12 @@ python-dateutil==2.6.0    # via edx-drf-extensions
 pytz==2016.10             # via babel
 readme-renderer==16.0
 requests==2.13.0          # via edx-drf-extensions, slumber, sphinx
-restructuredtext-lint==0.17.2  # via doc8
+restructuredtext-lint==1.0.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.10.0               # via bleach, django-extensions, doc8, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-Sphinx==1.5.2             # via edx-sphinx-theme
+Sphinx==1.5.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.0
 stevedore==1.20.0         # via doc8
 unicodecsv==0.14.1

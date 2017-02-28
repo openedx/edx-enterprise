@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.24.0] - 2017-02-17
+---------------------
+
+* API for SSO pipeline is simplified to a single element.
+* SSO users are linked to relevant Enterprise Customer when data sharing consent is disabled.
+
 [0.23.2] - 2017-02-22
 ---------------------
 
