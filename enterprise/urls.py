@@ -20,3 +20,12 @@ urlpatterns = [
         name='enterprise_api'
     ),
 ]
+
+# Because ROOT_URLCONF points here, we are including the urls from the integrated_channels app here for now.
+urlpatterns += [
+    url(
+        r'',
+        include('integrated_channels.integrated_channel.urls'),
+        name='integrated_channel'
+    ),
+]

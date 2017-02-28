@@ -7,6 +7,8 @@ from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
 
+import integrated_channels.integrated_channel
+import integrated_channels.sap_success_factors
 import mock
 from pytest import mark
 
@@ -59,3 +61,39 @@ class TestEnterpriseConfig(unittest.TestCase):
         UserFactory()
 
         assert not self.post_save_mock.called
+
+
+@mark.django_db
+class TestIntegratedChannelConfig(unittest.TestCase):
+    """
+    Test integrated_channels.integrated_channel app config.
+    """
+    def setUp(self):
+        """
+        Set up test environment
+        """
+        super(TestIntegratedChannelConfig, self).setUp()
+        self.app_config = integrated_channels.integrated_channel.apps.IntegratedChannelConfig(
+            'integrated_channel', integrated_channels.integrated_channel
+        )
+
+    def test_name(self):
+        assert self.app_config.name == 'integrated_channel'
+
+
+@mark.django_db
+class TestSAPSuccessFactorsConfig(unittest.TestCase):
+    """
+    Test integrated_channels.sap_success_factors app config.
+    """
+    def setUp(self):
+        """
+        Set up test environment
+        """
+        super(TestSAPSuccessFactorsConfig, self).setUp()
+        self.app_config = integrated_channels.sap_success_factors.apps.SAPSuccessFactorsConfig(
+            'sap_success_factors', integrated_channels.sap_success_factors
+        )
+
+    def test_name(self):
+        assert self.app_config.name == 'sap_success_factors'

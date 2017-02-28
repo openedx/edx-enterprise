@@ -826,3 +826,35 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         assert resp.status_code == 404
         enrollment.refresh_from_db()
         assert enrollment.consent_granted is None
+
+
+class TestPushLearnerDataToIntegratedChannel(unittest.TestCase):
+    """
+    Test PushLearnerDataToIntegratedChannel.
+    """
+
+    url = reverse('push_learner_data')
+
+    def test_post(self):
+        client = Client()
+        try:
+            client.post(self.url)
+            self.fail("Should have raised NotImplementedError")
+        except NotImplementedError:
+            pass
+
+
+class TestPushCatalogDataToIntegratedChannel(unittest.TestCase):
+    """
+    Test PushCatalogDataToIntegratedChannel.
+    """
+
+    url = reverse('push_catalog_data')
+
+    def test_post(self):
+        client = Client()
+        try:
+            client.post(self.url)
+            self.fail("Should have raised NotImplementedError")
+        except NotImplementedError:
+            pass

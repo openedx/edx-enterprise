@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.26.0] - 2017-02-28
+---------------------
+
+* Formally introducing new integrated_channels apps
+* Adding new models and admin interfaces for integrated_channel and sap_success_factors
+
 [0.25.0] - 2017-02-28
 ---------------------
 

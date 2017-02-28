@@ -1,7 +1,7 @@
 """
 Class for transmitting course data to SuccessFactors.
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 from integrated_channels.sap_success_factors.transmitters import SuccessFactorsTransmitterBase
 
 

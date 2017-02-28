@@ -11,6 +11,10 @@ from operator import itemgetter
 import ddt
 import mock
 from faker import Factory as FakerFactory
+from integrated_channels.integrated_channel.models import EnterpriseIntegratedChannel
+from integrated_channels.sap_success_factors.models import (CatalogTransmissionAudit, LearnerDataTransmissionAudit,
+                                                            SAPSuccessFactorsEnterpriseCustomerConfiguration,
+                                                            SAPSuccessFactorsGlobalConfiguration)
 from pytest import mark, raises
 
 from django.contrib.sites.models import Site
@@ -22,11 +26,6 @@ from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCo
                                EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerEntitlement,
                                EnterpriseCustomerUser, PendingEnterpriseCustomerUser, UserDataSharingConsentAudit,
                                logo_path)
-from integrated_channels.integrated_channel.models import (EnterpriseCustomerPluginConfiguration,
-                                                           EnterpriseIntegratedChannel)
-from integrated_channels.sap_success_factors.models import (CatalogTransmissionAudit, LearnerDataTransmissionAudit,
-                                                            SAPSuccessFactorsEnterpriseCustomerConfiguration,
-                                                            SAPSuccessFactorsGlobalConfiguration)
 from test_utils.factories import (EnterpriseCustomerEntitlementFactory, EnterpriseCustomerFactory,
                                   EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
                                   PendingEnrollmentFactory, PendingEnterpriseCustomerUserFactory,
@@ -860,32 +859,6 @@ class TestEnterpriseIntegratedChannel(unittest.TestCase):
 
 @mark.django_db
 @ddt.ddt
-class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
-    """
-    Tests of the EnterpriseCustomerPluginConfiguration model.
-    """
-    @ddt.data(
-        str, repr
-    )
-    def test_string_conversion(self, method):
-        """
-        Test ``EnterpriseCustomerPluginConfiguration`` conversion to string
-        """
-        channel = EnterpriseIntegratedChannel(
-            id=1, name='CorporateLMS', data_type='course'
-        )
-        faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()
-        plugin_config = EnterpriseCustomerPluginConfiguration(
-            enterprise_customer_uuid=customer_uuid, enterprise_integrated_channel=channel, active=False
-        )
-        expected_to_str = "<EnterpriseCustomerPluginConfiguration for enterprise {uuid} using channel CorporateLMS>"\
-            .format(uuid=customer_uuid)
-        assert expected_to_str == method(plugin_config)
-
-
-@mark.django_db
-@ddt.ddt
 class TestCatalogTransmissionAudit(unittest.TestCase):
     """
     Tests of the CatalogTransmissionAudit model.
@@ -932,8 +905,10 @@ class TestLearnerDataTransmissionAudit(unittest.TestCase):
             grade='Pass',
             error_message=None
         )
-        expected_to_str = "<LearnerDataTransmissionAudit 1 for enterprise enrollment 5, SAP user sap_user," \
-                          " and course course-v1:edX+DemoX+DemoCourse>"
+        expected_to_str = (
+            "<LearnerDataTransmissionAudit 1 for enterprise enrollment 5, SAP user sap_user,"
+            " and course course-v1:edX+DemoX+DemoCourse>"
+        )
         assert expected_to_str == method(learner_audit)
 
 
@@ -950,16 +925,16 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         """
         Test ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` conversion to string
         """
-        faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()
+        enterprise_customer_name = "GriffCo"
+        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
         config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
-            enterprise_customer_uuid=customer_uuid,
+            enterprise_customer=enterprise_customer,
             sapsf_base_url='enterprise.successfactors.com',
             key='key',
             secret='secret'
         )
         expected_to_str = "<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {}>".format(
-            customer_uuid
+            enterprise_customer_name
         )
         assert expected_to_str == method(config)
 
