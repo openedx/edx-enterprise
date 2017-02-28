@@ -25,9 +25,10 @@ enterprise
     :target: https://github.com/edx/edx-enterprise/blob/master/LICENSE.txt
     :alt: License
 
-``Enterprise`` app provides enterprise features to Open edX platform. Most of such features are
-structured around ``Enterprise Customer`` - an organization or a group of people that "consumes"
-courses on Open edX platform.
+The ``Open edx Enterprise Service`` app provides enterprise features to the Open
+edX platform.  The majority of these features are structured around the concept
+of an ``Enterprise Customer``, which is an organization or a group of people
+that "consumes" courses published on the Open edX platform.
 
 Overview
 --------
@@ -39,13 +40,13 @@ to understand the code in more detail.
 Documentation
 -------------
 
-The full documentation is at https://edx-enterprise.readthedocs.org.
+Full documentation for the Open edX Enterprise Service can be found at
+http://open-edx-enterprise-service-documentation.readthedocs.io/en/latest/.
 
 License
 -------
 
-The code in this repository is licensed under the AGPL 3.0 unless
-otherwise noted.
+The code in this repository is licensed under the AGPL 3.0 unless otherwise noted.
 
 Please see ``LICENSE.txt`` for details.
 
@@ -59,12 +60,14 @@ Please read `How To Contribute <https://github.com/edx/edx-platform/blob/master/
 Even though they were written with ``edx-platform`` in mind, the guidelines
 should be followed for Open edX code in general.
 
-PR description template can be found at`PULL_REQUEST_TEMPLATE.md`_ - it is automatially applied if you're sending a PR
-from GitHub, but please make sure to use it if sending PR via other channels.
+A Pull Request Description Template can be found at`PULL_REQUEST_TEMPLATE.md`_ - this
+template is automatially applied when you open a pull request from GitHub.  Please
+make sure to include this template if submitting a pull request via other channels.
 
 .. _PULL_REQUEST_TEMPLATE.md: https://github.com/edx/edx-enterprise/blob/master/.github/PULL_REQUEST_TEMPLATE_TEMPLATE.md
 
-After submitting Pull Request, please use "Reviewers" widget to add relevant reviewers and track review process.
+After submitting a pull request, please use the Github "Reviewers" widget to add
+relevant reviewers and track review process.
 
 Reporting Security Issues
 -------------------------
