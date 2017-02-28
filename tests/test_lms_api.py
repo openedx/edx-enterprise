@@ -13,7 +13,7 @@ from requests.compat import urljoin
 from django.conf import settings
 
 from enterprise import lms_api
-from enterprise.utils import NotConnectedToEdX
+from enterprise.utils import NotConnectedToOpenEdx
 
 URL_BASE_NAMES = {
     'enrollment': settings.ENTERPRISE_ENROLLMENT_API_URL,
@@ -121,5 +121,5 @@ def test_get_full_course_details():
 
 
 def test_enroll_locally_raises():
-    with raises(NotConnectedToEdX):
+    with raises(NotConnectedToOpenEdx):
         lms_api.enroll_user_in_course_locally(None, None, None)
