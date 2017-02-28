@@ -87,39 +87,6 @@ class MultipleProgramMatchError(CourseCatalogApiError):
         self.programs_matched = programs_matched
 
 
-class ConditionalEmailConnection(object):
-    """
-    Conditionally open an email connection as a context manager.
-    """
-
-    def __init__(self, open_conn=False):
-        """
-        Save the preference of whether to open a connection.
-
-        Args:
-            open_conn (bool): Whether the context manager should create and open an email
-            connection when entering a `with` statement.
-        """
-        self.open_conn = open_conn
-        self.conn = None
-
-    def __enter__(self):
-        """
-        Create and open the mail connection if necessary.
-        """
-        if self.open_conn:
-            self.conn = mail.get_connection()
-            self.conn.open()
-        return self.conn
-
-    def __exit__(self, *excinfo):
-        """
-        Close the email connection if it was opened.
-        """
-        if self.conn:
-            self.conn.close()
-
-
 def get_identity_provider(provider_id):
     """
     Get Identity Provider with given id.

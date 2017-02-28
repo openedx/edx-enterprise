@@ -564,7 +564,44 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
         self._assert_django_messages(response, set([
-            (messages.ERROR, "Enrollment of some users failed: {}".format(user.email)),
+            (messages.ERROR, "Enrollment of some users in {} failed: {}".format(course_id, user.email)),
+        ]))
+
+    @mock.patch('enterprise.admin.views.logging.error')
+    @mock.patch("enterprise.utils.reverse")
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enrollment_error_bad_error_string(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            reverse_mock,
+            logging_mock
+    ):
+        reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {
+            "name": "Cool Science",
+            "start": "2017-01-01T12:00:00Z",
+        }
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content='This is not JSON'.encode()
+        )
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        logging_mock.assert_called_with(
+            'Error while enrolling user %(user)s: %(message)s',
+            {'user': user.username, 'message': 'No error message provided'}
+        )
+        self._assert_django_messages(response, set([
+            (messages.ERROR, "Enrollment of some users in {} failed: {}".format(course_id, user.email)),
         ]))
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
@@ -586,8 +623,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         self._assert_django_messages(response, set(
             [
-                (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id))
-                for course_id in expected_courses
+                (messages.SUCCESS, "1 user was enrolled to {}.".format('Program2'))
             ]
         ))
         assert len(mail.outbox) == 1
@@ -629,7 +665,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         response = self._enroll_user_request(user, mode, program_id=program["uuid"])
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         self._assert_django_messages(response, set([
-            (messages.ERROR, "Enrollment of some users failed: {}".format(user.email)),
+            (messages.ERROR, "Enrollment of some users in Program2 failed: {}".format(user.email)),
         ]))
 
 
@@ -867,13 +903,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_mode
         )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
-            "When these users create an account, they will be enrolled in the course automatically: {}"
+            "The following users do not have an account on Test platform. They have not been enrolled in {}. "
+            "When these users create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
-            (messages.WARNING, pending_user_message.format(unknown_email)),
+            (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         assert len(mail.outbox) == 2
@@ -909,13 +945,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_mode
         )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
-            "When these users create an account, they will be enrolled in the course automatically: {}"
+            "The following users do not have an account on Test platform. They have not been enrolled in {}. "
+            "When these users create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
-            (messages.WARNING, pending_user_message.format(unknown_email)),
+            (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         assert len(mail.outbox) == 0
@@ -960,13 +996,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_mode
         )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
-            "When these users create an account, they will be enrolled in the course automatically: {}"
+            "The following users do not have an account on Test platform. They have not been enrolled in {}. "
+            "When these users create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
-            (messages.WARNING, pending_user_message.format(unknown_email)),
+            (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
         assert len(mail.outbox) == 0
@@ -1003,14 +1039,14 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 course_mode
             )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in the course. "
-            "When these users create an account, they will be enrolled in the course automatically: {}"
+            "The following users do not have an account on Test platform. They have not been enrolled in Program2. "
+            "When these users create an account, they will be enrolled automatically: {}"
         )
         expected_messages = {
             (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
             (messages.WARNING, pending_user_message.format(unknown_email))
         } | set([
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id))
+            (messages.SUCCESS, "1 user was enrolled to Program2.")
             for course_id in expected_courses
         ])
 

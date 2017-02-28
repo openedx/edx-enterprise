@@ -14,7 +14,13 @@ Change Log
 Unreleased
 ----------
 
-[0.24.0] - 2017-02-17
+[0.25.0] - 2017-02-28
+---------------------
+
+* Refactor _enroll_users() method to pay down technical debt
+* Improve admin messaging around enrollment actions
+
+[0.24.0] - 2017-02-27
 ---------------------
 
 * API for SSO pipeline is simplified to a single element.
