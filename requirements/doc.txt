@@ -31,7 +31,7 @@ MarkupSafe==0.23          # via jinja2
 olefile==0.44             # via pillow
 pbr==1.10.0               # via stevedore
 Pillow==4.0.0
-pockets==0.3.1            # via sphinxcontrib-napoleon
+pockets==0.3.2            # via sphinxcontrib-napoleon
 Pygments==2.2.0           # via readme-renderer, sphinx
 PyJWT==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
 python-dateutil==2.6.0    # via edx-drf-extensions
@@ -44,6 +44,6 @@ six==1.10.0               # via bleach, django-extensions, doc8, edx-sphinx-them
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
 Sphinx==1.5.3             # via edx-sphinx-theme
-sphinxcontrib-napoleon==0.6.0
+sphinxcontrib-napoleon==0.6.1
 stevedore==1.20.0         # via doc8
 unicodecsv==0.14.1

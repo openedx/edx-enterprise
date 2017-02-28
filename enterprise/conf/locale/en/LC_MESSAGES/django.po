@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-02-27 09:51-0600\n"
+"POT-Creation-Date: 2017-02-28 09:36-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -219,25 +219,25 @@ msgid ""
 "{ec_name}"
 msgstr ""
 
-#: enterprise/admin/views.py:226
+#: enterprise/admin/views.py:227
 #, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:253
+#: enterprise/admin/views.py:254
 #, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:266
+#: enterprise/admin/views.py:267
 #, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:274
+#: enterprise/admin/views.py:275
 #, python-brace-format
 msgid ""
 "The following learners are already associated with another Enterprise "
@@ -245,36 +245,42 @@ msgid ""
 "{list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:284
+#: enterprise/admin/views.py:285
 #, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:324
+#: enterprise/admin/views.py:484
 msgid ""
 "Course details were not found for course key {} - Course Catalog API "
 "returned nothing. Proceeding with enrollment, but notifications won't be sent"
 msgstr ""
 
-#: enterprise/admin/views.py:383
+#: enterprise/admin/views.py:563
 #, python-brace-format
-msgid "{enrolled_count} user was enrolled to {course_id}."
-msgid_plural "{enrolled_count} users were enrolled to {course_id}."
+msgid "{enrolled_count} user was enrolled to {enrolled_in}."
+msgid_plural "{enrolled_count} users were enrolled to {enrolled_in}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:389
+#: enterprise/admin/views.py:587
+#, python-brace-format
+msgid "Enrollment of some users in {enrolled_in} failed: {user_list}"
+msgstr ""
+
+#: enterprise/admin/views.py:609
+#, python-brace-format
 msgid ""
-"The following users do not have an account on {}. They have not been "
-"enrolled in the course. When these users create an account, they will be "
-"enrolled in the course automatically: {}"
+"The following users do not have an account on {platform_name}. They have not "
+"been enrolled in {enrolled_in}. When these users create an account, they "
+"will be enrolled automatically: {pending_email_list}"
 msgstr ""
 
-#: enterprise/admin/views.py:418
-msgid "Enrollment of some users failed: {}"
+#: enterprise/admin/views.py:681
+msgid "the program"
 msgstr ""
 
-#: enterprise/admin/views.py:555
+#: enterprise/admin/views.py:793
 #, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
@@ -520,12 +526,12 @@ msgid ""
 "auth providers."
 msgstr ""
 
-#: enterprise/utils.py:321
+#: enterprise/utils.py:288
 #, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
-#: enterprise/utils.py:377
+#: enterprise/utils.py:344
 msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 

@@ -13,6 +13,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
+from django.core import mail
 from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
@@ -29,7 +30,7 @@ from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.lms_api import EnrollmentApiClient, parse_lms_api_datetime
 from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
                                EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser)
-from enterprise.utils import ConditionalEmailConnection, get_reversed_url_by_site, send_email_notification_message
+from enterprise.utils import get_reversed_url_by_site, send_email_notification_message
 
 
 class TemplatePreviewView(View):
@@ -291,33 +292,192 @@ class EnterpriseCustomerManageLearnersView(View):
 
         return all_processable_emails
 
-    # TODO: this method is HUGE (> 100 lines) and complicated. Refactor it.
-    # Potential improvements:
-    # 1. Restructure flow so that notifications are sent after users and pending users are enrolled
-    #    FIXME: `send_email_notification_message` for pending users are executed OUTSIDE of ConditionalEmailConnection
-    #    context manager.
-    # 2. Split enrolling existing users and non-existing (pending) users into methods.
-    # 3. Extract notifications into dedicated method
     @classmethod
-    def _enroll_users(cls, enterprise_customer, emails, course_id, mode, request, notify=True):
+    def enroll_user(cls, enterprise_customer, user, course_mode, *course_ids):
         """
-        Enroll the users with the given email addresses to the course specified by course_id.
+        Enroll a single user in any number of courses using a particular course mode.
 
         Args:
-            cls (type): The EnterpriseCustomerManageLearnersView class itself
-            enterprise_customer: The instance of EnterpriseCustomer whose attached users we're enrolling
-            emails: An iterable of strings containing email addresses to enroll in a course
-            course_id: The ID of the course in which we want to enroll
-            mode: The enrollment mode the users will be enrolled in the course with
-            request: The HTTP request the enrollment is being created by
-            notify: Whether to notify (by email) the users that have been enrolled
-        """
-        enrolled = []
-        non_existing = []
-        failed = []
-        enrollment_client = EnrollmentApiClient()
-        course_details = CourseCatalogApiClient(request.user).get_course_run(course_id)
+            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
+            user: The user who needs to be enrolled in the course
+            course_mode: The mode with which the enrollment should be created
+            *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
 
+        Returns:
+            Boolean: Whether or not enrollment succeeded for all courses specified
+        """
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=enterprise_customer,
+            user_id=user.id
+        )
+        enrollment_client = EnrollmentApiClient()
+        succeeded = True
+        for course_id in course_ids:
+            try:
+                enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
+            except HttpClientError as exc:
+                succeeded = False
+                default_message = 'No error message provided'
+                try:
+                    error_message = json.loads(exc.content.decode()).get('message', default_message)
+                except ValueError:
+                    error_message = default_message
+                logging.error(
+                    'Error while enrolling user %(user)s: %(message)s',
+                    dict(user=user.username, message=error_message)
+                )
+            else:
+                EnterpriseCourseEnrollment.objects.get_or_create(
+                    enterprise_customer_user=enterprise_customer_user,
+                    course_id=course_id
+                )
+        return succeeded
+
+    @classmethod
+    def get_users_by_email(cls, emails):
+        """
+        Accept a list of emails, and separate them into users that exist on OpenEdX and users who don't.
+
+        Args:
+            emails: An iterable of email addresses to split between existing and nonexisting
+
+        Returns:
+            users: Queryset of users who exist in the OpenEdX platform and who were in the list of email addresses
+            missing_emails: List of unique emails which were in the original list, but do not yet exist as users
+        """
+        users = User.objects.filter(email__in=emails)
+        present_emails = users.values_list('email', flat=True)
+        missing_emails = list(set(emails) - set(present_emails))
+        return users, missing_emails
+
+    @classmethod
+    def enroll_user_pending_registration(cls, enterprise_customer, email, course_mode, *course_ids):
+        """
+        Create pending enrollments for the user in any number of courses, which will take effect on registration.
+
+        Args:
+            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
+            email: The email address for the pending link to be created
+            course_mode: The mode with which the eventual enrollment should be created
+            *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
+
+        Returns:
+            The PendingEnterpriseCustomerUser attached to the email address
+        """
+        pending_ecu, __ = PendingEnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=enterprise_customer,
+            user_email=email
+        )
+        for course_id in course_ids:
+            PendingEnrollment.objects.update_or_create(
+                user=pending_ecu,
+                course_id=course_id,
+                defaults={
+                    'course_mode': course_mode
+                }
+            )
+        return pending_ecu
+
+    @classmethod
+    def enroll_users_in_program(cls, enterprise_customer, program_details, course_mode, emails):
+        """
+        Enroll existing users in all courses in a program, and create pending enrollments for nonexisting users.
+
+        Args:
+            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
+            program_details: The details of the program in which we're enrolling
+            course_mode (str): The mode with which we're enrolling in the program
+            emails: An iterable of email addresses which need to be enrolled
+
+        Returns:
+            successes: A list of users who were successfully enrolled in all courses of the program
+            pending: A list of PendingEnterpriseCustomerUsers who were successfully linked and had
+                pending enrollments created for them in the database
+            failures: A list of users who could not be enrolled in the program
+        """
+        existing_users, unregistered_emails = cls.get_users_by_email(emails)
+        course_ids = get_course_runs_from_program(program_details)
+
+        successes = []
+        pending = []
+        failures = []
+
+        for user in existing_users:
+            succeeded = cls.enroll_user(enterprise_customer, user, course_mode, *course_ids)
+            if succeeded:
+                successes.append(user)
+            else:
+                failures.append(user)
+
+        for email in unregistered_emails:
+            pending_user = cls.enroll_user_pending_registration(enterprise_customer, email, course_mode, *course_ids)
+            pending.append(pending_user)
+
+        return successes, pending, failures
+
+    @classmethod
+    def enroll_users_in_course(cls, enterprise_customer, course_id, course_mode, emails):
+        """
+        Enroll existing users in a course, and create a pending enrollment for nonexisting users.
+
+        Args:
+            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
+            course_id (str): The unique identifier of the course in which we're enrolling
+            course_mode (str): The mode with which we're enrolling in the course
+            emails: An iterable of email addresses which need to be enrolled
+
+        Returns:
+            successes: A list of users who were successfully enrolled in the course
+            pending: A list of PendingEnterpriseCustomerUsers who were successfully linked and had
+                pending enrollments created for them in the database
+            failures: A list of users who could not be enrolled in the course
+        """
+        existing_users, unregistered_emails = cls.get_users_by_email(emails)
+
+        successes = []
+        pending = []
+        failures = []
+
+        for user in existing_users:
+            succeeded = cls.enroll_user(enterprise_customer, user, course_mode, course_id)
+            if succeeded:
+                successes.append(user)
+            else:
+                failures.append(user)
+
+        for email in unregistered_emails:
+            pending_user = cls.enroll_user_pending_registration(enterprise_customer, email, course_mode, course_id)
+            pending.append(pending_user)
+
+        return successes, pending, failures
+
+    @classmethod
+    def send_messages(cls, http_request, message_requests):
+        """
+        Deduplicate any outgoing message requests, and send the remainder.
+
+        Args:
+            http_request: The HTTP request in whose response we want to embed the messages
+            message_requests: A list of undeduplicated messages in the form of tuples of message type
+                and text- for example, ('error', 'Something went wrong')
+        """
+        deduplicated_messages = set(message_requests)
+        for msg_type, text in deduplicated_messages:
+            message_function = getattr(messages, msg_type)
+            message_function(http_request, text)
+
+    @classmethod
+    def notify_enrolled_learners(cls, enterprise_customer, request, course_id, users):
+        """
+        Notify learners about a course in which they've been enrolled.
+
+        Args:
+            enterprise_customer: The EnterpriseCustomer being linked to
+            request: The HTTP request that's being processed
+            course_id: The specific course the learners were enrolled in
+            users: An iterable of the users or pending users who were enrolled
+        """
+        course_details = CourseCatalogApiClient(request.user).get_course_run(course_id)
         if not course_details:
             logging.warning(
                 _(
@@ -325,98 +485,208 @@ class EnterpriseCustomerManageLearnersView(View):
                     "Proceeding with enrollment, but notifications won't be sent"
                 ).format(course_id)
             )
-            notify = False
-
-        if notify:
-            # Prefetch course metadata for drafting an email if we're going to send a notification
-            course_url = course_details.get('marketing_url')
-            if course_url is None:
-                # If we didn't get a useful path to the course on a marketing site from the catalog API,
-                # then we should build a path to the course on the LMS directly.
-                course_url = get_reversed_url_by_site(
-                    request,
-                    enterprise_customer.site,
-                    'about_course',
-                    args=(course_id,),
-                )
-            course_name = course_details.get('title')
-            course_start = course_details.get('start')
-
-        with ConditionalEmailConnection(open_conn=notify) as email_conn:
-            for email in emails:
-                try:
-                    user = User.objects.get(email=email)
-                except User.DoesNotExist:
-                    non_existing.append(email)
-                    continue
-                try:
-                    enrollment_client.enroll_user_in_course(user.username, course_id, mode)
-                except HttpClientError as exc:
-                    failed.append(email)
-                    error_message = json.loads(exc.content.decode()).get("message", "No error message provided.")
-                    logging.error(
-                        "Error while enrolling user %(user)s: %(message)s",
-                        dict(user=user.username, message=error_message),
-                    )
-                else:
-                    ecu = EnterpriseCustomerUser.objects.get_link_by_email(email)
-                    EnterpriseCourseEnrollment.objects.get_or_create(
-                        enterprise_customer_user=ecu,
-                        course_id=course_id
-                    )
-                    enrolled.append(email)
-                    if notify:
-                        send_email_notification_message(
-                            user=user,
-                            enrolled_in={
-                                'name': course_name,
-                                'url': course_url,
-                                'type': 'course',
-                                'start': parse_lms_api_datetime(course_start),
-                            },
-                            enterprise_customer=enterprise_customer,
-                            email_connection=email_conn,
-                        )
-        enrolled_count = len(enrolled)
-        if enrolled_count:
-            messages.success(request, ungettext(
-                "{enrolled_count} user was enrolled to {course_id}.",
-                "{enrolled_count} users were enrolled to {course_id}.",
-                enrolled_count,
-            ).format(enrolled_count=enrolled_count, course_id=course_id))
-        if non_existing:
-            messages.warning(request, _(
-                "The following users do not have an account on {}. They have not been enrolled in the course."
-                " When these users create an account, they will be enrolled in the course automatically: {}"
-            ).format(settings.PLATFORM_NAME, ", ".join(non_existing)))
-            for email in non_existing:
-                pending_user = PendingEnterpriseCustomerUser.objects.get(
-                    enterprise_customer=enterprise_customer,
-                    user_email=email
-                )
-                PendingEnrollment.objects.update_or_create(
-                    user=pending_user,
-                    course_id=course_id,
-                    course_mode=mode
-                )
-                if notify:
-                    send_email_notification_message(
-                        user=pending_user,
-                        enrolled_in={
-                            'name': course_name,
-                            'url': course_url,
-                            'type': 'course',
-                            'start': parse_lms_api_datetime(course_start),
-                        },
-                        enterprise_customer=enterprise_customer,
-                        email_connection=email_conn,
-                    )
-
-        if failed:
-            messages.error(
+            return
+        course_url = course_details.get('marketing_url')
+        if course_url is None:
+            # If we didn't get a useful path to the course on a marketing site from the catalog API,
+            # then we should build a path to the course on the LMS directly.
+            course_url = get_reversed_url_by_site(
                 request,
-                _("Enrollment of some users failed: {}").format(", ".join(failed)),
+                enterprise_customer.site,
+                'about_course',
+                args=(course_id,),
             )
+        course_name = course_details.get('title')
+        course_start = parse_lms_api_datetime(course_details.get('start'))
+
+        with mail.get_connection() as email_conn:
+            for user in users:
+                send_email_notification_message(
+                    user=user,
+                    enrolled_in={
+                        'name': course_name,
+                        'url': course_url,
+                        'type': 'course',
+                        'start': course_start,
+                    },
+                    enterprise_customer=enterprise_customer,
+                    email_connection=email_conn
+                )
+
+    @classmethod
+    def notify_program_learners(cls, enterprise_customer, program_details, users):
+        """
+        Notify learners about a program in which they've been enrolled.
+
+        Args:
+            enterprise_customer: The EnterpriseCustomer being linked to
+            program_details: Details about the specific program the learners were enrolled in
+            users: An iterable of the users or pending users who were enrolled
+        """
+        program_name = program_details.get('title')
+        program_branding = program_details.get('type')
+        program_url = program_details.get('marketing_url')
+        program_type = 'program'
+        program_start = get_earliest_start_date_from_program(program_details)
+
+        with mail.get_connection() as email_conn:
+            for user in users:
+                send_email_notification_message(
+                    user=user,
+                    enrolled_in={
+                        'name': program_name,
+                        'url': program_url,
+                        'type': program_type,
+                        'start': program_start,
+                        'branding': program_branding,
+                    },
+                    enterprise_customer=enterprise_customer,
+                    email_connection=email_conn
+                )
+
+    @classmethod
+    def get_success_enrollment_message(cls, users, enrolled_in):
+        """
+        Create message for the users who were enrolled in a course or program.
+
+        Args:
+            users: An iterable of users who were successfully enrolled
+            enrolled_in (str): A string identifier for the course or program the users were enrolled in
+
+        Returns:
+            tuple: A 2-tuple containing a message type and message text
+        """
+        enrolled_count = len(users)
+        return (
+            'success',
+            ungettext(
+                '{enrolled_count} user was enrolled to {enrolled_in}.',
+                '{enrolled_count} users were enrolled to {enrolled_in}.',
+                enrolled_count,
+            ).format(
+                enrolled_count=enrolled_count,
+                enrolled_in=enrolled_in,
+            )
+        )
+
+    @classmethod
+    def get_failed_enrollment_message(cls, users, enrolled_in):
+        """
+        Create message for the users who were not able to be enrolled in a course or program.
+
+        Args:
+            users: An iterable of users who were not successfully enrolled
+            enrolled_in (str): A string identifier for the course or program with which enrollment was attempted
+
+        Returns:
+        tuple: A 2-tuple containing a message type and message text
+        """
+        failed_emails = [user.email for user in users]
+        return (
+            'error',
+            _('Enrollment of some users in {enrolled_in} failed: {user_list}').format(
+                enrolled_in=enrolled_in,
+                user_list=', '.join(failed_emails),
+            )
+        )
+
+    @classmethod
+    def get_pending_enrollment_message(cls, pending_users, enrolled_in):
+        """
+        Create message for the users who were enrolled in a course or program.
+
+        Args:
+            users: An iterable of PendingEnterpriseCustomerUsers who were successfully linked with a pending enrollment
+            enrolled_in (str): A string identifier for the course or program the pending users were linked to
+
+        Returns:
+            tuple: A 2-tuple containing a message type and message text
+        """
+        pending_emails = [pending_user.user_email for pending_user in pending_users]
+        return (
+            'warning',
+            _(
+                'The following users do not have an account on {platform_name}. They have not been '
+                'enrolled in {enrolled_in}. When these users create an account, they will be '
+                'enrolled automatically: {pending_email_list}'
+            ).format(
+                platform_name=settings.PLATFORM_NAME,
+                enrolled_in=enrolled_in,
+                pending_email_list=', '.join(pending_emails),
+            )
+        )
+
+    @classmethod
+    def _enroll_users(
+            cls,
+            request,
+            enterprise_customer,
+            emails,
+            mode,
+            course_id=None,
+            program_details=None,
+            notify=True
+    ):
+        """
+        Enroll the users with the given email addresses to the courses specified, either specifically or by program.
+
+        Args:
+            cls (type): The EnterpriseCustomerManageLearnersView class itself
+            request: The HTTP request the enrollment is being created by
+            enterprise_customer: The instance of EnterpriseCustomer whose attached users we're enrolling
+            emails: An iterable of strings containing email addresses to enroll in a course
+            mode: The enrollment mode the users will be enrolled in the course with
+            course_id: The ID of the course in which we want to enroll
+            program_details: Details about a program in which we want to enroll
+            notify: Whether to notify (by email) the users that have been enrolled
+        """
+        pending_messages = []
+
+        if course_id:
+            succeeded, pending, failed = cls.enroll_users_in_course(
+                enterprise_customer=enterprise_customer,
+                course_id=course_id,
+                course_mode=mode,
+                emails=emails,
+            )
+            all_successes = succeeded + pending
+            if notify:
+                cls.notify_enrolled_learners(
+                    enterprise_customer=enterprise_customer,
+                    request=request,
+                    course_id=course_id,
+                    users=all_successes,
+                )
+            if succeeded:
+                pending_messages.append(cls.get_success_enrollment_message(succeeded, course_id))
+            if failed:
+                pending_messages.append(cls.get_failed_enrollment_message(failed, course_id))
+            if pending:
+                pending_messages.append(cls.get_pending_enrollment_message(pending, course_id))
+
+        if program_details:
+            succeeded, pending, failed = cls.enroll_users_in_program(
+                enterprise_customer=enterprise_customer,
+                program_details=program_details,
+                course_mode=mode,
+                emails=emails,
+            )
+            all_successes = succeeded + pending
+            if notify:
+                cls.notify_program_learners(
+                    enterprise_customer=enterprise_customer,
+                    program_details=program_details,
+                    users=all_successes
+                )
+            program_identifier = program_details.get('title', program_details.get('uuid', _('the program')))
+            if succeeded:
+                pending_messages.append(cls.get_success_enrollment_message(succeeded, program_identifier))
+            if failed:
+                pending_messages.append(cls.get_failed_enrollment_message(failed, program_identifier))
+            if pending:
+                pending_messages.append(cls.get_pending_enrollment_message(pending, program_identifier))
+
+        cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
         """
@@ -471,59 +741,27 @@ class EnterpriseCustomerManageLearnersView(View):
 
         # _handle_form might add form errors, so we check if it is still valid
         if manage_learners_form.is_valid():
-            course_ids = []
             course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
             program_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.PROGRAM)
 
             notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
 
+            course_id = None
             if course_details:
-                course_ids.append(course_details['course_id'])
-            elif program_details:
+                course_id = course_details['course_id']
 
-                course_ids.extend(get_course_runs_from_program(program_details))
-                program_notify = notify
-                notify = False
-                if program_notify:
-                    program_name = program_details.get('title')
-                    program_branding = program_details.get('type')
-                    program_url = program_details.get('marketing_url')
-                    program_type = 'program'
-                    program_start = get_earliest_start_date_from_program(program_details)
-                    with ConditionalEmailConnection(program_notify) as email_conn:
-                        for email in linked_learners:
-                            try:
-                                user = User.objects.get(email=email)
-                            except User.DoesNotExist:
-                                user = PendingEnterpriseCustomerUser.objects.get(
-                                    enterprise_customer=enterprise_customer,
-                                    user_email=email,
-                                )
-                            send_email_notification_message(
-                                user=user,
-                                enrolled_in={
-                                    'name': program_name,
-                                    'url': program_url,
-                                    'type': program_type,
-                                    'start': program_start,
-                                    'branding': program_branding,
-                                },
-                                enterprise_customer=enterprise_customer,
-                                email_connection=email_conn,
-                            )
-
-            if course_ids:
+            if course_id or program_details:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
-                for course_id in course_ids:
-                    self._enroll_users(
-                        enterprise_customer,
-                        linked_learners,
-                        course_id,
-                        course_mode,
-                        request,
-                        notify=notify,
-                    )
+                self._enroll_users(
+                    request=request,
+                    enterprise_customer=enterprise_customer,
+                    emails=linked_learners,
+                    mode=course_mode,
+                    course_id=course_id,
+                    program_details=program_details,
+                    notify=notify,
+                )
 
             # Redirect to GET if everything went smooth.
             return HttpResponseRedirect("")
