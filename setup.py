@@ -43,6 +43,7 @@ setup(
     url="https://github.com/edx/edx-enterprise",
     packages=[
         "enterprise",
+        "integrated_channels",
         "integrated_channels.integrated_channel",
         "integrated_channels.sap_success_factors",
     ],
