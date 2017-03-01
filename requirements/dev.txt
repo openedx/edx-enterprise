@@ -13,7 +13,7 @@ caniusepython3==5.0.0
 click==6.7                # via pip-tools
 clint==0.5.1              # via twine
 configparser==3.5.0       # via pylint
-diff-cover==0.9.10
+diff-cover==0.9.11
 distlib==0.2.4            # via caniusepython3
 django-config-models==0.1.5
 django-extensions==1.7.7
@@ -35,9 +35,9 @@ futures==3.0.5            # via caniusepython3
 inflect==0.2.5            # via jinja2-pluralize
 isort==4.2.5
 jinja2-pluralize==0.3.0   # via diff-cover
-Jinja2==2.9.5             # via diff-cover, jinja2-pluralize
+jinja2==2.9.5             # via diff-cover, jinja2-pluralize
 lazy-object-proxy==1.2.2  # via astroid
-MarkupSafe==0.23          # via jinja2
+MarkupSafe==1.0           # via jinja2
 mccabe==0.6.1             # via pylint
 olefile==0.44             # via pillow
 packaging==16.8           # via caniusepython3, setuptools

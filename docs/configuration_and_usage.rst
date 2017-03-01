@@ -99,6 +99,77 @@ to the help strings provided by the form.
 You can preview emails in the template edit view using the "Preview (program)" and "Preview (course)" buttons in
 top-right corner.
 
+Integrated Channels
+-------------------
+
+SAP SuccessFactors Configuration
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+One of the integrated channels available for an ``EnterpriseCustomer`` is `SAP SuccessFactors`_.
+
+To integrate an ``EnterpriseCustomer`` with SAP SuccessFactors:
+
+* Set up a `TPA SAML Integration`_ for the SAP SuccessFactors endpoint.
+* From the LMS Admin, ensure that your ``EnterpriseCustomer`` record has its ``identity_provider`` field pointing to the
+  SAML Integration created in the previous step.
+
+  This allows learners to create accounts using Single Sign-On from SAP SuccessFactors, and to have their course
+  completion records sent back to SAP SuccessFactors.
+* From the LMS Admin, create an ``SAP SuccessFactors Enterprise Customer Configuration`` record, and link it to your
+  ``EnterpriseCustomer``.
+
+  Ensure that the record is marked ``Active`` to allow the management commands below to send data via this channel.
+
+.. _SAP SuccessFactors: https://www.successfactors.com
+.. _TPA SAML Integration: http://edx.readthedocs.io/projects/edx-installing-configuring-and-running/en/latest/configuration/tpa/tpa_SAML_SP.html
+
+Management Commands
+^^^^^^^^^^^^^^^^^^^
+
+These Django management commands send data to ``EnterpriseCustomer``'s active, integrated channels.
+
+They must be run from the command line on a server with the Open edX environment installed.
+
+.. note::
+
+   If data sharing consent is enabled for your ``EnterpriseCustomer``, then any Enterprise learners enrolled in the
+   associated courses must consent to data sharing, thus permitting their data to be sent back to SAP SuccessFactors.
+
+   If data sharing consent is *not* enabled for your ``EnterpriseCustomer``, then learner data may be sent to SAP
+   SuccessFactors without their explicit consent, so use these settings with care.
+
+
+Transmit Learner Data
+_____________________
+
+The ``transmit_learner_data`` command sends course completion data for each ``EnterpriseCustomerCourseEnrollment`` where
+evidence of course completion exists for an enrolled learner.
+
+.. note::
+
+   Currently, "course completion" is determined by the presence of a certificate for a given learner and course
+
+   This means that audit learners in self-paced courses will not yet have their course completion data sent to the
+   integrated channels.
+
+Usage
+~~~~~
+
+.. code-block:: bash
+
+   # View command help
+   $ ./manage.py lms transmit_learner_data --help --settings=$EDX_PLATFORM_SETTINGS
+
+   # Transmit learner data for all EnterpriseCustomers, to all active integrated channels.
+   $ ./manage.py lms transmit_learner_data --settings=$EDX_PLATFORM_SETTINGS
+
+   # Transmit learner data for a single EnterpriseCustomer, e.g. with uuid 12
+   $ ./manage.py lms transmit_learner_data --enterprise-customer 12 --settings=$EDX_PLATFORM_SETTINGS
+
+   # Transmit learner data only to SAP SuccessFactors
+   $ ./manage.py lms transmit_learner_data --channel SAP --settings=$EDX_PLATFORM_SETTINGS
+
+
 .. rubric:: Footnotes
 
 .. [#f1] Course Catalog Service API does not expose any means to get a list of modes supported by *all* courses in the

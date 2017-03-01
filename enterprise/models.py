@@ -25,7 +25,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
-from enterprise.lms_api import enroll_user_in_course_locally
+from enterprise.lms_api import ThirdPartyAuthApiClient, enroll_user_in_course_locally
 from enterprise.validators import validate_image_extension, validate_image_size
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -339,6 +339,22 @@ class EnterpriseCustomerUser(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    def get_remote_id(self):
+        """
+        Retrieve the SSO provider's identifier for this user from the LMS Third Party API.
+
+        Returns None if:
+        * the user doesn't exist, or
+        * the associated EnterpriseCustomer has no identity_provider, or
+        * the remote identity is not found.
+        """
+        user = self.user
+        identity_provider = self.enterprise_customer.identity_provider
+        if user and identity_provider:
+            client = ThirdPartyAuthApiClient()
+            return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
+        return None
 
 
 @python_2_unicode_compatible
