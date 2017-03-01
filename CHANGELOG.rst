@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.26.1] - 2017-02-28
+---------------------
+
+* Added support for retrieving access token from SAP SuccessFactors
+* Added indicator in Sap SuccessFactors admin tool for checking the configuration's access to SuccessFactors.
+
 [0.26.0] - 2017-02-28
 ---------------------
 

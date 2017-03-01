@@ -21,8 +21,9 @@ olefile==0.44             # via pillow
 Pillow==4.0.0
 PyJWT==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
 python-dateutil==2.6.0    # via edx-drf-extensions
-requests==2.13.0          # via edx-drf-extensions, slumber
+requests==2.13.0
 shortuuid==0.5.0          # via edx-django-oauth2-provider
+simplejson==3.10.0
 six==1.10.0               # via django-extensions, python-dateutil
-slumber==0.7.1            # via edx-rest-api-client
+slumber==0.7.1
 unicodecsv==0.14.1
