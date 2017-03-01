@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.26.2] - 2017-03-02
+---------------------
+
+* Fixed package listing in setup.py to avoid import errors when using as a library
+
 [0.26.1] - 2017-02-28
 ---------------------
 
