@@ -18,7 +18,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 import enterprise
-from six.moves.urllib.parse import urlparse, urlunparse  # pylint: disable=import-error,wrong-import-order
+# pylint: disable=import-error,wrong-import-order
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunparse, urlunsplit
 
 try:
     from edxmako.paths import add_lookup
@@ -419,3 +420,80 @@ def get_enterprise_branding_info_by_ec_uuid(ec_uuid=None):  # pylint: disable=in
     return enterprise.models.EnterpriseCustomerBrandingConfiguration.objects.filter(
         enterprise_customer__uuid=ec_uuid
     ).first()
+
+
+def get_enterprise_customer_for_user(auth_user):
+    """
+    Return enterprise customer instance for given user.
+
+    Some users are associated with an enterprise customer via `EnterpriseCustomerUser` model,
+        1. if given user is associated with any enterprise customer, return enterprise customer.
+        2. otherwise return `None`.
+
+    Arguments:
+        auth_user (contrib.auth.User): Django User
+
+    Returns:
+        (EnterpriseCustomer): enterprise customer associated with the current user.
+    """
+    enterprise_customer_user = enterprise.models.EnterpriseCustomerUser.objects.filter(user_id=auth_user.id).first()
+
+    # Return `None` if given user is not associated with any enterprise customer
+    if not enterprise_customer_user:
+        return None
+
+    return enterprise_customer_user.enterprise_customer
+
+
+def get_course_track_selection_url(course_run, query_parameters):
+    """
+    Return track selection url for the given course.
+
+    Arguments:
+        course_run (dict): A dictionary containing course run metadata.
+        query_parameters (dict): A dictionary containing query parameters to be added to course selection url.
+
+    Raises:
+        (KeyError): Raised when course run dict does not have 'key' key.
+
+    Returns:
+        (str): Course track selection url.
+    """
+    try:
+        course_root = reverse('course_modes_choose', kwargs={'course_id': course_run['key']})
+    except KeyError:
+        LOGGER.exception(
+            "KeyError while parsing course run data.\nCourse Run: \n%s", course_run,
+        )
+        raise
+
+    url = '{}{}'.format(
+        settings.LMS_ROOT_URL,
+        course_root
+    )
+    course_run_url = update_query_parameters(url, query_parameters)
+
+    return course_run_url
+
+
+def update_query_parameters(url, query_parameters):
+    """
+    Return url with updated query parameters.
+
+    Arguments:
+        url (str): Original url whose query parameters need to be updated.
+        query_parameters (dict): A dictionary containing query parameters to be added to course selection url.
+
+    Returns:
+        (slug): slug identifier for the identity provider that can be used for identity verification of
+            users associated the enterprise customer of the given user.
+    """
+    scheme, netloc, path, query_string, fragment = urlsplit(url)
+    url_params = parse_qs(query_string)
+
+    # Update url query parameters
+    url_params.update(query_parameters)
+
+    return urlunsplit(
+        (scheme, netloc, path, urlencode(url_params, doseq=True), fragment),
+    )

@@ -64,6 +64,28 @@ class CourseCatalogApiClient(object):
         """
         return self._load_data('catalogs', default=[])
 
+    def get_catalog(self, catalog_id):
+        """
+        Return specified course catalog.
+
+        Returns:
+            dict: catalog details if it is available for the user.
+        """
+        return self._load_data('catalogs', default=[], resource_id=catalog_id)
+
+    def get_paginated_catalog_courses(self, catalog_id, page=1):
+        """
+        Return paginated resopnse for all catalog courses.
+
+        Returns:
+            dict: API response with links to next and previous pages.
+        """
+        resource = 'catalogs/{}/courses/'.format(catalog_id)
+        return self._load_data(
+            resource, default=[], querystring={'page': page},
+            traverse_pagination=False, many=False,
+        )
+
     def get_course_run(self, course_run_id):
         """
         Return course_run data, including name, ID and seats.

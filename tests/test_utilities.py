@@ -818,3 +818,143 @@ class TestUtils(unittest.TestCase):
             utils.get_enterprise_branding_info_by_ec_uuid(ec_uuid=FakerFactory.create().uuid4()),
             None,
         )
+
+    def test_get_enterprise_customer_for_user(self):
+        """
+        Test `get_enterprise_customer_for_user` helper method.
+        """
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+
+        user = UserFactory()
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=user.id,
+        )
+        EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=ecu.enterprise_customer,
+            provider_id=provider_id,
+        )
+
+        # Assert that correct enterprise customer is returned
+        self.assertEqual(
+            utils.get_enterprise_customer_for_user(auth_user=user),
+            ecu.enterprise_customer,
+        )
+
+        # Assert that None is returned if user is not associated with any enterprise customer
+        self.assertEqual(
+            utils.get_enterprise_customer_for_user(auth_user=UserFactory()),
+            None,
+        )
+
+    @ddt.data(
+        (
+            'localhost:8000/courses/course-v1:edx+test-course+T22017/',
+            {},
+            ['localhost:8000/courses/course-v1:edx+test-course+T22017/'],
+        ),
+        (
+            'http://localhost/courses/course-v1:edx+test-course+T22017/',
+            {},
+            ['http://localhost/courses/course-v1:edx+test-course+T22017/'],
+        ),
+        (
+            'http://open.edx/courses/course-v1:edx+test-course+T22017/?course=test-course',
+            {},
+            [
+                'http://open.edx/courses/course-v1:edx+test-course+T22017/?',
+                'course=test-course',
+            ],
+        ),
+        (
+            'http://open.edx/courses/course-v1:edx+test-course+T22017/',
+            {
+                'tpa_hint': 'test-shib',
+                'referrer': 'edX',
+            },
+            [
+                'http://open.edx/courses/course-v1:edx+test-course+T22017/?',
+                'tpa_hint=test-shib',
+                'referrer=edX',
+            ],
+        ),
+        (
+            'http://open.edx/courses/course-v1:edx+test-course+T22017/?course=test-course',
+            {
+                'tpa_hint': 'test-shib',
+                'referrer': 'edX',
+            },
+            [
+                'http://open.edx/courses/course-v1:edx+test-course+T22017/?',
+                'tpa_hint=test-shib',
+                'referrer=edX',
+                'course=test-course',
+            ],
+        ),
+    )
+    @ddt.unpack
+    def test_update_query_parameters(self, url, query_parameters, expected_url_parts):
+        """
+        Test `update_query_parameters` helper method.
+        """
+        url = utils.update_query_parameters(url, query_parameters)
+
+        # Make sure all query parameters are present We can not assert whole urls because we can
+        # not determine the position of these query parameters.
+        # e.g. `http://<base>?course=test-course&tpa_hint=test-shib` and
+        # `http://<base>?tpa_hint=test-shib&course=test-course` are both same urls but different strings.
+        for url_part in expected_url_parts:
+            assert url_part in url
+
+    @ddt.data(
+        (
+            {
+                'key': 'course-v1:edx+test-course+T22017',
+                'uuid': '57432370-0a6e-4d95-90fe-77b4fe64de2b',
+                'title': 'A self-paced audit course',
+            },
+            {},
+            ['http://testserver/course_modes/choose/course-v1:edx+test-course+T22017/'],
+        ),
+        (
+            {
+                'key': 'course-v1:edx+test-course+T22017',
+                'uuid': '57432370-0a6e-4d95-90fe-77b4fe64de2b',
+                'title': 'A self-paced audit course',
+            },
+            {
+                'tpa_hint': 'test-shib',
+                'referrer': 'edX',
+            },
+            [
+                'http://testserver/course_modes/choose/course-v1:edx+test-course+T22017/?',
+                'tpa_hint=test-shib',
+                'referrer=edX',
+            ],
+        ),
+    )
+    @ddt.unpack
+    @override_settings(LMS_ROOT_URL='http://testserver/')
+    def test_get_course_track_selection_url(self, course_run, query_parameters, expected_url_parts):
+        """
+        Test `get_course_track_selection_url` helper method.
+        """
+        course_root = "course_modes/choose/{course_id}/".format(course_id=course_run.get('key', ''))
+
+        with mock.patch('enterprise.utils.reverse', return_value=course_root):
+            url = utils.get_course_track_selection_url(course_run, query_parameters)
+
+            # Make sure course run url returned by get_course_track_selection_url
+            # contains all the expected url parts.
+            # We can not assert whole urls because we can not determine the position of these query parameters.
+            # e.g. `http://<base>?course=test-course&tpa_hint=test-shib` and
+            # `http://<base>?tpa_hint=test-shib&course=test-course` are both same urls but different strings.
+            for url_part in expected_url_parts:
+                assert url_part in url
+
+    def test_get_course_track_selection_url_raises_exception(self):
+        """
+        Test `get_course_track_selection_url` raises exception for missing `key` in course run.
+        """
+        with raises(KeyError):
+            utils.get_course_track_selection_url({}, {})

@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file requirements/doc.txt requirements/base.in requirements/doc.in
 #
-alabaster==0.7.9          # via sphinx
+alabaster==0.7.10         # via sphinx
 babel==2.3.4              # via sphinx
 bleach==1.5.0             # via readme-renderer
 chardet==2.3.0            # via doc8
@@ -29,7 +29,7 @@ imagesize==0.7.1          # via sphinx
 Jinja2==2.9.5             # via sphinx
 MarkupSafe==0.23          # via jinja2
 olefile==0.44             # via pillow
-pbr==1.10.0               # via stevedore
+pbr==2.0.0                # via stevedore
 Pillow==4.0.0
 pockets==0.3.2            # via sphinxcontrib-napoleon
 Pygments==2.2.0           # via readme-renderer, sphinx
@@ -46,5 +46,5 @@ slumber==0.7.1
 snowballstemmer==1.2.1    # via sphinx
 Sphinx==1.5.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
-stevedore==1.20.0         # via doc8
+stevedore==1.21.0         # via doc8
 unicodecsv==0.14.1

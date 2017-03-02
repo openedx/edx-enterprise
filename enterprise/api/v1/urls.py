@@ -30,3 +30,4 @@ router.register(
     views.EnterpriseCustomerEntitlementViewSet,
     'enterprise-customer-entitlement',
 )
+router.register("catalogs", views.EnterpriseCatalogViewSet, 'catalogs')

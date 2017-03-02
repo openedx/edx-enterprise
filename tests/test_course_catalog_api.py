@@ -119,6 +119,58 @@ class TestCourseCatalogApi(unittest.TestCase):
 
         assert self.api.get_all_catalogs() == []
 
+    def test_get_catalog(self):
+        """
+        Verify get_catalog of CourseCatalogApiClient works as expected.
+        """
+        response_dict = {"very": "complex", "json": {"with": " nested object"}}
+        self.get_data_mock.return_value = response_dict
+
+        actual_result = self.api.get_catalog(catalog_id=1)
+
+        assert self.get_data_mock.call_count == 1
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == "catalogs"
+        assert resource_id is 1
+        assert actual_result == response_dict
+
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_catalog_empty_response(self, response):
+        """
+        Verify get_catalog of CourseCatalogApiClient works as expected.
+        """
+        self.get_data_mock.return_value = response
+
+        assert self.api.get_catalog(catalog_id=1) == []
+
+    def test_get_paginated_catalog_courses(self):
+        """
+        Verify get_paginated_catalog_courses of CourseCatalogApiClient works as expected.
+        """
+        catalog_id = 1
+        response_dict = {"very": "complex", "json": {"with": " nested object"}}
+        self.get_data_mock.return_value = response_dict
+
+        actual_result = self.api.get_paginated_catalog_courses(catalog_id=catalog_id)
+
+        assert self.get_data_mock.call_count == catalog_id
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == "catalogs/{}/courses/".format(catalog_id)
+        assert resource_id is None
+        assert actual_result == response_dict
+
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_paginated_catalog_courses_empty_response(self, response):
+        """
+        Verify get_paginated_catalog_courses of CourseCatalogApiClient works as expected.
+        """
+        catalog_id = 1
+        self.get_data_mock.return_value = response
+
+        assert self.api.get_paginated_catalog_courses(catalog_id=catalog_id) == []
+
     @ddt.data(
         "course-v1:JediAcademy+AppliedTelekinesis+T1",
         "course-v1:TrantorAcademy+Psychohistory101+T1",
