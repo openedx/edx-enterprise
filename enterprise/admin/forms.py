@@ -29,21 +29,21 @@ class ManageLearnersForm(forms.Form):
     """
     Form to manage learner additions.
     """
-    email_or_username = forms.CharField(label=_("Type in Email or Username to link single user"), required=False)
+    email_or_username = forms.CharField(label=_("To add a single learner, enter an email address or username."), required=False)
     bulk_upload_csv = forms.FileField(
-        label=_("Or upload a CSV to enroll multiple users at once"), required=False,
-        help_text=_("The CSV must have a column of email addresses, indicated by the heading 'email' in the first row.")
+        label=_("To add multiple learners, upload a .csv file that contains a column of email addresses"), required=False,
+        help_text=_("The .csv file must have a column of email addresses, indicated by the heading 'email' in the first row.")
     )
     course = forms.CharField(
-        label=_("Also enroll these learners in this course"), required=False,
-        help_text=_("Provide a course ID if enrollment is desired."),
+        label=_("Enroll these learners in this course"), required=False,
+        help_text=_("To enroll learners in a course, enter a course ID."),
     )
     program = forms.CharField(
         label=_("Or enroll these learners in this program"), required=False,
-        help_text=_("Provide a program name or ID if enrollment is desired.")
+        help_text=_("To enroll learners in a program, enter a program name or ID.")
     )
     course_mode = forms.ChoiceField(
-        label=_("Course enrollment mode"), required=False,
+        label=_("Course enrollment track"), required=False,
         choices=BLANK_CHOICE_DASH + [
             ("audit", _("Audit")),
             ("verified", _("Verified")),
@@ -376,7 +376,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         except ObjectDoesNotExist:
             # This should not happen, as identity providers displayed in drop down are fetched dynamically.
             message = _(
-                "Selected Identity Provider does not exist, please contact system administrator for more info.",
+                "The specified Identity Provider does not exist. For more information, contact a system administrator.",
             )
             # Log message for debugging
             logger.exception(message)
@@ -386,10 +386,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         if identity_provider and identity_provider.site != enterprise_customer.site:
             raise ValidationError(
                 _(
-                    "Site ({identity_provider_site}) of selected identity provider does not match with "
-                    "enterprise customer's site ({enterprise_customer_site})."
-                    "Please either select site with domain '{identity_provider_site}' or update identity provider's "
-                    "site to '{enterprise_customer_site}'."
+                    "The site for the selected identity provider ({identity_provider_site}) does not match the site for this enterprise customer ({enterprise_customer_site}). To correct this problem, select a site that has a domain of '{identity_provider_site}', or update the   identity provider to '{enterprise_customer_site}'."
                 ).format(
                     enterprise_customer_site=enterprise_customer.site,
                     identity_provider_site=identity_provider.site,
