@@ -14,6 +14,7 @@ Change Log
 Unreleased
 ----------
 
+<<<<<<< HEAD
 
 [0.27.6] - 2017-03-21
 ---------------------
@@ -42,6 +43,8 @@ Unreleased
 
 * Added integrated_channels management command to transmit learner completion data to SAP SuccessFactors.
 
+=======
+>>>>>>> Edits to admin strings and tests
 [0.27.1] - 2017-03-13
 ---------------------
 

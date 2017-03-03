@@ -395,7 +395,10 @@ msgid "Branding Configurations"
 msgstr ""
 
 #: enterprise/models.py:590
+<<<<<<< HEAD
 
+=======
+>>>>>>> Edits to admin strings and tests
 msgid ""
 "Stores whether the learner linked to this model has consented to have their "
 "information shared with the associated EnterpriseCustomer."
@@ -410,7 +413,10 @@ msgid "Enterprise Customer Entitlements"
 msgstr ""
 
 #: enterprise/models.py:640
+<<<<<<< HEAD
 
+=======
+>>>>>>> Edits to admin strings and tests
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
@@ -428,7 +434,10 @@ msgid "The ID of the course in which the learner was enrolled."
 msgstr ""
 
 #: enterprise/models.py:764
+<<<<<<< HEAD
 
+=======
+>>>>>>> Edits to admin strings and tests
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -451,7 +460,10 @@ msgid ""
 msgstr ""
 
 #: enterprise/models.py:782
+<<<<<<< HEAD
 
+=======
+>>>>>>> Edits to admin strings and tests
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "

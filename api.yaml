@@ -23,9 +23,15 @@ auth_header:
   type: string
 endpoints:
   v1:
+<<<<<<< HEAD
     enterpriseCatalogById:
       get:
         operationId: get_enterprise_catalog_by_id
+=======
+    catalogById:
+      get:
+        operationId: get_catalog_by_id
+>>>>>>> Edits to admin strings and tests
         parameters:
           -
             in: header
@@ -77,9 +83,15 @@ endpoints:
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/"
+<<<<<<< HEAD
     enterpriseCatalogCourses:
       get:
         operationId: get_enterprise_catalog_courses
+=======
+    catalogCourses:
+      get:
+        operationId: get_catalog_courses
+>>>>>>> Edits to admin strings and tests
         parameters:
           -
             in: header
@@ -92,12 +104,20 @@ endpoints:
             required: true
             type: number
           -
+<<<<<<< HEAD
             in: query
+=======
+            in: querystring
+>>>>>>> Edits to admin strings and tests
             name: limit
             required: false
             type: number
           -
+<<<<<<< HEAD
             in: query
+=======
+            in: querystring
+>>>>>>> Edits to admin strings and tests
             name: offset
             required: false
             type: number
@@ -141,9 +161,15 @@ endpoints:
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/courses/"
+<<<<<<< HEAD
     enterpriseCatalogs:
       get:
         operationId: get_enterprise_catalogs
+=======
+    catalogs:
+      get:
+        operationId: get_catalogs
+>>>>>>> Edits to admin strings and tests
         parameters:
           -
             in: header
@@ -151,17 +177,29 @@ endpoints:
             required: true
             type: string
           -
+<<<<<<< HEAD
             in: query
+=======
+            in: querystring
+>>>>>>> Edits to admin strings and tests
             name: limit
             required: false
             type: number
           -
+<<<<<<< HEAD
             in: query
+=======
+            in: querystring
+>>>>>>> Edits to admin strings and tests
             name: offset
             required: false
             type: number
           -
+<<<<<<< HEAD
             in: query
+=======
+            in: querystring
+>>>>>>> Edits to admin strings and tests
             name: page
             required: false
             type: number

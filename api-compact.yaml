@@ -51,19 +51,31 @@ auth_header: &auth_header
   type: "string"
 
 limit_qs_parameter: &limit_qs_parameter
+<<<<<<< HEAD
   in: query
+=======
+  in: querystring
+>>>>>>> Edits to admin strings and tests
   name: limit
   required: false
   type: number
 
 offset_qs_parameter: &offset_qs_parameter
+<<<<<<< HEAD
   in: query
+=======
+  in: querystring
+>>>>>>> Edits to admin strings and tests
   name: offset
   required: false
   type: number
 
 page_qs_parameter: &page_qs_parameter
+<<<<<<< HEAD
   in: query
+=======
+  in: querystring
+>>>>>>> Edits to admin strings and tests
   name: page
   required: false
   type: number
@@ -89,7 +101,11 @@ endpoints:
   v1:
 
     # /v1/catalogs
+<<<<<<< HEAD
     enterpriseCatalogs:
+=======
+    catalogs:
+>>>>>>> Edits to admin strings and tests
         get:
           produces: *produces
           parameters:
@@ -97,27 +113,43 @@ endpoints:
             - *limit_qs_parameter
             - *offset_qs_parameter
             - *page_qs_parameter
+<<<<<<< HEAD
           operationId: "get_enterprise_catalogs"
+=======
+          operationId: "get_catalogs"
+>>>>>>> Edits to admin strings and tests
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration
             uri: "https://${stageVariables.enterprise_host}/v1/catalogs/"
 
     # /v1/catalogs/{id}
+<<<<<<< HEAD
     enterpriseCatalogById:
+=======
+    catalogById:
+>>>>>>> Edits to admin strings and tests
         get:
           produces: *produces
           parameters:
             - *auth_header
             - *id_parameter
+<<<<<<< HEAD
           operationId: "get_enterprise_catalog_by_id"
+=======
+          operationId: "get_catalog_by_id"
+>>>>>>> Edits to admin strings and tests
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_parameter
             uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/"
 
     # /v1/catalogs/{id}/courses
+<<<<<<< HEAD
     enterpriseCatalogCourses:
+=======
+    catalogCourses:
+>>>>>>> Edits to admin strings and tests
         get:
           produces: *produces
           parameters:
@@ -126,7 +158,11 @@ endpoints:
             - *limit_qs_parameter
             - *offset_qs_parameter
             - *page_qs_parameter
+<<<<<<< HEAD
           operationId: "get_enterprise_catalog_courses"
+=======
+          operationId: "get_catalog_courses"
+>>>>>>> Edits to admin strings and tests
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_parameter
