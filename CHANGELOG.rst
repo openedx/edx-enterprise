@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.26.3] - 2017-03-02
+---------------------
+
+* Added integrated_channels to MANIFEST.in to properly include migrations for the new packages.
+
 [0.26.2] - 2017-03-02
 ---------------------
 
