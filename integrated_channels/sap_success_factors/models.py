@@ -11,7 +11,7 @@ from simple_history.models import HistoricalRecords
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
-from model_utils.models import TimeFramedModel
+from model_utils.models import TimeStampedModel
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.sap_success_factors.utils import SapCourseExporter, parse_datetime_to_epoch
@@ -56,11 +56,26 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
     The Enterprise specific configuration we need for integrating with SuccessFactors.
     """
 
+    USER_TYPE_USER = 'user'
+    USER_TYPE_ADMIN = 'admin'
+
+    USER_TYPE_CHOICES = (
+        (USER_TYPE_USER, 'User'),
+        (USER_TYPE_ADMIN, 'Admin'),
+    )
+
     key = models.CharField(max_length=255, blank=True, verbose_name="Client ID")
     sapsf_base_url = models.CharField(max_length=255, verbose_name="SAP Base URL")
     sapsf_company_id = models.CharField(max_length=255, blank=True, verbose_name="SAP Company ID")
     sapsf_user_id = models.CharField(max_length=255, blank=True, verbose_name="SAP User ID")
     secret = models.CharField(max_length=255, blank=True, verbose_name="Client Secret")
+    user_type = models.CharField(
+        max_length=20,
+        choices=USER_TYPE_CHOICES,
+        blank=False,
+        default=USER_TYPE_USER,
+        verbose_name="SAP User Type"
+    )
 
     history = HistoricalRecords()
 
@@ -213,7 +228,7 @@ class LearnerDataTransmissionAudit(models.Model):
 
 
 @python_2_unicode_compatible
-class CatalogTransmissionAudit(TimeFramedModel):
+class CatalogTransmissionAudit(TimeStampedModel):
     """
     The summary of instances when the course catalog was sent to SuccessFactors for an enterprise.
     """

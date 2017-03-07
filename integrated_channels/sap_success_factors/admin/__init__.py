@@ -6,7 +6,6 @@ from __future__ import absolute_import, unicode_literals
 from django.contrib import admin
 from config_models.admin import ConfigurationModelAdmin
 from requests import RequestException
-from simplejson import JSONDecodeError
 
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration, SAPSuccessFactorsGlobalConfiguration
@@ -84,9 +83,10 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 obj.key,
                 obj.secret,
                 obj.sapsf_company_id,
-                obj.sapsf_user_id
+                obj.sapsf_user_id,
+                obj.user_type
             )
-        except (RequestException, JSONDecodeError):
+        except (RequestException, ValueError):
             return False
         return bool(access_token and expires_at)
 

@@ -41,7 +41,7 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
         )
         self.integrated_channel = SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
             enterprise_customer=self.enterprise_customer,
-            sapsf_base_url='enterprise.successfactors.com',
+            sapsf_base_url='http://enterprise.successfactors.com/',
             key='key',
             secret='secret',
             active=True,
@@ -79,10 +79,14 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 
 @mark.django_db
 @mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
-def test_transmit_courseware_task_success(fake_catalog_client, caplog):
+@mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
+def test_transmit_courseware_task_success(fake_client, fake_catalog_client, caplog):
     """
     Test the data transmission task.
     """
+    fake_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
+    fake_client.return_value.send_course_import.return_value = 200, '{}'
+
     fake_catalog_client.return_value = mock.MagicMock(
         get_course_details=get_course_details,
         get_catalog_courses=get_catalog_courses,
@@ -97,7 +101,7 @@ def test_transmit_courseware_task_success(fake_catalog_client, caplog):
     )
     SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
         enterprise_customer=enterprise_customer,
-        sapsf_base_url='enterprise.successfactors.com',
+        sapsf_base_url='http://enterprise.successfactors.com/',
         key='key',
         secret='secret',
         active=True,
@@ -105,25 +109,25 @@ def test_transmit_courseware_task_success(fake_catalog_client, caplog):
 
     call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
 
+    fake_client.return_value.send_course_import.assert_called()
     assert len(caplog.records) == 7
     expected_dump = (
         '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
         '"contentTitle": "Course Description", "launchType": 3, "launchURL": "http://l'
         'ocalhost:8000/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner",'
         ' "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
-        'moX+Demo_Course", "description": [{"locale": "English", "value": ""}], "dura'
-        'tion": "", "price": [], "providerID": "EDX", "revisionNumber": 1, "schedule"'
-        ': [{"active": true, "duration": "", "endDate": 2147483647000, "startDate": 1'
-        '360040400000}], "status": "INACTIVE", "thumbnailURI": "http://192.168.1.187:'
-        '8000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg'
-        '", "title": [{"locale": "English", "value": "edX Demonstration Course"}]}, {'
-        '"content": [{"contentID": "course-v1:foobar+fb1+fbv1", "contentTitle": "Cour'
-        'se Description", "launchType": 3, "launchURL": "http://localhost:8000/course'
-        '/foobarfb1?utm_source=admin&utm_medium=affiliate_partner", "mobileEnabled": '
-        'false, "providerID": "EDX"}], "courseID": "course-v1:foobar+fb1+fbv1", "desc'
-        'ription": [{"locale": "English", "value": "This is a really cool course. Lik'
-        'e, we promise."}], "duration": "", "price": [], "providerID": "EDX", "revisi'
-        'onNumber": 1, "schedule": [{"active": true, "duration": "", "endDate": 21474'
+        'moX+Demo_Course", "description": [{"locale": "English", "value": ""}], "price'
+        '": [], "providerID": "EDX", "revisionNumber": 1, "schedule": [{"active": true'
+        ', "endDate": 2147483647000, "startDate": 1360040400000}], "status": "INACTIVE'
+        '", "thumbnailURI": "http://192.168.1.187:8000/asset-v1:edX+DemoX+Demo_Course+'
+        'type@asset+block@images_course_image.jpg", "title": [{"locale": "English", "v'
+        'alue": "edX Demonstration Course"}]}, {"content": [{"contentID": "course-v1:f'
+        'oobar+fb1+fbv1", "contentTitle": "Course Description", "launchType": 3, "laun'
+        'chURL": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=a'
+        'ffiliate_partner", "mobileEnabled": false, "providerID": "EDX"}], "courseID":'
+        ' "course-v1:foobar+fb1+fbv1", "description": [{"locale": "English", "value": '
+        '"This is a really cool course. Like, we promise."}], "price": [], "providerID'
+        '": "EDX", "revisionNumber": 1, "schedule": [{"active": true, "endDate": 21474'
         '83647000, "startDate": 1420070400000}], "status": "INACTIVE", "thumbnailURI"'
         ': "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+type@asset+block@image'
         's_course_image.jpg", "title": [{"locale": "English", "value": "Other Course '
@@ -190,7 +194,7 @@ def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
     )
     SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
         enterprise_customer=enterprise_customer,
-        sapsf_base_url='enterprise.successfactors.com',
+        sapsf_base_url='http://enterprise.successfactors.com/',
         key='key',
         secret='secret',
         active=True,
@@ -449,7 +453,12 @@ def test_transmit_learner_data(caplog, command_kwargs, certificate, self_paced, 
 
     # Mock the Open edX environment classes
     with transmit_learner_data_context(command_kwargs, certificate, self_paced, end_date, passed) as (args, kwargs):
-        call_command('transmit_learner_data', *args, **kwargs)
+        with mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient') \
+                as mock_client:
+            mock_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
+            mock_client.return_value.send_completion_status.return_value = 200, '{}'
+            # Call the management command
+            call_command('transmit_learner_data', *args, **kwargs)
 
     # Ensure the correct learner_data record was logged
     assert len(caplog.records) == 1

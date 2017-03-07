@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` models module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import datetime
 import unittest
 from operator import itemgetter
 
@@ -1021,12 +1022,13 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
     def test_channel_code(self):
         assert self.config.channel_code() == 'SAP'
 
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
     @mock.patch(
         'integrated_channels.sap_success_factors.transmitters.learner_data.SuccessFactorsLearnerDataTransmitter')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
     @mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
-    def test_transmit_learner_data(self, mock_course_api, mock_certificate, mock_transmitter):
+    def test_transmit_learner_data(self, mock_course_api, mock_certificate, mock_transmitter, mock_sap_client):
 
         user = UserFactory()
         course_id = 'course-v1:edX+DemoX+DemoCourse'
@@ -1055,21 +1057,26 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         )
         mock_certificate.return_value.get_course_certificate.return_value = certificate
 
-        # Ensure an inactive config doesn't transmit anything.
-        self.config.transmit_learner_data('dummy-user')
-        assert not mock_transmitter.transmit.called
-
-        # Test that an active config transmits the expected data record
-        self.config.active = True
-        self.config.transmit_learner_data('dummy-user')
-        assert mock_transmitter.transmit.called_with(LearnerDataTransmissionAudit(
+        transmission_audit = LearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=enrollment.id,
             sapsf_user_id=None,
             course_id=enrollment.course_id,
             course_completed=True,
             completed_timestamp=1483326245000,
             grade='A-',
-        ))
+        )
+        mock_sap_client.get_oauth_access_token.return_value = "token", datetime.datetime.utcnow()
+        mock_transmitter_instance = mock_transmitter.return_value
+        mock_transmitter.transmit.return_value = transmission_audit
+
+        # Ensure an inactive config doesn't transmit anything.
+        self.config.transmit_learner_data('dummy-user')
+        assert not mock_transmitter_instance.transmit.called
+
+        # Test that an active config transmits the expected data record
+        self.config.active = True
+        self.config.transmit_learner_data('dummy-user')
+        assert mock_transmitter_instance.transmit.called_with(transmission_audit)
 
 
 @mark.django_db

@@ -48,7 +48,7 @@ class SapCourseExporter(BaseCourseExporter):
         'description': lambda x: [
             {
                 'locale': 'English',
-                'value': x['full_description'] or '',
+                'value': x['full_description'] or x['short_description'] or '',
             },
         ],
         'thumbnailURI': lambda x: (x['image']['src'] or ''),
@@ -58,7 +58,7 @@ class SapCourseExporter(BaseCourseExporter):
                     'sap_success_factors',
                     'SAPSuccessFactorsGlobalConfiguration'
                 ).current().provider_id,
-                'launchURL': x['marketing_url'] or '',
+                'launchURL': x['marketing_url'] or 'https://www.edx.org/',
                 'contentTitle': 'Course Description',
                 'contentID': x['key'],
                 'launchType': 3,
@@ -71,11 +71,9 @@ class SapCourseExporter(BaseCourseExporter):
                 'startDate': parse_datetime_to_epoch(x['start'] or UNIX_MIN_DATE_STRING),
                 'endDate': parse_datetime_to_epoch(x['end'] or UNIX_MAX_DATE_STRING),
                 'active': current_time_is_in_interval(x['start'], x['end']),
-                'duration': '',
             }
         ],
         'revisionNumber': lambda x: 1,
-        'duration': lambda x: '',
     }
 
 

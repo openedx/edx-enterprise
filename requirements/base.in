@@ -16,5 +16,3 @@ django-object-actions                   # Object actions in Django admin
 edx-rest-api-client                     # For accessing the Enrollment API (and possibly other edX APIs)
 django-config-models                    # Provides ConfigurationModel abstract base class
 requests                                # Required for SAPSuccessFactorsAPIClient
-simplejson                              # Provides JSONDecodeError
-slumber                                 # Extended by SAPSuccessFactorsAPIClient

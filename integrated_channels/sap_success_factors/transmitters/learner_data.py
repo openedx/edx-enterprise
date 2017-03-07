@@ -3,7 +3,9 @@ Class for transmitting learner data to SuccessFactors.
 """
 from __future__ import absolute_import, unicode_literals
 import logging
+from django.apps import apps
 from integrated_channels.sap_success_factors.transmitters import SuccessFactorsTransmitterBase
+from requests import RequestException
 
 
 LOGGER = logging.getLogger(__name__)
@@ -11,34 +13,52 @@ LOGGER = logging.getLogger(__name__)
 
 class SuccessFactorsLearnerDataTransmitter(SuccessFactorsTransmitterBase):
     """
-    This endpoint is intended to receive data routed from the enterprise app that is ready to be sent to
-    SuccessFactors. Requests should include most of the data that we need to send to SuccessFactors, so that
-    only basic validation that needs to be performed on the data, minimizing lookups.
-
-    Implementation will look something like:
-
-    Perform basic validation on the input (how much will probably depend on if this becomes a separate endpoint,
-     or only accessible from the router.)
-
-    Retrieve oauth access token from SuccessFactors, based on OCNWebServicesEnterpriseCustomerConfiguration.
-    This can either initiate generating a new token, or using an unexpired token which we have cached.
-
-    Fetch the remaining learner data we need to send to SuccessFactors. This includes:
-        The SuccessFactors user id which should be available from when the user was first authenticated via SSO.
-
-    Transform the data into the format expected by SuccessFactors.
-
-    Send the transformed learner data to SuccessFactors using the configured endpoint
-    (taken from OCNWebServicesConfiguration and OCNWebServicesEnterpriseCustomerConfiguration) and the oauth token.
-
-    Record information about the success/failure of posting the learner data to SuccessFactors in
-    the LearnerDataTransmissionAudit object provided, and save it to the database.
-
+    This endpoint is intended to receive learner data routed from the integrated_channel app that is ready to be
+    sent to SuccessFactors.
     """
-    def transmit(self, learner_data):
+
+    def transmit(self, payload):
         """
-        Transmit the learner data payload to the SAP SuccessFactors channel.
+        Send a completion status call to SAP SuccessFactors using the client.
+
+        Args:
+            payload (LearnerDataTransmissionAudit): The learner completion data payload to send to SAP SuccessFactors
         """
-        # TODO ENT-221 will handle transmitting the learner data payload to the channel
-        # We only want to transmit if learner_data.course_completed == True.
-        LOGGER.info(learner_data.serialize())
+        serialized_payload = payload.serialize()
+        LOGGER.info(serialized_payload)
+
+        enterprise_enrollment_id = payload.enterprise_course_enrollment_id
+        if payload.completed_timestamp is None:
+            # The user has not completed the course, so we shouldn't send a completion status call
+            LOGGER.debug('Skipping in progress enterprise enrollment {}'.format(enterprise_enrollment_id))
+            return None
+
+        LearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+            app_label='sap_success_factors',
+            model_name='LearnerDataTransmissionAudit'
+        )
+
+        previous_transmissions = LearnerDataTransmissionAudit.objects.filter(
+            enterprise_course_enrollment_id=enterprise_enrollment_id,
+            completed_timestamp=payload.completed_timestamp,
+            error_message=''
+        )
+        if previous_transmissions.exists():
+            # We've already sent a completion status call for this enrollment and certificate generation
+            LOGGER.debug('Skipping previously sent enterprise enrollment {}'.format(enterprise_enrollment_id))
+            return None
+
+        try:
+            code, body = self.client.send_completion_status(payload.sapsf_user_id, serialized_payload)
+            LOGGER.debug('Successfully sent completion status call for enterprise enrollment {} with payload {}'.
+                         format(enterprise_enrollment_id, serialized_payload))
+        except RequestException as request_exception:
+            code = 500
+            body = str(request_exception)
+            LOGGER.error('Failed to send completion status call for enterprise enrollment {} with payload {}'
+                         '\nError message: {}'.format(enterprise_enrollment_id, payload, body))
+
+        payload.status = str(code)
+        payload.error_message = body if code >= 400 else ''
+        payload.save()
+        return payload
