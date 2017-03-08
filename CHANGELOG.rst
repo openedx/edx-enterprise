@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.27.1] - 2017-03-13
+---------------------
+
+* Added api.yaml and api-compact.yaml files to introduce api endpoints for catalog api-manager.
+
+
 [0.27.0] - 2017-03-02
 ---------------------
 
