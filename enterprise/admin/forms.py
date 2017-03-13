@@ -29,10 +29,16 @@ class ManageLearnersForm(forms.Form):
     """
     Form to manage learner additions.
     """
-    email_or_username = forms.CharField(label=_("To add a single learner, enter an email address or username."), required=False)
+    email_or_username = forms.CharField(label=_(
+        "To add a single learner, enter an email address or username."),
+         required=False)
     bulk_upload_csv = forms.FileField(
-        label=_("To add multiple learners, upload a .csv file that contains a column of email addresses"), required=False,
-        help_text=_("The .csv file must have a column of email addresses, indicated by the heading 'email' in the first row.")
+        label=_(
+            "To add multiple learners, upload a .csv file that contains a " +
+            "column of email addresses"), required=False,
+        help_text=_(
+            "The .csv file must have a column of email addresses, indicated " +
+            "by the heading 'email' in the first row.")
     )
     course = forms.CharField(
         label=_("Enroll these learners in this course"), required=False,
@@ -40,7 +46,8 @@ class ManageLearnersForm(forms.Form):
     )
     program = forms.CharField(
         label=_("Or enroll these learners in this program"), required=False,
-        help_text=_("To enroll learners in a program, enter a program name or ID.")
+        help_text=_(
+            "To enroll learners in a program, enter a program name or ID.")
     )
     course_mode = forms.ChoiceField(
         label=_("Course enrollment track"), required=False,
