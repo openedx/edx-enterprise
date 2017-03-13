@@ -3,10 +3,13 @@ Views for enterprise api version 1 endpoint.
 """
 from __future__ import absolute_import, unicode_literals
 
+from logging import getLogger
+
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
 from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework_oauth.authentication import OAuth2Authentication
 
@@ -15,9 +18,13 @@ from django.contrib.sites.models import Site
 
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend
+from enterprise.api.pagination import get_paginated_response
 from enterprise.api.permissions import IsServiceUserOrReadOnly
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
+from enterprise.course_catalog_api import CourseCatalogApiClient
+
+logger = getLogger(__name__)  # pylint: disable=invalid-name
 
 
 class EnterpriseModelViewSet(object):
@@ -188,3 +195,80 @@ class EnterpriseCustomerEntitlementViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+
+class EnterpriseCatalogViewSet(viewsets.ViewSet):
+    """
+    API views for `enterprise customer catalogs` api endpoint.
+    """
+    serializer_class = serializers.EnterpriseCourseCatalogReadOnlySerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (OAuth2Authentication, SessionAuthentication, BearerAuthentication, JwtAuthentication)
+    throttle_classes = (ServiceUserThrottle,)
+
+    def list(self, request):
+        """
+        DRF view to list all catalogs.
+
+        Arguments:
+            request (HttpRequest): Current request
+
+        Returns:
+            (Response): DRF response object containing course catalogs.
+        """
+        # fetch all course catalogs.
+        catalog_api = CourseCatalogApiClient(request.user)
+        catalogs = catalog_api.get_all_catalogs()
+        serializer = self.serializer_class(catalogs, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):  # pylint: disable=invalid-name
+        """
+        DRF view to get catalog details.
+
+        Arguments:
+            request (HttpRequest): Current request
+            pk (int): Course catalog identifier
+
+        Returns:
+            (Response): DRF response object containing course catalogs.
+        """
+        # fetch course catalog for the given catalog id.
+        catalog_api = CourseCatalogApiClient(request.user)
+        catalog = catalog_api.get_catalog(pk)
+
+        if not catalog:
+            logger.error("Unable to fetch API response for given catalog from endpoint '/catalog/%s/'.", pk)
+            raise NotFound("The resource you are looking for does not exist.")
+
+        serializer = self.serializer_class(catalog)
+        return Response(serializer.data)
+
+    @detail_route()
+    def courses(self, request, pk=None):  # pylint: disable=invalid-name
+        """
+        Retrieve the list of courses contained within this catalog.
+
+        Only courses with active course runs are returned. A course run is considered active if it is currently
+        open for enrollment, or will open in the future.
+        ---
+        serializer: serializers.CourseSerializerExcludingClosedRuns
+        """
+        page = request.GET.get('page', 1)
+        catalog_api = CourseCatalogApiClient(request.user)
+        courses = catalog_api.get_paginated_catalog_courses(pk, page)
+
+        # if API returned an empty response, that means pagination has ended.
+        # An empty response can also means that there was a problem fetching data from catalog API.
+        if not courses:
+            logger.error(
+                "Unable to fetch API response for catalog courses from endpoint '/catalog/%s/courses?page=%s'.",
+                pk, page,
+            )
+            raise NotFound("The resource you are looking for does not exist.")
+
+        serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
+
+        # Add enterprise related context for the courses.
+        serializer.update_enterprise_courses(request, pk)
+        return get_paginated_response(serializer.data, request)

@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file requirements/test.txt requirements/base.in requirements/test.in
 #
-appdirs==1.4.2            # via setuptools
+appdirs==1.4.3            # via setuptools
 cookies==2.2.1            # via responses
 coverage==4.3.4           # via pytest-cov
 ddt==1.1.1
@@ -28,11 +28,11 @@ ipaddress==1.0.18         # via faker
 mock==2.0.0
 olefile==0.44             # via pillow
 packaging==16.8           # via setuptools
-pbr==1.10.0               # via mock
+pbr==2.0.0                # via mock
 Pillow==4.0.0
 py==1.4.32                # via pytest, pytest-catchlog
 PyJWT==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
-pyparsing==2.1.10         # via packaging
+pyparsing==2.2.0          # via packaging
 pytest-catchlog==1.2.2
 pytest-cov==2.4.0
 pytest-django==3.1.2

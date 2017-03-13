@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file requirements/dev.txt requirements/base.in requirements/dev.in requirements/quality.in
 #
-appdirs==1.4.2            # via setuptools
+appdirs==1.4.3            # via setuptools
 argparse==1.4.0           # via caniusepython3
 args==0.1.0               # via clint
 astroid==1.4.9            # via pylint, pylint-celery, pylint-plugin-utils
@@ -56,7 +56,7 @@ pylint-celery==0.3        # via edx-lint
 pylint-django==0.7.2      # via edx-lint
 pylint-plugin-utils==0.2.4  # via pylint-celery, pylint-django
 pylint==1.6.4             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
-pyparsing==2.1.10         # via packaging
+pyparsing==2.2.0          # via packaging
 python-dateutil==2.6.0    # via edx-drf-extensions
 pyYaml==3.12              # via edx-i18n-tools
 requests-toolbelt==0.7.1  # via twine

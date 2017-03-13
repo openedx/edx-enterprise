@@ -13,6 +13,7 @@ from pytest import mark
 from rest_framework.test import APITestCase, APIClient
 
 from test_utils import factories
+from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-error,wrong-import-order
 
 TEST_USERNAME = 'api_worker'
 TEST_PASSWORD = 'QWERTY'
@@ -62,3 +63,25 @@ class APITest(APITestCase):
         if isinstance(content, bytes):
             content = content.decode('utf-8')
         return json.loads(content)
+
+    def assert_url(self, first, second):
+        """
+        Compare first and second url.
+
+        Arguments:
+            first (str) : first url.
+            second (str) : second url.
+
+        Raises:
+            Assertion error if both urls do not match.
+
+        """
+        # Convert query paramters to a dictionary, so that they can be compared correctly
+        scheme, netloc, path, query_string, fragment = urlsplit(first)
+        first = (scheme, netloc, path, parse_qs(query_string), fragment)
+
+        # Convert query paramters to a dictionary, so that they can be compared correctly
+        scheme, netloc, path, query_string, fragment = urlsplit(second)
+        second = (scheme, netloc, path, parse_qs(query_string), fragment)
+
+        assert first == second

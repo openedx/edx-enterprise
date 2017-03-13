@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.27.0] - 2017-03-02
+---------------------
+
+* Added API endpoint for fetching catalogs and catalog courses.
+
+
 [0.26.3] - 2017-03-02
 ---------------------
 

@@ -8,6 +8,7 @@ import datetime
 from operator import itemgetter
 
 import ddt
+import mock
 from rest_framework.reverse import reverse
 
 from django.conf import settings
@@ -580,3 +581,243 @@ class TestEnterpriseAPIViews(APITest):
         }
         response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
         assert response.status_code == 401
+
+    @ddt.data(
+        (
+            reverse('catalogs-list'), itemgetter('id'), [], [],
+        ),
+        (
+            reverse('catalogs-list'),
+            itemgetter('id'),
+            [
+                {
+                    'id': 1,
+                    'name': 'Enterprise Dummy Catalog',
+                    'query': '*',
+                    'courses_count': 22,
+                    'viewers': []
+                },
+                {
+                    'id': 2,
+                    'name': 'Enterprise All Biology',
+                    'query': 'title:*Biology*',
+                    'courses_count': 3,
+                    'viewers': []
+                },
+                {
+                    'id': 3,
+                    'name': 'Test User Catalog',
+                    'query': '*',
+                    'courses_count': 22,
+                    'viewers': [
+                        'test-user'
+                    ]
+                },
+            ],
+            [
+                {
+                    'id': 1,
+                    'name': 'Enterprise Dummy Catalog',
+                    'query': '*',
+                    'courses_count': 22,
+                    'viewers': []
+                },
+                {
+                    'id': 2,
+                    'name': 'Enterprise All Biology',
+                    'query': 'title:*Biology*',
+                    'courses_count': 3,
+                    'viewers': []
+                },
+                {
+                    'id': 3,
+                    'name': 'Test User Catalog',
+                    'query': '*',
+                    'courses_count': 22,
+                    'viewers': [
+                        'test-user'
+                    ]
+                },
+            ],
+        )
+    )
+    @ddt.unpack
+    def test_enterprise_catalogs_list(self, url, sorting_key, mocked_catalogs, expected):
+        """
+        Make sure enterprise catalog view returns correct data.
+
+        Arguments:
+            mocked_catalogs (list): A list of dict elements with each dict element containing catalog information.
+                This list is used to mock catalogs returned by catalog api.
+            expected (list): A list of dict elements with each dict element containing catalog information.
+                This is the list of catalogs expected from enterprise catalog api endpoint.
+        """
+        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
+            mock_catalog_api_client.return_value = mock.Mock(
+                get_all_catalogs=mock.Mock(return_value=mocked_catalogs),
+            )
+            response = self.client.get(url)
+            response = self.load_json(response.content)
+
+            assert sorted(response, key=sorting_key) == sorted(expected, key=sorting_key)
+
+    @ddt.data(
+        (
+            reverse('catalogs-detail', (1, )),
+            {},
+            {'detail': 'The resource you are looking for does not exist.'},
+        ),
+        (
+            reverse('catalogs-detail', (1, )),
+            {
+                'id': 1,
+                'name': 'Enterprise Dummy Catalog',
+                'query': '*',
+                'courses_count': 22,
+                'viewers': []
+            },
+            {
+                'id': 1,
+                'name': 'Enterprise Dummy Catalog',
+                'query': '*',
+                'courses_count': 22,
+                'viewers': []
+            },
+        ),
+    )
+    @ddt.unpack
+    def test_enterprise_catalog_details(self, url, mocked_catalog, expected):
+        """
+        Make sure enterprise catalog view returns correct data.
+
+        Arguments:
+            mocked_catalog (dict): This is used to mock catalog returned by catalog api.
+            expected (list): This is the expected catalog from enterprise api.
+        """
+        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
+            mock_catalog_api_client.return_value = mock.Mock(
+                get_catalog=mock.Mock(return_value=mocked_catalog),
+            )
+            response = self.client.get(url)
+            response = self.load_json(response.content)
+
+            assert response == expected
+
+    @ddt.data(
+        (
+            reverse('catalogs-courses', (1, )),
+            'saml-testshib',
+            'd2fb4cb0-b538-4934-1926-684d48ff5865',
+            {},
+            {'detail': 'The resource you are looking for does not exist.'},
+        ),
+        (
+            reverse('catalogs-courses', (1, )),
+            'saml-testshib',
+            'd2fb4cb0-b538-4934-1926-684d48ff5865',
+            {
+                'count': 3,
+                'next': 'http://testserver/api/v1/catalogs/1/courses?page=3',
+                'previous': 'http://testserver/api/v1/catalogs/1/courses?page=1',
+                'results': [
+                    {
+                        'owners': [
+                            {
+                                'description': None,
+                                'tags': [],
+                                'name': '',
+                                'homepage_url': None,
+                                'key': 'edX',
+                                'certificate_logo_image_url': None,
+                                'marketing_url': None,
+                                'logo_image_url': None,
+                                'uuid': 'aa4aaad0-2ff0-44ce-95e5-1121d02f3b27'
+                            }
+                        ],
+                        'uuid': 'd2fb4cb0-b538-4934-ba60-684d48ff5865',
+                        'title': 'edX Demonstration Course',
+                        'prerequisites': [],
+                        'image': None,
+                        'expected_learning_items': [],
+                        'sponsors': [],
+                        'modified': '2017-03-03T07:34:19.322916Z',
+                        'full_description': None,
+                        'subjects': [],
+                        'video': None,
+                        'key': 'edX+DemoX',
+                        'short_description': None,
+                        'marketing_url': None,
+                        'level_type': None,
+                        'course_runs': []
+                    }
+                ]
+            },
+            {
+                'count': 3,
+                'next': 'http://testserver/enterprise/api/v1/catalogs/1/courses/?page=3',
+                'previous': 'http://testserver/enterprise/api/v1/catalogs/1/courses/?page=1',
+                'results': [
+                    {
+                        'owners': [
+                            {
+                                'description': None,
+                                'tags': [],
+                                'name': '',
+                                'homepage_url': None,
+                                'key': 'edX',
+                                'certificate_logo_image_url': None,
+                                'marketing_url': None,
+                                'logo_image_url': None,
+                                'uuid': 'aa4aaad0-2ff0-44ce-95e5-1121d02f3b27'
+                            }
+                        ],
+                        'tpa_hint': 'saml-testshib',
+                        'catalog_id': '1',
+                        'enterprise_id': 'd2fb4cb0-b538-4934-1926-684d48ff5865',
+                        'uuid': 'd2fb4cb0-b538-4934-ba60-684d48ff5865',
+                        'title': 'edX Demonstration Course',
+                        'prerequisites': [],
+                        'image': None,
+                        'expected_learning_items': [],
+                        'sponsors': [],
+                        'modified': '2017-03-03T07:34:19.322916Z',
+                        'full_description': None,
+                        'subjects': [],
+                        'video': None,
+                        'key': 'edX+DemoX',
+                        'short_description': None,
+                        'marketing_url': None,
+                        'level_type': None,
+                        'course_runs': []
+                    }
+                ]
+            },
+        ),
+    )
+    @ddt.unpack
+    def test_enterprise_catalog_courses(self, url, provider_id, enterprise_customer, mocked_catalog_courses, expected):
+        """
+        Make sure enterprise catalog view returns correct data.
+
+        Arguments:
+            mocked_catalog_courses: This is used to mock catalog courses returned by catalog api.
+            expected: This is the expected catalog courses from enterprise api.
+        """
+        # Populate database
+        ecu = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer__uuid=enterprise_customer,
+        )
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=ecu.enterprise_customer,
+            provider_id=provider_id,
+        )
+
+        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
+            mock_catalog_api_client.return_value = mock.Mock(
+                get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
+            )
+            response = self.client.get(url)
+            response = self.load_json(response.content)
+
+            assert response == expected
