@@ -5,17 +5,22 @@ from __future__ import absolute_import, unicode_literals, with_statement
 
 import logging
 import unittest
-from datetime import datetime
+from contextlib import contextmanager
+from datetime import datetime, timedelta
 
 import mock
+import responses
 from faker import Factory as FakerFactory
+from freezegun import freeze_time
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from pytest import mark, raises
+from requests.compat import urljoin
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import timezone
 
+from enterprise import lms_api
 from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerFactory,
                                   EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
                                   UserFactory)
@@ -197,16 +202,43 @@ def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
     assert len(caplog.records) == 0
 
 
+# Constants used in the parameters for the transmit_learner_data integration tests below.
+NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+NOW_TIMESTAMP = 1483326245000
+DAY_DELTA = timedelta(days=1)
+PAST = NOW - DAY_DELTA
+PAST_TIMESTAMP = NOW_TIMESTAMP - 24*60*60*1000
+FUTURE = NOW + DAY_DELTA
+
+COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
+
+# Mock certificate data
+MOCK_CERTIFICATE = mock.MagicMock(
+    grade='A-',
+    created_date=NOW,
+    status='downloadable',
+)
+
+# Expected leaner completion data from the mock certificate
+COMPLETE_CERTIFICATE = dict(
+    completed='true',
+    timestamp=NOW_TIMESTAMP,
+    grade='A-',
+)
+
+
 @mark.django_db
 class TestTransmitLearnerData(unittest.TestCase):
     """
     Test the transmit_learner_data management command.
     """
     def setUp(self):
-        self.user = UserFactory(username='R2D2')
-        self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.api_user = UserFactory(username='staff_user')
+        self.user = UserFactory()
+        self.course_id = COURSE_ID
         self.enterprise_customer = EnterpriseCustomerFactory()
-        EnterpriseCustomerIdentityProviderFactory(provider_id=FakerFactory.create().slug(),
+        self.identity_provider = FakerFactory.create().slug()
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.identity_provider,
                                                   enterprise_customer=self.enterprise_customer)
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
@@ -226,37 +258,41 @@ class TestTransmitLearnerData(unittest.TestCase):
 
         super(TestTransmitLearnerData, self).setUp()
 
+    def test_api_user_required(self):
+        error = 'Error: argument --api_user is required'
+        with raises(CommandError, message=error):
+            call_command('transmit_learner_data')
+
+    def test_api_user_must_exist(self):
+        error = 'A user with the username bob was not found.'
+        with raises(CommandError, message=error):
+            call_command('transmit_learner_data', '--api_user', 'bob')
+
     def test_enterprise_customer_not_found(self):
         faker = FakerFactory.create()
         invalid_customer_id = faker.uuid4()
         error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
         with raises(CommandError, message=error):
-            call_command('transmit_learner_data', enterprise_customer=invalid_customer_id)
+            call_command('transmit_learner_data',
+                         '--api_user', self.api_user.username,
+                         enterprise_customer=invalid_customer_id)
 
     def test_invalid_integrated_channel(self):
         channel_code = 'abc'
         error = 'Invalid integrated channel: {}'.format(channel_code)
         with raises(CommandError, message=error):
             call_command('transmit_learner_data',
+                         '--api_user', self.api_user.username,
                          enterprise_customer=self.enterprise_customer.uuid,
                          channel=channel_code)
 
 
-@mark.django_db
-@mark.parametrize('command_args', [
-    dict(),
-    dict(channel='sap'),  # channel code is case-insensitive
-    dict(channel='SAP'),
-    dict(enterprise_customer=None),  # enterprise_customer UUID gets filled in below
-    dict(enterprise_customer=None, channel='sap'),
-])
-def test_transmit_learner_data(caplog, command_args):
+# Helper methods used for the transmit_learner_data integration tests below.
+@contextmanager
+def transmit_learner_data_context(command_kwargs, certificate, self_paced, end_date, passed):
     """
-    Test the log output from a successful run of the transmit_learner_data management command,
-    using all the ways we can invoke it.
+    Sets up all the data and context wrappers required to run the transmit_learner_data management command.
     """
-    caplog.set_level(logging.INFO)
-
     # Borrow the test data from TestTransmitLearnerData
     testcase = TestTransmitLearnerData(methodName='setUp')
     testcase.setUp()
@@ -265,7 +301,90 @@ def test_transmit_learner_data(caplog, command_args):
     testcase.integrated_channel.active = True
     testcase.integrated_channel.save()
 
-    # Expect the learner data record to be sent to the logger
+    # Stub out the APIs called by the transmit_learner_data command
+    stub_transmit_learner_data_apis(testcase, self_paced, end_date, passed)
+
+    # Prepare the management command arguments
+    command_args = ('--api_user', testcase.api_user.username)
+    if 'enterprise_customer' in command_kwargs:
+        command_kwargs['enterprise_customer'] = testcase.enterprise_customer.uuid
+
+    # Mock all the classes pulled from the Open edX environment
+    with mock.patch('integrated_channels.integrated_channel.learner_data.CourseKey') as mock_course_key:
+        mock_course_key.from_string.return_value = None
+
+        with mock.patch('integrated_channels.integrated_channel.learner_data.GeneratedCertificate') as mock_certificate:
+            # Mark course completion with a mock certificate.
+            if certificate:
+                mock_certificate.eligible_certificates.get.return_value = mock.MagicMock(
+                    grade='A-',
+                    created_date=NOW,
+                    status='downloadable',
+                )
+            # Or raise GeneratedCertificate.DoesNotExist
+            else:
+                mock_certificate.DoesNotExist = Exception
+                mock_certificate.eligible_certificates.get.side_effect = mock_certificate.DoesNotExist
+
+            with mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock()):
+
+                # Yield to the management command test, freezing time to the known NOW.
+                with freeze_time(NOW):
+                    yield (command_args, command_kwargs)
+
+    # Clean up the testcase data
+    testcase.tearDown()
+
+
+# Helper methods for the transmit_learner_data integration test below
+def stub_transmit_learner_data_apis(testcase, self_paced, end_date, passed):
+    """
+    Stub out all of the API calls made during transmit_learner_data
+    """
+
+    # Third Party API remote_id response
+    responses.add(
+        responses.GET,
+        urljoin(lms_api.ThirdPartyAuthApiClient.API_BASE_URL,
+                "providers/{provider}/users/{user}".format(provider=testcase.identity_provider,
+                                                           user=testcase.user.username)),
+        json=dict(results=[
+            dict(username=testcase.user.username, remote_id='remote-user-id'),
+        ]),
+    )
+
+    # Course API course_details response
+    responses.add(
+        responses.GET,
+        urljoin(lms_api.CourseApiClient.API_BASE_URL,
+                "courses/{course}/".format(course=testcase.course_id)),
+        json=dict(
+            course_id=COURSE_ID,
+            pacing="self" if self_paced else "instructor",
+            end=end_date.isoformat() if end_date else None,
+        ),
+    )
+
+    # Grades API course_grades response
+    responses.add(
+        responses.GET,
+        urljoin(lms_api.GradesApiClient.API_BASE_URL,
+                "course_grade/{course}/users/?username={user}".format(course=testcase.course_id,
+                                                                      user=testcase.user.username)),
+        match_querystring=True,
+        json=[dict(
+            username=testcase.user.username,
+            course_id=COURSE_ID,
+            passed=passed,
+        )],
+    )
+
+
+
+def get_expected_output(**expected_completion):
+    """
+    Returns the expected JSON record logged by the transmit_learner_data command.
+    """
     output_template = (
         '{{'
         '"comments": "", '
@@ -284,41 +403,54 @@ def test_transmit_learner_data(caplog, command_args):
         '"userID": "{user_id}"'
         '}}'
     )
-    expected_output = output_template.format(
-        user_id='remote-r2d2',
-        course_id=testcase.course_id,
+    return output_template.format(
+        user_id='remote-user-id',
+        course_id=COURSE_ID,
         provider_id="EDX",
-        completed="true",
-        timestamp=1483326245,
-        grade="A-",
+        **expected_completion
     )
 
-    # Populate the command arguments
-    if 'enterprise_customer' in command_args:
-        command_args['enterprise_customer'] = testcase.enterprise_customer.uuid
 
-    with mock.patch('enterprise.models.ThirdPartyAuthApiClient') as mock_third_party_api:
-        mock_third_party_api.return_value.get_remote_id.return_value = 'remote-r2d2'
+@responses.activate
+@mark.django_db
+@mark.parametrize('command_kwargs,certificate,self_paced,end_date,passed,expected_completion', [
+    # Certificate marks course completion
+    (dict(), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    # channel code is case-insensitive
+    (dict(channel='sap'), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    (dict(channel='SAP'), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    # enterprise_customer UUID gets filled in below
+    (dict(enterprise_customer=None), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    (dict(enterprise_customer=None, channel='sap'), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
 
-        with mock.patch('integrated_channels.integrated_channel.models.CourseKey') as mock_course_key:
-            mock_course_key.from_string.return_value = None
+    # Instructor-paced course with no certificates issued yet results in incomplete course data
+    (dict(), None, False, None, False, dict(completed='false', timestamp='null', grade='In Progress')),
 
-            with mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate') as mock_certificate:
-                # Mark course completion with a mock certificate.
-                mock_certificate.eligible_certificates.get.return_value = mock.MagicMock(
-                    user=testcase.user,
-                    course_id=testcase.course_id,
-                    grade="A-",
-                    created_date=datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc),
-                    status="downloadable",
-                )
+    # Self-paced course with no end date send grade=Pass, or grade=In Progress, depending on current grade.
+    (dict(), None, True, None, False, dict(completed='false', timestamp='null', grade='In Progress')),
+    (dict(), None, True, None, True, dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
 
-                # Call the management command
-                call_command('transmit_learner_data', **command_args)
+    # Self-paced course with future end date sends grade=Pass, or grade=In Progress, depending on current grade.
+    (dict(), None, True, FUTURE, False, dict(completed='false', timestamp='null', grade='In Progress')),
+    (dict(), None, True, FUTURE, True, dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
+
+    # Self-paced course with past end date sends grade=Pass, or grade=Fail, depending on current grade.
+    (dict(), None, True, PAST, False, dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Fail')),
+    (dict(), None, True, PAST, True, dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass')),
+])
+def test_transmit_learner_data(caplog, command_kwargs, certificate, self_paced, end_date, passed, expected_completion):
+    """
+    Test the log output from a successful run of the transmit_learner_data management command,
+    using all the ways we can invoke it.
+    """
+    caplog.set_level(logging.INFO)
+
+    # Mock the Open edX environment classes
+    with transmit_learner_data_context(command_kwargs, certificate, self_paced, end_date, passed) as (args, kwargs):
+        call_command('transmit_learner_data', *args, **kwargs)
 
     # Ensure the correct learner_data record was logged
     assert len(caplog.records) == 1
-    assert expected_output in caplog.records[0].message
 
-    # Clean up the testcase data
-    testcase.tearDown()
+    expected_output = get_expected_output(**expected_completion)
+    assert expected_output in caplog.records[0].message

@@ -44,7 +44,7 @@ class IntegratedChannelCommandMixin(object):
             '--enterprise_customer',
             dest='enterprise_customer',
             default=None,
-            metavar=_('ENTERPRISE_CUSTOMER_UUID'),
+            metavar='ENTERPRISE_CUSTOMER_UUID',
             help=_('Transmit data for only this EnterpriseCustomer. '
                    'Omit this option to transmit to all EnterpriseCustomers with active integrated channels.'),
         )
@@ -52,11 +52,48 @@ class IntegratedChannelCommandMixin(object):
             '--channel',
             dest='channel',
             default='',
-            metavar=_('INTEGRATED_CHANNEL'),
+            metavar='INTEGRATED_CHANNEL',
             help=_('Transmit data to this IntegrateChannel. '
                    'Omit this option to transmit to all configured, active integrated channels.'),
             choices=INTEGRATED_CHANNEL_CHOICES.keys(),
         )
+
+    @staticmethod
+    def _get_enterprise_customer(uuid):
+        """
+        Returns the enterprise customer requested for the given uuid, None if not.
+
+        Raises CommandError if uuid is invalid.
+        """
+        if uuid is None:
+            return None
+        try:
+            return EnterpriseCustomer.active_customers.get(uuid=uuid)
+        except EnterpriseCustomer.DoesNotExist:
+            raise CommandError(
+                _('Enterprise customer {uuid} not found, or not active').format(uuid=uuid))
+
+    @staticmethod
+    def _get_channel_classes(channel_code):
+        """
+        Assemble a list of integrated channel classes to transmit to.
+
+        If a valid channel type was provided, use it.
+
+        Otherwise, use all the available channel types.
+        """
+        if channel_code:
+            # Channel code is case-insensitive
+            channel_code = channel_code.upper()
+
+            if channel_code not in INTEGRATED_CHANNEL_CHOICES:
+                raise CommandError(_('Invalid integrated channel: {channel}').format(channel=channel_code))
+
+            channel_classes = [INTEGRATED_CHANNEL_CHOICES[channel_code]]
+        else:
+            channel_classes = INTEGRATED_CHANNEL_CHOICES.values()
+
+        return channel_classes
 
     def get_integrated_channels(self, options, **filter_kwargs):
         """
@@ -69,36 +106,16 @@ class IntegratedChannelCommandMixin(object):
         filter_kwargs is passed as an additional set of parameters that jobs can use to restrict
         the database query used to retrieve relevant integrated channels.
         """
-        # If a valid enterprise customer uuid was provided, transmit for that customer.
-        # Otherwise, transmit for all customers.
-        enterprise_customer = None
-        enterprise_customer_uuid = options['enterprise_customer']
-        if enterprise_customer_uuid:
-            try:
-                enterprise_customer = EnterpriseCustomer.active_customers.get(uuid=enterprise_customer_uuid)
-            except EnterpriseCustomer.DoesNotExist:
-                raise CommandError(
-                    _('Enterprise customer {uuid} not found, or not active').format(uuid=enterprise_customer_uuid))
+        enterprise_customer = self._get_enterprise_customer(options.get('enterprise_customer'))
+        if enterprise_customer:
+            filter_kwargs['enterprise_customer'] = enterprise_customer
 
-        # Assemble a list of integrated channel classes to transmit to.
-        # If a valid channel type was provided, use it.
-        # Otherwise, use all the available channel types.
-        channel_code = options['channel'].upper()
-        if channel_code:
-            if channel_code not in INTEGRATED_CHANNEL_CHOICES:
-                raise CommandError(_('Invalid integrated channel: {channel}').format(channel=channel_code))
-
-            channel_classes = [INTEGRATED_CHANNEL_CHOICES[channel_code]]
-        else:
-            channel_classes = INTEGRATED_CHANNEL_CHOICES.values()
+        channel_classes = self._get_channel_classes(options.get('channel'))
 
         # Loop through each channel class (optionally for a specific enterprise customer)
         for channel_class in channel_classes:
             # Use Active channels only
             integrated_channels = channel_class.objects.filter(active=True)
-
-            if enterprise_customer:
-                integrated_channels = integrated_channels.filter(enterprise_customer=enterprise_customer)
 
             # Filter down to the integrated channels that are strictly relevant
             if filter_kwargs:

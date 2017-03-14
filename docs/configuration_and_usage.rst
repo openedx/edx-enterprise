@@ -147,27 +147,37 @@ evidence of course completion exists for an enrolled learner.
 
 .. note::
 
-   Currently, "course completion" is determined by the presence of a certificate for a given learner and course
+   "Course completion" is determined by differently for different types of courses.
 
-   This means that audit learners in self-paced courses will not yet have their course completion data sent to the
-   integrated channels.
+   * Instructor-paced course enrollments are deemed "complete" by the presence of a certificate for a given learner and
+     course.  The grade reported is pulled from the certificate.
+   * Self-paced courses with an end date are deemed "complete" once the end date has passed.  The grade reported is
+     "Pass" or "Fail", pulled from the Grades API, as of the current date.
+   * Self-paced courses with no end date are deemed "complete" once the learner passes the course.  If the learner has
+     not yet passed the course, the grade is reported as "In Progress".
 
 Usage
 ~~~~~
 
 .. code-block:: bash
 
+   # Login as the edxapp user, and enable the edxapp environment.
+   $ sudo -u edxapp -Hs
+   $ cd ~
+   $ source edxapp_env   # adds $EDX_PLATFORM_SETTINGS to the environment, e.g. aws, openstack, devstack..
+
    # View command help
    $ ./manage.py lms transmit_learner_data --help --settings=$EDX_PLATFORM_SETTINGS
 
    # Transmit learner data for all EnterpriseCustomers, to all active integrated channels.
-   $ ./manage.py lms transmit_learner_data --settings=$EDX_PLATFORM_SETTINGS
+   # * --api_user must be a user with staff access to all the courses linked to the EnterpriseCustomers.
+   $ ./manage.py lms transmit_learner_data --api_user staff --settings=$EDX_PLATFORM_SETTINGS
 
    # Transmit learner data for a single EnterpriseCustomer, e.g. with uuid 12
-   $ ./manage.py lms transmit_learner_data --enterprise-customer 12 --settings=$EDX_PLATFORM_SETTINGS
+   $ ./manage.py lms transmit_learner_data --api_user staff --enterprise-customer 12 --settings=$EDX_PLATFORM_SETTINGS
 
    # Transmit learner data only to SAP SuccessFactors
-   $ ./manage.py lms transmit_learner_data --channel SAP --settings=$EDX_PLATFORM_SETTINGS
+   $ ./manage.py lms transmit_learner_data --api_user staff --channel SAP --settings=$EDX_PLATFORM_SETTINGS
 
 
 .. rubric:: Footnotes

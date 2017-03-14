@@ -90,6 +90,8 @@ ENTERPRISE_ENROLLMENT_API_URL = LMS_ROOT_URL + "/api/enrollment/v1/"
 
 ENTERPRISE_PUBLIC_ENROLLMENT_API_URL = ENTERPRISE_ENROLLMENT_API_URL
 
+OAUTH_ID_TOKEN_EXPIRATION = 60*60  # in seconds
+
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
 DEFAULT_FROM_EMAIL = 'course_staff@example.com'
@@ -105,7 +107,7 @@ REST_FRAMEWORK = {
         'user': '50/minute',
         'service_user': '60/minute',
     },
-
+    'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%SZ',
 }
 
 # URL for the server that django client listens to by default.
@@ -114,3 +116,5 @@ MEDIA_URL = "/"
 
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
 ENTERPRISE_SERVICE_WORKER_USERNAME = 'enterprise_worker'
+
+USE_TZ = True

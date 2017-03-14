@@ -4,13 +4,13 @@ Tests for the `edx-enterprise` utility functions.
 """
 from __future__ import absolute_import, unicode_literals
 
-import datetime
 import unittest
 
 import ddt
 from pytest import mark, raises
 
 from django.core.exceptions import ValidationError
+from django.utils.dateparse import parse_datetime
 
 from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
                                     get_earliest_start_date_from_program, parse_csv, validate_email_to_link)
@@ -242,4 +242,4 @@ class TestGetEarliestStartDateFromProgram(unittest.TestCase):
                 }
             ]
         }
-        assert get_earliest_start_date_from_program(program) == datetime.datetime.strptime('2016-01-01', '%Y-%m-%d')
+        assert get_earliest_start_date_from_program(program) == parse_datetime('2016-01-01 00:00:00+0000')

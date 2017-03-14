@@ -5,14 +5,18 @@ Utilities to get details from the course catalog API.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
+import logging
+from functools import wraps
+from time import time
 
 import requests
 from edx_rest_api_client.client import EdxRestApiClient
 from slumber.exceptions import HttpNotFoundError
 
 from django.conf import settings
+from django.utils import timezone
 
-from enterprise.utils import NotConnectedToEdX
+from enterprise.utils import NotConnectedToOpenEdX
 
 try:
     from opaque_keys.edx.keys import CourseKey
@@ -24,24 +28,89 @@ try:
 except ImportError:
     CourseEnrollment = None
 
+try:
+    from openedx.core.lib.token_utils import JwtBuilder
+except ImportError:
+    JwtBuilder = None
 
+
+LOGGER = logging.getLogger(__name__)
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
 class LmsApiClient(object):
     """
     Object builds an API client to make calls to the edxapp LMS API.
+
+    Authenticates using settings.EDX_API_KEY.
     """
 
-    def __init__(self, url, append_slash=False):
+    API_BASE_URL = settings.LMS_ROOT_URL + '/api/'
+    APPEND_SLASH = False
+
+    def __init__(self):
         """
         Create an LMS API client, authenticated with the API token from Django settings.
         """
         session = requests.Session()
         session.headers = {"X-Edx-Api-Key": settings.EDX_API_KEY}
         self.client = EdxRestApiClient(
-            url, append_slash=append_slash, session=session
+            self.API_BASE_URL, append_slash=self.APPEND_SLASH, session=session
         )
+
+
+class JwtLmsApiClient(object):
+    """
+    LMS client authenticates using a JSON Web Token (JWT) for the given user.
+    """
+
+    API_BASE_URL = settings.LMS_ROOT_URL + '/api/'
+    APPEND_SLASH = False
+
+    def __init__(self, user, expires_in=settings.OAUTH_ID_TOKEN_EXPIRATION):
+        """
+        Connect to the REST API.
+        """
+        self.user = user
+        self.expires_in = expires_in
+        self.expires_at = 0
+        self.client = None
+
+    def connect(self):
+        """
+        Connect to the REST API, authenticating with a JWT for the current user.
+        """
+        if JwtBuilder is None:
+            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
+
+        now = int(time())
+        scopes = ['profile', 'email']
+        jwt = JwtBuilder(self.user).build_token(scopes, self.expires_in)
+        self.client = EdxRestApiClient(
+            self.API_BASE_URL, append_slash=self.APPEND_SLASH, jwt=jwt,
+        )
+        self.expires_at = now + self.expires_in
+
+    def token_expired(self):
+        """
+        Return True if the JWT token has expired, False if not.
+        """
+        return int(time()) > self.expires_at
+
+    @staticmethod
+    def refresh_token(func):
+        """
+        Method decorator that ensures the JWT token is refreshed when needed.
+        """
+        @wraps(func)
+        def inner(self, *args, **kwargs):
+            """
+            Before calling the wrapped function, we check if the JWT token is expired, and if so, re-connect.
+            """
+            if self.token_expired():
+                self.connect()
+            return func(self, *args, **kwargs)
+        return inner
 
 
 class EnrollmentApiClient(LmsApiClient):
@@ -49,11 +118,7 @@ class EnrollmentApiClient(LmsApiClient):
     Object builds an API client to make calls to the Enrollment API.
     """
 
-    def __init__(self):
-        """
-        Create an Enrollment API client.
-        """
-        super(EnrollmentApiClient, self).__init__(settings.ENTERPRISE_ENROLLMENT_API_URL)
+    API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
 
     def get_course_details(self, course_id):
         """
@@ -105,11 +170,8 @@ class CourseApiClient(LmsApiClient):
     Object builds an API client to make calls to the Course API.
     """
 
-    def __init__(self):
-        """
-        Create a Courses API client.
-        """
-        super(CourseApiClient, self).__init__(settings.LMS_ROOT_URL + '/api/courses/v1/', append_slash=True)
+    API_BASE_URL = settings.LMS_ROOT_URL + '/api/courses/v1/'
+    APPEND_SLASH = True
 
     def get_course_details(self, course_id):
         """
@@ -121,7 +183,11 @@ class CourseApiClient(LmsApiClient):
         Returns:
             dict: Contains keys identifying those course details available from the courses API (e.g., name).
         """
-        return self.client.courses(course_id).get()
+        try:
+            return self.client.courses(course_id).get()
+        except HttpNotFoundError:
+            LOGGER.error('details not found for course=%s', course_id)
+            return None
 
 
 class ThirdPartyAuthApiClient(LmsApiClient):
@@ -129,11 +195,7 @@ class ThirdPartyAuthApiClient(LmsApiClient):
     Object builds an API client to make calls to the Third Party Auth API.
     """
 
-    def __init__(self):
-        """
-        Create a Third Party Auth API client.
-        """
-        super(ThirdPartyAuthApiClient, self).__init__(settings.LMS_ROOT_URL + '/api/third_party_auth/v0/')
+    API_BASE_URL = settings.LMS_ROOT_URL + '/api/third_party_auth/v0/'
 
     def get_remote_id(self, identity_provider, username):
         """
@@ -150,12 +212,55 @@ class ThirdPartyAuthApiClient(LmsApiClient):
             returned = self.client.providers(identity_provider).users(username).get()
             results = returned.get('results', [])
         except HttpNotFoundError:
+            LOGGER.error('remote_id not found for third party provider=%s, username=%s', identity_provider, username)
             results = []
 
         for row in results:
             if row.get('username') == username:
                 return row.get('remote_id')
         return None
+
+
+class GradesApiClient(JwtLmsApiClient):
+    """
+    Object builds an API client to make calls to the LMS Grades API.
+
+    Note that this API client requires a JWT token, and so it keeps its token alive.
+    """
+
+    API_BASE_URL = settings.LMS_ROOT_URL + '/api/grades/v0/'
+    APPEND_SLASH = True
+
+    @JwtLmsApiClient.refresh_token
+    def get_course_grade(self, course_id, username):
+        """
+        Retrieve the grade for the given username for the given course_id.
+
+        Args:
+        * ``course_id`` (str): The string value of the course's unique identifier
+        * ``username`` (str): The username ID identifying the user for which to retrieve the grade.
+
+        Returns:
+
+        None if no grade found, or a dict containing:
+
+        Raises:
+
+        HttpNotFoundError if no grade returned for the given user.
+
+        * ``username``: A string representation of a user's username passed in the request.
+        * ``course_key``: A string representation of a Course ID.
+        * ``passed``: Boolean representing whether the course has been passed according the course's grading policy.
+        * ``percent``: A float representing the overall grade for the course
+        * ``letter_grade``: A letter grade as defined in grading_policy (e.g. 'A' 'B' 'C' for 6.002x) or None
+
+        """
+        results = self.client.course_grade(course_id).users().get(username=username)
+        for row in results:
+            if row.get('username') == username:
+                return row
+
+        raise HttpNotFoundError('No grade record found for course={}, username={}'.format(course_id, username))
 
 
 def enroll_user_in_course_locally(user, course_id, mode):
@@ -172,16 +277,26 @@ def enroll_user_in_course_locally(user, course_id, mode):
     can shift over to that, but for right now, we have to do it this way.
     """
     if CourseKey is None and CourseEnrollment is None:
-        raise NotConnectedToEdX("This package must be installed in an OpenEdX environment.")
+        raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
     CourseEnrollment.enroll(user, CourseKey.from_string(course_id), mode=mode, check_access=True)
 
 
 def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):
     """
-    Parse a received datetime string into a Python datetime object.
+    Parse a received datetime into a timezone-aware, Python datetime object.
 
     Arguments:
         datetime_string: A string to be parsed.
         datetime_format: A datetime format string to be used for parsing
     """
-    return datetime.datetime.strptime(datetime_string, datetime_format)
+    if isinstance(datetime_string, datetime.datetime):
+        date_time = datetime_string
+    else:
+        date_time = datetime.datetime.strptime(datetime_string, datetime_format)
+
+    # If the datetime format didn't include a timezone, then set to UTC.
+    # Note that if we're using the default LMS_API_DATETIME_FORMAT, it ends in 'Z',
+    # which denotes UTC for ISO-8661.
+    if date_time.tzinfo is None:
+        date_time = date_time.replace(tzinfo=timezone.utc)
+    return date_time

@@ -5,20 +5,20 @@ Database models for Enterprise Integrated Channel SAP SuccessFactors.
 from __future__ import absolute_import, unicode_literals
 
 import json
-from datetime import datetime
 from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 
 from django.db import models
-from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
 from model_utils.models import TimeFramedModel
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from integrated_channels.sap_success_factors.utils import SapCourseExporter
-from .transmitters.courses import SuccessFactorsCourseTransmitter
-from .transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
+from integrated_channels.sap_success_factors.utils import SapCourseExporter, parse_datetime_to_epoch
+from integrated_channels.integrated_channel.learner_data import BaseLearnerExporter
+
+from integrated_channels.sap_success_factors.transmitters.courses import SuccessFactorsCourseTransmitter
+from integrated_channels.sap_success_factors.transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
 
 
 @python_2_unicode_compatible
@@ -88,16 +88,33 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         """
         return 'SAP'
 
-    def get_learner_data(self, enterprise_enrollment, certificate):
+    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None):
         """
-        Returns a LearnerDataTransmissionAudit initialized from the given enrollment and certificate data.
+        Returns a LearnerDataTransmissionAudit initialized from the given enrollment and course completion data.
+
+        If completed_date is None, then course completion has not been met.
         """
+        # Have to create the audit model instance here to avoid a circular dependency.
+        completed_timestamp = None
+        course_completed = False
+        if completed_date is not None:
+            completed_timestamp = parse_datetime_to_epoch(completed_date)
+            course_completed = True
+
         return LearnerDataTransmissionAudit(
-            enterprise_enrollment=enterprise_enrollment,
-            certificate=certificate,
-            # Used only if certificate is None
-            course_completed=False,
+            enterprise_course_enrollment_id=enterprise_enrollment.id,
+            sapsf_user_id=enterprise_enrollment.enterprise_customer_user.get_remote_id(),
+            course_id=enterprise_enrollment.course_id,
+            course_completed=course_completed,
+            completed_timestamp=completed_timestamp,
+            grade=grade,
         )
+
+    def get_learner_data_exporter(self, user):
+        """
+        Returns a SAP learner data exporter instance.
+        """
+        return BaseLearnerExporter(user, self)
 
     def get_learner_data_transmitter(self):
         """
@@ -135,36 +152,8 @@ class LearnerDataTransmissionAudit(models.Model):
     error_message = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
-
     class Meta:
         app_label = 'sap_success_factors'
-
-    def __init__(self, *args, **kwargs):
-        """
-        Return a new ``LearnerDataTransmissionAudit`` object.
-
-        Optional arguments:
-        * ``enterprise_enrollment``: If provided, then ``enterprise_course_enrollment_id``, ``user_id``, * ``course_id``
-          are pulled from this EnterpriseCourseEnrollment object.
-        * ``certificate``: If provided, then ``course_completed=True``; ``completed_timestamp`, ``grade``
-          are pulled from this GeneratedCertificate object.
-
-        Otherwise, the field values are pulled directly from the kwargs, as usual.
-        """
-        enterprise_enrollment = kwargs.pop('enterprise_enrollment', None)
-        if enterprise_enrollment is not None:
-            kwargs['enterprise_course_enrollment_id'] = enterprise_enrollment.id
-            kwargs['sapsf_user_id'] = enterprise_enrollment.enterprise_customer_user.get_remote_id()
-            kwargs['course_id'] = enterprise_enrollment.course_id
-
-        certificate = kwargs.pop('certificate', None)
-        if certificate is not None:
-            kwargs['course_completed'] = True
-            kwargs['completed_timestamp'] = int((certificate.created_date - self.epoch).total_seconds())
-            kwargs['grade'] = certificate.grade
-
-        super(LearnerDataTransmissionAudit, self).__init__(*args, **kwargs)
 
     def __str__(self):
         """
