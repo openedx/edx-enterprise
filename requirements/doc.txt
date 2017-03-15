@@ -6,7 +6,7 @@
 #
 alabaster==0.7.10         # via sphinx
 babel==2.3.4              # via sphinx
-bleach==1.5.0             # via readme-renderer
+bleach==2.0.0             # via readme-renderer
 chardet==2.3.0            # via doc8
 django-config-models==0.1.5
 django-extensions==1.7.7
@@ -24,27 +24,33 @@ edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.2
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.0.2
-html5lib==0.9999999       # via bleach
+html5lib==0.999999999     # via bleach
 imagesize==0.7.1          # via sphinx
 Jinja2==2.9.5             # via sphinx
-MarkupSafe==0.23          # via jinja2
+MarkupSafe==1.0           # via jinja2
 olefile==0.44             # via pillow
+packaging==16.8           # via setuptools
 pbr==2.0.0                # via stevedore
 Pillow==4.0.0
 pockets==0.3.2            # via sphinxcontrib-napoleon
 Pygments==2.2.0           # via readme-renderer, sphinx
 PyJWT==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
+pyparsing==2.2.0          # via packaging
 python-dateutil==2.6.0    # via edx-drf-extensions
 pytz==2016.10             # via babel
-readme-renderer==16.0
+readme-renderer==17.1
 requests==2.13.0
 restructuredtext-lint==1.0.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 simplejson==3.10.0
-six==1.10.0               # via bleach, django-extensions, doc8, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
+six==1.10.0               # via bleach, django-extensions, doc8, edx-sphinx-theme, html5lib, packaging, pockets, python-dateutil, readme-renderer, setuptools, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1
 snowballstemmer==1.2.1    # via sphinx
 Sphinx==1.5.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 stevedore==1.21.0         # via doc8
 unicodecsv==0.14.1
+webencodings==0.5         # via html5lib
+
+# The following packages are considered to be unsafe in a requirements file:
+# setuptools                # via html5lib

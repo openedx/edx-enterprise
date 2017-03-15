@@ -18,6 +18,7 @@ from enterprise.utils import NotConnectedToEdX
 URL_BASE_NAMES = {
     'enrollment': settings.ENTERPRISE_ENROLLMENT_API_URL,
     'courses': settings.LMS_ROOT_URL + '/api/courses/v1/',
+    'third_party_auth': settings.LMS_ROOT_URL + '/api/third_party_auth/v0/',
 }
 
 
@@ -104,6 +105,11 @@ def test_get_enrolled_courses():
     assert actual_response == expected_response
 
 
+def test_enroll_locally_raises():
+    with raises(NotConnectedToEdX):
+        lms_api.enroll_user_in_course_locally(None, None, None)
+
+
 @responses.activate  # pylint: disable=no-member
 def test_get_full_course_details():
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -120,6 +126,61 @@ def test_get_full_course_details():
     assert actual_response == expected_response
 
 
-def test_enroll_locally_raises():
-    with raises(NotConnectedToEdX):
-        lms_api.enroll_user_in_course_locally(None, None, None)
+@responses.activate  # pylint: disable=no-member
+def test_get_remote_id_not_found():
+    username = "DarthVadar"
+    provider_id = "DeathStar"
+    responses.add(  # pylint: disable=no-member
+        responses.GET,  # pylint: disable=no-member
+        _url("third_party_auth", "providers/{provider}/users/{user}".format(provider=provider_id, user=username)),
+        status=404
+    )
+    client = lms_api.ThirdPartyAuthApiClient()
+    actual_response = client.get_remote_id(provider_id, username)
+    assert actual_response is None
+
+
+@responses.activate  # pylint: disable=no-member
+def test_get_remote_id_no_results():
+    username = "DarthVadar"
+    provider_id = "DeathStar"
+    expected_response = {
+        "page": 1,
+        "page_size": 200,
+        "count": 2,
+        "results": [
+            {"username": "Obi-Wan", "remote_id": "Kenobi"},
+            {"username": "Hans", "remote_id": "Solo"},
+        ]
+    }
+    responses.add(  # pylint: disable=no-member
+        responses.GET,  # pylint: disable=no-member
+        _url("third_party_auth", "providers/{provider}/users/{user}".format(provider=provider_id, user=username)),
+        json=expected_response,
+    )
+    client = lms_api.ThirdPartyAuthApiClient()
+    actual_response = client.get_remote_id(provider_id, username)
+    assert actual_response is None
+
+
+@responses.activate  # pylint: disable=no-member
+def test_get_remote_id():
+    username = "DarthVadar"
+    provider_id = "DeathStar"
+    expected_response = {
+        "page": 1,
+        "page_size": 200,
+        "count": 2,
+        "results": [
+            {"username": "DarthVadar", "remote_id": "LukeIamYrFather"},
+            {"username": "DarthVadar", "remote_id": "JamesEarlJones"},
+        ]
+    }
+    responses.add(  # pylint: disable=no-member
+        responses.GET,  # pylint: disable=no-member
+        _url("third_party_auth", "providers/{provider}/users/{user}".format(provider=provider_id, user=username)),
+        json=expected_response,
+    )
+    client = lms_api.ThirdPartyAuthApiClient()
+    actual_response = client.get_remote_id(provider_id, username)
+    assert actual_response == "LukeIamYrFather"

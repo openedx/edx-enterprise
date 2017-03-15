@@ -14,7 +14,7 @@ itsdangerous==0.24        # via flask
 jasmine-core==2.5.2       # via jasmine
 jasmine==2.5.0
 Jinja2==2.9.5             # via flask, jasmine
-MarkupSafe==0.23          # via jinja2
+MarkupSafe==1.0           # via jinja2
 ordereddict==1.1          # via jasmine-core
 PyYAML==3.10              # via jasmine
 selenium==2.53.6          # via jasmine

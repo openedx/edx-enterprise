@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.27.2] - 2017-03-10
+---------------------
+
+* Added integrated_channels management command to transmit learner completion data to SAP SuccessFactors.
+
 [0.27.1] - 2017-03-13
 ---------------------
 
@@ -24,7 +29,6 @@ Unreleased
 ---------------------
 
 * Added API endpoint for fetching catalogs and catalog courses.
-
 
 [0.26.3] - 2017-03-02
 ---------------------

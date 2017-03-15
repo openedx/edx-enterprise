@@ -6,12 +6,14 @@ Tests for the `edx-enterprise` models module.
 from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
+from datetime import datetime
 from operator import itemgetter
 
 import ddt
 import mock
 from faker import Factory as FakerFactory
-from integrated_channels.integrated_channel.models import EnterpriseIntegratedChannel
+from integrated_channels.integrated_channel.models import (EnterpriseCustomerPluginConfiguration,
+                                                           EnterpriseIntegratedChannel)
 from integrated_channels.sap_success_factors.models import (CatalogTransmissionAudit, LearnerDataTransmissionAudit,
                                                             SAPSuccessFactorsEnterpriseCustomerConfiguration,
                                                             SAPSuccessFactorsGlobalConfiguration)
@@ -21,15 +23,17 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
+from django.utils import timezone
 
 from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
                                EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerEntitlement,
                                EnterpriseCustomerUser, PendingEnterpriseCustomerUser, UserDataSharingConsentAudit,
                                logo_path)
-from test_utils.factories import (EnterpriseCustomerEntitlementFactory, EnterpriseCustomerFactory,
-                                  EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnrollmentFactory, PendingEnterpriseCustomerUserFactory,
-                                  UserDataSharingConsentAuditFactory, UserFactory)
+from enterprise.utils import NotConnectedToOpenEdX
+from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerEntitlementFactory,
+                                  EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
+                                  EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
+                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
 
 
 @mark.django_db
@@ -385,6 +389,26 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     def test_user_email_property_user_missing(self):
         enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=42)
         assert enterprise_customer_user.user_email is None
+
+    @ddt.data(
+        (None, None, False),
+        ('fake-identity', 'saml-user-id', True),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    def test_get_remote_id(self, provider_id, expected_value, called, mock_third_party_api):
+        user = UserFactory(username="hi")
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user.id)
+        if provider_id:
+            EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id,
+                                                      enterprise_customer=enterprise_customer_user.enterprise_customer)
+        mock_third_party_api.return_value.get_remote_id.return_value = 'saml-user-id'
+        actual_value = enterprise_customer_user.get_remote_id()
+        assert actual_value == expected_value
+        if called:
+            mock_third_party_api.return_value.get_remote_id.assert_called_once_with(provider_id, "hi")
+        else:
+            assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
     @ddt.data(
         (
@@ -858,6 +882,145 @@ class TestEnterpriseIntegratedChannel(unittest.TestCase):
 
 
 @mark.django_db
+class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
+    """
+    Tests of the EnterpriseCustomerPluginConfiguration abstract model.
+    """
+
+    def setUp(self):
+        self.user = UserFactory(username='C3PO')
+        self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.active_config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret',
+        )
+        self.inactive_config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=self.enterprise_customer,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret',
+            active=False,
+        )
+        super(TestEnterpriseCustomerPluginConfiguration, self).setUp()
+
+    def test_get_learner_data_raises(self):
+        abstract_base = EnterpriseCustomerPluginConfiguration()
+        with raises(NotImplementedError):
+            abstract_base.get_learner_data(enterprise_enrollment=None, certificate=None)
+
+    def test_channel_code_raises(self):
+        abstract_base = EnterpriseCustomerPluginConfiguration()
+        with raises(NotImplementedError):
+            abstract_base.channel_code()
+
+    def test_learner_data_course_key_raises(self):
+        with raises(NotConnectedToOpenEdX):
+            list(self.active_config.collect_learner_data())
+
+    @mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate', mock.Mock())
+    @mock.patch('integrated_channels.integrated_channel.models.CourseKey', mock.Mock())
+    def test_collect_learner_data_no_enrollments(self):
+        learner_data = list(self.active_config.collect_learner_data())
+        assert len(learner_data) == 0
+
+    @mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate', mock.Mock())
+    @mock.patch('integrated_channels.integrated_channel.models.CourseKey', mock.Mock())
+    def test_collect_learner_data_without_consent(self):
+        EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+            consent_granted=False,
+        )
+        learner_data = list(self.active_config.collect_learner_data())
+        assert len(learner_data) == 0
+
+    @mock.patch('integrated_channels.sap_success_factors.models.SAPSuccessFactorsEnterpriseCustomerConfiguration')
+    @mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate')
+    @mock.patch('integrated_channels.integrated_channel.models.CourseKey')
+    def test_learner_data_course_incomplete(self, mock_course_key, mock_certificate, mock_configuration):
+        enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+            consent_granted=True,
+        )
+        # Raise GeneratedCertificate.DoesNotExist
+        mock_course_key.from_string.return_value = None
+        mock_certificate.DoesNotExist = Exception
+        mock_certificate.eligible_certificates.get.side_effect = mock_certificate.DoesNotExist
+
+        learner_data = list(self.active_config.collect_learner_data())
+        assert len(learner_data) == 1
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+        assert learner_data[0].course_id == self.course_id
+        assert not learner_data[0].course_completed
+        assert mock_configuration.get_learner_data.called_with(enterprise_enrollment=enrollment, certificate=None)
+
+    @mock.patch('integrated_channels.sap_success_factors.models.SAPSuccessFactorsEnterpriseCustomerConfiguration')
+    @mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate')
+    @mock.patch('integrated_channels.integrated_channel.models.CourseKey')
+    def test_learner_data_course_complete(self, mock_course_key, mock_certificate, mock_configuration):
+        enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+            consent_granted=True,
+        )
+
+        # Return a mock certificate
+        mock_course_key.from_string.return_value = None
+        certificate = mock.MagicMock()
+        mock_certificate.eligible_certificates.get.return_value = certificate
+
+        learner_data = list(self.active_config.collect_learner_data())
+        assert len(learner_data) == 1
+        assert learner_data[0] is not None
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+        assert learner_data[0].course_id == self.course_id
+        assert learner_data[0].course_completed
+        assert mock_configuration.get_learner_data.called_with(enterprise_enrollment=enrollment,
+                                                               certificate=certificate)
+
+    def test_transmit_learner_data_raises(self):
+        abstract_base = EnterpriseCustomerPluginConfiguration()
+        with raises(NotImplementedError):
+            abstract_base.transmit_learner_data()
+
+    @mock.patch(
+        'integrated_channels.sap_success_factors.transmitters.learner_data.SuccessFactorsLearnerDataTransmitter')
+    @mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate')
+    @mock.patch('integrated_channels.integrated_channel.models.CourseKey')
+    def test_transmit_learner_data(self, mock_course_key, mock_certificate, mock_transmitter):
+        enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+            consent_granted=True,
+        )
+
+        # Return a mock certificate
+        mock_course_key.from_string.return_value = None
+        certificate = mock.MagicMock(
+            user=self.user,
+            course_id=self.course_id,
+            grade="A-",
+            created_date=datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+        )
+        mock_certificate.eligible_certificates.get.return_value = certificate
+
+        # Test that the transmitter gets called with the expected data record
+        self.active_config.transmit_learner_data()
+        assert mock_transmitter.transmit.called_with(LearnerDataTransmissionAudit(
+            enterprise_enrollment=enrollment,
+            certificate=certificate
+        ))
+
+
+@mark.django_db
 @ddt.ddt
 class TestCatalogTransmissionAudit(unittest.TestCase):
     """
@@ -885,8 +1048,55 @@ class TestCatalogTransmissionAudit(unittest.TestCase):
 @ddt.ddt
 class TestLearnerDataTransmissionAudit(unittest.TestCase):
     """
-    Tests of the LearnerDataTransmissionAudit model.
+    Tests of the ``LearnerDataTransmissionAudit`` model.
     """
+    payload_format = (
+        '{{'
+        '"comments": "", '
+        '"completedTimestamp": {timestamp}, '
+        '"contactHours": "", '
+        '"courseCompleted": "{completed}", '
+        '"courseID": "{course_id}", '
+        '"cpeHours": "", '
+        '"creditHours": "", '
+        '"currency": "", '
+        '"grade": "{grade}", '
+        '"instructorName": "", '
+        '"price": "", '
+        '"providerID": "{provider_id}", '
+        '"totalHours": "", '
+        '"userID": "{user_id}"'
+        '}}'
+    )
+
+    def setUp(self):
+        """
+        Create an EnterpriseCustomerUser, with an EnterpriseCourseEnrollment,
+        an EnterpriseCustomerIdentityProvider for the EnterpriseCustomer,
+        and some sample certificate data.
+        """
+        self.user = UserFactory(username='C3PO')
+        self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+        )
+        self.provider_id = FakerFactory.create().slug()
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id,
+                                                  enterprise_customer=self.enterprise_customer_user.enterprise_customer)
+        self.enrollment = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+            consent_granted=True,
+        )
+        self.certificate = mock.MagicMock(
+            user=self.user,
+            course_id=self.course_id,
+            grade="A-",
+            status="downloadable",
+            created_date=datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+        )
+        super(TestLearnerDataTransmissionAudit, self).setUp()
+
     @ddt.data(
         str, repr
     )
@@ -898,7 +1108,7 @@ class TestLearnerDataTransmissionAudit(unittest.TestCase):
             id=1,
             enterprise_course_enrollment_id=5,
             sapsf_user_id='sap_user',
-            course_id='course-v1:edX+DemoX+DemoCourse',
+            course_id=self.course_id,
             course_completed=True,
             completed_timestamp=1486755998,
             instructor_name='Professor Professorson',
@@ -910,6 +1120,69 @@ class TestLearnerDataTransmissionAudit(unittest.TestCase):
             " and course course-v1:edX+DemoX+DemoCourse>"
         )
         assert expected_to_str == method(learner_audit)
+
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    def test_init(self, mock_third_party_api):
+        """
+        Test the LearnerDataTransmissionAudit constructor using an enrollment object.
+
+        Note that course_completed defaults to True.
+        """
+        mock_third_party_api.return_value.get_remote_id.return_value = 'sso-user-id'
+        learner_data = LearnerDataTransmissionAudit(
+            enterprise_enrollment=self.enrollment,
+        )
+        assert learner_data is not None
+        assert learner_data.enterprise_course_enrollment_id == self.enrollment.id
+        assert learner_data.sapsf_user_id == 'sso-user-id'
+        assert learner_data.course_id == self.course_id
+        assert learner_data.course_completed
+        assert learner_data.completed_timestamp is None
+        assert learner_data.instructor_name == ''
+        assert learner_data.grade == ''
+        assert learner_data.status == ''
+        assert learner_data.error_message == ''
+        assert learner_data.created is None
+
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    def test_payload_course_incomplete(self, mock_third_party_api):
+        """
+        Test the JSON payload generated when a certificate is not provided.
+
+        Note that course_completed defaults to True.
+        """
+        mock_third_party_api.return_value.get_remote_id.return_value = 'sso-user-id'
+        learner_data = LearnerDataTransmissionAudit(
+            enterprise_enrollment=self.enrollment,
+        )
+        assert learner_data is not None
+        assert learner_data.serialize() == self.payload_format.format(
+            user_id='sso-user-id',
+            course_id=self.course_id,
+            provider_id="EDX",
+            completed="true",
+            timestamp="null",
+            grade="",
+        )
+
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient.get_remote_id', mock.Mock(return_value='sso-user-id'))
+    def test_payload_course_complete(self):
+        """
+        Test the JSON payload generated when a certificate is provided.
+        """
+        learner_data = LearnerDataTransmissionAudit(
+            enterprise_enrollment=self.enrollment,
+            certificate=self.certificate,
+        )
+        assert learner_data is not None
+        assert learner_data.serialize() == self.payload_format.format(
+            user_id='sso-user-id',
+            course_id=self.course_id,
+            provider_id="EDX",
+            completed="true",
+            timestamp=1483326245,
+            grade="A-",
+        )
 
 
 @mark.django_db
@@ -937,6 +1210,16 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
             enterprise_customer_name
         )
         assert expected_to_str == method(config)
+
+    def test_channel_code(self):
+        enterprise_customer = EnterpriseCustomerFactory()
+        config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=enterprise_customer,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret'
+        )
+        assert config.channel_code() == 'SAP'
 
 
 @mark.django_db
