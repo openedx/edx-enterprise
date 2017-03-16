@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ----------
 
+[0.27.3] - 2017-03-16
+---------------------
+* Added integrated_channels management command to transmit courseware metadata to SAP SuccessFactors.
+
 [0.27.2] - 2017-03-10
 ---------------------
 

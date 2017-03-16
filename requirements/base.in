@@ -1,5 +1,6 @@
 # Core requirements for using this application
 
+celery                                  # Run task workers in other locations
 Django>=1.8,<1.10                       # Web application framework
 djangorestframework>=3.2.3,<3.3.0       # REST API extensions for Django
 djangorestframework-oauth               # For enterprise REST API endpoint

@@ -924,6 +924,16 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
         with raises(NotConnectedToOpenEdX):
             list(self.active_config.collect_learner_data())
 
+    def test_get_course_data_exporter_raises(self):
+        abstract_base = EnterpriseCustomerPluginConfiguration()
+        with raises(NotImplementedError):
+            abstract_base.get_course_data_exporter(None)
+
+    def test_get_course_data_transmitter_raises(self):
+        abstract_base = EnterpriseCustomerPluginConfiguration()
+        with raises(NotImplementedError):
+            abstract_base.get_course_data_transmitter()
+
     @mock.patch('integrated_channels.integrated_channel.models.GeneratedCertificate', mock.Mock())
     @mock.patch('integrated_channels.integrated_channel.models.CourseKey', mock.Mock())
     def test_collect_learner_data_no_enrollments(self):

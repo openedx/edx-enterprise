@@ -21,12 +21,12 @@ pycodestyle==2.3.1
 pydocstyle==1.1.1
 pylint-celery==0.3        # via edx-lint
 pylint-django==0.7.2      # via edx-lint
-pylint-plugin-utils==0.2.4  # via pylint-celery, pylint-django
+pylint-plugin-utils==0.2.6  # via pylint-celery, pylint-django
 pylint==1.6.4             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
 pyparsing==2.2.0          # via packaging
 requests==2.13.0          # via caniusepython3
 six==1.10.0               # via astroid, edx-lint, packaging, pylint, setuptools
-wrapt==1.10.8             # via astroid
+wrapt==1.10.10            # via astroid
 
 # The following packages are considered to be unsafe in a requirements file:
 # pip                       # via caniusepython3

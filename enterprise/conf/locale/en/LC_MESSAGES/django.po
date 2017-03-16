@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: edx-enteprise \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-13 03:54-0500\n"
+"POT-Creation-Date: 2017-03-16 13:25-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -376,50 +376,50 @@ msgstr ""
 msgid "Enterprise Customer Users"
 msgstr ""
 
-#: enterprise/models.py:463
+#: enterprise/models.py:479
 msgid "Please add only .PNG files for logo images."
 msgstr ""
 
-#: enterprise/models.py:472
+#: enterprise/models.py:488
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:473
+#: enterprise/models.py:489
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:589
+#: enterprise/models.py:605
 msgid ""
 "Stores whether the user linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:631
+#: enterprise/models.py:647
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:632
+#: enterprise/models.py:648
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:639
+#: enterprise/models.py:655
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:680
+#: enterprise/models.py:696
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:685
+#: enterprise/models.py:701
 msgid "Whether the learner has granted consent for this particular course."
 msgstr ""
 
-#: enterprise/models.py:692
+#: enterprise/models.py:708
 msgid "The course ID in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:763
+#: enterprise/models.py:779
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer users. The following "
@@ -441,7 +441,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:781
+#: enterprise/models.py:797
 #, python-brace-format
 msgid ""
 "Fill in a string that can be used to generate a dynamic subject line for "
@@ -626,18 +626,65 @@ msgid ""
 "share your data, you will be redirected to your dashboard."
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:24
+#: integrated_channels/integrated_channel/management/commands/__init__.py:47
+msgid "ENTERPRISE_CUSTOMER_UUID"
+msgstr ""
+
+#: integrated_channels/integrated_channel/management/commands/__init__.py:48
+msgid ""
+"Transmit data for only this EnterpriseCustomer. Omit this option to transmit "
+"to all EnterpriseCustomers with active integrated channels."
+msgstr ""
+
+#: integrated_channels/integrated_channel/management/commands/__init__.py:55
+msgid "INTEGRATED_CHANNEL"
+msgstr ""
+
+#: integrated_channels/integrated_channel/management/commands/__init__.py:56
+msgid ""
+"Transmit data to this IntegrateChannel. Omit this option to transmit to all "
+"configured, active integrated channels."
+msgstr ""
+
+#: integrated_channels/integrated_channel/management/commands/__init__.py:81
+#, python-brace-format
+msgid "Enterprise customer {uuid} not found, or not active"
+msgstr ""
+
+#: integrated_channels/integrated_channel/management/commands/__init__.py:89
+#, python-brace-format
+msgid "Invalid integrated channel: {channel}"
+msgstr ""
+
+#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:19
+msgid ""
+"\n"
+"    Transmit Enterprise learner course completion data for the given "
+"EnterpriseCustomer.\n"
+"    "
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:35
 msgid "Third Party name."
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:25
+#: integrated_channels/integrated_channel/models.py:36
 msgid "Data Type"
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:29
+#: integrated_channels/integrated_channel/models.py:40
 msgid "Enterprise Integrated Channel"
 msgstr ""
 
-#: integrated_channels/integrated_channel/models.py:30
+#: integrated_channels/integrated_channel/models.py:41
 msgid "Enterprise Integrated Channels"
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:82
+#: integrated_channels/integrated_channel/models.py:136
+msgid "Implemented in concrete subclass."
+msgstr ""
+
+#: integrated_channels/integrated_channel/models.py:104
+msgid "This package must be installed in an OpenEdX environment."
 msgstr ""

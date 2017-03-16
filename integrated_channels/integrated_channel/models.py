@@ -139,4 +139,24 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         Returns the class that can transmit the learner completion data to the integrated channel.
         """
-        raise NotImplementedError(_('Implemented in concrete subclass.'))
+        raise NotImplementedError("Implemented in concrete subclass.")
+
+    def get_course_data_exporter(self, user):
+        """
+        Returns a class that can retrieve, transform, and serialize the courseware data to the integrated channel.
+        """
+        raise NotImplementedError("Implemented in concrete subclass.")
+
+    def get_course_data_transmitter(self):
+        """
+        Returns a class that can transmit the courseware data to the integrated channel.
+        """
+        raise NotImplementedError("Implemented in concrete subclass.")
+
+    def transmit_course_data(self, user):
+        """
+        Compose the details from the concrete subclass to transmit the relevant data.
+        """
+        course_data_exporter = self.get_course_data_exporter(user)
+        transmitter = self.get_course_data_transmitter()
+        transmitter.transmit(course_data_exporter)

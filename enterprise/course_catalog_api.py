@@ -86,6 +86,30 @@ class CourseCatalogApiClient(object):
             traverse_pagination=False, many=False,
         )
 
+    def get_catalog_courses(self, catalog_id):
+        """
+        Return the courses included in a single course catalog by ID.
+
+        Args:
+            catalog_id (int): The catalog ID we want to retrieve.
+
+        Returns:
+            list: Courses of the catalog in question
+        """
+        return self._load_data('catalogs/{catalog_id}/courses'.format(catalog_id=catalog_id), default=[])
+
+    def get_course_details(self, course_key):
+        """
+        Return the details of a single course by key - not a course run key.
+
+        Args:
+            course_key (str): The unique key for the course in question.
+
+        Returns:
+            dict: Details of the course in question.
+        """
+        return self._load_data('courses', resource_id=course_key, many=False)
+
     def get_course_run(self, course_run_id):
         """
         Return course_run data, including name, ID and seats.

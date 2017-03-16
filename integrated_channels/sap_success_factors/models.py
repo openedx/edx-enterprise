@@ -16,6 +16,8 @@ from django.utils.encoding import python_2_unicode_compatible
 from model_utils.models import TimeFramedModel
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.sap_success_factors.utils import SapCourseExporter
+from .transmitters.courses import SuccessFactorsCourseTransmitter
 from .transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
 
 
@@ -101,7 +103,19 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         """
         Returns a SuccessFactorsLearnerDataTransmitter instance.
         """
-        return SuccessFactorsLearnerDataTransmitter()
+        return SuccessFactorsLearnerDataTransmitter(self)
+
+    def get_course_data_exporter(self, user):
+        """
+        Returns a SapCourseExporter instance.
+        """
+        return SapCourseExporter(user, self)
+
+    def get_course_data_transmitter(self):
+        """
+        Returns a SuccessFactorsCourseTransmitter instance.
+        """
+        return SuccessFactorsCourseTransmitter(self)
 
 
 @python_2_unicode_compatible

@@ -19,6 +19,182 @@ from django.utils import timezone
 from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerFactory,
                                   EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
                                   UserFactory)
+from test_utils.fake_catalog_api import get_catalog_courses, get_course_details
+
+
+@mark.django_db
+class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
+    """
+    Test the transmit_courseware_data management command.
+    """
+    def setUp(self):
+
+        self.user = UserFactory(username='C-3PO')
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            catalog=1,
+            name='Veridian Dynamics',
+        )
+        self.integrated_channel = SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
+            enterprise_customer=self.enterprise_customer,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret',
+            active=True,
+        )
+
+        super(TestTransmitCoursewareDataManagementCommand, self).setUp()
+
+    def test_enterprise_customer_not_found(self):
+        faker = FakerFactory.create()
+        invalid_customer_id = faker.uuid4()
+        error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
+        with raises(CommandError) as excinfo:
+            call_command('transmit_courseware_data', '--catalog_user', 'C-3PO', enterprise_customer=invalid_customer_id)
+        assert str(excinfo.value) == error
+
+    def test_user_not_set(self):
+        # Python2 and Python3 have different error strings. So that's great.
+        py2error = 'Error: argument --catalog_user is required'
+        py3error = 'Error: the following arguments are required: --catalog_user'
+        with raises(CommandError) as excinfo:
+            call_command('transmit_courseware_data', enterprise_customer=self.enterprise_customer.uuid)
+        assert str(excinfo.value) in (py2error, py3error)
+
+    def test_override_user(self):
+        error = 'A user with the username bob was not found.'
+        with raises(CommandError) as excinfo:
+            call_command('transmit_courseware_data', '--catalog_user', 'bob')
+        assert str(excinfo.value) == error
+
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_courseware_data.send_data_task')
+    def test_working_user(self, mock_data_task):
+        call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+        mock_data_task.delay.assert_called_once_with('C-3PO', 'SAP', 1)
+
+
+@mark.django_db
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+def test_transmit_courseware_task_success(fake_catalog_client, caplog):
+    """
+    Test the data transmission task.
+    """
+    fake_catalog_client.return_value = mock.MagicMock(
+        get_course_details=get_course_details,
+        get_catalog_courses=get_catalog_courses,
+    )
+
+    caplog.set_level(logging.INFO)
+
+    UserFactory(username='C-3PO')
+    enterprise_customer = EnterpriseCustomerFactory(
+        catalog=1,
+        name='Veridian Dynamics',
+    )
+    SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
+        enterprise_customer=enterprise_customer,
+        sapsf_base_url='enterprise.successfactors.com',
+        key='key',
+        secret='secret',
+        active=True,
+    )
+
+    call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+
+    assert len(caplog.records) == 7
+    expected_dump = (
+        '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
+        '"contentTitle": "Course Description", "launchType": 3, "launchURL": "http://l'
+        'ocalhost:8000/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner",'
+        ' "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
+        'moX+Demo_Course", "description": [{"locale": "English", "value": ""}], "dura'
+        'tion": "", "price": [], "providerID": "EDX", "revisionNumber": 1, "schedule"'
+        ': [{"active": true, "duration": "", "endDate": 2147483647000, "startDate": 1'
+        '360040400000}], "status": "INACTIVE", "thumbnailURI": "http://192.168.1.187:'
+        '8000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg'
+        '", "title": [{"locale": "English", "value": "edX Demonstration Course"}]}, {'
+        '"content": [{"contentID": "course-v1:foobar+fb1+fbv1", "contentTitle": "Cour'
+        'se Description", "launchType": 3, "launchURL": "http://localhost:8000/course'
+        '/foobarfb1?utm_source=admin&utm_medium=affiliate_partner", "mobileEnabled": '
+        'false, "providerID": "EDX"}], "courseID": "course-v1:foobar+fb1+fbv1", "desc'
+        'ription": [{"locale": "English", "value": "This is a really cool course. Lik'
+        'e, we promise."}], "duration": "", "price": [], "providerID": "EDX", "revisi'
+        'onNumber": 1, "schedule": [{"active": true, "duration": "", "endDate": 21474'
+        '83647000, "startDate": 1420070400000}], "status": "INACTIVE", "thumbnailURI"'
+        ': "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+type@asset+block@image'
+        's_course_image.jpg", "title": [{"locale": "English", "value": "Other Course '
+        'Name"}]}]}'
+    )
+    expected_messages = [
+        'Processing courses for integrated channel using configuration: '
+        '<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
+        'Retrieving course list for catalog 1',
+        'Processing course with ID course-v1:edX+DemoX+Demo_Course',
+        'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
+        'CustomerConfiguration for Enterprise Veridian Dynamics>',
+        'Processing course with ID course-v1:foobar+fb1+fbv1',
+        'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
+        'CustomerConfiguration for Enterprise Veridian Dynamics>',
+        expected_dump,
+    ]
+    for i, msg in enumerate(expected_messages):
+        assert msg in caplog.records[i].message
+
+
+@mark.django_db
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
+    """
+    Test the data transmission task.
+    """
+    fake_catalog_client.return_value = mock.MagicMock(
+        get_course_details=get_course_details,
+        get_catalog_courses=get_catalog_courses,
+    )
+
+    caplog.set_level(logging.INFO)
+
+    UserFactory(username='C-3PO')
+    EnterpriseCustomerFactory(
+        catalog=1,
+        name='Veridian Dynamics',
+    )
+
+    call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+
+    # Because there are no IntegratedChannels, the process will end early.
+    assert len(caplog.records) == 0
+
+
+@mark.django_db
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
+    """
+    Test the data transmission task.
+    """
+    fake_catalog_client.return_value = mock.MagicMock(
+        get_course_details=get_course_details,
+        get_catalog_courses=get_catalog_courses,
+    )
+
+    caplog.set_level(logging.INFO)
+
+    UserFactory(username='C-3PO')
+    enterprise_customer = EnterpriseCustomerFactory(
+        catalog=None,
+        name='Veridian Dynamics',
+    )
+    SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
+        enterprise_customer=enterprise_customer,
+        sapsf_base_url='enterprise.successfactors.com',
+        key='key',
+        secret='secret',
+        active=True,
+    )
+
+    call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+
+    # Because there are no EnterpriseCustomers with a catalog, the process will end early.
+    assert len(caplog.records) == 0
 
 
 @mark.django_db
@@ -53,7 +229,7 @@ class TestTransmitLearnerData(unittest.TestCase):
     def test_enterprise_customer_not_found(self):
         faker = FakerFactory.create()
         invalid_customer_id = faker.uuid4()
-        error = 'Enterprise customer {} not found, or not active.'.format(invalid_customer_id)
+        error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
         with raises(CommandError, message=error):
             call_command('transmit_learner_data', enterprise_customer=invalid_customer_id)
 
