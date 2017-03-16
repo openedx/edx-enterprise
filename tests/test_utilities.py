@@ -12,6 +12,7 @@ import ddt
 import mock
 import six
 from faker import Factory as FakerFactory
+from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 from pytest import mark, raises
 
 from django.core import mail
@@ -958,3 +959,12 @@ class TestUtils(unittest.TestCase):
         """
         with raises(KeyError):
             utils.get_course_track_selection_url({}, {})
+
+    @mock.patch('integrated_channels.integrated_channel.course_metadata.get_course_runs')
+    def test_base_course_exporter_serialized_data_raises(self, mock_get_course_runs):
+        mock_get_course_runs.return_value = []
+        mock_user = mock.MagicMock()
+        mock_plugin_configuration = mock.MagicMock()
+        exporter = BaseCourseExporter(mock_user, mock_plugin_configuration)
+        with raises(NotImplementedError):
+            exporter.get_serialized_data()

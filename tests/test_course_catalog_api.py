@@ -113,6 +113,32 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert resource_id is None
         assert actual_result == response_dict
 
+    def test_get_catalog_courses(self):
+        expected_result = ['item1', 'item2', 'item3']
+        self.get_data_mock.return_value = expected_result
+
+        actual_result = self.api.get_catalog_courses(123)
+
+        assert self.get_data_mock.call_count == 1
+        resource, _ = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == 'catalogs/123/courses'
+        assert actual_result == expected_result
+
+    def test_get_course_details(self):
+        course_key = 'edX+DemoX'
+        expected_result = {"complex": "dict"}
+        self.get_data_mock.return_value = expected_result
+
+        actual_result = self.api.get_course_details(course_key)
+
+        assert self.get_data_mock.call_count == 1
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == 'courses'
+        assert resource_id == 'edX+DemoX'
+        assert actual_result == expected_result
+
     @ddt.data(*EMPTY_RESPONSES)
     def test_get_all_catalogs_empty_response(self, response):
         self.get_data_mock.return_value = response
