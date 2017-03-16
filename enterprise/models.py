@@ -167,6 +167,12 @@ class EnterpriseCustomerUserManager(models.Manager):
     This class should contain methods that create, modify or query :class:`.EnterpriseCustomerUser` entities.
     """
 
+    def get_queryset(self):
+        """
+        Return a new QuerySet object. Filters out inactive Enterprise Customer Users.
+        """
+        return super(EnterpriseCustomerUserManager, self).get_queryset().filter(active=True)
+
     def get_link_by_email(self, user_email):
         """
         Return link by email.
@@ -218,13 +224,28 @@ class EnterpriseCustomerUserManager(models.Manager):
             existing_user = User.objects.get(email=user_email)
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             link_record = self.get(enterprise_customer=enterprise_customer, user_id=existing_user.id)
-            link_record.delete()
+            link_record.active = False
+            link_record.save()
         except User.DoesNotExist:
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             pending_link = PendingEnterpriseCustomerUser.objects.get(
                 enterprise_customer=enterprise_customer, user_email=user_email
             )
             pending_link.delete()
+
+
+class DeactivatedEnterpriseCustomerUserManager(models.Manager):
+    """
+    Model manager for the deactivated attribute of the :class:`.EnterpriseCustomerUser` entity.
+
+    This class filters out the active :class:`.EnterpriseCustomerUser` objects.
+    """
+
+    def get_queryset(self):
+        """
+        Return a new QuerySet object. Filters out active Enterprise Customer Users.
+        """
+        return super(DeactivatedEnterpriseCustomerUserManager, self).get_queryset().filter(active=False)
 
 
 @python_2_unicode_compatible
@@ -242,7 +263,11 @@ class EnterpriseCustomerUser(TimeStampedModel):
     )
     user_id = models.PositiveIntegerField(null=False, blank=False)
 
+    active = models.BooleanField(default=True)
+
     objects = EnterpriseCustomerUserManager()
+
+    deactivated = DeactivatedEnterpriseCustomerUserManager()
 
     class Meta(object):
         app_label = 'enterprise'

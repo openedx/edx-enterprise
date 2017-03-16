@@ -64,6 +64,11 @@ function switchTo(newEnrollmentMode, otherEnrollmentMode) {
     newEnrollmentMode.timeout = setTimeout(newEnrollmentMode.apply, 300);
 }
 
+function addFormData() {
+    addCheckedLearnersToEnrollBox();
+    addUnlinkEmails();
+}
+
 function addCheckedLearnersToEnrollBox() {
     var checkedEmailContainers = $(".enroll-checkbox:checked").parent().siblings('.email-container');
     var checked_emails = [];
@@ -73,6 +78,15 @@ function addCheckedLearnersToEnrollBox() {
     if ($("#id_email_or_username").val() === "") {
         $("#id_email_or_username").val(checked_emails.join(", "));
     }
+}
+
+function addUnlinkEmails() {
+    var checkedEmailContainers = $(".unlink-checkbox:checked").parent().siblings('.email-container');
+    var checked_emails = [];
+    $.each(checkedEmailContainers, function () {
+        checked_emails.push($.trim($(this).text()));
+    });
+    document.getElementById("id_unlink_emails").value = checked_emails.join(", ");
 }
 
 function loadPage() {
@@ -88,7 +102,7 @@ function loadPage() {
                     xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
                 }
             }).success(function () {
-                $row.remove();
+                window.location.reload();
             }).error(function (xhr, errmsg, err) {
                 alert(xhr.responseText);
             });
@@ -139,7 +153,7 @@ function loadPage() {
     } else if (programEnrollment.$control.val()) {
         programEnrollment.$control.trigger("input");
     }
-    $("#learner-management-form").submit(addCheckedLearnersToEnrollBox);
+    $("#learner-management-form").submit(addFormData);
 }
 
 $(loadPage());

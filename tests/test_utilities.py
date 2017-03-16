@@ -143,6 +143,7 @@ class TestUtils(unittest.TestCase):
                 "modified",
                 "enterprise_customer",
                 "user_id",
+                "active",
             ]
         ),
         (

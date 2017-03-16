@@ -53,6 +53,7 @@ class ManageLearnersForm(forms.Form):
             ("honor", _("Honor")),
         ],
     )
+    unlink_emails = forms.CharField(required=False, widget=forms.HiddenInput())
 
     class NotificationTypes(object):
         """
@@ -92,6 +93,8 @@ class ManageLearnersForm(forms.Form):
         COURSE_MODE = "course_mode"
         PROGRAM = "program"
         NOTIFY = "notify_on_enrollment"
+        UNLINK_EMAILS = "unlink_emails"
+        BULK_UNLINK_SUBMIT = "bulk_unlink_submit"
 
     class CsvColumns(object):
         """
@@ -201,6 +204,8 @@ class ManageLearnersForm(forms.Form):
         exclusive modes, so this method checks that only one field is passed.
         """
         cleaned_data = super(ManageLearnersForm, self).clean()
+        if self.Fields.BULK_UNLINK_SUBMIT in self.data:
+            return cleaned_data
 
         # Here we take values from `data` (and not `cleaned_data`) as we need raw values - field clean methods
         # might "invalidate" the value and set it to None, while all we care here is if it was provided at all or not
