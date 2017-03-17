@@ -40,42 +40,42 @@ class ValidationMessages(object):
 
     # Keep this alphabetically sorted
     BOTH_FIELDS_SPECIFIED = _(
-        "Either \"Email or Username\" or \"CSV bulk upload\" must be " +
+        "Either \"Email or Username\" or \"CSV bulk upload\" must be " \
         "specified, but both were.")
     BULK_LINK_FAILED = _(
         "Error: Learners could not be added. Correct the following errors.")
-    COURSE_AND_PROGRAM_ERROR = _("Either \"Course ID\" or \"Program ID\"" +
-        " can be specified, but both were.")
+    COURSE_AND_PROGRAM_ERROR = _("Either \"Course ID\" or \"Program ID\" can" \
+         "be specified, but both were.")
     COURSE_MODE_INVALID_FOR_COURSE = _(
-        "Enrollment track {course_mode} is not available for course "+
+        "Enrollment track {course_mode} is not available for course " \
         "{course_id}.")
     COURSE_MODE_NOT_AVAILABLE = _(
-        "Enrollment track {mode} is not available for all courses in " +
+        "Enrollment track {mode} is not available for all courses in " \
         "{program_title}. The available enrollment tracks are {modes}.")
     COURSE_WITHOUT_COURSE_MODE = _(
-        "Select a course enrollment track for the  course or program.")
+        "Select a course enrollment track for the course or program.")
     FAILED_TO_OBTAIN_COURSE_MODES = _(
         "Failed to obtain available course modes for program {program_title}.")
     INVALID_COURSE_ID = _(
-        "Could not retrieve details for the course ID {course_id}. " +
+        "Could not retrieve details for the course ID {course_id}. " \
         "Please specify a valid ID.")
     INVALID_EMAIL = _("{argument} does not appear to be a valid email address")
-    INVALID_EMAIL_OR_USERNAME = _("{argument} does not appear to be a valid " +
+    INVALID_EMAIL_OR_USERNAME = _("{argument} does not appear to be a valid " \
         "email address or known username.")
     INVALID_PROGRAM_ID = _(
-        "Could not retrieve details for the program {program_id}. Specify " +
+        "Could not retrieve details for the program {program_id}. Specify " \
         "a valid program ID or program name.")
     MISSING_EXPECTED_COLUMNS = _(
-        "Expected a CSV file with [{expected_columns}] columns, but found " +
+        "Expected a CSV file with [{expected_columns}] columns, but found " \
         "[{actual_columns}] columns instead.")
     MULTIPLE_PROGRAM_MATCH = _(
-        "Searching programs by title returned {program_count} programs. Try " +
+        "Searching programs by title returned {program_count} programs. Try " \
         "using program UUID.")
-    NO_FIELDS_SPECIFIED = _("Either \"Email or Username\" or " +
+    NO_FIELDS_SPECIFIED = _("Either \"Email or Username\" or " \
         "\"CSV bulk upload\" must be specified, but neither were.")
-    PROGRAM_IS_INACTIVE = _("Enrollment in program {program_id} is closed " +
+    PROGRAM_IS_INACTIVE = _("Enrollment in program {program_id} is closed " \
         "because it is in {status} status.")
-    USER_ALREADY_REGISTERED = _("A learner with the email address {email} " +
+    USER_ALREADY_REGISTERED = _("A learner with the email address {email} " \
         "is already registered with Enterprise Customer {ec_name}.")
 
 

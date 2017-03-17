@@ -31,13 +31,13 @@ class ManageLearnersForm(forms.Form):
     """
     email_or_username = forms.CharField(label=_(
         "To add a single learner, enter an email address or username."),
-         required=False)
+                                        required=False)
     bulk_upload_csv = forms.FileField(
         label=_(
-            "To add multiple learners, upload a .csv file that contains a " +
+            "To add multiple learners, upload a .csv file that contains a " \
             "column of email addresses"), required=False,
         help_text=_(
-            "The .csv file must have a column of email addresses, indicated " +
+            "The .csv file must have a column of email addresses, indicated " \
             "by the heading 'email' in the first row.")
     )
     course = forms.CharField(
@@ -383,7 +383,8 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         except ObjectDoesNotExist:
             # This should not happen, as identity providers displayed in drop down are fetched dynamically.
             message = _(
-                "The specified Identity Provider does not exist. For more information, contact a system administrator.",
+                "The specified Identity Provider does not exist. For more " \
+                "information, contact a system administrator.",
             )
             # Log message for debugging
             logger.exception(message)
@@ -393,7 +394,12 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         if identity_provider and identity_provider.site != enterprise_customer.site:
             raise ValidationError(
                 _(
-                    "The site for the selected identity provider ({identity_provider_site}) does not match the site for this enterprise customer ({enterprise_customer_site}). To correct this problem, select a site that has a domain of '{identity_provider_site}', or update the   identity provider to '{enterprise_customer_site}'."
+                "The site for the selected identity provider " \
+                "({identity_provider_site}) does not match the site for this " \
+                "enterprise customer ({enterprise_customer_site}). To correct " \
+                "this problem, select a site that has a domain of " \
+                "'{identity_provider_site}', or update the identity provider " \
+                " to '{enterprise_customer_site}'."
                 ).format(
                     enterprise_customer_site=enterprise_customer.site,
                     identity_provider_site=identity_provider.site,
