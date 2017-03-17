@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.27.4] - 2017-03-17
+---------------------
+
+* Allows enterprise enrollments to be made on servers that sit behind a load balancer.
+
+
 [0.27.3] - 2017-03-16
 ---------------------
 * Added integrated_channels management command to transmit courseware metadata to SAP SuccessFactors.
