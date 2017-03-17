@@ -394,12 +394,12 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         if identity_provider and identity_provider.site != enterprise_customer.site:
             raise ValidationError(
                 _(
-                "The site for the selected identity provider " \
-                "({identity_provider_site}) does not match the site for this " \
-                "enterprise customer ({enterprise_customer_site}). To correct " \
-                "this problem, select a site that has a domain of " \
-                "'{identity_provider_site}', or update the identity provider " \
-                " to '{enterprise_customer_site}'."
+                    "The site for the selected identity provider " \
+                    "({identity_provider_site}) does not match the site for this " \
+                    "enterprise customer ({enterprise_customer_site}). To correct " \
+                    "this problem, select a site that has a domain of " \
+                    "'{identity_provider_site}', or update the identity provider " \
+                    "to '{enterprise_customer_site}'."
                 ).format(
                     enterprise_customer_site=enterprise_customer.site,
                     identity_provider_site=identity_provider.site,
