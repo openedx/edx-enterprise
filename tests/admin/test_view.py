@@ -825,12 +825,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.count() == 1, "One pending linked users should be created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=new_email).exists()
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (
                 messages.WARNING,
-                "Some users were already linked to this Enterprise Customer: {}".format(linked_user.email)
+                "The following learners were already associated with this Enterprise Customer: {}".format(linked_user.email)
             ),
-            (messages.WARNING, "Some duplicate emails in the CSV were ignored: {}".format(user.email)),
+            (messages.WARNING, "The following duplicate email addresses were not added to: {}".format(user.email)),
             (
                 messages.WARNING,
                 "The following learners are already associated with another Enterprise Customer. "
@@ -866,7 +866,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=previously_not_seen_email).exists(), \
             "it should create EnterpriseCustomerRecord by email"
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
         ]))
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
@@ -949,7 +949,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "When these learners create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were associated with {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
@@ -1000,7 +1000,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "When these learners create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were associated with {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.SUCCESS, "1 user was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
