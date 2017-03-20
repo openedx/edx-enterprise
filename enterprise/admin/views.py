@@ -267,7 +267,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 _("The following learners were already associated with this " \
                   "Enterprise Customer: {list_of_emails}"
                  ).format(
-                    list_of_emails=", ".join(this_customer_linked_emails)
+                     list_of_emails=", ".join(this_customer_linked_emails)
                  )
             )
         if other_customer_linked_emails:
@@ -288,7 +288,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 _("The following duplicate email addresses were not added to " \
                   "{enterprise_customer_name}: {list_of_emails}").format(
                       list_of_emails=", ".join(duplicate_emails)
-                 )
+                )
             )
         # Build a list of all the emails that we can act on further; that is,
         # emails that we either linked to this customer, or that were linked already.
