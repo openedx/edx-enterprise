@@ -830,7 +830,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 messages.WARNING,
                 "The following learners were already associated with this Enterprise Customer: {}".format(linked_user.email)
             ),
-            (messages.WARNING, "The following duplicate email addresses were not added to: {}".format(user.email)),
+            (messages.WARNING, "The following duplicate email addresses were not added to {}:".format(user.email)),
             (
                 messages.WARNING,
                 "The following learners are already associated with another Enterprise Customer. "
@@ -950,7 +950,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled in {}.".format(course_id)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
@@ -1001,7 +1001,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         )
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled in {}.".format(course_id)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
