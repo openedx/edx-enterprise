@@ -278,8 +278,8 @@ class EnterpriseCustomerManageLearnersView(View):
                     "another Enterprise Customer. These learners were not " \
                     "added to {enterprise_customer_name}: {list_of_emails}"
                  ).format(
-                    enterprise_customer_name=enterprise_customer.name,
-                    list_of_emails=", ".join(other_customer_linked_emails),
+                     enterprise_customer_name=enterprise_customer.name,
+                     list_of_emails=", ".join(other_customer_linked_emails),
                  )
             )
         if duplicate_emails:
@@ -289,7 +289,7 @@ class EnterpriseCustomerManageLearnersView(View):
                     "The following duplicate email addresses were not added: "\
                     "{list_of_emails}"
                  ).format(
-                      list_of_emails=", ".join(duplicate_emails)
+                     list_of_emails=", ".join(duplicate_emails)
                  )
             )
         # Build a list of all the emails that we can act on further; that is,
