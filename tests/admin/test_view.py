@@ -502,7 +502,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             mode,
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "1 learner was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
         assert len(all_enterprise_enrollments) == 1
@@ -949,8 +949,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "When these learners create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "2 new users were associated with {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 user was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
@@ -1000,8 +1000,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "When these learners create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "2 new users were associated with {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 user was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
