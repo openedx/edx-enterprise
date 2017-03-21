@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.27.5] - 2017-03-17
+---------------------
+
+* Updated api.yaml to resolve swagger configuration issues.
+
+
 [0.27.4] - 2017-03-17
 ---------------------
 

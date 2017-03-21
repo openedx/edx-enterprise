@@ -51,19 +51,19 @@ auth_header: &auth_header
   type: "string"
 
 limit_qs_parameter: &limit_qs_parameter
-  in: querystring
+  in: query
   name: limit
   required: false
   type: number
 
 offset_qs_parameter: &offset_qs_parameter
-  in: querystring
+  in: query
   name: offset
   required: false
   type: number
 
 page_qs_parameter: &page_qs_parameter
-  in: querystring
+  in: query
   name: page
   required: false
   type: number
@@ -89,7 +89,7 @@ endpoints:
   v1:
 
     # /v1/catalogs
-    catalogs:
+    enterpriseCatalogs:
         get:
           produces: *produces
           parameters:
@@ -97,27 +97,27 @@ endpoints:
             - *limit_qs_parameter
             - *offset_qs_parameter
             - *page_qs_parameter
-          operationId: "get_catalogs"
+          operationId: "get_enterprise_catalogs"
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration
             uri: "https://${stageVariables.enterprise_host}/v1/catalogs/"
 
     # /v1/catalogs/{id}
-    catalogById:
+    enterpriseCatalogById:
         get:
           produces: *produces
           parameters:
             - *auth_header
             - *id_parameter
-          operationId: "get_catalog_by_id"
+          operationId: "get_enterprise_catalog_by_id"
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_parameter
             uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/"
 
     # /v1/catalogs/{id}/courses
-    catalogCourses:
+    enterpriseCatalogCourses:
         get:
           produces: *produces
           parameters:
@@ -126,7 +126,7 @@ endpoints:
             - *limit_qs_parameter
             - *offset_qs_parameter
             - *page_qs_parameter
-          operationId: "get_catalog_courses"
+          operationId: "get_enterprise_catalog_courses"
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_parameter

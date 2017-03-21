@@ -23,9 +23,9 @@ auth_header:
   type: string
 endpoints:
   v1:
-    catalogById:
+    enterpriseCatalogById:
       get:
-        operationId: get_catalog_by_id
+        operationId: get_enterprise_catalog_by_id
         parameters:
           -
             in: header
@@ -77,9 +77,9 @@ endpoints:
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/"
-    catalogCourses:
+    enterpriseCatalogCourses:
       get:
-        operationId: get_catalog_courses
+        operationId: get_enterprise_catalog_courses
         parameters:
           -
             in: header
@@ -92,12 +92,12 @@ endpoints:
             required: true
             type: number
           -
-            in: querystring
+            in: query
             name: limit
             required: false
             type: number
           -
-            in: querystring
+            in: query
             name: offset
             required: false
             type: number
@@ -141,9 +141,9 @@ endpoints:
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/courses/"
-    catalogs:
+    enterpriseCatalogs:
       get:
-        operationId: get_catalogs
+        operationId: get_enterprise_catalogs
         parameters:
           -
             in: header
@@ -151,17 +151,17 @@ endpoints:
             required: true
             type: string
           -
-            in: querystring
+            in: query
             name: limit
             required: false
             type: number
           -
-            in: querystring
+            in: query
             name: offset
             required: false
             type: number
           -
-            in: querystring
+            in: query
             name: page
             required: false
             type: number
