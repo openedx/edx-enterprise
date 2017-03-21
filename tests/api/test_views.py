@@ -582,6 +582,14 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
         assert response.status_code == 401
 
+
+@ddt.ddt
+class TestEnterpriseCatalogAPIViews(APITest):
+    """
+    Enterprise Catalog API endpoint validations.  These have been split into a separate class
+    due to an apparent test state conflict with the general API view validations above.
+    """
+
     @ddt.data(
         (
             reverse('catalogs-list'), itemgetter('id'), [], [],
@@ -808,6 +816,7 @@ class TestEnterpriseAPIViews(APITest):
             user_id=self.user.id,
             enterprise_customer__uuid=enterprise_customer,
         )
+
         factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=ecu.enterprise_customer,
             provider_id=provider_id,
