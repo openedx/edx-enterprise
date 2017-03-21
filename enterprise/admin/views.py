@@ -273,10 +273,9 @@ class EnterpriseCustomerManageLearnersView(View):
         if other_customer_linked_emails:
             messages.warning(
                 request,
-                _(
-                    "The following learners are already associated with " \
-                    "another Enterprise Customer. These learners were not " \
-                    "added to {enterprise_customer_name}: {list_of_emails}"
+                _("The following learners are already associated with " \
+                  "another Enterprise Customer. These learners were not " \
+                  "added to {enterprise_customer_name}: {list_of_emails}"
                  ).format(
                      enterprise_customer_name=enterprise_customer.name,
                      list_of_emails=", ".join(other_customer_linked_emails),
@@ -285,9 +284,8 @@ class EnterpriseCustomerManageLearnersView(View):
         if duplicate_emails:
             messages.warning(
                 request,
-                _(
-                    "The following duplicate email addresses were not added: "\
-                    "{list_of_emails}"
+                _("The following duplicate email addresses were not added: "\
+                  "{list_of_emails}"
                  ).format(
                      list_of_emails=", ".join(duplicate_emails)
                  )
