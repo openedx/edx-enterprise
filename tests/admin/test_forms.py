@@ -609,8 +609,8 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
                     "this problem, select a site that has a domain of " \
                     "'{identity_provider_site}', or update the identity provider " \
                     "to '{enterprise_customer_site}'.".format(
-                            enterprise_customer_site=self.first_site,
-                            identity_provider_site=self.second_site,
+                        enterprise_customer_site=self.first_site,
+                        identity_provider_site=self.second_site,
                         )
         # Validate and clean form data
         assert not form.is_valid()
@@ -628,7 +628,8 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         form = EnterpriseCustomerIdentityProviderAdminForm(
             data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid},
         )
-        error_message = "The specified Identity Provider does not exist. For more information, contact a system administrator."
+        error_message = "The specified Identity Provider does not exist. For more information, " \
+            "contact a system administrator."
 
         # Validate and clean form data
         assert not form.is_valid()
