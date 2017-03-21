@@ -11,7 +11,6 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
-from rest_framework_oauth.authentication import OAuth2Authentication
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -33,7 +32,7 @@ class EnterpriseModelViewSet(object):
     """
     filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend)
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (OAuth2Authentication, SessionAuthentication, BearerAuthentication, JwtAuthentication)
+    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
 
 
@@ -203,7 +202,7 @@ class EnterpriseCatalogViewSet(viewsets.ViewSet):
     """
     serializer_class = serializers.EnterpriseCourseCatalogReadOnlySerializer
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (OAuth2Authentication, SessionAuthentication, BearerAuthentication, JwtAuthentication)
+    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
 
     def list(self, request):
