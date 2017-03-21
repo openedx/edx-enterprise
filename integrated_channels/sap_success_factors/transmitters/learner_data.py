@@ -2,7 +2,11 @@
 Class for transmitting learner data to SuccessFactors.
 """
 from __future__ import absolute_import, unicode_literals
+import logging
 from integrated_channels.sap_success_factors.transmitters import SuccessFactorsTransmitterBase
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SuccessFactorsLearnerDataTransmitter(SuccessFactorsTransmitterBase):
@@ -28,5 +32,13 @@ class SuccessFactorsLearnerDataTransmitter(SuccessFactorsTransmitterBase):
     (taken from OCNWebServicesConfiguration and OCNWebServicesEnterpriseCustomerConfiguration) and the oauth token.
 
     Record information about the success/failure of posting the learner data to SuccessFactors in
-     CompletionStatusEventAudit
+    the LearnerDataTransmissionAudit object provided, and save it to the database.
+
     """
+    def transmit(self, learner_data):
+        """
+        Transmit the learner data payload to the SAP SuccessFactors channel.
+        """
+        # TODO ENT-221 will handle transmitting the learner data payload to the channel
+        # We only want to transmit if learner_data.course_completed == True.
+        LOGGER.info(learner_data.serialize())

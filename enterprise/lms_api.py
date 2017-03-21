@@ -8,6 +8,7 @@ import datetime
 
 import requests
 from edx_rest_api_client.client import EdxRestApiClient
+from slumber.exceptions import HttpNotFoundError
 
 from django.conf import settings
 
@@ -27,20 +28,32 @@ except ImportError:
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
 
-class EnrollmentApiClient(object):
+class LmsApiClient(object):
+    """
+    Object builds an API client to make calls to the edxapp LMS API.
+    """
+
+    def __init__(self, url, append_slash=False):
+        """
+        Create an LMS API client, authenticated with the API token from Django settings.
+        """
+        session = requests.Session()
+        session.headers = {"X-Edx-Api-Key": settings.EDX_API_KEY}
+        self.client = EdxRestApiClient(
+            url, append_slash=append_slash, session=session
+        )
+
+
+class EnrollmentApiClient(LmsApiClient):
     """
     Object builds an API client to make calls to the Enrollment API.
     """
 
     def __init__(self):
         """
-        Create an Enrollment API client, authenticated with the API token from Django settings.
+        Create an Enrollment API client.
         """
-        session = requests.Session()
-        session.headers = {"X-Edx-Api-Key": settings.EDX_API_KEY}
-        self.client = EdxRestApiClient(
-            settings.ENTERPRISE_ENROLLMENT_API_URL, append_slash=False, session=session
-        )
+        super(EnrollmentApiClient, self).__init__(settings.ENTERPRISE_ENROLLMENT_API_URL)
 
     def get_course_details(self, course_id):
         """
@@ -87,22 +100,16 @@ class EnrollmentApiClient(object):
         return self.client.enrollment.get(user=username)
 
 
-class CourseApiClient(object):
+class CourseApiClient(LmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
     """
 
     def __init__(self):
         """
-        Create a Courses API client, authenticated with the API token from Django settings.
+        Create a Courses API client.
         """
-        session = requests.Session()
-        session.headers = {'X-Edx-Api-Key': settings.EDX_API_KEY}
-        self.client = EdxRestApiClient(
-            settings.LMS_ROOT_URL + '/api/courses/v1/',
-            append_slash=True,
-            session=session,
-        )
+        super(CourseApiClient, self).__init__(settings.LMS_ROOT_URL + '/api/courses/v1/', append_slash=True)
 
     def get_course_details(self, course_id):
         """
@@ -115,6 +122,40 @@ class CourseApiClient(object):
             dict: Contains keys identifying those course details available from the courses API (e.g., name).
         """
         return self.client.courses(course_id).get()
+
+
+class ThirdPartyAuthApiClient(LmsApiClient):
+    """
+    Object builds an API client to make calls to the Third Party Auth API.
+    """
+
+    def __init__(self):
+        """
+        Create a Third Party Auth API client.
+        """
+        super(ThirdPartyAuthApiClient, self).__init__(settings.LMS_ROOT_URL + '/api/third_party_auth/v0/')
+
+    def get_remote_id(self, identity_provider, username):
+        """
+        Retrieve the remote identifier for the given username.
+
+        Args:
+        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
+        * ``username`` (str): The username ID identifying the user for which to retrieve the remote name.
+
+        Returns:
+            string or None: the remote name of the given user.  None if not found.
+        """
+        try:
+            returned = self.client.providers(identity_provider).users(username).get()
+            results = returned.get('results', [])
+        except HttpNotFoundError:
+            results = []
+
+        for row in results:
+            if row.get('username') == username:
+                return row.get('remote_id')
+        return None
 
 
 def enroll_user_in_course_locally(user, course_id, mode):

@@ -82,11 +82,13 @@ SITE_ID = 1
 
 EDX_API_KEY = "PUT_YOUR_API_KEY_HERE"
 
-ENTERPRISE_ENROLLMENT_API_URL = "http://localhost:8000/api/enrollment/v1/"
-
 COURSE_CATALOG_API_URL = "http://localhost:18381/api/v1/"
 
 LMS_ROOT_URL = "http://localhost:8000"
+
+ENTERPRISE_ENROLLMENT_API_URL = LMS_ROOT_URL + "/api/enrollment/v1/"
+
+ENTERPRISE_PUBLIC_ENROLLMENT_API_URL = ENTERPRISE_ENROLLMENT_API_URL
 
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 

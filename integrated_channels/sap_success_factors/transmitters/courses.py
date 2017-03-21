@@ -2,7 +2,13 @@
 Class for transmitting course data to SuccessFactors.
 """
 from __future__ import absolute_import, unicode_literals
+
+import logging
+
 from integrated_channels.sap_success_factors.transmitters import SuccessFactorsTransmitterBase
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SuccessFactorsCourseTransmitter(SuccessFactorsTransmitterBase):
@@ -28,3 +34,8 @@ class SuccessFactorsCourseTransmitter(SuccessFactorsTransmitterBase):
     Record information about the success/failure of posting the course data to SuccessFactors in
      CourseContentExportAudit.
     """
+    def transmit(self, courseware_exporter):
+        """
+        Get serialized data from the courseware exporter and transmit it.
+        """
+        LOGGER.info(courseware_exporter.get_serialized_data())

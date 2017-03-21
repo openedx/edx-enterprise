@@ -126,7 +126,9 @@ class EnterpriseCustomerManageLearnersView(View):
             self.ContextParameters.PENDING_LEARNERS: pending_linked_learners,
             self.ContextParameters.LEARNERS: linked_learners,
             self.ContextParameters.SEARCH_KEYWORD: search_keyword or '',
-            self.ContextParameters.ENROLLMENT_URL: settings.ENTERPRISE_ENROLLMENT_API_URL,
+            self.ContextParameters.ENROLLMENT_URL: getattr(settings,
+                                                           'ENTERPRISE_PUBLIC_ENROLLMENT_API_URL',
+                                                           settings.ENTERPRISE_ENROLLMENT_API_URL),
         }
         context.update(admin.site.each_context(request))
         context.update(self._build_admin_context(request, enterprise_customer))

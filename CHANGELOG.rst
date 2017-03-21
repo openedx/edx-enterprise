@@ -6,13 +6,41 @@ Change Log
    in this file.  It adheres to the structure of http://keepachangelog.com/ ,
    but in reStructuredText instead of Markdown (for ease of incorporation into
    Sphinx documentation and the PyPI description).
-   
+
    This project adheres to Semantic Versioning (http://semver.org/).
 
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
 ----------
+
+
+[0.27.6] - 2017-03-21
+---------------------
+
+* Removed OAuth2Authentication class from API viewset definitions
+
+
+[0.27.5] - 2017-03-17
+---------------------
+
+* Updated api.yaml to resolve swagger configuration issues.
+
+
+[0.27.4] - 2017-03-17
+---------------------
+
+* Allows enterprise enrollments to be made on servers that sit behind a load balancer.
+
+
+[0.27.3] - 2017-03-16
+---------------------
+* Added integrated_channels management command to transmit courseware metadata to SAP SuccessFactors.
+
+[0.27.2] - 2017-03-10
+---------------------
+
+* Added integrated_channels management command to transmit learner completion data to SAP SuccessFactors.
 
 [0.27.1] - 2017-03-13
 ---------------------
@@ -24,7 +52,6 @@ Unreleased
 ---------------------
 
 * Added API endpoint for fetching catalogs and catalog courses.
-
 
 [0.26.3] - 2017-03-02
 ---------------------
