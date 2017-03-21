@@ -6,13 +6,20 @@ Change Log
    in this file.  It adheres to the structure of http://keepachangelog.com/ ,
    but in reStructuredText instead of Markdown (for ease of incorporation into
    Sphinx documentation and the PyPI description).
-   
+
    This project adheres to Semantic Versioning (http://semver.org/).
 
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
 ----------
+
+
+[0.27.6] - 2017-03-21
+---------------------
+
+* Removed OAuth2Authentication class from API viewset definitions
+
 
 [0.27.5] - 2017-03-17
 ---------------------
