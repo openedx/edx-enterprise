@@ -69,7 +69,6 @@ setup(
         "Framework :: Django",
         "Framework :: Django :: 1.8",
         "Framework :: Django :: 1.9",
-        "Framework :: Django :: 1.10",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",
