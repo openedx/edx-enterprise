@@ -604,13 +604,13 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         )
 
         error_message = "The site for the selected identity provider " \
-                    "({identity_provider_site}) does not match the site for this " \
-                    "enterprise customer ({enterprise_customer_site}). To correct " \
-                    "this problem, select a site that has a domain of " \
-                    "'{identity_provider_site}', or update the identity provider " \
-                    "to '{enterprise_customer_site}'.".format(
-                        enterprise_customer_site=self.first_site,
-                        identity_provider_site=self.second_site,
+            "({identity_provider_site}) does not match the site for this " \
+            "enterprise customer ({enterprise_customer_site}). To correct " \
+            "this problem, select a site that has a domain of " \
+            "'{identity_provider_site}', or update the identity provider " \
+             "to '{enterprise_customer_site}'.".format(
+                    enterprise_customer_site=self.first_site,
+                    identity_provider_site=self.second_site,
                         )
         # Validate and clean form data
         assert not form.is_valid()

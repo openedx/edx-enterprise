@@ -101,9 +101,9 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_data_sharing_consent = models.BooleanField(
         default=False,
         help_text=_(
-            "Specifies whether data sharing consent is enabled or " \
-            "disabled for learners signing in through this enterprise " \
-            "customer. If disabled, consent will not be requested, " \
+            "Specifies whether data sharing consent is enabled or "
+            "disabled for learners signing in through this enterprise "
+            "customer. If disabled, consent will not be requested, "
             "and eligible data will not be shared."
         )
     )
@@ -114,7 +114,7 @@ class EnterpriseCustomer(TimeStampedModel):
         choices=DATA_SHARING_CONSENT_CHOICES,
         default=DATA_CONSENT_OPTIONAL,
         help_text=_(
-            "Specifies whether  data sharing consent is optional, is " \
+            "Specifies whether  data sharing consent is optional, is "
             "required at login, or is required at enrollment."
         )
     )

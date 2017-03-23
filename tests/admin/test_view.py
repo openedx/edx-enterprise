@@ -828,7 +828,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (
                 messages.WARNING,
-                "The following learners were already associated with this Enterprise Customer: " \
+                "The following learners were already associated with this Enterprise Customer: "
                 "{}".format(linked_user.email)
             ),
             (messages.WARNING, "The following duplicate email addresses were not added: {}".format(user.email)),
