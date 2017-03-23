@@ -10,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.translation import ugettext as _
+from django.utils.translation import get_language_from_request
 from django.views.generic import View
 
 try:
@@ -23,8 +24,8 @@ except ImportError:
     configuration_helpers = None
 
 try:
-    from third_party_auth.pipeline import (get_complete_url, get_real_social_auth_object, quarantine_session,
-                                           lift_quarantine)
+    from third_party_auth.pipeline import (get_complete_url, get_real_social_auth_object, lift_quarantine,
+                                           quarantine_session)
 except ImportError:
     get_complete_url = None
     get_real_social_auth_object = None
@@ -65,6 +66,44 @@ class GrantDataSharingPermissions(View):
     consent to be provided, and a POST view that consumes said form.
     """
 
+    title_bar_prefix = _('Data sharing consent required')
+    consent_message_header = _('Before enrollment is complete...')
+    requested_permissions_header = _('{enterprise_customer_name} would like to know about:')
+    agreement_text = _(
+        'I agree to allow {platform_name} to share data about my enrollment, completion, and performance '
+        'in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}'
+    )
+    continue_text = _('Yes, continue')
+    abort_text = _('No, take me back.')
+    policy_dropdown_header = _('Data Sharing Policy')
+    sharable_items_header = _(
+        'Enrollment, completion, and performance data that may be shared with {enterprise_customer_name} '
+        '(or its designee) for these courses and programs are limited to the following:'
+    )
+    sharable_items = [
+        _('My email address for my {platform_name} account'),
+        _('My {platform_name} ID'),
+        _('My {platform_name} username'),
+        _('What courses and/or programs I\'ve enrolled in'),
+        _(
+            'Whether I completed specific parts of each course or program (for example, whether '
+            'I watched a given video or completed a given homework assignment)'
+        ),
+        _('My overall percentage completion of each course or program on a periodic basis'),
+        _('My performance in each course or program'),
+        _('My final grade in each course or program'),
+        _('Whether I received a certificate in each course or program'),
+    ]
+    sharable_items_footer = _(
+        'My permission applies only to data from courses or programs that are sponsored by {enterprise_customer_name}'
+        ', and not to data from any {platform_name} courses or programs that I take on my own.'
+    )
+    confirmation_modal_header = _('Are you aware...')
+    modal_affirm_decline_msg = _('I decline')
+    modal_abort_decline_msg = _('View the data sharing policy')
+    policy_link_template = _('View the {start_link}data sharing policy{end_link}.')
+    policy_return_link_text = _('Return to Top')
+
     @staticmethod
     def quarantine(request):
         """
@@ -79,65 +118,42 @@ class GrantDataSharingPermissions(View):
         """
         lift_quarantine(request)
 
-    @staticmethod
-    def get_warning(provider, platform, required):
+    def get_default_context(self, enterprise_customer, platform_name):
         """
-        Get the appropriate warning for the form.
+        Get the set of variables that will populate the template by default.
         """
-        if required:
-            return _(
-                "Are you sure? If you do not agree to share your data, you will have to use "
-                "another account to access {platform}."
-            ).format(platform=platform)
-        else:
-            return _(
-                "Are you sure? If you do not agree to share your data, you will not receive "
-                "discounts from {provider}."
-            ).format(provider=provider)
-
-    @staticmethod
-    def get_course_warning(provider, course_name):
-        """
-        Get a course-specific warning for the form.
-
-        Arguments:
-            provider: The name of the linked EnterpriseCustomer
-            course_name: The name of the course in question
-        """
-        return _(
-            "Are you sure? If you do not agree to share your data with {provider}, you cannot "
-            "access {course_name}."
-        ).format(provider=provider, course_name=course_name)
-
-    @staticmethod
-    def get_note(provider, required):
-        """
-        Get the appropriate note for the form.
-        """
-        if required:
-            return _(
-                "{provider} requires data sharing consent; if consent is not provided, you will"
-                " be redirected to log in page."
-            ).format(provider=provider)
-        else:
-            return _(
-                "{provider} requests data sharing consent; if consent is not provided, you will"
-                " not be able to get any discounts from {provider}."
-            ).format(provider=provider)
-
-    @staticmethod
-    def get_course_note(provider, course_name):
-        """
-        Get a course-specific note for the form.
-
-        Arguments:
-            provider: The name of the linked EnterpriseCustomer
-            course_name: The name of the course in question
-        """
-        return _(
-            "Courses from {provider} require data sharing consent. If you do not agree to "
-            "share your data, you will be redirected to your dashboard."
-        ).format(provider=provider, course_name=course_name)
+        return {
+            'title_bar_prefix': self.title_bar_prefix,
+            'consent_message_header': self.consent_message_header,
+            'requested_permissions_header': self.requested_permissions_header.format(
+                enterprise_customer_name=enterprise_customer.name
+            ),
+            'agreement_text': self.agreement_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+            ),
+            'continue_text': self.continue_text,
+            'abort_text': self.abort_text,
+            'policy_dropdown_header': self.policy_dropdown_header,
+            'sharable_items_header': self.sharable_items_header.format(
+                enterprise_customer_name=enterprise_customer.name
+            ),
+            'sharable_items': [
+                item.format(
+                    enterprise_customer_name=enterprise_customer.name,
+                    platform_name=platform_name
+                ) for item in self.sharable_items
+            ],
+            'sharable_items_footer': self.sharable_items_footer.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+            ),
+            'confirmation_modal_header': self.confirmation_modal_header,
+            'confirmation_modal_affirm_decline_text': self.modal_affirm_decline_msg,
+            'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
+            'policy_link_template': self.policy_link_template,
+            'policy_return_link_text': self.policy_return_link_text,
+        }
 
     def get_course_specific_consent(self, request, course_id):
         """
@@ -163,6 +179,7 @@ class GrantDataSharingPermissions(View):
         except HttpClientError:
             raise Http404
         next_url = request.GET.get('next')
+        failure_url = request.GET.get('failure_url')
 
         enrollment_deferred = request.GET.get('enrollment_deferred')
         if enrollment_deferred is None:
@@ -184,21 +201,37 @@ class GrantDataSharingPermissions(View):
 
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
         course_name = course_details['name']
-        data = {
+        context_data = self.get_default_context(customer, platform_name)
+        course_specific_context = {
+            'consent_request_prompt': _(
+                'To access this course and use your discount, you must first consent to share your '
+                'learning achievements with {enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=customer.name
+            ),
+            'confirmation_alert_prompt': _(
+                'In order to start this course and use your discount, you must consent to share your '
+                'course data with {enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=customer.name
+            ),
+            'page_language': get_language_from_request(request),
             'platform_name': platform_name,
-            'data_sharing_consent': 'required',
-            "messages": {
-                "warning": self.get_course_warning(customer.name, course_name),
-                "note": self.get_course_note(customer.name, course_name),
-            },
             'course_id': course_id,
             'course_name': course_name,
             'redirect_url': next_url,
             'enterprise_customer_name': customer.name,
             'course_specific': True,
             'enrollment_deferred': enrollment_deferred is not None,
+            'failure_url': failure_url,
+            'requested_permissions': [
+                _('your enrollment in this course'),
+                _('your learning progress'),
+                _('course completion'),
+            ]
         }
-        return render_to_response('grant_data_sharing_permissions.html', data, request=request)
+        context_data.update(course_specific_context)
+        return render_to_response('grant_data_sharing_permissions.html', context_data, request=request)
 
     def get_account_consent(self, request):
         """
@@ -218,21 +251,40 @@ class GrantDataSharingPermissions(View):
         # Quarantine the user to this module.
         self.quarantine(request)
 
-        required = customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN)
+        failure_url = request.GET.get('failure_url')
 
-        data = {
+        context_data = self.get_default_context(customer, platform_name)
+
+        account_specific_context = {
+            'consent_request_prompt': _(
+                'To log in using this SSO identity provider and access special course offers, you must first '
+                'consent to share your learning achievements with {enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=customer.name
+            ),
+            'confirmation_alert_prompt': _(
+                'In order to sign in and access special offers, you must consent to share your '
+                'course data with {enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=customer.name
+            ),
+            'page_language': get_language_from_request(request),
             'platform_name': platform_name,
             'enterprise_customer_name': customer.name,
-            'data_sharing_consent': 'required' if required else 'optional',
-            "messages": {
-                "warning": self.get_warning(customer.name, platform_name, required),
-                "note": self.get_note(customer.name, required),
-            },
             "course_id": None,
             "course_specific": False,
             'enrollment_deferred': False,
+            'failure_url': failure_url,
+            'requested_permissions': [
+                _('your enrollment in all sponsored courses'),
+                _('your learning progress'),
+                _('course completion'),
+            ]
         }
-        return render_to_response('grant_data_sharing_permissions.html', data, request=request)
+
+        context_data.update(account_specific_context)
+
+        return render_to_response('grant_data_sharing_permissions.html', context_data, request=request)
 
     def get(self, request):
         """
@@ -271,7 +323,8 @@ class GrantDataSharingPermissions(View):
                 }
             )
         if not consent_provided:
-            return redirect(reverse('dashboard'))
+            failure_url = request.POST.get('failure_url') or reverse('dashboard')
+            return redirect(failure_url)
         return redirect(request.POST.get('redirect_url', reverse('dashboard')))
 
     def post_account_consent(self, request, consent_provided):
@@ -296,7 +349,8 @@ class GrantDataSharingPermissions(View):
             # Flush the session to avoid the possibility of accidental login and to abort the pipeline.
             # pipeline is flushed only if data sharing is enforced, in other cases let the user to login.
             request.session.flush()
-            return redirect(reverse('dashboard'))
+            failure_url = request.POST.get('failure_url') or reverse('dashboard')
+            return redirect(failure_url)
 
         ec_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             user_id=user.id,
