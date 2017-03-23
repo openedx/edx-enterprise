@@ -60,35 +60,6 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         GrantDataSharingPermissions.lift_quarantine(request)
         mock_lift.assert_called_with(request)
 
-    def test_get_warning(self):
-        """
-        Check that ``get_warning`` gives us the correct message.
-        """
-        platform = 'my platform'
-        provider = 'your provider'
-        assert GrantDataSharingPermissions.get_warning(provider, platform, True) == (
-            "Are you sure? If you do not agree to share your data, you will have to use "
-            "another account to access my platform."
-        )
-        assert GrantDataSharingPermissions.get_warning(provider, platform, False) == (
-            "Are you sure? If you do not agree to share your data, you will not receive "
-            "discounts from your provider."
-        )
-
-    def test_get_note(self):
-        """
-        Test that ``get_note`` gives us the correct message.
-        """
-        provider = 'Your provider'
-        assert GrantDataSharingPermissions.get_note(provider, True) == (
-            "Your provider requires data sharing consent; if consent is not provided, you will"
-            " be redirected to log in page."
-        )
-        assert GrantDataSharingPermissions.get_note(provider, False) == (
-            "Your provider requests data sharing consent; if consent is not provided, you will"
-            " not be able to get any discounts from Your provider."
-        )
-
     def test_get_no_patches(self):
         """
         Test that we get the right exception when nothing is patched.
@@ -152,22 +123,19 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         get_ec_mock.return_value = fake_ec
         client = Client()
         response = client.get(self.url)
-        expected_warning = (
-            "Are you sure? If you do not agree to share your data, you will have to use "
-            "another account to access This Platform."
+        expected_prompt = (
+            "To log in using this SSO identity provider and access special course offers, you must first "
+            "consent to share your learning achievements with Fake Customer Name."
         )
-        expected_note = (
-            "Fake Customer Name requires data sharing consent; if consent is not provided, you will"
-            " be redirected to log in page."
+        expected_alert = (
+            "In order to sign in and access special offers, you must consent to share your "
+            "course data with Fake Customer Name."
         )
         expected_context = {
+            'consent_request_prompt': expected_prompt,
+            'confirmation_alert_prompt': expected_alert,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
-            'data_sharing_consent': 'required',
-            'messages': {
-                'warning': expected_warning,
-                'note': expected_note
-            }
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
@@ -200,22 +168,19 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         get_ec_mock.return_value = fake_ec
         client = Client()
         response = client.get(self.url)
-        expected_warning = (
-            "Are you sure? If you do not agree to share your data, you will not receive "
-            "discounts from Fake Customer Name."
+        expected_prompt = (
+            "To log in using this SSO identity provider and access special course offers, you must first "
+            "consent to share your learning achievements with Fake Customer Name."
         )
-        expected_note = (
-            "Fake Customer Name requests data sharing consent; if consent is not provided, you will"
-            " not be able to get any discounts from Fake Customer Name."
+        expected_alert = (
+            "In order to sign in and access special offers, you must consent to share your "
+            "course data with Fake Customer Name."
         )
         expected_context = {
+            'consent_request_prompt': expected_prompt,
+            'confirmation_alert_prompt': expected_alert,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
-            'data_sharing_consent': 'optional',
-            'messages': {
-                'warning': expected_warning,
-                'note': expected_note
-            }
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
@@ -390,6 +355,42 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         assert UserDataSharingConsentAudit.objects.all()[0].enabled
         assert response.status_code == 302
 
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    def test_post_patch_real_social_auth_no_consent_provided(
+            self,
+            mock_get_ec,
+            mock_get_rsa,
+            mock_get_ec2,
+            mock_url,
+            mock_render,
+            mock_config,
+            mock_lift,
+            mock_quarantine,
+    ):  # pylint: disable=unused-argument
+        """
+        Test an enforced request with consent and rendering patched in.
+        """
+        customer = EnterpriseCustomerFactory()
+        mock_get_ec.return_value = customer
+        mock_get_ec2.return_value = customer
+        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory())
+        mock_url.return_value = '/'
+        client = Client()
+        session = client.session
+        session['partial_pipeline'] = {'backend': 'fake_backend'}
+        session.save()
+        response = client.post(self.url, {'failure_url': 'http://google.com/'})
+        assert UserDataSharingConsentAudit.objects.all().count() == 0
+        assert EnterpriseCustomerUser.objects.all().count() == 0
+        assert response.status_code == 302
+
     def _login(self):
         """
         Log user in.
@@ -451,17 +452,14 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         assert response.status_code == 200
         for key, value in {
                 "platform_name": "My Platform",
-                "data_sharing_consent": "required",
-                "messages": {
-                    "note": (
-                        "Courses from Starfleet Academy require data sharing consent. If you do not agree to "
-                        "share your data, you will be redirected to your dashboard."
-                    ),
-                    "warning": (
-                        "Are you sure? If you do not agree to share your data "
-                        "with Starfleet Academy, you cannot access edX Demo Course."
-                    ),
-                },
+                "consent_request_prompt": (
+                    'To access this course and use your discount, you must first consent to share your '
+                    'learning achievements with Starfleet Academy.'
+                ),
+                'confirmation_alert_prompt': (
+                    'In order to start this course and use your discount, you must consent to share your '
+                    'course data with Starfleet Academy.'
+                ),
                 "course_id": "course-v1:edX+DemoX+Demo_Course",
                 "course_name": "edX Demo Course",
                 "redirect_url": "https://google.com",

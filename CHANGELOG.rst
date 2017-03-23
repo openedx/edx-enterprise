@@ -15,6 +15,12 @@ Unreleased
 ----------
 
 
+[0.28.0] - 2017-03-23
+---------------------
+
+* New data sharing consent view supporting failure_url parameter
+
+
 [0.27.6] - 2017-03-21
 ---------------------
 
