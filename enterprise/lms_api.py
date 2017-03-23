@@ -240,13 +240,13 @@ class GradesApiClient(JwtLmsApiClient):
         * ``course_id`` (str): The string value of the course's unique identifier
         * ``username`` (str): The username ID identifying the user for which to retrieve the grade.
 
-        Returns:
-
-        None if no grade found, or a dict containing:
-
         Raises:
 
-        HttpNotFoundError if no grade returned for the given user.
+        HttpNotFoundError if no grade found for the given user+course.
+
+        Returns:
+
+        a dict containing:
 
         * ``username``: A string representation of a user's username passed in the request.
         * ``course_key``: A string representation of a Course ID.
@@ -261,6 +261,45 @@ class GradesApiClient(JwtLmsApiClient):
                 return row
 
         raise HttpNotFoundError('No grade record found for course={}, username={}'.format(course_id, username))
+
+
+class CertificatesApiClient(JwtLmsApiClient):
+    """
+    Object builds an API client to make calls to the LMS Certificates API.
+
+    Note that this API client requires a JWT token, and so it keeps its token alive.
+    """
+
+    API_BASE_URL = settings.LMS_ROOT_URL + '/api/certificates/v0/'
+    APPEND_SLASH = True
+
+    @JwtLmsApiClient.refresh_token
+    def get_course_certificate(self, course_id, username):
+        """
+        Retrieve the certificate for the given username for the given course_id.
+
+        Args:
+        * ``course_id`` (str): The string value of the course's unique identifier
+        * ``username`` (str): The username ID identifying the user for which to retrieve the certificate
+
+        Raises:
+
+        HttpNotFoundError if no certificate found for the given user+course.
+
+        Returns:
+
+        a dict containing:
+
+        * ``username``: A string representation of an user's username passed in the request.
+        * ``course_id``: A string representation of a Course ID.
+        * ``certificate_type``: A string representation of the certificate type.
+        * ``created_date`: Datetime the certificate was created (tz-aware).
+        * ``status``: A string representation of the certificate status.
+        * ``is_passing``: True if the certificate has a passing status, False if not.
+        * ``download_url``: A string representation of the certificate url.
+        * ``grade``: A string representation of a float for the user's course grade.
+        """
+        return self.client.certificates(username).courses(course_id).get()
 
 
 def enroll_user_in_course_locally(user, course_id, mode):

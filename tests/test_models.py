@@ -6,7 +6,6 @@ Tests for the `edx-enterprise` models module.
 from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
-from datetime import datetime
 from operator import itemgetter
 
 import ddt
@@ -23,7 +22,6 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
-from django.utils import timezone
 
 from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
                                EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerEntitlement,
@@ -1025,11 +1023,10 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
 
     @mock.patch(
         'integrated_channels.sap_success_factors.transmitters.learner_data.SuccessFactorsLearnerDataTransmitter')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.GeneratedCertificate')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.CourseKey')
+    @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
     @mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
-    def test_transmit_learner_data(self, mock_course_api, mock_course_key, mock_certificate, mock_transmitter):
+    def test_transmit_learner_data(self, mock_course_api, mock_certificate, mock_transmitter):
 
         user = UserFactory()
         course_id = 'course-v1:edX+DemoX+DemoCourse'
@@ -1049,14 +1046,14 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         )
 
         # Return a mock certificate
-        mock_course_key.from_string.return_value = None
-        certificate = mock.MagicMock(
+        certificate = dict(
             user=user,
             course_id=course_id,
             grade="A-",
-            created_date=datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
+            is_passing=True,
+            created_date='2017-01-02T03:04:05:00Z'
         )
-        mock_certificate.eligible_certificates.get.return_value = certificate
+        mock_certificate.return_value.get_course_certificate.return_value = certificate
 
         # Ensure an inactive config doesn't transmit anything.
         self.config.transmit_learner_data('dummy-user')

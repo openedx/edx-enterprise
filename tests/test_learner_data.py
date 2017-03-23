@@ -12,12 +12,11 @@ import mock
 from freezegun import freeze_time
 from integrated_channels.integrated_channel.learner_data import BaseLearnerExporter
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
-from pytest import mark, raises
+from pytest import mark
 from slumber.exceptions import HttpNotFoundError
 
 from django.utils import timezone
 
-from enterprise.utils import NotConnectedToOpenEdX
 from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerFactory,
                                   EnterpriseCustomerUserFactory, UserFactory)
 
@@ -83,34 +82,16 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert len(learner_data) == 0
 
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
-    def test_collect_learner_data_raises(self, mock_course_api):
-        EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=self.enterprise_customer_user,
-            course_id=self.course_id,
-            consent_granted=True,
-        )
-
-        # Return instructor-paced course details
-        mock_course_api.return_value.get_course_details.return_value = dict(
-            pacing='instructor',
-        )
-
-        with raises(NotConnectedToOpenEdX):
-            list(self.exporter.collect_learner_data())
-
-    @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.GeneratedCertificate')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.CourseKey')
-    def test_learner_data_instructor_paced_no_certificate(self, mock_course_key, mock_certificate, mock_course_api):
+    @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
+    def test_learner_data_instructor_paced_no_certificate(self, mock_certificate_api, mock_course_api):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
             consent_granted=True,
         )
-        # Raise GeneratedCertificate.DoesNotExist
-        mock_course_key.from_string.return_value = None
-        mock_certificate.DoesNotExist = Exception
-        mock_certificate.eligible_certificates.get.side_effect = mock_certificate.DoesNotExist
+
+        # Raise 404 - no certificate found
+        mock_certificate_api.return_value.get_course_certificate.side_effect = HttpNotFoundError
 
         # Return instructor-paced course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -126,24 +107,25 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[0].grade == 'In Progress'
 
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.GeneratedCertificate')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.CourseKey')
-    def test_learner_data_instructor_paced_certificate(self, mock_course_key, mock_certificate, mock_course_api):
+    @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
+    def test_learner_data_instructor_paced_w_certificate(self, mock_certificate_api, mock_course_api):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
             consent_granted=True,
         )
+
         # Return a mock certificate
-        mock_course_key.from_string.return_value = None
-        certificate = mock.MagicMock(
-            user=self.user,
+        certificate = dict(
+            username=self.user,
             course_id=self.course_id,
-            grade='A-',
-            created_date=self.NOW,
+            certificate_type='professional',
+            created_date=self.NOW.isoformat(),
             status="downloadable",
+            is_passing=True,
+            grade='A-',
         )
-        mock_certificate.eligible_certificates.get.return_value = certificate
+        mock_certificate_api.return_value.get_course_certificate.return_value = certificate
 
         # Return instructor-paced course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -224,9 +206,15 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[0].completed_timestamp == expected_completion
         assert learner_data[0].grade == expected_grade
 
+    @ddt.data(
+        ('self', 'Pass'),
+        ('instructor', 'A-'),
+    )
+    @ddt.unpack
+    @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
-    def test_learner_data_multiple_self_paced_courses(self, mock_course_api, mock_grades_api):
+    def test_learner_data_multiple_courses(self, pacing, grade, mock_course_api, mock_grades_api, mock_certificate_api):
         enrollment1 = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
@@ -249,13 +237,27 @@ class TestBaseLearnerExporter(unittest.TestCase):
 
         def get_course_details(course_id):
             """
-            Mock self-paced course details - set course_id to match input
+            Mock course details - set course_id to match input
             """
             return dict(
-                pacing='self',
+                pacing=pacing,
                 course_id=course_id
             )
         mock_course_api.return_value.get_course_details.side_effect = get_course_details
+
+        def get_course_certificate(course_id, username):
+            """
+            Mock certificate data - return depending on course_id
+            """
+            if '2' in course_id:
+                return dict(
+                    username=username,
+                    is_passing=True,
+                    grade=grade,
+                )
+            else:
+                raise HttpNotFoundError
+        mock_certificate_api.return_value.get_course_certificate.side_effect = get_course_certificate
 
         def get_course_grade(course_id, username):
             """
@@ -289,4 +291,4 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[2].course_id == course_id2
         assert learner_data[2].course_completed
         assert learner_data[2].completed_timestamp == self.NOW_TIMESTAMP
-        assert learner_data[2].grade == 'Pass'
+        assert learner_data[2].grade == grade

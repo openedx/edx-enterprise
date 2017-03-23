@@ -11,22 +11,10 @@ from logging import getLogger
 
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from django.utils.translation import ugettext_lazy as _
 from slumber.exceptions import HttpNotFoundError
 
-from enterprise.lms_api import CourseApiClient, GradesApiClient
+from enterprise.lms_api import CourseApiClient, GradesApiClient, CertificatesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
-from enterprise.utils import NotConnectedToOpenEdX
-
-try:
-    from certificates.api import GeneratedCertificate
-except ImportError:
-    GeneratedCertificate = None
-
-try:
-    from opaque_keys.edx.keys import CourseKey
-except ImportError:
-    CourseKey = None
 
 
 LOGGER = getLogger(__name__)
@@ -73,8 +61,10 @@ class BaseLearnerExporter(object):
         self.enterprise_customer = plugin_configuration.enterprise_customer
         self.get_learner_data_record = plugin_configuration.get_learner_data_record
 
-        # The Grades API requires an OAuth2 access token, so cache the client to allow the token to be reused.
+        # The Grades API and Certificates API clients require an OAuth2 access token,
+        #  so cache the client to allow the token to be reused.
         self.grades_api = None
+        self.certificates_api = None
 
     def collect_learner_data(self):
         """
@@ -141,7 +131,7 @@ class BaseLearnerExporter(object):
 
     def _collect_certificate_data(self, enterprise_enrollment):
         """
-        Collect the learner completion data from a certificate.
+        Collect the learner completion data from the course certificate.
 
         Used for Instructor-paced courses.
 
@@ -149,21 +139,23 @@ class BaseLearnerExporter(object):
         certificate will eventually be generated.
         """
 
-        if CourseKey is None or GeneratedCertificate is None:
-            raise NotConnectedToOpenEdX(_('This package must be installed in an OpenEdX environment.'))
+        if self.certificates_api is None:
+            self.certificates_api = CertificatesApiClient(self.user)
+
+        course_id = enterprise_enrollment.course_id
+        username = enterprise_enrollment.enterprise_customer_user.user.username
 
         try:
-            # TODO - use Certificates API instead?
-            certificate = GeneratedCertificate.eligible_certificates.get(
-                user__id=enterprise_enrollment.enterprise_customer_user.user_id,
-                course_id=CourseKey.from_string(enterprise_enrollment.course_id),
-            )
+            certificate = self.certificates_api.get_course_certificate(course_id, username)
+            completed_date = certificate.get('created_date')
+            if completed_date:
+                completed_date = parse_datetime(completed_date)
+            else:
+                completed_date = timezone.now()
+            # TODO: use certificate['is_passing'] to send Pass/Fail instead of numeric grade?
+            grade = certificate.get('grade', self.grade_incomplete)
 
-            completed_date = certificate.created_date
-            # TODO: change to Pass/Fail/In Progress?
-            grade = certificate.grade
-
-        except GeneratedCertificate.DoesNotExist:
+        except HttpNotFoundError:
             completed_date = None
             grade = self.grade_incomplete
 

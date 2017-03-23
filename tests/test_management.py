@@ -213,10 +213,11 @@ FUTURE = NOW + DAY_DELTA
 COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
 
 # Mock certificate data
-MOCK_CERTIFICATE = mock.MagicMock(
+MOCK_CERTIFICATE = dict(
     grade='A-',
-    created_date=NOW,
+    created_date=NOW.strftime(lms_api.LMS_API_DATETIME_FORMAT),
     status='downloadable',
+    is_passing=True,
 )
 
 # Expected leaner completion data from the mock certificate
@@ -302,42 +303,26 @@ def transmit_learner_data_context(command_kwargs, certificate, self_paced, end_d
     testcase.integrated_channel.save()
 
     # Stub out the APIs called by the transmit_learner_data command
-    stub_transmit_learner_data_apis(testcase, self_paced, end_date, passed)
+    stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date, passed)
 
     # Prepare the management command arguments
     command_args = ('--api_user', testcase.api_user.username)
     if 'enterprise_customer' in command_kwargs:
         command_kwargs['enterprise_customer'] = testcase.enterprise_customer.uuid
 
-    # Mock all the classes pulled from the Open edX environment
-    with mock.patch('integrated_channels.integrated_channel.learner_data.CourseKey') as mock_course_key:
-        mock_course_key.from_string.return_value = None
+    # Mock the JWT authentication for LMS API calls
+    with mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock()):
 
-        with mock.patch('integrated_channels.integrated_channel.learner_data.GeneratedCertificate') as mock_certificate:
-            # Mark course completion with a mock certificate.
-            if certificate:
-                mock_certificate.eligible_certificates.get.return_value = mock.MagicMock(
-                    grade='A-',
-                    created_date=NOW,
-                    status='downloadable',
-                )
-            # Or raise GeneratedCertificate.DoesNotExist
-            else:
-                mock_certificate.DoesNotExist = Exception
-                mock_certificate.eligible_certificates.get.side_effect = mock_certificate.DoesNotExist
-
-            with mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock()):
-
-                # Yield to the management command test, freezing time to the known NOW.
-                with freeze_time(NOW):
-                    yield (command_args, command_kwargs)
+        # Yield to the management command test, freezing time to the known NOW.
+        with freeze_time(NOW):
+            yield (command_args, command_kwargs)
 
     # Clean up the testcase data
     testcase.tearDown()
 
 
 # Helper methods for the transmit_learner_data integration test below
-def stub_transmit_learner_data_apis(testcase, self_paced, end_date, passed):
+def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date, passed):
     """
     Stub out all of the API calls made during transmit_learner_data
     """
@@ -379,6 +364,23 @@ def stub_transmit_learner_data_apis(testcase, self_paced, end_date, passed):
         )],
     )
 
+    # Certificates API course_grades response
+    if certificate:
+        responses.add(
+            responses.GET,
+            urljoin(lms_api.CertificatesApiClient.API_BASE_URL,
+                    "certificates/{user}/courses/{course}/".format(course=testcase.course_id,
+                                                                   user=testcase.user.username)),
+            json=certificate,
+        )
+    else:
+        responses.add(
+            responses.GET,
+            urljoin(lms_api.CertificatesApiClient.API_BASE_URL,
+                    "certificates/{user}/courses/{course}/".format(course=testcase.course_id,
+                                                                   user=testcase.user.username)),
+            status=404,
+        )
 
 
 def get_expected_output(**expected_completion):

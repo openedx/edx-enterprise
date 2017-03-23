@@ -23,6 +23,7 @@ URL_BASE_NAMES = {
     'courses': lms_api.CourseApiClient,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
     'course_grades': lms_api.GradesApiClient,
+    'certificates': lms_api.CertificatesApiClient,
 }
 
 
@@ -304,3 +305,43 @@ def test_get_course_grade():
     client = lms_api.GradesApiClient('staff-user-goes-here')
     actual_response = client.get_course_grade(course_id, username)
     assert actual_response == expected_response[0]
+
+
+@responses.activate
+@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+def test_get_course_certificate_not_found():
+    username = "DarthVadar"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    responses.add(
+        responses.GET,
+        _url("certificates", "certificates/{user}/courses/{course}/".format(course=course_id, user=username)),
+        match_querystring=True,
+        status=404
+    )
+    client = lms_api.CertificatesApiClient('staff-user-goes-here')
+    with raises(HttpNotFoundError):
+        client.get_course_certificate(course_id, username)
+
+
+@responses.activate
+@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+def test_get_course_certificate():
+    username = "DarthVadar"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    expected_response = {
+        "username": username,
+        "course_id": course_id,
+        "certificate_type": "professional",
+        "status": "downloadable",
+        "is_passing": True,
+        "grade": '0.88',
+    }
+    responses.add(
+        responses.GET,
+        _url("certificates", "certificates/{user}/courses/{course}/".format(course=course_id, user=username)),
+        match_querystring=True,
+        json=expected_response,
+    )
+    client = lms_api.CertificatesApiClient('staff-user-goes-here')
+    actual_response = client.get_course_certificate(course_id, username)
+    assert actual_response == expected_response
