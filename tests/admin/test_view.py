@@ -502,7 +502,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             mode,
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
         assert len(all_enterprise_enrollments) == 1
@@ -533,7 +533,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             mode,
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
         assert len(all_enterprise_enrollments) == 1
@@ -564,7 +564,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
         self._assert_django_messages(response, set([
-            (messages.ERROR, "Enrollment of some users in {} failed: {}".format(course_id, user.email)),
+            (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         ]))
 
     @mock.patch('enterprise.admin.views.logging.error')
@@ -601,7 +601,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             {'user': user.username, 'message': 'No error message provided'}
         )
         self._assert_django_messages(response, set([
-            (messages.ERROR, "Enrollment of some users in {} failed: {}".format(course_id, user.email)),
+            (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         ]))
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
@@ -623,7 +623,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         self._assert_django_messages(response, set(
             [
-                (messages.SUCCESS, "1 user was enrolled to {}.".format('Program2'))
+                (messages.SUCCESS, "1 learner was enrolled in {}.".format('Program2'))
             ]
         ))
         assert len(mail.outbox) == 1
@@ -665,7 +665,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         response = self._enroll_user_request(user, mode, program_id=program["uuid"])
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
         self._assert_django_messages(response, set([
-            (messages.ERROR, "Enrollment of some users in Program2 failed: {}".format(user.email)),
+            (messages.ERROR, "The following learners could not be enrolled in Program2: {}".format(user.email)),
         ]))
 
 
@@ -825,12 +825,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.count() == 1, "One pending linked users should be created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=new_email).exists()
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (
                 messages.WARNING,
-                "Some users were already linked to this Enterprise Customer: {}".format(linked_user.email)
+                "The following learners were already associated with this "
+                "Enterprise Customer: {}".format(linked_user.email)
             ),
-            (messages.WARNING, "Some duplicate emails in the CSV were ignored: {}".format(user.email)),
+            (messages.WARNING, "The following duplicate email addresses were not added: {}".format(user.email)),
             (
                 messages.WARNING,
                 "The following learners are already associated with another Enterprise Customer. "
@@ -866,7 +867,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=previously_not_seen_email).exists(), \
             "it should create EnterpriseCustomerRecord by email"
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
         ]))
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
@@ -903,12 +904,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_mode
         )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in {}. "
-            "When these users create an account, they will be enrolled automatically: {}"
+            "The following learners do not have an account on Test platform. "
+            "They have not been enrolled in {}. When these learners create an "
+            "account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
@@ -945,12 +947,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_mode
         )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in {}. "
-            "When these users create an account, they will be enrolled automatically: {}"
+            "The following learners do not have an account on Test platform. "
+            "They have not been enrolled in {}. When these learners create an "
+            "account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
@@ -996,12 +999,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             course_mode
         )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in {}. "
-            "When these users create an account, they will be enrolled automatically: {}"
+            "The following learners do not have an account on Test platform. They have not been enrolled in {}. "
+            "When these learners create an account, they will be enrolled automatically: {}"
         )
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
-            (messages.SUCCESS, "1 user was enrolled to {}.".format(course_id)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
@@ -1039,14 +1042,14 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 course_mode
             )
         pending_user_message = (
-            "The following users do not have an account on Test platform. They have not been enrolled in Program2. "
-            "When these users create an account, they will be enrolled automatically: {}"
+            "The following learners do not have an account on Test platform. They have not been enrolled in Program2. "
+            "When these learners create an account, they will be enrolled automatically: {}"
         )
         expected_messages = {
-            (messages.SUCCESS, "2 new users were linked to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.WARNING, pending_user_message.format(unknown_email))
         } | set([
-            (messages.SUCCESS, "1 user was enrolled to Program2.")
+            (messages.SUCCESS, "1 learner was enrolled in Program2.")
             for course_id in expected_courses
         ])
 
@@ -1075,7 +1078,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         response = self.client.delete(self.view_url + "?" + query_string)
 
         assert response.status_code == 404
-        expected_message = "Email {email} is not linked to Enterprise Customer {ec_name}".format(
+        expected_message = "Email {email} is not associated with Enterprise Customer {ec_name}".format(
             email=email, ec_name=self.enterprise_customer.name
         )
         assert response.content.decode("utf-8") == expected_message

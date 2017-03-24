@@ -39,30 +39,52 @@ class ValidationMessages(object):
     """
 
     # Keep this alphabetically sorted
-    BOTH_FIELDS_SPECIFIED = _("Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but both were.")
-    BULK_LINK_FAILED = _("Bulk operation failed - no users were linked. Please correct the errors listed below.")
-    COURSE_AND_PROGRAM_ERROR = _("Either \"Course ID\" or \"Program ID\" can be specified, both were.")
-    COURSE_MODE_INVALID_FOR_COURSE = _("Enrollment mode {course_mode} not available for course {course_id}.")
+    BOTH_FIELDS_SPECIFIED = _(
+        "Either \"Email or Username\" or \"CSV bulk upload\" must be specified, "
+        "but both were.")
+    BULK_LINK_FAILED = _(
+        "Error: Learners could not be added. Correct the following errors.")
+    COURSE_AND_PROGRAM_ERROR = _(
+        "Either \"Course ID\" or \"Program ID\" can be specified, but both were.")
+    COURSE_MODE_INVALID_FOR_COURSE = _(
+        "Enrollment track {course_mode} is not available for course {course_id}.")
     COURSE_MODE_NOT_AVAILABLE = _(
-        "Course mode {mode} is not available for all courses in program {program_title}. Available modes are {modes}."
-    )
-    COURSE_WITHOUT_COURSE_MODE = _("Please select a course enrollment mode for the given course/program.")
-    FAILED_TO_OBTAIN_COURSE_MODES = _("Failed to obtain available course modes for program {program_title}")
-    INVALID_COURSE_ID = _("Could not retrieve details for the course ID {course_id}. Please specify a valid ID.")
-    INVALID_EMAIL = _("{argument} does not appear to be a valid email")
-    INVALID_EMAIL_OR_USERNAME = _("{argument} does not appear to be a valid email or known username")
+        "Enrollment track {mode} is not available for all courses in program "
+        "{program_title}. The available enrollment tracks are {modes}.")
+    COURSE_WITHOUT_COURSE_MODE = _(
+        "Select a course enrollment track for the given course or program.")
+    FAILED_TO_OBTAIN_COURSE_MODES = _(
+        "Failed to obtain available course enrollment tracks for "
+        "program {program_title}")
+    INVALID_COURSE_ID = _(
+        "Could not retrieve details for the course ID {course_id}. Specify "
+        "a valid ID.")
+    INVALID_EMAIL = _(
+        "{argument} does not appear to be a valid email address.")
+    INVALID_EMAIL_OR_USERNAME = _(
+        "{argument} does not appear to be a valid email address or known "
+        "username")
     INVALID_PROGRAM_ID = _(
-        "Could not retrieve details for the program {program_id}. Please specify a valid ID or program name."
+        "Could not retrieve details for the program {program_id}. Specify a "
+        "valid program ID or program name."
     )
     MISSING_EXPECTED_COLUMNS = _(
-        "Expected a CSV file with [{expected_columns}] columns, but found [{actual_columns}] columns instead."
+        "Expected a CSV file with [{expected_columns}] columns, but found "
+        "[{actual_columns}] columns instead."
     )
     MULTIPLE_PROGRAM_MATCH = _(
-        "Searching programs by title returned {program_count} programs. Please try using program UUID"
+        "Searching programs by title returned {program_count} programs. "
+        "Try using program UUID"
     )
-    NO_FIELDS_SPECIFIED = _("Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but neither were.")
-    PROGRAM_IS_INACTIVE = _("Enrollment in program {program_id} is closed as it is in {status} status.")
-    USER_ALREADY_REGISTERED = _("User with email {email} is already registered with Enterprise Customer {ec_name}")
+    NO_FIELDS_SPECIFIED = _(
+        "Either \"Email or Username\" or \"CSV bulk upload\" must be "
+        "specified, but neither were.")
+    PROGRAM_IS_INACTIVE = _(
+        "Enrollment in program {program_id} is closed because it is in "
+        "{status} status.")
+    USER_ALREADY_REGISTERED = _(
+        "User with email address {email} is already registered with Enterprise "
+        "Customer {ec_name}")
 
 
 def parse_csv(file_stream, expected_columns=None):
