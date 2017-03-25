@@ -13,7 +13,9 @@ from rest_framework.reverse import reverse
 
 from django.conf import settings
 from django.test import override_settings
+from django.utils import timezone
 
+from enterprise.lms_api import LMS_API_DATETIME_FORMAT
 from enterprise.models import EnterpriseCustomer, UserDataSharingConsentAudit
 from test_utils import TEST_USERNAME, APITest, factories
 
@@ -24,7 +26,7 @@ class TestEnterpriseAPIViews(APITest):
     Tests for enterprise api views.
     """
     # Get current datetime, so that all tests can use same datetime.
-    now = datetime.datetime.now()
+    now = timezone.now()
 
     def create_items(self, factory, items):
         """
@@ -66,7 +68,7 @@ class TestEnterpriseAPIViews(APITest):
                     'email': 'test1@example.com',
                     'is_staff': True,
                     'is_active': False,
-                    'date_joined': (now - datetime.timedelta(days=10)).isoformat(),
+                    'date_joined': (now - datetime.timedelta(days=10)).strftime(LMS_API_DATETIME_FORMAT),
                 },
                 {
                     'username': 'test_user_2',
@@ -75,7 +77,7 @@ class TestEnterpriseAPIViews(APITest):
                     'email': 'test2@example.com',
                     'is_staff': False,
                     'is_active': True,
-                    'date_joined': (now - datetime.timedelta(days=20)).isoformat(),
+                    'date_joined': (now - datetime.timedelta(days=20)).strftime(LMS_API_DATETIME_FORMAT),
                 },
             ],
         ),
@@ -97,7 +99,7 @@ class TestEnterpriseAPIViews(APITest):
             'email': self.user.email,
             'is_staff': self.user.is_staff,
             'is_active': self.user.is_active,
-            'date_joined': self.user.date_joined.isoformat(),
+            'date_joined': self.user.date_joined.strftime(LMS_API_DATETIME_FORMAT),
         })
 
         for user in response['results']:

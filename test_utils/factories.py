@@ -10,6 +10,7 @@ from faker import Factory as FakerFactory
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.utils import timezone
 
 from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
                                EnterpriseCustomerEntitlement, EnterpriseCustomerIdentityProvider,
@@ -131,7 +132,7 @@ class UserFactory(factory.DjangoModelFactory):
     last_name = factory.LazyAttribute(lambda x: FAKER.last_name())
     is_staff = False
     is_active = False
-    date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year())
+    date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
 
 
 class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactory):

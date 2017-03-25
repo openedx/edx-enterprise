@@ -14,7 +14,7 @@ from pytest import mark, raises
 
 
 @mark.django_db
-@responses.activate  # pylint: disable=no-member
+@responses.activate
 def test_get_oauth_access_token():
     oauth_api_path = "learning/oauth-api/rest/v1/token"
     url_base = "http://test.successfactors.com/"
@@ -34,8 +34,8 @@ def test_get_oauth_access_token():
     expected_response_body = {"expiresIn": expires_in, "access_token": access_token}
     expected_response = (access_token, datetime.datetime.utcfromtimestamp(expires_in))
 
-    responses.add(  # pylint: disable=no-member
-        responses.POST,  # pylint: disable=no-member
+    responses.add(
+        responses.POST,
         url_base + oauth_api_path,
         json=expected_response_body
     )
@@ -48,12 +48,12 @@ def test_get_oauth_access_token():
         user_id
     )
     assert actual_response == expected_response
-    assert len(responses.calls) == 1  # pylint: disable=no-member
-    assert responses.calls[0].request.url == url_base + oauth_api_path  # pylint: disable=no-member
+    assert len(responses.calls) == 1
+    assert responses.calls[0].request.url == url_base + oauth_api_path
 
 
 @mark.django_db
-@responses.activate  # pylint: disable=no-member
+@responses.activate
 def test_get_oauth_access_token_response_missing_fields():
     with raises(requests.RequestException):
         oauth_api_path = "learning/oauth-api/rest/v1/token"
@@ -69,8 +69,8 @@ def test_get_oauth_access_token_response_missing_fields():
             oauth_api_path=oauth_api_path
         )
 
-        responses.add(  # pylint: disable=no-member
-            responses.POST,  # pylint: disable=no-member
+        responses.add(
+            responses.POST,
             url_base + oauth_api_path,
             json={"issuedFor": "learning_public_api"}
         )

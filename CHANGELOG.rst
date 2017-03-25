@@ -15,6 +15,12 @@ Unreleased
 ----------
 
 
+[0.29.0] - 2017-03-23
+---------------------
+
+* Updates integrated_channels management command `transmit_learner_data` to support sending completion data for
+  self-paced courses, and to use the Certificates API for instructor-paced courses.
+
 [0.28.0] - 2017-03-23
 ---------------------
 

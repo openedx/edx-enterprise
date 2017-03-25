@@ -7,12 +7,13 @@ import datetime
 import json
 
 from django.apps import apps
+from django.utils import timezone
 
 from enterprise.lms_api import parse_lms_api_datetime
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 
 
-UNIX_EPOCH = datetime.datetime(1970, 1, 1)
+UNIX_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 
@@ -93,4 +94,4 @@ def current_time_is_in_interval(start, end):
     """
     interval_start = parse_lms_api_datetime(start or UNIX_MIN_DATE_STRING)
     interval_end = parse_lms_api_datetime(end or UNIX_MAX_DATE_STRING)
-    return interval_start <= datetime.datetime.now() <= interval_end
+    return interval_start <= timezone.now() <= interval_end
