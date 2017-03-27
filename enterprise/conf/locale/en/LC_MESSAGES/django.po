@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: edx-enteprise \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-03-24 21:39-0500\n"
+"POT-Creation-Date: 2017-03-27 09:04-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -117,6 +117,7 @@ msgid ""
 msgstr ""
 
 #: enterprise/admin/forms.py:389
+#, python-brace-format
 msgid ""
 "Site ({identity_provider_site}) of selected identity provider does not match "
 "with enterprise customer's site ({enterprise_customer_site}).Please either "
@@ -141,10 +142,12 @@ msgid "Either \"Course ID\" or \"Program ID\" can be specified, both were."
 msgstr ""
 
 #: enterprise/admin/utils.py:45
+#, python-brace-format
 msgid "Enrollment mode {course_mode} not available for course {course_id}."
 msgstr ""
 
 #: enterprise/admin/utils.py:47
+#, python-brace-format
 msgid ""
 "Course mode {mode} is not available for all courses in program "
 "{program_title}. Available modes are {modes}."
@@ -155,36 +158,43 @@ msgid "Please select a course enrollment mode for the given course/program."
 msgstr ""
 
 #: enterprise/admin/utils.py:50
+#, python-brace-format
 msgid "Failed to obtain available course modes for program {program_title}"
 msgstr ""
 
 #: enterprise/admin/utils.py:51
+#, python-brace-format
 msgid ""
 "Could not retrieve details for the course ID {course_id}. Please specify a "
 "valid ID."
 msgstr ""
 
 #: enterprise/admin/utils.py:52
+#, python-brace-format
 msgid "{argument} does not appear to be a valid email"
 msgstr ""
 
 #: enterprise/admin/utils.py:53
+#, python-brace-format
 msgid "{argument} does not appear to be a valid email or known username"
 msgstr ""
 
 #: enterprise/admin/utils.py:55
+#, python-brace-format
 msgid ""
 "Could not retrieve details for the program {program_id}. Please specify a "
 "valid ID or program name."
 msgstr ""
 
 #: enterprise/admin/utils.py:58
+#, python-brace-format
 msgid ""
 "Expected a CSV file with [{expected_columns}] columns, but found "
 "[{actual_columns}] columns instead."
 msgstr ""
 
 #: enterprise/admin/utils.py:61
+#, python-brace-format
 msgid ""
 "Searching programs by title returned {program_count} programs. Please try "
 "using program UUID"
@@ -197,32 +207,38 @@ msgid ""
 msgstr ""
 
 #: enterprise/admin/utils.py:64
+#, python-brace-format
 msgid ""
 "Enrollment in program {program_id} is closed as it is in {status} status."
 msgstr ""
 
 #: enterprise/admin/utils.py:65
+#, python-brace-format
 msgid ""
 "User with email {email} is already registered with Enterprise Customer "
 "{ec_name}"
 msgstr ""
 
 #: enterprise/admin/views.py:229
+#, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
 #: enterprise/admin/views.py:256
+#, python-brace-format
 msgid "{count} new user was linked to {enterprise_customer_name}."
 msgid_plural "{count} new users were linked to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
 #: enterprise/admin/views.py:269
+#, python-brace-format
 msgid ""
 "Some users were already linked to this Enterprise Customer: {list_of_emails}"
 msgstr ""
 
 #: enterprise/admin/views.py:277
+#, python-brace-format
 msgid ""
 "The following learners are already associated with another Enterprise "
 "Customer. These learners were not added to {enterprise_customer_name}: "
@@ -230,6 +246,7 @@ msgid ""
 msgstr ""
 
 #: enterprise/admin/views.py:287
+#, python-brace-format
 msgid "Some duplicate emails in the CSV were ignored: {list_of_emails}"
 msgstr ""
 
@@ -240,16 +257,19 @@ msgid ""
 msgstr ""
 
 #: enterprise/admin/views.py:565
+#, python-brace-format
 msgid "{enrolled_count} user was enrolled to {enrolled_in}."
 msgid_plural "{enrolled_count} users were enrolled to {enrolled_in}."
 msgstr[0] ""
 msgstr[1] ""
 
 #: enterprise/admin/views.py:589
+#, python-brace-format
 msgid "Enrollment of some users in {enrolled_in} failed: {user_list}"
 msgstr ""
 
 #: enterprise/admin/views.py:611
+#, python-brace-format
 msgid ""
 "The following users do not have an account on {platform_name}. They have not "
 "been enrolled in {enrolled_in}. When these users create an account, they "
@@ -261,6 +281,7 @@ msgid "the program"
 msgstr ""
 
 #: enterprise/admin/views.py:795
+#, python-brace-format
 msgid "Email {email} is not linked to Enterprise Customer {ec_name}"
 msgstr ""
 
@@ -421,6 +442,7 @@ msgid ""
 msgstr ""
 
 #: enterprise/models.py:797
+#, python-brace-format
 msgid ""
 "Fill in a string that can be used to generate a dynamic subject line for "
 "notification emails. The placeholder {course_name} will be replaced with the "
@@ -541,6 +563,7 @@ msgid ""
 msgstr ""
 
 #: enterprise/utils.py:289
+#, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
@@ -570,10 +593,12 @@ msgid "Before enrollment is complete..."
 msgstr ""
 
 #: enterprise/views.py:71
+#, python-brace-format
 msgid "{enterprise_customer_name} would like to know about:"
 msgstr ""
 
 #: enterprise/views.py:73
+#, python-brace-format
 msgid ""
 "I agree to allow {platform_name} to share data about my enrollment, "
 "completion, and performance in all {platform_name} courses and programs "
@@ -593,6 +618,7 @@ msgid "Data Sharing Policy"
 msgstr ""
 
 #: enterprise/views.py:80
+#, python-brace-format
 msgid ""
 "Enrollment, completion, and performance data that may be shared with "
 "{enterprise_customer_name} (or its designee) for these courses and programs "
@@ -600,14 +626,17 @@ msgid ""
 msgstr ""
 
 #: enterprise/views.py:84
+#, python-brace-format
 msgid "My email address for my {platform_name} account"
 msgstr ""
 
 #: enterprise/views.py:85
+#, python-brace-format
 msgid "My {platform_name} ID"
 msgstr ""
 
 #: enterprise/views.py:86
+#, python-brace-format
 msgid "My {platform_name} username"
 msgstr ""
 
@@ -640,6 +669,7 @@ msgid "Whether I received a certificate in each course or program"
 msgstr ""
 
 #: enterprise/views.py:98
+#, python-brace-format
 msgid ""
 "My permission applies only to data from courses or programs that are "
 "sponsored by {enterprise_customer_name}, and not to data from any "
@@ -659,6 +689,7 @@ msgid "View the data sharing policy"
 msgstr ""
 
 #: enterprise/views.py:104
+#, python-brace-format
 msgid "View the {start_link}data sharing policy{end_link}."
 msgstr ""
 
@@ -667,12 +698,14 @@ msgid "Return to Top"
 msgstr ""
 
 #: enterprise/views.py:207
+#, python-brace-format
 msgid ""
 "To access this course and use your discount, you must first consent to share "
 "your learning achievements with {enterprise_customer_name}."
 msgstr ""
 
 #: enterprise/views.py:213
+#, python-brace-format
 msgid ""
 "In order to start this course and use your discount, you must consent to "
 "share your course data with {enterprise_customer_name}."
@@ -691,6 +724,7 @@ msgid "course completion"
 msgstr ""
 
 #: enterprise/views.py:260
+#, python-brace-format
 msgid ""
 "To log in using this SSO identity provider and access special course offers, "
 "you must first consent to share your learning achievements with "
@@ -698,6 +732,7 @@ msgid ""
 msgstr ""
 
 #: enterprise/views.py:266
+#, python-brace-format
 msgid ""
 "In order to sign in and access special offers, you must consent to share "
 "your course data with {enterprise_customer_name}."
@@ -720,10 +755,12 @@ msgid ""
 msgstr ""
 
 #: integrated_channels/integrated_channel/management/commands/__init__.py:74
+#, python-brace-format
 msgid "Enterprise customer {uuid} not found, or not active"
 msgstr ""
 
 #: integrated_channels/integrated_channel/management/commands/__init__.py:90
+#, python-brace-format
 msgid "Invalid integrated channel: {channel}"
 msgstr ""
 
@@ -740,6 +777,7 @@ msgid "Username of a user authorized to fetch grades from the LMS API."
 msgstr ""
 
 #: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:46
+#, python-brace-format
 msgid "A user with the username {username} was not found."
 msgstr ""
 

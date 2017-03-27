@@ -1,3 +1,9 @@
+<script type="text/javascript">
+  var courseId;
+  var successUrl;
+  var failureUrl;
+  var enrollmentDeferred = false;
+</script>
 <input type="checkbox" id="data-consent-checkbox"/>
 <button type="button" id="consent-button" disabled>Button contents</button>
 <button type="button" id="failure-link">Failure link</button>
@@ -7,3 +13,4 @@
 <button type="button" id="consent-policy-dropdown-bar">Show policy</button>
 <div class="consent-policy" style="display: none;"></div>
 <i id="consent-policy-dropdown-icon"></i>
+<form name="data-sharing-consent" method="POST" id="data-sharing"></form>
