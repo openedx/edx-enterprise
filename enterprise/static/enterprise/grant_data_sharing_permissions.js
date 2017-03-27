@@ -80,6 +80,20 @@ function loadConsentPage() {
             $("#review-policy-link").focus();
         }
     });
+    var formDetails = {
+        enrollmentDeferred: enrollmentDeferred,
+        successUrl: successUrl,
+        failureUrl: failureUrl,
+        courseId: courseId,
+    };
+    analytics.track("edx.bi.user.consent_form.shown", formDetails);
+    analytics.trackForm($("#data-sharing"), function () {
+        if ($("#data-consent-checkbox").is(":checked")) {
+            return "edx.bi.user.consent_form.accepted";
+        } else {
+            return "edx.bi.user.consent_form.denied";
+        }
+    }, formDetails);
 }
 (function() {
     "use strict";

@@ -15,6 +15,7 @@ src_files:
   - spec/vendor/jquery.js
   - spec/vendor/jasmine-jquery.js
   - spec/vendor/mock-ajax.js
+  - spec/vendor/analytics-mock.js
   - enterprise/static/enterprise/*.js
   - enterprise/static/enterprise/admin/*.js
 

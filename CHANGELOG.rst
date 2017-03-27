@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.29.1] - 2017-03-27
+---------------------
+
+* Support for segment.io events on data sharing consent flow
+
 
 [0.29.0] - 2017-03-23
 ---------------------

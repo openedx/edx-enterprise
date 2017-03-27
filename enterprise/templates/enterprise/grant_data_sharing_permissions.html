@@ -5,12 +5,31 @@
   <%!
     from django.utils.translation import ugettext as _
     %>
+<%include file="widgets/segment-io.html" />
 <html lang="${ page_language }">
   <title>${ title_bar_prefix } | ${ platform_name }</title>
   <head>
     <link rel="stylesheet" href="${static.url('css/vendor/font-awesome.css')}"/>
     <link rel="stylesheet" href="${static.url('enterprise/grant_data_sharing_permissions.css')}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <script type="text/javascript">
+      var courseId;
+      var successUrl;
+      var failureUrl;
+      var enrollmentDeferred = false;
+      % if course_specific and course_id:
+        courseId = "${ course_id }";
+      % endif
+      % if redirect_url:
+        successUrl = "${ redirect_url }";
+      % endif
+      % if failure_url:
+        failureUrl = "${ failure_url }";
+      % endif
+      % if enrollment_deferred:
+        enrollmentDeferred = true;
+      % endif
+    </script>
     <script type="text/javascript" src="${static.url('common/js/vendor/jquery.js')}"></script>
     <script type="text/javascript" src="${static.url('js/vendor/jquery.cookie.js')}"></script>
     <script type="text/javascript" src="${static.url('enterprise/grant_data_sharing_permissions.js')}"></script>

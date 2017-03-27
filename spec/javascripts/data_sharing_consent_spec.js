@@ -78,6 +78,27 @@ describe("Data sharing consent page", function () {
             $("#consent-policy-dropdown-bar").click();
             expect($(".consent-policy")).toBeHidden();
             expect($("#consent-policy-dropdown-icon")).toHaveClass("fa-chevron-right");
-        })
+        });
+    });
+
+    describe("analytics", function () {
+        it("should fire a \"edx.bi.user.consent_form.shown\" event when loading the page", function () {
+            expect(lastTrackedEvent).toBe('edx.bi.user.consent_form.shown');
+        });
+
+        it("should be set up to submit events when the form is submitted", function () {
+            expect(lastTrackedForm.form.attr("id")).toBe("data-sharing");
+        });
+
+        describe("when the form is submitted", function () {
+            it("should fire a \"edx.bi.user.consent_form.accepted\" event if the form checkbox is checked", function () {
+                $("#data-consent-checkbox").click();
+                expect(lastTrackedForm.callback()).toBe("edx.bi.user.consent_form.accepted");
+            })
+
+            it("should fire a \"edx.bi.user.consent_form.denied\" event if the form checkbox is not checked", function () {
+                expect(lastTrackedForm.callback()).toBe("edx.bi.user.consent_form.denied");
+            })
+        });
     });
 });
