@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.30.0] - 2017-03-27
+---------------------
+
+* Fully implements sap_success_factors transmitters and client to communicate with the SAP SuccessFactors API,
+  and to handle auditing and other business logic for both catalog and learner data calls.
+
+
 [0.29.1] - 2017-03-27
 ---------------------
 
