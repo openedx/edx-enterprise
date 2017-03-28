@@ -25,26 +25,30 @@ class BaseLearnerExporter(object):
     Base class for exporting learner completion data to integrated channels.
     """
 
+    GRADE_PASSING = 'Pass'
+    GRADE_FAILING = 'Fail'
+    GRADE_INCOMPLETE = 'In Progress'
+
     @property
     def grade_passing(self):
         """
         Returns the string used for a passing grade.
         """
-        return 'Pass'
+        return self.GRADE_PASSING
 
     @property
     def grade_failing(self):
         """
         Returns the string used for a failing grade.
         """
-        return 'Fail'
+        return self.GRADE_FAILING
 
     @property
     def grade_incomplete(self):
         """
         Returns the string used for an incomplete course grade.
         """
-        return 'In Progress'
+        return self.GRADE_INCOMPLETE
 
     def __init__(self, user, plugin_configuration):
         """
@@ -117,16 +121,17 @@ class BaseLearnerExporter(object):
 
             # For instructor-paced courses, let the certificate determine course completion
             if course_details.get('pacing') == 'instructor':
-                completed_date, grade = self._collect_certificate_data(enterprise_enrollment)
+                completed_date, grade, is_passing = self._collect_certificate_data(enterprise_enrollment)
 
             # For self-paced courses, check the Grades API
             else:
-                completed_date, grade = self._collect_grades_data(enterprise_enrollment, course_details)
+                completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
 
             yield self.get_learner_data_record(
                 enterprise_enrollment=enterprise_enrollment,
                 completed_date=completed_date,
                 grade=grade,
+                is_passing=is_passing,
             )
 
     def _collect_certificate_data(self, enterprise_enrollment):
@@ -137,6 +142,15 @@ class BaseLearnerExporter(object):
 
         If no certificate is found, then returns the completed_date = None, grade = In Progress, on the idea that a
         certificate will eventually be generated.
+
+        Args:
+            enterprise_enrollment (EnterpriseCourseEnrollment): the enterprise enrollment record for which we need to
+            collect completion/grade data
+
+        Returns:
+            completed_date: Date the course was completed, this is None if course has not been completed.
+            grade: Current grade in the course.
+            is_passing: Boolean indicating if the grade is a passing grade or not.
         """
 
         if self.certificates_api is None:
@@ -152,20 +166,33 @@ class BaseLearnerExporter(object):
                 completed_date = parse_datetime(completed_date)
             else:
                 completed_date = timezone.now()
-            # TODO: use certificate['is_passing'] to send Pass/Fail instead of numeric grade?
-            grade = certificate.get('grade', self.grade_incomplete)
+
+            # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
+            is_passing = certificate.get('is_passing')
+            grade = self.grade_passing if is_passing else self.grade_failing
 
         except HttpNotFoundError:
             completed_date = None
             grade = self.grade_incomplete
+            is_passing = False
 
-        return completed_date, grade
+        return completed_date, grade, is_passing
 
     def _collect_grades_data(self, enterprise_enrollment, course_details):
         """
         Collect the learner completion data from the Grades API.
 
         Used for self-paced courses.
+
+        Args:
+            enterprise_enrollment (EnterpriseCourseEnrollment): the enterprise enrollment record for which we need to
+            collect completion/grade data
+            course_details (dict): the course details for the course in the enterprise enrollment record.
+
+        Returns:
+            completed_date: Date the course was completed, this is None if course has not been completed.
+            grade: Current grade in the course.
+            is_passing: Boolean indicating if the grade is a passing grade or not.
         """
         if self.grades_api is None:
             self.grades_api = GradesApiClient(self.user)
@@ -179,23 +206,23 @@ class BaseLearnerExporter(object):
         except HttpNotFoundError:
             # Grade not found, so we have nothing to report.
             LOGGER.error("No grades data found for %d: %s, %s", enterprise_enrollment.pk, course_id, username)
-            return None, None
+            return None, None, None
 
         # Prepare to process the course end date and pass/fail grade
         course_end_date = course_details.get('end')
         if course_end_date is not None:
             course_end_date = parse_datetime(course_end_date)
         now = timezone.now()
-        passed = grades_data.get('passed')
+        is_passing = grades_data.get('passed')
 
         # We can consider a course complete if:
         # * the course's end date has passed
         if course_end_date is not None and course_end_date < now:
             completed_date = course_end_date
-            grade = self.grade_passing if passed else self.grade_failing
+            grade = self.grade_passing if is_passing else self.grade_failing
 
         # * Or, the learner has a passing grade (as of now)
-        elif passed:
+        elif is_passing:
             completed_date = now
             grade = self.grade_passing
 
@@ -204,4 +231,4 @@ class BaseLearnerExporter(object):
             completed_date = None
             grade = self.grade_incomplete
 
-        return completed_date, grade
+        return completed_date, grade, is_passing

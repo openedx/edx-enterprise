@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.31.3] - 2017-04-04
+---------------------
+
+* Modified SAP completion status data to correctly indicate a failing grade to SAP systems.
+
 [0.31.2] - 2017-04-03
 ---------------------
 

@@ -104,7 +104,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[0].course_id == self.course_id
         assert not learner_data[0].course_completed
         assert learner_data[0].completed_timestamp is None
-        assert learner_data[0].grade == 'In Progress'
+        assert learner_data[0].grade == BaseLearnerExporter.GRADE_INCOMPLETE
 
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
@@ -138,7 +138,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[0].course_id == self.course_id
         assert learner_data[0].course_completed
         assert learner_data[0].completed_timestamp == self.NOW_TIMESTAMP
-        assert learner_data[0].grade == 'A-'
+        assert learner_data[0].grade == BaseLearnerExporter.GRADE_PASSING
 
     @mock.patch('integrated_channels.integrated_channel.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
@@ -166,12 +166,18 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[0].grade is None
 
     @ddt.data(
-        (True, None, NOW_TIMESTAMP, 'Pass'),  # passing grade with no course end date
-        (True, YESTERDAY, YESTERDAY_TIMESTAMP, 'Pass'),  # passing grade with course end date in past
-        (True, TOMORROW, NOW_TIMESTAMP, 'Pass'),  # passing grade with course end date in future
-        (False, None, None, 'In Progress'),  # non-passing grade with no course end date
-        (False, YESTERDAY, YESTERDAY_TIMESTAMP, 'Fail'),  # non-passing grade with course end date in past
-        (False, TOMORROW, None, 'In Progress'),  # non-passing grade with course end date in future
+        # passing grade with no course end date
+        (True, None, NOW_TIMESTAMP, BaseLearnerExporter.GRADE_PASSING),
+        # passing grade with course end date in past
+        (True, YESTERDAY, YESTERDAY_TIMESTAMP, BaseLearnerExporter.GRADE_PASSING),
+        # passing grade with course end date in future
+        (True, TOMORROW, NOW_TIMESTAMP, BaseLearnerExporter.GRADE_PASSING),
+        # non-passing grade with no course end date
+        (False, None, None, BaseLearnerExporter.GRADE_INCOMPLETE),
+        # non-passing grade with course end date in past
+        (False, YESTERDAY, YESTERDAY_TIMESTAMP, BaseLearnerExporter.GRADE_FAILING),
+        # non-passing grade with course end date in future
+        (False, TOMORROW, None, BaseLearnerExporter.GRADE_INCOMPLETE),
     )
     @ddt.unpack
     @mock.patch('integrated_channels.integrated_channel.learner_data.GradesApiClient')
@@ -202,13 +208,13 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert len(learner_data) == 1
         assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
         assert learner_data[0].course_id == self.course_id
-        assert learner_data[0].course_completed == (expected_completion is not None)
+        assert learner_data[0].course_completed == (passing and expected_completion is not None)
         assert learner_data[0].completed_timestamp == expected_completion
         assert learner_data[0].grade == expected_grade
 
     @ddt.data(
-        ('self', 'Pass'),
-        ('instructor', 'A-'),
+        ('self', BaseLearnerExporter.GRADE_PASSING),
+        ('instructor', BaseLearnerExporter.GRADE_PASSING),
     )
     @ddt.unpack
     @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
@@ -279,13 +285,13 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert learner_data[0].course_id == self.course_id
         assert not learner_data[0].course_completed
         assert learner_data[0].completed_timestamp is None
-        assert learner_data[0].grade == 'In Progress'
+        assert learner_data[0].grade == BaseLearnerExporter.GRADE_INCOMPLETE
 
         assert learner_data[1].enterprise_course_enrollment_id == enrollment3.id
         assert learner_data[1].course_id == self.course_id
         assert not learner_data[1].course_completed
         assert learner_data[1].completed_timestamp is None
-        assert learner_data[1].grade == 'In Progress'
+        assert learner_data[1].grade == BaseLearnerExporter.GRADE_INCOMPLETE
 
         assert learner_data[2].enterprise_course_enrollment_id == enrollment2.id
         assert learner_data[2].course_id == course_id2

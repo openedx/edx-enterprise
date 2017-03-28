@@ -103,7 +103,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         """
         return 'SAP'
 
-    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None):
+    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
         """
         Returns a LearnerDataTransmissionAudit initialized from the given enrollment and course completion data.
 
@@ -114,7 +114,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         course_completed = False
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch(completed_date)
-            course_completed = True
+            course_completed = is_passing
 
         return LearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=enterprise_enrollment.id,
