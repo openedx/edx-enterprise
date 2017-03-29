@@ -35,7 +35,7 @@ kombu==4.0.2              # via celery
 markupsafe==1.0           # via jinja2
 olefile==0.44             # via pillow
 packaging==16.8           # via setuptools
-pbr==2.0.0                # via stevedore
+pbr==2.1.0                # via stevedore
 pillow==4.1.0
 pockets==0.3.2            # via sphinxcontrib-napoleon
 pygments==2.2.0           # via readme-renderer, sphinx

@@ -14,6 +14,7 @@ from six.moves.urllib.parse import urlunparse  # pylint: disable=import-error,wr
 
 from enterprise.django_compatibility import reverse
 from enterprise.lms_api import parse_lms_api_datetime
+from enterprise.utils import safe_extract_key
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 
 
@@ -144,8 +145,11 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
     """
 
     CHUNK_PAGE_LENGTH = 1000
+    STATUS_ACTIVE = 'ACTIVE'
+    STATUS_INACTIVE = 'INACTIVE'
 
     def __init__(self, user, plugin_configuration):
+        self.removed_courses_resolved = False
         super(SapCourseExporter, self).__init__(user, plugin_configuration)
 
     def get_serialized_data_blocks(self):
@@ -166,26 +170,75 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                 len(this_batch)
             )
 
+    def resolve_removed_courses(self, previous_audit_summary):
+        """
+        Ensures courses that are no longer in the catalog get properly marked as inactive.
+
+        Args:
+            previous_audit_summary (dict): The previous audit summary from the last course export.
+
+        Returns:
+            An audit summary of courses with information about their presence in the catalog and current status.
+        """
+        if self.removed_courses_resolved:
+            return {}
+
+        new_audit_summary = {}
+        new_courses = []
+
+        for course in self.courses:
+            course_key = course['courseID']
+            course_status = course['status']
+
+            # Remove the key from previous audit summary so we can process courses that are no longer present,
+            # and keep course records for all previously pushed courses and new, active courses.
+            if previous_audit_summary.pop(course_key, None) or course_status == self.STATUS_ACTIVE:
+                new_courses.append(course)
+                new_audit_summary[course_key] = {
+                    'in_catalog': True,
+                    'status': course_status,
+                }
+
+        for course_key, summary in previous_audit_summary.items():
+            # Add a course payload to self.courses so that courses no longer in the catalog are marked inactive.
+            if summary['status'] == self.STATUS_ACTIVE and summary['in_catalog']:
+                new_courses.append({
+                    'courseID': course_key,
+                    'status': self.STATUS_INACTIVE,
+                })
+
+                new_audit_summary[course_key] = {
+                    'in_catalog': False,
+                    'status': self.STATUS_INACTIVE,
+                }
+
+        self.courses = new_courses
+        self.removed_courses_resolved = True
+        return new_audit_summary
+
     data_transform = {
         'courseID': lambda x: x['key'],
         'providerID': lambda x: apps.get_model(
             'sap_success_factors',
             'SAPSuccessFactorsGlobalConfiguration'
         ).current().provider_id,
-        'status': lambda x: 'ACTIVE' if x['availability'] == 'Current' else 'INACTIVE',
+        'status': lambda x: (SapCourseExporter.STATUS_ACTIVE
+                             if x['availability'] == BaseCourseExporter.AVAILABILITY_CURRENT
+                             or x['availability'] == BaseCourseExporter.AVAILABILITY_UPCOMING
+                             else SapCourseExporter.STATUS_INACTIVE),
         'title': lambda x: [
             {
-                'locale': transform_language_code(x['content_language']),
-                'value': x['title']
+                'locale': transform_language_code(safe_extract_key(x, 'content_language', None)),
+                'value': safe_extract_key(x, 'title')
             },
         ],
         'description': lambda x: [
             {
-                'locale': transform_language_code(x['content_language']),
-                'value': x['full_description'] or x['short_description'] or '',
+                'locale': transform_language_code(safe_extract_key(x, 'content_language', None)),
+                'value': safe_extract_key(x, 'full_description'),
             },
         ],
-        'thumbnailURI': lambda x: (x['image']['src'] or ''),
+        'thumbnailURI': lambda x: (safe_extract_key(x['image'], 'src') if 'image' in x else ''),
         'content': lambda x: [
             {
                 'providerID': apps.get_model(
@@ -196,15 +249,18 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                 'contentTitle': 'Course Description',
                 'contentID': x['key'],
                 'launchType': 3,
-                'mobileEnabled': x['mobile_available'],
+                'mobileEnabled': safe_extract_key(x, 'mobile_available', 'false'),
             }
         ],
         'price': lambda x: [],
         'schedule': lambda x: [
             {
-                'startDate': parse_datetime_to_epoch(x['start'] or UNIX_MIN_DATE_STRING),
-                'endDate': parse_datetime_to_epoch(x['end'] or UNIX_MAX_DATE_STRING),
-                'active': current_time_is_in_interval(x['start'], x['end']),
+                'startDate': parse_datetime_to_epoch(safe_extract_key(x, 'start', UNIX_MIN_DATE_STRING)),
+                'endDate': parse_datetime_to_epoch(safe_extract_key(x, 'end', UNIX_MAX_DATE_STRING)),
+                'active': current_time_is_in_interval(
+                    safe_extract_key(x, 'start', UNIX_MIN_DATE_STRING),
+                    safe_extract_key(x, 'end', UNIX_MAX_DATE_STRING)
+                ),
             }
         ],
         'revisionNumber': lambda x: 1,

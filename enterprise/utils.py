@@ -497,3 +497,18 @@ def update_query_parameters(url, query_parameters):
     return urlunsplit(
         (scheme, netloc, path, urlencode(url_params, doseq=True), fragment),
     )
+
+
+def safe_extract_key(data, key, default=''):
+    """
+    Safely extract the key, if it does not exist or is None, return the default.
+
+    Arguments:
+        data (dict): The dictionary from which to extract the key's value.
+        key (str): The key for which we need to extract the value from data.
+        default: The value to return if the key is not present in data.
+    """
+    if key in data and data[key] is not None:
+        return data[key]
+    else:
+        return default

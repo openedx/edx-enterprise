@@ -237,6 +237,7 @@ class CatalogTransmissionAudit(TimeStampedModel):
     total_courses = models.PositiveIntegerField(blank=False, null=False)
     status = models.CharField(max_length=100, blank=False, null=False)
     error_message = models.TextField(blank=True)
+    audit_summary = models.TextField(default='{}')
 
     class Meta:
         app_label = 'sap_success_factors'
