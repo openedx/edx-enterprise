@@ -253,8 +253,8 @@ class EnterpriseCustomerManageLearnersView(View):
         # Report what happened:
         count = len(emails)
         messages.success(request, ungettext(
-            "{count} new user was linked to {enterprise_customer_name}.",
-            "{count} new users were linked to {enterprise_customer_name}.",
+            "{count} new learner was added to {enterprise_customer_name}.",
+            "{count} new learners were added to {enterprise_customer_name}.",
             count
         ).format(count=count, enterprise_customer_name=enterprise_customer.name))
         this_customer_linked_emails = [
@@ -266,7 +266,10 @@ class EnterpriseCustomerManageLearnersView(View):
         if this_customer_linked_emails:
             messages.warning(
                 request,
-                _("Some users were already linked to this Enterprise Customer: {list_of_emails}").format(
+                _(
+                    "The following learners were already associated with this Enterprise "
+                    "Customer: {list_of_emails}"
+                ).format(
                     list_of_emails=", ".join(this_customer_linked_emails)
                 )
             )
@@ -274,8 +277,9 @@ class EnterpriseCustomerManageLearnersView(View):
             messages.warning(
                 request,
                 _(
-                    "The following learners are already associated with another Enterprise Customer. "
-                    "These learners were not added to {enterprise_customer_name}: {list_of_emails}"
+                    "The following learners are already associated with "
+                    "another Enterprise Customer. These learners were not "
+                    "added to {enterprise_customer_name}: {list_of_emails}"
                 ).format(
                     enterprise_customer_name=enterprise_customer.name,
                     list_of_emails=", ".join(other_customer_linked_emails),
@@ -284,7 +288,10 @@ class EnterpriseCustomerManageLearnersView(View):
         if duplicate_emails:
             messages.warning(
                 request,
-                _("Some duplicate emails in the CSV were ignored: {list_of_emails}").format(
+                _(
+                    "The following duplicate email addresses were not added: "
+                    "{list_of_emails}"
+                ).format(
                     list_of_emails=", ".join(duplicate_emails)
                 )
             )
@@ -562,8 +569,8 @@ class EnterpriseCustomerManageLearnersView(View):
         return (
             'success',
             ungettext(
-                '{enrolled_count} user was enrolled to {enrolled_in}.',
-                '{enrolled_count} users were enrolled to {enrolled_in}.',
+                '{enrolled_count} learner was enrolled in {enrolled_in}.',
+                '{enrolled_count} learners were enrolled in {enrolled_in}.',
                 enrolled_count,
             ).format(
                 enrolled_count=enrolled_count,
@@ -586,7 +593,9 @@ class EnterpriseCustomerManageLearnersView(View):
         failed_emails = [user.email for user in users]
         return (
             'error',
-            _('Enrollment of some users in {enrolled_in} failed: {user_list}').format(
+            _(
+                'The following learners could not be enrolled in {enrolled_in}: {user_list}'
+            ).format(
                 enrolled_in=enrolled_in,
                 user_list=', '.join(failed_emails),
             )
@@ -608,9 +617,10 @@ class EnterpriseCustomerManageLearnersView(View):
         return (
             'warning',
             _(
-                'The following users do not have an account on {platform_name}. They have not been '
-                'enrolled in {enrolled_in}. When these users create an account, they will be '
-                'enrolled automatically: {pending_email_list}'
+                "The following learners do not have an account on "
+                "{platform_name}. They have not been enrolled in "
+                "{enrolled_in}. When these learners create an account, they will "
+                "be enrolled automatically: {pending_email_list}"
             ).format(
                 platform_name=settings.PLATFORM_NAME,
                 enrolled_in=enrolled_in,
@@ -792,9 +802,9 @@ class EnterpriseCustomerManageLearnersView(View):
                 enterprise_customer=enterprise_customer, user_email=email_to_unlink
             )
         except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
-            message = _("Email {email} is not linked to Enterprise Customer {ec_name}").format(
-                email=email_to_unlink, ec_name=enterprise_customer.name
-            )
+            message = _("Email {email} is not associated with Enterprise "
+                        "Customer {ec_name}").format(
+                            email=email_to_unlink, ec_name=enterprise_customer.name)
             return HttpResponse(message, content_type="application/json", status=404)
 
         return HttpResponse(

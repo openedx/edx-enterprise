@@ -101,9 +101,10 @@ class EnterpriseCustomer(TimeStampedModel):
     enable_data_sharing_consent = models.BooleanField(
         default=False,
         help_text=_(
-            "This field is used to determine whether data sharing consent is enabled or "
-            "disabled for users signing in using this enterprise customer. If disabled, consent "
-            "will not be requested, and eligible data will not be shared."
+            "Specifies whether data sharing consent is enabled or disabled "
+            "for learners signing in through this enterprise customer. If "
+            "disabled, consent will not be requested, and eligible data will "
+            "not be shared."
         )
     )
 
@@ -113,8 +114,8 @@ class EnterpriseCustomer(TimeStampedModel):
         choices=DATA_SHARING_CONSENT_CHOICES,
         default=DATA_CONSENT_OPTIONAL,
         help_text=_(
-            "This field determines if data sharing consent is optional, if it's required at login, "
-            "or if it's required when registering for eligible courses."
+            "Specifies whether data sharing consent is optional, is required "
+            "at login, or is required at enrollment."
         )
     )
 
@@ -246,8 +247,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
     class Meta(object):
         app_label = 'enterprise'
-        verbose_name = _("Enterprise Customer User")
-        verbose_name_plural = _("Enterprise Customer Users")
+        verbose_name = _("Enterprise Customer Learner")
+        verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
 
     @property
@@ -476,7 +477,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
     )
     logo = models.ImageField(
         upload_to=logo_path,
-        help_text=_(u"Please add only .PNG files for logo images."),
+        help_text=_(u"Logo images must be in .png format."),
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
     )
@@ -602,8 +603,8 @@ class UserDataSharingConsentAudit(TimeStampedModel):
         choices=STATE_CHOICES,
         default=NOT_SET,
         help_text=_(
-            "Stores whether the user linked to this model has consented to have "
-            "their information shared with the linked EnterpriseCustomer."
+            "Stores whether the learner linked to this model has consented to "
+            "have their information shared with the linked EnterpriseCustomer."
         )
     )
 
@@ -705,7 +706,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         max_length=255,
         blank=False,
         help_text=_(
-            "The course ID in which the learner was enrolled."
+            "The ID of the course in which the learner was enrolled."
         )
     )
     history = HistoricalRecords()
@@ -777,12 +778,12 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
 
     BODY_HELP_TEXT = mark_safe_lazy(_(
         'Fill in a standard Django template that, when rendered, produces the email you want '
-        'sent to newly-enrolled Enterprise Customer users. The following variables may be available:\n'
+        'sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n'
         '<ul><li>user_name: A human-readable name for the person being emailed. Be sure to '
         'handle the case where this is not defined, as it may be missing in some cases. '
-        'It may also be a username, if the user hasn\'t configured their "real" name in the system.</li>'
+        'It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>'
         '    <li>organization_name: The name of the organization sponsoring the enrollment.</li>'
-        '    <li>enrolled_in: Details of the course or program that was enrolled in. Possible items it contains:'
+        '    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:'
         '    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>'
         '        <li>url: A link to the homepage of the enrolled-in item.</li>'
         '        <li>branding: A custom branding name for the enrolled-in item. For example, '
@@ -794,7 +795,7 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     ))
 
     SUBJECT_HELP_TEXT = _(
-        'Fill in a string that can be used to generate a dynamic subject line for notification emails. The '
+        'Enter a string that can be used to generate a dynamic subject line for notification emails. The '
         'placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.'
     )
 

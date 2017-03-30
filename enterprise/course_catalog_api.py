@@ -41,15 +41,18 @@ class CourseCatalogApiClient(object):
         """
         if CatalogIntegration is None:
             raise NotConnectedToOpenEdX(
-                _('To get a CatalogIntegration object, this package must be installed in an OpenEdX environment.')
+                _("To get a CatalogIntegration object, this package must be "
+                  "installed in an Open edX environment.")
             )
         if get_edx_api_data is None:
             raise NotConnectedToOpenEdX(
-                _('To parse a catalog API response, this package must be installed in an OpenEdX environment.')
+                _("To parse a Catalog API response, this package must be "
+                  "installed in an Open edX environment.")
             )
         if course_discovery_api_client is None:
             raise NotConnectedToOpenEdX(
-                _('To get a catalog API client, this package must be installed in an OpenEdX environment.')
+                _("To get a Catalog API client, this package must be "
+                  "installed in an Open edX environment.")
             )
 
         self.user = user
