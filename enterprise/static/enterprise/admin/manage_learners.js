@@ -82,7 +82,7 @@ function loadPage() {
         var message = interpolate(gettext("Are you sure you want to unlink %(email)s?"), {"email": email}, true);
         if (confirm(message)) {
             $.ajax({
-                url: "?unlink_email=" + email,
+                url: "?unlink_email=" + encodeURIComponent(email),
                 method: "delete",
                 beforeSend: function (xhr) {
                     xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));

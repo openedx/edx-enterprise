@@ -2,6 +2,12 @@ var enrollmentApiRoot = 'http://localhost/';
 var gettext = function (arg) {
     return arg;
 };
+var interpolate = function (arg) {
+    return arg;
+}
+$.cookie = function (arg) {
+    return null;
+}
 
 describe("Manage Learners form", function () {
 
@@ -134,6 +140,13 @@ describe("Manage Learners form", function () {
         expect(request.url).toBe('http://localhost/course/course1');
         expect(request.method).toBe('GET');
     });
+
+    it("correctly escapes emails of users for removal", function () {
+        spyOn(window, 'confirm').and.returnValue(true);
+        $("#learner-unlink-button").click();
+        var request = jasmine.Ajax.requests.mostRecent();
+        expect(request.url).toBe('?unlink_email=escaped%2Bemail%40google.com');
+    })
 
     describe("program ID and course ID inputs interaction", function() {
         function testInputs($sourceInput, $otherInput, eventType) {
