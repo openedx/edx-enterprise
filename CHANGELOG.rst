@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.31.1] - 2017-03-31
+---------------------
+
+* Bugfix: Allow unlinking of enterprise learners with plus sign or certain other characters in email address.
+
 [0.31.0] - 2017-03-30
 ---------------------
 
