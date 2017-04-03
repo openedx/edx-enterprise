@@ -151,6 +151,30 @@ class TestTpaPipeline(unittest.TestCase):
                 user_id=self.user.id
             ).count() == 1
 
+    def test_handle_enterprise_logistration_consent_not_required_for_existing_enterprise_user(self):
+        """
+        Test that when consent isn't required and learner is already linked,
+        we simply return the exi    sting EnterpriseCustomerUser.
+        """
+        backend = mock.MagicMock(name=None)
+        with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
+            enterprise_customer = EnterpriseCustomerFactory(
+                enable_data_sharing_consent=False
+            )
+            fake_get_ec.return_value = enterprise_customer
+
+            # manually link the user with the enterprise
+            EnterpriseCustomerUser.objects.create(
+                enterprise_customer=enterprise_customer,
+                user_id=self.user.id
+            )
+
+            assert handle_enterprise_logistration(backend, self.user) is None
+            assert EnterpriseCustomerUser.objects.filter(
+                enterprise_customer=enterprise_customer,
+                user_id=self.user.id
+            ).count() == 1
+
     def test_handle_enterprise_logistration_consent_required(self):
         """
         Test that when consent is required, we redirect to the consent page.
