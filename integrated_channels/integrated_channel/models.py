@@ -74,7 +74,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         raise NotImplementedError('Implemented in concrete subclass.')
 
-    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None):
+    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
         """
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """

@@ -6,17 +6,17 @@
 #
 argparse==1.4.0           # via jasmine
 chardet==2.3              # via jasmine
-CherryPy==3.8.2           # via jasmine
+cherrypy==3.8.2           # via jasmine
 click==6.7                # via flask
-Flask==0.12               # via jasmine
+flask==0.12.1             # via jasmine
 glob2==0.5                # via jasmine-core
 itsdangerous==0.24        # via flask
 jasmine-core==2.5.2       # via jasmine
 jasmine==2.5.0
-Jinja2==2.9.5             # via flask, jasmine
-MarkupSafe==1.0           # via jinja2
+jinja2==2.9.6             # via flask, jasmine
+markupsafe==1.0           # via jinja2
 ordereddict==1.1          # via jasmine-core
-PyYAML==3.10              # via jasmine
+pyyaml==3.10              # via jasmine
 selenium==2.53.6          # via jasmine
 six==1.10.0               # via jasmine
-Werkzeug==0.11.1          # via flask, jasmine
+werkzeug==0.11.1          # via flask, jasmine

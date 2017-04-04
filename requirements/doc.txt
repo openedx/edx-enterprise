@@ -13,16 +13,16 @@ bleach==2.0.0             # via readme-renderer
 celery==4.0.2
 chardet==2.3.0            # via doc8
 django-config-models==0.1.5
-django-extensions==1.7.7
+django-extensions==1.7.8
 django-filter==0.15.3
 django-model-utils==2.6.1
 django-object-actions==0.9.0
 django-simple-history==1.8.2
-Django==1.9.12            # via django-config-models, django-model-utils, edx-drf-extensions
+django==1.9.13            # via django-config-models, django-model-utils, edx-drf-extensions
 djangorestframework-jwt==1.10.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.2.5
-doc8==0.7.0
+doc8==0.8.0
 docutils==0.13.1          # via doc8, readme-renderer, restructuredtext-lint, sphinx
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.2
@@ -30,19 +30,19 @@ edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.0.2
 html5lib==0.999999999     # via bleach
 imagesize==0.7.1          # via sphinx
-Jinja2==2.9.5             # via sphinx
+jinja2==2.9.6             # via sphinx
 kombu==4.0.2              # via celery
-MarkupSafe==1.0           # via jinja2
+markupsafe==1.0           # via jinja2
 olefile==0.44             # via pillow
 packaging==16.8           # via setuptools
 pbr==2.0.0                # via stevedore
-Pillow==4.0.0
+pillow==4.1.0
 pockets==0.3.2            # via sphinxcontrib-napoleon
-Pygments==2.2.0           # via readme-renderer, sphinx
-PyJWT==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
+pygments==2.2.0           # via readme-renderer, sphinx
+pyjwt==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
 pyparsing==2.2.0          # via packaging
 python-dateutil==2.6.0    # via edx-drf-extensions
-pytz==2016.10             # via babel, celery
+pytz==2017.2              # via babel, celery
 readme-renderer==17.2
 requests==2.13.0
 restructuredtext-lint==1.0.1  # via doc8
@@ -50,7 +50,7 @@ shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.10.0               # via bleach, django-extensions, doc8, edx-sphinx-theme, html5lib, packaging, pockets, python-dateutil, readme-renderer, setuptools, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-Sphinx==1.5.3             # via edx-sphinx-theme
+sphinx==1.5.5             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 stevedore==1.21.0         # via doc8
 unicodecsv==0.14.1

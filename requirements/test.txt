@@ -12,11 +12,12 @@ cookies==2.2.1            # via responses
 coverage==4.3.4           # via pytest-cov
 ddt==1.1.1
 django-config-models==0.1.5
-django-extensions==1.7.7
+django-extensions==1.7.8
 django-filter==0.15.3
 django-model-utils==2.6.1
 django-object-actions==0.9.0
 django-simple-history==1.8.2
+django==1.9.13            # via django-config-models, django-model-utils, edx-drf-extensions
 djangorestframework-jwt==1.10.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.2.5
@@ -24,7 +25,7 @@ edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.2
 edx-rest-api-client==1.7.1
 factory-boy==2.8.1
-Faker==0.7.10             # via factory-boy
+faker==0.7.10             # via factory-boy
 freezegun==0.3.8
 funcsigs==1.0.2           # via mock
 ipaddress==1.0.18         # via faker
@@ -33,16 +34,16 @@ mock==2.0.0
 olefile==0.44             # via pillow
 packaging==16.8           # via setuptools
 pbr==2.0.0                # via mock
-Pillow==4.0.0
+pillow==4.1.0
 py==1.4.33                # via pytest, pytest-catchlog
-PyJWT==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
+pyjwt==1.4.2              # via djangorestframework-jwt, edx-rest-api-client
 pyparsing==2.2.0          # via packaging
 pytest-catchlog==1.2.2
 pytest-cov==2.4.0
 pytest-django==3.1.2
 pytest==3.0.7             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.0    # via edx-drf-extensions, faker, freezegun
-pytz==2016.10             # via celery
+pytz==2017.2              # via celery
 requests==2.13.0
 responses==0.5.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider

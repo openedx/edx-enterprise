@@ -12,6 +12,7 @@ import mock
 import responses
 from faker import Factory as FakerFactory
 from freezegun import freeze_time
+from integrated_channels.integrated_channel.learner_data import BaseLearnerExporter
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from pytest import mark, raises
 from requests.compat import urljoin
@@ -216,19 +217,34 @@ FUTURE = NOW + DAY_DELTA
 
 COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
 
-# Mock certificate data
-MOCK_CERTIFICATE = dict(
+# Mock passing certificate data
+MOCK_PASSING_CERTIFICATE = dict(
     grade='A-',
     created_date=NOW.strftime(lms_api.LMS_API_DATETIME_FORMAT),
     status='downloadable',
     is_passing=True,
 )
 
-# Expected leaner completion data from the mock certificate
-COMPLETE_CERTIFICATE = dict(
+# Mock failing certificate data
+MOCK_FAILING_CERTIFICATE = dict(
+    grade='D',
+    created_date=NOW.strftime(lms_api.LMS_API_DATETIME_FORMAT),
+    status='downloadable',
+    is_passing=False,
+)
+
+# Expected learner completion data from the mock passing certificate
+CERTIFICATE_PASSING_COMPLETION = dict(
     completed='true',
     timestamp=NOW_TIMESTAMP,
-    grade='A-',
+    grade=BaseLearnerExporter.GRADE_PASSING,
+)
+
+# Expected learner completion data from the mock failing certificate
+CERTIFICATE_FAILING_COMPLETION = dict(
+    completed='false',
+    timestamp=NOW_TIMESTAMP,
+    grade=BaseLearnerExporter.GRADE_FAILING,
 )
 
 
@@ -421,13 +437,20 @@ def get_expected_output(**expected_completion):
 @mark.django_db
 @mark.parametrize('command_kwargs,certificate,self_paced,end_date,passed,expected_completion', [
     # Certificate marks course completion
-    (dict(), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    (dict(), MOCK_PASSING_CERTIFICATE, False, None, False, CERTIFICATE_PASSING_COMPLETION),
+    (dict(), MOCK_FAILING_CERTIFICATE, False, None, False, CERTIFICATE_FAILING_COMPLETION),
     # channel code is case-insensitive
-    (dict(channel='sap'), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
-    (dict(channel='SAP'), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    (dict(channel='sap'), MOCK_PASSING_CERTIFICATE, False, None, False, CERTIFICATE_PASSING_COMPLETION),
+    (dict(channel='SAP'), MOCK_PASSING_CERTIFICATE, False, None, False, CERTIFICATE_PASSING_COMPLETION),
+    (dict(channel='sap'), MOCK_FAILING_CERTIFICATE, False, None, False, CERTIFICATE_FAILING_COMPLETION),
+    (dict(channel='SAP'), MOCK_FAILING_CERTIFICATE, False, None, False, CERTIFICATE_FAILING_COMPLETION),
     # enterprise_customer UUID gets filled in below
-    (dict(enterprise_customer=None), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
-    (dict(enterprise_customer=None, channel='sap'), MOCK_CERTIFICATE, False, None, False, COMPLETE_CERTIFICATE),
+    (dict(enterprise_customer=None), MOCK_PASSING_CERTIFICATE, False, None, False, CERTIFICATE_PASSING_COMPLETION),
+    (dict(enterprise_customer=None, channel='sap'), MOCK_PASSING_CERTIFICATE, False, None, False,
+     CERTIFICATE_PASSING_COMPLETION),
+    (dict(enterprise_customer=None), MOCK_FAILING_CERTIFICATE, False, None, False, CERTIFICATE_FAILING_COMPLETION),
+    (dict(enterprise_customer=None, channel='sap'), MOCK_FAILING_CERTIFICATE, False, None, False,
+     CERTIFICATE_FAILING_COMPLETION),
 
     # Instructor-paced course with no certificates issued yet results in incomplete course data
     (dict(), None, False, None, False, dict(completed='false', timestamp='null', grade='In Progress')),
@@ -441,7 +464,7 @@ def get_expected_output(**expected_completion):
     (dict(), None, True, FUTURE, True, dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
 
     # Self-paced course with past end date sends grade=Pass, or grade=Fail, depending on current grade.
-    (dict(), None, True, PAST, False, dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Fail')),
+    (dict(), None, True, PAST, False, dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail')),
     (dict(), None, True, PAST, True, dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass')),
 ])
 def test_transmit_learner_data(caplog, command_kwargs, certificate, self_paced, end_date, passed, expected_completion):
