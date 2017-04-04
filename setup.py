@@ -36,7 +36,7 @@ CHANGELOG = open(os.path.join(os.path.dirname(__file__), "CHANGELOG.rst")).read(
 setup(
     name="edx-enterprise",
     version=VERSION,
-    description="""Your project description goes here""",
+    description="""Provide enterprise features to the Open edX platform.""",
     long_description=README + "\n\n" + CHANGELOG,
     author="edX",
     author_email="oscm@edx.org",
