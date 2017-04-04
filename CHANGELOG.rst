@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.31.2] - 2017-04-03
+---------------------
+
+* Bugfix: Resolve IntegrityError getting raised while linking existing enterprise users when data sharing consent is
+  disabled for the related enterprise.
+
 [0.31.1] - 2017-03-31
 ---------------------
 
