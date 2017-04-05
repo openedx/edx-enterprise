@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.31.4] - 2017-04-05
+---------------------
+
+* Added missing migration file for recent string updates
+
+
 [0.31.3] - 2017-04-04
 ---------------------
 
