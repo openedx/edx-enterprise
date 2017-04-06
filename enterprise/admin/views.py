@@ -506,7 +506,16 @@ class EnterpriseCustomerManageLearnersView(View):
                 args=(course_id,),
             )
         course_name = course_details.get('title')
-        course_start = parse_lms_api_datetime(course_details.get('start'))
+
+        try:
+            course_start = parse_lms_api_datetime(course_details.get('start'))
+        except (TypeError, ValueError):
+            course_start = None
+            logging.exception(
+                "None or empty value passed as course start date.\nCourse Details:\n{course_details}".format(
+                    course_details=course_details,
+                )
+            )
 
         with mail.get_connection() as email_conn:
             for user in users:

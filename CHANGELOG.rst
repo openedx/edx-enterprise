@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.32.1] - 2017-04-06
+---------------------
+
+* Bug Fix: Added Handling for user enrollment to courses that do not have a start date.
+
+
 [0.32.0] - 2017-04-06
 ---------------------
 
