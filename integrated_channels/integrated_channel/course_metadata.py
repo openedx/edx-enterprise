@@ -105,6 +105,8 @@ class BaseCourseExporter(object):
             self.enterprise_customer,
             json.dumps(course_run_details, indent=4),
         )
+        # Add the enterprise customer to the course run details so it can be used in the data transform
+        course_run_details['enterprise_customer'] = self.enterprise_customer
         output = {}
         for key, transform in self.data_transform.items():
             output[key] = transform(course_run_details) if transform is not None else course_run_details.get(key)

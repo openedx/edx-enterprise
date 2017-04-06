@@ -79,9 +79,10 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 
 
 @mark.django_db
+@mock.patch('integrated_channels.sap_success_factors.utils.reverse')
 @mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
 @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
-def test_transmit_courseware_task_success(fake_client, fake_catalog_client, caplog):
+def test_transmit_courseware_task_success(fake_client, fake_catalog_client, track_selection_reverse_mock, caplog):
     """
     Test the data transmission task.
     """
@@ -93,12 +94,15 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, capl
         get_catalog_courses=get_catalog_courses,
     )
 
+    track_selection_reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
+
     caplog.set_level(logging.INFO)
 
     UserFactory(username='C-3PO')
     enterprise_customer = EnterpriseCustomerFactory(
         catalog=1,
         name='Veridian Dynamics',
+        site__domain='example.com'
     )
     SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
         enterprise_customer=enterprise_customer,
@@ -114,8 +118,8 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, capl
     assert len(caplog.records) == 7
     expected_dump = (
         '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
-        '"contentTitle": "Course Description", "launchType": 3, "launchURL": "http://l'
-        'ocalhost:8000/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner",'
+        '"contentTitle": "Course Description", "launchType": 3, "launchURL": "https://'
+        'example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/",'
         ' "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
         'moX+Demo_Course", "description": [{"locale": "English", "value": ""}], "price'
         '": [], "providerID": "EDX", "revisionNumber": 1, "schedule": [{"active": true'
@@ -124,8 +128,8 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, capl
         'type@asset+block@images_course_image.jpg", "title": [{"locale": "English", "v'
         'alue": "edX Demonstration Course"}]}, {"content": [{"contentID": "course-v1:f'
         'oobar+fb1+fbv1", "contentTitle": "Course Description", "launchType": 3, "laun'
-        'chURL": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=a'
-        'ffiliate_partner", "mobileEnabled": false, "providerID": "EDX"}], "courseID":'
+        'chURL": "https://example.com/course_modes/choose/course-v1:edX+DemoX+'
+        'Demo_Course/", "mobileEnabled": false, "providerID": "EDX"}], "courseID":'
         ' "course-v1:foobar+fb1+fbv1", "description": [{"locale": "English", "value": '
         '"This is a really cool course. Like, we promise."}], "price": [], "providerID'
         '": "EDX", "revisionNumber": 1, "schedule": [{"active": true, "endDate": 21474'

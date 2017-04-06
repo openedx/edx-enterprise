@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.32.0] - 2017-04-06
+---------------------
+
+* Refine SAP course export parameters
+
+
 [0.31.4] - 2017-04-05
 ---------------------
 
