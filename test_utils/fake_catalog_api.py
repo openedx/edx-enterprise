@@ -347,7 +347,7 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
                         "sku": ""
                     }
                 ],
-                "content_language": None,
+                "content_language": 'en-us',
                 "transcript_languages": [],
                 "instructors": [],
                 "staff": [],

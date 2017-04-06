@@ -658,9 +658,16 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         )
         self.assertEqual(method(customer_branding_config), expected_str)
 
-    def test_logo_path(self):
+    @ddt.data(
+        (True, True),
+        (False, False),
+    )
+    @ddt.unpack
+    def test_logo_path(self, file_exists, delete_called):
         """
-        Test path of image file should be enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
+        Test that the path of image file should beenterprise/branding/<model.id>/<model_id>_logo.<ext>.lower().
+
+        Additionally, test that the correct backend actions are taken in regards to deleting existing data.
         """
         file_mock = self._make_file_mock()
         branding_config = EnterpriseCustomerBrandingConfiguration(
@@ -670,9 +677,13 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         )
 
         storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
+        storage_mock.exists.return_value = file_exists
         with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
             path = logo_path(branding_config, branding_config.logo.name)
             self.assertEqual(path, "enterprise/branding/1/1_logo.png")
+            assert storage_mock.delete.call_count == (1 if delete_called else 0)
+            if delete_called:
+                storage_mock.delete.assert_called_once_with('enterprise/branding/1/1_logo.png')
 
     def test_branding_configuration_saving_successfully(self):
         """
