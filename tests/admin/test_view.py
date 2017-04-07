@@ -542,6 +542,47 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert enrollment.course_id == course_id
         assert len(mail.outbox) == 0
 
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enroll_with_missing_course_start_date(self, forms_client, views_client, course_catalog_client):
+        """
+        Test that learner is added successfully if course does not have a start date.
+
+        If admin tries to add a learner to a course that does not have a start date then
+        learner should be enrolled successfully without any errors and learner should receive an email
+        about the enrollment.
+        """
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {
+            "title": "Cool Science",
+            "start": None,
+            "marketing_url": "http://localhost:8000/courses/course-v1:HarvardX+CoolScience+2016"
+        }
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        user = UserFactory()
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        views_instance.enroll_user_in_course.assert_called_once()
+        views_instance.enroll_user_in_course.assert_called_with(
+            user.username,
+            course_id,
+            mode,
+        )
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
+        ]))
+        all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
+        assert len(all_enterprise_enrollments) == 1
+        enrollment = all_enterprise_enrollments[0]
+        assert enrollment.enterprise_customer_user.user == user
+        assert enrollment.course_id == course_id
+        assert len(mail.outbox) == 1
+
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")

@@ -55,7 +55,7 @@ sphinxcontrib-napoleon==0.6.1
 stevedore==1.21.0         # via doc8
 unicodecsv==0.14.1
 vine==1.1.3               # via amqp
-webencodings==0.5         # via html5lib
+webencodings==0.5.1       # via html5lib
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools                # via html5lib
