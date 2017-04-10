@@ -6,9 +6,11 @@ from __future__ import absolute_import, unicode_literals
 from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import get_language_from_request
 from django.views.generic import View
@@ -158,6 +160,7 @@ class GrantDataSharingPermissions(View):
             'policy_return_link_text': self.policy_return_link_text,
         }
 
+    @method_decorator(login_required)
     def get_course_specific_consent(self, request, course_id):
         """
         Render a form with course-specific information about data sharing consent.
@@ -315,13 +318,11 @@ class GrantDataSharingPermissions(View):
             return self.get_course_specific_consent(request, course)
         return self.get_account_consent(request)
 
+    @method_decorator(login_required)
     def post_course_specific_consent(self, request, course_id, consent_provided):
         """
         Interpret the course-specific form above and save it to en EnterpriseCourseEnrollment object.
         """
-        if not request.user.is_authenticated():
-            raise Http404
-
         try:
             client = CourseApiClient()
             client.get_course_details(course_id)
