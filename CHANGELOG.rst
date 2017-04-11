@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.0] - 2017-04-11
+---------------------
+
+* Improve accounting for inactive courses for SAP course export.
+
+
 [0.32.1] - 2017-04-06
 ---------------------
 

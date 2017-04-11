@@ -13,6 +13,8 @@ import mock
 import six
 from faker import Factory as FakerFactory
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
+from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
+from integrated_channels.sap_success_factors.utils import SapCourseExporter
 from pytest import mark, raises
 
 from django.core import mail
@@ -24,8 +26,7 @@ from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, E
 from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
 from test_utils.factories import (EnterpriseCustomerBrandingFactory, EnterpriseCustomerFactory,
                                   EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory,
-                                  UserFactory)
+                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
 
 
 def mock_get_available_idps(idps):
@@ -48,15 +49,15 @@ def mock_get_available_idps(idps):
 @mark.django_db
 @ddt.ddt
 @mark.django_db
-class TestUtils(unittest.TestCase):
+class TestEnterpriseUtils(unittest.TestCase):
     """
-    Tests for utility functions.
+    Tests for enterprise utility functions.
     """
     def setUp(self):
         """
         Set up test environment.
         """
-        super(TestUtils, self).setUp()
+        super(TestEnterpriseUtils, self).setUp()
         faker = FakerFactory.create()
         self.provider_id = faker.slug()
         self.uuid = faker.uuid4()
@@ -968,3 +969,149 @@ class TestUtils(unittest.TestCase):
         exporter = BaseCourseExporter(mock_user, mock_plugin_configuration)
         with raises(NotImplementedError):
             exporter.get_serialized_data()
+
+
+@mark.django_db
+@ddt.ddt
+class TestSAPSuccessFactorsUtils(unittest.TestCase):
+    """
+    Tests for sap success factors utility functions.
+    """
+    def setUp(self):
+        """
+        Set up test environment.
+        """
+        super(TestSAPSuccessFactorsUtils, self).setUp()
+        faker = FakerFactory.create()
+        self.user = UserFactory()
+        self.uuid = faker.uuid4()
+        self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
+        self.plugin_configuration = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+            enterprise_customer=self.customer,
+            sapsf_base_url='enterprise.successfactors.com',
+            key='key',
+            secret='secret',
+        )
+
+    @mock.patch('integrated_channels.integrated_channel.course_metadata.get_course_runs')
+    @mock.patch('integrated_channels.sap_success_factors.utils.get_course_track_selection_url')
+    @ddt.data(
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+                {'key': 'course2', 'availability': 'Archived'},
+            ],
+            {},
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            1,
+        ),
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+                {'key': 'course2', 'availability': 'Archived'},
+            ],
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
+            },
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
+            },
+            2,
+        ),
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+                {'key': 'course2', 'availability': 'Archived'},
+            ],
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
+            },
+            2,
+        ),
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+            ],
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
+            },
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            1,
+        ),
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+            ],
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': False, 'status': 'INACTIVE'},
+            },
+            2,
+        ),
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+                {'key': 'course2', 'availability': 'Current'},
+            ],
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
+            },
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            2,
+        ),
+        (
+            [
+                {'key': 'course1', 'availability': 'Current'},
+                {'key': 'course2', 'availability': 'Current'},
+            ],
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            {
+                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
+                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
+            },
+            2,
+        ),
+    )
+    @ddt.unpack
+    def test_resolve_removed_courses(
+            self,
+            course_runs,
+            previous_audit_summary,
+            expected_audit_summary,
+            num_expected_courses,
+            get_course_url_mock,
+            get_course_runs_mock
+    ):
+        get_course_url_mock.return_value = ''
+        get_course_runs_mock.return_value = course_runs
+        course_exporter = SapCourseExporter(self.user, self.plugin_configuration)
+
+        audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
+        assert audit_summary == expected_audit_summary
+        assert course_exporter.removed_courses_resolved
+        assert len(course_exporter.courses) == num_expected_courses
+
+        second_audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
+        assert second_audit_summary == {}

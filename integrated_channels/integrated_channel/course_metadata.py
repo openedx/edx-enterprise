@@ -67,6 +67,10 @@ class BaseCourseExporter(object):
     Base class for course metadata exporters to implement a "send" method on.
     """
 
+    AVAILABILITY_CURRENT = 'Current'
+    AVAILABILITY_UPCOMING = 'Upcoming'
+    AVAILABILITY_ARCHIVED = 'Archived'
+
     data_transform = {}
 
     def __init__(self, user, plugin_configuration):
