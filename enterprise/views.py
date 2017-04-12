@@ -71,7 +71,7 @@ class GrantDataSharingPermissions(View):
     requested_permissions_header = _('{enterprise_customer_name} would like to know about:')
     agreement_text = _(
         'I agree to allow {platform_name} to share data about my enrollment, completion, and performance '
-        'in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}'
+        'in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}.'
     )
     continue_text = _('Yes, continue')
     abort_text = _('No, take me back.')
@@ -84,7 +84,7 @@ class GrantDataSharingPermissions(View):
         _('My email address for my {platform_name} account'),
         _('My {platform_name} ID'),
         _('My {platform_name} username'),
-        _('What courses and/or programs I\'ve enrolled in'),
+        _('What courses and/or programs I\'ve enrolled in or unenrolled from'),
         _(
             'Whether I completed specific parts of each course or program (for example, whether '
             'I watched a given video or completed a given homework assignment)'
@@ -96,7 +96,10 @@ class GrantDataSharingPermissions(View):
     ]
     sharable_items_footer = _(
         'My permission applies only to data from courses or programs that are sponsored by {enterprise_customer_name}'
-        ', and not to data from any {platform_name} courses or programs that I take on my own.'
+        ', and not to data from any {platform_name} courses or programs that I take on my own. I understand that '
+        'once I grant my permission to allow data to be shared with {enterprise_customer_name}, '
+        'I may not withdraw my permission but I may elect to unenroll from any courses or programs that are '
+        'sponsored by {enterprise_customer_name}.'
     )
     confirmation_modal_header = _('Are you aware...')
     modal_affirm_decline_msg = _('I decline')
@@ -202,18 +205,30 @@ class GrantDataSharingPermissions(View):
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
         course_name = course_details['name']
         context_data = self.get_default_context(customer, platform_name)
+        # Translators: bold_start and bold_end are HTML tags for specifying
+        # enterprise name in bold text.
         course_specific_context = {
             'consent_request_prompt': _(
                 'To access this course and use your discount, you must first consent to share your '
-                'learning achievements with {enterprise_customer_name}.'
+                'learning achievements with {bold_start}{enterprise_customer_name}{bold_end}.'
             ).format(
-                enterprise_customer_name=customer.name
+                enterprise_customer_name=customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
             ),
             'confirmation_alert_prompt': _(
-                'In order to start this course and use your discount, you must consent to share your '
-                'course data with {enterprise_customer_name}.'
+                'In order to start this course and use your discount, {bold_start}you must{bold_end} consent '
+                'to share your course data with {enterprise_customer_name}.'
             ).format(
-                enterprise_customer_name=customer.name
+                enterprise_customer_name=customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+            ),
+            'confirmation_alert_prompt_warning': _(
+                'If you do not consent to share your course data, that information may be shared with '
+                '{enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=customer.name,
             ),
             'page_language': get_language_from_request(request),
             'platform_name': platform_name,
