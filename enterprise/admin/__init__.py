@@ -99,6 +99,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     )
 
     list_filter = ("active",)
+    ordering = ("name",)
     search_fields = ("name", "uuid",)
     inlines = [
         EnterpriseCustomerBrandingConfigurationInline,
