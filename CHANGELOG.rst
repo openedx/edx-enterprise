@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.1] - 2017-04-17
+---------------------
+
+* Order enterprise customers by name on enterprise customer django admin
+
+
 [0.33.0] - 2017-04-11
 ---------------------
 
