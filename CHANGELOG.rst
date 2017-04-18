@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.4] - 2017-04-18
+---------------------
+
+* Enforce login for course-specific data sharing consent views.
+
+
 [0.33.3] - 2017-04-18
 ---------------------
 

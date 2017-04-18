@@ -3,15 +3,13 @@ Module tests user-facing views of the Enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
-import unittest
-
 import ddt
 import mock
 from pytest import mark, raises
 
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.shortcuts import render_to_response
-from django.test import Client
+from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.utils import NotConnectedToEdX
@@ -28,7 +26,7 @@ def fake_render(template, context, request):  # pylint: disable=unused-argument
 
 @mark.django_db
 @ddt.ddt
-class TestGrantDataSharingPermissions(unittest.TestCase):
+class TestGrantDataSharingPermissions(TestCase):
     """
     Test GrantDataSharingPermissions.
     """
@@ -562,7 +560,15 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         response = self.client.get(
             self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
         )
-        assert response.status_code == 404
+        assert response.status_code == 302
+        self.assertRedirects(
+            response,
+            (
+                '/accounts/login/?next=/enterprise/grant_data_sharing_permissions%3Fcourse_id%3Dcourse-v1'
+                '%253AedX%252BDemoX%252BDemo_Course%26next%3Dhttps%253A%252F%252Fgoogle.com'
+            ),
+            fetch_redirect_response=False
+        )
 
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -787,7 +793,12 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
                 'redirect_url': '/successful_enrollment'
             },
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 302
+        self.assertRedirects(
+            resp,
+            '/accounts/login/?next=/enterprise/grant_data_sharing_permissions',
+            fetch_redirect_response=False
+        )
 
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -837,7 +848,7 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
         assert enrollment.consent_granted is None
 
 
-class TestPushLearnerDataToIntegratedChannel(unittest.TestCase):
+class TestPushLearnerDataToIntegratedChannel(TestCase):
     """
     Test PushLearnerDataToIntegratedChannel.
     """
@@ -853,7 +864,7 @@ class TestPushLearnerDataToIntegratedChannel(unittest.TestCase):
             pass
 
 
-class TestPushCatalogDataToIntegratedChannel(unittest.TestCase):
+class TestPushCatalogDataToIntegratedChannel(TestCase):
     """
     Test PushCatalogDataToIntegratedChannel.
     """
