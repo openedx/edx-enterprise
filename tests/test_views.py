@@ -454,11 +454,22 @@ class TestGrantDataSharingPermissions(unittest.TestCase):
                 "platform_name": "My Platform",
                 "consent_request_prompt": (
                     'To access this course and use your discount, you must first consent to share your '
-                    'learning achievements with Starfleet Academy.'
+                    'learning achievements with <b>Starfleet Academy</b>.'
                 ),
                 'confirmation_alert_prompt': (
-                    'In order to start this course and use your discount, you must consent to share your '
+                    'In order to start this course and use your discount, <b>you must</b> consent to share your '
                     'course data with Starfleet Academy.'
+                ),
+                'confirmation_alert_prompt_warning': (
+                    'If you do not consent to share your course data, that information may be shared with '
+                    'Starfleet Academy.'
+                ),
+                'sharable_items_footer': (
+                    'My permission applies only to data from courses or programs that are sponsored by '
+                    'Starfleet Academy, and not to data from any My Platform courses or programs that '
+                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
+                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
+                    'from any courses or programs that are sponsored by Starfleet Academy.'
                 ),
                 "course_id": "course-v1:edX+DemoX+Demo_Course",
                 "course_name": "edX Demo Course",

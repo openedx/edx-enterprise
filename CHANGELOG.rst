@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.2] - 2017-04-17
+---------------------
+
+* Update Data Sharing Consent message.
+
+
 [0.33.1] - 2017-04-17
 ---------------------
 
