@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.3] - 2017-04-18
+---------------------
+
+* Fixed the CSS for the expand arrow in the data sharing consent page.
+
+
 [0.33.2] - 2017-04-17
 ---------------------
 
