@@ -4,10 +4,13 @@ Django admin integration for enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+from functools import partial
+
 from django.conf.urls import url
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.auth import settings
+from django.forms import ChoiceField
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -80,6 +83,18 @@ class EnterpriseCustomerEntitlementInline(admin.StackedInline):
     readonly_fields = ('ecommerce_coupon_url',)
     ecommerce_coupon_url.allow_tags = True
     ecommerce_coupon_url.short_description = 'Coupon URL'
+
+    def get_formset(self, request, obj=None, **kwargs):
+        kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)
+        return super(EnterpriseCustomerEntitlementInline, self).get_formset(request, obj, **kwargs)
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        enterprise_customer = kwargs.pop('obj', None)
+        request = kwargs.get('request', None)
+        formfield = super(EnterpriseCustomerEntitlementInline, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == "entitlement_id" and enterprise_customer:
+            return ChoiceField(choices=enterprise_customer.coupon_options(request.user), required=True)
+        return formfield
 
 
 @admin.register(EnterpriseCustomer)

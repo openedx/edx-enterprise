@@ -25,6 +25,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
+from enterprise.ecommerce_api import EcommerceApiClient
 from enterprise.lms_api import ThirdPartyAuthApiClient, enroll_user_in_course_locally
 from enterprise.validators import validate_image_extension, validate_image_size
 
@@ -118,6 +119,16 @@ class EnterpriseCustomer(TimeStampedModel):
             "at login, or is required at enrollment."
         )
     )
+
+    def coupon_options(self, user):
+        """
+        Given a user to use for authentication, fetch a list of the coupons linked to this EnterpriseCustomer.
+        """
+        client = EcommerceApiClient(user)
+        coupons = client.get_coupons_by_enterprise_customer(self.uuid)
+        return models.fields.BLANK_CHOICE_DASH + [
+            (coupon['id'], coupon['title'],) for coupon in coupons
+        ]
 
     @property
     def identity_provider(self):

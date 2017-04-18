@@ -217,6 +217,29 @@ class TestEnterpriseCustomer(unittest.TestCase):
         customer = EnterpriseCustomerFactory()
         assert customer.identity_provider is None  # pylint: disable=no-member
 
+    @mock.patch('enterprise.models.EcommerceApiClient')
+    def test_get_coupon_options(self, mock_client_generator):
+        faker = FakerFactory.create()
+        customer_uuid = faker.uuid4()
+        customer = EnterpriseCustomerFactory(uuid=customer_uuid)
+        user = UserFactory()
+        mock_client = mock_client_generator.return_value
+        get_coupons = mock_client.get_coupons_by_enterprise_customer
+        get_coupons.return_value = [
+            {"id": 5, "title": "Fancy Coupon"},
+            {"id": 34, "title": "Boring Coupon"},
+            {"id": 76, "title": "Trombone Coupon"},
+        ]
+        options = customer.coupon_options(user)
+        mock_client_generator.assert_called_once_with(user)
+        get_coupons.assert_called_once_with(customer_uuid)
+        assert options == [
+            ('', '---------'),
+            (5, 'Fancy Coupon'),
+            (34, 'Boring Coupon'),
+            (76, 'Trombone Coupon'),
+        ]
+
 
 @mark.django_db
 @ddt.ddt
