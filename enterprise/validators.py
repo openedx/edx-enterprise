@@ -24,7 +24,7 @@ def validate_image_extension(value):
     """
     config = get_app_config()
     ext = os.path.splitext(value.name)[1]
-    if config and not ext.lower() in getattr(config, "valid_extensions", []):
+    if config and not ext.lower() in config.valid_image_extensions:
         raise ValidationError(_("Unsupported file extension."))
 
 
@@ -33,5 +33,7 @@ def validate_image_size(image):
     Validate that a particular image size.
     """
     config = get_app_config()
-    if config and not image.size < getattr(config, "image_size", 0):
-        raise ValidationError(_("The logo image file size must be less than 4KB."))
+    valid_max_image_size_in_bytes = config.valid_max_image_size * 1024
+    if config and not image.size <= valid_max_image_size_in_bytes:
+        raise ValidationError(
+            _("The logo image file size must be less than or equal to %s KB.") % getattr(config, "image_size", 0))

@@ -730,27 +730,28 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 2)
 
     @ddt.data(
-        (False, 350 * 1024),
-        (False, 251 * 1024),
-        (False, 250 * 1024),
-        (False, 4 * 1024),
-        (True, 2 * 1024),
-        (True, 3 * 1024),
+        (False, 2048),
+        (False, 1024),
+        (True, 512),
+        (True, 256),
+        (True, 128),
     )
     @ddt.unpack
-    def test_image_size(self, valid_image, image_size):
+    def test_image_size(self, is_valid_image_size, image_size):
         """
-        Test image size, image_size < (4 * 1024) e.g. 4kb. See apps.py.
+        Test image size in KB's, image_size < 512 KB.
+        Default valid max image size is 512 KB (512 * 1024 bytes).
+        See config `valid_max_image_size` in apps.py.
         """
         file_mock = mock.MagicMock(spec=File, name="FileMock")
         file_mock.name = "test1.png"
-        file_mock.size = image_size
+        file_mock.size = image_size * 1024  # image size in bytes
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
             enterprise_customer=EnterpriseCustomerFactory(),
             logo=file_mock
         )
 
-        if not valid_image:
+        if not is_valid_image_size:
             with self.assertRaises(ValidationError):
                 branding_configuration.full_clean()
         else:
@@ -763,7 +764,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         (True, ".png"),
     )
     @ddt.unpack
-    def test_image_type(self, valid_image, image_extension):
+    def test_image_type(self, is_valid_image_extension, image_extension):
         """
         Test image type, currently .png is supported in configuration. see apps.py.
         """
@@ -775,7 +776,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo=file_mock
         )
 
-        if not valid_image:
+        if not is_valid_image_extension:
             with self.assertRaises(ValidationError):
                 branding_configuration.full_clean()
         else:

@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.6] - 2017-04-21
+---------------------
+
+* Increase max size limit for enterprise logo
+
+
 [0.33.5] - 2017-04-20
 ---------------------
 
