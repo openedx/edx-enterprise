@@ -18,7 +18,7 @@ except ImportError:
 
 class EcommerceApiClient(object):
     """
-    Object builds an API client to make calls to the Ecommerce API.
+    Object builds an API client to make calls to the ecommerce API.
     """
 
     def __init__(self, user):
@@ -33,6 +33,12 @@ class EcommerceApiClient(object):
     def get_single_coupon(self, coupon_id):
         """
         Get the details of a single coupon, identified by ID.
+
+        If the client fails to retrieve the details of a coupon, as indicated
+        by a raised exception, catch it and simply return an empty value. Depending
+        on the exact architecture of the upstream client, an error could be of
+        any number of given base classes, so we catch broadly, as specifying the entire
+        set of exceptions that we'd need to look for would both be fragile and complex.
         """
         if self.client is None:
             return {}
@@ -45,6 +51,12 @@ class EcommerceApiClient(object):
     def get_coupons_by_enterprise_customer(self, enterprise_customer_uuid):
         """
         Get a list of the coupons associated with an EnterpriseCustomer.
+
+        If the client fails to retrieve a list of coupons, as indicated by a
+        raised exception, catch it and simply return an empty value. Depending
+        on the exact architecture of the upstream client, an error could be of
+        any number of given base classes, so we catch broadly, as specifying the entire
+        set of exceptions that we'd need to look for would both be fragile and complex.
         """
         if self.client is None:
             return []

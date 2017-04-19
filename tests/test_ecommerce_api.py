@@ -41,7 +41,7 @@ class TestEcommerceApiClientInitialization(unittest.TestCase):
 
 class TestEcommerceApiClientBehavior(unittest.TestCase):
     """
-    Test the behavior of getting a single coupon by ID.
+    Test the behavior of getting coupons, both by ID and as a set.
     """
 
     def setUp(self):
@@ -52,24 +52,24 @@ class TestEcommerceApiClientBehavior(unittest.TestCase):
                 is_configured.return_value = True
                 self.client = EcommerceApiClient(mock.MagicMock(spec=User))
         self.id_getter = self.subclient.coupons
-        self.get_mock = self.subclient.coupons.return_value.get
-        self.get_multiple_mock = self.subclient.coupons.get
+        self.get_single_coupon_mock = self.subclient.coupons.return_value.get
+        self.get_multiple_coupons_mock = self.subclient.coupons.get
         super(TestEcommerceApiClientBehavior, self).setUp()
 
     def test_single_coupon(self):
-        self.get_mock.return_value = {
+        self.get_single_coupon_mock.return_value = {
             'response': 'value'
         }
         response = self.client.get_single_coupon(123)
         assert response == {'response': 'value'}
-        self.get_mock.assert_called_once()
+        self.get_single_coupon_mock.assert_called_once()
         self.id_getter.assert_called_once_with(123)
 
     def test_single_coupon_fails(self):
-        self.get_mock.side_effect = ValueError
+        self.get_single_coupon_mock.side_effect = ValueError
         response = self.client.get_single_coupon(123)
         assert response == {}
-        self.get_mock.assert_called_once()
+        self.get_single_coupon_mock.assert_called_once()
         self.id_getter.assert_called_once_with(123)
 
     def test_single_coupon_no_client(self):
@@ -78,14 +78,14 @@ class TestEcommerceApiClientBehavior(unittest.TestCase):
         assert response == {}
 
     def test_get_multiple_coupons(self):
-        self.get_multiple_mock.side_effect = [
+        self.get_multiple_coupons_mock.side_effect = [
             {"results": [1, 2, 3], "next": "url"},
             {"results": [4, 5, 6]},
             {"results": [7, 8, 9]}
         ]
         response = self.client.get_coupons_by_enterprise_customer('123-456-789-ABC-DEF-0')
         assert response == [1, 2, 3, 4, 5, 6]
-        self.get_multiple_mock.assert_has_calls(
+        self.get_multiple_coupons_mock.assert_has_calls(
             [
                 mock.call(enterprise_customer='123-456-789-ABC-DEF-0', page=1),
                 mock.call(enterprise_customer='123-456-789-ABC-DEF-0', page=2),
@@ -93,14 +93,14 @@ class TestEcommerceApiClientBehavior(unittest.TestCase):
         )
 
     def test_get_multiple_coupons_error_partway_through(self):
-        self.get_multiple_mock.side_effect = [
+        self.get_multiple_coupons_mock.side_effect = [
             {"results": [1, 2, 3], "next": "url"},
             ValueError,
             {"results": [7, 8, 9]}
         ]
         response = self.client.get_coupons_by_enterprise_customer('123-456-789-ABC-DEF-0')
         assert response == [1, 2, 3]
-        self.get_multiple_mock.assert_has_calls(
+        self.get_multiple_coupons_mock.assert_has_calls(
             [
                 mock.call(enterprise_customer='123-456-789-ABC-DEF-0', page=1),
                 mock.call(enterprise_customer='123-456-789-ABC-DEF-0', page=2),
@@ -108,10 +108,10 @@ class TestEcommerceApiClientBehavior(unittest.TestCase):
         )
 
     def test_get_multiple_coupons_error_at_beginning(self):
-        self.get_multiple_mock.side_effect = ValueError
+        self.get_multiple_coupons_mock.side_effect = ValueError
         response = self.client.get_coupons_by_enterprise_customer('123-456-789-ABC-DEF-0')
         assert response == []
-        self.get_multiple_mock.assert_has_calls(
+        self.get_multiple_coupons_mock.assert_has_calls(
             [
                 mock.call(enterprise_customer='123-456-789-ABC-DEF-0', page=1),
             ]
