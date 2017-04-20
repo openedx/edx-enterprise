@@ -26,8 +26,12 @@ except ImportError:
     configuration_helpers = None
 
 try:
-    from third_party_auth.pipeline import (get_complete_url, get_real_social_auth_object, lift_quarantine,
-                                           quarantine_session)
+    from third_party_auth.pipeline import (
+        get_complete_url,
+        get_real_social_auth_object,
+        lift_quarantine,
+        quarantine_session,
+    )
 except ImportError:
     get_complete_url = None
     get_real_social_auth_object = None
@@ -37,8 +41,12 @@ except ImportError:
 
 # isort:imports-firstparty
 from enterprise.lms_api import CourseApiClient
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser,
-                               UserDataSharingConsentAudit)
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerUser,
+    UserDataSharingConsentAudit,
+)
 from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_enterprise_customer_for_request
 from enterprise.utils import NotConnectedToEdX, consent_necessary_for_course
 

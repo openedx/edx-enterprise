@@ -17,8 +17,12 @@ from slumber.exceptions import HttpNotFoundError
 
 from django.utils import timezone
 
-from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerFactory,
-                                  EnterpriseCustomerUserFactory, UserFactory)
+from test_utils.factories import (
+    EnterpriseCourseEnrollmentFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 
 @mark.django_db

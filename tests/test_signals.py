@@ -11,11 +11,20 @@ import ddt
 import mock
 from pytest import mark
 
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomerUser,
-                               PendingEnrollment, PendingEnterpriseCustomerUser)
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomerUser,
+    PendingEnrollment,
+    PendingEnterpriseCustomerUser,
+)
 from enterprise.signals import handle_user_post_save
-from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserFactory)
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnrollmentFactory,
+    PendingEnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 
 @mark.django_db

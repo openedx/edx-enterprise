@@ -12,10 +12,15 @@ from pytest import mark, raises
 from django.http import HttpResponseRedirect
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDataSharingConsentAudit
-from enterprise.tpa_pipeline import (active_provider_enforces_data_sharing, active_provider_requests_data_sharing,
-                                     get_consent_status_for_pipeline, get_ec_for_running_pipeline,
-                                     get_enterprise_customer_for_request, get_enterprise_customer_for_sso,
-                                     handle_enterprise_logistration)
+from enterprise.tpa_pipeline import (
+    active_provider_enforces_data_sharing,
+    active_provider_requests_data_sharing,
+    get_consent_status_for_pipeline,
+    get_ec_for_running_pipeline,
+    get_enterprise_customer_for_request,
+    get_enterprise_customer_for_sso,
+    handle_enterprise_logistration,
+)
 from enterprise.utils import NotConnectedToEdX
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 

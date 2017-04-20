@@ -9,8 +9,12 @@ import unittest
 
 import ddt
 import mock
-from integrated_channels.sap_success_factors.utils import (current_time_is_in_interval, get_course_track_selection_url,
-                                                           parse_datetime_to_epoch, transform_language_code)
+from integrated_channels.sap_success_factors.utils import (
+    current_time_is_in_interval,
+    get_course_track_selection_url,
+    parse_datetime_to_epoch,
+    transform_language_code,
+)
 from pytest import raises
 
 from enterprise.lms_api import parse_lms_api_datetime

@@ -8,10 +8,12 @@ import json
 import unittest
 
 import mock
-from integrated_channels.sap_success_factors.models import (CatalogTransmissionAudit,
-                                                            LearnerDataTransmissionAudit,
-                                                            SAPSuccessFactorsEnterpriseCustomerConfiguration,
-                                                            SAPSuccessFactorsGlobalConfiguration)
+from integrated_channels.sap_success_factors.models import (
+    CatalogTransmissionAudit,
+    LearnerDataTransmissionAudit,
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+)
 from integrated_channels.sap_success_factors.transmitters import courses, learner_data
 from pytest import mark
 from requests import RequestException

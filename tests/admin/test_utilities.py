@@ -12,8 +12,14 @@ from pytest import mark, raises
 from django.core.exceptions import ValidationError
 from django.utils.dateparse import parse_datetime
 
-from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
-                                    get_earliest_start_date_from_program, parse_csv, validate_email_to_link)
+from enterprise.admin.utils import (
+    ValidationMessages,
+    email_or_username__to__email,
+    get_course_runs_from_program,
+    get_earliest_start_date_from_program,
+    parse_csv,
+    validate_email_to_link,
+)
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
 from test_utils.file_helpers import MakeCsvStreamContextManager

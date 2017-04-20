@@ -12,10 +12,17 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
-                               EnterpriseCustomerEntitlement, EnterpriseCustomerIdentityProvider,
-                               EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser,
-                               UserDataSharingConsentAudit)
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerEntitlement,
+    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerUser,
+    PendingEnrollment,
+    PendingEnterpriseCustomerUser,
+    UserDataSharingConsentAudit,
+)
 
 FAKER = FakerFactory.create()
 
