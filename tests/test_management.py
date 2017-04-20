@@ -22,9 +22,13 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from enterprise import lms_api
-from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerFactory,
-                                  EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
-                                  UserFactory)
+from test_utils.factories import (
+    EnterpriseCourseEnrollmentFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerUserFactory,
+    UserFactory,
+)
 from test_utils.fake_catalog_api import get_catalog_courses, get_course_details
 
 

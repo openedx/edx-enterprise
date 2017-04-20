@@ -18,14 +18,22 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models.fields import BLANK_CHOICE_DASH
 
-from enterprise.admin.forms import (EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm,
-                                    ManageLearnersForm)
+from enterprise.admin.forms import (
+    EnterpriseCustomerAdminForm,
+    EnterpriseCustomerIdentityProviderAdminForm,
+    ManageLearnersForm,
+)
 from enterprise.admin.utils import ValidationMessages
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.utils import MultipleProgramMatchError
 from test_utils import fake_catalog_api, fake_enrollment_api
-from test_utils.factories import (EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerUserFactory,
+    SiteFactory,
+    UserFactory,
+)
 from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE1, FAKE_PROGRAM_RESPONSE2
 
 FAKER = FakerFactory.create()

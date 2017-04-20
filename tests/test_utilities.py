@@ -21,12 +21,24 @@ from django.core import mail
 from django.test import override_settings
 
 from enterprise import utils
-from enterprise.models import (EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerBrandingConfiguration,
-                               EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser, UserDataSharingConsentAudit)
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerUser,
+    UserDataSharingConsentAudit,
+)
 from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
-from test_utils.factories import (EnterpriseCustomerBrandingFactory, EnterpriseCustomerFactory,
-                                  EnterpriseCustomerIdentityProviderFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
+from test_utils.factories import (
+    EnterpriseCustomerBrandingFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerUserFactory,
+    UserDataSharingConsentAuditFactory,
+    UserFactory,
+)
 
 
 def mock_get_available_idps(idps):

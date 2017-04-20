@@ -12,8 +12,10 @@ import unittest
 import requests
 import responses
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
-from integrated_channels.sap_success_factors.models import (SAPSuccessFactorsEnterpriseCustomerConfiguration,
-                                                            SAPSuccessFactorsGlobalConfiguration)
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+)
 from pytest import mark, raises
 
 

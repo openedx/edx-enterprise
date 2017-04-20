@@ -23,11 +23,22 @@ from enterprise.admin import EnterpriseCustomerManageLearnersView, TemplatePrevi
 from enterprise.admin.forms import ManageLearnersForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
 from enterprise.django_compatibility import reverse
-from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomerUser,
-                               PendingEnrollment, PendingEnterpriseCustomerUser)
+from enterprise.models import (
+    EnrollmentNotificationEmailTemplate,
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomerUser,
+    PendingEnrollment,
+    PendingEnterpriseCustomerUser,
+)
 from test_utils import fake_catalog_api, fake_enrollment_api
-from test_utils.factories import (FAKER, EnterpriseCustomerFactory, EnterpriseCustomerUserFactory,
-                                  PendingEnterpriseCustomerUserFactory, SiteFactory, UserFactory)
+from test_utils.factories import (
+    FAKER,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnterpriseCustomerUserFactory,
+    SiteFactory,
+    UserFactory,
+)
 from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE2
 from test_utils.file_helpers import MakeCsvStreamContextManager
 

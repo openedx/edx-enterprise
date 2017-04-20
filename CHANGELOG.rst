@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.5] - 2017-04-20
+---------------------
+
+* Added vertical hanging indent mode to isort settings and adjusted current imports
+
+
 [0.33.4] - 2017-04-18
 ---------------------
 

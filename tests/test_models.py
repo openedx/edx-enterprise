@@ -12,11 +12,16 @@ from operator import itemgetter
 import ddt
 import mock
 from faker import Factory as FakerFactory
-from integrated_channels.integrated_channel.models import (EnterpriseCustomerPluginConfiguration,
-                                                           EnterpriseIntegratedChannel)
-from integrated_channels.sap_success_factors.models import (CatalogTransmissionAudit, LearnerDataTransmissionAudit,
-                                                            SAPSuccessFactorsEnterpriseCustomerConfiguration,
-                                                            SAPSuccessFactorsGlobalConfiguration)
+from integrated_channels.integrated_channel.models import (
+    EnterpriseCustomerPluginConfiguration,
+    EnterpriseIntegratedChannel,
+)
+from integrated_channels.sap_success_factors.models import (
+    CatalogTransmissionAudit,
+    LearnerDataTransmissionAudit,
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+)
 from pytest import mark, raises
 
 from django.contrib.sites.models import Site
@@ -24,14 +29,28 @@ from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 
-from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
-                               EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerEntitlement,
-                               EnterpriseCustomerUser, PendingEnterpriseCustomerUser, UserDataSharingConsentAudit,
-                               logo_path)
-from test_utils.factories import (EnterpriseCourseEnrollmentFactory, EnterpriseCustomerEntitlementFactory,
-                                  EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory,
-                                  EnterpriseCustomerUserFactory, PendingEnrollmentFactory,
-                                  PendingEnterpriseCustomerUserFactory, UserDataSharingConsentAuditFactory, UserFactory)
+from enterprise.models import (
+    EnrollmentNotificationEmailTemplate,
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerEntitlement,
+    EnterpriseCustomerUser,
+    PendingEnterpriseCustomerUser,
+    UserDataSharingConsentAudit,
+    logo_path,
+)
+from test_utils.factories import (
+    EnterpriseCourseEnrollmentFactory,
+    EnterpriseCustomerEntitlementFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerUserFactory,
+    PendingEnrollmentFactory,
+    PendingEnterpriseCustomerUserFactory,
+    UserDataSharingConsentAuditFactory,
+    UserFactory,
+)
 
 
 @mark.django_db

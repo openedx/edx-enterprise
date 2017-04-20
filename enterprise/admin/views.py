@@ -23,13 +23,25 @@ from django.utils.translation import ungettext
 from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm
-from enterprise.admin.utils import (ValidationMessages, email_or_username__to__email, get_course_runs_from_program,
-                                    get_earliest_start_date_from_program, parse_csv, split_usernames_and_emails,
-                                    validate_email_to_link)
+from enterprise.admin.utils import (
+    ValidationMessages,
+    email_or_username__to__email,
+    get_course_runs_from_program,
+    get_earliest_start_date_from_program,
+    parse_csv,
+    split_usernames_and_emails,
+    validate_email_to_link,
+)
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.lms_api import EnrollmentApiClient, parse_lms_api_datetime
-from enterprise.models import (EnrollmentNotificationEmailTemplate, EnterpriseCourseEnrollment, EnterpriseCustomer,
-                               EnterpriseCustomerUser, PendingEnrollment, PendingEnterpriseCustomerUser)
+from enterprise.models import (
+    EnrollmentNotificationEmailTemplate,
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerUser,
+    PendingEnrollment,
+    PendingEnterpriseCustomerUser,
+)
 from enterprise.utils import get_reversed_url_by_site, send_email_notification_message
 
 

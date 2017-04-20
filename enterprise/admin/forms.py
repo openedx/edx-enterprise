@@ -15,8 +15,14 @@ from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import ugettext as _
 
 from enterprise import utils
-from enterprise.admin.utils import (ProgramStatuses, ValidationMessages, email_or_username__to__email,
-                                    get_course_runs_from_program, split_usernames_and_emails, validate_email_to_link)
+from enterprise.admin.utils import (
+    ProgramStatuses,
+    ValidationMessages,
+    email_or_username__to__email,
+    get_course_runs_from_program,
+    split_usernames_and_emails,
+    validate_email_to_link,
+)
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.lms_api import EnrollmentApiClient
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider

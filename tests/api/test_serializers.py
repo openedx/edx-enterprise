@@ -16,9 +16,11 @@ from rest_framework.test import APIRequestFactory
 
 from django.test import override_settings
 
-from enterprise.api.v1.serializers import (EnterpriseCatalogCoursesReadOnlySerializer,
-                                           EnterpriseCourseCatalogReadOnlySerializer,
-                                           EnterpriseCustomerUserEntitlementSerializer)
+from enterprise.api.v1.serializers import (
+    EnterpriseCatalogCoursesReadOnlySerializer,
+    EnterpriseCourseCatalogReadOnlySerializer,
+    EnterpriseCustomerUserEntitlementSerializer,
+)
 from test_utils import APITest, factories
 
 
