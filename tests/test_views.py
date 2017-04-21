@@ -109,6 +109,7 @@ class TestGrantDataSharingPermissions(TestCase):
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
         redirect_mock.assert_called_once_with('signin_user')
 
+    @ddt.data(True, False)
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -118,6 +119,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     def test_get_render_patched(
             self,
+            enforces_data_sharing_consent,
             config_mock,
             get_ec_mock,
             render_mock,
@@ -127,52 +129,12 @@ class TestGrantDataSharingPermissions(TestCase):
             mock_lift,
     ):  # pylint: disable=unused-argument
         """
-        Test that we have the appropriate context when rendering the form.
+        Test that we have the appropriate context when rendering the form,
+        for both mandatory and optional data sharing consent.
         """
         config_mock.get_value.return_value = 'This Platform'
         fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=True)
-        )
-        fake_ec.name = 'Fake Customer Name'
-        get_ec_mock.return_value = fake_ec
-        client = Client()
-        response = client.get(self.url)
-        expected_prompt = CONSENT_REQUEST_PROMPT.format(enterprise_customer_name=fake_ec.name)
-        expected_alert = CONFIRMATION_ALERT_PROMPT.format(enterprise_customer_name=fake_ec.name)
-        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(enterprise_customer_name=fake_ec.name)
-        expected_context = {
-            'consent_request_prompt': expected_prompt,
-            'confirmation_alert_prompt': expected_alert,
-            'confirmation_alert_prompt_warning': expected_warning,
-            'platform_name': 'This Platform',
-            'enterprise_customer_name': 'Fake Customer Name',
-        }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
-
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_render_patched_optional(
-            self,
-            config_mock,
-            get_ec_mock,
-            render_mock,
-            mock_url,
-            mock_social,
-            mock_quarantine,
-            mock_lift,
-    ):  # pylint: disable=unused-argument
-        """
-        Test that we have correct context for an optional form rendering.
-        """
-        config_mock.get_value.return_value = 'This Platform'
-        fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=False)
+            enforces_data_sharing_consent=mock.MagicMock(return_value=enforces_data_sharing_consent)
         )
         fake_ec.name = 'Fake Customer Name'
         get_ec_mock.return_value = fake_ec
