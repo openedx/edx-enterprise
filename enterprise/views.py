@@ -40,6 +40,7 @@ except ImportError:
 
 
 # isort:imports-firstparty
+from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
 from enterprise.lms_api import CourseApiClient
 from enterprise.models import (
     EnterpriseCourseEnrollment,
@@ -235,10 +236,7 @@ class GrantDataSharingPermissions(View):
                 bold_start='<b>',
                 bold_end='</b>',
             ),
-            'confirmation_alert_prompt_warning': _(
-                'If you do not consent to share your course data, that information may be shared with '
-                '{enterprise_customer_name}.'
-            ).format(
+            'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name,
             ),
             'page_language': get_language_from_request(request),
@@ -286,22 +284,13 @@ class GrantDataSharingPermissions(View):
         context_data = self.get_default_context(customer, platform_name)
 
         account_specific_context = {
-            'consent_request_prompt': _(
-                'To log in using this SSO identity provider and access special course offers, you must first '
-                'consent to share your learning achievements with {enterprise_customer_name}.'
-            ).format(
+            'consent_request_prompt': CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name
             ),
-            'confirmation_alert_prompt': _(
-                'In order to sign in and access special offers, you must consent to share your '
-                'course data with {enterprise_customer_name}.'
-            ).format(
+            'confirmation_alert_prompt': CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name
             ),
-            'confirmation_alert_prompt_warning': _(
-                'If you do not consent to share your course data, that information may be shared with '
-                '{enterprise_customer_name}.'
-            ).format(
+            'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name,
             ),
             'page_language': get_language_from_request(request),

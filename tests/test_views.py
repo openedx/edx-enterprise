@@ -14,7 +14,13 @@ from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.utils import NotConnectedToEdX
-from enterprise.views import GrantDataSharingPermissions, HttpClientError
+from enterprise.views import (
+    CONFIRMATION_ALERT_PROMPT,
+    CONFIRMATION_ALERT_PROMPT_WARNING,
+    CONSENT_REQUEST_PROMPT,
+    GrantDataSharingPermissions,
+    HttpClientError,
+)
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
@@ -131,18 +137,9 @@ class TestGrantDataSharingPermissions(TestCase):
         get_ec_mock.return_value = fake_ec
         client = Client()
         response = client.get(self.url)
-        expected_prompt = (
-            "To log in using this SSO identity provider and access special course offers, you must first "
-            "consent to share your learning achievements with Fake Customer Name."
-        )
-        expected_alert = (
-            "In order to sign in and access special offers, you must consent to share your "
-            "course data with Fake Customer Name."
-        )
-        expected_warning = (
-            "If you do not consent to share your course data, that information may be shared with "
-            "Fake Customer Name."
-        )
+        expected_prompt = CONSENT_REQUEST_PROMPT.format(enterprise_customer_name=fake_ec.name)
+        expected_alert = CONFIRMATION_ALERT_PROMPT.format(enterprise_customer_name=fake_ec.name)
+        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(enterprise_customer_name=fake_ec.name)
         expected_context = {
             'consent_request_prompt': expected_prompt,
             'confirmation_alert_prompt': expected_alert,
@@ -181,17 +178,14 @@ class TestGrantDataSharingPermissions(TestCase):
         get_ec_mock.return_value = fake_ec
         client = Client()
         response = client.get(self.url)
-        expected_prompt = (
-            "To log in using this SSO identity provider and access special course offers, you must first "
-            "consent to share your learning achievements with Fake Customer Name."
+        expected_prompt = CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
+            enterprise_customer_name=fake_ec.name
         )
-        expected_alert = (
-            "In order to sign in and access special offers, you must consent to share your "
-            "course data with Fake Customer Name."
+        expected_alert = CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
+            enterprise_customer_name=fake_ec.name
         )
-        expected_warning = (
-            "If you do not consent to share your course data, that information may be shared with "
-            "Fake Customer Name."
+        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
+            enterprise_customer_name=fake_ec.name
         )
         expected_context = {
             'consent_request_prompt': expected_prompt,
@@ -477,20 +471,22 @@ class TestGrantDataSharingPermissions(TestCase):
             params['enterprise_id'] = str(enterprise_customer.uuid)
         response = self.client.get(self.url, data=params)
         assert response.status_code == 200
+        expected_prompt = (
+            'To access this course and use your discount, you must first consent to share your '
+            'learning achievements with <b>Starfleet Academy</b>.'
+        )
+        expected_alert = (
+            'In order to start this course and use your discount, <b>you must</b> consent to share your '
+            'course data with Starfleet Academy.'
+        )
+        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
+            enterprise_customer_name='Starfleet Academy'
+        )
         for key, value in {
                 "platform_name": "My Platform",
-                "consent_request_prompt": (
-                    'To access this course and use your discount, you must first consent to share your '
-                    'learning achievements with <b>Starfleet Academy</b>.'
-                ),
-                'confirmation_alert_prompt': (
-                    'In order to start this course and use your discount, <b>you must</b> consent to share your '
-                    'course data with Starfleet Academy.'
-                ),
-                'confirmation_alert_prompt_warning': (
-                    'If you do not consent to share your course data, that information may be shared with '
-                    'Starfleet Academy.'
-                ),
+                "consent_request_prompt": expected_prompt,
+                'confirmation_alert_prompt': expected_alert,
+                'confirmation_alert_prompt_warning': expected_warning,
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any My Platform courses or programs that '
