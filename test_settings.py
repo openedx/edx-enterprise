@@ -117,4 +117,6 @@ MEDIA_URL = "/"
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
 ENTERPRISE_SERVICE_WORKER_USERNAME = 'enterprise_worker'
 
+ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE = 512   # Enterprise logo image size limit in KB's
+
 USE_TZ = True

@@ -17,8 +17,8 @@ class EnterpriseConfig(AppConfig):
     """
 
     name = "enterprise"
-    valid_extensions = [".png", ]
-    image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 4 * 1024)
+    valid_image_extensions = [".png", ]
+    valid_max_image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)  # Value in KB's
 
     @property
     def auth_user_model(self):
