@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-20 09:12-0500\n"
+"POT-Creation-Date: 2017-04-24 08:24-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -588,8 +588,9 @@ msgstr ""
 msgid "Unsupported file extension."
 msgstr ""
 
-#: enterprise/validators.py:37
-msgid "The logo image file size must be less than 4KB."
+#: enterprise/validators.py:39
+#, python-format
+msgid "The logo image file size must be less than or equal to %s KB."
 msgstr ""
 
 #: enterprise/views.py:67
@@ -741,15 +742,15 @@ msgstr ""
 msgid "your enrollment in this course"
 msgstr ""
 
-#: enterprise/views.py:255 enterprise/views.py:306
+#: enterprise/views.py:255 enterprise/views.py:310
 msgid "your learning progress"
 msgstr ""
 
-#: enterprise/views.py:256 enterprise/views.py:307
+#: enterprise/views.py:256 enterprise/views.py:311
 msgid "course completion"
 msgstr ""
 
-#: enterprise/views.py:286
+#: enterprise/views.py:290
 #, python-brace-format
 msgid ""
 "To log in using this SSO identity provider and access special course offers, "
@@ -757,14 +758,14 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:292
+#: enterprise/views.py:296
 #, python-brace-format
 msgid ""
 "In order to sign in and access special offers, you must consent to share "
 "your course data with {enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:305
+#: enterprise/views.py:309
 msgid "your enrollment in all sponsored courses"
 msgstr ""
 

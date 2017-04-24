@@ -269,10 +269,14 @@ class GrantDataSharingPermissions(View):
         # Get the OpenEdX platform name
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
 
-        # Get the EnterpriseCustomer for the request; raise an error if there isn't one.
+        # Get the EnterpriseCustomer for the request.
         customer = get_enterprise_customer_for_request(request)
         if customer is None:
-            raise Http404
+            # If we can't get an EnterpriseCustomer from the pipeline, then we don't really
+            # have enough state to do anything meaningful. Just send the user to the login
+            # screen; if they want to sign in with an Enterprise-linked SSO, they can do
+            # so, and the pipeline will get them back here if they need to be.
+            return redirect('signin_user')
 
         # Quarantine the user to this module.
         self.quarantine(request)
@@ -357,10 +361,14 @@ class GrantDataSharingPermissions(View):
         """
         self.lift_quarantine(request)
 
-        # Load the linked EnterpriseCustomer for this request. Return a 404 if no such EnterpriseCustomer exists
+        # Load the linked EnterpriseCustomer for this request.
         customer = get_enterprise_customer_for_request(request)
         if customer is None:
-            raise Http404
+            # If we can't get an EnterpriseCustomer from the pipeline, then we don't really
+            # have enough state to do anything meaningful. Just send the user to the login
+            # screen; if they want to sign in with an Enterprise-linked SSO, they can do
+            # so, and the pipeline will get them back here if they need to be.
+            return redirect('signin_user')
 
         # Attempt to retrieve a user being manipulated by the third-party auth
         # pipeline. Return a 404 if no such user exists.

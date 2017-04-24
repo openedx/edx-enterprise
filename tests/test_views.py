@@ -8,6 +8,7 @@ import mock
 from pytest import mark, raises
 
 from django.core.urlresolvers import NoReverseMatch, reverse
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.test import Client, TestCase
 
@@ -71,27 +72,36 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.views.redirect')
     @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_no_customer_404(
+    def test_get_no_customer_redirect(
             self,
             config_mock,
             get_ec_mock,
             render_mock,
+            redirect_mock,
             mock_url,
             mock_social,
             mock_quarantine,
             mock_lift,
     ):  # pylint: disable=unused-argument
         """
-        Test that we have the appropriate context when rendering the form.
+        Test that view redirects to login screen if it can't get an EnterpriseCustomer from the pipeline.
+
+        Note that this test needs to patch `django.shortcuts.redirect`.
+        This is because the target view ('signin_user') only exists in edx-platform.
         """
         config_mock.get_value.return_value = 'This Platform'
         get_ec_mock.return_value = None
+        redirect_url = '/fake/path'
+        mock_response = HttpResponseRedirect(redirect_url)
+        redirect_mock.return_value = mock_response
         client = Client()
         response = client.get(self.url)
-        assert response.status_code == 404
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+        redirect_mock.assert_called_once_with('signin_user')
 
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.quarantine_session')
@@ -186,29 +196,38 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.redirect')
     @mock.patch('enterprise.views.render_to_response')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_post_no_customer_404(
+    def test_post_no_customer_redirect(
             self,
             mock_get_ec,
             mock_get_rsa,
             mock_get_ec2,
             mock_url,
             mock_render,
+            mock_redirect,
             mock_config,
             mock_lift,
             mock_quarantine,
     ):  # pylint: disable=unused-argument
         """
-        Test that when there's no customer for the request, POST gives a 404.
+        Test that when there's no customer for the request, POST redirects to the login screen.
+
+        Note that this test needs to patch `django.shortcuts.redirect`.
+        This is because the target view ('signin_user') only exists in edx-platform.
         """
         mock_get_ec.return_value = None
+        redirect_url = '/fake/path'
+        mock_response = HttpResponseRedirect(redirect_url)
+        mock_redirect.return_value = mock_response
         client = Client()
         response = client.post(self.url)
-        assert response.status_code == 404
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+        mock_redirect.assert_called_once_with('signin_user')
 
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
