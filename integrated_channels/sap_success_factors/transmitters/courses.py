@@ -34,13 +34,16 @@ class SuccessFactorsCourseTransmitter(SuccessFactorsTransmitterBase):
         LOGGER.info(serialized_payload)
         try:
             status_code, body = self.client.send_course_import(serialized_payload)
-            LOGGER.debug('Successfully sent course metadata for Enterprise Customer {}'.
-                         format(self.enterprise_configuration.enterprise_customer.name))
         except RequestException as request_exception:
             status_code = 500
             body = str(request_exception)
+
+        if status_code >= 400:
             LOGGER.error('Failed to send course metadata for Enterprise Customer {}\nError Message {}'.
                          format(self.enterprise_configuration.enterprise_customer.name, body))
+        else:
+            LOGGER.debug('Successfully sent course metadata for Enterprise Customer {}'.
+                         format(self.enterprise_configuration.enterprise_customer.name))
 
         return status_code, body
 

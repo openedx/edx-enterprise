@@ -199,13 +199,19 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                     'status': course_status,
                 }
 
+        provider_id = apps.get_model(
+            'sap_success_factors',
+            'SAPSuccessFactorsGlobalConfiguration'
+        ).current().provider_id
+
         for course_key, summary in previous_audit_summary.items():
             # Add a course payload to self.courses so that courses no longer in the catalog are marked inactive.
             if summary['status'] == self.STATUS_ACTIVE and summary['in_catalog']:
-                new_courses.append({
-                    'courseID': course_key,
-                    'status': self.STATUS_INACTIVE,
-                })
+                new_courses.append(get_course_metadata_for_inactivation(
+                    course_key,
+                    self.enterprise_customer,
+                    provider_id
+                ))
 
                 new_audit_summary[course_key] = {
                     'in_catalog': False,
@@ -235,7 +241,9 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
         'description': lambda x: [
             {
                 'locale': transform_language_code(safe_extract_key(x, 'content_language', None)),
-                'value': safe_extract_key(x, 'full_description'),
+                'value': (safe_extract_key(x, 'full_description')
+                          or safe_extract_key(x, 'short_description')
+                          or safe_extract_key(x, 'title')),
             },
         ],
         'thumbnailURI': lambda x: (safe_extract_key(x['image'], 'src') if 'image' in x else ''),
@@ -246,7 +254,7 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                     'SAPSuccessFactorsGlobalConfiguration'
                 ).current().provider_id,
                 'launchURL': get_course_track_selection_url(x['enterprise_customer'], x['key']),
-                'contentTitle': 'Course Description',
+                'contentTitle': safe_extract_key(x, 'title'),
                 'contentID': x['key'],
                 'launchType': 3,
                 'mobileEnabled': safe_extract_key(x, 'mobile_available', 'false'),
@@ -322,3 +330,29 @@ def transform_language_code(code):
     language_family = SUCCESSFACTORS_OCN_LANGUAGE_CODES[language_code]
     language_name = language_family.get(country_code, language_family['_'])
     return language_name
+
+
+def get_course_metadata_for_inactivation(course_id, enterprise_customer, provider_id):
+    """
+    Provide the minimal course metadata structure for updating a course to be inactive.
+    """
+    return {
+        'courseID': course_id,
+        'providerID': provider_id,
+        'status': SapCourseExporter.STATUS_INACTIVE,
+        'title': [
+            {
+                'locale': transform_language_code(None),
+                'value': course_id
+            },
+        ],
+        'content': [
+            {
+                'providerID': provider_id,
+                'launchURL': get_course_track_selection_url(enterprise_customer, course_id),
+                'contentTitle': 'Course Description',
+                'launchType': 3,
+                'contentID': course_id,
+            }
+        ],
+    }

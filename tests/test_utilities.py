@@ -983,6 +983,39 @@ class TestEnterpriseUtils(unittest.TestCase):
             exporter.get_serialized_data()
 
 
+def get_transformed_course_metadata(course_id, status):
+    """
+    Return the expected transformed data for TestSAPSuccessFactorsUtils tests.
+    """
+    return {
+        'courseID': course_id,
+        'providerID': 'EDX',
+        'status': status,
+        'title': [{'locale': 'English', 'value': ''}],
+        'description': [{'locale': 'English', 'value': ''}],
+        'thumbnailURI': '',
+        'content': [
+            {
+                'providerID': 'EDX',
+                'launchURL': '',
+                'contentTitle': '',
+                'contentID': course_id,
+                'launchType': 3,
+                'mobileEnabled': 'false',
+            }
+        ],
+        'price': [],
+        'schedule': [
+            {
+                'startDate': 0,
+                'endDate': 2147483647000,
+                'active': True
+            }
+        ],
+        'revisionNumber': 1,
+    }
+
+
 @mark.django_db
 @ddt.ddt
 class TestSAPSuccessFactorsUtils(unittest.TestCase):
@@ -1009,101 +1042,162 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
     @mock.patch('integrated_channels.sap_success_factors.utils.get_course_track_selection_url')
     @ddt.data(
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
                 {'key': 'course2', 'availability': 'Archived'},
             ],
+            # previous audit summary
             {},
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
             },
-            1,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE)
+            ],
         ),
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
                 {'key': 'course2', 'availability': 'Archived'},
             ],
+            # previous audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'INACTIVE'},
             },
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'INACTIVE'},
             },
-            2,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_INACTIVE),
+            ],
         ),
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
                 {'key': 'course2', 'availability': 'Archived'},
             ],
+            # previous audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'ACTIVE'},
             },
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'INACTIVE'},
             },
-            2,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_INACTIVE),
+            ],
         ),
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
             ],
+            # previous audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'INACTIVE'},
             },
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
             },
-            1,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+            ],
         ),
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
             ],
+            # previous audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'ACTIVE'},
             },
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': False, 'status': 'INACTIVE'},
             },
-            2,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                {
+                    'courseID': 'course2',
+                    'providerID': 'EDX',
+                    'status': SapCourseExporter.STATUS_INACTIVE,
+                    'title': [{'locale': 'English', 'value': 'course2'}],
+                    'content': [
+                        {
+                            'providerID': 'EDX',
+                            'launchURL': '',
+                            'contentTitle': 'Course Description',
+                            'launchType': 3,
+                            'contentID': 'course2',
+                        }
+                    ],
+                },
+            ],
         ),
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
                 {'key': 'course2', 'availability': 'Current'},
             ],
+            # previous audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'INACTIVE'},
             },
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'ACTIVE'},
             },
-            2,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_ACTIVE),
+            ],
         ),
         (
+            # course runs
             [
                 {'key': 'course1', 'availability': 'Current'},
                 {'key': 'course2', 'availability': 'Current'},
             ],
+            # previous audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
             },
+            # expected audit summary
             {
                 'course1': {'in_catalog': True, 'status': 'ACTIVE'},
                 'course2': {'in_catalog': True, 'status': 'ACTIVE'},
             },
-            2,
+            # expected courses
+            [
+                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_ACTIVE),
+            ],
         ),
     )
     @ddt.unpack
@@ -1112,7 +1206,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             course_runs,
             previous_audit_summary,
             expected_audit_summary,
-            num_expected_courses,
+            expected_courses,
             get_course_url_mock,
             get_course_runs_mock
     ):
@@ -1123,7 +1217,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
         assert audit_summary == expected_audit_summary
         assert course_exporter.removed_courses_resolved
-        assert len(course_exporter.courses) == num_expected_courses
+        assert course_exporter.courses == expected_courses
 
         second_audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
         assert second_audit_summary == {}
