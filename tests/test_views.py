@@ -139,9 +139,14 @@ class TestGrantDataSharingPermissions(TestCase):
             "In order to sign in and access special offers, you must consent to share your "
             "course data with Fake Customer Name."
         )
+        expected_warning = (
+            "If you do not consent to share your course data, that information may be shared with "
+            "Fake Customer Name."
+        )
         expected_context = {
             'consent_request_prompt': expected_prompt,
             'confirmation_alert_prompt': expected_alert,
+            'confirmation_alert_prompt_warning': expected_warning,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
         }
@@ -184,9 +189,14 @@ class TestGrantDataSharingPermissions(TestCase):
             "In order to sign in and access special offers, you must consent to share your "
             "course data with Fake Customer Name."
         )
+        expected_warning = (
+            "If you do not consent to share your course data, that information may be shared with "
+            "Fake Customer Name."
+        )
         expected_context = {
             'consent_request_prompt': expected_prompt,
             'confirmation_alert_prompt': expected_alert,
+            'confirmation_alert_prompt_warning': expected_warning,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
         }

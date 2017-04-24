@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-24 08:24-0500\n"
+"POT-Creation-Date: 2017-04-24 08:25-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -731,7 +731,7 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:239
+#: enterprise/views.py:239 enterprise/views.py:302
 #, python-brace-format
 msgid ""
 "If you do not consent to share your course data, that information may be "
@@ -742,11 +742,11 @@ msgstr ""
 msgid "your enrollment in this course"
 msgstr ""
 
-#: enterprise/views.py:255 enterprise/views.py:310
+#: enterprise/views.py:255 enterprise/views.py:316
 msgid "your learning progress"
 msgstr ""
 
-#: enterprise/views.py:256 enterprise/views.py:311
+#: enterprise/views.py:256 enterprise/views.py:317
 msgid "course completion"
 msgstr ""
 
@@ -765,7 +765,7 @@ msgid ""
 "your course data with {enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:309
+#: enterprise/views.py:315
 msgid "your enrollment in all sponsored courses"
 msgstr ""
 

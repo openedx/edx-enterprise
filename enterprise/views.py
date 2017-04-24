@@ -298,6 +298,12 @@ class GrantDataSharingPermissions(View):
             ).format(
                 enterprise_customer_name=customer.name
             ),
+            'confirmation_alert_prompt_warning': _(
+                'If you do not consent to share your course data, that information may be shared with '
+                '{enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=customer.name,
+            ),
             'page_language': get_language_from_request(request),
             'platform_name': platform_name,
             'enterprise_customer_name': customer.name,
