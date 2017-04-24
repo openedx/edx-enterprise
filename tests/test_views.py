@@ -8,12 +8,19 @@ import mock
 from pytest import mark, raises
 
 from django.core.urlresolvers import NoReverseMatch, reverse
+from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.utils import NotConnectedToEdX
-from enterprise.views import GrantDataSharingPermissions, HttpClientError
+from enterprise.views import (
+    CONFIRMATION_ALERT_PROMPT,
+    CONFIRMATION_ALERT_PROMPT_WARNING,
+    CONSENT_REQUEST_PROMPT,
+    GrantDataSharingPermissions,
+    HttpClientError,
+)
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
@@ -71,28 +78,38 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.views.redirect')
     @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_no_customer_404(
+    def test_get_no_customer_redirect(
             self,
             config_mock,
             get_ec_mock,
             render_mock,
+            redirect_mock,
             mock_url,
             mock_social,
             mock_quarantine,
             mock_lift,
     ):  # pylint: disable=unused-argument
         """
-        Test that we have the appropriate context when rendering the form.
+        Test that view redirects to login screen if it can't get an EnterpriseCustomer from the pipeline.
+
+        Note that this test needs to patch `django.shortcuts.redirect`.
+        This is because the target view ('signin_user') only exists in edx-platform.
         """
         config_mock.get_value.return_value = 'This Platform'
         get_ec_mock.return_value = None
+        redirect_url = '/fake/path'
+        mock_response = HttpResponseRedirect(redirect_url)
+        redirect_mock.return_value = mock_response
         client = Client()
         response = client.get(self.url)
-        assert response.status_code == 404
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+        redirect_mock.assert_called_once_with('signin_user')
 
+    @ddt.data(True, False)
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -102,6 +119,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     def test_get_render_patched(
             self,
+            enforces_data_sharing_consent,
             config_mock,
             get_ec_mock,
             render_mock,
@@ -111,72 +129,30 @@ class TestGrantDataSharingPermissions(TestCase):
             mock_lift,
     ):  # pylint: disable=unused-argument
         """
-        Test that we have the appropriate context when rendering the form.
+        Test that we have the appropriate context when rendering the form,
+        for both mandatory and optional data sharing consent.
         """
         config_mock.get_value.return_value = 'This Platform'
         fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=True)
+            enforces_data_sharing_consent=mock.MagicMock(return_value=enforces_data_sharing_consent)
         )
         fake_ec.name = 'Fake Customer Name'
         get_ec_mock.return_value = fake_ec
         client = Client()
         response = client.get(self.url)
-        expected_prompt = (
-            "To log in using this SSO identity provider and access special course offers, you must first "
-            "consent to share your learning achievements with Fake Customer Name."
+        expected_prompt = CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
+            enterprise_customer_name=fake_ec.name
         )
-        expected_alert = (
-            "In order to sign in and access special offers, you must consent to share your "
-            "course data with Fake Customer Name."
+        expected_alert = CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
+            enterprise_customer_name=fake_ec.name
         )
-        expected_context = {
-            'consent_request_prompt': expected_prompt,
-            'confirmation_alert_prompt': expected_alert,
-            'platform_name': 'This Platform',
-            'enterprise_customer_name': 'Fake Customer Name',
-        }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
-
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_render_patched_optional(
-            self,
-            config_mock,
-            get_ec_mock,
-            render_mock,
-            mock_url,
-            mock_social,
-            mock_quarantine,
-            mock_lift,
-    ):  # pylint: disable=unused-argument
-        """
-        Test that we have correct context for an optional form rendering.
-        """
-        config_mock.get_value.return_value = 'This Platform'
-        fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=False)
-        )
-        fake_ec.name = 'Fake Customer Name'
-        get_ec_mock.return_value = fake_ec
-        client = Client()
-        response = client.get(self.url)
-        expected_prompt = (
-            "To log in using this SSO identity provider and access special course offers, you must first "
-            "consent to share your learning achievements with Fake Customer Name."
-        )
-        expected_alert = (
-            "In order to sign in and access special offers, you must consent to share your "
-            "course data with Fake Customer Name."
+        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
+            enterprise_customer_name=fake_ec.name
         )
         expected_context = {
             'consent_request_prompt': expected_prompt,
             'confirmation_alert_prompt': expected_alert,
+            'confirmation_alert_prompt_warning': expected_warning,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
         }
@@ -186,29 +162,38 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.redirect')
     @mock.patch('enterprise.views.render_to_response')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_post_no_customer_404(
+    def test_post_no_customer_redirect(
             self,
             mock_get_ec,
             mock_get_rsa,
             mock_get_ec2,
             mock_url,
             mock_render,
+            mock_redirect,
             mock_config,
             mock_lift,
             mock_quarantine,
     ):  # pylint: disable=unused-argument
         """
-        Test that when there's no customer for the request, POST gives a 404.
+        Test that when there's no customer for the request, POST redirects to the login screen.
+
+        Note that this test needs to patch `django.shortcuts.redirect`.
+        This is because the target view ('signin_user') only exists in edx-platform.
         """
         mock_get_ec.return_value = None
+        redirect_url = '/fake/path'
+        mock_response = HttpResponseRedirect(redirect_url)
+        mock_redirect.return_value = mock_response
         client = Client()
         response = client.post(self.url)
-        assert response.status_code == 404
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+        mock_redirect.assert_called_once_with('signin_user')
 
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
@@ -448,20 +433,22 @@ class TestGrantDataSharingPermissions(TestCase):
             params['enterprise_id'] = str(enterprise_customer.uuid)
         response = self.client.get(self.url, data=params)
         assert response.status_code == 200
+        expected_prompt = (
+            'To access this course and use your discount, you must first consent to share your '
+            'learning achievements with <b>Starfleet Academy</b>.'
+        )
+        expected_alert = (
+            'In order to start this course and use your discount, <b>you must</b> consent to share your '
+            'course data with Starfleet Academy.'
+        )
+        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
+            enterprise_customer_name='Starfleet Academy'
+        )
         for key, value in {
                 "platform_name": "My Platform",
-                "consent_request_prompt": (
-                    'To access this course and use your discount, you must first consent to share your '
-                    'learning achievements with <b>Starfleet Academy</b>.'
-                ),
-                'confirmation_alert_prompt': (
-                    'In order to start this course and use your discount, <b>you must</b> consent to share your '
-                    'course data with Starfleet Academy.'
-                ),
-                'confirmation_alert_prompt_warning': (
-                    'If you do not consent to share your course data, that information may be shared with '
-                    'Starfleet Academy.'
-                ),
+                "consent_request_prompt": expected_prompt,
+                'confirmation_alert_prompt': expected_alert,
+                'confirmation_alert_prompt_warning': expected_warning,
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any My Platform courses or programs that '

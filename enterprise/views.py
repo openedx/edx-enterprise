@@ -40,6 +40,7 @@ except ImportError:
 
 
 # isort:imports-firstparty
+from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
 from enterprise.lms_api import CourseApiClient
 from enterprise.models import (
     EnterpriseCourseEnrollment,
@@ -235,10 +236,7 @@ class GrantDataSharingPermissions(View):
                 bold_start='<b>',
                 bold_end='</b>',
             ),
-            'confirmation_alert_prompt_warning': _(
-                'If you do not consent to share your course data, that information may be shared with '
-                '{enterprise_customer_name}.'
-            ).format(
+            'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name,
             ),
             'page_language': get_language_from_request(request),
@@ -269,10 +267,14 @@ class GrantDataSharingPermissions(View):
         # Get the OpenEdX platform name
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
 
-        # Get the EnterpriseCustomer for the request; raise an error if there isn't one.
+        # Get the EnterpriseCustomer for the request.
         customer = get_enterprise_customer_for_request(request)
         if customer is None:
-            raise Http404
+            # If we can't get an EnterpriseCustomer from the pipeline, then we don't really
+            # have enough state to do anything meaningful. Just send the user to the login
+            # screen; if they want to sign in with an Enterprise-linked SSO, they can do
+            # so, and the pipeline will get them back here if they need to be.
+            return redirect('signin_user')
 
         # Quarantine the user to this module.
         self.quarantine(request)
@@ -282,17 +284,14 @@ class GrantDataSharingPermissions(View):
         context_data = self.get_default_context(customer, platform_name)
 
         account_specific_context = {
-            'consent_request_prompt': _(
-                'To log in using this SSO identity provider and access special course offers, you must first '
-                'consent to share your learning achievements with {enterprise_customer_name}.'
-            ).format(
+            'consent_request_prompt': CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name
             ),
-            'confirmation_alert_prompt': _(
-                'In order to sign in and access special offers, you must consent to share your '
-                'course data with {enterprise_customer_name}.'
-            ).format(
+            'confirmation_alert_prompt': CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name
+            ),
+            'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
+                enterprise_customer_name=customer.name,
             ),
             'page_language': get_language_from_request(request),
             'platform_name': platform_name,
@@ -357,10 +356,14 @@ class GrantDataSharingPermissions(View):
         """
         self.lift_quarantine(request)
 
-        # Load the linked EnterpriseCustomer for this request. Return a 404 if no such EnterpriseCustomer exists
+        # Load the linked EnterpriseCustomer for this request.
         customer = get_enterprise_customer_for_request(request)
         if customer is None:
-            raise Http404
+            # If we can't get an EnterpriseCustomer from the pipeline, then we don't really
+            # have enough state to do anything meaningful. Just send the user to the login
+            # screen; if they want to sign in with an Enterprise-linked SSO, they can do
+            # so, and the pipeline will get them back here if they need to be.
+            return redirect('signin_user')
 
         # Attempt to retrieve a user being manipulated by the third-party auth
         # pipeline. Return a 404 if no such user exists.

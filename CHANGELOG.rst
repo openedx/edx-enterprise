@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.33.7] - 2017-04-24
+---------------------
+
+* Redirect to login instead of raising Http404 if EnterpriseCustomer missing.
+* Add confirmation_alert_prompt_warning to context of account-level consent view.
+
+
 [0.33.6] - 2017-04-21
 ---------------------
 
