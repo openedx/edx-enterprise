@@ -16,7 +16,8 @@ from slumber.exceptions import HttpNotFoundError
 from django.conf import settings
 
 from enterprise import lms_api
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdx
+
 
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
@@ -111,7 +112,7 @@ def test_get_enrolled_courses():
 
 
 def test_enroll_locally_raises():
-    with raises(NotConnectedToOpenEdX):
+    with raises(NotConnectedToOpenEdx):
         lms_api.enroll_user_in_course_locally(None, None, None)
 
 
@@ -205,7 +206,7 @@ def test_get_remote_id():
 
 
 def test_jwt_lms_api_client_locally_raises():
-    with raises(NotConnectedToOpenEdX):
+    with raises(NotConnectedToOpenEdx):
         client = lms_api.JwtLmsApiClient('user-goes-here')
         client.connect()
 
@@ -345,3 +346,7 @@ def test_get_course_certificate():
     client = lms_api.CertificatesApiClient('staff-user-goes-here')
     actual_response = client.get_course_certificate(course_id, username)
     assert actual_response == expected_response
+
+def test_enroll_locally_raises():
+    with raises(NotConnectedToOpenEdx):
+        lms_api.enroll_user_in_course_locally(None, None, None)

@@ -14,7 +14,7 @@ from pytest import raises
 from django.contrib.auth.models import User
 
 from enterprise.course_catalog_api import CourseCatalogApiClient
-from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
+from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdx
 
 
 class TestCourseCatalogApiInitialization(unittest.TestCase):
@@ -25,7 +25,7 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
     @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
     def test_raise_error_missing_course_discovery_api(self, *args):  # pylint: disable=unused-argument
         message = 'To get a Catalog API client, this package must be installed in an Open edX environment.'
-        with raises(NotConnectedToOpenEdX) as excinfo:
+        with raises(NotConnectedToOpenEdx) as excinfo:
             CourseCatalogApiClient(mock.Mock(spec=User))
         assert message == str(excinfo.value)
 
@@ -33,7 +33,7 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
     @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
     def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
         message = 'To get a CatalogIntegration object, this package must be installed in an Open edX environment.'
-        with raises(NotConnectedToOpenEdX) as excinfo:
+        with raises(NotConnectedToOpenEdx) as excinfo:
             CourseCatalogApiClient(mock.Mock(spec=User))
         assert message == str(excinfo.value)
 
@@ -41,7 +41,7 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
     @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
     def test_raise_error_missing_get_edx_api_data(self, *args):  # pylint: disable=unused-argument
         message = 'To parse a Catalog API response, this package must be installed in an Open edX environment.'
-        with raises(NotConnectedToOpenEdX) as excinfo:
+        with raises(NotConnectedToOpenEdx) as excinfo:
             CourseCatalogApiClient(mock.Mock(spec=User))
         assert message == str(excinfo.value)
 

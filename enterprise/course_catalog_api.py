@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX
+from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdx
 
 try:
     from openedx.core.djangoapps.api_admin.utils import course_discovery_api_client
@@ -40,17 +40,17 @@ class CourseCatalogApiClient(object):
         a higher level if the package doesn't have OpenEdX resources available.
         """
         if CatalogIntegration is None:
-            raise NotConnectedToOpenEdX(
+            raise NotConnectedToOpenEdx(
                 _("To get a CatalogIntegration object, this package must be "
                   "installed in an Open edX environment.")
             )
         if get_edx_api_data is None:
-            raise NotConnectedToOpenEdX(
+            raise NotConnectedToOpenEdx(
                 _("To parse a Catalog API response, this package must be "
                   "installed in an Open edX environment.")
             )
         if course_discovery_api_client is None:
-            raise NotConnectedToOpenEdX(
+            raise NotConnectedToOpenEdx(
                 _("To get a Catalog API client, this package must be "
                   "installed in an Open edX environment.")
             )

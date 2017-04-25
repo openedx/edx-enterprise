@@ -16,7 +16,7 @@ from slumber.exceptions import HttpNotFoundError
 from django.conf import settings
 from django.utils import timezone
 
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdx
 
 try:
     from opaque_keys.edx.keys import CourseKey
@@ -81,7 +81,7 @@ class JwtLmsApiClient(object):
         Connect to the REST API, authenticating with a JWT for the current user.
         """
         if JwtBuilder is None:
-            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
+            raise NotConnectedToOpenEdx("This package must be installed in an OpenEdX environment.")
 
         now = int(time())
         scopes = ['profile', 'email']
@@ -316,7 +316,7 @@ def enroll_user_in_course_locally(user, course_id, mode):
     can shift over to that, but for right now, we have to do it this way.
     """
     if CourseKey is None and CourseEnrollment is None:
-        raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
+        raise NotConnectedToOpenEdx("This package must be installed in an OpenEdX environment.")
     CourseEnrollment.enroll(user, CourseKey.from_string(course_id), mode=mode, check_access=True)
 
 
