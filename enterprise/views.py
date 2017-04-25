@@ -37,12 +37,14 @@ try:
         get_real_social_auth_object,
         lift_quarantine,
         quarantine_session,
+        get as get_partial_pipeline
     )
 except ImportError:
     get_complete_url = None
     get_real_social_auth_object = None
     quarantine_session = None
     lift_quarantine = None
+    get_partial_pipeline = None
 
 try:
     from util import organizations_helpers
@@ -61,7 +63,7 @@ from enterprise.models import (
 )
 from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_enterprise_customer_for_request
 from enterprise.utils import (
-    NotConnectedToEdX,
+    NotConnectedToOpenEdX,
     consent_necessary_for_course,
     enterprise_login_required,
     filter_audit_course_modes,
@@ -83,15 +85,21 @@ def verify_edx_resources():
     """
     Ensure that all necessary resources to render the view are present.
     """
-    required_methods = (
-        configuration_helpers,
-        get_enterprise_customer_for_request,
-        get_real_social_auth_object,
-        quarantine_session,
-        lift_quarantine
-    )
-    if any(method is None for method in required_methods):
-        raise NotConnectedToEdX(_('Methods in the Open edX platform necessary for this view are not available.'))
+    required_methods = {
+        'configuration_helpers': configuration_helpers,
+        'get_enterprise_customer_for_request': get_enterprise_customer_for_request,
+        'get_real_social_auth_object': get_real_social_auth_object,
+        'quarantine_session': quarantine_session,
+        'lift_quarantine': lift_quarantine,
+        'get_partial_pipeline': get_partial_pipeline,
+    }
+
+    for method in required_methods:
+        if required_methods[method] is None:
+            raise NotConnectedToOpenEdX(
+                _("The following method from the Open edX platform is necessary for this view but isn't available.")
+                + "\nUnavailable: {method}".format(method=method)
+            )
 
 
 class GrantDataSharingPermissions(View):
@@ -481,7 +489,7 @@ class GrantDataSharingPermissions(View):
         )
 
         # Resume auth pipeline
-        backend_name = request.session.get('partial_pipeline', {}).get('backend')
+        backend_name = get_partial_pipeline(request).get('backend')
         return redirect(get_complete_url(backend_name))
 
     def post(self, request):

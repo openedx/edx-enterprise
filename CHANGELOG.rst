@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.36.0] - 2017-06-20
+---------------------
+
+* Migrate from old, monolithic python-social-auth to latest, split version.
+* Rework the NotConnectedToOpenEdX exception to be just one, and to say which method/dependency is missing.
+
+
 [0.35.2] - 2017-06-20
 ---------------------
 
@@ -45,7 +52,7 @@ Unreleased
 
 
 [0.34.5] - 2017-06-09
-----------------------
+---------------------
 
 * Add Django 1.10 support back
 
@@ -69,13 +76,13 @@ Unreleased
 
 
 [0.34.1] - 2017-06-06
-----------------------
+---------------------
 
 * Bug fix for Data sharing consent pop up page.
 
 
 [0.34.0] - 2017-06-05
-----------------------
+---------------------
 
 * Update data backing and behavior of enterprise landing page
 * Fix template prioritization bug
