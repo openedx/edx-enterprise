@@ -222,9 +222,8 @@ class CourseCatalogApiClient(object):
         """
         default_val = default if default != self.DEFAULT_VALUE_SAFEGUARD else {}
         result = get_edx_api_data(
-            CatalogIntegration.current(),
-            self.user,
-            resource,
+            api_config=CatalogIntegration.current(),
+            resource=resource,
             api=self.client,
             **kwargs
         )

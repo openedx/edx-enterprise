@@ -83,10 +83,16 @@ class TestCourseCatalogApi(unittest.TestCase):
     @staticmethod
     def _get_important_parameters(get_data_mock):
         """
-        Return important (i.e. varying) parmaameters to get_edx_api_data
+        Return important (i.e. varying) parameters to get_edx_api_data
         """
         args, kwargs = get_data_mock.call_args
-        return args[2], kwargs.get('resource_id', None)
+
+        # This test is to make sure that all calls to get_edx_api_data are made using kwargs
+        # and there is no positional argument. This is required as changes in get_edx_api_data's
+        # signature are breaking edx-enterprise and using kwargs would reduce that.
+        assert args == ()
+
+        return kwargs.get('resource', None), kwargs.get('resource_id', None)
 
     @staticmethod
     def _make_course_run(key, *seat_types):
