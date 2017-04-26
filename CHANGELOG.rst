@@ -14,10 +14,17 @@ Change Log
 Unreleased
 ----------
 
+[0.33.9] - 2017-04-26
+---------------------
+
+* Fix enterprise logo validation message for max image size limit
+
+
 [0.33.8] - 2017-04-26
 ---------------------
 
 * Updated calls to get_edx_api_data as its signature has changed in openedx.
+
 
 [0.33.7] - 2017-04-24
 ---------------------

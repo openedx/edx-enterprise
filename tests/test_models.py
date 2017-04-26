@@ -752,8 +752,11 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         )
 
         if not is_valid_image_size:
-            with self.assertRaises(ValidationError):
+            with self.assertRaises(ValidationError) as validation_error:
                 branding_configuration.full_clean()
+
+            expected_validation_message = 'The logo image file size must be less than or equal to 512 KB.'
+            self.assertEqual(validation_error.exception.messages[0], expected_validation_message)
         else:
             branding_configuration.full_clean()  # exception here will fail the test
 
