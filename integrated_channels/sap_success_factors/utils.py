@@ -10,7 +10,7 @@ from logging import getLogger
 
 from django.apps import apps
 from django.utils import timezone
-from six.moves.urllib.parse import urlunparse  # pylint: disable=import-error,wrong-import-order
+from six.moves.urllib.parse import urlencode, urlunparse  # pylint: disable=import-error,wrong-import-order
 
 from enterprise.django_compatibility import reverse
 from enterprise.lms_api import parse_lms_api_datetime
@@ -285,8 +285,12 @@ def get_course_track_selection_url(enterprise_customer, course_id):
     """
     netloc = enterprise_customer.site.domain
     scheme = COURSE_URL_SCHEME
+    if enterprise_customer.identity_provider:
+        tpa_hint = urlencode({'tpa_hint': enterprise_customer.identity_provider})
+    else:
+        tpa_hint = ''
     path = reverse('course_modes_choose', args=[course_id])
-    return urlunparse((scheme, netloc, path, None, None, None))
+    return urlunparse((scheme, netloc, path, None, tpa_hint, None))
 
 
 def parse_datetime_to_epoch(datestamp):

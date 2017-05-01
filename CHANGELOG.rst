@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.33.11] - 2017-05-02
+----------------------
+
+* Add tpa hint if available for launchURLs for SAP Course metadata push.
+
 [0.33.10] - 2017-05-02
 ----------------------
 
