@@ -400,6 +400,15 @@ class TestEnterpriseAPIViews(APITest):
             True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
             [], {"entitlements": []},
         ),
+        (
+            True, EnterpriseCustomer.EXTERNALLY_MANAGED, UserDataSharingConsentAudit.EXTERNALLY_MANAGED,
+            [1, 2, 3],
+            {"entitlements": [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ]},
+        ),
     )
     @ddt.unpack
     def test_enterprise_learner_entitlements(

@@ -155,6 +155,33 @@ class TestTpaPipeline(unittest.TestCase):
                 enterprise_customer=enterprise_customer,
                 user_id=self.user.id
             ).count() == 1
+            assert UserDataSharingConsentAudit.objects.filter(
+                user__user_id=self.user.id,
+                user__enterprise_customer=enterprise_customer,
+            ).count() == 0
+
+    @mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline')
+    def test_handle_enterprise_logistration_consent_externally_managed(self, fake_get_ec):
+        """
+        Test that when consent is externally managed, we create an EnterpriseCustomerUser and
+        UserDataSharingConsentAudit object, then return.
+        """
+        backend = mock.MagicMock()
+        enterprise_customer = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent=EnterpriseCustomer.EXTERNALLY_MANAGED
+        )
+        fake_get_ec.return_value = enterprise_customer
+        assert handle_enterprise_logistration(backend, self.user) is None
+        assert EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=enterprise_customer,
+            user_id=self.user.id
+        ).count() == 1
+        assert UserDataSharingConsentAudit.objects.filter(
+            user__user_id=self.user.id,
+            user__enterprise_customer=enterprise_customer,
+            state=UserDataSharingConsentAudit.EXTERNALLY_MANAGED
+        ).count() == 1
 
     def test_handle_enterprise_logistration_consent_not_required_for_existing_enterprise_user(self):
         """
@@ -179,6 +206,10 @@ class TestTpaPipeline(unittest.TestCase):
                 enterprise_customer=enterprise_customer,
                 user_id=self.user.id
             ).count() == 1
+            assert UserDataSharingConsentAudit.objects.filter(
+                user__user_id=self.user.id,
+                user__enterprise_customer=enterprise_customer,
+            ).count() == 0
 
     def test_handle_enterprise_logistration_consent_required(self):
         """
