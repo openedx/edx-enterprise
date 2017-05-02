@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.33.10] - 2017-05-02
+----------------------
+
+* Fix bug with inactivating SAP courses that are no longer in the catalog.
+
 [0.33.9] - 2017-04-26
 ---------------------
 
