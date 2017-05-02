@@ -68,20 +68,33 @@ class TestSapSuccessFactorsUtils(unittest.TestCase):
             'https',
             'example.com',
             'course-v1:edX+DemoX+Demo_Course',
-            'https://example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/',
+            'some_idp',
+            'https://example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/?tpa_hint=some_idp',
         ),
         (
             'ftp',
             'otherdomain.com',
             'course-v1:Starfleet+Phaser101+Spring_2017',
+            None,
             'ftp://otherdomain.com/course_modes/choose/course-v1:Starfleet+Phaser101+Spring_2017/',
         )
     )
     @ddt.unpack
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
-    def test_get_course_track_selection_url(self, scheme, domain, course_id, expected_url, reverse_mock):
+    def test_get_course_track_selection_url(
+            self,
+            scheme,
+            domain,
+            course_id,
+            identity_provider,
+            expected_url,
+            reverse_mock
+    ):
         reverse_mock.return_value = '/course_modes/choose/{}/'.format(course_id)
         with mock.patch('integrated_channels.sap_success_factors.utils.COURSE_URL_SCHEME', scheme):
-            enterprise_customer = mock.MagicMock(site=mock.MagicMock(domain=domain))
+            enterprise_customer = mock.MagicMock(
+                site=mock.MagicMock(domain=domain),
+                identity_provider=identity_provider
+            )
             assert get_course_track_selection_url(enterprise_customer, course_id) == expected_url
             reverse_mock.assert_called_once_with('course_modes_choose', args=[course_id])
