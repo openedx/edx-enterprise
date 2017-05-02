@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals
 
 import ddt
 import mock
+from dateutil.parser import parse
 from pytest import mark, raises
 
 from django.core.urlresolvers import NoReverseMatch, reverse
@@ -865,3 +866,269 @@ class TestPushCatalogDataToIntegratedChannel(TestCase):
             self.fail("Should have raised NotImplementedError")
         except NotImplementedError:
             pass
+
+
+@mark.django_db
+@ddt.ddt
+class TestCourseEnrollmentView(TestCase):
+    """
+    Test CourseEnrollmentView.
+    """
+
+    def setUp(self):
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.client = Client()
+        self.demo_course_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.dummy_demo_course_details_data = {
+            'name': 'edX Demo Course',
+            'id': self.demo_course_id,
+            'course_id': self.demo_course_id,
+            'start': '2015-01-01T00:00:00Z',
+            'start_display': 'Jan. 1, 2015',
+            'end': None,
+            'media': {
+                'image': {
+                    'small': 'http://localhost:8000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@11-132x-blog.jpg',
+                    'raw': 'http://localhost:8000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@11-132x-blog.jpg',
+                    'large': 'http://localhost:8000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@11-132x-blog.jpg'
+                },
+                'course_video': {
+                    'uri': None
+                },
+                'course_image': {
+                    'uri': '/asset-v1:edX+DemoX+Demo_Course+type@asset+block@11-132x-blog.jpg'
+                },
+            },
+            'pacing': u'instructor',
+            'short_description': u'',
+            'org': u'edX',
+        }
+        super(TestCourseEnrollmentView, self).setUp()
+
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent(
+            self,
+            course_api_client_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,
+            render_to_response_mock,    # pylint: disable=unused-argument
+    ):
+        course_id = self.demo_course_id
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        response = self.client.get(enterprise_landing_page_url)
+        assert response.status_code == 200
+        expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Choose Your Track',
+            'course_id': course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': self.dummy_demo_course_details_data['pacing'].title(),
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
+            'enterprise_customer': enterprise_customer,
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'course_pace_text': 'Paced',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'enroll_text': 'Enroll',
+            'audit_text': 'Audit',
+            'price_text': 'Price',
+            'free_price_text': 'FREE',
+            'discount_text': 'Discount provided by Starfleet Academy',
+            'not_eligible_for_certificate_text': (
+                'Not eligible for a certificate; does not count toward a MicroMasters'
+            ),
+            'continue_link_text': 'Continue',
+        }
+        for key, value in expected_context.items():
+            assert response.context[key] == value  # pylint: disable=no-member
+
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_with_no_start_date(
+            self,
+            course_api_client_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,
+            render_to_response_mock,    # pylint: disable=unused-argument
+    ):
+        """
+        Verify that the context of the enterprise course enrollment page has
+        empty course start date if course details has no start date.
+        """
+        course_id = self.demo_course_id
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        dummy_demo_course_details_data = self.dummy_demo_course_details_data
+        dummy_demo_course_details_data['start'] = ''
+        client.get_course_details.return_value = dummy_demo_course_details_data
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        course_enrollment_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        response = self.client.get(course_enrollment_page_url)
+        assert response.status_code == 200
+        expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Choose Your Track',
+            'course_id': course_id,
+            'course_start_date': '',
+        }
+        for key, value in expected_context.items():
+            assert response.context[key] == value  # pylint: disable=no-member
+
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_for_non_existing_course(
+            self,
+            course_api_client_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,
+            render_to_response_mock,    # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user will see HTTP 404 (Not Found) in case of invalid
+        or non existing course.
+        """
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = None
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        course_enrollment_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+        response = self.client.get(course_enrollment_page_url)
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_for_error_in_getting_course(
+            self,
+            course_api_client_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,
+            render_to_response_mock,    # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user will see HTTP 404 (Not Found) in case of error while
+        getting the course details from CourseApiClient.
+        """
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        client.get_course_details.side_effect = HttpClientError
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        course_enrollment_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+        response = self.client.get(course_enrollment_page_url)
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_for_invalid_ec_uuid(
+            self,
+            course_api_client_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,
+            render_to_response_mock,    # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user will see HTTP 404 (Not Found) in case of invalid
+        enterprise customer uuid.
+        """
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        self._login()
+        course_enrollment_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=['some-fake-enterprise-customer-uuid', self.demo_course_id],
+        )
+        response = self.client.get(course_enrollment_page_url)
+        assert response.status_code == 404

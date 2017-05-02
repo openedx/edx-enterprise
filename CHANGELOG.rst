@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.12] - 2017-05-03
+----------------------
+
+* Add enterprise landing page
+
+
 [0.33.11] - 2017-05-02
 ----------------------
 
@@ -23,6 +29,7 @@ Unreleased
 ----------------------
 
 * Fix bug with inactivating SAP courses that are no longer in the catalog.
+
 
 [0.33.9] - 2017-04-26
 ---------------------

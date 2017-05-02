@@ -3,6 +3,10 @@ User-facing views for the Enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+from logging import getLogger
+from uuid import UUID
+
+from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
@@ -52,6 +56,9 @@ from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_e
 from enterprise.utils import NotConnectedToEdX, consent_necessary_for_course
 
 
+logger = getLogger(__name__)  # pylint: disable=invalid-name
+
+
 def verify_edx_resources():
     """
     Ensure that all necessary resources to render the view are present.
@@ -59,7 +66,7 @@ def verify_edx_resources():
     required_methods = (
         render_to_response,
         configuration_helpers,
-        get_complete_url,
+        get_enterprise_customer_for_request,
         get_real_social_auth_object,
         quarantine_session,
         lift_quarantine
@@ -416,3 +423,118 @@ class GrantDataSharingPermissions(View):
             # We're handing consent only for a particular course
             return self.post_course_specific_consent(request, specific_course, consent_provided)
         return self.post_account_consent(request, consent_provided)
+
+
+class CourseEnrollmentView(View):
+    """
+    Enterprise landing page view.
+
+    This view will display the course mode selection with related enterprise
+    information.
+    """
+
+    context_data = {
+        'page_title': _('Choose Your Track'),
+        'enterprise_welcome_text': _(
+            "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
+            "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
+            "opportunities from the world's best universities."
+        ),
+        'confirmation_text': _('Confirm your course'),
+        'starts_at_text': _('Starts'),
+        'course_pace_text': _('Paced'),
+        'view_course_details_text': _('View Course Details'),
+        'select_mode_text': _('Please select one:'),
+        'enroll_text': _('Enroll'),
+        'audit_text': _('Audit'),
+        'price_text': _('Price'),
+        'free_price_text': _('FREE'),
+        'discount_text': _('Discount provided by {enterprise_customer_name}'),
+        'not_eligible_for_cert_text': _(
+            'Not eligible for a certificate; does not count toward a MicroMasters'
+        ),
+        'continue_link_text': _('Continue'),
+    }
+
+    def get_enterprise_course_enrollment_page(self, request, enterprise_uuid, course_id):
+        """
+        Render enterprise specific course track selection page.
+
+        A 404 will be raised if any of the following conditions are met:
+            * Course details are not found against the provided course id.
+            * No enterprise customer uuid querystring "ec_uuid" in the request.
+            * No enterprise customer against the enterprise customer uuid in
+                the request querystring.
+
+        """
+        try:
+            client = CourseApiClient()
+            course_details = client.get_course_details(course_id)
+        except HttpClientError:
+            logger.error('Failed to get course details for course ID: %s', course_id)
+            raise Http404
+
+        if course_details is None:
+            logger.error('Unable to find course details for course ID: %s', course_id)
+            raise Http404
+
+        try:
+            enterprise_uuid = UUID(enterprise_uuid)
+            # pylint: disable=no-member
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
+        except (ValueError, EnterpriseCustomer.DoesNotExist):
+            logger.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
+            raise Http404
+
+        platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
+        course_start_date = ''
+        if course_details['start']:
+            course_start_date = parse(course_details['start']).strftime('%B %d, %Y')
+
+        context_data = {
+            'page_title': self.context_data['page_title'],
+            'page_language': get_language_from_request(request),
+            'platform_name': configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME),
+            'course_id': course_id,
+            'course_name': course_details['name'],
+            'course_organization': course_details['org'],
+            'course_short_description': course_details['short_description'],
+            'course_pacing': course_details['pacing'].title(),
+            'course_start_date': course_start_date,
+            'course_image_uri': course_details['media']['course_image']['uri'],
+            'enterprise_customer': enterprise_customer,
+            'enterprise_welcome_text': self.context_data['enterprise_welcome_text'].format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                strong_start='<strong>',
+                strong_end='</strong>',
+            ),
+            'confirmation_text': self.context_data['confirmation_text'],
+            'starts_at_text': self.context_data['starts_at_text'],
+            'course_pace_text': self.context_data['course_pace_text'],
+            'view_course_details_text': self.context_data['view_course_details_text'],
+            'select_mode_text': self.context_data['select_mode_text'],
+            'enroll_text': self.context_data['enroll_text'],
+            'audit_text': self.context_data['audit_text'],
+            'price_text': self.context_data['price_text'],
+            'free_price_text': self.context_data['free_price_text'],
+            'discount_text': self.context_data['discount_text'].format(
+                enterprise_customer_name=enterprise_customer.name,
+            ),
+            'not_eligible_for_certificate_text': self.context_data['not_eligible_for_cert_text'],
+            'continue_link_text': self.context_data['continue_link_text'],
+        }
+        return render_to_response('enterprise_course_enrollment_page.html', context_data, request=request)
+
+    @method_decorator(login_required)
+    def get(self, request, enterprise_uuid, course_id):
+        """
+        Show course track selection page for the enterprise.
+
+        Based on `enterprise_uuid` in URL, the view will decide which
+        enterprise customer's course enrollment page is to use.
+        """
+        # Verify that all necessary resources are present
+        verify_edx_resources()
+
+        return self.get_enterprise_course_enrollment_page(request, enterprise_uuid, course_id)
