@@ -119,6 +119,13 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    contact_email = models.EmailField(
+        blank=True,
+        help_text=_(
+            "Optional contact email that is displayed to learners."
+        )
+    )
+
     @property
     def identity_provider(self):
         """

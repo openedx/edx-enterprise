@@ -146,6 +146,7 @@ class TestEnterpriseAPIViews(APITest):
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
+                'contact_email': '',
             }],
         ),
         (
@@ -171,7 +172,6 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_login',
                 'enterprise_customer__site__domain': 'example.com', 'enterprise_customer__site__name': 'example.com',
-
             }],
             [{
                 'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent': [],
@@ -183,6 +183,7 @@ class TestEnterpriseAPIViews(APITest):
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },
+                    'contact_email': '',
                 }
             }],
         ),

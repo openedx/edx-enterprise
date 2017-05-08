@@ -144,6 +144,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "site",
                 "enable_data_sharing_consent",
                 "enforce_data_sharing_consent",
+                "contact_email",
             ]
         ),
         (
