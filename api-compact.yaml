@@ -101,7 +101,7 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration
-            uri: "https://${stageVariables.enterprise_host}/v1/catalogs/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/v1/catalogs/"
 
     # /v1/catalogs/{id}
     enterpriseCatalogById:
@@ -114,7 +114,7 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_parameter
-            uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/v1/catalogs/{id}/"
 
     # /v1/catalogs/{id}/courses
     enterpriseCatalogCourses:
@@ -130,4 +130,4 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_parameter
-            uri: "https://${stageVariables.enterprise_host}/v1/catalogs/{id}/courses/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/v1/catalogs/{id}/courses/"
