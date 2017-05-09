@@ -1,0 +1,85 @@
+<%namespace name='static' file='/static_content.html'/>
+
+<%static:css group='style-vendor'/>
+<%! main_css = "style-main-v2" %>
+<%static:css group='${self.attr.main_css}'/>
+
+<%!
+from django.utils.translation import ugettext as _
+%>
+
+<html lang="${ page_language }">
+  <title>${ page_title } | ${ platform_name }</title>
+  <head>
+    <link rel="stylesheet" href="${static.url('css/vendor/font-awesome.css')}"/>
+    <link rel="stylesheet" href="${static.url('enterprise/enterprise_course_enrollment_page.css')}"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  </head>
+  <body>
+
+    <header class="logo-container" aria-label="${ page_title }">
+      <h1>
+        <img src="${static.url('images/logo.png')}" alt="${ platform_name }"/>
+      </h1>
+    </header>
+    <hr class="pinstripe"/>
+
+    <div class="enterprise-container">
+      <div class="row">
+        <div class="col-3">
+          <img class="enterprise-logo" src="${ enterprise_customer.branding_configuration.logo.url }" alt="${ enterprise_customer.name }"/>
+          <div class="partnered-text">
+            ${ enterprise_welcome_text }
+          </div>
+        </div>
+        <div class="col-7 border-left">
+          <h3 class="course-confirmation-title">${ confirmation_text }</h3>
+          <div class="media">
+            <div class="thumbnail">
+              <img class="course-image" src="${ course_image_uri }" alt="${ course_name }"/>
+            </div>
+            <div class="media-content">
+              <div class="course-title">${ course_name }</div>
+            </div>
+          </div>
+          <div class="course-detail">
+            <div class="course-org">
+              ${ course_organization }
+            </div>
+            <div class="course-info">
+              <i class="fa fa-clock-o" aria-hidden="true"></i>
+              <span>${ starts_at_text } ${ course_start_date } &nbsp;| &nbsp; ${ course_pacing } - ${ course_pace_text }</span>
+            </div>
+            ${ course_short_description }
+            <a href="#!">${ view_course_details_text }</a>
+          </div>
+          <form>
+            <div class="caption">${ select_mode_text }</div>
+            <div class="radio-block">
+              <div class="radio">
+                <input type="radio" name="data_sharing_consent" id="radio1" checked="checked"/>
+              </div>
+              <label for="radio1">
+                <strong class="title">${ enroll_text }</strong>
+                <span class="price">${ price_text }: <strike>$200</strike> $190</span>
+                ${ discount_text }
+              </label>
+            </div>
+            <div class="radio-block">
+              <div class="radio">
+                <input type="radio" name="data_sharing_consent" id="radio2"/>
+              </div>
+              <label for="radio2">
+                <strong class="title">${ audit_text }</strong>
+                <span class="price">${ price_text }: ${ free_price_text }</span>
+                ${ not_eligible_for_certificate_text }
+              </label>
+            </div>
+            <button class="btn-continue">${ continue_link_text }</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>

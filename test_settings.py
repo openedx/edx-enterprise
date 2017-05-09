@@ -119,4 +119,8 @@ ENTERPRISE_SERVICE_WORKER_USERNAME = 'enterprise_worker'
 
 ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE = 512   # Enterprise logo image size limit in KB's
 
+# These are standard regexes for pulling out info like course_ids, usage_ids, etc.
+COURSE_KEY_PATTERN = r'(?P<course_key_string>[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+)'
+COURSE_ID_PATTERN = COURSE_KEY_PATTERN.replace('course_key_string', 'course_id')
+
 USE_TZ = True
