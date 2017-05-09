@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.33.16] - 2017-05-15
+----------------------
+
+* Bug fixes for SAP learner completion data passback.
+
 [0.33.15] - 2017-05-10
 ----------------------
 

@@ -209,7 +209,7 @@ class ThirdPartyAuthApiClient(LmsApiClient):
             string or None: the remote name of the given user.  None if not found.
         """
         try:
-            returned = self.client.providers(identity_provider).users(username).get()
+            returned = self.client.providers(identity_provider).users.get(username=username)
             results = returned.get('results', [])
         except HttpNotFoundError:
             LOGGER.error('remote_id not found for third party provider=%s, username=%s', identity_provider, username)
