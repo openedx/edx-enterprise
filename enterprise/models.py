@@ -92,10 +92,12 @@ class EnterpriseCustomer(TimeStampedModel):
     DATA_CONSENT_OPTIONAL = 'optional'
     AT_LOGIN = 'at_login'
     AT_ENROLLMENT = 'at_enrollment'
+    EXTERNALLY_MANAGED = 'externally_managed'
     DATA_SHARING_CONSENT_CHOICES = (
         (DATA_CONSENT_OPTIONAL, 'Optional'),
         (AT_LOGIN, 'At Login'),
         (AT_ENROLLMENT, 'At Enrollment'),
+        (EXTERNALLY_MANAGED, 'Managed externally')
     )
 
     enable_data_sharing_consent = models.BooleanField(
@@ -158,7 +160,7 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Determine whether the enterprise customer has enabled the data sharing consent request.
         """
-        return self.enable_data_sharing_consent
+        return self.enable_data_sharing_consent and self.enforce_data_sharing_consent != self.EXTERNALLY_MANAGED
 
 
 class EnterpriseCustomerUserManager(models.Manager):
@@ -589,11 +591,18 @@ class UserDataSharingConsentAudit(TimeStampedModel):
     NOT_SET = 'not_set'
     ENABLED = 'enabled'
     DISABLED = 'disabled'
+    EXTERNALLY_MANAGED = 'external'
     STATE_CHOICES = (
         (NOT_SET, 'Not set'),
         (ENABLED, 'Enabled'),
         (DISABLED, 'Disabled'),
+        (EXTERNALLY_MANAGED, 'Managed Externally'),
     )
+
+    ENABLED_STATES = [
+        ENABLED,
+        EXTERNALLY_MANAGED,
+    ]
 
     user = models.ForeignKey(EnterpriseCustomerUser, related_name='data_sharing_consent')
 
@@ -615,7 +624,7 @@ class UserDataSharingConsentAudit(TimeStampedModel):
         """
         Determine whether the user has enabled data sharing.
         """
-        return self.state == self.ENABLED
+        return self.state in self.ENABLED_STATES
 
     def __str__(self):
         """

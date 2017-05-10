@@ -139,6 +139,13 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
         )
         assert self.enrollment.consent_available() is False
 
+    def test_consent_not_stored_audit_available_externally_managed(self):
+        UserDataSharingConsentAuditFactory(
+            user=self.enterprise_customer_user,
+            state='external',
+        )
+        assert self.enrollment.consent_available() is True
+
     def test_consent_not_stored_no_audit_available(self):
         assert self.enrollment.consent_available() is False
 
@@ -571,6 +578,14 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         (True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED, [], []),
         (True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED, [], []),
         (True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET, [], []),
+        (
+            True, EnterpriseCustomer.EXTERNALLY_MANAGED, UserDataSharingConsentAudit.EXTERNALLY_MANAGED, [1, 2, 3],
+            [
+                {"entitlement_id": 1, "requires_consent": False},
+                {"entitlement_id": 2, "requires_consent": False},
+                {"entitlement_id": 3, "requires_consent": False},
+            ],
+        ),
     )
     @ddt.unpack
     def test_entitlements(

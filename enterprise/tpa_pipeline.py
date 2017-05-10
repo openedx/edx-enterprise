@@ -142,10 +142,21 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     if not enterprise_customer.requests_data_sharing_consent:
         # This enterprise customer attached to this pipeline element does not request data sharing consent;
         # proceed with the creation of a link between the user and the enterprise customer, then exit.
-        EnterpriseCustomerUser.objects.get_or_create(
+        ec_user, _ = EnterpriseCustomerUser.objects.get_or_create(
             enterprise_customer=enterprise_customer,
             user_id=user.id
         )
+
+        if (enterprise_customer.enforce_data_sharing_consent == EnterpriseCustomer.EXTERNALLY_MANAGED
+                and enterprise_customer.enable_data_sharing_consent):
+
+            UserDataSharingConsentAudit.objects.update_or_create(
+                user=ec_user,
+                defaults={
+                    'state': UserDataSharingConsentAudit.EXTERNALLY_MANAGED,
+                }
+            )
+
         return
 
     try:
