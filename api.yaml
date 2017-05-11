@@ -76,7 +76,7 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/v1/catalogs/{id}/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/"
     enterpriseCatalogCourses:
       get:
         operationId: get_enterprise_catalog_courses
@@ -140,7 +140,7 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/v1/catalogs/{id}/courses/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"
     enterpriseCatalogs:
       get:
         operationId: get_enterprise_catalogs
@@ -204,4 +204,4 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/v1/catalogs/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/"
