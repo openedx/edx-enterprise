@@ -6,10 +6,15 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
+import ddt
 import mock
 from pytest import mark, raises
 
+from django.contrib import messages
+from django.contrib.messages.storage import fallback
+from django.contrib.sessions.backends import cache
 from django.http import HttpResponseRedirect
+from django.test import RequestFactory
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.tpa_pipeline import (
@@ -25,6 +30,7 @@ from enterprise.utils import NotConnectedToEdX
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 
 
+@ddt.ddt
 @mark.django_db
 class TestTpaPipeline(unittest.TestCase):
     """
@@ -36,6 +42,63 @@ class TestTpaPipeline(unittest.TestCase):
         self.customer = ecidp.enterprise_customer
         self.user = UserFactory(is_active=True)
         super(TestTpaPipeline, self).setUp()
+
+    def get_mocked_sso_backend(self):
+        """
+        Get a mocked request backend with mocked strategy.
+        """
+        request_factory = RequestFactory()
+        request = request_factory.get('/')
+        request.session = cache.SessionStore()
+        # Monkey-patch storage for messaging;   pylint: disable=protected-access
+        request._messages = fallback.FallbackStorage(request)
+
+        strategy_mock = mock.MagicMock(request=request)
+        backend = mock.MagicMock(
+            name=None,
+            strategy=strategy_mock,
+        )
+        return backend
+
+    def _assert_request_message(self, request_message, expected_message_tags, expected_message_text):
+        """
+        Verify the request message tags and text.
+        """
+        self.assertEqual(request_message.tags, expected_message_tags)
+        self.assertEqual(request_message.message, expected_message_text)
+
+    def _assert_enterprise_linking_messages(self, request, user_is_active=True):
+        """
+        Verify request messages for a learner when he/she is linked with an
+        enterprise depending on whether the learner has activated the linked
+        account.
+        """
+        request_messages = [msg for msg in messages.get_messages(request)]
+        if user_is_active:
+            # Verify that request contains the expected success message when a
+            # learner with activated account is linked with an enterprise
+            self.assertEqual(len(request_messages), 1)
+            self._assert_request_message(
+                request_messages[0],
+                'success',
+                '<span>Account created</span> Thank you for creating an account with edX.'
+            )
+        else:
+            # Verify that request contains the expected success message and an
+            # info message when a learner with unactivated account is linked
+            # with an enterprise.
+            self.assertEqual(len(request_messages), 2)
+            self._assert_request_message(
+                request_messages[0],
+                'success',
+                '<span>Account created</span> Thank you for creating an account with edX.'
+            )
+            self._assert_request_message(
+                request_messages[1],
+                'info',
+                '<span>Activate your account</span> Check your inbox for an activation email. '
+                'You will not be able to log back into your account until you have activated it.'
+            )
 
     def test_get_ec_for_request(self):
         """
@@ -134,17 +197,25 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that when there's no pipeline, we do nothing, then return.
         """
-        backend = mock.MagicMock(name=None)
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = None
             assert handle_enterprise_logistration(backend, self.user) is None
             assert EnterpriseCustomerUser.objects.count() == 0
 
-    def test_handle_enterprise_logistration_consent_not_required(self):
+    @mock.patch('enterprise.tpa_pipeline.configuration_helpers')
+    @ddt.data(False, True)
+    def test_handle_enterprise_logistration_consent_not_required(
+            self,
+            user_is_active,
+            configuration_helpers_mock,
+    ):
         """
         Test that when consent isn't required, we create an EnterpriseCustomerUser, then return.
         """
-        backend = mock.MagicMock(name=None)
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        backend = self.get_mocked_sso_backend()
+        self.user = UserFactory(is_active=user_is_active)
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             enterprise_customer = EnterpriseCustomerFactory(
                 enable_data_sharing_consent=False
@@ -160,13 +231,23 @@ class TestTpaPipeline(unittest.TestCase):
                 user__enterprise_customer=enterprise_customer,
             ).count() == 0
 
+            # Now verify that request contains the expected messages when a
+            # learner is linked with an enterprise
+            self._assert_enterprise_linking_messages(backend.strategy.request, user_is_active)
+
+    @mock.patch('enterprise.tpa_pipeline.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline')
-    def test_handle_enterprise_logistration_consent_externally_managed(self, fake_get_ec):
+    def test_handle_enterprise_logistration_consent_externally_managed(
+            self,
+            fake_get_ec,
+            configuration_helpers_mock,
+    ):
         """
         Test that when consent is externally managed, we create an EnterpriseCustomerUser and
         UserDataSharingConsentAudit object, then return.
         """
-        backend = mock.MagicMock()
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        backend = self.get_mocked_sso_backend()
         enterprise_customer = EnterpriseCustomerFactory(
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent=EnterpriseCustomer.EXTERNALLY_MANAGED
@@ -183,12 +264,17 @@ class TestTpaPipeline(unittest.TestCase):
             state=UserDataSharingConsentAudit.EXTERNALLY_MANAGED
         ).count() == 1
 
-    def test_handle_enterprise_logistration_consent_not_required_for_existing_enterprise_user(self):
+    @mock.patch('enterprise.tpa_pipeline.configuration_helpers')
+    def test_handle_enterprise_logistration_consent_not_required_for_existing_enterprise_user(
+            self,
+            configuration_helpers_mock,
+    ):
         """
         Test that when consent isn't required and learner is already linked,
-        we simply return the exi    sting EnterpriseCustomerUser.
+        we simply return the existing EnterpriseCustomerUser.
         """
-        backend = mock.MagicMock(name=None)
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             enterprise_customer = EnterpriseCustomerFactory(
                 enable_data_sharing_consent=False
@@ -215,7 +301,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that when consent is required, we redirect to the consent page.
         """
-        backend = mock.MagicMock(name=None)
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer
             assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
@@ -224,7 +310,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that when consent is optional, but requested, we redirect to the consent page.
         """
-        backend = mock.MagicMock(name=None)
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             self.customer.enforce_data_sharing_consent = EnterpriseCustomer.DATA_CONSENT_OPTIONAL
             fake_get_ec.return_value = self.customer
@@ -234,7 +320,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that when consent is required at enrollment, but optional at logistration, we redirect to the consent page.
         """
-        backend = mock.MagicMock(name=None)
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             self.customer.enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
             fake_get_ec.return_value = self.customer
@@ -244,7 +330,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that when consent has been previously been declined, we redirect to the consent page.
         """
-        backend = mock.MagicMock(name=None)
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer
             ec_user = EnterpriseCustomerUser.objects.create(
@@ -260,7 +346,7 @@ class TestTpaPipeline(unittest.TestCase):
         """
         Test that when consent has been provided, we return and allow the pipeline to proceed.
         """
-        backend = mock.MagicMock(name=None)
+        backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_ec_for_running_pipeline') as fake_get_ec:
             fake_get_ec.return_value = self.customer
             ec_user = EnterpriseCustomerUser.objects.create(

@@ -17,10 +17,13 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 from integrated_channels.sap_success_factors.utils import SapCourseExporter
 from pytest import mark, raises
 
+from django.contrib.auth.models import AnonymousUser
 from django.core import mail
-from django.test import override_settings
+from django.http import Http404
+from django.test import RequestFactory, override_settings
 
 from enterprise import utils
+from enterprise.django_compatibility import reverse
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -95,6 +98,15 @@ class TestEnterpriseUtils(unittest.TestCase):
             str or unicode
         """
         return str(value) if six.PY2 else value
+
+    @staticmethod
+    def mock_view_function():
+        """
+        Return mock function for views that are decorated.
+        """
+        view_function = mock.Mock()
+        view_function.__name__ = str('view_function') if six.PY2 else 'view_function'
+        return view_function
 
     def test_get_idp_choices(self):
         """
@@ -987,6 +999,76 @@ class TestEnterpriseUtils(unittest.TestCase):
         exporter = BaseCourseExporter(mock_user, mock_plugin_configuration)
         with raises(NotImplementedError):
             exporter.get_serialized_data()
+
+    @ddt.data(
+        {},  # Missing required parameter `enterprise_uuid` arguments in kwargs
+        {'enterprise_uuid': ''},  # Required parameter `enterprise_uuid` with empty value in kwargs.
+        {'enterprise_uuid': FakerFactory.create().uuid4()},  # Invalid value of `enterprise_uuid` in kwargs.
+    )
+    def test_enterprise_login_required_raises_404(self, kwargs):
+        """
+        Test that the decorator `enterprise_login_required` raises `Http404`
+        error when called with invalid or missing arguments.
+        """
+        view_function = self.mock_view_function()
+        enterprise_dashboard_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[self.customer.uuid, 'course-v1:edX+DemoX+Demo_Course'],
+        )
+        request = RequestFactory().get(enterprise_dashboard_url)
+        request.user = UserFactory(is_active=True)
+
+        with raises(Http404):
+            utils.enterprise_login_required(view_function)(request, **kwargs)
+
+    def test_enterprise_login_required_redirects_for_anonymous_users(self):
+        """
+        Test that the decorator `enterprise_login_required` returns Http
+        Redirect for anonymous users.
+        """
+        view_function = self.mock_view_function()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_dashboard_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[self.customer.uuid, course_id],
+        )
+        request = RequestFactory().get(enterprise_dashboard_url)
+        request.user = AnonymousUser()
+
+        response = utils.enterprise_login_required(view_function)(
+            request, enterprise_uuid=self.customer.uuid, course_id=course_id
+        )
+
+        # Assert that redirect status code 302 is returned when an anonymous
+        # user tries to access enterprise course enrollment page.
+        assert response.status_code == 302
+
+    def test_enterprise_login_required(self):
+        """
+        Test that the enterprise login decorator calls the view function.
+
+        Test that the decorator `enterprise_login_required` calls the view
+        function when:
+            1. `enterprise_uuid` is provided and corresponding enterprise
+                customer exists in database.
+            2. User making the request is authenticated.
+
+        """
+        view_function = self.mock_view_function()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_dashboard_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[self.customer.uuid, course_id],
+        )
+        request = RequestFactory().get(enterprise_dashboard_url)
+        request.user = UserFactory(is_active=True)
+
+        utils.enterprise_login_required(view_function)(
+            request, enterprise_uuid=self.customer.uuid, course_id=course_id
+        )
+
+        # Assert that view function was called.
+        assert view_function.called
 
 
 def get_transformed_course_metadata(course_id, status):

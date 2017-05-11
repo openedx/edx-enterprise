@@ -3,12 +3,19 @@ Module provides elements to be used in third-party auth pipeline.
 """
 from __future__ import absolute_import, unicode_literals
 
+from django.conf import settings
+from django.contrib import messages
 from django.core.urlresolvers import reverse
 from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDataSharingConsentAudit
 from enterprise.utils import NotConnectedToEdX
+
+try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
 
 try:
     from social.pipeline.partial import partial
@@ -142,16 +149,34 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     if not enterprise_customer.requests_data_sharing_consent:
         # This enterprise customer attached to this pipeline element does not request data sharing consent;
         # proceed with the creation of a link between the user and the enterprise customer, then exit.
-        ec_user, _ = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             enterprise_customer=enterprise_customer,
             user_id=user.id
         )
+
+        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        messages.success(
+            backend.strategy.request,
+            _('{span_start}Account created{span_end} Thank you for creating an account with {platform_name}.').format(
+                platform_name=platform_name,
+                span_start='<span>',
+                span_end='</span>',
+            )
+        )
+        if not user.is_active:
+            messages.info(
+                backend.strategy.request,
+                _(
+                    '{span_start}Activate your account{span_end} Check your inbox for an activation email. '
+                    'You will not be able to log back into your account until you have activated it.'
+                ).format(span_start='<span>', span_end='</span>')
+            )
 
         if (enterprise_customer.enforce_data_sharing_consent == EnterpriseCustomer.EXTERNALLY_MANAGED
                 and enterprise_customer.enable_data_sharing_consent):
 
             UserDataSharingConsentAudit.objects.update_or_create(
-                user=ec_user,
+                user=enterprise_customer_user,
                 defaults={
                     'state': UserDataSharingConsentAudit.EXTERNALLY_MANAGED,
                 }
