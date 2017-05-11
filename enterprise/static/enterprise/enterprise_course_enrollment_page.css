@@ -60,7 +60,7 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
 
 .enterprise-logo {
     width: auto;
-    height: 60px;
+    height: 100px;
     display: none;
 }
 
@@ -81,10 +81,11 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     [class*='col-'].col-7 {
         width: 70%;
         padding-right: 0;
+        padding-left: 35px;
     }
 
     .border-left {
-        border-left: 1px solid #bcdbed;
+        border-left: 1px solid #D9D9D9;
     }
 
     .enterprise-logo {
@@ -94,7 +95,7 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
 
 .partnered-text {
     font-size: 16px;
-    color: #0b5c8a;
+    color: #414141;
     margin-top: 5px;
     margin-bottom: 20px;
 }
@@ -161,6 +162,10 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     display: inline-block;
     vertical-align: middle;
     margin-right: 5px;
+}
+
+.text-underline {
+    text-decoration: underline;
 }
 
 .caption {

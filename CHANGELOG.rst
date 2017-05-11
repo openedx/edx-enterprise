@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.15] - 2017-05-10
+----------------------
+
+* Additional minor UI updates for enterprise landing page.
+
+
 [0.33.14] - 2017-05-10
 ----------------------
 
