@@ -4,10 +4,13 @@ Django admin integration for enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+from functools import partial
+
 from django.conf.urls import url
 from django.contrib import admin
 from django.utils.html import format_html
 from django.contrib.auth import settings
+from django.forms import ChoiceField
 from django.http import HttpResponseRedirect
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
@@ -80,6 +83,43 @@ class EnterpriseCustomerEntitlementInline(admin.StackedInline):
     readonly_fields = ('ecommerce_coupon_url',)
     ecommerce_coupon_url.allow_tags = True
     ecommerce_coupon_url.short_description = 'Coupon URL'
+
+    def get_formset(self, request, obj=None, **kwargs):
+        """
+        Retrieve the inline formset for the EnterpriseCustomerEntitlementInline admin.
+
+        Inlines don't get to have their get_form method called, like regular admins do.
+        The effect of this is that we're a bit more limited in what we can patch onto
+        that form. For a standard get_form method, we could make a call to retrieve the
+        list of allowed coupons and patch the options on directly, but we can't do that
+        here. What we _can_ do is set the formfield_callback kwarg.
+
+        What this does is provide a function that will, given a particular database field
+        that needs to be included in the inline, returns the appropriate form field widget
+        to render in the form. We provide the standard method that would be used anyway,
+        but patched with an extra kwarg containing the details of the EnterpriseCustomer
+        object that's provided to this method, but not provided to that method by default.
+        functools.partial lets us add that variable on, and then the standard logic is enough.
+        """
+        kwargs['formfield_callback'] = partial(self.formfield_for_dbfield, request=request, obj=obj)
+        return super(EnterpriseCustomerEntitlementInline, self).get_formset(request, obj, **kwargs)
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        """
+        For most fields, just fall through to the standard behavior. If the field is entitlement_id set up a dropdown.
+
+        This method gets wrapped with functools.partial, as described in the get_formset method. When
+        wrapped in that manner, it receives extra `request` and `obj` kwargs that can be used to get
+        additional information. For most fields, simply call super() and return the standard result;
+        for `entitlement_id`, call the EnterpriseCustomer to retrieve a list of the coupons that can
+        be associated as entitlements.
+        """
+        enterprise_customer = kwargs.pop('obj', None)
+        request = kwargs.get('request')
+        formfield = super(EnterpriseCustomerEntitlementInline, self).formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == "entitlement_id" and enterprise_customer:
+            return ChoiceField(choices=enterprise_customer.coupon_options(request.user), required=True)
+        return formfield
 
 
 @admin.register(EnterpriseCustomer)
