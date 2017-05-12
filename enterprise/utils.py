@@ -534,6 +534,26 @@ def filter_audit_course_modes(enterprise_customer, course_modes):
         return course_modes
 
 
+def get_enterprise_customer_or_404(enterprise_uuid):
+    """
+    Given an EnterpriseCustomer UUID, return the corresponding EnterpriseCustomer or raise a 404.
+
+    Arguments:
+        enterprise_uuid (str): The UUID (in string form) of the EnterpriseCustomer to fetch.
+
+    Returns:
+        (EnterpriseCustomer): The EnterpriseCustomer given the UUID.
+    """
+    try:
+        enterprise_uuid = UUID(enterprise_uuid)
+        # pylint: disable=no-member
+        enterprise_customer = enterprise.models.EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
+    except (ValueError, enterprise.models.EnterpriseCustomer.DoesNotExist):
+        LOGGER.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
+        raise Http404
+    return enterprise_customer
+
+
 def enterprise_login_required(view):
     """
     View decorator for allowing authenticated user with valid enterprise UUID.
@@ -571,13 +591,7 @@ def enterprise_login_required(view):
             raise Http404
 
         enterprise_uuid = kwargs['enterprise_uuid']
-        try:
-            enterprise_uuid = UUID(enterprise_uuid)
-            # pylint: disable=no-member
-            enterprise_customer = enterprise.models.EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
-        except (ValueError, enterprise.models.EnterpriseCustomer.DoesNotExist):
-            LOGGER.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
-            raise Http404
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
 
         # Now verify if the user is logged in. If user is not logged in then
         # send the user to the login screen to sign in with an
