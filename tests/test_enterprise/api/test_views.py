@@ -16,8 +16,47 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.lms_api import LMS_API_DATETIME_FORMAT
-from enterprise.models import EnterpriseCustomer, UserDataSharingConsentAudit
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, UserDataSharingConsentAudit
 from test_utils import TEST_USERNAME, APITest, factories
+
+DEFAULT_ENTERPRISE_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
+MOCK_CATALOG_COURSE_RESPONSE = {
+    'count': 3,
+    'next': 'http://testserver/api/v1/catalogs/1/courses?page=3',
+    'previous': 'http://testserver/api/v1/catalogs/1/courses?page=1',
+    'results': [
+        {
+            'owners': [
+                {
+                    'description': None,
+                    'tags': [],
+                    'name': '',
+                    'homepage_url': None,
+                    'key': 'edX',
+                    'certificate_logo_image_url': None,
+                    'marketing_url': None,
+                    'logo_image_url': None,
+                    'uuid': 'aa4aaad0-2ff0-44ce-95e5-1121d02f3b27'
+                }
+            ],
+            'uuid': 'd2fb4cb0-b538-4934-ba60-684d48ff5865',
+            'title': 'edX Demonstration Course',
+            'prerequisites': [],
+            'image': None,
+            'expected_learning_items': [],
+            'sponsors': [],
+            'modified': '2017-03-03T07:34:19.322916Z',
+            'full_description': None,
+            'subjects': [],
+            'video': None,
+            'key': 'edX+DemoX',
+            'short_description': None,
+            'marketing_url': None,
+            'level_type': None,
+            'course_runs': []
+        }
+    ]
+}
 
 
 @ddt.ddt
@@ -120,13 +159,13 @@ class TestEnterpriseAPIViews(APITest):
             reverse('enterprise-customer-list'),
             itemgetter('uuid'),
             [{
-                'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                'uuid': DEFAULT_ENTERPRISE_UUID, 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }],
             [{
-                'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                'uuid': DEFAULT_ENTERPRISE_UUID, 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment', 'enterprise_customer_users': [],
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
@@ -379,7 +418,7 @@ class TestEnterpriseAPIViews(APITest):
             [
                 factories.EnterpriseCustomerFactory,
                 [{
-                    'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                    'uuid': DEFAULT_ENTERPRISE_UUID, 'name': 'Test Enterprise Customer',
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'site__domain': 'example.com', 'site__name': 'example.com',
@@ -428,14 +467,14 @@ class TestEnterpriseAPIViews(APITest):
         self.create_items(
             factories.EnterpriseCustomerFactory,
             [{
-                'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                'uuid': DEFAULT_ENTERPRISE_UUID, 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }]
         )
         data = {
-            'enterprise_customer': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f',
+            'enterprise_customer': DEFAULT_ENTERPRISE_UUID,
             'username': username,
         }
         response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
@@ -454,18 +493,139 @@ class TestEnterpriseAPIViews(APITest):
         self.create_items(
             factories.EnterpriseCustomerFactory,
             [{
-                'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
+                'uuid': DEFAULT_ENTERPRISE_UUID, 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }]
         )
         data = {
-            'enterprise_customer': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f',
+            'enterprise_customer': DEFAULT_ENTERPRISE_UUID,
             'username': self.user.username
         }
         response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
         assert response.status_code == 401
+
+    @ddt.data(
+        (
+            DEFAULT_ENTERPRISE_UUID,
+            None,
+            reverse('enterprise-customer-courses', (DEFAULT_ENTERPRISE_UUID,)),
+            True,
+            {},
+            {'detail': (
+                "No catalog is associated with Enterprise Pied Piper from endpoint "
+                "'/enterprise/api/v1/enterprise-customer/"+DEFAULT_ENTERPRISE_UUID+"/courses/'."
+            )}
+        ),
+        (
+            DEFAULT_ENTERPRISE_UUID,
+            1,
+            reverse('enterprise-customer-courses', (DEFAULT_ENTERPRISE_UUID,)),
+            False,
+            {},
+            {'detail': 'User must be a staff user or associated with the specified Enterprise.'}
+        ),
+        (
+            DEFAULT_ENTERPRISE_UUID,
+            1,
+            reverse('enterprise-customer-courses', (DEFAULT_ENTERPRISE_UUID,)),
+            True,
+            {},
+            {'detail': (
+                "Unable to fetch API response for catalog courses for Enterprise Pied Piper from endpoint "
+                "'/enterprise/api/v1/enterprise-customer/"+DEFAULT_ENTERPRISE_UUID+"/courses/'."
+            )},
+        ),
+        (
+            DEFAULT_ENTERPRISE_UUID,
+            1,
+            reverse('enterprise-customer-courses', (DEFAULT_ENTERPRISE_UUID,)),
+            True,
+            MOCK_CATALOG_COURSE_RESPONSE,
+            {
+                'count': 3,
+                'next': ('http://testserver/enterprise/api/v1/enterprise-customer/'
+                         + DEFAULT_ENTERPRISE_UUID + '/courses/?page=3'),
+                'previous': ('http://testserver/enterprise/api/v1/enterprise-customer/'
+                             + DEFAULT_ENTERPRISE_UUID + '/courses/?page=1'),
+                'results': [
+                    {
+                        'owners': [
+                            {
+                                'description': None,
+                                'tags': [],
+                                'name': '',
+                                'homepage_url': None,
+                                'key': 'edX',
+                                'certificate_logo_image_url': None,
+                                'marketing_url': None,
+                                'logo_image_url': None,
+                                'uuid': 'aa4aaad0-2ff0-44ce-95e5-1121d02f3b27'
+                            }
+                        ],
+                        'tpa_hint': None,
+                        'catalog_id': 1,
+                        'enterprise_id': DEFAULT_ENTERPRISE_UUID,
+                        'uuid': 'd2fb4cb0-b538-4934-ba60-684d48ff5865',
+                        'title': 'edX Demonstration Course',
+                        'prerequisites': [],
+                        'image': None,
+                        'expected_learning_items': [],
+                        'sponsors': [],
+                        'modified': '2017-03-03T07:34:19.322916Z',
+                        'full_description': None,
+                        'subjects': [],
+                        'video': None,
+                        'key': 'edX+DemoX',
+                        'short_description': None,
+                        'marketing_url': None,
+                        'level_type': None,
+                        'course_runs': []
+                    }
+                ]
+            }
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.CourseCatalogApiClient')
+    def test_enterprise_customer_courses(
+            self,
+            enterprise_uuid,
+            catalog,
+            url,
+            link_user,
+            mocked_catalog_courses,
+            expected,
+            mock_catalog_api_client
+    ):
+        """
+        Make sure the enterprise courses view returns correct data.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=enterprise_uuid,
+            catalog=catalog,
+            name='Pied Piper',
+        )
+
+        if link_user:
+            factories.EnterpriseCustomerUserFactory(
+                user_id=self.user.id,
+                enterprise_customer=enterprise_customer,
+            )
+
+            EnterpriseCustomerIdentityProvider(
+                enterprise_customer=enterprise_customer,
+                provider_id='saml-testshib',
+            )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
+        )
+        response = self.client.get(url)
+        response = self.load_json(response.content)
+
+        assert response == expected
 
 
 @ddt.ddt
@@ -583,43 +743,7 @@ class TestEnterpriseCatalogAPIViews(APITest):
             reverse('catalogs-courses', (1, )),
             'saml-testshib',
             'd2fb4cb0-b538-4934-1926-684d48ff5865',
-            {
-                'count': 3,
-                'next': 'http://testserver/api/v1/catalogs/1/courses?page=3',
-                'previous': 'http://testserver/api/v1/catalogs/1/courses?page=1',
-                'results': [
-                    {
-                        'owners': [
-                            {
-                                'description': None,
-                                'tags': [],
-                                'name': '',
-                                'homepage_url': None,
-                                'key': 'edX',
-                                'certificate_logo_image_url': None,
-                                'marketing_url': None,
-                                'logo_image_url': None,
-                                'uuid': 'aa4aaad0-2ff0-44ce-95e5-1121d02f3b27'
-                            }
-                        ],
-                        'uuid': 'd2fb4cb0-b538-4934-ba60-684d48ff5865',
-                        'title': 'edX Demonstration Course',
-                        'prerequisites': [],
-                        'image': None,
-                        'expected_learning_items': [],
-                        'sponsors': [],
-                        'modified': '2017-03-03T07:34:19.322916Z',
-                        'full_description': None,
-                        'subjects': [],
-                        'video': None,
-                        'key': 'edX+DemoX',
-                        'short_description': None,
-                        'marketing_url': None,
-                        'level_type': None,
-                        'course_runs': []
-                    }
-                ]
-            },
+            MOCK_CATALOG_COURSE_RESPONSE,
             {
                 'count': 3,
                 'next': 'http://testserver/enterprise/api/v1/catalogs/1/courses/?page=3',

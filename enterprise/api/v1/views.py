@@ -19,7 +19,7 @@ from django.utils.decorators import method_decorator
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend
 from enterprise.api.pagination import get_paginated_response
-from enterprise.api.permissions import IsServiceUserOrReadOnly
+from enterprise.api.permissions import IsServiceUserOrReadOnly, IsStaffUserOrLinkedToEnterprise
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import decorators, serializers
 from enterprise.course_catalog_api import CourseCatalogApiClient
@@ -64,6 +64,57 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+    @detail_route(
+        permission_classes=[permissions.IsAuthenticated, IsServiceUserOrReadOnly, IsStaffUserOrLinkedToEnterprise],
+        authentication_classes=[JwtAuthentication, BearerAuthentication, SessionAuthentication],
+        throttle_classes=[ServiceUserThrottle],
+    )  # pylint: disable=invalid-name,unused-argument
+    def courses(self, request, pk=None):
+        """
+        Retrieve the list of courses contained within the catalog linked to this enterprise.
+
+        Only courses with active course runs are returned. A course run is considered active if it is currently
+        open for enrollment, or will open in the future.
+        ---
+        serializer: serializers.CourseSerializerExcludingClosedRuns
+        """
+        enterprise_customer = self.get_object()
+        self.check_object_permissions(request, enterprise_customer)
+
+        # Make sure there is a catalog associated with the enterprise
+        if not enterprise_customer.catalog:
+            error_message = (
+                "No catalog is associated with Enterprise {enterprise_name} from endpoint '{path}'.".format(
+                    enterprise_name=enterprise_customer.name,
+                    path=request.get_full_path()
+                )
+            )
+            logger.error(error_message)
+            raise NotFound(error_message)
+
+        # We have handled potential error cases and are now ready to call out to the Catalog API.
+        catalog_api = CourseCatalogApiClient(request.user)
+        courses = catalog_api.get_paginated_catalog_courses(enterprise_customer.catalog, request.GET)
+
+        # An empty response means that there was a problem fetching data from Catalog API, since
+        # a Catalog with no courses has a non empty response indicating that there are no courses.
+        if not courses:
+            error_message = (
+                "Unable to fetch API response for catalog courses for Enterprise {enterprise_name} from endpoint "
+                "'{path}'.".format(
+                    enterprise_name=enterprise_customer.name,
+                    path=request.get_full_path()
+                )
+            )
+            logger.error(error_message)
+            raise NotFound(error_message)
+
+        serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
+
+        # Add enterprise related context for the courses.
+        serializer.update_enterprise_courses(enterprise_customer, enterprise_customer.catalog)
+        return get_paginated_response(serializer.data, request)
 
 
 class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):

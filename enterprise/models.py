@@ -194,7 +194,6 @@ class EnterpriseCustomer(TimeStampedModel):
             course_run_key (str): The course run id for the course to be displayed.
         Returns:
             (str): Enterprise landing page url.
-
         """
         if configuration_helpers is None:
             raise NotConnectedToOpenEdX(
