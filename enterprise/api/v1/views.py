@@ -9,7 +9,7 @@ from edx_rest_framework_extensions.authentication import BearerAuthentication, J
 from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.response import Response
 
 from django.contrib.auth.models import User
@@ -63,6 +63,56 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+    @detail_route()
+    def courses(self, request, pk=None):  # pylint: disable=invalid-name
+        """
+        Retrieve the list of courses contained within the catalog linked to this enterprise.
+
+        Only courses with active course runs are returned. A course run is considered active if it is currently
+        open for enrollment, or will open in the future.
+        ---
+        serializer: serializers.CourseSerializerExcludingClosedRuns
+        """
+        page = request.GET.get('page', 1)
+        enterprise_customer = self.get_object()
+
+        # Make sure there is a catalog associated with the enterprise
+        if not enterprise_customer.catalog:
+            error_message = ("No catalog is associated with the given enterprise from endpoint "
+                             "'/enterprise-customer/{}/courses?page={}'.".format(pk, page))
+            logger.error(error_message)
+            raise NotFound("The resource you are looking for does not exist: " + error_message)
+
+        # Ensure that the user making this request is either a staff user or is linked to the enterprise
+        if not request.user.is_staff:
+            try:
+                models.EnterpriseCustomerUser.objects.get(
+                    enterprise_customer=enterprise_customer,
+                    user_id=request.user.id,
+                )
+            except models.ObjectDoesNotExist:
+                error_message = ("User is not associated with enterprise from endpoint "
+                                 "'/enterprise-customer/{}/courses?page={}'.".format(pk, page))
+                logger.error(error_message)
+                raise PermissionDenied("The user does not have permission to access this resource: " + error_message)
+
+        catalog_api = CourseCatalogApiClient(request.user)
+        courses = catalog_api.get_paginated_catalog_courses(enterprise_customer.catalog, page)
+
+        # if API returned an empty response, that means pagination has ended.
+        # An empty response can also means that there was a problem fetching data from catalog API.
+        if not courses:
+            error_message = ("Unable to fetch API response for catalog courses from endpoint "
+                             "'/enterprise-customer/{}/courses?page={}'.".format(pk, page))
+            logger.error(error_message)
+            raise NotFound("The resource you are looking for does not exist: " + error_message)
+
+        serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
+
+        # Add enterprise related context for the courses.
+        serializer.update_enterprise_courses(request, enterprise_customer.catalog, enterprise_customer)
+        return get_paginated_response(serializer.data, request)
 
 
 class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
