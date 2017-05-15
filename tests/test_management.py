@@ -359,8 +359,9 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
     responses.add(
         responses.GET,
         urljoin(lms_api.ThirdPartyAuthApiClient.API_BASE_URL,
-                "providers/{provider}/users/{user}".format(provider=testcase.identity_provider,
-                                                           user=testcase.user.username)),
+                "providers/{provider}/users?username={user}".format(provider=testcase.identity_provider,
+                                                                    user=testcase.user.username)),
+        match_querystring=True,
         json=dict(results=[
             dict(username=testcase.user.username, remote_id='remote-user-id'),
         ]),
@@ -417,19 +418,11 @@ def get_expected_output(**expected_completion):
     """
     output_template = (
         '{{'
-        '"comments": "", '
         '"completedTimestamp": {timestamp}, '
-        '"contactHours": "", '
         '"courseCompleted": "{completed}", '
         '"courseID": "{course_id}", '
-        '"cpeHours": "", '
-        '"creditHours": "", '
-        '"currency": "", '
         '"grade": "{grade}", '
-        '"instructorName": "", '
-        '"price": "", '
         '"providerID": "{provider_id}", '
-        '"totalHours": "", '
         '"userID": "{user_id}"'
         '}}'
     )

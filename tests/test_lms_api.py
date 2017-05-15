@@ -150,7 +150,10 @@ def test_get_remote_id_not_found():
     provider_id = "DeathStar"
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users/{user}".format(provider=provider_id, user=username)),
+        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+            provider=provider_id, user=username
+        )),
+        match_querystring=True,
         status=404
     )
     client = lms_api.ThirdPartyAuthApiClient()
@@ -173,7 +176,10 @@ def test_get_remote_id_no_results():
     }
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users/{user}".format(provider=provider_id, user=username)),
+        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+            provider=provider_id, user=username
+        )),
+        match_querystring=True,
         json=expected_response,
     )
     client = lms_api.ThirdPartyAuthApiClient()
@@ -196,7 +202,10 @@ def test_get_remote_id():
     }
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users/{user}".format(provider=provider_id, user=username)),
+        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+            provider=provider_id, user=username
+        )),
+        match_querystring=True,
         json=expected_response,
     )
     client = lms_api.ThirdPartyAuthApiClient()

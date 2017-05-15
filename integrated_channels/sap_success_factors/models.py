@@ -194,7 +194,7 @@ class LearnerDataTransmissionAudit(models.Model):
         '''
         return SAPSuccessFactorsGlobalConfiguration.current().provider_id
 
-    def _payload_data(self, empty_value):
+    def _payload_data(self):
         """
         Convert the audit record's fields into SAP SuccessFactors key/value pairs.
         """
@@ -207,24 +207,26 @@ class LearnerDataTransmissionAudit(models.Model):
             completedTimestamp=self.completed_timestamp,
             grade=self.grade,
             # TODO: determine these values from the enrollment seat?
-            price=empty_value,
-            currency=empty_value,
-            creditHours=empty_value,
-            # These fields currently have no edX source, so remain empty.
-            totalHours=empty_value,
-            contactHours=empty_value,
-            cpeHours=empty_value,
-            instructorName=empty_value,
-            comments=empty_value,
+            # We might at a later date choose to send these values,
+            # but at this point we will omit them from the payload to avoid errors.
+            #
+            # price=empty_value,
+            # currency=empty_value,
+            # creditHours=empty_value,
+            # totalHours=empty_value,
+            # contactHours=empty_value,
+            # cpeHours=empty_value,
+            # instructorName=empty_value,
+            # comments=empty_value,
         )
 
-    def serialize(self, empty_value=''):
+    def serialize(self):
         """
         Return a JSON-serialized representation.
 
         Sort the keys so the result is consistent and testable.
         """
-        return json.dumps(self._payload_data(empty_value=empty_value), sort_keys=True)
+        return json.dumps(self._payload_data(), sort_keys=True)
 
 
 @python_2_unicode_compatible
