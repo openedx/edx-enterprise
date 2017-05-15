@@ -29,7 +29,7 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
-from test_utils.fake_catalog_api import get_catalog_courses, get_course_details
+from test_utils.fake_catalog_api import get_enterprise_courses
 
 
 @mark.django_db
@@ -84,7 +84,7 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 
 @mark.django_db
 @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.EnterpriseApiClient')
 @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
 def test_transmit_courseware_task_success(fake_client, fake_catalog_client, track_selection_reverse_mock, caplog):
     """
@@ -94,8 +94,7 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
     fake_client.return_value.send_course_import.return_value = 200, '{}'
 
     fake_catalog_client.return_value = mock.MagicMock(
-        get_course_details=get_course_details,
-        get_catalog_courses=get_catalog_courses,
+        get_enterprise_courses=get_enterprise_courses,
     )
 
     track_selection_reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
@@ -123,29 +122,28 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
     expected_dump = (
         '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
         '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": "htt'
-        'ps://example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/",'
-        ' "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
-        'moX+Demo_Course", "description": [{"locale": "English", "value": "edX Demonst'
-        'ration Course"}], "price": [], "providerID": "EDX", "revisionNumber": 1, "sch'
-        'edule": [{"active": true, "endDate": 2147483647000, "startDate": 136004040000'
-        '0}], "status": "ACTIVE", "thumbnailURI": "http://192.168.1.187:8000/asset-v1:'
-        'edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg", "title": [{"'
-        'locale": "English", "value": "edX Demonstration Course"}]}, {"content": [{"co'
-        'ntentID": "course-v1:foobar+fb1+fbv1", "contentTitle": "Other Course Name", "'
-        'launchType": 3, "launchURL": "https://example.com/course_modes/choose/course-'
-        'v1:edX+DemoX+Demo_Course/", "mobileEnabled": false, "providerID": "EDX"}], "c'
-        'ourseID": "course-v1:foobar+fb1+fbv1", "description": [{"locale": "English", '
-        '"value": "This is a really cool course. Like, we promise."}], "price": [], "p'
-        'roviderID": "EDX", "revisionNumber": 1, "schedule": [{"active": true, "endDat'
-        'e": 2147483647000, "startDate": 1420070400000}], "status": "ACTIVE", "thumbna'
-        'ilURI": "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+type@asset+block@'
-        'images_course_image.jpg", "title": [{"locale": "English", "value": "Other Cou'
-        'rse Name"}]}]}'
+        'p://www.example.com/course-v1:edX+DemoX+Demo_Course", "mobileEnabled": false, '
+        '"providerID": "EDX"}], "courseID": "course-v1:edX+DemoX+Demo_Course", "descrip'
+        'tion": [{"locale": "English", "value": "edX Demonstration Course"}], "price": '
+        '[], "providerID": "EDX", "revisionNumber": 1, "schedule": [{"active": true, "e'
+        'ndDate": 2147483647000, "startDate": 1360040400000}], "status": "ACTIVE", "thu'
+        'mbnailURI": "http://192.168.1.187:8000/asset-v1:edX+DemoX+Demo_Course+type@ass'
+        'et+block@images_course_image.jpg", "title": [{"locale": "English", "value": "e'
+        'dX Demonstration Course"}]}, {"content": [{"contentID": "course-v1:foobar+fb1+'
+        'fbv1", "contentTitle": "Other Course Name", "launchType": 3, "launchURL": "htt'
+        'p://www.example.com/course-v1:foobar+fb1+fbv1", "mobileEnabled": false, "provi'
+        'derID": "EDX"}], "courseID": "course-v1:foobar+fb1+fbv1", "description": [{"lo'
+        'cale": "English", "value": "This is a really cool course. Like, we promise."}]'
+        ', "price": [], "providerID": "EDX", "revisionNumber": 1, "schedule": [{"active'
+        '": true, "endDate": 2147483647000, "startDate": 1420070400000}], "status": "AC'
+        'TIVE", "thumbnailURI": "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+typ'
+        'e@asset+block@images_course_image.jpg", "title": [{"locale": "English", "value'
+        '": "Other Course Name"}]}]}'
     )
     expected_messages = [
         'Processing courses for integrated channel using configuration: '
         '<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
-        'Retrieving course list for catalog 1',
+        'Retrieving course list for enterprise Veridian Dynamics',
         'Processing course with ID course-v1:edX+DemoX+Demo_Course',
         'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
         'CustomerConfiguration for Enterprise Veridian Dynamics>',
@@ -159,14 +157,13 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
 
 
 @mark.django_db
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.EnterpriseApiClient')
 def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
     """
     Test the data transmission task.
     """
     fake_catalog_client.return_value = mock.MagicMock(
-        get_course_details=get_course_details,
-        get_catalog_courses=get_catalog_courses,
+        get_enterprise_courses=get_enterprise_courses,
     )
 
     caplog.set_level(logging.INFO)
@@ -184,14 +181,13 @@ def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
 
 
 @mark.django_db
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.EnterpriseApiClient')
 def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
     """
     Test the data transmission task.
     """
     fake_catalog_client.return_value = mock.MagicMock(
-        get_course_details=get_course_details,
-        get_catalog_courses=get_catalog_courses,
+        get_enterprise_courses=get_enterprise_courses,
     )
 
     caplog.set_level(logging.INFO)

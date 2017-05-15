@@ -74,13 +74,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
         ---
         serializer: serializers.CourseSerializerExcludingClosedRuns
         """
-        page = request.GET.get('page', 1)
         enterprise_customer = self.get_object()
 
         # Make sure there is a catalog associated with the enterprise
         if not enterprise_customer.catalog:
             error_message = ("No catalog is associated with the given enterprise from endpoint "
-                             "'/enterprise-customer/{}/courses?page={}'.".format(pk, page))
+                             "'/enterprise-customer/{}/courses'.".format(pk))
             logger.error(error_message)
             raise NotFound("The resource you are looking for does not exist: " + error_message)
 
@@ -93,18 +92,18 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
                 )
             except models.ObjectDoesNotExist:
                 error_message = ("User is not associated with enterprise from endpoint "
-                                 "'/enterprise-customer/{}/courses?page={}'.".format(pk, page))
+                                 "'/enterprise-customer/{}/courses'.".format(pk))
                 logger.error(error_message)
                 raise PermissionDenied("The user does not have permission to access this resource: " + error_message)
 
         catalog_api = CourseCatalogApiClient(request.user)
-        courses = catalog_api.get_paginated_catalog_courses(enterprise_customer.catalog, page)
+        courses = catalog_api.get_catalog_courses(enterprise_customer.catalog)
 
         # if API returned an empty response, that means pagination has ended.
         # An empty response can also means that there was a problem fetching data from catalog API.
         if not courses:
             error_message = ("Unable to fetch API response for catalog courses from endpoint "
-                             "'/enterprise-customer/{}/courses?page={}'.".format(pk, page))
+                             "'/enterprise-customer/{}/courses'.".format(pk))
             logger.error(error_message)
             raise NotFound("The resource you are looking for does not exist: " + error_message)
 

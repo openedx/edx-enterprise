@@ -473,6 +473,179 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
     }
 }
 
+FAKE_ENTERPRISE_COURSES_RESPONSE = [
+    {
+        "key": "edX+DemoX",
+        "uuid": "cf8f5cce-1370-46aa-8162-31fdff55dc7e",
+        "title": "Fancy Course",
+        "course_runs": [
+            {
+                "key": "course-v1:edX+DemoX+Demo_Course",
+                "uuid": "0a25b789-86d0-43bd-972b-3858a985462e",
+                "title": "edX Demonstration Course",
+                "image": {
+                    "src": (
+                        "http://192.168.1.187:8000/asset-v1:edX+DemoX+Demo_"
+                        "Course+type@asset+block@images_course_image.jpg"
+                    ),
+                    "height": None,
+                    "width": None,
+                    "description": None
+                },
+                "short_description": None,
+                "marketing_url": None,
+                "start": "2013-02-05T05:00:00Z",
+                "end": None,
+                "enrollment_start": None,
+                "enrollment_end": None,
+                "pacing_type": "instructor_paced",
+                "type": "audit",
+                "course": "edX+DemoX",
+                "full_description": None,
+                "announcement": None,
+                "video": None,
+                "seats": [
+                    {
+                        "type": "audit",
+                        "price": "0.00",
+                        "currency": "USD",
+                        "upgrade_deadline": None,
+                        "credit_provider": "",
+                        "credit_hours": None,
+                        "sku": ""
+                    }
+                ],
+                "content_language": 'en-us',
+                "transcript_languages": [],
+                "instructors": [],
+                "staff": [],
+                "min_effort": None,
+                "max_effort": None,
+                "modified": "2017-03-07T18:37:43.992494Z",
+                "level_type": None,
+                "availability": "Upcoming",
+                "mobile_available": False,
+                "hidden": False,
+                "reporting_type": "mooc",
+                "landing_page_url": "http://www.example.com/course-v1:edX+DemoX+Demo_Course"
+            }
+        ],
+        "owners": [
+            {
+                "uuid": "366e7739-fb3a-42d0-8351-8c3dbab3e339",
+                "key": "edX",
+                "name": "",
+                "certificate_logo_image_url": None,
+                "description": None,
+                "homepage_url": None,
+                "tags": [],
+                "logo_image_url": None,
+                "marketing_url": None
+            }
+        ],
+        "image": None,
+        "short_description": None,
+        "full_description": None,
+        "level_type": None,
+        "subjects": [],
+        "prerequisites": [],
+        "expected_learning_items": [],
+        "video": None,
+        "sponsors": [],
+        "modified": "2017-01-16T14:07:47.327605Z",
+        "marketing_url": "http://localhost:8000/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner"
+    },
+    {
+        "key": "foobar+fb1",
+        "uuid": "c08c1e43-307c-444b-acc7-aea4a7b9f8f6",
+        "title": "FooBar Ventures",
+        "course_runs": [
+            {
+                "key": "course-v1:foobar+fb1+fbv1",
+                "uuid": "3550853f-e65a-492e-8781-d0eaa16dd538",
+                "title": "Other Course Name",
+                "image": {
+                    "src": (
+                        "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1"
+                        "+type@asset+block@images_course_image.jpg"
+                    ),
+                    "height": None,
+                    "width": None,
+                    "description": None
+                },
+                "short_description": "",
+                "marketing_url": None,
+                "start": "2015-01-01T00:00:00Z",
+                "end": None,
+                "enrollment_start": None,
+                "enrollment_end": None,
+                "pacing_type": "instructor_paced",
+                "type": None,
+                "course": "foobar+fb1",
+                "full_description": "This is a really cool course. Like, we promise.",
+                "announcement": None,
+                "video": None,
+                "seats": [],
+                "content_language": None,
+                "transcript_languages": [],
+                "instructors": [],
+                "staff": [],
+                "min_effort": None,
+                "max_effort": None,
+                "modified": "2017-03-07T18:37:45.082681Z",
+                "level_type": None,
+                "availability": "Upcoming",
+                "mobile_available": False,
+                "hidden": False,
+                "reporting_type": "mooc",
+                "landing_page_url": "http://www.example.com/course-v1:foobar+fb1+fbv1"
+            }
+        ],
+        "owners": [
+            {
+                "uuid": "8d920bc3-a1b2-44db-9380-1d3ca728c275",
+                "key": "foobar",
+                "name": "",
+                "certificate_logo_image_url": None,
+                "description": None,
+                "homepage_url": None,
+                "tags": [],
+                "logo_image_url": None,
+                "marketing_url": None
+            }
+        ],
+        "image": {
+            "src": "",
+            "height": None,
+            "width": None,
+            "description": None
+        },
+        "short_description": "",
+        "full_description": "This is a really cool course.",
+        "level_type": None,
+        "subjects": [],
+        "prerequisites": [],
+        "expected_learning_items": [],
+        "video": None,
+        "sponsors": [],
+        "modified": "2017-03-07T18:37:45.238722Z",
+        "marketing_url": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner"
+    },
+]
+
+
+def get_enterprise_courses(enterprise_id):  # pylint: disable=unused-argument
+    """
+    Fake implementation returning courses by enterprise id.
+
+    Arguments:
+        enterprise_id (str): Enterprise ID
+
+    Returns:
+        list: Details of the courses included in the enterprise's catalog
+    """
+    return FAKE_ENTERPRISE_COURSES_RESPONSE
+
 
 def get_catalog_courses(catalog_id):
     """

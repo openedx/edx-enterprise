@@ -10,7 +10,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from integrated_channels.integrated_channel.enterprise_api import EnterpriseApiClient
 
 
 EXCLUDED_COURSE_DETAIL_KEYS = [
@@ -48,18 +48,14 @@ def get_course_runs(user, enterprise_customer):
     Returns:
         iterable: An iterable containing the details of each course run.
     """
-    catalog_id = enterprise_customer.catalog
+    client = EnterpriseApiClient(user)
 
-    client = CourseCatalogApiClient(user)
-
-    catalog_courses = client.get_catalog_courses(catalog_id)
-    LOGGER.info('Retrieving course list for catalog %s', catalog_id)
+    catalog_courses = client.get_enterprise_courses(enterprise_customer.uuid)
+    LOGGER.info('Retrieving course list for enterprise %s', enterprise_customer.name)
 
     for course in catalog_courses:
-        course_key = course.get('key')
-        course_details = client.get_course_details(course_key)
-        for run in course_details.get('course_runs', []):
-            yield get_complete_course_run_details(course_details, run)
+        for run in course.get('course_runs', []):
+            yield get_complete_course_run_details(course, run)
 
 
 class BaseCourseExporter(object):

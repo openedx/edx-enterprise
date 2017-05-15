@@ -644,7 +644,7 @@ class TestEnterpriseAPIViews(APITest):
             {'detail': (
                 "The resource you are looking for does not exist: "
                 "No catalog is associated with the given enterprise from endpoint "
-                "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses?page=1'."
+                "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses'."
             )}
         ),
         (
@@ -656,7 +656,7 @@ class TestEnterpriseAPIViews(APITest):
             {'detail': (
                 "The user does not have permission to access this resource: "
                 "User is not associated with enterprise from endpoint "
-                "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses?page=1'."
+                "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses'."
             )}
         ),
         (
@@ -668,7 +668,7 @@ class TestEnterpriseAPIViews(APITest):
             {'detail': (
                 "The resource you are looking for does not exist: "
                 "Unable to fetch API response for catalog courses from endpoint "
-                "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses?page=1'."
+                "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses'."
             )},
         ),
         (
@@ -679,8 +679,10 @@ class TestEnterpriseAPIViews(APITest):
             MOCK_CATALOG_COURSE_RESPONSE,
             {
                 'count': 3,
-                'next': 'http://testserver/enterprise/api/v1/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses/?page=3',
-                'previous': 'http://testserver/enterprise/api/v1/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses/?page=1',
+                'next': ('http://testserver/enterprise/api/v1/enterprise-customer/'
+                         'd2098bfb-2c78-44f1-9eb2-b94475356a3f/courses/?page=3'),
+                'previous': ('http://testserver/enterprise/api/v1/enterprise-customer/'
+                             'd2098bfb-2c78-44f1-9eb2-b94475356a3f/courses/?page=1'),
                 'results': [
                     {
                         'owners': [
@@ -751,7 +753,7 @@ class TestEnterpriseAPIViews(APITest):
             )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
+            get_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
         )
         response = self.client.get(url)
         response = self.load_json(response.content)
