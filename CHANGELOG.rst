@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.17] - 2017-05-16
+----------------------
+
+* Add django admin for enterprise course enrollment models
+
+
 [0.33.16] - 2017-05-15
 ----------------------
 
