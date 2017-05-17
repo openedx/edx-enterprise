@@ -23,8 +23,8 @@ from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (  # pylint:disable=no-name-in-module
     EnrollmentNotificationEmailTemplate, EnterpriseCustomer, EnterpriseCustomerUser,
     EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerIdentityProvider,
-    HistoricalUserDataSharingConsentAudit, PendingEnterpriseCustomerUser,
-    EnterpriseCustomerEntitlement
+    HistoricalUserDataSharingConsentAudit, PendingEnrollment, PendingEnterpriseCustomerUser,
+    EnterpriseCustomerEntitlement, EnterpriseCourseEnrollment
 )
 from enterprise.utils import get_all_field_names, get_catalog_admin_url, get_catalog_admin_url_template
 
@@ -410,3 +410,75 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
     preview_as_program.short_description = _(
         "Preview the HTML template rendered in the context of a program enrollment."
     )
+
+
+@admin.register(EnterpriseCourseEnrollment)
+class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCourseEnrollment
+    """
+
+    class Meta(object):
+        model = EnterpriseCourseEnrollment
+
+    readonly_fields = (
+        'enterprise_customer_user',
+        'course_id',
+        'consent_granted',
+    )
+
+    list_display = (
+        'enterprise_customer_user',
+        'course_id',
+        'consent_granted',
+    )
+
+    search_fields = ('enterprise_customer_user__user_id', 'course_id',)
+
+    def has_add_permission(self, request):
+        """
+        Disable add permission for EnterpriseCourseEnrollment.
+        """
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Disable deletion for EnterpriseCourseEnrollment.
+        """
+        return False
+
+
+@admin.register(PendingEnrollment)
+class PendingEnrollmentAdmin(admin.ModelAdmin):
+    """
+    Django admin model for PendingEnrollment
+    """
+
+    class Meta(object):
+        model = PendingEnrollment
+
+    readonly_fields = (
+        'user',
+        'course_id',
+        'course_mode',
+    )
+
+    list_display = (
+        'user',
+        'course_id',
+        'course_mode',
+    )
+
+    search_fields = ('user__user_email', 'course_id',)
+
+    def has_add_permission(self, request):
+        """
+        Disable add permission for PendingEnrollment.
+        """
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """
+        Disable deletion for PendingEnrollment.
+        """
+        return False
