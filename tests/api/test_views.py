@@ -143,6 +143,7 @@ class TestEnterpriseAPIViews(APITest):
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_login', 'enterprise_customer_users': [],
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                'enable_audit_enrollment': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -180,6 +181,7 @@ class TestEnterpriseAPIViews(APITest):
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_login', 'enterprise_customer_users': [1],
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                    'enable_audit_enrollment': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },

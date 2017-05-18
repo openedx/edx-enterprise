@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-04-24 08:27-0500\n"
+"POT-Creation-Date: 2017-05-17 20:45-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -76,7 +76,7 @@ msgstr ""
 msgid "Course enrollment track"
 msgstr ""
 
-#: enterprise/admin/forms.py:65
+#: enterprise/admin/forms.py:65 enterprise/views.py:449
 msgid "Audit"
 msgstr ""
 
@@ -292,39 +292,39 @@ msgstr ""
 msgid "Email {email} is not associated with Enterprise Customer {ec_name}"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:225
+#: enterprise/api/v1/serializers.py:226
 msgid "Enterprise course catalog primary key."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:226
+#: enterprise/api/v1/serializers.py:227
 msgid "Catalog name"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:227
+#: enterprise/api/v1/serializers.py:228
 msgid "Query to retrieve catalog contents"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:228
+#: enterprise/api/v1/serializers.py:229
 msgid "Number of courses contained in this catalog"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:231
+#: enterprise/api/v1/serializers.py:232
 msgid "Usernames of users with explicit access to view this catalog"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:253
+#: enterprise/api/v1/serializers.py:254
 msgid "Total count of catalog courses."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:254
+#: enterprise/api/v1/serializers.py:255
 msgid "URL to fetch next page of courses."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:255
+#: enterprise/api/v1/serializers.py:256
 msgid "URL to fetch previous page of courses."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:256
+#: enterprise/api/v1/serializers.py:257
 msgid "list of courses."
 msgstr ""
 
@@ -384,71 +384,77 @@ msgstr ""
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:104
+#: enterprise/models.py:106
 msgid ""
 "Specifies whether data sharing consent is enabled or disabled for learners "
 "signing in through this enterprise customer. If disabled, consent will not "
 "be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:117
+#: enterprise/models.py:119
 msgid ""
 "Specifies whether data sharing consent is optional, is required at login, or "
 "is required at enrollment."
 msgstr ""
 
-#: enterprise/models.py:250
+#: enterprise/models.py:127
+msgid ""
+"Specifies whether the audit track enrollment option will be displayed in the "
+"course enrollment view."
+msgstr ""
+
+#: enterprise/models.py:259
 msgid "Enterprise Customer Learner"
 msgstr ""
 
-#: enterprise/models.py:251
+#: enterprise/models.py:260
 msgid "Enterprise Customer Learners"
 msgstr ""
 
-#: enterprise/models.py:480
+#: enterprise/models.py:489
 msgid "Logo images must be in .png format."
 msgstr ""
 
-#: enterprise/models.py:489
+#: enterprise/models.py:498
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:490
+#: enterprise/models.py:499
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:606
+#: enterprise/models.py:622
 msgid ""
 "Stores whether the learner linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:648
+#: enterprise/models.py:664
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:649
+#: enterprise/models.py:665
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:656
+#: enterprise/models.py:672
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:697
+#: enterprise/models.py:713
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:702
+#: enterprise/models.py:718
 msgid "Whether the learner has granted consent for this particular course."
 msgstr ""
 
-#: enterprise/models.py:709
+#: enterprise/models.py:725
 msgid "The ID of the course in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:780
+#: enterprise/models.py:796
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -470,7 +476,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:798
+#: enterprise/models.py:814
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "
@@ -508,6 +514,7 @@ msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:100
 #: enterprise/templates/enterprise/admin/manage_learners.html:127
+#: enterprise/views.py:448
 msgid "Enroll"
 msgstr ""
 
@@ -615,25 +622,25 @@ msgstr ""
 msgid "The logo image file size must be less than or equal to %s KB."
 msgstr ""
 
-#: enterprise/views.py:68
+#: enterprise/views.py:75
 msgid ""
 "Methods in the Open edX platform necessary for this view are not available."
 msgstr ""
 
-#: enterprise/views.py:80
+#: enterprise/views.py:87
 msgid "Data sharing consent required"
 msgstr ""
 
-#: enterprise/views.py:81
+#: enterprise/views.py:88
 msgid "Before enrollment is complete..."
 msgstr ""
 
-#: enterprise/views.py:82
+#: enterprise/views.py:89
 #, python-brace-format
 msgid "{enterprise_customer_name} would like to know about:"
 msgstr ""
 
-#: enterprise/views.py:84
+#: enterprise/views.py:91
 #, python-brace-format
 msgid ""
 "I agree to allow {platform_name} to share data about my enrollment, "
@@ -641,19 +648,19 @@ msgid ""
 "where my enrollment is sponsored by {enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:87
+#: enterprise/views.py:94
 msgid "Yes, continue"
 msgstr ""
 
-#: enterprise/views.py:88
+#: enterprise/views.py:95
 msgid "No, take me back."
 msgstr ""
 
-#: enterprise/views.py:89
+#: enterprise/views.py:96
 msgid "Data Sharing Policy"
 msgstr ""
 
-#: enterprise/views.py:91
+#: enterprise/views.py:98
 #, python-brace-format
 msgid ""
 "Enrollment, completion, and performance data that may be shared with "
@@ -661,50 +668,50 @@ msgid ""
 "are limited to the following:"
 msgstr ""
 
-#: enterprise/views.py:95
+#: enterprise/views.py:102
 #, python-brace-format
 msgid "My email address for my {platform_name} account"
 msgstr ""
 
-#: enterprise/views.py:96
+#: enterprise/views.py:103
 #, python-brace-format
 msgid "My {platform_name} ID"
 msgstr ""
 
-#: enterprise/views.py:97
+#: enterprise/views.py:104
 #, python-brace-format
 msgid "My {platform_name} username"
 msgstr ""
 
-#: enterprise/views.py:98
+#: enterprise/views.py:105
 msgid "What courses and/or programs I've enrolled in or unenrolled from"
 msgstr ""
 
-#: enterprise/views.py:100
+#: enterprise/views.py:107
 msgid ""
 "Whether I completed specific parts of each course or program (for example, "
 "whether I watched a given video or completed a given homework assignment)"
 msgstr ""
 
-#: enterprise/views.py:103
+#: enterprise/views.py:110
 msgid ""
 "My overall percentage completion of each course or program on a periodic "
 "basis"
 msgstr ""
 
-#: enterprise/views.py:104
+#: enterprise/views.py:111
 msgid "My performance in each course or program"
 msgstr ""
 
-#: enterprise/views.py:105
+#: enterprise/views.py:112
 msgid "My final grade in each course or program"
 msgstr ""
 
-#: enterprise/views.py:106
+#: enterprise/views.py:113
 msgid "Whether I received a certificate in each course or program"
 msgstr ""
 
-#: enterprise/views.py:109
+#: enterprise/views.py:116
 #, python-brace-format
 msgid ""
 "My permission applies only to data from courses or programs that are "
@@ -716,28 +723,28 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:115
+#: enterprise/views.py:122
 msgid "Are you aware..."
 msgstr ""
 
-#: enterprise/views.py:116
+#: enterprise/views.py:123
 msgid "I decline"
 msgstr ""
 
-#: enterprise/views.py:117
+#: enterprise/views.py:124
 msgid "View the data sharing policy"
 msgstr ""
 
-#: enterprise/views.py:118
+#: enterprise/views.py:125
 #, python-brace-format
 msgid "View the {start_link}data sharing policy{end_link}."
 msgstr ""
 
-#: enterprise/views.py:119
+#: enterprise/views.py:126
 msgid "Return to Top"
 msgstr ""
 
-#: enterprise/views.py:224
+#: enterprise/views.py:231
 #, python-brace-format
 msgid ""
 "To access this course and use your discount, you must first consent to share "
@@ -745,7 +752,7 @@ msgid ""
 "{bold_end}."
 msgstr ""
 
-#: enterprise/views.py:232
+#: enterprise/views.py:239
 #, python-brace-format
 msgid ""
 "In order to start this course and use your discount, {bold_start}you "
@@ -753,20 +760,73 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:252
+#: enterprise/views.py:259
 msgid "your enrollment in this course"
 msgstr ""
 
-#: enterprise/views.py:253 enterprise/views.py:305
+#: enterprise/views.py:260 enterprise/views.py:312
 msgid "your learning progress"
 msgstr ""
 
-#: enterprise/views.py:254 enterprise/views.py:306
+#: enterprise/views.py:261 enterprise/views.py:313
 msgid "course completion"
 msgstr ""
 
-#: enterprise/views.py:304
+#: enterprise/views.py:311
 msgid "your enrollment in all sponsored courses"
+msgstr ""
+
+#: enterprise/views.py:437
+msgid "Choose Your Track"
+msgstr ""
+
+#: enterprise/views.py:439
+#, python-brace-format
+msgid ""
+"{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
+"{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
+"opportunities from the world's best universities."
+msgstr ""
+
+#: enterprise/views.py:443
+msgid "Confirm your course"
+msgstr ""
+
+#: enterprise/views.py:444
+msgid "Starts"
+msgstr ""
+
+#: enterprise/views.py:445
+msgid "Paced"
+msgstr ""
+
+#: enterprise/views.py:446
+msgid "View Course Details"
+msgstr ""
+
+#: enterprise/views.py:447
+msgid "Please select one:"
+msgstr ""
+
+#: enterprise/views.py:450
+msgid "Price"
+msgstr ""
+
+#: enterprise/views.py:451
+msgid "FREE"
+msgstr ""
+
+#: enterprise/views.py:452
+#, python-brace-format
+msgid "Discount provided by {enterprise_customer_name}"
+msgstr ""
+
+#: enterprise/views.py:454
+msgid "Not eligible for a certificate; does not count toward a MicroMasters"
+msgstr ""
+
+#: enterprise/views.py:456
+msgid "Continue"
 msgstr ""
 
 #: integrated_channels/integrated_channel/management/commands/__init__.py:48

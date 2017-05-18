@@ -946,6 +946,15 @@ class TestCourseEnrollmentView(TestCase):
         )
         response = self.client.get(enterprise_landing_page_url)
         assert response.status_code == 200
+        course_modes = [
+            {
+                'mode': 'enroll',
+                'title': 'Enroll',
+                'original_price': '$200',
+                'final_price': '$190',
+                'description': 'Discount provided by Starfleet Academy',
+            }
+        ]
         expected_context = {
             'platform_name': 'edX',
             'page_title': 'Choose Your Track',
@@ -966,15 +975,9 @@ class TestCourseEnrollmentView(TestCase):
             'course_pace_text': 'Paced',
             'view_course_details_text': 'View Course Details',
             'select_mode_text': 'Please select one:',
-            'enroll_text': 'Enroll',
-            'audit_text': 'Audit',
             'price_text': 'Price',
-            'free_price_text': 'FREE',
-            'discount_text': 'Discount provided by Starfleet Academy',
-            'not_eligible_for_certificate_text': (
-                'Not eligible for a certificate; does not count toward a MicroMasters'
-            ),
             'continue_link_text': 'Continue',
+            'course_modes': course_modes,
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member

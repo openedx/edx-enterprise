@@ -29,7 +29,12 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     UserDataSharingConsentAudit,
 )
-from enterprise.utils import consent_necessary_for_course, disable_for_loaddata, get_all_field_names
+from enterprise.utils import (
+    consent_necessary_for_course,
+    disable_for_loaddata,
+    filter_audit_course_modes,
+    get_all_field_names,
+)
 from test_utils.factories import (
     EnterpriseCustomerBrandingFactory,
     EnterpriseCustomerFactory,
@@ -144,6 +149,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "site",
                 "enable_data_sharing_consent",
                 "enforce_data_sharing_consent",
+                "enable_audit_enrollment",
             ]
         ),
         (
@@ -1221,3 +1227,47 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
 
         second_audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
         assert second_audit_summary == {}
+
+    @ddt.data(
+        (
+            {
+                'mode': 'enroll',
+                'number': 0,
+            },
+            {
+                'mode': 'audit',
+                'number': 1,
+            },
+            {
+                'mode': 'another_audit',
+                'number': 2,
+            },
+            {
+                'mode': 'enroll',
+                'number': 3,
+            },
+            {
+                'mode': 'audit',
+                'number': 4,
+            },
+        )
+    )
+    @override_settings(ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES=['audit', 'another_audit'])
+    def test_filter_audit_course_modes(
+            self,
+            course_modes,
+    ):
+        # when the audit enrollment flag is disabled
+        self.customer.enable_audit_enrollment = False
+        # course modes are filtered out if their mode is in the ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES setting
+        filtered_course_modes = filter_audit_course_modes(self.customer, course_modes)
+        assert len(filtered_course_modes) == 2
+        result = [course_mode['number'] for course_mode in filtered_course_modes]
+        expected = [0, 3]
+        self.assertListEqual(result, expected)
+
+        # when the audit enrollment flag is enabled
+        self.customer.enable_audit_enrollment = True
+        # audit course modes are not filtered out
+        filtered_course_modes = filter_audit_course_modes(self.customer, course_modes)
+        assert len(filtered_course_modes) == 5
