@@ -55,26 +55,34 @@ from django.utils.translation import ugettext as _
           </div>
           <form>
             <div class="caption">${ select_mode_text }</div>
+            % for course_mode in course_modes:
             <div class="radio-block">
               <div class="radio">
-                <input type="radio" name="data_sharing_consent" id="radio1" checked="checked"/>
+                % if len(course_modes) > 1:
+                <input type="radio" name="data_sharing_consent" id="radio${loop.index}"
+                       % if loop.first:
+                       checked="checked"
+                       % endif
+                       />
+                % else:
+                <input type="hidden" name="data_sharing_consent" id="radio${loop.index}"
+                       value="${ course_mode['mode'] }" />
+                % endif
               </div>
-              <label for="radio1">
-                <strong class="title">${ enroll_text }</strong>
-                <span class="price">${ price_text }: <strike>$200</strike> $190</span>
-                ${ discount_text }
+              <label for="radio${loop.index}">
+                <strong class="title">${ course_mode['title'] }</strong>
+                <span class="price">
+                  ${ price_text }:
+                  % if course_mode['final_price'] and course_mode['original_price'] != course_mode['final_price']:
+                  <strike>${ course_mode['original_price'] }</strike> ${ course_mode['final_price'] }
+                  % else:
+                  ${ course_mode['original_price'] }
+                  % endif
+                </span>
+                <span class="description">${ course_mode['description'] }</span>
               </label>
             </div>
-            <div class="radio-block">
-              <div class="radio">
-                <input type="radio" name="data_sharing_consent" id="radio2"/>
-              </div>
-              <label for="radio2">
-                <strong class="title">${ audit_text }</strong>
-                <span class="price">${ price_text }: ${ free_price_text }</span>
-                ${ not_eligible_for_certificate_text }
-              </label>
-            </div>
+            % endfor
             <button class="btn-continue">${ continue_link_text }</button>
           </form>
         </div>

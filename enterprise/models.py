@@ -121,6 +121,13 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_audit_enrollment = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether the audit track enrollment option will be displayed in the course enrollment view."
+        )
+    )
+
     @property
     def identity_provider(self):
         """
