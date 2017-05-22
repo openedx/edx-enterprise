@@ -7,7 +7,9 @@ import ddt
 import mock
 from dateutil.parser import parse
 from pytest import mark, raises
+from requests.utils import quote
 
+from django.contrib import messages
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
@@ -22,6 +24,7 @@ from enterprise.views import (
     GrantDataSharingPermissions,
     HttpClientError,
 )
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
@@ -47,6 +50,47 @@ class TestGrantDataSharingPermissions(TestCase):
         super(TestGrantDataSharingPermissions, self).setUp()
 
     url = reverse('grant_data_sharing_permissions')
+
+    def _assert_request_message(self, request_message, expected_message_tags, expected_message_text):
+        """
+        Verify the request message tags and text.
+        """
+        self.assertEqual(request_message.tags, expected_message_tags)
+        self.assertEqual(request_message.message, expected_message_text)
+
+    def _assert_enterprise_linking_messages(self, response, user_is_active=True):
+        """
+        Verify response messages for a learner when he/she is linked with an
+        enterprise depending on whether the learner has activated the linked
+        account.
+        """
+        # pylint: disable=protected-access
+        response_messages = messages.storage.cookie.CookieStorage(response)._decode(response.cookies['messages'].value)
+        if user_is_active:
+            # Verify that request contains the expected success message when a
+            # learner with activated account is linked with an enterprise
+            self.assertEqual(len(response_messages), 1)
+            self._assert_request_message(
+                response_messages[0],
+                'success',
+                '<span>Account created</span> Thank you for creating an account with edX.'
+            )
+        else:
+            # Verify that request contains the expected success message and an
+            # info message when a learner with unactivated account is linked
+            # with an enterprise.
+            self.assertEqual(len(response_messages), 2)
+            self._assert_request_message(
+                response_messages[0],
+                'success',
+                '<span>Account created</span> Thank you for creating an account with edX.'
+            )
+            self._assert_request_message(
+                response_messages[1],
+                'info',
+                '<span>Activate your account</span> Check your inbox for an activation email. '
+                'You will not be able to log back into your account until you have activated it.'
+            )
 
     @mock.patch('enterprise.views.quarantine_session')
     def test_quarantine(self, mock_quarantine):
@@ -310,8 +354,10 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @ddt.data(False, True)
     def test_post_patch_real_social_auth_enabled(
             self,
+            user_is_active,
             mock_get_ec,
             mock_get_rsa,
             mock_get_ec2,
@@ -324,10 +370,11 @@ class TestGrantDataSharingPermissions(TestCase):
         """
         Test an enforced request with consent and rendering patched in.
         """
+        mock_config.get_value.return_value = 'edX'
         customer = EnterpriseCustomerFactory()
         mock_get_ec.return_value = customer
         mock_get_ec2.return_value = customer
-        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory())
+        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory(is_active=user_is_active))
         mock_url.return_value = '/'
         client = Client()
         session = client.session
@@ -338,6 +385,10 @@ class TestGrantDataSharingPermissions(TestCase):
         assert EnterpriseCustomerUser.objects.all().count() == 1
         assert UserDataSharingConsentAudit.objects.all()[0].enabled
         assert response.status_code == 302
+
+        # Now verify that response contains the expected messages when a
+        # learner is linked with an enterprise
+        self._assert_enterprise_linking_messages(response, user_is_active)
 
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
@@ -920,7 +971,7 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent(
+    def test_get_course_enrollment_page(
             self,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -989,7 +1040,7 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent_with_no_start_date(
+    def test_get_course_enrollment_page_with_no_start_date(
             self,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1037,7 +1088,7 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent_for_non_existing_course(
+    def test_get_course_enrollment_page_for_non_existing_course(
             self,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1074,7 +1125,7 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent_for_error_in_getting_course(
+    def test_get_course_enrollment_page_for_error_in_getting_course(
             self,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1111,7 +1162,7 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent_for_invalid_ec_uuid(
+    def test_get_course_enrollment_page_for_invalid_ec_uuid(
             self,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1135,3 +1186,41 @@ class TestCourseEnrollmentView(TestCase):
         )
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 404
+
+    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    def test_get_course_enrollment_page_for_inactive_user(
+            self,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,
+            render_to_response_mock,    # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user is redirected to login screen to sign in with an
+        enterprise-linked SSO.
+        """
+        course_id = self.demo_course_id
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        response = self.client.get(enterprise_landing_page_url)
+        expected_redirect_url = '{login_url}?next={enterprise_course_enrollment_url}?{tpa_hint_query_string}'.format(
+            login_url='/login',
+            enterprise_course_enrollment_url=quote(enterprise_landing_page_url),
+            tpa_hint_query_string=urlencode({'tpa_hint': enterprise_customer.identity_provider})
+        )
+        self.assertRedirects(response, expected_redirect_url, fetch_redirect_response=False)

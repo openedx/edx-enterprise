@@ -8,12 +8,17 @@ import logging
 import os
 import re
 from functools import wraps
+from uuid import UUID
+
+from requests.utils import quote
 
 from django.apps import apps
 from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.http import Http404
+from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
@@ -527,3 +532,62 @@ def filter_audit_course_modes(enterprise_customer, course_modes):
         return [course_mode for course_mode in course_modes if course_mode['mode'] not in audit_modes]
     else:
         return course_modes
+
+
+def enterprise_login_required(view):
+    """
+    View decorator for allowing authenticated user with valid enterprise UUID.
+
+    This decorator requires enterprise identifier as a parameter
+    `enterprise_uuid`.
+
+    This decorator will throw 404 if no kwarg `enterprise_uuid` is provided to
+    the decorated view .
+
+    If there is no enterprise in database against the kwarg `enterprise_uuid`
+    or if the user is not authenticated then it will redirect the user to the
+    enterprise-linked SSO login page.
+
+    Usage::
+        @enterprise_login_required()
+        def my_view(request, enterprise_uuid):
+            # Some functionality ...
+
+        OR
+
+        class MyView(View):
+            ...
+            @method_decorator(enterprise_login_required)
+            def get(self, request, enterprise_uuid):
+                # Some functionality ...
+
+    """
+    @wraps(view)
+    def wrapper(request, *args, **kwargs):
+        """
+        Function wrapper.
+        """
+        if 'enterprise_uuid' not in kwargs:
+            raise Http404
+
+        enterprise_uuid = kwargs['enterprise_uuid']
+        try:
+            enterprise_uuid = UUID(enterprise_uuid)
+            # pylint: disable=no-member
+            enterprise_customer = enterprise.models.EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
+        except (ValueError, enterprise.models.EnterpriseCustomer.DoesNotExist):
+            LOGGER.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
+            raise Http404
+
+        # Now verify if the user is logged in. If user is not logged in then
+        # send the user to the login screen to sign in with an
+        # Enterprise-linked SSO and the pipeline will get them back here.
+        if not request.user.is_authenticated():
+            next_url = '{current_url}?{query_string}'.format(
+                current_url=quote(request.get_full_path()),
+                query_string=urlencode({'tpa_hint': enterprise_customer.identity_provider})
+            )
+            return redirect('{login_url}?next={next_url}'.format(login_url='/login', next_url=next_url))
+
+        return view(request, *args, **kwargs)
+    return wrapper

@@ -33,6 +33,26 @@ from django.utils.translation import ugettext as _
           </div>
         </div>
         <div class="col-7 border-left">
+
+          % if messages:
+              <div id="messages">
+                % for message in messages:
+                  <div class="alert ${ message.tags }" aria-live="polite">
+                    % if 'success' in message.tags:
+                        <i class="fa fa-check-circle" aria-hidden="true"></i>
+                    % elif 'info' in message.tags:
+                        <i class="fa fa-info-circle" aria-hidden="true"></i>
+                    % elif 'warning' in message.tags:
+                        <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                    % elif 'error' in message.tags:
+                        <i class="fa fa-times-circle" aria-hidden="true"></i>
+                    % endif %}
+                    ${ message }
+                  </div>
+                % endfor
+              </div>
+          % endif
+
           <h3 class="course-confirmation-title">${ confirmation_text }</h3>
           <div class="media">
             <div class="thumbnail">

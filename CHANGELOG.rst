@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.19] - 2017-05-18
+----------------------
+
+* Display account created/linked messages on enterprise landing page
+
+
 [0.33.18] - 2017-05-17
 ----------------------
 

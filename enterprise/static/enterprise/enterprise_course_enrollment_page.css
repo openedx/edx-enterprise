@@ -207,3 +207,48 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     cursor: pointer;
     background: #0b5177;
 }
+
+#messages .alert {
+    position: relative;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid transparent;
+    box-shadow: none;
+    border-radius: 2px;
+    margin-bottom: 8px;
+}
+
+#messages .fa {
+    position: absolute;
+    left: 11px;
+    top: 13px;
+    font-size: 16px;
+}
+
+#messages .alert > span {
+    display: block;
+    font-weight: 600;
+}
+
+#messages .success {
+  background-color: #ecfaec;
+  border-color: #b9edb9;
+  color: #3c763d;
+}
+
+#messages .info {
+  background-color: #f2f8fb;
+  border-color: #cce3f0;
+  color: #31708f;
+}
+
+#messages .warning {
+  background-color: #fcf8e3;
+  border-color: #faebcc;
+  color: #8a6d3b;
+}
+
+#messages .error {
+  background-color: #f2dede;
+  border-color: #ebccd1;
+  color: #a94442;
+}

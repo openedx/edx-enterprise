@@ -33,6 +33,8 @@ INSTALLED_APPS = (
     "django.contrib.sites",
     "django.contrib.sessions",
     "django.contrib.admin",  # only used in DEBUG mode
+    "django.contrib.messages",
+
     "enterprise",
     "integrated_channels.integrated_channel",
     "integrated_channels.sap_success_factors",

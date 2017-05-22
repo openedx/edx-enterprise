@@ -4,12 +4,12 @@ User-facing views for the Enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
-from uuid import UUID
 
 from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404
@@ -53,7 +53,12 @@ from enterprise.models import (
     UserDataSharingConsentAudit,
 )
 from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_enterprise_customer_for_request
-from enterprise.utils import NotConnectedToEdX, consent_necessary_for_course, filter_audit_course_modes
+from enterprise.utils import (
+    NotConnectedToEdX,
+    consent_necessary_for_course,
+    enterprise_login_required,
+    filter_audit_course_modes,
+)
 
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -386,13 +391,31 @@ class GrantDataSharingPermissions(View):
             failure_url = request.POST.get('failure_url') or reverse('dashboard')
             return redirect(failure_url)
 
-        ec_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             user_id=user.id,
             enterprise_customer=customer,
         )
 
+        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        messages.success(
+            request,
+            _('{span_start}Account created{span_end} Thank you for creating an account with {platform_name}.').format(
+                platform_name=platform_name,
+                span_start='<span>',
+                span_end='</span>',
+            )
+        )
+        if not user.is_active:
+            messages.info(
+                request,
+                _(
+                    '{span_start}Activate your account{span_end} Check your inbox for an activation email. '
+                    'You will not be able to log back into your account until you have activated it.'
+                ).format(span_start='<span>', span_end='</span>')
+            )
+
         UserDataSharingConsentAudit.objects.update_or_create(
-            user=ec_user,
+            user=enterprise_customer_user,
             defaults={
                 'state': (
                     UserDataSharingConsentAudit.ENABLED if consent_provided
@@ -460,13 +483,11 @@ class CourseEnrollmentView(View):
         """
         Render enterprise specific course track selection page.
 
-        A 404 will be raised if any of the following conditions are met:
-            * Course details are not found against the provided course id.
-            * No enterprise customer uuid querystring "ec_uuid" in the request.
-            * No enterprise customer against the enterprise customer uuid in
-                the request querystring.
+        A 404 will be raised if course details are not found against the
+        provided course id.
 
         """
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_uuid)  # pylint: disable=no-member
         try:
             client = CourseApiClient()
             course_details = client.get_course_details(course_id)
@@ -478,15 +499,7 @@ class CourseEnrollmentView(View):
             logger.error('Unable to find course details for course ID: %s', course_id)
             raise Http404
 
-        try:
-            enterprise_uuid = UUID(enterprise_uuid)
-            # pylint: disable=no-member
-            enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
-        except (ValueError, EnterpriseCustomer.DoesNotExist):
-            logger.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
-            raise Http404
-
-        platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
+        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         course_start_date = ''
         if course_details['start']:
             course_start_date = parse(course_details['start']).strftime('%B %d, %Y')
@@ -512,7 +525,7 @@ class CourseEnrollmentView(View):
         context_data = {
             'page_title': self.context_data['page_title'],
             'page_language': get_language_from_request(request),
-            'platform_name': configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME),
+            'platform_name': platform_name,
             'course_id': course_id,
             'course_name': course_details['name'],
             'course_organization': course_details['org'],
@@ -538,13 +551,20 @@ class CourseEnrollmentView(View):
         }
         return render_to_response('enterprise_course_enrollment_page.html', context_data, request=request)
 
-    @method_decorator(login_required)
+    @method_decorator(enterprise_login_required)
     def get(self, request, enterprise_uuid, course_id):
         """
         Show course track selection page for the enterprise.
 
         Based on `enterprise_uuid` in URL, the view will decide which
         enterprise customer's course enrollment page is to use.
+
+        Unauthenticated learners will be redirected to enterprise-linked SSO.
+
+        A 404 will be raised if any of the following conditions are met:
+            * No enterprise customer uuid kwarg `enterprise_uuid` in request.
+            * No enterprise customer found against the enterprise customer
+                uuid `enterprise_uuid` in the request kwargs.
         """
         # Verify that all necessary resources are present
         verify_edx_resources()
