@@ -1,6 +1,6 @@
 * {
     font-family: "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
-    font-size: 16;
+    font-size: 16px;
 }
 body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     background-color: white;
@@ -43,7 +43,7 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     border-color: transparent;
     height: auto;
     width: 33%;
-    font-size: 18;
+    font-size: 18px;
     padding: 5px 2px;
     max-width: 180px;
     min-width: 125px;
@@ -80,7 +80,7 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
 }
 .failure-link {
     color: #0075B4;
-    font-size: 18;
+    font-size: 18px;
     display: inline-block;
     text-decoration: underline;
     border: none;
@@ -140,8 +140,8 @@ h1 {
 
 .modal-close-button {
     position: absolute;
-    top: -27;
-    right: 3;
+    top: -27px;
+    right: 3px;
     color: white;
     font-size: 1.5em;
     border: none;
@@ -150,13 +150,13 @@ h1 {
 
 .modal-close-button:hover {
     font-size: 1.8em;
-    top: -30;
+    top: -30px;
     right: 0;
 }
 
 .modal-close-button:focus {
     font-size: 1.8em;
-    top: -30;
+    top: -30px;
     right: 0;
 }
 
@@ -172,14 +172,14 @@ h1 {
     padding: 20px;
     width: 80%;
     max-width: 450px;
-    max-height: 300px;
+    max-height: 320px;
     min-width: 300px;
     border-top: 30px solid #0075B4;
 }
 
 h2#modal-header-text {
     font-weight: bold;
-    font-size: 18;
+    font-size: 18px;
 }
 
 .data-consent-checkbox {

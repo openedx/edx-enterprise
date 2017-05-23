@@ -1,0 +1,25 @@
+{% load theme_pipeline staticfiles %}
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}">
+  <head>
+  {% block title %}<title>{{ page_title }} | {{ platform_name }}</title>{% endblock %}
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+
+    {% block styles %}
+      {% stylesheet 'style-vendor' %}
+      {% stylesheet 'style-main-v2' %}
+       <link rel="stylesheet" href="{% static 'css/vendor/font-awesome.css' %}"/>
+    {% endblock %}
+
+    {% block extrastyles %}{% endblock %}
+
+    {% block extrahead %}{% endblock %}
+
+    {% include "enterprise/widgets/segment-io.html" %}
+  </head>
+
+  <body>
+    {% block contents %}{% endblock %}
+  </body>
+</html>

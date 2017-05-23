@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.20] - 2017-05-23
+----------------------
+
+* Migrate from mako templates to django templates
+
+
 [0.33.19] - 2017-05-18
 ----------------------
 

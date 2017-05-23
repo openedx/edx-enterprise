@@ -12,7 +12,7 @@ from requests.utils import quote
 from django.contrib import messages
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render_to_response
+from django.shortcuts import render
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
@@ -28,11 +28,11 @@ from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
-def fake_render(template, context, request):  # pylint: disable=unused-argument
+def fake_render(request, template, context):  # pylint: disable=unused-argument
     """
-    Switch the request to use the Django rendering engine instead of Mako.
+    Switch the request to use a template that does not depend on edx-platform.
     """
-    return render_to_response('enterprise/grant_data_sharing_permissions.html', context=context)
+    return render(request, 'enterprise/emails/user_notification.html', context=context)
 
 
 @mark.django_db
@@ -124,7 +124,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.views.redirect')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.configuration_helpers')
     def test_get_no_customer_redirect(
@@ -159,7 +159,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.configuration_helpers')
     def test_get_render_patched(
@@ -208,7 +208,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.redirect')
-    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.render')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -243,7 +243,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.render')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -271,7 +271,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.render')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -312,7 +312,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.render')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -349,7 +349,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.render')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -393,7 +393,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response')
+    @mock.patch('enterprise.views.render')
     @mock.patch('enterprise.views.get_complete_url')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -439,7 +439,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
         (False, False),
@@ -524,7 +524,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_invalid_params(
             self,
@@ -568,7 +568,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_unauthenticated_user(
             self,
@@ -616,7 +616,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_bad_api_response(
             self,
@@ -655,7 +655,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_not_needed(
             self,
@@ -697,7 +697,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(True, False)
@@ -749,7 +749,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_not_provided(
@@ -797,7 +797,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_no_user(
@@ -846,7 +846,7 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_bad_api_response(
@@ -964,7 +964,7 @@ class TestCourseEnrollmentView(TestCase):
         """
         assert self.client.login(username=self.user.username, password="QWERTY")
 
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -1033,7 +1033,7 @@ class TestCourseEnrollmentView(TestCase):
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
 
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -1081,7 +1081,7 @@ class TestCourseEnrollmentView(TestCase):
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
 
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -1118,7 +1118,7 @@ class TestCourseEnrollmentView(TestCase):
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -1155,7 +1155,7 @@ class TestCourseEnrollmentView(TestCase):
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
@@ -1187,7 +1187,7 @@ class TestCourseEnrollmentView(TestCase):
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
