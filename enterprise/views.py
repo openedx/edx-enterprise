@@ -131,6 +131,11 @@ class GrantDataSharingPermissions(View):
         end_link='</a>',
     )
     policy_return_link_text = _('Return to Top')
+    enterprise_welcome_text = _(
+        "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
+        "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
+        "opportunities from the world's best universities."
+    )
 
     @staticmethod
     def quarantine(request):
@@ -267,7 +272,14 @@ class GrantDataSharingPermissions(View):
                 _('your enrollment in this course'),
                 _('your learning progress'),
                 _('course completion'),
-            ]
+            ],
+            'enterprise_customer': customer,
+            'enterprise_welcome_text': self.enterprise_welcome_text.format(
+                enterprise_customer_name=customer.name,
+                platform_name=platform_name,
+                strong_start='<strong>',
+                strong_end='</strong>',
+            )
         }
         context_data.update(course_specific_context)
         return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
@@ -319,7 +331,14 @@ class GrantDataSharingPermissions(View):
                 _('your enrollment in all sponsored courses'),
                 _('your learning progress'),
                 _('course completion'),
-            ]
+            ],
+            'enterprise_customer': customer,
+            'enterprise_welcome_text': self.enterprise_welcome_text.format(
+                enterprise_customer_name=customer.name,
+                platform_name=platform_name,
+                strong_start='<strong>',
+                strong_end='</strong>',
+            ),
         }
 
         context_data.update(account_specific_context)
