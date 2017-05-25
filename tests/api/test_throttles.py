@@ -31,9 +31,6 @@ class TestEnterpriseAPIThrottling(APITest):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory()
         factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=user.id)
-        factories.EnterpriseCustomerBrandingFactory(
-            enterprise_customer=enterprise_customer, logo='/static/images/logo.png',
-        )
 
         self.url = settings.TEST_SERVER + reverse('site-list')
 

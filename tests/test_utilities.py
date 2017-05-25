@@ -39,7 +39,6 @@ from enterprise.utils import (
     get_all_field_names,
 )
 from test_utils.factories import (
-    EnterpriseCustomerBrandingFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
@@ -807,49 +806,6 @@ class TestEnterpriseUtils(unittest.TestCase):
             for field, val in expected_fields.items():
                 assert getattr(mail.outbox[0], field) == val
             assert mail.outbox[0].connection is conn
-
-    def test_enterprise_branding_info_by_provider_id(self):
-        """
-        Test `get_enterprise_branding_info_by_provider_id` helper method.
-        """
-        EnterpriseCustomerBrandingFactory(
-            enterprise_customer=self.customer,
-            logo='/test_1.png/'
-        )
-        self.assertEqual(
-            utils.get_enterprise_branding_info_by_provider_id(),
-            None,
-        )
-        self.assertEqual(
-            utils.get_enterprise_branding_info_by_provider_id(identity_provider_id=self.provider_id).logo,
-            '/test_1.png/',
-        )
-        self.assertEqual(
-            utils.get_enterprise_branding_info_by_provider_id(identity_provider_id='fake'),
-            None,
-        )
-
-    def test_enterprise_branding_info_by_ec_uuid(self):
-        """
-        Test `get_enterprise_branding_info_by_ec_uuid` helper method.
-        """
-        EnterpriseCustomerBrandingFactory(
-            enterprise_customer=self.customer,
-            logo='/test_2.png/'
-        )
-
-        self.assertEqual(
-            utils.get_enterprise_branding_info_by_ec_uuid(),
-            None,
-        )
-        self.assertEqual(
-            utils.get_enterprise_branding_info_by_ec_uuid(ec_uuid=self.uuid).logo,
-            '/test_2.png/',
-        )
-        self.assertEqual(
-            utils.get_enterprise_branding_info_by_ec_uuid(ec_uuid=FakerFactory.create().uuid4()),
-            None,
-        )
 
     def test_get_enterprise_customer_for_user(self):
         """

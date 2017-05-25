@@ -116,19 +116,6 @@ class TestEnterpriseAPIViews(APITest):
             [{'domain': 'example.com', 'name': 'example.com'}],
         ),
         (
-            factories.EnterpriseCustomerBrandingFactory,
-            reverse('enterprise-customer-branding-list'),
-            itemgetter('enterprise_customer'),
-            [{
-                'enterprise_customer__uuid': 'd1098bfb-2c78-44f1-9eb2-b94475356a3f',
-                'logo': '/static/images/logo.png'
-            }],
-            [{
-                'enterprise_customer': 'd1098bfb-2c78-44f1-9eb2-b94475356a3f',
-                'logo': settings.TEST_SERVER + settings.MEDIA_URL + 'static/images/logo.png'
-            }],
-        ),
-        (
             factories.EnterpriseCustomerFactory,
             reverse('enterprise-customer-list'),
             itemgetter('uuid'),
