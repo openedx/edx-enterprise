@@ -21,10 +21,8 @@ from django.shortcuts import redirect
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
-import enterprise
 # pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunparse, urlunsplit
-
 
 try:
     # Try to import identity provider registry if third_party_auth is present
@@ -389,14 +387,86 @@ def get_enterprise_customer_for_user(auth_user):
 
     Returns:
         (EnterpriseCustomer): enterprise customer associated with the current user.
+
     """
-    enterprise_customer_user = enterprise.models.EnterpriseCustomerUser.objects.filter(user_id=auth_user.id).first()
+    # pylint: disable=invalid-name
+    EnterpriseCustomerUser = apps.get_model(app_label='enterprise', model_name='EnterpriseCustomerUser')
+    enterprise_customer_user = EnterpriseCustomerUser.objects.filter(user_id=auth_user.id).first()
 
     # Return `None` if given user is not associated with any enterprise customer
     if not enterprise_customer_user:
         return None
 
     return enterprise_customer_user.enterprise_customer
+
+
+def get_enterprise_customer_user(user_id, enterprise_uuid):
+    """
+    Return the object for EnterpriseCustomerUser.
+
+    Arguments:
+        user_id (str): user identifier
+        enterprise_uuid (UUID): Universally unique identifier for the enterprise customer.
+
+    Returns:
+        (EnterpriseCustomerUser): enterprise customer user record
+
+    """
+    # pylint: disable=invalid-name
+    EnterpriseCustomerUser = apps.get_model(app_label='enterprise', model_name='EnterpriseCustomerUser')
+    try:
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+            enterprise_customer__uuid=enterprise_uuid,
+            user_id=user_id
+        )
+    except EnterpriseCustomerUser.DoesNotExist:
+        return None
+
+    return enterprise_customer_user
+
+
+def is_consent_required_for_user(enterprise_customer_user, course_id=None):
+    """
+    Determine if user fulfills data sharing consent requirement for enterprise.
+
+    This method first checks if learner has provided account level consent
+    then checks course level consent.
+
+    Arguments:
+        course_id (str): The ID of the course in which the learner is enrolled
+        enterprise_customer_user (EnterpriseCustomerUser): enterprise customer
+            user record
+
+    Returns:
+        Boolean: enterprise customer user required to provide data sharing
+            consent.
+
+    """
+    enterprise_customer = enterprise_customer_user.enterprise_customer
+    # pylint: disable=invalid-name
+    EnterpriseCustomer = apps.get_model(app_label='enterprise', model_name='EnterpriseCustomer')
+
+    # No need for consent, if the enterprise customer doesn't requires DSC.
+    if not (enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN) or
+            enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT)):
+        return False
+
+    # No need for consent, if the enterprise learner has provided account
+    # level consent.
+    learner_consent_state = enterprise_customer_user.data_sharing_consent.first()
+    learner_consent_enabled = learner_consent_state and learner_consent_state.enabled
+    if learner_consent_enabled:
+        return False
+
+    # No need for consent, if the enterprise learner has provided course level
+    # consent for the given course.
+    if course_id:
+        learner_course_consent_state = enterprise_customer_user.enterprise_enrollments.filter(
+            course_id=course_id
+        ).first()
+        return learner_course_consent_state.consent_needed if learner_course_consent_state else True
+
+    return True
 
 
 def get_course_track_selection_url(course_run, query_parameters):
@@ -492,12 +562,14 @@ def get_enterprise_customer_or_404(enterprise_uuid):
 
     Returns:
         (EnterpriseCustomer): The EnterpriseCustomer given the UUID.
+
     """
+    # pylint: disable=invalid-name
+    EnterpriseCustomer = apps.get_model(app_label='enterprise', model_name='EnterpriseCustomer')
     try:
         enterprise_uuid = UUID(enterprise_uuid)
-        # pylint: disable=no-member
-        enterprise_customer = enterprise.models.EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
-    except (ValueError, enterprise.models.EnterpriseCustomer.DoesNotExist):
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_uuid)
+    except (ValueError, EnterpriseCustomer.DoesNotExist):
         LOGGER.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
         raise Http404
     return enterprise_customer

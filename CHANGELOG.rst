@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.34.7] - 2017-06-14
+---------------------
+
+* Enable "Continue" button flows on enterprise landing page
+
+
 [0.34.6] - 2017-06-14
 ---------------------
 

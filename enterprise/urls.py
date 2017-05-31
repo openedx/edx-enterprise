@@ -7,7 +7,7 @@ from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from django.conf.urls import include, url
 
-from enterprise.views import CourseEnrollmentView, GrantDataSharingPermissions
+from enterprise.views import CourseEnrollmentView, GrantDataSharingPermissions, HandleConsentEnrollment
 
 
 urlpatterns = [
@@ -16,6 +16,12 @@ urlpatterns = [
         GrantDataSharingPermissions.as_view(),
         name='grant_data_sharing_permissions'
     ),
+    url(
+        r'^enterprise/handle_consent_enrollment/(?P<enterprise_uuid>[^/]+)/course/{}/$'.format(
+            settings.COURSE_ID_PATTERN
+        ),
+        HandleConsentEnrollment.as_view(),
+        name='enterprise_handle_consent_enrollment'),
     url(
         r'^enterprise/(?P<enterprise_uuid>[^/]+)/course/{}/enroll/$'.format(settings.COURSE_ID_PATTERN),
         CourseEnrollmentView.as_view(),
