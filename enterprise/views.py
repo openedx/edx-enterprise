@@ -40,7 +40,7 @@ except ImportError:
 
 # isort:imports-firstparty
 from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
-from enterprise.lms_api import CourseApiClient
+from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -53,10 +53,14 @@ from enterprise.utils import (
     consent_necessary_for_course,
     enterprise_login_required,
     filter_audit_course_modes,
+    get_enterprise_customer_or_404,
 )
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+
+LMS_COURSE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
 
 
 def verify_edx_resources():
@@ -498,7 +502,22 @@ class CourseEnrollmentView(View):
             logger.error('Unable to find course details for course ID: %s', course_id)
             raise Http404
 
-        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+
+        enrollment_client = EnrollmentApiClient()
+        enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
+
+        if (enrolled_course is not None or
+                EnterpriseCourseEnrollment.objects.filter(
+                    enterprise_customer_user__enterprise_customer=enterprise_customer,
+                    enterprise_customer_user__user_id=request.user.id,
+                    course_id=course_id
+                ).exists()):
+            # The user is already enrolled in the course through the Enterprise Customer, so redirect to the course
+            # info page.
+            return redirect(LMS_COURSE_URL.format(course_id=course_id))
+
+        platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
         course_start_date = ''
         if course_details['start']:
             course_start_date = parse(course_details['start']).strftime('%B %d, %Y')
