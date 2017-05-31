@@ -90,17 +90,16 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
                     enterprise_customer=enterprise_customer,
                     user_id=request.user.id,
                 )
-            except models.ObjectDoesNotExist:
-                error_message = ("User is not associated with enterprise from endpoint "
-                                 "'/enterprise-customer/{}/courses'.".format(pk))
+            except models.EnterpriseCustomerUser.DoesNotExist:
+                error_message = ("User '{}' is not associated with enterprise from endpoint "
+                                 "'/enterprise-customer/{}/courses'.".format(request.user.username, pk))
                 logger.error(error_message)
                 raise PermissionDenied("The user does not have permission to access this resource: " + error_message)
 
         catalog_api = CourseCatalogApiClient(request.user)
         courses = catalog_api.get_catalog_courses(enterprise_customer.catalog)
 
-        # if API returned an empty response, that means pagination has ended.
-        # An empty response can also means that there was a problem fetching data from catalog API.
+        # An empty response can mean that there was a problem fetching data from catalog API.
         if not courses:
             error_message = ("Unable to fetch API response for catalog courses from endpoint "
                              "'/enterprise-customer/{}/courses'.".format(pk))

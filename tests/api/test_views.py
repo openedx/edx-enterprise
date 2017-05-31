@@ -655,7 +655,7 @@ class TestEnterpriseAPIViews(APITest):
             {},
             {'detail': (
                 "The user does not have permission to access this resource: "
-                "User is not associated with enterprise from endpoint "
+                "User 'api_worker' is not associated with enterprise from endpoint "
                 "'/enterprise-customer/d2098bfb-2c78-44f1-9eb2-b94475356a3f/courses'."
             )}
         ),

@@ -343,15 +343,12 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
                 query_parameters=query_parameters,
             )
 
-            landing_page_url = utils.get_enterprise_landing_page_url(
-                enterprise_customer.uuid,
-                course_run.get('key'),
-            )
+            enrollment_url = enterprise_customer.get_course_enrollment_url(course_run.get('key'))
 
             # Add/update track selection url in course run metadata.
             course_run.update({
                 'track_selection_url': track_selection_url,
-                'landing_page_url': landing_page_url
+                'enrollment_url': enrollment_url
             })
 
             # Update marketing urls in course metadata to include enterprise related info.

@@ -481,30 +481,6 @@ def get_course_track_selection_url(course_run, query_parameters):
     return course_run_url
 
 
-def get_enterprise_landing_page_url(enterprise_uuid, course_run_key):
-    """
-    Return enterprise landing page url for the given course.
-
-    Arguments:
-        enterprise_uuid (str): The enterprise uuid.
-        course_run_key (str): The course run id for the course to be displayed.
-
-    Returns:
-        (str): Enterprise landing page url.
-    """
-    course_root = reverse(
-        'enterprise_course_enrollment_page',
-        kwargs={'enterprise_uuid': enterprise_uuid, 'course_id': course_run_key}
-    )
-
-    url = '{}{}'.format(
-        settings.LMS_ROOT_URL,
-        course_root
-    )
-
-    return url
-
-
 def update_query_parameters(url, query_parameters):
     """
     Return url with updated query parameters.
