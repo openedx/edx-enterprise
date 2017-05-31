@@ -1,113 +1,81 @@
-<%namespace name='static' file='/static_content.html'/>
+{% extends 'enterprise/base.html' %}
 
-<%static:css group='style-vendor'/>
-<%! main_css = "style-main-v2" %>
-<%static:css group='${self.attr.main_css}'/>
+{% load staticfiles enterprise %}
 
-<%!
-from django.utils.translation import ugettext as _
-%>
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'enterprise/enterprise_course_enrollment_page.css' %}" />
+{% endblock %}
 
-<html lang="${ page_language }">
-  <title>${ page_title } | ${ platform_name }</title>
-  <head>
-    <link rel="stylesheet" href="${static.url('css/vendor/font-awesome.css')}"/>
-    <link rel="stylesheet" href="${static.url('enterprise/enterprise_course_enrollment_page.css')}"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  </head>
-  <body>
+{% block contents %}
+  <header class="logo-container" aria-label="{{ page_title }}">
+    <h1>
+      <img src="{% static 'images/logo.png' %}" alt="{{ platform_name }}"/>
+    </h1>
+  </header>
+  <hr class="pinstripe"/>
 
-    <header class="logo-container" aria-label="${ page_title }">
-      <h1>
-        <img src="${static.url('images/logo.png')}" alt="${ platform_name }"/>
-      </h1>
-    </header>
-    <hr class="pinstripe"/>
-
-    <div class="enterprise-container">
-      <div class="row">
-        <div class="col-3">
-          <img class="enterprise-logo" src="${ enterprise_customer.branding_configuration.logo.url }" alt="${ enterprise_customer.name }"/>
-          <div class="partnered-text">
-            ${ enterprise_welcome_text }
-          </div>
-        </div>
-        <div class="col-7 border-left">
-
-          % if messages:
-              <div id="messages">
-                % for message in messages:
-                  <div class="alert ${ message.tags }" aria-live="polite">
-                    % if 'success' in message.tags:
-                        <i class="fa fa-check-circle" aria-hidden="true"></i>
-                    % elif 'info' in message.tags:
-                        <i class="fa fa-info-circle" aria-hidden="true"></i>
-                    % elif 'warning' in message.tags:
-                        <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
-                    % elif 'error' in message.tags:
-                        <i class="fa fa-times-circle" aria-hidden="true"></i>
-                    % endif %}
-                    ${ message }
-                  </div>
-                % endfor
-              </div>
-          % endif
-
-          <h3 class="course-confirmation-title">${ confirmation_text }</h3>
-          <div class="media">
-            <div class="thumbnail">
-              <img class="course-image" src="${ course_image_uri }" alt="${ course_name }"/>
-            </div>
-            <div class="media-content">
-              <div class="course-title">${ course_name }</div>
-            </div>
-          </div>
-          <div class="course-detail">
-            <div class="course-org">
-              ${ course_organization }
-            </div>
-            <div class="course-info">
-              <i class="fa fa-clock-o" aria-hidden="true"></i>
-              <span>${ starts_at_text } ${ course_start_date } &nbsp;| &nbsp; ${ course_pacing } - ${ course_pace_text }</span>
-            </div>
-            ${ course_short_description }
-            <a class="text-underline" href="#!">${ view_course_details_text }</a>
-          </div>
-          <form>
-            <div class="caption">${ select_mode_text }</div>
-            % for course_mode in course_modes:
-            <div class="radio-block">
-              <div class="radio">
-                % if len(course_modes) > 1:
-                <input type="radio" name="data_sharing_consent" id="radio${loop.index}"
-                       % if loop.first:
-                       checked="checked"
-                       % endif
-                       />
-                % else:
-                <input type="hidden" name="data_sharing_consent" id="radio${loop.index}"
-                       value="${ course_mode['mode'] }" />
-                % endif
-              </div>
-              <label for="radio${loop.index}">
-                <strong class="title">${ course_mode['title'] }</strong>
-                <span class="price">
-                  ${ price_text }:
-                  % if course_mode['final_price'] and course_mode['original_price'] != course_mode['final_price']:
-                  <strike>${ course_mode['original_price'] }</strike> ${ course_mode['final_price'] }
-                  % else:
-                  ${ course_mode['original_price'] }
-                  % endif
-                </span>
-                <span class="description">${ course_mode['description'] }</span>
-              </label>
-            </div>
-            % endfor
-            <button class="btn-continue">${ continue_link_text }</button>
-          </form>
+  <div class="enterprise-container">
+    <div class="row">
+      <div class="col-3">
+        <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
+        <div class="partnered-text">
+          {% autoescape off %}{{ enterprise_welcome_text }}{% endautoescape %}
         </div>
       </div>
-    </div>
+      <div class="col-7 border-left">
 
-  </body>
-</html>
+        {# Display success, error, warning or info messages #}
+        {% alert_messages messages %}
+
+        <h3 class="course-confirmation-title">{{ confirmation_text }}</h3>
+        <div class="media">
+          <div class="thumbnail">
+            <img class="course-image" src="{{ course_image_uri }}" alt="{{ course_name }}"/>
+          </div>
+          <div class="media-content">
+            <div class="course-title">{{ course_name }}</div>
+          </div>
+        </div>
+        <div class="course-detail">
+          <div class="course-org">
+            {{ course_organization }}
+          </div>
+          <div class="course-info">
+            <i class="fa fa-clock-o" aria-hidden="true"></i>
+            <span>{{ starts_at_text }} {{ course_start_date }} &nbsp;| &nbsp; {{ course_pacing }} - {{ course_pace_text }}</span>
+          </div>
+          {{ course_short_description }}
+          <a class="text-underline" href="#!">{{ view_course_details_text }}</a>
+        </div>
+        <form>
+          <div class="caption">{{ select_mode_text }}</div>
+          {% for course_mode in course_modes %}
+          <div class="radio-block">
+            <div class="radio">
+              {% if course_modes|length > 1 %}
+                <input type="radio" name="data_sharing_consent" id="radio${{ forloop.counter0 }}" {% if forloop.first %}checked="checked"{% endif %} />
+              {% else %}
+                <input type="hidden" name="data_sharing_consent" id="radio{{ forloop.counter0 }}" value="{{ course_mode.mode }}" />
+              {% endif %}
+            </div>
+
+            <label for="radio{{ forloop.counter0 }}">
+              <strong class="title">{{ course_mode.title }}</strong>
+              <span class="price">
+                {{ price_text }}:
+                {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
+                  <strike>{{ course_mode.original_price }}</strike> {{ course_mode.final_price }}
+                {% else %}
+                  {{ course_mode.original_price }}
+                {% endif %}
+              </span>
+              <span class="description">{{ course_mode.description }}</span>
+            </label>
+          </div>
+          {% endfor %}
+          <button class="btn-continue">{{ continue_link_text }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

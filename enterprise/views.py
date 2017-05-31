@@ -13,16 +13,11 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.utils.translation import get_language_from_request
 from django.views.generic import View
-
-try:
-    from edxmako.shortcuts import render_to_response
-except ImportError:
-    render_to_response = None
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -69,7 +64,6 @@ def verify_edx_resources():
     Ensure that all necessary resources to render the view are present.
     """
     required_methods = (
-        render_to_response,
         configuration_helpers,
         get_enterprise_customer_for_request,
         get_real_social_auth_object,
@@ -89,7 +83,7 @@ class GrantDataSharingPermissions(View):
     consent to be provided, and a POST view that consumes said form.
     """
 
-    title_bar_prefix = _('Data sharing consent required')
+    page_title = _('Data sharing consent required')
     consent_message_header = _('Before enrollment is complete...')
     requested_permissions_header = _('{enterprise_customer_name} would like to know about:')
     agreement_text = _(
@@ -127,7 +121,11 @@ class GrantDataSharingPermissions(View):
     confirmation_modal_header = _('Are you aware...')
     modal_affirm_decline_msg = _('I decline')
     modal_abort_decline_msg = _('View the data sharing policy')
-    policy_link_template = _('View the {start_link}data sharing policy{end_link}.')
+    policy_link_template = _('View the {start_link}data sharing policy{end_link}.').format(
+        start_link='<a href="#consent-policy-dropdown-bar" class="policy-dropdown-link background-input" '
+                   'id="policy-dropdown-link">',
+        end_link='</a>',
+    )
     policy_return_link_text = _('Return to Top')
 
     @staticmethod
@@ -149,7 +147,7 @@ class GrantDataSharingPermissions(View):
         Get the set of variables that will populate the template by default.
         """
         return {
-            'title_bar_prefix': self.title_bar_prefix,
+            'page_title': self.page_title,
             'consent_message_header': self.consent_message_header,
             'requested_permissions_header': self.requested_permissions_header.format(
                 enterprise_customer_name=enterprise_customer.name
@@ -179,6 +177,7 @@ class GrantDataSharingPermissions(View):
             'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
             'policy_link_template': self.policy_link_template,
             'policy_return_link_text': self.policy_return_link_text,
+            'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }
 
     @method_decorator(login_required)
@@ -251,7 +250,7 @@ class GrantDataSharingPermissions(View):
             'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name,
             ),
-            'page_language': get_language_from_request(request),
+            'LANGUAGE_CODE': get_language_from_request(request),
             'platform_name': platform_name,
             'course_id': course_id,
             'course_name': course_name,
@@ -267,7 +266,7 @@ class GrantDataSharingPermissions(View):
             ]
         }
         context_data.update(course_specific_context)
-        return render_to_response('grant_data_sharing_permissions.html', context_data, request=request)
+        return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
     def get_account_consent(self, request):
         """
@@ -305,7 +304,7 @@ class GrantDataSharingPermissions(View):
             'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
                 enterprise_customer_name=customer.name,
             ),
-            'page_language': get_language_from_request(request),
+            'LANGUAGE_CODE': get_language_from_request(request),
             'platform_name': platform_name,
             'enterprise_customer_name': customer.name,
             "course_id": None,
@@ -321,7 +320,7 @@ class GrantDataSharingPermissions(View):
 
         context_data.update(account_specific_context)
 
-        return render_to_response('grant_data_sharing_permissions.html', context_data, request=request)
+        return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
     def get(self, request):
         """
@@ -524,7 +523,7 @@ class CourseEnrollmentView(View):
 
         context_data = {
             'page_title': self.context_data['page_title'],
-            'page_language': get_language_from_request(request),
+            'LANGUAGE_CODE': get_language_from_request(request),
             'platform_name': platform_name,
             'course_id': course_id,
             'course_name': course_details['name'],
@@ -549,7 +548,7 @@ class CourseEnrollmentView(View):
             'continue_link_text': self.context_data['continue_link_text'],
             'course_modes': filter_audit_course_modes(enterprise_customer, course_modes),
         }
-        return render_to_response('enterprise_course_enrollment_page.html', context_data, request=request)
+        return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
     @method_decorator(enterprise_login_required)
     def get(self, request, enterprise_uuid, course_id):

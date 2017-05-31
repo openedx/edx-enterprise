@@ -1,115 +1,113 @@
-<%namespace name='static' file='/static_content.html'/>
-  <%static:css group='style-vendor'/>
-    <%! main_css = "style-main-v2" %>
-<%static:css group='${self.attr.main_css}'/>
-  <%!
-    from django.utils.translation import ugettext as _
-    %>
-<%include file="widgets/segment-io.html" />
-<html lang="${ page_language }">
-  <title>${ title_bar_prefix } | ${ platform_name }</title>
-  <head>
-    <link rel="stylesheet" href="${static.url('css/vendor/font-awesome.css')}"/>
-    <link rel="stylesheet" href="${static.url('enterprise/grant_data_sharing_permissions.css')}"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    <script type="text/javascript">
-      var courseId;
-      var successUrl;
-      var failureUrl;
-      var enrollmentDeferred = false;
-      % if course_specific and course_id:
-        courseId = "${ course_id }";
-      % endif
-      % if redirect_url:
-        successUrl = "${ redirect_url }";
-      % endif
-      % if failure_url:
-        failureUrl = "${ failure_url }";
-      % endif
-      % if enrollment_deferred:
-        enrollmentDeferred = true;
-      % endif
-    </script>
-    <script type="text/javascript" src="${static.url('common/js/vendor/jquery.js')}"></script>
-    <script type="text/javascript" src="${static.url('js/vendor/jquery.cookie.js')}"></script>
-    <script type="text/javascript" src="${static.url('enterprise/grant_data_sharing_permissions.js')}"></script>
-  </head>
-  <body>
-    <header class="logo-container" aria-label="${ title_bar_prefix }">
-      <h1>
-        <img src="${static.url('images/logo.png')}" alt="${ platform_name }"/>
-      </h1>
-    </header>
-    <hr class="pinstripe"/>
-    <main>
-      <div class="consent-container">
-        <h2 class="consent-title">${ consent_message_header }</h2>
-        <div class="consent-message">
-          <p>${ consent_request_prompt } ${ policy_link_template.format(start_link='<a href="#consent-policy-dropdown-bar" class="policy-dropdown-link background-input" id="policy-dropdown-link">', end_link='</a>') }</p>
-          <p>${ requested_permissions_header }
+{% extends 'enterprise/base.html' %}
+
+{% load i18n staticfiles %}
+
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'enterprise/grant_data_sharing_permissions.css' %}"/>
+{% endblock %}
+
+{% block extrahead %}
+  <script type="text/javascript">
+    var courseId;
+    var successUrl = {{ redirect_url|default:"null"|escapejs }};
+    var failureUrl = {{ failure_url|default:"null"|escapejs }};
+    var enrollmentDeferred = {{ enrollment_deferred|yesno:"true,false" }};
+    {% if course_specific and course_id %}
+      courseId = "{{ course_id }}";
+    {% endif %}
+  </script>
+  <script type="text/javascript" src="{% static  'common/js/vendor/jquery.js' %}"></script>
+  <script type="text/javascript" src="{% static  'js/vendor/jquery.cookie.js' %}"></script>
+  <script type="text/javascript" src="{% static  'enterprise/grant_data_sharing_permissions.js' %}"></script>
+{% endblock %}
+
+{% block contents %}
+  <header class="logo-container" aria-label="{{ page_title }}">
+    <h1>
+      <img src="{% static 'images/logo.png' %}" alt="{{ platform_name }}"/>
+    </h1>
+  </header>
+  <hr class="pinstripe"/>
+  <main>
+
+    <div class="consent-container">
+      <h2 class="consent-title">{{ consent_message_header }}</h2>
+      <div class="consent-message">
+        {% autoescape off %}
+          <p>{{ consent_request_prompt }} {{ policy_link_template }}</p>
+        {% endautoescape %}
+
+        <p>{{ requested_permissions_header }}
           <ul class="consent-items">
-            % for permission in requested_permissions:
-            <li>${ permission }</li>
-            % endfor
+            {% for permission in requested_permissions %}
+              <li>{{ permission }}</li>
+            {% endfor %}
           </ul>
+        </p>
+      </div>
+
+      <div class="consent-input-container login-register">
+        <form name="data-sharing-consent" method="POST" id="data-sharing">
+          {% csrf_token %}
+
+          <input class="background-input data-consent-checkbox" type="checkbox" name="data_sharing_consent" id="data-consent-checkbox" value="True"/>
+          <p class="agreement-text">
+            <label for="data-consent-checkbox">{{ agreement_text }}</label>
           </p>
-        </div>
-        <div class="consent-input-container login-register">
-          <form name="data-sharing-consent" method="POST" id="data-sharing">
-            <input class="background-input data-consent-checkbox" type="checkbox" name="data_sharing_consent" id="data-consent-checkbox" value="True"/>
-            <p class="agreement-text">
-              <label for="data-consent-checkbox">${agreement_text}</label>
-            </p>
-            <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>${ continue_text }</button>
-            <button type="button" class="failure-link background-input" id="failure-link">${ abort_text }</a>
-            <input type="hidden" name="csrfmiddlewaretoken" value="${ csrf_token }" />
-            % if course_specific and course_id:
-            <input type="hidden" name="course_id" value="${ course_id }" />
-            % endif
-            % if redirect_url:
-            <input type="hidden" name="redirect_url" value="${redirect_url}" />
-            % endif
-            % if failure_url:
-            <input type="hidden" name="failure_url" value="${failure_url}" />
-            % endif
-            % if enrollment_deferred:
+          <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>{{ continue_text }}</button>
+          <button type="button" class="failure-link background-input" id="failure-link">{{ abort_text }}</button>
+
+          {% if course_specific and course_id %}
+            <input type="hidden" name="course_id" value="{{ course_id }}" />
+          {% endif %}
+
+          {% if redirect_url %}
+            <input type="hidden" name="redirect_url" value="{{ redirect_url }}" />
+          {% endif %}
+
+          {% if failure_url %}
+            <input type="hidden" name="failure_url" value="{{ failure_url }}" />
+          {% endif %}
+
+          {% if enrollment_deferred %}
             <input type="hidden" name="enrollment_deferred" value="true" />
-            % endif
-          </form>
-        </div>
-        <br/>
-        <button type="button" id="consent-policy-dropdown-bar" class="consent-policy-dropdown-bar background-input" aria-controls="consent-policy" aria-expanded="false">
-          <span class="dropdown-text">${ policy_dropdown_header }</span>
-          <span class="fa-stack fa-lg dropdown-icon-container" aria-hidden="true">
-            <span id="consent-policy-dropdown-icon-surround" class="fa fa-circle fa-stack-2x" aria-hidden="true"></span>
-            <span id="consent-policy-dropdown-icon" class="fa fa-chevron-right fa-stack-1x" aria-hidden="true"></span>
-          </span>
-        </button>
-        <div class="consent-policy" id="consent-policy" style="display:none;">
-          <p>${ sharable_items_header }</p>
-          <ul class="consent-policy-bulletpoints">
-            % for item in sharable_items:
-              <li>${ item }</li>
-            % endfor
-          </ul>
-          <p>${ sharable_items_footer }</p>
-          <p>
-            <a href="#">${ policy_return_link_text }</a>
-          </p>
-        </div>
+          {% endif %}
+        </form>
       </div>
-      <div id="consent-confirmation-modal" class="modal">
-        <div id="consent-confirmation-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
-          <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="${_('Close')}"></button>
-          <header class="modal-header">
-            <h2 id="modal-header-text">${ confirmation_modal_header}</h2>
-          </header>
-          <p>${ confirmation_alert_prompt }</p>
-          <p>${ confirmation_alert_prompt_warning }</p>
-          <button class="consent-agreement-button" id="modal-no-consent-button">${ confirmation_modal_affirm_decline_text }</button>
-          <button class="failure-link" id="review-policy-link">${ confirmation_modal_abort_decline_text }</a>
-        </div>
+
+      <br/>
+      <button type="button" id="consent-policy-dropdown-bar" class="consent-policy-dropdown-bar background-input" aria-controls="consent-policy" aria-expanded="false">
+        <span class="dropdown-text">{{ policy_dropdown_header }}</span>
+        <span class="fa-stack fa-lg dropdown-icon-container" aria-hidden="true">
+          <span id="consent-policy-dropdown-icon-surround" class="fa fa-circle fa-stack-2x" aria-hidden="true"></span>
+          <span id="consent-policy-dropdown-icon" class="fa fa-chevron-right fa-stack-1x" aria-hidden="true"></span>
+        </span>
+      </button>
+
+      <div class="consent-policy" id="consent-policy" style="display:none;">
+        <p>{{ sharable_items_header }}</p>
+        <ul class="consent-policy-bulletpoints">
+          {% for item in sharable_items %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        <p>{{ sharable_items_footer }}</p>
+        <p>
+          <a href="#">{{ policy_return_link_text }}</a>
+        </p>
       </div>
-    </main>
-  </body>
-</html>
+    </div>
+    <div id="consent-confirmation-modal" class="modal">
+      <div id="consent-confirmation-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
+        <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="{% trans "Close" %}"></button>
+        <header class="modal-header">
+          <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
+        </header>
+        <p>{{ confirmation_alert_prompt }}</p>
+        <p>{{ confirmation_alert_prompt_warning }}</p>
+        <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
+        <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+      </div>
+    </div>
+  </main>
+{% endblock %}
