@@ -89,6 +89,43 @@ def test_enroll_user_in_course():
 
 
 @responses.activate
+def test_get_course_enrollment():
+    user = "some_user"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    course_details = {"course_id": course_id}
+    mode = "audit"
+    expected_response = dict(user=user, course_details=course_details, mode=mode)
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        json=expected_response
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.get_course_enrollment(user, course_id)
+    assert actual_response == expected_response
+
+
+@responses.activate
+def test_get_course_enrollment_not_found():
+    user = "some_user"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        status=404,
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.get_course_enrollment(user, course_id)
+    assert actual_response is None
+
+
+@responses.activate
 def test_get_enrolled_courses():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"

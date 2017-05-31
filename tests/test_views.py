@@ -957,9 +957,9 @@ class TestCourseEnrollmentView(TestCase):
             'org': u'edX',
         }
 
-        self.get_enrolled_courses_mock = []
+        self.get_course_enrollment_mock = None
         enrollment_client_mock = mock.Mock()
-        enrollment_client_mock.get_enrolled_courses = Mock(return_value=self.get_enrolled_courses_mock)
+        enrollment_client_mock.get_course_enrollment = mock.Mock(return_value=self.get_course_enrollment_mock)
         enrollment_client = mock.patch('enterprise.views.EnrollmentApiClient', return_value=enrollment_client_mock)
         enrollment_client.start()
         self.addCleanup(enrollment_client.stop)
@@ -1201,56 +1201,6 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent_for_enrolled_user(
-            self,
-            course_api_client_mock,
-            lift_quarantine_mock,  # pylint: disable=unused-argument
-            quarantine_session_mock,  # pylint: disable=unused-argument
-            social_auth_object_mock,  # pylint: disable=unused-argument
-            get_ec_for_request_mock,  # pylint: disable=unused-argument
-            configuration_helpers_mock,
-            render_to_response_mock,  # pylint: disable=unused-argument
-    ):
-        """
-        Verify that the user will be redirected to the course home page when
-        the user is already enrolled.
-        """
-        course_id = self.demo_course_id
-        configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
-        self._login()
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-        )
-        ecu = EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer
-        )
-        EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=ecu,
-            course_id=course_id
-        )
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
-        )
-        response = self.client.get(enterprise_landing_page_url)
-        self.assertRedirects(
-            response,
-            'http://localhost:8000/courses/{course_id}'.format(course_id=course_id),
-            fetch_redirect_response=False,
-        )
-
-    @mock.patch('enterprise.views.render_to_response', side_effect=fake_render)
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     def test_get_course_enrollment_page_for_inactive_user(
             self,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1282,3 +1232,52 @@ class TestCourseEnrollmentView(TestCase):
             tpa_hint_query_string=urlencode({'tpa_hint': enterprise_customer.identity_provider})
         )
         self.assertRedirects(response, expected_redirect_url, fetch_redirect_response=False)
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_for_enrolled_user(
+            self,
+            course_api_client_mock,
+            lift_quarantine_mock,  # pylint: disable=unused-argument
+            quarantine_session_mock,  # pylint: disable=unused-argument
+            social_auth_object_mock,  # pylint: disable=unused-argument
+            get_ec_for_request_mock,  # pylint: disable=unused-argument
+            configuration_helpers_mock,
+    ):
+        """
+        Verify that the user will be redirected to the course home page when
+        the user is already enrolled.
+        """
+        course_id = self.demo_course_id
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        self.get_course_enrollment_mock = {"course_details": {"course_id": course_id}}
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        response = self.client.get(enterprise_landing_page_url)
+        self.assertRedirects(
+            response,
+            'http://localhost:8000/courses/{course_id}/courseware'.format(course_id=course_id),
+            fetch_redirect_response=False,
+        )

@@ -60,7 +60,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
-LMS_COURSE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}')
+LMS_COURSE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
 
 
 def verify_edx_resources():
@@ -505,10 +505,9 @@ class CourseEnrollmentView(View):
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
 
         enrollment_client = EnrollmentApiClient()
-        enrolled_courses = enrollment_client.get_enrolled_courses(request.user.username)
-        enrolled_course_ids = [course['course_details']['course_id'] for course in enrolled_courses]
+        enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
 
-        if (course_id in enrolled_course_ids or
+        if (enrolled_course is not None or
                 EnterpriseCourseEnrollment.objects.filter(
                     enterprise_customer_user__enterprise_customer=enterprise_customer,
                     enterprise_customer_user__user_id=request.user.id,
