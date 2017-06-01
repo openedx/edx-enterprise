@@ -109,7 +109,7 @@ def test_get_course_enrollment():
 
 
 @responses.activate
-def test_get_course_enrollment_not_found():
+def test_get_course_enrollment_invalid():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
@@ -119,6 +119,23 @@ def test_get_course_enrollment_not_found():
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         status=404,
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.get_course_enrollment(user, course_id)
+    assert actual_response is None
+
+
+@responses.activate
+def test_get_course_enrollment_not_found():
+    user = "some_user"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        body='',
     )
     client = lms_api.EnrollmentApiClient()
     actual_response = client.get_course_enrollment(user, course_id)
