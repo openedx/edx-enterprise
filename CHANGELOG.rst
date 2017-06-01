@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.33.22] - 2017-06-02
+----------------------
+
+* Add an `EnterpriseApiClient` method for getting enrollment data about a single user+course pair
+* Add logic to enterprise landing page that redirects users to the course when already registered
+
+
 [0.33.21] - 2017-06-01
 ----------------------
 
