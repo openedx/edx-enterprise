@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.33.21] - 2017-06-01
+----------------------
+
+* UI updates for course mode selection in enterprise landing page.
+
 [0.33.20] - 2017-05-23
 ----------------------
 
