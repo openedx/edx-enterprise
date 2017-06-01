@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.33.23] - 2017-06-02
+----------------------
+
+* Fix a bug with unexpected image data in SAP course export job.
+
+
 [0.33.22] - 2017-06-02
 ----------------------
 

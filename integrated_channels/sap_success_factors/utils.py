@@ -246,7 +246,7 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                           or safe_extract_key(x, 'title')),
             },
         ],
-        'thumbnailURI': lambda x: (safe_extract_key(x['image'], 'src') if 'image' in x else ''),
+        'thumbnailURI': lambda x: safe_extract_key(safe_extract_key(x, 'image', {}), 'src'),
         'content': lambda x: [
             {
                 'providerID': apps.get_model(
