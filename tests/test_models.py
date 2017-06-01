@@ -744,6 +744,20 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             branding_config_2.save()
             self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 2)
 
+    def test_branding_configuration_editing(self):
+        """
+        Test enterprise customer branding configuration saves changes to existing instance.
+        """
+        configuration = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=EnterpriseCustomerFactory(),
+            logo="test1.png"
+        )
+        configuration.save()
+        self.assertEqual(configuration.logo.url, '/test1.png')
+        configuration.logo = 'test2.png'
+        configuration.save()
+        self.assertEqual(configuration.logo.url, '/test2.png')
+
     @ddt.data(
         (False, 2048),
         (False, 1024),
