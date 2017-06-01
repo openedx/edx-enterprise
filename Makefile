@@ -59,7 +59,7 @@ upgrade: ## update the requirements/*.txt files with the latest packages satisfy
 	pip-compile --upgrade -o requirements/travis.txt requirements/travis.in
 	pip-compile --upgrade -o requirements/js_test.txt requirements/js_test.in
 	# Let tox control the Django version for tests
-	sed '/Django==/d' requirements/test.txt > requirements/test.tmp
+	sed '/^django==/d' requirements/test.txt > requirements/test.tmp
 	mv requirements/test.tmp requirements/test.txt
 
 pull_translations: ## pull translations from Transifex
