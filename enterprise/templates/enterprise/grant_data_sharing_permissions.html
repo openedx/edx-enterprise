@@ -28,86 +28,100 @@
     </h1>
   </header>
   <hr class="pinstripe"/>
-  <main>
+  <div class="enterprise-container">
+      <div class="row">
+          <div class="col-3">
+              {% if enterprise_customer.branding_configuration %}
+                 <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
+              {% endif %}
+              <div class="partnered-text">
+                  {{ enterprise_welcome_text |safe }}
+              </div>
+          </div>
+          <div class="col-7 border-left">
+              <main>
+                <div class="consent-container">
+                  <h2 class="consent-title">{{ consent_message_header }}</h2>
+                  <div class="consent-message">
+                    {% autoescape off %}
+                      <p>{{ consent_request_prompt }} {{ policy_link_template }}</p>
+                    {% endautoescape %}
 
-    <div class="consent-container">
-      <h2 class="consent-title">{{ consent_message_header }}</h2>
-      <div class="consent-message">
-        {% autoescape off %}
-          <p>{{ consent_request_prompt }} {{ policy_link_template }}</p>
-        {% endautoescape %}
+                    <p>{{ requested_permissions_header }}
+                      <ul class="consent-items">
+                        {% for permission in requested_permissions %}
+                          <li>{{ permission }}</li>
+                        {% endfor %}
+                      </ul>
+                    </p>
+                  </div>
 
-        <p>{{ requested_permissions_header }}
-          <ul class="consent-items">
-            {% for permission in requested_permissions %}
-              <li>{{ permission }}</li>
-            {% endfor %}
-          </ul>
-        </p>
+                  <div class="consent-input-container login-register">
+                    <form name="data-sharing-consent" method="POST" id="data-sharing">
+                      {% csrf_token %}
+
+                      <input class="background-input data-consent-checkbox" type="checkbox" name="data_sharing_consent" id="data-consent-checkbox" value="True"/>
+                      <p class="agreement-text">
+                        <label for="data-consent-checkbox">{{ agreement_text }}</label>
+                      </p>
+                      <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>{{ continue_text }}</button>
+                      <button type="button" class="failure-link background-input" id="failure-link">{{ abort_text }}</button>
+
+                      {% if course_specific and course_id %}
+                        <input type="hidden" name="course_id" value="{{ course_id }}" />
+                      {% endif %}
+
+                      {% if redirect_url %}
+                        <input type="hidden" name="redirect_url" value="{{ redirect_url }}" />
+                      {% endif %}
+
+                      {% if failure_url %}
+                        <input type="hidden" name="failure_url" value="{{ failure_url }}" />
+                      {% endif %}
+
+                      {% if enrollment_deferred %}
+                        <input type="hidden" name="enrollment_deferred" value="true" />
+                      {% endif %}
+                    </form>
+                  </div>
+
+                  <br/>
+                  <button type="button" id="consent-policy-dropdown-bar" class="consent-policy-dropdown-bar background-input" aria-controls="consent-policy" aria-expanded="false">
+                    <span class="dropdown-text">{{ policy_dropdown_header }}</span>
+                    <span class="fa-stack fa-lg dropdown-icon-container" aria-hidden="true">
+                      <span id="consent-policy-dropdown-icon-surround" class="fa fa-circle fa-stack-2x" aria-hidden="true"></span>
+                      <span id="consent-policy-dropdown-icon" class="fa fa-chevron-right fa-stack-1x" aria-hidden="true"></span>
+                    </span>
+                  </button>
+
+                  <div class="consent-policy" id="consent-policy" style="display:none;">
+                    <p>{{ sharable_items_header }}</p>
+                    <ul class="consent-policy-bulletpoints">
+                      {% for item in sharable_items %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+                    <p>{{ sharable_items_footer }}</p>
+                    <p>
+                      <a href="#">{{ policy_return_link_text }}</a>
+                    </p>
+                  </div>
+                </div>
+                <div id="consent-confirmation-modal" class="modal">
+                  <div id="consent-confirmation-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
+                    <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="{% trans "Close" %}"></button>
+                    <header class="modal-header">
+                      <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
+                    </header>
+                    <p>{{ confirmation_alert_prompt }}</p>
+                    <p>{{ confirmation_alert_prompt_warning }}</p>
+                    <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
+                    <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+                  </div>
+                </div>
+              </main>
+          </div>
       </div>
+  </div>
 
-      <div class="consent-input-container login-register">
-        <form name="data-sharing-consent" method="POST" id="data-sharing">
-          {% csrf_token %}
-
-          <input class="background-input data-consent-checkbox" type="checkbox" name="data_sharing_consent" id="data-consent-checkbox" value="True"/>
-          <p class="agreement-text">
-            <label for="data-consent-checkbox">{{ agreement_text }}</label>
-          </p>
-          <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>{{ continue_text }}</button>
-          <button type="button" class="failure-link background-input" id="failure-link">{{ abort_text }}</button>
-
-          {% if course_specific and course_id %}
-            <input type="hidden" name="course_id" value="{{ course_id }}" />
-          {% endif %}
-
-          {% if redirect_url %}
-            <input type="hidden" name="redirect_url" value="{{ redirect_url }}" />
-          {% endif %}
-
-          {% if failure_url %}
-            <input type="hidden" name="failure_url" value="{{ failure_url }}" />
-          {% endif %}
-
-          {% if enrollment_deferred %}
-            <input type="hidden" name="enrollment_deferred" value="true" />
-          {% endif %}
-        </form>
-      </div>
-
-      <br/>
-      <button type="button" id="consent-policy-dropdown-bar" class="consent-policy-dropdown-bar background-input" aria-controls="consent-policy" aria-expanded="false">
-        <span class="dropdown-text">{{ policy_dropdown_header }}</span>
-        <span class="fa-stack fa-lg dropdown-icon-container" aria-hidden="true">
-          <span id="consent-policy-dropdown-icon-surround" class="fa fa-circle fa-stack-2x" aria-hidden="true"></span>
-          <span id="consent-policy-dropdown-icon" class="fa fa-chevron-right fa-stack-1x" aria-hidden="true"></span>
-        </span>
-      </button>
-
-      <div class="consent-policy" id="consent-policy" style="display:none;">
-        <p>{{ sharable_items_header }}</p>
-        <ul class="consent-policy-bulletpoints">
-          {% for item in sharable_items %}
-            <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        <p>{{ sharable_items_footer }}</p>
-        <p>
-          <a href="#">{{ policy_return_link_text }}</a>
-        </p>
-      </div>
-    </div>
-    <div id="consent-confirmation-modal" class="modal">
-      <div id="consent-confirmation-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
-        <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="{% trans "Close" %}"></button>
-        <header class="modal-header">
-          <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
-        </header>
-        <p>{{ confirmation_alert_prompt }}</p>
-        <p>{{ confirmation_alert_prompt_warning }}</p>
-        <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
-        <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
-      </div>
-    </div>
-  </main>
 {% endblock %}

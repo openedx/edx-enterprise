@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+
+[0.33.24] - 2017-06-02
+----------------------
+
+* UI updates for data sharing consent page.
+
+
 [0.33.23] - 2017-06-02
 ----------------------
 
@@ -31,6 +38,7 @@ Unreleased
 ----------------------
 
 * UI updates for course mode selection in enterprise landing page.
+
 
 [0.33.20] - 2017-05-23
 ----------------------

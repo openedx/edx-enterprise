@@ -22,35 +22,46 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     margin: 0 auto;
 }
 .consent-container {
-    width: 70%;
+    width: auto;
     max-width: 700px;
     min-width: 300px;
     margin: 0 auto;
 }
+
+.consent-container p {
+    margin-bottom: 15px;
+}
 .consent-input-container {
-    position: absolute;
-    border: solid 1px #a0a0a0;
     border-radius: 10px;
-    position: relative;
-    padding: 25px;
+    border: 1px solid #e5e5e5;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+
 }
 .agreement-text {
     overflow: hidden;
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 .consent-agreement-button {
-    color: #f2f8fb;
-    background-color: #0075B4;
     border-color: transparent;
     height: auto;
-    width: 33%;
-    font-size: 18px;
-    padding: 5px 2px;
     max-width: 180px;
     min-width: 125px;
     border-radius: 5px;
+    font-size: 16px;
+    font-weight: bold;
+    background: #0075B4;
+    border: none;
+    color: #fff;
+    margin-right: 10px;
+    padding: 10px 15px;
+    box-shadow: none;
+    width: auto;
 }
 .consent-agreement-button:hover {
-    background-color: #065683;
+    cursor: pointer;
+    background: #0b5177;
 }
 .consent-agreement-button:focus {
     background-color: #065683;
@@ -64,57 +75,62 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
 }
 .consent-policy-dropdown-bar {
     text-align: left;
-    background-color: #f2f8fb;
-    height: 62px;
     border: none;
     width: 100%;
+    height: 60px;
+    font-weight: 600;
+    display: block;
+    background: #f2f8fb;
+    border-radius: 5px;
 }
-.consent-policy-dropdown-bar:hover {
-    font-weight: bold;
-}
-.consent-policy-dropdown-bar:focus {
-    font-weight: bold;
-}
+
+.consent-policy-dropdown-bar:focus,
+.consent-policy-dropdown-bar:hover,
 .consent-policy-dropdown-bar:active {
-    font-weight: bold;
+    font-weight: 600;
 }
+
 .failure-link {
     color: #0075B4;
-    font-size: 18px;
     display: inline-block;
     text-decoration: underline;
     border: none;
     background-color:rgba(0,0,0,0);
-    padding: 5px 2px;
+    padding: 0 !important;
+    vertical-align: bottom;
+    font-size: 16px;
 }
 .failure-link:hover {
-    font-weight: bold;
+    font-weight: normal;
 }
 .failure-link:focus {
-    font-weight: bold;
+    font-weight: normal;
 }
 .dropdown-text {
-    font-size: 18px;
-    color: #065683;
     line-height: 60px;
     white-space: nowrap;
     padding-left: 2%;
+    font-size: 18px;
+    color: #0075B4;
 }
 .dropdown-icon-container {
     float: right;
     padding-right: 10%;
+    top: -16px;
 }
 #consent-policy-dropdown-icon-surround {
-    font-size: 45px;
+    font-size: 40px;
     line-height: 60px;
     white-space: nowrap;
     color: white;
 }
+
 #consent-policy-dropdown-icon {
-    font-size: 21px;
     line-height: 60px;
     white-space: nowrap;
-    color: #065683;
+    font-size: 18px;
+    padding-left: 3px;
+    color: #0075B4;
 }
 .consent-policy {
     padding-top: 2%;
@@ -140,16 +156,17 @@ h1 {
 
 .modal-close-button {
     position: absolute;
-    top: -27px;
+    top: -29px;
     right: 3px;
     color: white;
-    font-size: 1.5em;
+    font-size: 1.5em !important;
     border: none;
-    background-color:rgba(0,0,0,0);
+    line-height: normal !important;
+    padding: 2px 5px;
+    background-color: transparent;
 }
 
 .modal-close-button:hover {
-    font-size: 1.8em;
     top: -30px;
     right: 0;
 }
@@ -158,6 +175,7 @@ h1 {
     font-size: 1.8em;
     top: -30px;
     right: 0;
+    outline: none;
 }
 
 .modal-content {
@@ -172,7 +190,7 @@ h1 {
     padding: 20px;
     width: 80%;
     max-width: 450px;
-    max-height: 320px;
+    max-height: 300px;
     min-width: 300px;
     border-top: 30px solid #0075B4;
 }
@@ -186,4 +204,184 @@ h2#modal-header-text {
     float: left;
     margin-top: 4px;
     margin-right: 10px;
+}
+
+
+/* Enterprise */
+.header {
+    text-align: center;
+    line-height: 60px;
+    border-bottom: 2px solid #48bef4;
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+.enterprise-container:after,
+.row:after {
+    content: " ";
+    display: table;
+}
+
+.enterprise-container:after,
+.row:after {
+    clear: both;
+}
+
+.enterprise-container {
+    min-width: 300px;
+    max-width: 700px;
+    margin: 0 auto;
+    color: #383838;
+}
+
+.enterprise-container * {
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.enterprise-container a {
+    color: #2489c2;
+}
+
+.enterprise-container a:hover {
+    color: #0b5c8a;
+}
+
+.enterprise-logo {
+    width: auto;
+    height: 100px;
+    display: none;
+}
+
+[class*='col-'] {
+    padding: 0 15px;
+}
+
+@media (min-width: 768px) {
+    [class*='col-'] {
+        float: left;
+    }
+}
+
+@media (min-width: 768px) {
+    [class*='col-'].col-3 {
+        padding-left: 0;
+        padding-right: 30px;
+        width: 30%;
+    }
+}
+
+@media (min-width: 768px) {
+    [class*='col-'].col-7 {
+        width: 70%;
+        padding-right: 0;
+        padding-left: 35px;
+    }
+}
+
+@media (min-width: 768px) {
+    .border-left {
+        border-left: 1px solid #D9D9D9;
+    }
+
+    .enterprise-logo {
+        display: block;
+    }
+}
+
+.partnered-text {
+    font-size: 16px;
+    color: #414141;
+    margin-top: 5px;
+    margin-bottom: 15px;
+}
+
+.partnered-text strong {
+    font-size: 1.05em;
+}
+
+.consent-title {
+    font-size: 20px !important;
+    color: #2489c2 !important;
+    font-weight: normal;
+    margin-bottom: 10px;
+}
+
+.media {
+    margin-bottom: 40px;
+}
+
+.media .thumbnail,
+.media .media-content {
+    vertical-align: top;
+}
+
+.media .thumbnail {
+    width: 55px;
+}
+
+.media .media-content {
+    padding-left: 15px;
+}
+
+.media .media-content .course-title {
+    margin-bottom: 5px;
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.media .media-content .course-info {
+    font-size: .8em;
+    margin: 8px 0;
+}
+
+.media .media-content .course-info .fa,
+.media .media-content .course-info span {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+
+.media .media-content .course-info .fa {
+    font-size: 16px;
+}
+
+.caption {
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.radio-block {
+    margin-bottom: 15px;
+}
+
+.radio-block .radio,
+.radio-block label {
+    vertical-align: top;
+}
+
+.radio-block .radio {
+    width: 40px;
+}
+
+.radio-block label > span {
+    display: block;
+}
+
+.enterprise-container ul.consent-items {
+    margin-left: 25px;
+}
+
+.enterprise-container ul.consent-items li {
+    margin-bottom: 4px;
+}
+
+
+.enterprise-container .consent-input-container #data-sharing {
+    margin: 0;
+}
+
+.enterprise-container .consent-input-container input {
+    position: relative;
+    top: 2px
 }
