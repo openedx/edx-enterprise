@@ -13,7 +13,7 @@ import six
 from faker import Factory as FakerFactory
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
-from integrated_channels.sap_success_factors.utils import SapCourseExporter
+from integrated_channels.sap_success_factors.utils import SapCourseExporter, get_launch_url
 from pytest import mark, raises
 
 from django.contrib.auth.models import AnonymousUser
@@ -42,6 +42,7 @@ from test_utils.factories import (
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
+    SiteFactory,
     UserDataSharingConsentAuditFactory,
     UserFactory,
 )
@@ -1301,3 +1302,42 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         # audit course modes are not filtered out
         filtered_course_modes = filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
+
+    @mock.patch('integrated_channels.sap_success_factors.utils.configuration_helpers')
+    @mock.patch('enterprise.models.configuration_helpers')
+    def test_get_launch_url_flag_on(
+            self,
+            mock_config_helpers_1,
+            mock_config_helpers_2):
+        """
+        Test `get_launch_url` helper method.
+        """
+        mock_config_helpers_1.get_value.return_value = 'https://www.example.com'
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_uuid = '47432370-0a6e-4d95-90fe-77b4fe64de2c'
+        expected_url = ('https://www.example.com/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
+                        'course-v1:edX+DemoX+Demo_Course/enroll/')
+        enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid)
+        mock_config_helpers_2.get_value.return_value = 1
+
+        launch_url = get_launch_url(enterprise_customer, course_id)
+        assert launch_url == expected_url
+
+    @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
+    def test_get_launch_url_flag_off(
+            self,
+            reverse_mock):
+        """
+        Test `get_launch_url` helper method.
+        """
+        reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_uuid = '37432370-0a6e-4d95-90fe-77b4fe64de2d'
+        expected_url = 'https://example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
+        enterprise_customer = EnterpriseCustomerFactory(
+            site=SiteFactory(domain='example.com'),
+            uuid=enterprise_uuid
+        )
+
+        launch_url = get_launch_url(enterprise_customer, course_id)
+        assert launch_url == expected_url

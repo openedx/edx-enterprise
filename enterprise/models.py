@@ -11,10 +11,12 @@ from uuid import uuid4
 import six
 from simple_history.models import HistoricalRecords
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.storage import default_storage
+from django.core.urlresolvers import reverse
 from django.db import models
 from django.template import Context, Template
 from django.utils.encoding import python_2_unicode_compatible
@@ -26,7 +28,14 @@ from model_utils.models import TimeStampedModel
 
 from enterprise import utils
 from enterprise.lms_api import ThirdPartyAuthApiClient, enroll_user_in_course_locally
+from enterprise.utils import NotConnectedToOpenEdX
 from enterprise.validators import validate_image_extension, validate_image_size
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
+
+try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -168,6 +177,28 @@ class EnterpriseCustomer(TimeStampedModel):
         Determine whether the enterprise customer has enabled the data sharing consent request.
         """
         return self.enable_data_sharing_consent and self.enforce_data_sharing_consent != self.EXTERNALLY_MANAGED
+
+    def get_course_enrollment_url(self, course_run_key):
+        """
+        Return enterprise landing page url for the given course.
+
+        Arguments:
+            course_run_key (str): The course run id for the course to be displayed.
+        Returns:
+            (str): Enterprise landing page url.
+        """
+        if configuration_helpers is None:
+            raise NotConnectedToOpenEdX(
+                _("This package must be installed in an EdX environment to look up configuration.")
+            )
+
+        return urljoin(
+            configuration_helpers.get_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            reverse(
+                'enterprise_course_enrollment_page',
+                kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
+            )
+        )
 
 
 class EnterpriseCustomerUserManager(models.Manager):

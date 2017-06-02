@@ -310,9 +310,17 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         ),
     )
     @ddt.unpack
+    @mock.patch('enterprise.models.configuration_helpers')
     @override_settings(LMS_ROOT_URL='http://testserver/')
     def test_update_course_runs(
-            self, course_run, catalog_id, provider_id, enterprise_customer_uuid, expected_fields, expected_urls,
+            self,
+            course_run,
+            catalog_id,
+            provider_id,
+            enterprise_customer_uuid,
+            expected_fields,
+            expected_urls,
+            mock_config_helpers,
     ):
         """
         Test update_course_runs method of EnterpriseCatalogCoursesReadOnlySerializer.
@@ -321,6 +329,7 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         successfully without errors.
         """
         # Populate database.
+        mock_config_helpers.get_value.return_value = 'http://testserver/'
         ec_identity_provider = factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer__uuid=enterprise_customer_uuid,
             provider_id=provider_id,
@@ -349,13 +358,15 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
                 self.assert_url(value, updated_course_run[key])
 
     @mock.patch('enterprise.utils.reverse', return_value='')
-    def test_update_course(self, _):
+    @mock.patch('enterprise.models.configuration_helpers')
+    def test_update_course(self, mock_config_helpers, _):
         """
         Test update_course method of EnterpriseCatalogCoursesReadOnlySerializer.
 
         Verify that update_course for EnterpriseCatalogCoursesReadOnlySerializer returns
         successfully without errors.
         """
+        mock_config_helpers.get_value.return_value = ''
         global_context = {
             'tpa_hint': self.provider_id
         }
@@ -442,13 +453,15 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
             assert expected_course == updated_course
 
     @mock.patch('enterprise.utils.reverse', return_value='/course_modes/choose/')
-    def test_update_enterprise_courses(self, _):
+    @mock.patch('enterprise.models.configuration_helpers')
+    def test_update_enterprise_courses(self, mock_config_helpers, _):
         """
         Test update_enterprise_courses method of EnterpriseCatalogCoursesReadOnlySerializer.
 
         Verify that update_enterprise_courses for EnterpriseCatalogCoursesReadOnlySerializer updates
         serializer data successfully without errors.
         """
+        mock_config_helpers.get_value.return_value = ''
         self.serializer.update_enterprise_courses(self.request, 1)
 
         # Make sure global context passed in to update_course is added to the course.

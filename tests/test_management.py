@@ -86,10 +86,20 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
 @mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
 @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
-def test_transmit_courseware_task_success(fake_client, fake_catalog_client, track_selection_reverse_mock, caplog):
+@mock.patch('integrated_channels.sap_success_factors.utils.configuration_helpers')
+@mock.patch('enterprise.models.configuration_helpers')
+def test_transmit_courseware_task_success(
+        fake_config_helpers_1,
+        fake_config_helpers_2,
+        fake_client,
+        fake_catalog_client,
+        track_selection_reverse_mock,
+        caplog):
     """
     Test the data transmission task.
     """
+    fake_config_helpers_1.get_value.return_value = 'https://example.com'
+    fake_config_helpers_2.get_value.return_value = 1
     fake_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
     fake_client.return_value.send_course_import.return_value = 200, '{}'
 
@@ -115,6 +125,7 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
         secret='secret',
         active=True,
     )
+    uuid = str(enterprise_customer.uuid)
 
     call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
 
@@ -123,8 +134,8 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
     expected_dump = (
         '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
         '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": "htt'
-        'ps://example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/",'
-        ' "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
+        'ps://example.com/enterprise/'+uuid+'/course/course-v1:edX+DemoX+Demo_Course/enroll/'
+        '", "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
         'moX+Demo_Course", "description": [{"locale": "English", "value": "edX Demonst'
         'ration Course"}], "price": [], "providerID": "EDX", "revisionNumber": 1, "sch'
         'edule": [{"active": true, "endDate": 2147483647000, "startDate": 136004040000'
@@ -132,18 +143,18 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
         'edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg", "title": [{"'
         'locale": "English", "value": "edX Demonstration Course"}]}, {"content": [{"co'
         'ntentID": "course-v1:foobar+fb1+fbv1", "contentTitle": "Other Course Name", "'
-        'launchType": 3, "launchURL": "https://example.com/course_modes/choose/course-'
-        'v1:edX+DemoX+Demo_Course/", "mobileEnabled": false, "providerID": "EDX"}], "c'
+        'launchType": 3, "launchURL": "https://example.com/enterprise/'+uuid+'/course/'
+        'course-v1:foobar+fb1+fbv1/enroll/", "mobileEnabled": false, "providerID": "EDX"}], "c'
         'ourseID": "course-v1:foobar+fb1+fbv1", "description": [{"locale": "English", '
         '"value": "This is a really cool course. Like, we promise."}], "price": [], "p'
         'roviderID": "EDX", "revisionNumber": 1, "schedule": [{"active": true, "endDat'
         'e": 2147483647000, "startDate": 1420070400000}], "status": "ACTIVE", "thumbna'
         'ilURI": "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+type@asset+block@'
         'images_course_image.jpg", "title": [{"locale": "English", "value": "Other Cou'
-        'rse Name"}]}, {"content": [{"contentID": "course-v1:test_course_3+fbv1", "conte'
+        'rse Name"}]}, {"content": [{"contentID": "course-v1:test+course3+fbv1", "conte'
         'ntTitle": "Other Course Name", "launchType": 3, "launchURL": "https://example'
-        '.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/", "mobileEnabled": '
-        'false, "providerID": "EDX"}], "courseID": "course-v1:test_course_3+fbv1", "de'
+        '.com/enterprise/'+uuid+'/course/course-v1:test+course3+fbv1/enroll/", "mobileEnabled": '
+        'false, "providerID": "EDX"}], "courseID": "course-v1:test+course3+fbv1", "de'
         'scription": [{"locale": "English", "value": "This is a really cool course. Li'
         'ke, we promise."}], "price": [], "providerID": "EDX", "revisionNumber": 1, "s'
         'chedule": [{"active": true, "endDate": 2147483647000, "startDate": 1420070400'
@@ -160,7 +171,7 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
         'Processing course with ID course-v1:foobar+fb1+fbv1',
         'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
         'CustomerConfiguration for Enterprise Veridian Dynamics>',
-        'Processing course with ID course-v1:test_course_3+fbv1',
+        'Processing course with ID course-v1:test+course3+fbv1',
         'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
         'CustomerConfiguration for Enterprise Veridian Dynamics>',
         expected_dump,
