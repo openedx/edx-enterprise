@@ -119,7 +119,7 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
     call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
 
     fake_client.return_value.send_course_import.assert_called()
-    assert len(caplog.records) == 7
+    assert len(caplog.records) == 9
     expected_dump = (
         '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
         '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": "htt'
@@ -140,7 +140,15 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
         'e": 2147483647000, "startDate": 1420070400000}], "status": "ACTIVE", "thumbna'
         'ilURI": "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+type@asset+block@'
         'images_course_image.jpg", "title": [{"locale": "English", "value": "Other Cou'
-        'rse Name"}]}]}'
+        'rse Name"}]}, {"content": [{"contentID": "course-v1:test_course_3+fbv1", "conte'
+        'ntTitle": "Other Course Name", "launchType": 3, "launchURL": "https://example'
+        '.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/", "mobileEnabled": '
+        'false, "providerID": "EDX"}], "courseID": "course-v1:test_course_3+fbv1", "de'
+        'scription": [{"locale": "English", "value": "This is a really cool course. Li'
+        'ke, we promise."}], "price": [], "providerID": "EDX", "revisionNumber": 1, "s'
+        'chedule": [{"active": true, "endDate": 2147483647000, "startDate": 1420070400'
+        '000}], "status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English"'
+        ', "value": "Other Course Name"}]}]}'
     )
     expected_messages = [
         'Processing courses for integrated channel using configuration: '
@@ -150,6 +158,9 @@ def test_transmit_courseware_task_success(fake_client, fake_catalog_client, trac
         'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
         'CustomerConfiguration for Enterprise Veridian Dynamics>',
         'Processing course with ID course-v1:foobar+fb1+fbv1',
+        'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
+        'CustomerConfiguration for Enterprise Veridian Dynamics>',
+        'Processing course with ID course-v1:test_course_3+fbv1',
         'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
         'CustomerConfiguration for Enterprise Veridian Dynamics>',
         expected_dump,
