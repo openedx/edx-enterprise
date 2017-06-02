@@ -256,7 +256,7 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
     previous = serializers.CharField(read_only=True, help_text=_("URL to fetch previous page of courses."))
     results = serializers.ListField(read_only=True, help_text=_("list of courses."))
 
-    def update_enterprise_courses(self, request, catalog_id):
+    def update_enterprise_courses(self, request, catalog_id, enterprise_customer=None):
         """
         This method adds enterprise specific metadata for each course.
 
@@ -264,7 +264,8 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
             tpa_hint: a string for identifying Identity Provider.
         """
         courses = []
-        enterprise_customer = utils.get_enterprise_customer_for_user(request.user)
+        if enterprise_customer is None:
+            enterprise_customer = utils.get_enterprise_customer_for_user(request.user)
 
         global_context = {
             'tpa_hint': enterprise_customer and enterprise_customer.identity_provider,
@@ -342,9 +343,12 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
                 query_parameters=query_parameters,
             )
 
+            enrollment_url = enterprise_customer.get_course_enrollment_url(course_run.get('key'))
+
             # Add/update track selection url in course run metadata.
             course_run.update({
                 'track_selection_url': track_selection_url,
+                'enrollment_url': enrollment_url
             })
 
             # Update marketing urls in course metadata to include enterprise related info.

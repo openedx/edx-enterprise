@@ -253,7 +253,9 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                     'sap_success_factors',
                     'SAPSuccessFactorsGlobalConfiguration'
                 ).current().provider_id,
-                'launchURL': get_course_track_selection_url(x['enterprise_customer'], x['key']),
+                'launchURL': safe_extract_key(
+                    x, 'landing_page_url', get_course_track_selection_url(x['enterprise_customer'], x['key'])
+                ),
                 'contentTitle': safe_extract_key(x, 'title'),
                 'contentID': x['key'],
                 'launchType': 3,
