@@ -168,10 +168,22 @@ class EnrollmentApiClient(LmsApiClient):
             '{username},{course_id}'.format(username=username, course_id=course_id)
         )
         try:
-            return endpoint.get()
+            result = endpoint.get()
         except HttpNotFoundError:
-            LOGGER.error('course enrollment details not found for username=%s, course=%s', username, course_id)
+            # This enrollment data endpoint returns a 404 if either the username or course_id specified isn't valid
+            LOGGER.error(
+                'course enrollment details not found for invalid username or course; username=%s, course=%s',
+                username,
+                course_id
+            )
             return None
+        # This enrollment data endpoint returns an empty string if the username and course_id is valid, but there's
+        # no matching enrollment found
+        if not result:
+            LOGGER.error('no course enrollment details found for username=%s, course=%s', username, course_id)
+            return None
+
+        return result
 
     def get_enrolled_courses(self, username):
         """
