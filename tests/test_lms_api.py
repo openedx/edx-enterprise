@@ -109,6 +109,24 @@ def test_get_course_enrollment():
 
 
 @responses.activate
+def test_get_enrollment_course_modes():
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    response = {"course_modes": ['a', 'list', 'containing', 'course', 'modes']}
+    expected_return = ['a', 'list', 'containing', 'course', 'modes']
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "course/{}".format(course_id),
+        ),
+        json=response
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.get_course_modes(course_id)
+    assert actual_response == expected_return
+
+
+@responses.activate
 def test_get_course_enrollment_invalid():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"

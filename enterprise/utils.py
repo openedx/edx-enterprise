@@ -5,7 +5,6 @@ Utility functions for enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import logging
-import os
 import re
 from functools import wraps
 from uuid import UUID
@@ -26,10 +25,6 @@ import enterprise
 # pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunparse, urlunsplit
 
-try:
-    from edxmako.paths import add_lookup
-except ImportError:
-    add_lookup = None
 
 try:
     # Try to import identity provider registry if third_party_auth is present
@@ -159,22 +154,6 @@ def null_decorator(func):
     we need to be able to wrap the function with something.
     """
     return func
-
-
-def patch_mako_lookup():
-    """
-    Update the EdX Mako paths to point to our consent template.
-
-    Do nothing if we're not connected to OpenEdX.
-    """
-    if add_lookup is None:
-        return
-    full_location = os.path.realpath(__file__)
-    directory = os.path.dirname(full_location)
-    template_location = os.path.join(directory, 'templates', 'enterprise')
-    # Both add an item to the setting AND insert the lookup for immediate use
-    settings.MAKO_TEMPLATES['main'].insert(0, template_location)
-    add_lookup('main', template_location)
 
 
 def get_catalog_admin_url(catalog_id):
@@ -571,7 +550,13 @@ def enterprise_login_required(view):
                 current_url=quote(request.get_full_path()),
                 query_string=urlencode({'tpa_hint': enterprise_customer.identity_provider})
             )
-            return redirect('{login_url}?next={next_url}'.format(login_url='/login', next_url=next_url))
-
+            return redirect(
+                '{login_url}?{params}'.format(
+                    login_url='/login',
+                    params=urlencode(
+                        {'next': next_url}
+                    )
+                )
+            )
         return view(request, *args, **kwargs)
     return wrapper

@@ -5,7 +5,6 @@ Tests for the `edx-enterprise` utility functions.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
-import os
 import unittest
 
 import ddt
@@ -209,13 +208,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         wrapped_handler(raw=raw)
 
         assert signal_handler_mock.called != raw
-
-    @mock.patch('enterprise.utils.add_lookup')
-    def test_patch_path(self, lookup_patch):
-        utils.patch_mako_lookup()
-        assert lookup_patch.call_args[0][0] == 'main'
-        assert os.path.isdir(lookup_patch.call_args[0][1])
-        assert lookup_patch.call_args[1] == {}
 
     @ddt.data(
         ("", ""),
