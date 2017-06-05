@@ -32,12 +32,10 @@ class EnterpriseConfig(AppConfig):
         Perform other one-time initialization steps.
         """
         from enterprise.signals import handle_user_post_save
-        from enterprise.utils import patch_mako_lookup
         from django.db.models.signals import pre_migrate, post_save
 
         post_save.connect(handle_user_post_save, sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
         pre_migrate.connect(self._disconnect_user_post_save_for_migrations)
-        patch_mako_lookup()
 
     def _disconnect_user_post_save_for_migrations(self, sender, **kwargs):  # pylint: disable=unused-argument
         """

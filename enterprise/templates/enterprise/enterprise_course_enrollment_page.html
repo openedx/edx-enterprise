@@ -42,20 +42,21 @@
           </div>
           <div class="course-info">
             <i class="fa fa-clock-o" aria-hidden="true"></i>
-            <span>{{ starts_at_text }} {{ course_start_date }} &nbsp;| &nbsp; {{ course_pacing }} - {{ course_pace_text }}</span>
+            <span>{{ starts_at_text }} {{ course_start_date }} &nbsp;| &nbsp; {{ course_pacing }}</span>
           </div>
           {{ course_short_description }}
           <a class="text-underline" href="#!">{{ view_course_details_text }}</a>
         </div>
-        <form>
+        <form method="POST">
+          <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
           {% if course_modes|length > 1 %}<div class="caption">{{ select_mode_text }}</div>{% endif %}
           {% for course_mode in course_modes %}
           <div class="radio-block">
             <div class=" {% if course_modes|length > 1 %}radio{% endif %}">
               {% if course_modes|length > 1 %}
-                <input type="radio" name="data_sharing_consent" id="radio${{ forloop.counter0 }}" {% if forloop.first %}checked="checked"{% endif %} />
+                <input type="radio" name="course_mode" id="radio{{ forloop.counter0 }}"{% if forloop.first %} checked="checked"{% endif %} value="{{ course_mode.mode }}" />
               {% else %}
-                <input type="hidden" name="data_sharing_consent" id="radio{{ forloop.counter0 }}" value="{{ course_mode.mode }}" />
+                <input type="hidden" name="course_mode" id="radio{{ forloop.counter0 }}" value="{{ course_mode.mode }}" />
               {% endif %}
             </div>
 

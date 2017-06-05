@@ -132,6 +132,19 @@ class EnrollmentApiClient(LmsApiClient):
         """
         return self.client.course(course_id).get()
 
+    def get_course_modes(self, course_id):
+        """
+        Query the Enrollment API for the specific course modes that are available for the given course_id.
+
+        Arguments:
+            course_id (str): The string value of the course's unique identifier
+
+        Returns:
+            list: A list of course mode dictionaries.
+        """
+        details = self.get_course_details(course_id)
+        return details.get('course_modes', [])
+
     def enroll_user_in_course(self, username, course_id, mode):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
