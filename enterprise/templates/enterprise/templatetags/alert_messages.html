@@ -3,7 +3,7 @@
 <div id="messages">
   {% for message in messages %}
     <div class="alert {{ message.tags }}" aria-live="polite">
-      {% fa_icon message.level_tag %} {{ message }}
+      {% fa_icon message.level_tag %} {{ message|safe }}
     </div>
   {% endfor %}
 </div>
