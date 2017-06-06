@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.34.1] - 2017-06-06
+----------------------
+
+* Bug fix for Data sharing consent pop up page.
+
+
 [0.34.0] - 2017-06-05
 ----------------------
 
