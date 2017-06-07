@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.34.2] - 2017-06-06
+---------------------
+
+* Fix UI issues (unexpected html escape) on enterprise landing page.
+
+
 [0.34.1] - 2017-06-06
 ----------------------
 
