@@ -35,7 +35,7 @@
                  <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
               {% endif %}
               <div class="partnered-text">
-                  {{ enterprise_welcome_text |safe }}
+                  {{ enterprise_welcome_text|safe }}
               </div>
           </div>
           <div class="col-7 border-left">
@@ -44,7 +44,7 @@
                   <h2 class="consent-title">{{ consent_message_header }}</h2>
                   <div class="consent-message">
                     {% autoescape off %}
-                      <p>{{ consent_request_prompt }} {{ policy_link_template }}</p>
+                      <p>{{ consent_request_prompt|safe }} {{ policy_link_template }}</p>
                     {% endautoescape %}
 
                     <p>{{ requested_permissions_header }}
@@ -113,7 +113,7 @@
                     <header class="modal-header">
                       <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
                     </header>
-                    <p>{{ confirmation_alert_prompt }}</p>
+                    <p>{{ confirmation_alert_prompt|safe }}</p>
                     <p>{{ confirmation_alert_prompt_warning }}</p>
                     <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
                     <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
