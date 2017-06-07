@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.34.3] - 2017-06-07
+---------------------
+
+* Make enterprise landing page url available in the enterprise api and SAP course export.
+
+
 [0.34.2] - 2017-06-06
 ---------------------
 

@@ -17,6 +17,11 @@ from enterprise.lms_api import parse_lms_api_datetime
 from enterprise.utils import safe_extract_key
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 
+try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
+
 
 LOGGER = getLogger(__name__)
 COURSE_URL_SCHEME = os.environ.get('SUCCESSFACTORS_COURSE_EXPORT_DEFAULT_URL_SCHEME', 'https')
@@ -253,7 +258,7 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                     'sap_success_factors',
                     'SAPSuccessFactorsGlobalConfiguration'
                 ).current().provider_id,
-                'launchURL': get_course_track_selection_url(x['enterprise_customer'], x['key']),
+                'launchURL': get_launch_url(x['enterprise_customer'], x['key']),
                 'contentTitle': safe_extract_key(x, 'title'),
                 'contentID': x['key'],
                 'launchType': 3,
@@ -273,6 +278,20 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
         ],
         'revisionNumber': lambda x: 1,
     }
+
+
+def get_launch_url(enterprise_customer, course_id):
+    """
+    Given an EnterpriseCustomer and a course ID, determine the appropriate launch url.
+
+    Args:
+        enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer that a URL needs to be built for
+        course_id (str): The string identifier of the course in question
+    """
+    if configuration_helpers and configuration_helpers.get_value('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE'):
+        return enterprise_customer.get_course_enrollment_url(course_id)
+    else:
+        return get_course_track_selection_url(enterprise_customer, course_id)
 
 
 def get_course_track_selection_url(enterprise_customer, course_id):

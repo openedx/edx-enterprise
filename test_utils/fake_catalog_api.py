@@ -303,7 +303,7 @@ FAKE_CATALOG_COURSES_RESPONSE = {
             "marketing_url": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner"
         },
         {
-            "key": "test_course_3",
+            "key": "test+course3",
             "uuid": "c08c1e43-307c-444b-acc7-aea4a7b9f8f7",
             "title": "Test Course for unexpected data",
             "course_runs": [],
@@ -501,13 +501,13 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
         "marketing_url": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner",
         "programs": []
     },
-    'test_course_3': {
-        "key": "test_course_3",
+    'test+course3': {
+        "key": "test+course3",
         "uuid": "c08c1e43-307c-444b-acc7-aea4a7b9f8f6",
         "title": "Test Course with unexpected data",
         "course_runs": [
             {
-                "key": "course-v1:test_course_3+fbv1",
+                "key": "course-v1:test+course3+fbv1",
                 "uuid": "3550853f-e65a-492e-8781-d0eaa16dd538",
                 "title": "Other Course Name",
                 "image": None,
@@ -561,7 +561,7 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
         "video": None,
         "sponsors": [],
         "modified": "2017-03-07T18:37:45.238722Z",
-        "marketing_url": "http://localhost:8000/course/test_course_3?utm_source=admin&utm_medium=affiliate_partner",
+        "marketing_url": "http://localhost:8000/course/test+course3?utm_source=admin&utm_medium=affiliate_partner",
         "programs": []
     }
 }
