@@ -23,9 +23,9 @@ apigateway_responses: &apigateway_responses
   404:
     statusCode: "404"
   429:
-      statusCode: "429"
+    statusCode: "429"
   500:
-      statusCode: "500"
+    statusCode: "500"
 
 produces: &produces
   - "application/json"
@@ -60,22 +60,22 @@ auth_header: &auth_header
   type: "string"
 
 limit_qs_parameter: &limit_qs_parameter
-  in: query
-  name: limit
+  in: "query"
+  name: "limit"
   required: false
-  type: number
+  type: "number"
 
 offset_qs_parameter: &offset_qs_parameter
-  in: query
-  name: offset
+  in: "query"
+  name: "offset"
   required: false
-  type: number
+  type: "number"
 
 page_qs_parameter: &page_qs_parameter
-  in: query
-  name: page
+  in: "query"
+  name: "page"
   required: false
-  type: number
+  type: "number"
 
 # AWS API Gateway vendor extension point. This information is used
 #  by https://github.com/awslabs/aws-apigateway-importer.
@@ -85,6 +85,9 @@ x-amazon-apigateway-integration: &apigateway_integration
   type: "http"
   requestParameters:
     integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.querystring.limit: "method.request.querystring.limit"
+    integration.request.querystring.offset: "method.request.querystring.offset"
+    integration.request.querystring.page: "method.request.querystring.page"
 
 x-amazon-apigateway-integration-with-id: &apigateway_integration_with_id_parameter
   responses: *apigateway_responses
@@ -93,6 +96,17 @@ x-amazon-apigateway-integration-with-id: &apigateway_integration_with_id_paramet
   requestParameters:
     integration.request.header.Authorization: "method.request.header.Authorization"
     integration.request.path.id: "method.request.path.id"
+
+x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_integration_with_id_and_querystring_parameters
+  responses: *apigateway_responses
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.id: "method.request.path.id"
+    integration.request.querystring.limit: "method.request.querystring.limit"
+    integration.request.querystring.offset: "method.request.querystring.offset"
+    integration.request.querystring.page: "method.request.querystring.page"
 
 endpoints:
   v1:
@@ -138,5 +152,5 @@ endpoints:
           operationId: "get_enterprise_catalog_courses"
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_id_parameter
+            <<: *apigateway_integration_with_id_and_querystring_parameters
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"

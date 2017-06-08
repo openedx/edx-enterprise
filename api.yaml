@@ -1,3 +1,4 @@
+# This file is a "de-compacted" version of api-compact.yaml. The consuming tools are unable to process YAML anchors.
 # This file was generated using http://www.yamllint.com/.
 
 ---
@@ -101,6 +102,11 @@ endpoints:
             name: offset
             required: false
             type: number
+          -
+            in: query
+            name: page
+            required: false
+            type: number
         produces:
           - application/json
           - application/csv
@@ -124,6 +130,9 @@ endpoints:
           requestParameters:
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.id: method.request.path.id
+            integration.request.querystring.limit: method.request.querystring.limit
+            integration.request.querystring.offset: method.request.querystring.offset
+            integration.request.querystring.page: method.request.querystring.page
           responses:
             200:
               statusCode: "200"
@@ -165,7 +174,6 @@ endpoints:
             name: page
             required: false
             type: number
-
         produces:
           - application/json
           - application/csv
@@ -188,6 +196,9 @@ endpoints:
           httpMethod: GET
           requestParameters:
             integration.request.header.Authorization: method.request.header.Authorization
+            integration.request.querystring.limit: method.request.querystring.limit
+            integration.request.querystring.offset: method.request.querystring.offset
+            integration.request.querystring.page: method.request.querystring.page
           responses:
             200:
               statusCode: "200"
@@ -205,3 +216,109 @@ endpoints:
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/"
+id_parameter:
+  in: path
+  name: id
+  required: true
+  type: number
+limit_qs_parameter:
+  in: query
+  name: limit
+  required: false
+  type: number
+offset_qs_parameter:
+  in: query
+  name: offset
+  required: false
+  type: number
+page_qs_parameter:
+  in: query
+  name: page
+  required: false
+  type: number
+produces:
+  - application/json
+  - application/csv
+responses:
+  200:
+    description: OK
+  400:
+    description: "Bad Request"
+  401:
+    description: Unauthorized
+  403:
+    description: Forbidden
+  404:
+    description: "Not Found"
+  429:
+    description: "Too Many Requests"
+  500:
+    description: "Internal Server Error"
+x-amazon-apigateway-integration:
+  httpMethod: GET
+  requestParameters:
+    integration.request.header.Authorization: method.request.header.Authorization
+    integration.request.querystring.limit: method.request.querystring.limit
+    integration.request.querystring.offset: method.request.querystring.offset
+    integration.request.querystring.page: method.request.querystring.page
+  responses:
+    200:
+      statusCode: "200"
+    401:
+      statusCode: "401"
+    403:
+      statusCode: "403"
+    404:
+      statusCode: "404"
+    429:
+      statusCode: "429"
+    500:
+      statusCode: "500"
+    default:
+      statusCode: "400"
+  type: http
+x-amazon-apigateway-integration-with-id:
+  httpMethod: GET
+  requestParameters:
+    integration.request.header.Authorization: method.request.header.Authorization
+    integration.request.path.id: method.request.path.id
+  responses:
+    200:
+      statusCode: "200"
+    401:
+      statusCode: "401"
+    403:
+      statusCode: "403"
+    404:
+      statusCode: "404"
+    429:
+      statusCode: "429"
+    500:
+      statusCode: "500"
+    default:
+      statusCode: "400"
+  type: http
+x-amazon-apigateway-integration-with-id-and-querystring-parameters:
+  httpMethod: GET
+  requestParameters:
+    integration.request.header.Authorization: method.request.header.Authorization
+    integration.request.path.id: method.request.path.id
+    integration.request.querystring.limit: method.request.querystring.limit
+    integration.request.querystring.offset: method.request.querystring.offset
+    integration.request.querystring.page: method.request.querystring.page
+  responses:
+    200:
+      statusCode: "200"
+    401:
+      statusCode: "401"
+    403:
+      statusCode: "403"
+    404:
+      statusCode: "404"
+    429:
+      statusCode: "429"
+    500:
+      statusCode: "500"
+    default:
+      statusCode: "400"
+  type: http
