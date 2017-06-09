@@ -2,6 +2,7 @@
 Module tests user-facing views of the Enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
+import inspect
 
 import ddt
 import mock
@@ -953,6 +954,8 @@ class TestCourseEnrollmentView(TestCase):
             'pacing': u'instructor',
             'short_description': u'',
             'org': u'edX',
+            'effort': '06:00',
+            'overview': None,
         }
         self.dummy_demo_course_modes = [
             {
@@ -974,6 +977,42 @@ class TestCourseEnrollmentView(TestCase):
         """
         assert self.client.login(username=self.user.username, password="QWERTY")
 
+    def _setup_course_catalog_client(self, client_mock):
+        """
+        Sets up the Course Catalog API client
+        """
+        client = client_mock.return_value
+        client.get_course_run.return_value = {
+            'level_type': 'Type 1',
+        }
+
+    def _setup_organizations_client(self, client_mock):
+        """
+        Sets up the Organizations API client
+        """
+        logo_mock = mock.MagicMock()
+        logo_mock.url = 'logo.png'
+        data = {
+            'logo': logo_mock,
+            'name': 'Organization',
+        }
+        client_mock.get_organization.return_value = data
+
+    def _setup_course_api_client(self, client_mock):
+        """
+        Sets up the Courses API client
+        """
+        client = client_mock.return_value
+        client.get_course_details.return_value = self.dummy_demo_course_details_data
+
+    def _setup_enrollment_client(self, client_mock):
+        """
+        Sets up the Enrollment API client
+        """
+        client = client_mock.return_value
+        client.get_course_modes.return_value = self.dummy_demo_course_modes
+        client.get_course_enrollment.return_value = None
+
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -982,8 +1021,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
     def test_get_course_enrollment_page(
             self,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -993,13 +1036,12 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
             render_to_response_mock,    # pylint: disable=unused-argument
     ):
+        self._setup_course_catalog_client(course_catalog_client_mock)
+        self._setup_organizations_client(organizations_helpers_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1044,6 +1086,14 @@ class TestCourseEnrollmentView(TestCase):
             'price_text': 'Price',
             'continue_link_text': 'Continue',
             'course_modes': course_modes,
+            'course_effort': '6 hours per week, per course',
+            'level_text': 'Level',
+            'effort_text': 'Effort',
+            'course_overview': None,
+            'organization_logo': 'logo.png',
+            'organization_name': 'Organization',
+            'course_level_type': 'Type 1',
+            'close_modal_button_text': 'Close',
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
@@ -1056,8 +1106,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
     def test_get_course_specific_enrollment_view_audit_enabled(
             self,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1067,13 +1121,12 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
             render_to_response_mock,    # pylint: disable=unused-argument
     ):
+        self._setup_course_catalog_client(course_catalog_client_mock)
+        self._setup_organizations_client(organizations_helpers_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1139,8 +1192,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
     def test_get_course_enrollment_page_with_no_start_date(
             self,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1154,15 +1211,15 @@ class TestCourseEnrollmentView(TestCase):
         Verify that the context of the enterprise course enrollment page has
         empty course start date if course details has no start date.
         """
+        self._setup_course_catalog_client(course_catalog_client_mock)
+        self._setup_organizations_client(organizations_helpers_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
         dummy_demo_course_details_data = self.dummy_demo_course_details_data
         dummy_demo_course_details_data['start'] = ''
-        client.get_course_details.return_value = dummy_demo_course_details_data
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
+        course_client = course_api_client_mock.return_value
+        course_client.get_course_details.return_value = dummy_demo_course_details_data
+        self._setup_enrollment_client(enrollment_api_client_mock)
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1206,8 +1263,8 @@ class TestCourseEnrollmentView(TestCase):
         or non existing course.
         """
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = None
+        course_client = course_api_client_mock.return_value
+        course_client.get_course_details.return_value = None
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1243,8 +1300,8 @@ class TestCourseEnrollmentView(TestCase):
         getting the course details from CourseApiClient.
         """
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.side_effect = HttpClientError
+        course_client = course_api_client_mock.return_value
+        course_client.get_course_details.side_effect = HttpClientError
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1282,11 +1339,10 @@ class TestCourseEnrollmentView(TestCase):
         enterprise customer uuid.
         """
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        self._setup_course_api_client(course_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.side_effect = HttpClientError
-        enrollment_client.get_course_enrollment.return_value = None
+
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -1324,11 +1380,8 @@ class TestCourseEnrollmentView(TestCase):
         enterprise customer uuid.
         """
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -1400,8 +1453,7 @@ class TestCourseEnrollmentView(TestCase):
         """
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        self._setup_course_api_client(course_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
         enrollment_client.get_course_enrollment.return_value = {"course_details": {"course_id": course_id}}
@@ -1449,8 +1501,7 @@ class TestCourseEnrollmentView(TestCase):
     ):
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        self._setup_course_api_client(course_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
         enrollment_client.get_course_enrollment.return_value = None
@@ -1484,8 +1535,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
     def test_post_course_specific_enrollment_view_incompatible_mode(
             self,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1495,13 +1550,13 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
             render_to_response_mock,    # pylint: disable=unused-argument
     ):
+        self._setup_course_catalog_client(course_catalog_client_mock)
+        self._setup_organizations_client(organizations_helpers_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -1580,11 +1635,8 @@ class TestCourseEnrollmentView(TestCase):
     ):
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = self.dummy_demo_course_details_data
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -1604,3 +1656,211 @@ class TestCourseEnrollmentView(TestCase):
             'http://localhost:8000/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/',
             fetch_redirect_response=False
         )
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @ddt.data(None, 'Cannot convert to integer')
+    def test_get_course_enrollment_page_with_unparseable_course_effort(
+            self,
+            course_effort,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            _unused_quarantine_mock,
+            _unused_session_mock,
+            _unused_social_auth_object_mock,
+            _unused_get_ec_for_request_mock,
+            configuration_helpers_mock,
+            _unused_render_to_response_mock,
+    ):
+        # Set up course catalog API client
+        self._setup_course_catalog_client(course_catalog_client_mock)
+
+        # Set up organizations API client
+        self._setup_organizations_client(organizations_helpers_mock)
+
+        configuration_helpers_mock.get_value.return_value = 'edX'
+
+        # Set up course API client
+        dummy_demo_course_details_data = self.dummy_demo_course_details_data.copy()
+        dummy_demo_course_details_data['effort'] = course_effort
+        course_client = course_api_client_mock.return_value
+        course_client.get_course_details.return_value = dummy_demo_course_details_data
+
+        # Set up enrollment API client
+        self._setup_enrollment_client(enrollment_api_client_mock)
+
+        # Get landing page
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        assert response.status_code == 200
+
+        # Set up expected context
+        course_modes = [
+            {
+                'mode': 'professional',
+                'title': 'Professional Track',
+                'original_price': '$100',
+                'final_price': '$100',
+                'description': 'Earn a verified certificate!',
+                'premium': True,
+            }
+        ]
+        expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Choose Your Track',
+            'course_id': course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
+            'enterprise_customer': enterprise_customer,
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'price_text': 'Price',
+            'continue_link_text': 'Continue',
+            'course_modes': course_modes,
+            'course_effort': '',
+            'level_text': 'Level',
+            'effort_text': 'Effort',
+            'course_overview': None,
+            'organization_logo': 'logo.png',
+            'organization_name': 'Organization',
+            'course_level_type': 'Type 1',
+            'close_modal_button_text': 'Close',
+        }
+
+        # Compare expected context with response result
+        for key, value in expected_context.items():
+            assert response.context[key] == value  # pylint: disable=no-member
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @ddt.data(None, ValueError)
+    def test_get_course_enrollment_page_organization_errors(
+            self,
+            organizations_data,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            _unused_quarantine_mock,
+            _unused_session_mock,
+            _unused_social_auth_object_mock,
+            _unused_get_ec_for_request_mock,
+            configuration_helpers_mock,
+            _unused_render_to_response_mock,
+    ):
+        # Set up course catalog API client
+        self._setup_course_catalog_client(course_catalog_client_mock)
+
+        # Set up organizations API client
+        if inspect.isclass(organizations_data) and issubclass(organizations_data, Exception):
+            organizations_helpers_mock.get_organization.side_effect = organizations_data
+        else:
+            organizations_helpers_mock.get_organization.return_value = organizations_data
+
+        configuration_helpers_mock.get_value.return_value = 'edX'
+
+        # Set up course API client
+        self._setup_course_api_client(course_api_client_mock)
+
+        # Set up enrollment API client
+        self._setup_enrollment_client(enrollment_api_client_mock)
+
+        # Get landing page
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        assert response.status_code == 200
+
+        # Set up expected context
+        course_modes = [
+            {
+                'mode': 'professional',
+                'title': 'Professional Track',
+                'original_price': '$100',
+                'final_price': '$100',
+                'description': 'Earn a verified certificate!',
+                'premium': True,
+            }
+        ]
+        expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Choose Your Track',
+            'course_id': course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
+            'enterprise_customer': enterprise_customer,
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'price_text': 'Price',
+            'continue_link_text': 'Continue',
+            'course_modes': course_modes,
+            'course_effort': '6 hours per week, per course',
+            'level_text': 'Level',
+            'effort_text': 'Effort',
+            'course_overview': None,
+            'organization_logo': None,
+            'organization_name': None,
+            'course_level_type': 'Type 1',
+            'close_modal_button_text': 'Close',
+        }
+
+        # Compare expected context with response result
+        for key, value in expected_context.items():
+            assert response.context[key] == value  # pylint: disable=no-member

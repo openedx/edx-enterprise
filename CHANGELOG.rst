@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.34.4] - 2017-06-09
+---------------------
+
+* Added course information overlay
+
+
 [0.34.3] - 2017-06-07
 ---------------------
 
@@ -38,6 +44,7 @@ Unreleased
 * Update data backing and behavior of enterprise landing page
 * Fix template prioritization bug
 * Fix URL rendering in enterprise login decorator
+
 
 [0.33.24] - 2017-06-02
 ----------------------
