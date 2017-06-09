@@ -27,6 +27,11 @@ except ImportError:
     configuration_helpers = None
 
 try:
+    from openedx.core.djangoapps.commerce.utils import ecommerce_api_client
+except ImportError:
+    ecommerce_api_client = None
+
+try:
     from third_party_auth.pipeline import (
         get_complete_url,
         get_real_social_auth_object,
@@ -616,6 +621,36 @@ class CourseEnrollmentView(View):
         'close_modal_button_text': _('Close'),
     }
 
+    def set_final_prices(self, modes, request):
+        """
+        Set the final discounted price on each premium mode.
+        """
+        result = []
+        for mode in modes:
+            if mode['premium']:
+                mode['final_price'] = self.get_final_price(mode, request)
+            result.append(mode)
+        return result
+
+    def get_final_price(self, mode, request):
+        """
+        Get course mode's SKU discounted price after applying any entitlement available for this user.
+        """
+        try:
+            client = ecommerce_api_client(request.user)
+            endpoint = client.baskets.calculate
+            price_details = endpoint.get(sku=[mode['sku']])
+            price = price_details['total_incl_tax']
+            if price != mode['min_price']:
+                return '${}'.format(price)
+        except HttpClientError:
+            logger.error(
+                "Failed to get price details for course mode's SKU '{sku}' for username '{username}'".format(
+                    sku=mode['sku'], username=request.user.username
+                )
+            )
+        return mode['original_price']
+
     def get_base_details(self, enterprise_uuid, course_id):
         """
         Retrieve fundamental details used by both POST and GET versions of this view.
@@ -663,6 +698,8 @@ class CourseEnrollmentView(View):
                 description = self.context_data['verified_text']
             course_modes.append({
                 'mode': mode['slug'],
+                'min_price': mode['min_price'],
+                'sku': mode['sku'],
                 'title': mode['name'],
                 'original_price': price_text,
                 'final_price': price_text,
@@ -690,6 +727,9 @@ class CourseEnrollmentView(View):
                 hours=effort_hours
             )
         course_run = CourseCatalogApiClient(request.user).get_course_run(course_details['course_id'])
+
+        course_modes = self.set_final_prices(course_modes, request)
+        premium_modes = [mode for mode in course_modes if mode['premium']]
 
         try:
             organization = organizations_helpers.get_organization(course_details['org'])
@@ -732,6 +772,7 @@ class CourseEnrollmentView(View):
             'organization_name': organization_name,
             'course_level_type': course_run.get('level_type', ''),
             'close_modal_button_text': self.context_data['close_modal_button_text'],
+            'premium_modes': premium_modes,
         }
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
