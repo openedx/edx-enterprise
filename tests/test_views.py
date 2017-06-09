@@ -1108,13 +1108,13 @@ class TestCourseEnrollmentView(TestCase):
         client.get_course_modes.return_value = self.dummy_demo_course_modes
         client.get_course_enrollment.return_value = None
 
-    def _setup_ecommerce_client(self, client_mock, total=50):
+    def _setup_ecommerce_client(self, client_mock):
         """
         Sets up the Ecommerce API client
         """
         dummy_price_details_mock = mock.MagicMock()
         dummy_price_details_mock.return_value = {
-            'total_incl_tax': total,
+            'total_incl_tax': 50,
         }
         price_details_mock = mock.MagicMock()
         method_name = 'baskets.calculate.get'
@@ -1149,7 +1149,15 @@ class TestCourseEnrollmentView(TestCase):
     ):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
-        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        dummy_price_details_mock = mock.MagicMock()
+        dummy_price_details_mock.return_value = {
+            'total_incl_tax': 100,
+        }
+        price_details_mock = mock.MagicMock()
+        method_name = 'baskets.calculate.get'
+        attrs = {method_name: dummy_price_details_mock}
+        price_details_mock.configure_mock(**attrs)
+        ecommerce_api_client_mock.return_value = price_details_mock
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
