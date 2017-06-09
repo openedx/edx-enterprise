@@ -6,6 +6,11 @@
   <link rel="stylesheet" href="{% static 'enterprise/enterprise_course_enrollment_page.css' %}" />
 {% endblock %}
 
+{% block extrahead %}
+  <script type="text/javascript" src="{% static 'common/js/vendor/jquery.js' %}"></script>
+  <script type="text/javascript" src="{% static 'enterprise/enterprise_course_enrollment_page.js' %}"></script>
+{% endblock %}
+
 {% block contents %}
   <header class="logo-container" aria-label="{{ page_title }}">
     <h1>
@@ -45,7 +50,7 @@
             <span>{{ starts_at_text }} {{ course_start_date }} &nbsp;| &nbsp; {{ course_pacing }}</span>
           </div>
           {{ course_short_description }}
-          <a class="text-underline" href="#!">{{ view_course_details_text }}</a>
+          <a id="view-course-details-link" class="text-underline" href="#!">{{ view_course_details_text }}</a>
         </div>
         <form method="POST">
           <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
@@ -76,6 +81,67 @@
           {% endfor %}
           <button class="btn-continue">{{ continue_link_text }}</button>
         </form>
+      </div>
+    </div>
+  </div>
+  <div id="course-details-modal" class="modal" aria-hidden="true">
+    <div id="course-details-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
+      <button class="modal-close-button" id="modal-close-button" aria-label="{{ close_modal_button_text }}">{{ close_modal_button_text }}</button>
+      <header class="wrapper">
+        <div class="image">
+          <img src="{{ course_image_uri }}" alt="{{ course_name }}"/>
+        </div>
+        <div class="details">
+          <h1 id="modal-header-text">{{ course_name }}</h1>
+          <p class="short-description">{{ course_short_description }}</p>
+          {% if organization_logo and organization_name %}
+            <div class="organization">
+              <img src="{{ organization_logo }}" alt="{{ organization_name }}" />
+            </div>
+          {% endif %}
+        </div>
+      </header>
+      <div class="body">
+        <div class="details">
+          <ol>
+            {% if course_modes|length > 0 %}
+              {% with course_mode=course_modes.0 %}
+                {% if course_mode.original_price %}
+                  <li>
+                    <span class="icon fa fa-tag" aria-hidden="true"></span>
+                    <span class="title">{{ price_text }}</span>
+                    <span class="text">
+                      {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
+                        <strike>{{ course_mode.original_price }}</strike>
+                        <br />
+                        <span class="discount">{{ course_mode.final_price }}</span>
+                      {% else %}
+                        {{ course_mode.original_price }}
+                      {% endif %}
+                    </span>
+                  </li>
+                {% endif %}
+              {% endwith %}
+            {% endif %}
+            {% if course_level_type %}
+              <li>
+                <span class="icon fa fa-certificate" aria-hidden="true"></span>
+                <span class="title">{{ level_text }}</span>
+                <span class="text">{{ course_level_type }}</span>
+              </li>
+            {% endif %}
+            {% if course_effort %}
+              <li>
+                <span class="icon fa fa-tachometer" aria-hidden="true"></span>
+                <span class="title">{{ effort_text }}</span>
+                <span class="text">{{ course_effort }}</span>
+              </li>
+            {% endif %}
+          </ol>
+        </div>
+        <div class="overview">
+          {{ course_overview|safe }}
+        </div>
       </div>
     </div>
   </div>

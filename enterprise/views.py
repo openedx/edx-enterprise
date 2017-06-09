@@ -11,6 +11,7 @@ from edx_rest_api_client.exceptions import HttpClientError
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404
@@ -38,9 +39,14 @@ except ImportError:
     quarantine_session = None
     lift_quarantine = None
 
+try:
+    from util import organizations_helpers
+except ImportError:
+    organizations_helpers = None
 
 # isort:imports-firstparty
 from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
+from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnterpriseCourseEnrollment,
@@ -505,6 +511,10 @@ class CourseEnrollmentView(View):
             'Not eligible for a certificate; does not count toward a MicroMasters'
         ),
         'continue_link_text': _('Continue'),
+        'level_text': _('Level'),
+        'effort_text': _('Effort'),
+        'effort_hours_text': _('{hours} hours per week, per course'),
+        'close_modal_button_text': _('Close'),
     }
 
     def get_base_details(self, enterprise_uuid, course_id):
@@ -572,6 +582,24 @@ class CourseEnrollmentView(View):
         if course_details['start']:
             course_start_date = parse(course_details['start']).strftime('%B %d, %Y')
 
+        try:
+            effort_hours = int(course_details['effort'].split(':')[0])
+        except (AttributeError, ValueError):
+            course_effort = ''
+        else:
+            course_effort = self.context_data['effort_hours_text'].format(
+                hours=effort_hours
+            )
+        course_run = CourseCatalogApiClient(request.user).get_course_run(course_details['course_id'])
+
+        try:
+            organization = organizations_helpers.get_organization(course_details['org'])
+            organization_logo = organization['logo'].url
+            organization_name = organization['name']
+        except (TypeError, ValidationError, ValueError):
+            organization_logo = None
+            organization_name = None
+
         context_data = {
             'page_title': self.context_data['page_title'],
             'LANGUAGE_CODE': get_language_from_request(request),
@@ -597,6 +625,14 @@ class CourseEnrollmentView(View):
             'price_text': self.context_data['price_text'],
             'continue_link_text': self.context_data['continue_link_text'],
             'course_modes': filter_audit_course_modes(enterprise_customer, course_modes),
+            'course_effort': course_effort,
+            'level_text': self.context_data['level_text'],
+            'effort_text': self.context_data['effort_text'],
+            'course_overview': course_details['overview'],
+            'organization_logo': organization_logo,
+            'organization_name': organization_name,
+            'course_level_type': course_run.get('level_type', ''),
+            'close_modal_button_text': self.context_data['close_modal_button_text'],
         }
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
