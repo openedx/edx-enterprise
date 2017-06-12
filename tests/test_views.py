@@ -1055,11 +1055,13 @@ class TestCourseEnrollmentView(TestCase):
                 "slug": "professional",
                 "name": "Professional Track",
                 "min_price": 100,
+                "sku": "sku-professional",
             },
             {
                 "slug": "audit",
                 "name": "Audit Track",
                 "min_price": 0,
+                "sku": "sku-audit",
             },
         ]
         super(TestCourseEnrollmentView, self).setUp()
@@ -1106,6 +1108,20 @@ class TestCourseEnrollmentView(TestCase):
         client.get_course_modes.return_value = self.dummy_demo_course_modes
         client.get_course_enrollment.return_value = None
 
+    def _setup_ecommerce_client(self, client_mock, total=50):
+        """
+        Sets up the Ecommerce API client
+        """
+        dummy_price_details_mock = mock.MagicMock()
+        dummy_price_details_mock.return_value = {
+            'total_incl_tax': total,
+        }
+        price_details_mock = mock.MagicMock()
+        method_name = 'baskets.calculate.get'
+        attrs = {method_name: dummy_price_details_mock}
+        price_details_mock.configure_mock(**attrs)
+        client_mock.return_value = price_details_mock
+
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -1116,8 +1132,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
     def test_get_course_enrollment_page(
             self,
+            ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
             enrollment_api_client_mock,
@@ -1131,6 +1149,7 @@ class TestCourseEnrollmentView(TestCase):
     ):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
@@ -1149,12 +1168,14 @@ class TestCourseEnrollmentView(TestCase):
         assert response.status_code == 200
         course_modes = [
             {
-                'mode': 'professional',
-                'title': 'Professional Track',
-                'original_price': '$100',
-                'final_price': '$100',
-                'description': 'Earn a verified certificate!',
-                'premium': True,
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$100",
+                "description": "Earn a verified certificate!",
+                "premium": True,
             }
         ]
         expected_context = {
@@ -1187,6 +1208,7 @@ class TestCourseEnrollmentView(TestCase):
             'organization_name': 'Organization',
             'course_level_type': 'Type 1',
             'close_modal_button_text': 'Close',
+            'premium_modes': course_modes,
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
@@ -1201,8 +1223,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
     def test_get_course_specific_enrollment_view_audit_enabled(
             self,
+            ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
             enrollment_api_client_mock,
@@ -1216,6 +1240,7 @@ class TestCourseEnrollmentView(TestCase):
     ):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
@@ -1238,7 +1263,9 @@ class TestCourseEnrollmentView(TestCase):
                 'mode': 'professional',
                 'title': 'Professional Track',
                 'original_price': '$100',
-                'final_price': '$100',
+                'min_price': 100,
+                'sku': 'sku-professional',
+                'final_price': '$50',
                 'description': 'Earn a verified certificate!',
                 'premium': True,
             },
@@ -1246,6 +1273,8 @@ class TestCourseEnrollmentView(TestCase):
                 'mode': 'audit',
                 'title': 'Audit Track',
                 'original_price': 'FREE',
+                'min_price': 0,
+                'sku': 'sku-audit',
                 'final_price': 'FREE',
                 'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
                 'premium': False,
@@ -1287,8 +1316,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
     def test_get_course_enrollment_page_with_no_start_date(
             self,
+            ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
             enrollment_api_client_mock,
@@ -1306,6 +1337,7 @@ class TestCourseEnrollmentView(TestCase):
         """
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         dummy_demo_course_details_data = self.dummy_demo_course_details_data
@@ -1696,8 +1728,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
     def test_post_course_specific_enrollment_view_incompatible_mode(
             self,
+            ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
             enrollment_api_client_mock,
@@ -1711,6 +1745,7 @@ class TestCourseEnrollmentView(TestCase):
     ):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
@@ -1756,7 +1791,9 @@ class TestCourseEnrollmentView(TestCase):
                     'mode': 'professional',
                     'title': 'Professional Track',
                     'original_price': '$100',
-                    'final_price': '$100',
+                    'min_price': 100,
+                    'sku': 'sku-professional',
+                    'final_price': '$50',
                     'description': 'Earn a verified certificate!',
                     'premium': True,
                 },
@@ -1764,6 +1801,8 @@ class TestCourseEnrollmentView(TestCase):
                     'mode': 'audit',
                     'title': 'Audit Track',
                     'original_price': 'FREE',
+                    'min_price': 0,
+                    'sku': 'sku-audit',
                     'final_price': 'FREE',
                     'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
                     'premium': False,
@@ -1829,10 +1868,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
     @ddt.data(None, 'Cannot convert to integer')
     def test_get_course_enrollment_page_with_unparseable_course_effort(
             self,
             course_effort,
+            ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
             enrollment_api_client_mock,
@@ -1844,6 +1885,9 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
             _unused_render_to_response_mock,
     ):
+        # Set up Ecommerce API client
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
+
         # Set up course catalog API client
         self._setup_course_catalog_client(course_catalog_client_mock)
 
@@ -1879,12 +1923,14 @@ class TestCourseEnrollmentView(TestCase):
         # Set up expected context
         course_modes = [
             {
-                'mode': 'professional',
-                'title': 'Professional Track',
-                'original_price': '$100',
-                'final_price': '$100',
-                'description': 'Earn a verified certificate!',
-                'premium': True,
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$50",
+                "description": "Earn a verified certificate!",
+                "premium": True,
             }
         ]
         expected_context = {
@@ -1917,6 +1963,7 @@ class TestCourseEnrollmentView(TestCase):
             'organization_name': 'Organization',
             'course_level_type': 'Type 1',
             'close_modal_button_text': 'Close',
+            'premium_modes': course_modes,
         }
 
         # Compare expected context with response result
@@ -1933,10 +1980,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
     @ddt.data(None, ValueError)
     def test_get_course_enrollment_page_organization_errors(
             self,
             organizations_data,
+            ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
             enrollment_api_client_mock,
@@ -1948,6 +1997,9 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
             _unused_render_to_response_mock,
     ):
+        # Set up Ecommerce API client
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
+
         # Set up course catalog API client
         self._setup_course_catalog_client(course_catalog_client_mock)
 
@@ -1983,12 +2035,14 @@ class TestCourseEnrollmentView(TestCase):
         # Set up expected context
         course_modes = [
             {
-                'mode': 'professional',
-                'title': 'Professional Track',
-                'original_price': '$100',
-                'final_price': '$100',
-                'description': 'Earn a verified certificate!',
-                'premium': True,
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$50",
+                "description": "Earn a verified certificate!",
+                "premium": True,
             }
         ]
         expected_context = {
@@ -2021,6 +2075,116 @@ class TestCourseEnrollmentView(TestCase):
             'organization_name': None,
             'course_level_type': 'Type 1',
             'close_modal_button_text': 'Close',
+            'premium_modes': course_modes,
+        }
+        for key, value in expected_context.items():
+            assert response.context[key] == value  # pylint: disable=no-member
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
+    def test_get_course_enrollment_page_with_ecommerce_error(
+            self,
+            ecommerce_api_client_mock,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            _unused_lift_quarantine_mock,
+            _unused_quarantine_session_mock,
+            _unused_social_auth_object_mock,
+            _unused_get_ec_for_request_mock,
+            configuration_helpers_mock,
+            _unused_render_to_response_mock,
+    ):
+        # Set up Ecommerce API client that returns an error
+        broken_price_details_mock = mock.MagicMock()
+        method_name = 'baskets.calculate.get'
+        attrs = {method_name + '.side_effect': HttpClientError()}
+        broken_price_details_mock.configure_mock(**attrs)
+        ecommerce_api_client_mock.return_value = broken_price_details_mock
+
+        # Set up course catalog API client
+        self._setup_course_catalog_client(course_catalog_client_mock)
+
+        # Set up organizations API client
+        self._setup_organizations_client(organizations_helpers_mock)
+
+        configuration_helpers_mock.get_value.return_value = 'edX'
+
+        # Set up course API client
+        self._setup_course_api_client(course_api_client_mock)
+
+        # Set up enrollment API client
+        self._setup_enrollment_client(enrollment_api_client_mock)
+
+        # Get landing page
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        assert response.status_code == 200
+
+        # Set up expected context
+        course_modes = [
+            {
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$100",
+                "description": "Earn a verified certificate!",
+                "premium": True,
+            }
+        ]
+        expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Choose Your Track',
+            'course_id': course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
+            'enterprise_customer': enterprise_customer,
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'price_text': 'Price',
+            'continue_link_text': 'Continue',
+            'course_modes': course_modes,
+            'course_effort': '6 hours per week, per course',
+            'level_text': 'Level',
+            'effort_text': 'Effort',
+            'course_overview': None,
+            'organization_logo': 'logo.png',
+            'organization_name': 'Organization',
+            'course_level_type': 'Type 1',
+            'close_modal_button_text': 'Close',
+            'premium_modes': course_modes,
         }
 
         # Compare expected context with response result
