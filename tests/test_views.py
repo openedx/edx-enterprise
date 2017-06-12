@@ -1108,13 +1108,13 @@ class TestCourseEnrollmentView(TestCase):
         client.get_course_modes.return_value = self.dummy_demo_course_modes
         client.get_course_enrollment.return_value = None
 
-    def _setup_ecommerce_client(self, client_mock):
+    def _setup_ecommerce_client(self, client_mock, total=50):
         """
         Sets up the Ecommerce API client
         """
         dummy_price_details_mock = mock.MagicMock()
         dummy_price_details_mock.return_value = {
-            'total_incl_tax': 50,
+            'total_incl_tax': total,
         }
         price_details_mock = mock.MagicMock()
         method_name = 'baskets.calculate.get'
@@ -1149,15 +1149,7 @@ class TestCourseEnrollmentView(TestCase):
     ):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
-        dummy_price_details_mock = mock.MagicMock()
-        dummy_price_details_mock.return_value = {
-            'total_incl_tax': 100,
-        }
-        price_details_mock = mock.MagicMock()
-        method_name = 'baskets.calculate.get'
-        attrs = {method_name: dummy_price_details_mock}
-        price_details_mock.configure_mock(**attrs)
-        ecommerce_api_client_mock.return_value = price_details_mock
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
@@ -2113,18 +2105,29 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
             _unused_render_to_response_mock,
     ):
+        # Set up Ecommerce API client that returns an error
         broken_price_details_mock = mock.MagicMock()
         method_name = 'baskets.calculate.get'
         attrs = {method_name + '.side_effect': HttpClientError()}
         broken_price_details_mock.configure_mock(**attrs)
         ecommerce_api_client_mock.return_value = broken_price_details_mock
+
+        # Set up course catalog API client
         self._setup_course_catalog_client(course_catalog_client_mock)
+
+        # Set up organizations API client
         self._setup_organizations_client(organizations_helpers_mock)
-        course_id = self.demo_course_id
+
         configuration_helpers_mock.get_value.return_value = 'edX'
+
+        # Set up course API client
         self._setup_course_api_client(course_api_client_mock)
+
+        # Set up enrollment API client
         self._setup_enrollment_client(enrollment_api_client_mock)
-        self._login()
+
+        # Get landing page
+        course_id = self.demo_course_id
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -2134,8 +2137,11 @@ class TestCourseEnrollmentView(TestCase):
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
         )
+        self._login()
         response = self.client.get(enterprise_landing_page_url)
         assert response.status_code == 200
+
+        # Set up expected context
         course_modes = [
             {
                 "mode": "professional",
