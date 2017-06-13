@@ -184,15 +184,16 @@ def handle_enterprise_logistration(backend, user, **kwargs):
 
         return
 
-    try:
-        # Find an existing account-level consent record for the user
-        consent = UserDataSharingConsentAudit.objects.get(
-            user__user_id=user.id,
-            user__enterprise_customer=enterprise_customer,
-        )
-    except UserDataSharingConsentAudit.DoesNotExist:
-        return redirect_to_consent()
+    if enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN):
+        try:
+            # Find an existing account-level consent record for the user
+            consent = UserDataSharingConsentAudit.objects.get(
+                user__user_id=user.id,
+                user__enterprise_customer=enterprise_customer,
+            )
+        except UserDataSharingConsentAudit.DoesNotExist:
+            return redirect_to_consent()
 
-    if (not consent.enabled) and enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN):
-        # If consent has been declined, and the enterprise customer requires it, redirect to get it.
-        return redirect_to_consent()
+        if not consent.enabled:
+            # If consent has been declined, and the enterprise customer requires it, redirect to get it.
+            return redirect_to_consent()
