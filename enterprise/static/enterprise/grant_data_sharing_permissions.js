@@ -24,8 +24,15 @@ function showBackgroundInTabIndex() {
     $(".consent-container").attr("aria-hidden", "false");
 }
 
+function hideConsentConfirmationModal() {
+    $("body").removeClass("open-modal");
+    $("#consent-confirmation-modal").hide();
+    showBackgroundInTabIndex();
+}
+
 function loadConsentPage() {
     $("#failure-link").click(function (event) {
+        $("body").addClass("open-modal");
         $("#consent-confirmation-modal").show();
         $("#modal-close-button").focus();
         hideBackgroundFromTabIndex();
@@ -42,14 +49,12 @@ function loadConsentPage() {
     });
     $("#review-policy-link").click(function (event) {
         event.stopPropagation();
-        $("#consent-confirmation-modal").hide();
-        showBackgroundInTabIndex();
+        hideConsentConfirmationModal();
         togglePolicy(true);
         $("#consent-policy-dropdown-bar").focus();
     });
     $("#consent-confirmation-modal").click(function (event) {
-        $("#consent-confirmation-modal").hide();
-        showBackgroundInTabIndex();
+        hideConsentConfirmationModal();
         $("#failure-link").focus();
     });
     $("#data-consent-checkbox").change(function (event) {
@@ -58,8 +63,7 @@ function loadConsentPage() {
     $(document).keydown(function (event) {
         if ((event.keyCode === 27) && ($("#consent-confirmation-modal").is(":visible"))) {
             // If the modal is shown, and the ESC key is pressed, hide the modal.
-            $("#consent-confirmation-modal").hide();
-            showBackgroundInTabIndex();
+            hideConsentConfirmationModal();
             $("#failure-link").focus();
             event.preventDefault();
         }

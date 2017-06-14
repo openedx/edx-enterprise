@@ -110,13 +110,15 @@
                 <div id="consent-confirmation-modal" class="modal">
                   <div id="consent-confirmation-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
                     <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="{% trans "Close" %}"></button>
-                    <header class="modal-header">
-                      <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
-                    </header>
-                    <p>{{ confirmation_alert_prompt|safe }}</p>
-                    <p>{{ confirmation_alert_prompt_warning }}</p>
-                    <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
-                    <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+                    <div class="consent-confirmation-modal-scrollable">
+                      <header class="modal-header">
+                        <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
+                      </header>
+                      <p>{{ confirmation_alert_prompt|safe }}</p>
+                      <p>{{ confirmation_alert_prompt_warning }}</p>
+                      <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
+                      <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+                    </div>
                   </div>
                 </div>
               </main>
