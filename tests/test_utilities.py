@@ -36,6 +36,8 @@ from enterprise.utils import (
     disable_for_loaddata,
     filter_audit_course_modes,
     get_all_field_names,
+    get_enterprise_customer_user,
+    is_consent_required_for_user,
 )
 from test_utils.factories import (
     EnterpriseCustomerFactory,
@@ -320,6 +322,86 @@ class TestEnterpriseUtils(unittest.TestCase):
         account_consent.delete()  # pylint: disable=no-member
         enrollment.delete()
         assert consent_necessary_for_course(user, course_id) is False
+
+    def test_get_enterprise_customer_user(self):
+        user = UserFactory()
+        enterprise_customer = EnterpriseCustomerFactory()
+
+        assert get_enterprise_customer_user(user.id, enterprise_customer.uuid) is None
+
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        assert get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
+
+    @ddt.data(
+        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, False),
+        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, True),
+        (False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, False),
+        (False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, False),
+        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, False),
+        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, True),
+        (False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, False),
+        (False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, False),
+    )
+    @ddt.unpack
+    def test_is_consent_required_for_user(
+            self,
+            ec_consent_enabled,
+            ec_consent_enforcement,
+            learner_consent_state,
+            expected_result
+    ):
+        user = UserFactory()
+        enterprise_customer = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=ec_consent_enabled,
+            enforce_data_sharing_consent=ec_consent_enforcement,
+        )
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        UserDataSharingConsentAuditFactory(
+            user=enterprise_customer_user,
+            state=learner_consent_state,
+        )
+        assert is_consent_required_for_user(enterprise_customer_user) is expected_result
+
+    @ddt.data(
+        (True, EnterpriseCustomer.AT_ENROLLMENT, True, False),
+        (True, EnterpriseCustomer.AT_ENROLLMENT, False, True),
+        (False, EnterpriseCustomer.AT_ENROLLMENT, True, False),
+        (False, EnterpriseCustomer.AT_ENROLLMENT, False, False),
+        (True, EnterpriseCustomer.AT_LOGIN, True, False),
+        (True, EnterpriseCustomer.AT_LOGIN, False, True),
+        (False, EnterpriseCustomer.AT_LOGIN, True, False),
+        (False, EnterpriseCustomer.AT_LOGIN, False, False),
+    )
+    @ddt.unpack
+    def test_is_consent_required_for_user_with_course(
+            self,
+            ec_consent_enabled,
+            ec_consent_enforcement,
+            learner_consent_state,
+            expected_result
+    ):
+        user = UserFactory()
+        enterprise_customer = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=ec_consent_enabled,
+            enforce_data_sharing_consent=ec_consent_enforcement,
+        )
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=enterprise_customer_user,
+            consent_granted=learner_consent_state,
+            course_id=course_id
+        )
+        assert is_consent_required_for_user(enterprise_customer_user, course_id) is expected_result
 
     @ddt.data(
         (

@@ -2,6 +2,7 @@
 Module tests user-facing views of the Enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
+
 import inspect
 
 import ddt
@@ -21,9 +22,14 @@ from enterprise.views import (
     CONFIRMATION_ALERT_PROMPT,
     CONFIRMATION_ALERT_PROMPT_WARNING,
     CONSENT_REQUEST_PROMPT,
+    LMS_COURSEWARE_URL,
+    LMS_DASHBOARD_URL,
+    LMS_START_PREMIUM_COURSE_FLOW_URL,
     GrantDataSharingPermissions,
     HttpClientError,
 )
+# pylint: disable=import-error,wrong-import-order
+from six.moves.urllib.parse import urlencode
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
@@ -1489,8 +1495,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.is_consent_required_for_user')
     def test_post_course_specific_enrollment_view(
             self,
+            is_consent_required_mock,  # pylint: disable=invalid-name
             enrollment_api_client_mock,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1500,6 +1508,7 @@ class TestCourseEnrollmentView(TestCase):
             configuration_helpers_mock,
     ):
         course_id = self.demo_course_id
+        is_consent_required_mock.return_value = False
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
@@ -1526,6 +1535,69 @@ class TestCourseEnrollmentView(TestCase):
             fetch_redirect_response=False
         )
         enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit')
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.is_consent_required_for_user')
+    def test_post_course_specific_enrollment_view_consent_needed(
+            self,
+            is_consent_required_mock,  # pylint: disable=invalid-name
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            lift_quarantine_mock,  # pylint: disable=unused-argument
+            quarantine_session_mock,  # pylint: disable=unused-argument
+            social_auth_object_mock,  # pylint: disable=unused-argument
+            get_ec_for_request_mock,  # pylint: disable=unused-argument
+            configuration_helpers_mock,
+    ):
+        course_id = self.demo_course_id
+        is_consent_required_mock.return_value = True
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = self.dummy_demo_course_details_data
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
+        enrollment_client.get_course_enrollment.return_value = None
+
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        enterprise_id = enterprise_customer.uuid
+        self._login()
+        course_enrollment_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_id, course_id],
+        )
+        response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'})
+
+        assert response.status_code == 302
+
+        expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
+        consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
+            enterprise_id, course_id, urlencode({'course_mode': 'audit'})
+        )
+        self.assertRedirects(
+            response,
+            expected_url_format.format(
+                urlencode(
+                    {
+                        'next': consent_enrollment_url,
+                        'enterprise_id': enterprise_id,
+                        'course_id': course_id,
+                        'enrollment_deferred': True,
+                    }
+                )
+            ),
+            fetch_redirect_response=False
+        )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
@@ -1622,8 +1694,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.is_consent_required_for_user')
     def test_post_course_specific_enrollment_view_premium_mode(
             self,
+            is_consent_required_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             lift_quarantine_mock,   # pylint: disable=unused-argument
@@ -1634,6 +1708,7 @@ class TestCourseEnrollmentView(TestCase):
             render_to_response_mock,    # pylint: disable=unused-argument
     ):
         course_id = self.demo_course_id
+        is_consent_required_mock.return_value = False
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
@@ -1864,3 +1939,293 @@ class TestCourseEnrollmentView(TestCase):
         # Compare expected context with response result
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
+
+
+@mark.django_db
+@ddt.ddt
+class TestHandleConsentEnrollmentView(TestCase):
+    """
+    Test HandleConsentEnrollment.
+    """
+
+    def setUp(self):
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.client = Client()
+        self.demo_course_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.dummy_demo_course_modes = [
+            {
+                "slug": "professional",
+                "name": "Professional Track",
+                "min_price": 100,
+            },
+            {
+                "slug": "audit",
+                "name": "Audit Track",
+                "min_price": 0,
+            },
+        ]
+        super(TestHandleConsentEnrollmentView, self).setUp()
+
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    def test_handle_consent_enrollment_without_course_mode(
+            self,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,  # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user is redirected to LMS dashboard in case there is
+        no parameter `course_mode` in the request querystring.
+        """
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        self._login()
+        handle_consent_enrollment_url = reverse(
+            'enterprise_handle_consent_enrollment',
+            args=[enterprise_customer.uuid, course_id],
+        )
+        response = self.client.get(handle_consent_enrollment_url)
+        redirect_url = LMS_DASHBOARD_URL
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    def test_handle_consent_enrollment_404(
+            self,
+            enrollment_api_client_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,  # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user gets HTTP 404 response if there is no enterprise in
+        database against the provided enterprise UUID or if enrollment API
+        client is unable to get course modes for the provided course id.
+        """
+        course_id = self.demo_course_id
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.side_effect = HttpClientError
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        self._login()
+        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
+            consent_enrollment_url=reverse(
+                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+            ),
+            params=urlencode({'course_mode': 'professional'})
+        )
+        response = self.client.get(handle_consent_enrollment_url)
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    def test_handle_consent_enrollment_no_enterprise_user(
+            self,
+            enrollment_api_client_mock,
+            lift_quarantine_mock,  # pylint: disable=unused-argument
+            quarantine_session_mock,  # pylint: disable=unused-argument
+            social_auth_object_mock,  # pylint: disable=unused-argument
+            get_ec_for_request_mock,  # pylint: disable=unused-argument
+            configuration_helpers_mock,  # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user gets HTTP 404 response if the user is not linked to
+        the enterprise with the provided enterprise UUID or if enrollment API
+        client is unable to get course modes for the provided course id.
+        """
+        course_id = self.demo_course_id
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        self._login()
+        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
+            consent_enrollment_url=reverse(
+                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+            ),
+            params=urlencode({'course_mode': 'professional'})
+        )
+        response = self.client.get(handle_consent_enrollment_url)
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.get_enterprise_customer_user')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    def test_handle_consent_enrollment_with_invalid_course_mode(
+            self,
+            enrollment_api_client_mock,
+            get_ec_user_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
+            configuration_helpers_mock,  # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user is redirected to LMS dashboard in case the provided
+        course mode does not exist.
+        """
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
+        mocked_enterprise_customer_user = get_ec_user_mock.return_value
+        mocked_enterprise_customer_user.return_value = enterprise_customer_user
+        self._login()
+        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
+            consent_enrollment_url=reverse(
+                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+            ),
+            params=urlencode({'course_mode': 'some-invalid-course-mode'})
+        )
+        response = self.client.get(handle_consent_enrollment_url)
+        redirect_url = LMS_DASHBOARD_URL
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    def test_handle_consent_enrollment_with_audit_course_mode(
+            self,
+            enrollment_api_client_mock,
+            lift_quarantine_mock,  # pylint: disable=unused-argument
+            quarantine_session_mock,  # pylint: disable=unused-argument
+            social_auth_object_mock,  # pylint: disable=unused-argument
+            get_ec_for_request_mock,  # pylint: disable=unused-argument
+            configuration_helpers_mock,  # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user is redirected to course in case the provided
+        course mode is audit track.
+        """
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
+        self._login()
+        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
+            consent_enrollment_url=reverse(
+                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+            ),
+            params=urlencode({'course_mode': 'audit'})
+        )
+        response = self.client.get(handle_consent_enrollment_url)
+        redirect_url = LMS_COURSEWARE_URL.format(course_id=course_id)
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+
+        self.assertTrue(EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user__enterprise_customer=enterprise_customer,
+            enterprise_customer_user__user_id=enterprise_customer_user.user_id,
+            course_id=course_id
+        ).exists())
+
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    def test_handle_consent_enrollment_with_professional_course_mode(
+            self,
+            enrollment_api_client_mock,
+            lift_quarantine_mock,  # pylint: disable=unused-argument
+            quarantine_session_mock,  # pylint: disable=unused-argument
+            social_auth_object_mock,  # pylint: disable=unused-argument
+            get_ec_for_request_mock,  # pylint: disable=unused-argument
+            configuration_helpers_mock,  # pylint: disable=unused-argument
+    ):
+        """
+        Verify that user is redirected to course in case the provided
+        course mode is audit track.
+        """
+        course_id = self.demo_course_id
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
+        self._login()
+        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
+            consent_enrollment_url=reverse(
+                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+            ),
+            params=urlencode({'course_mode': 'professional'})
+        )
+        response = self.client.get(handle_consent_enrollment_url)
+        redirect_url = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
+        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
+
+        self.assertTrue(EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user__enterprise_customer=enterprise_customer,
+            enterprise_customer_user__user_id=enterprise_customer_user.user_id,
+            course_id=course_id
+        ).exists())

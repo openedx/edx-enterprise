@@ -61,13 +61,16 @@ from enterprise.utils import (
     enterprise_login_required,
     filter_audit_course_modes,
     get_enterprise_customer_or_404,
+    get_enterprise_customer_user,
+    is_consent_required_for_user,
 )
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
+
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
-
 LMS_COURSE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
 
 
@@ -478,6 +481,84 @@ class GrantDataSharingPermissions(View):
         return self.post_account_consent(request, consent_provided)
 
 
+class HandleConsentEnrollment(View):
+    """
+    Handle enterprise course enrollment at providing data sharing consent.
+
+    View handles the case for enterprise course enrollment after successful
+    consent.
+    """
+
+    @method_decorator(enterprise_login_required)
+    def get(self, request, enterprise_uuid, course_id):
+        """
+        Handle the enrollment of enterprise learner in the provided course.
+
+        Based on `enterprise_uuid` in URL, the view will decide which
+        enterprise customer's course enrollment record should be created.
+
+        Depending on the value of query parameter `course_mode` then learner
+        will be either redirected to LMS dashboard for audit modes or
+        redirected to ecommerce basket flow for payment of premium modes.
+        """
+        # Verify that all necessary resources are present
+        verify_edx_resources()
+        enrollment_course_mode = request.GET.get('course_mode')
+
+        # Redirect the learner to LMS dashboard in case no course mode is
+        # provided as query parameter `course_mode`
+        if not enrollment_course_mode:
+            return redirect(LMS_DASHBOARD_URL)
+
+        try:
+            enrollment_client = EnrollmentApiClient()
+            course_modes = enrollment_client.get_course_modes(course_id)
+        except HttpClientError:
+            logger.error('Failed to determine available course modes for course ID: %s', course_id)
+            raise Http404
+
+        # Verify that the request user belongs to the enterprise against the
+        # provided `enterprise_uuid`.
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        enterprise_customer_user = get_enterprise_customer_user(request.user.id, enterprise_customer.uuid)
+        if not enterprise_customer_user:
+            raise Http404
+
+        selected_course_mode = None
+        for course_mode in course_modes:
+            if course_mode['slug'] == enrollment_course_mode:
+                selected_course_mode = course_mode
+                break
+
+        if not selected_course_mode:
+            return redirect(LMS_DASHBOARD_URL)
+
+        # Create the Enterprise backend database records for this course
+        # enrollment
+        EnterpriseCourseEnrollment.objects.update_or_create(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+            defaults={
+                'consent_granted': True,
+            }
+        )
+
+        audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
+        if selected_course_mode['slug'] in audit_modes:
+            # In case of Audit course modes enroll the learner directly through
+            # enrollment API client and redirect the learner to dashboard.
+            enrollment_api_client = EnrollmentApiClient()
+            enrollment_api_client.enroll_user_in_course(
+                request.user.username, course_id, selected_course_mode['slug']
+            )
+
+            return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
+
+        # redirect the enterprise learner to the ecommerce flow in LMS
+        # Note: LMS start flow automatically detects the paid mode
+        return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
+
+
 class CourseEnrollmentView(View):
     """
     Enterprise landing page view.
@@ -641,36 +722,72 @@ class CourseEnrollmentView(View):
         """
         Process a submitted track selection form for the enterprise.
         """
-        enterprise_customer, course, modes = self.get_base_details(enterprise_uuid, course_id)
+        enterprise_customer, course, course_modes = self.get_base_details(enterprise_uuid, course_id)
 
-        selected_mode = request.POST.get('course_mode')
+        # Create a link between the user and the enterprise customer if it
+        # does not already exist.
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=enterprise_customer,
+            user_id=request.user.id
+        )
 
-        matching_modes = [mode for mode in modes if mode['mode'] == selected_mode]
+        selected_course_mode_name = request.POST.get('course_mode')
+        selected_course_mode = None
+        for course_mode in course_modes:
+            if course_mode['mode'] == selected_course_mode_name:
+                selected_course_mode = course_mode
+                break
 
-        if not matching_modes:
-            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, modes)
+        if not selected_course_mode:
+            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_modes)
 
-        if matching_modes[0].get('premium', False):
-            # Premium modes should be directed to the ecommerce flow
+        user_consent_needed = is_consent_required_for_user(enterprise_customer_user, course_id)
+        if not selected_course_mode.get('premium') and not user_consent_needed:
+            # For the audit course modes (audit, honor), where DSC is not
+            # required, enroll the learner directly through enrollment API
+            # client and redirect the learner to LMS courseware page.
+            with transaction.atomic():
+                # Create the Enterprise backend database records for this course
+                # enrollment.
+                EnterpriseCourseEnrollment.objects.get_or_create(
+                    enterprise_customer_user=enterprise_customer_user,
+                    course_id=course_id,
+                )
+                client = EnrollmentApiClient()
+                client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
+
+            return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
+        elif user_consent_needed:
+            # For the audit course modes (audit, honor) or for the premium
+            # course modes (Verified, Prof Ed) where DSC is required, redirect
+            # the learner to course specific DSC with enterprise UUID from
+            # there the learner will be directed to the ecommerce flow after
+            # providing DSC.
+            next_url = '{handle_consent_enrollment_url}?{query_string}'.format(
+                handle_consent_enrollment_url=reverse(
+                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+                ),
+                query_string=urlencode({'course_mode': selected_course_mode_name})
+            )
+            return redirect(
+                '{grant_data_sharing_url}?{params}'.format(
+                    grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
+                    params=urlencode(
+                        {
+                            'next': next_url,
+                            'enterprise_id': enterprise_customer.uuid,
+                            'course_id': course_id,
+                            'enrollment_deferred': True,
+                        }
+                    )
+                )
+            )
+        else:
+            # For the premium course modes (Verified, Prof Ed) where DSC is
+            # not required, redirect the enterprise learner to the ecommerce
+            # flow in LMS.
+            # Note: LMS start flow automatically detects the paid mode
             return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
-
-        with transaction.atomic():
-            # Create the Enterprise backend database records for this course
-            # enrollment, then create the real enrollment in the LMS. Finally,
-            # redirect the user to the courseware page, where they'll be prompted
-            # for data sharing consent if they need to be.
-            ec_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-                user_id=request.user.id,
-                enterprise_customer=enterprise_customer,
-            )
-            EnterpriseCourseEnrollment.objects.get_or_create(
-                enterprise_customer_user=ec_user,
-                course_id=course_id,
-            )
-
-            client = EnrollmentApiClient()
-            client.enroll_user_in_course(request.user.username, course_id, selected_mode)
-        return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
     @method_decorator(enterprise_login_required)
     def get(self, request, enterprise_uuid, course_id):
@@ -686,16 +803,23 @@ class CourseEnrollmentView(View):
             * No enterprise customer uuid kwarg `enterprise_uuid` in request.
             * No enterprise customer found against the enterprise customer
                 uuid `enterprise_uuid` in the request kwargs.
+            * No course is found in database against the provided `course_id`.
         """
         # Verify that all necessary resources are present
         verify_edx_resources()
 
         enterprise_customer, course, modes = self.get_base_details(enterprise_uuid, course_id)
 
+        # Create a link between the user and the enterprise customer if it
+        # does not already exist.
+        EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=enterprise_customer,
+            user_id=request.user.id
+        )
+
         enrollment_client = EnrollmentApiClient()
         enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
-
-        if (enrolled_course is not None or
+        if (enrolled_course is not None and
                 EnterpriseCourseEnrollment.objects.filter(
                     enterprise_customer_user__enterprise_customer=enterprise_customer,
                     enterprise_customer_user__user_id=request.user.id,
