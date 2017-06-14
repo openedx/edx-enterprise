@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.34.6] - 2017-06-14
+---------------------
+
+* Fixed layout of data sharing consent decline modal on mobile view
+
+
 [0.34.5] - 2017-06-09
 ----------------------
 
