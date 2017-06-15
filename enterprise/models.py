@@ -137,6 +137,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    require_account_level_consent = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether every consent interaction should ask for account-wide consent, rather than only "
+            "the specific scope at which the interaction is happening."
+        )
+    )
+
     @property
     def identity_provider(self):
         """
@@ -812,6 +820,34 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         Return string representation of the enrollment.
         """
         return self.__str__()
+
+    def save(self, *args, **kwargs):
+        """
+        When saving an EnterpriseCourseEnrollment, update the account-level consent if needed.
+        """
+        enterprise_customer = self.enterprise_customer_user.enterprise_customer
+
+        if enterprise_customer.enforce_data_sharing_consent == EnterpriseCustomer.EXTERNALLY_MANAGED:
+            # If the consent is externally managed, create a record indicating external consent.
+            account_consent_equivalent = UserDataSharingConsentAudit.EXTERNALLY_MANAGED
+        elif self.consent_granted:
+            # If explicit consent has been provided, create a record indicating that.
+            account_consent_equivalent = UserDataSharingConsentAudit.ENABLED
+        elif self.consent_granted is not None:
+            # If consent was declined, create a record indicating that.
+            account_consent_equivalent = UserDataSharingConsentAudit.DISABLED
+        else:
+            # If no explicit consent state was set, indicate that.
+            account_consent_equivalent = UserDataSharingConsentAudit.NOT_SET
+
+        # This is an awful hack. Once we migrate to the planned generic consent architecture, it can DIAF.
+        if enterprise_customer.require_account_level_consent:
+            UserDataSharingConsentAudit.objects.update_or_create(
+                user=self.enterprise_customer_user,
+                defaults={'state': account_consent_equivalent}
+            )
+
+        super(EnterpriseCourseEnrollment, self).save(*args, **kwargs)
 
 
 @python_2_unicode_compatible

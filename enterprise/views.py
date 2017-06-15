@@ -293,6 +293,24 @@ class GrantDataSharingPermissions(View):
             )
         }
         context_data.update(course_specific_context)
+        if customer.require_account_level_consent:
+            context_data.update({
+                'consent_request_prompt': _(
+                    'To access this and other courses sponsored by {bold_start}{enterprise_customer_name}{bold_end}, '
+                    'and to use the discounts available to you, you must first consent to share your '
+                    'learning achievements with {bold_start}{enterprise_customer_name}{bold_end}.'
+                ).format(
+                    enterprise_customer_name=customer.name,
+                    bold_start='<b>',
+                    bold_end='</b>',
+                ),
+                'requested_permissions': [
+                    _('your enrollment in all sponsored courses'),
+                    _('your learning progress'),
+                    _('course completion'),
+                ],
+            })
+
         return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
     def get_account_consent(self, request):
