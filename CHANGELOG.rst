@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.35.1] - 2017-06-15
+---------------------
+
+* Displayed course run price with entitlement on landing page and course information overlay
+
+
 [0.35.0] - 2017-06-15
 ---------------------
 

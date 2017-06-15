@@ -104,8 +104,8 @@
       <div class="body">
         <div class="details">
           <ol>
-            {% if course_modes|length > 0 %}
-              {% with course_mode=course_modes.0 %}
+            {% if premium_modes|length > 0 %}
+              {% with course_mode=premium_modes.0 %}
                 {% if course_mode.original_price %}
                   <li>
                     <span class="icon fa fa-tag" aria-hidden="true"></span>
