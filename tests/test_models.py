@@ -150,6 +150,25 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
     def test_consent_not_stored_no_audit_available(self):
         assert self.enrollment.consent_available() is False
 
+    @ddt.data(
+        ('at_login', None, 'not_set'),
+        ('at_login', True, 'enabled'),
+        ('at_login', False, 'disabled'),
+        ('externally_managed', None, 'external'),
+        ('externally_managed', False, 'external'),
+        ('externally_managed', True, 'external'),
+    )
+    @ddt.unpack
+    def test_create_related_consent_audit(self, requirement, this_state, expected_value):
+        assert UserDataSharingConsentAudit.objects.count() == 0
+        self.enterprise_customer_user.enterprise_customer.require_account_level_consent = True
+        self.enterprise_customer_user.enterprise_customer.enforce_data_sharing_consent = requirement
+        self.enterprise_customer_user.save()
+        self.enrollment.consent_granted = this_state
+        self.enrollment.save()
+        assert UserDataSharingConsentAudit.objects.count() == 1
+        assert UserDataSharingConsentAudit.objects.first().state == expected_value
+
 
 @mark.django_db
 class TestEnterpriseCustomerManager(unittest.TestCase):

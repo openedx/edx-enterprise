@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.35.0] - 2017-06-15
+---------------------
+
+* Allow account-level data sharing consent in a course-specific context
+
+
 [0.34.7] - 2017-06-14
 ---------------------
 

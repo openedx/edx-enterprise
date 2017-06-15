@@ -531,6 +531,93 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
+    @ddt.data(
+        (False, False),
+        (True, True),
+    )
+    @ddt.unpack
+    def test_get_course_specific_consent_ec_requires_account_level(
+            self,
+            enrollment_deferred,
+            supply_customer_uuid,
+            course_api_client_mock,
+            render_mock_unused,
+            mock_config,
+            *args  # pylint: disable=unused-argument
+    ):
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        mock_config.get_value.return_value = 'My Platform'
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            require_account_level_consent=True,
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        params = {
+            'course_id': 'course-v1:edX+DemoX+Demo_Course',
+            'next': 'https://google.com'
+        }
+        if enrollment_deferred:
+            params['enrollment_deferred'] = True
+        if supply_customer_uuid:
+            params['enterprise_id'] = str(enterprise_customer.uuid)
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 200
+        expected_prompt = (
+            'To access this and other courses sponsored by <b>Starfleet Academy</b>, and to '
+            'use the discounts available to you, you must first consent to share your '
+            'learning achievements with <b>Starfleet Academy</b>.'
+        )
+        expected_alert = (
+            'In order to start this course and use your discount, <b>you must</b> consent to share your '
+            'course data with Starfleet Academy.'
+        )
+        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
+            enterprise_customer_name='Starfleet Academy'
+        )
+        for key, value in {
+                "platform_name": "My Platform",
+                "consent_request_prompt": expected_prompt,
+                'confirmation_alert_prompt': expected_alert,
+                'confirmation_alert_prompt_warning': expected_warning,
+                'sharable_items_footer': (
+                    'My permission applies only to data from courses or programs that are sponsored by '
+                    'Starfleet Academy, and not to data from any My Platform courses or programs that '
+                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
+                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
+                    'from any courses or programs that are sponsored by Starfleet Academy.'
+                ),
+                "course_id": "course-v1:edX+DemoX+Demo_Course",
+                "course_name": "edX Demo Course",
+                "redirect_url": "https://google.com",
+                "enterprise_customer_name": ecu.enterprise_customer.name,
+                "course_specific": True,
+                "enrollment_deferred": enrollment_deferred,
+        }.items():
+            assert response.context[key] == value  # pylint:disable=no-member
+
+    @mock.patch('enterprise.views.get_complete_url')
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_invalid_params(
             self,
             course_api_client_mock,
