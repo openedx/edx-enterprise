@@ -8,6 +8,7 @@ import inspect
 import ddt
 import mock
 from dateutil.parser import parse
+from faker import Factory as FakerFactory
 from pytest import mark, raises
 
 from django.contrib import messages
@@ -32,7 +33,12 @@ from enterprise.views import (
 # pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import urlencode
 
-from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 
 def fake_render(request, template, context):  # pylint: disable=unused-argument
@@ -1147,6 +1153,12 @@ class TestCourseEnrollmentView(TestCase):
         price_details_mock.configure_mock(**attrs)
         client_mock.return_value = price_details_mock
 
+    def _setup_registry_mock(self, registry_mock, provider_id):
+        """
+        Sets up the SSO Registry object
+        """
+        registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
+
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -1159,8 +1171,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page(
             self,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -1182,6 +1196,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -1247,8 +1265,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_specific_enrollment_view_audit_enabled(
             self,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -1271,6 +1291,10 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -1337,8 +1361,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_with_no_start_date(
             self,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -1367,6 +1393,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -1390,8 +1420,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_non_existing_course(
             self,
+            registry_mock,
             course_api_client_mock,
             configuration_helpers_mock,
             *args
@@ -1409,6 +1441,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -1424,8 +1460,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_error_in_getting_course(
             self,
+            registry_mock,
             course_api_client_mock,
             configuration_helpers_mock,
             *args
@@ -1443,6 +1481,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -1459,8 +1501,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_specific_enrollment_view_with_course_mode_error(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             configuration_helpers_mock,
@@ -1480,6 +1524,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -1519,13 +1567,19 @@ class TestCourseEnrollmentView(TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_inactive_user(
             self,
+            registry_mock,
+            lift_quarantine_mock,   # pylint: disable=unused-argument
+            quarantine_session_mock,    # pylint: disable=unused-argument
+            social_auth_object_mock,   # pylint: disable=unused-argument
+            get_ec_for_request_mock,   # pylint: disable=unused-argument
             configuration_helpers_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -1541,6 +1595,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -1548,8 +1606,10 @@ class TestCourseEnrollmentView(TestCase):
         response = self.client.get(enterprise_landing_page_url)
         expected_redirect_url = (
             '/login?next=%2Fenterprise%2F{enterprise_customer_uuid}%2Fcourse%2Fcourse-v1'
-            '%253AedX%252BDemoX%252BDemo_Course%2Fenroll%2F%3Ftpa_hint%3DNone'.format(
-                enterprise_customer_uuid=enterprise_customer.uuid
+            '%253AedX%252BDemoX%252BDemo_Course%2Fenroll%2F%3Ftpa_hint%3D{provider_id}'
+            '%26session_cleared%3Dyes'.format(
+                enterprise_customer_uuid=enterprise_customer.uuid,
+                provider_id=provider_id,
             )
         )
         self.assertRedirects(response, expected_redirect_url, fetch_redirect_response=False)
@@ -1562,8 +1622,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_landing_page_for_enrolled_user(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
             configuration_helpers_mock,
@@ -1585,6 +1647,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -1612,8 +1678,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.is_consent_required_for_user')
+    @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view(
             self,
+            registry_mock,
             is_consent_required_mock,  # pylint: disable=invalid-name
             enrollment_api_client_mock,
             course_api_client_mock,
@@ -1634,6 +1702,10 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -1657,8 +1729,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.is_consent_required_for_user')
+    @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_consent_needed(
             self,
+            registry_mock,
             is_consent_required_mock,  # pylint: disable=invalid-name
             enrollment_api_client_mock,
             course_api_client_mock,
@@ -1680,6 +1754,10 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_id = enterprise_customer.uuid
         self._login()
         course_enrollment_page_url = reverse(
@@ -1720,8 +1798,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_incompatible_mode(
             self,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -1744,6 +1824,10 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -1808,8 +1892,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.is_consent_required_for_user')
+    @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_premium_mode(
             self,
+            registry_mock,
             is_consent_required_mock,
             enrollment_api_client_mock,
             course_api_client_mock,
@@ -1827,6 +1913,10 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -1853,10 +1943,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     @ddt.data(None, 'Cannot convert to integer')
     def test_get_course_enrollment_page_with_unparseable_course_effort(
             self,
             course_effort,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -1891,6 +1983,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -1961,10 +2057,12 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     @ddt.data(None, ValueError)
     def test_get_course_enrollment_page_organization_errors(
             self,
             organizations_data,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -1999,6 +2097,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -2067,8 +2169,10 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.organizations_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_with_ecommerce_error(
             self,
+            registry_mock,
             ecommerce_api_client_mock,
             course_catalog_client_mock,
             organizations_helpers_mock,
@@ -2105,6 +2209,10 @@ class TestCourseEnrollmentView(TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -2197,14 +2305,22 @@ class TestHandleConsentEnrollmentView(TestCase):
         """
         assert self.client.login(username=self.user.username, password="QWERTY")
 
+    def _setup_registry_mock(self, registry_mock, provider_id):
+        """
+        Sets up the SSO Registry object
+        """
+        registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
+
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
     @mock.patch('enterprise.views.get_real_social_auth_object')
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_without_course_mode(
             self,
+            registry_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -2218,6 +2334,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         handle_consent_enrollment_url = reverse(
             'enterprise_handle_consent_enrollment',
@@ -2234,8 +2354,10 @@ class TestHandleConsentEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_404(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -2253,6 +2375,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
             consent_enrollment_url=reverse(
@@ -2270,8 +2396,10 @@ class TestHandleConsentEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_no_enterprise_user(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -2289,6 +2417,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
         handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
             consent_enrollment_url=reverse(
@@ -2307,8 +2439,10 @@ class TestHandleConsentEnrollmentView(TestCase):
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.get_enterprise_customer_user')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_invalid_course_mode(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             get_ec_user_mock,
             *args
@@ -2324,6 +2458,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -2350,8 +2488,10 @@ class TestHandleConsentEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_audit_course_mode(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -2366,6 +2506,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -2396,8 +2540,10 @@ class TestHandleConsentEnrollmentView(TestCase):
     @mock.patch('enterprise.views.quarantine_session')
     @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_professional_course_mode(
             self,
+            registry_mock,
             enrollment_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -2412,6 +2558,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
