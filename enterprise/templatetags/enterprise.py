@@ -10,7 +10,7 @@ register = template.Library()  # pylint: disable=invalid-name
 MESSAGE_ICONS = {
     'success': 'fa-check-circle',
     'info': 'fa-info-circle',
-    'warning': 'fa-exclamation-circle',
+    'warning': 'fa-exclamation-triangle',
     'error': 'fa-times-circle'
 }
 

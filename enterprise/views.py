@@ -57,6 +57,7 @@ from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_P
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
+from enterprise.messages import add_consent_declined_message
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -66,8 +67,8 @@ from enterprise.models import (
 from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_enterprise_customer_for_request
 from enterprise.utils import (
     NotConnectedToOpenEdX,
-    consent_necessary_for_course,
     filter_audit_course_modes,
+    get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     is_consent_required_for_user,
@@ -236,8 +237,6 @@ class GrantDataSharingPermissions(View):
         about the specific course that's being set up.
 
         A 404 will be raised if any of the following conditions are met:
-            * Enrollment is not to be deferred, but there is no EnterpriseCourseEnrollment
-              associated with the current user.
             * Enrollment is not to be deferred and there's an EnterpriseCourseEnrollment
               associated with the current user, but the corresponding EnterpriseCustomer
               does not require course-level consent for this course.
@@ -254,21 +253,31 @@ class GrantDataSharingPermissions(View):
         failure_url = request.GET.get('failure_url')
 
         enrollment_deferred = request.GET.get('enrollment_deferred')
+        customer = None
         if enrollment_deferred is None:
-            customer = get_object_or_404(
-                EnterpriseCourseEnrollment,
-                enterprise_customer_user__user_id=request.user.id,
-                course_id=course_id
-            ).enterprise_customer_user.enterprise_customer
+            # For non-deferred enrollments, check if we need to collect
+            # consent and retrieve the EnterpriseCustomer using the existing
+            # EnterpriseCourseEnrollment.
+            try:
+                enrollment = EnterpriseCourseEnrollment.objects.get(
+                    enterprise_customer_user__user_id=request.user.id,
+                    course_id=course_id
+                )
+                if not enrollment.consent_needed:
+                    raise Http404
+                customer = enrollment.enterprise_customer_user.enterprise_customer
+            except EnterpriseCourseEnrollment.DoesNotExist:
+                # Enrollment is not deferred, but we don't have
+                # an EnterpriseCourseEnrollment yet, so we carry
+                # and attempt to retrieve the EnterpriseCustomer
+                # using the enterprise_id request param below.
+                pass
 
-            if not consent_necessary_for_course(request.user, course_id):
-                raise Http404
-        else:
-            # For deferred enrollment, expect to receive the EnterpriseCustomer from the GET parameters,
-            # which is used for display purposes.
+        # Deferred enrollments will pass the EnterpriseCustomer UUID
+        # as a request parameter. Use it to get the EnterpriseCustomer
+        # if we were not able to retrieve it above.
+        if not customer:
             enterprise_uuid = request.GET.get('enterprise_id')
-            if not enterprise_uuid:
-                raise Http404
             customer = get_object_or_404(EnterpriseCustomer, uuid=enterprise_uuid)
 
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
@@ -440,16 +449,23 @@ class GrantDataSharingPermissions(View):
 
         enrollment_deferred = request.POST.get('enrollment_deferred')
         if enrollment_deferred is None:
+            enterprise_customer = get_enterprise_customer_for_user(request.user)
+            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer=enterprise_customer,
+                user_id=request.user.id
+            )
             EnterpriseCourseEnrollment.objects.update_or_create(
-                enterprise_customer_user__user_id=request.user.id,
+                enterprise_customer_user=enterprise_customer_user,
                 course_id=course_id,
                 defaults={
                     'consent_granted': consent_provided,
                 }
             )
+
         if not consent_provided:
             failure_url = request.POST.get('failure_url') or reverse('dashboard')
             return redirect(failure_url)
+
         return redirect(request.POST.get('redirect_url', reverse('dashboard')))
 
     def post_account_consent(self, request, consent_provided):
@@ -489,19 +505,21 @@ class GrantDataSharingPermissions(View):
         platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         messages.success(
             request,
-            _('{span_start}Account created{span_end} Thank you for creating an account with {platform_name}.').format(
+            _(
+                '{strong_start}Account created{strong_end} Thank you for creating an account with {platform_name}.'
+            ).format(
                 platform_name=platform_name,
-                span_start='<span>',
-                span_end='</span>',
+                strong_start='<strong>',
+                strong_end='</strong>',
             )
         )
         if not user.is_active:
             messages.info(
                 request,
                 _(
-                    '{span_start}Activate your account{span_end} Check your inbox for an activation email. '
+                    '{strong_start}Activate your account{strong_end} Check your inbox for an activation email. '
                     'You will not be able to log back into your account until you have activated it.'
-                ).format(span_start='<span>', span_end='</span>')
+                ).format(strong_start='<strong>', strong_end='</strong>')
             )
 
         UserDataSharingConsentAudit.objects.update_or_create(
@@ -745,7 +763,8 @@ class CourseEnrollmentView(View):
 
         return enterprise_customer, course_details, course_modes
 
-    def get_enterprise_course_enrollment_page(self, request, enterprise_customer, course_details, course_modes):
+    def get_enterprise_course_enrollment_page(self, request, enterprise_customer, course_details, course_modes,
+                                              enterprise_course_enrollment):
         """
         Render enterprise specific course track selection page.
         """
@@ -777,6 +796,9 @@ class CourseEnrollmentView(View):
         except (TypeError, ValidationError, ValueError):
             organization_logo = None
             organization_name = None
+
+        if enterprise_course_enrollment and not enterprise_course_enrollment.consent_granted:
+            add_consent_declined_message(request, enterprise_customer, course_details)
 
         context_data = {
             'page_title': self.context_data['page_title'],
@@ -843,6 +865,15 @@ class CourseEnrollmentView(View):
             user_id=request.user.id
         )
 
+        try:
+            enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
+                enterprise_customer_user__enterprise_customer=enterprise_customer,
+                enterprise_customer_user__user_id=request.user.id,
+                course_id=course_id
+            )
+        except EnterpriseCourseEnrollment.DoesNotExist:
+            enterprise_course_enrollment = None
+
         selected_course_mode_name = request.POST.get('course_mode')
         selected_course_mode = None
         for course_mode in course_modes:
@@ -851,22 +882,22 @@ class CourseEnrollmentView(View):
                 break
 
         if not selected_course_mode:
-            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_modes)
+            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_modes,
+                                                              enterprise_course_enrollment)
 
         user_consent_needed = is_consent_required_for_user(enterprise_customer_user, course_id)
         if not selected_course_mode.get('premium') and not user_consent_needed:
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
             # client and redirect the learner to LMS courseware page.
-            with transaction.atomic():
-                # Create the Enterprise backend database records for this course
-                # enrollment.
-                EnterpriseCourseEnrollment.objects.get_or_create(
+            if not enterprise_course_enrollment:
+                # Create the Enterprise backend database records for this course enrollment.
+                EnterpriseCourseEnrollment.objects.create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
                 )
-                client = EnrollmentApiClient()
-                client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
+            client = EnrollmentApiClient()
+            client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
@@ -882,15 +913,16 @@ class CourseEnrollmentView(View):
                 ),
                 query_string=urlencode({'course_mode': selected_course_mode_name})
             )
+            failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
             return redirect(
                 '{grant_data_sharing_url}?{params}'.format(
                     grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
                     params=urlencode(
                         {
                             'next': next_url,
+                            'failure_url': failure_url,
                             'enterprise_id': enterprise_customer.uuid,
                             'course_id': course_id,
-                            'enrollment_deferred': True,
                         }
                     )
                 )
@@ -935,14 +967,19 @@ class CourseEnrollmentView(View):
 
         enrollment_client = EnrollmentApiClient()
         enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
-        if (enrolled_course is not None and
-                EnterpriseCourseEnrollment.objects.filter(
-                    enterprise_customer_user__enterprise_customer=enterprise_customer,
-                    enterprise_customer_user__user_id=request.user.id,
-                    course_id=course_id
-                ).exists()):
+        try:
+            enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
+                enterprise_customer_user__enterprise_customer=enterprise_customer,
+                enterprise_customer_user__user_id=request.user.id,
+                course_id=course_id
+            )
+        except EnterpriseCourseEnrollment.DoesNotExist:
+            enterprise_course_enrollment = None
+
+        if enrolled_course and enterprise_course_enrollment:
             # The user is already enrolled in the course through the Enterprise Customer, so redirect to the course
             # info page.
             return redirect(LMS_COURSE_URL.format(course_id=course_id))
 
-        return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, modes)
+        return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, modes,
+                                                          enterprise_course_enrollment)
