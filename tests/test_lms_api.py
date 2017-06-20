@@ -18,6 +18,7 @@ from django.conf import settings
 from enterprise import lms_api
 from enterprise.utils import NotConnectedToOpenEdX
 
+
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
     'courses': lms_api.CourseApiClient,

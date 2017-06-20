@@ -34,7 +34,7 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 
-class NotConnectedToEdX(Exception):
+class NotConnectedToOpenEdX(Exception):
     """
     Exception to raise when not connected to OpenEdX.
 
@@ -47,19 +47,7 @@ class NotConnectedToEdX(Exception):
         Log a warning and initialize the exception.
         """
         LOGGER.warning('edx-enterprise unexpectedly failed as if not installed in an OpenEdX platform')
-        super(NotConnectedToEdX, self).__init__(*args, **kwargs)
-
-
-class NotConnectedToOpenEdX(Exception):
-    """
-    Exception to raise when we weren't able to import needed resources.
-
-    This is raised when we try to use the resources, rather than on
-    import, so that during testing we can load the module
-    and mock out the resources we need.
-    """
-
-    pass
+        super(NotConnectedToOpenEdX, self).__init__(*args, **kwargs)
 
 
 class CourseCatalogApiError(Exception):
@@ -148,7 +136,7 @@ def null_decorator(func):
     """
     Decorator that does nothing to the wrapped function.
 
-    If we're unable to import social.pipeline.partial, which is the case in our CI platform,
+    If we're unable to import social_core.pipeline.partial, which is the case in our CI platform,
     we need to be able to wrap the function with something.
     """
     return func
