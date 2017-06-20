@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.35.2] - 2017-06-20
+---------------------
+
+* Fix Next and Previous page urls for enterprise catalog courses.
+
+
 [0.35.1] - 2017-06-15
 ---------------------
 

@@ -124,3 +124,22 @@ class TestEnterpriseAPIPagination(APITest):
 
         assert response.data.get('next') == expected_next
         assert response.data.get('previous') == expected_previous
+
+    def test_get_paginated_response_correct_query_parameters(self):
+        """
+        Verify get_paginated_response returns correct response.
+        """
+        self.data['next'] = '{discovery_uri}?page=3'.format(discovery_uri=DISCOVERY_URI)
+        self.data['previous'] = '{discovery_uri}?page=1'.format(discovery_uri=DISCOVERY_URI)
+        expected_next = '{enterprise_uri}?page=3'.format(enterprise_uri=ENTERPRISE_URI)
+        expected_previous = '{enterprise_uri}?page=1'.format(enterprise_uri=ENTERPRISE_URI)
+        request = APIRequestFactory().get(
+            reverse('catalogs-list') + "?page=2",
+            SERVER_NAME="testserver.enterprise",
+        )
+
+        # Update authentication parameters based in ddt data.
+        response = get_paginated_response(self.data, request)
+
+        assert response.data.get('next') == expected_next
+        assert response.data.get('previous') == expected_previous

@@ -21,7 +21,8 @@ def get_paginated_response(data, request):
     Returns:
         (Response): DRF response object containing pagination links.
     """
-    url = request.build_absolute_uri().rstrip('/') + '/'
+    url = urlparse(request.build_absolute_uri())._replace(query=None).geturl()
+
     next_page = None
     previous_page = None
 
