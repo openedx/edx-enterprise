@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.36.1] - 2017-06-20
+---------------------
+
+* Properly bump PyPI to latest changes from v0.36.0.
+
+
 [0.36.0] - 2017-06-20
 ---------------------
 
