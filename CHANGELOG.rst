@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.36.8] - 2017-06-28
+---------------------
+
+* Enforce data sharing consent at login for SSO users only if data sharing consent is requested at login.
+
 [0.36.7] - 2017-06-25
 ---------------------
 

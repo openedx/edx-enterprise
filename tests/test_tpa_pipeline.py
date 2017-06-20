@@ -300,34 +300,34 @@ class TestTpaPipeline(unittest.TestCase):
                 user__enterprise_customer=enterprise_customer,
             ).count() == 0
 
-    def test_handle_enterprise_logistration_consent_required(self):
+    def test_handle_enterprise_logistration_consent_required_at_login(self):
         """
-        Test that when consent is required, we redirect to the consent page.
+        Test that when consent is required at login, we redirect to the consent page on login.
         """
         backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
+            self.customer.enforce_data_sharing_consent = EnterpriseCustomer.AT_LOGIN
             fake_get_ec.return_value = self.customer
             assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
 
-    def test_handle_enterprise_logistration_consent_optional(self):
+    @mock.patch('enterprise.tpa_pipeline.configuration_helpers')
+    @ddt.data(EnterpriseCustomer.DATA_CONSENT_OPTIONAL,
+              EnterpriseCustomer.AT_ENROLLMENT,
+              EnterpriseCustomer.EXTERNALLY_MANAGED)
+    def test_handle_enterprise_logistration_consent_not_required_at_login(
+            self,
+            enforce_data_sharing_consent,
+            configuration_helpers_mock,
+    ):
         """
-        Test that when consent is optional, but requested, we redirect to the consent page.
+        Test that when consent is requested, but not required at login, we do not redirect to the consent page on login.
         """
+        configuration_helpers_mock.get_value.return_value = 'edX'
         backend = self.get_mocked_sso_backend()
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            self.customer.enforce_data_sharing_consent = EnterpriseCustomer.DATA_CONSENT_OPTIONAL
+            self.customer.enforce_data_sharing_consent = enforce_data_sharing_consent
             fake_get_ec.return_value = self.customer
-            assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
-
-    def test_handle_enterprise_logistration_consent_required_at_enrollment(self):
-        """
-        Test that when consent is required at enrollment, but optional at logistration, we redirect to the consent page.
-        """
-        backend = self.get_mocked_sso_backend()
-        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
-            self.customer.enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
-            fake_get_ec.return_value = self.customer
-            assert isinstance(handle_enterprise_logistration(backend, self.user), HttpResponseRedirect)
+            assert handle_enterprise_logistration(backend, self.user) is None
 
     def test_handle_enterprise_logistration_consent_previously_declined(self):
         """
