@@ -253,16 +253,15 @@ class EnterpriseCatalogViewSet(viewsets.ViewSet):
         ---
         serializer: serializers.CourseSerializerExcludingClosedRuns
         """
-        page = request.GET.get('page', 1)
         catalog_api = CourseCatalogApiClient(request.user)
-        courses = catalog_api.get_paginated_catalog_courses(pk, page)
+        courses = catalog_api.get_paginated_catalog_courses(pk, request.GET)
 
         # if API returned an empty response, that means pagination has ended.
         # An empty response can also means that there was a problem fetching data from catalog API.
         if not courses:
             logger.error(
-                "Unable to fetch API response for catalog courses from endpoint '/catalog/%s/courses?page=%s'.",
-                pk, page,
+                "Unable to fetch API response for catalog courses from endpoint '%s'.",
+                request.get_full_path(),
             )
             raise NotFound("The resource you are looking for does not exist.")
 
