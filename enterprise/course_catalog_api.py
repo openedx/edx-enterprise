@@ -4,14 +4,17 @@ Utilities to get details from the course catalog API.
 """
 from __future__ import absolute_import, unicode_literals
 
+from edx_rest_api_client.client import EdxRestApiClient
+
+from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX
 
 try:
-    from openedx.core.djangoapps.api_admin.utils import course_discovery_api_client
+    from openedx.core.lib.token_utils import JwtBuilder
 except ImportError:
-    course_discovery_api_client = None
+    JwtBuilder = None
 
 try:
     from openedx.core.djangoapps.catalog.models import CatalogIntegration
@@ -22,6 +25,22 @@ try:
     from openedx.core.lib.edx_api_utils import get_edx_api_data
 except ImportError:
     get_edx_api_data = None
+
+
+def course_discovery_api_client(user):
+    """
+    Return a Course Discovery API client setup with authentication for the specified user.
+    """
+    if JwtBuilder is None:
+        raise NotConnectedToOpenEdX(
+            _("To get a Catalog API client, this package must be "
+              "installed in an Open edX environment.")
+        )
+
+    scopes = ['email', 'profile']
+    expires_in = settings.OAUTH_ID_TOKEN_EXPIRATION
+    jwt = JwtBuilder(user).build_token(scopes, expires_in)
+    return EdxRestApiClient(settings.COURSE_CATALOG_API_URL, jwt=jwt)
 
 
 class CourseCatalogApiClient(object):
@@ -47,11 +66,6 @@ class CourseCatalogApiClient(object):
         if get_edx_api_data is None:
             raise NotConnectedToOpenEdX(
                 _("To parse a Catalog API response, this package must be "
-                  "installed in an Open edX environment.")
-            )
-        if course_discovery_api_client is None:
-            raise NotConnectedToOpenEdX(
-                _("To get a Catalog API client, this package must be "
                   "installed in an Open edX environment.")
             )
 

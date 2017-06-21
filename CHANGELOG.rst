@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.36.3] - 2017-06-21
+---------------------
+
+* Fix for being unable to create course catalog clients due to upstream removal of the library.
+
 [0.36.2] - 2017-06-21
 ---------------------
 

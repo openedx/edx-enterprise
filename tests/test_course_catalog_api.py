@@ -29,7 +29,7 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
             CourseCatalogApiClient(mock.Mock(spec=User))
         assert message == str(excinfo.value)
 
-    @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
+    @mock.patch('enterprise.course_catalog_api.JwtBuilder')
     @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
     def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
         message = 'To get a CatalogIntegration object, this package must be installed in an Open edX environment.'
@@ -38,7 +38,7 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
         assert message == str(excinfo.value)
 
     @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
-    @mock.patch('enterprise.course_catalog_api.course_discovery_api_client')
+    @mock.patch('enterprise.course_catalog_api.JwtBuilder')
     def test_raise_error_missing_get_edx_api_data(self, *args):  # pylint: disable=unused-argument
         message = 'To parse a Catalog API response, this package must be installed in an Open edX environment.'
         with raises(NotConnectedToOpenEdX) as excinfo:
@@ -76,7 +76,7 @@ class TestCourseCatalogApi(unittest.TestCase):
         self.user_mock = mock.Mock(spec=User)
         self.get_data_mock = self._make_patch(self._make_catalog_api_location("get_edx_api_data"))
         self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
-        self.api_factory_mock = self._make_patch(self._make_catalog_api_location("course_discovery_api_client"))
+        self.jwt_builder_mock = self._make_patch(self._make_catalog_api_location("JwtBuilder"))
 
         self.api = CourseCatalogApiClient(self.user_mock)
 
