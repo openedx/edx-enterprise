@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.36.2] - 2017-06-21
+---------------------
+
+* Add the ability to pass limit, offset and page_size parameters to enterprise catalog courses.
+
+
 [0.36.1] - 2017-06-20
 ---------------------
 

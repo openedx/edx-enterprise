@@ -76,7 +76,7 @@ class CourseCatalogApiClient(object):
         """
         return self._load_data('catalogs', default=[], resource_id=catalog_id)
 
-    def get_paginated_catalog_courses(self, catalog_id, page=1):
+    def get_paginated_catalog_courses(self, catalog_id, querystring=None):
         """
         Return paginated resopnse for all catalog courses.
 
@@ -85,7 +85,7 @@ class CourseCatalogApiClient(object):
         """
         resource = 'catalogs/{}/courses/'.format(catalog_id)
         return self._load_data(
-            resource, default=[], querystring={'page': page},
+            resource, default=[], querystring=querystring,
             traverse_pagination=False, many=False,
         )
 
