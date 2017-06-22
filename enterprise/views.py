@@ -51,6 +51,7 @@ try:
 except ImportError:
     organizations_helpers = None
 
+
 # isort:imports-firstparty
 from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
 from enterprise.course_catalog_api import CourseCatalogApiClient
@@ -784,6 +785,19 @@ class CourseEnrollmentView(View):
         }
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, *args, **kwargs):
+        """
+        Disable atomicity for the view.
+
+        Since we have settings.ATOMIC_REQUESTS enabled, Django wraps all view functions in an atomic transaction, so
+        they can be rolled back if anything fails.
+
+        However, the we need to be able to save data in the middle of get/post(), so that it's available for calls to
+        external APIs.  To allow this, we need to disable atomicity at the top dispatch level.
+        """
+        return super(CourseEnrollmentView, self).dispatch(*args, **kwargs)
+
     @method_decorator(enterprise_login_required)
     def post(self, request, enterprise_uuid, course_id):
         """
@@ -877,12 +891,14 @@ class CourseEnrollmentView(View):
 
         enterprise_customer, course, modes = self.get_base_details(enterprise_uuid, course_id)
 
-        # Create a link between the user and the enterprise customer if it
-        # does not already exist.
-        EnterpriseCustomerUser.objects.get_or_create(
-            enterprise_customer=enterprise_customer,
-            user_id=request.user.id
-        )
+        # Create a link between the user and the enterprise customer if it does not already exist.  Ensure that the link
+        # is saved to the database prior to invoking get_final_price() on the displayed course modes, so that the
+        # ecommerce service knows this user belongs to an enterprise customer.
+        with transaction.atomic():
+            EnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer=enterprise_customer,
+                user_id=request.user.id
+            )
 
         enrollment_client = EnrollmentApiClient()
         enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)

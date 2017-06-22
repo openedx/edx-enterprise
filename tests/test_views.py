@@ -1159,6 +1159,45 @@ class TestCourseEnrollmentView(TestCase):
         """
         registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
 
+    def _check_expected_enrollment_page(self, response, expected_context):
+        """
+        Check the response was successful, and contains the expected content.
+        """
+        default_context = {
+            'platform_name': 'edX',
+            'page_title': 'Choose Your Track',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'price_text': 'Price',
+            'continue_link_text': 'Continue',
+            'course_effort': '6 hours per week, per course',
+            'level_text': 'Level',
+            'effort_text': 'Effort',
+            'course_overview': None,
+            'organization_logo': 'logo.png',
+            'organization_name': 'Organization',
+            'course_level_type': 'Type 1',
+            'close_modal_button_text': 'Close',
+        }
+        default_context.update(expected_context)
+
+        assert response.status_code == 200
+        for key, value in default_context.items():
+            assert response.context[key] == value  # pylint: disable=no-member
+
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -1186,11 +1225,9 @@ class TestCourseEnrollmentView(TestCase):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
-        course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
-        self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -1202,10 +1239,10 @@ class TestCourseEnrollmentView(TestCase):
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+            args=[enterprise_customer.uuid, self.demo_course_id],
         )
-        response = self.client.get(enterprise_landing_page_url)
-        assert response.status_code == 200
+
+        # Set up expected context
         course_modes = [
             {
                 "mode": "professional",
@@ -1219,39 +1256,14 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
-            'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
-            'course_id': course_id,
-            'course_name': self.dummy_demo_course_details_data['name'],
-            'course_organization': self.dummy_demo_course_details_data['org'],
-            'course_short_description': self.dummy_demo_course_details_data['short_description'],
-            'course_pacing': 'Instructor-Paced',
-            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
-            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
-            'confirmation_text': 'Confirm your course',
-            'starts_at_text': 'Starts',
-            'view_course_details_text': 'View Course Details',
-            'select_mode_text': 'Please select one:',
-            'price_text': 'Price',
-            'continue_link_text': 'Continue',
             'course_modes': course_modes,
-            'course_effort': '6 hours per week, per course',
-            'level_text': 'Level',
-            'effort_text': 'Effort',
-            'course_overview': None,
-            'organization_logo': 'logo.png',
-            'organization_name': 'Organization',
-            'course_level_type': 'Type 1',
-            'close_modal_button_text': 'Close',
             'premium_modes': course_modes,
         }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
@@ -1280,11 +1292,9 @@ class TestCourseEnrollmentView(TestCase):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock)
-        course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
-        self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -1297,10 +1307,10 @@ class TestCourseEnrollmentView(TestCase):
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+            args=[enterprise_customer.uuid, self.demo_course_id],
         )
-        response = self.client.get(enterprise_landing_page_url)
-        assert response.status_code == 200
+
+        # Set up expected context
         course_modes = [
             {
                 'mode': 'professional',
@@ -1324,30 +1334,14 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
-            'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
-            'course_id': course_id,
-            'course_name': self.dummy_demo_course_details_data['name'],
-            'course_organization': self.dummy_demo_course_details_data['org'],
-            'course_short_description': self.dummy_demo_course_details_data['short_description'],
-            'course_pacing': 'Instructor-Paced',
-            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
-            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
-            'confirmation_text': 'Confirm your course',
-            'starts_at_text': 'Starts',
-            'view_course_details_text': 'View Course Details',
-            'select_mode_text': 'Please select one:',
-            'price_text': 'Price',
-            'continue_link_text': 'Continue',
             'course_modes': course_modes,
+            'premium_modes': course_modes[0:1],
         }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
@@ -1813,7 +1807,6 @@ class TestCourseEnrollmentView(TestCase):
         self._setup_course_catalog_client(course_catalog_client_mock)
         self._setup_organizations_client(organizations_helpers_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock)
-        course_id = self.demo_course_id
         configuration_helpers_mock.get_value.return_value = 'edX'
         self._setup_course_api_client(course_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
@@ -1828,60 +1821,43 @@ class TestCourseEnrollmentView(TestCase):
         provider_id = faker.slug()
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
-        self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+            args=[enterprise_customer.uuid, self.demo_course_id],
         )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': 'fakemode'})
 
-        assert response.status_code == 200
+        # Set up expected context
+        course_modes = [
+            {
+                'mode': 'professional',
+                'title': 'Professional Track',
+                'original_price': '$100',
+                'min_price': 100,
+                'sku': 'sku-professional',
+                'final_price': '$50',
+                'description': 'Earn a verified certificate!',
+                'premium': True,
+            },
+            {
+                'mode': 'audit',
+                'title': 'Audit Track',
+                'original_price': 'FREE',
+                'min_price': 0,
+                'sku': 'sku-audit',
+                'final_price': 'FREE',
+                'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
+                'premium': False,
+            }
+        ]
         expected_context = {
-            'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
-            'course_id': course_id,
-            'course_name': self.dummy_demo_course_details_data['name'],
-            'course_organization': self.dummy_demo_course_details_data['org'],
-            'course_short_description': self.dummy_demo_course_details_data['short_description'],
-            'course_pacing': 'Instructor-Paced',
-            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
-            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
-            'confirmation_text': 'Confirm your course',
-            'starts_at_text': 'Starts',
-            'view_course_details_text': 'View Course Details',
-            'select_mode_text': 'Please select one:',
-            'price_text': 'Price',
-            'continue_link_text': 'Continue',
-            'course_modes': [
-                {
-                    'mode': 'professional',
-                    'title': 'Professional Track',
-                    'original_price': '$100',
-                    'min_price': 100,
-                    'sku': 'sku-professional',
-                    'final_price': '$50',
-                    'description': 'Earn a verified certificate!',
-                    'premium': True,
-                },
-                {
-                    'mode': 'audit',
-                    'title': 'Audit Track',
-                    'original_price': 'FREE',
-                    'min_price': 0,
-                    'sku': 'sku-audit',
-                    'final_price': 'FREE',
-                    'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
-                    'premium': False,
-                }
-            ]
+            'course_modes': course_modes,
+            'premium_modes': course_modes[0:1],
         }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+
+        self._login()
+        response = self.client.post(course_enrollment_page_url, {'course_mode': 'fakemode'})
+        self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
@@ -1977,7 +1953,6 @@ class TestCourseEnrollmentView(TestCase):
         self._setup_enrollment_client(enrollment_api_client_mock)
 
         # Get landing page
-        course_id = self.demo_course_id
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -1989,11 +1964,8 @@ class TestCourseEnrollmentView(TestCase):
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+            args=[enterprise_customer.uuid, self.demo_course_id],
         )
-        self._login()
-        response = self.client.get(enterprise_landing_page_url)
-        assert response.status_code == 200
 
         # Set up expected context
         course_modes = [
@@ -2009,41 +1981,15 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
-            'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
-            'course_id': course_id,
-            'course_name': self.dummy_demo_course_details_data['name'],
-            'course_organization': self.dummy_demo_course_details_data['org'],
-            'course_short_description': self.dummy_demo_course_details_data['short_description'],
-            'course_pacing': 'Instructor-Paced',
-            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
-            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
-            'confirmation_text': 'Confirm your course',
-            'starts_at_text': 'Starts',
-            'view_course_details_text': 'View Course Details',
-            'select_mode_text': 'Please select one:',
-            'price_text': 'Price',
-            'continue_link_text': 'Continue',
             'course_modes': course_modes,
-            'course_effort': '',
-            'level_text': 'Level',
-            'effort_text': 'Effort',
-            'course_overview': None,
-            'organization_logo': 'logo.png',
-            'organization_name': 'Organization',
-            'course_level_type': 'Type 1',
-            'close_modal_button_text': 'Close',
             'premium_modes': course_modes,
+            'course_effort': '',
         }
 
-        # Compare expected context with response result
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
@@ -2091,7 +2037,6 @@ class TestCourseEnrollmentView(TestCase):
         self._setup_enrollment_client(enrollment_api_client_mock)
 
         # Get landing page
-        course_id = self.demo_course_id
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -2103,11 +2048,8 @@ class TestCourseEnrollmentView(TestCase):
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+            args=[enterprise_customer.uuid, self.demo_course_id],
         )
-        self._login()
-        response = self.client.get(enterprise_landing_page_url)
-        assert response.status_code == 200
 
         # Set up expected context
         course_modes = [
@@ -2123,39 +2065,16 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
-            'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
-            'course_id': course_id,
-            'course_name': self.dummy_demo_course_details_data['name'],
-            'course_organization': self.dummy_demo_course_details_data['org'],
-            'course_short_description': self.dummy_demo_course_details_data['short_description'],
-            'course_pacing': 'Instructor-Paced',
-            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
-            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
-            'confirmation_text': 'Confirm your course',
-            'starts_at_text': 'Starts',
-            'view_course_details_text': 'View Course Details',
-            'select_mode_text': 'Please select one:',
-            'price_text': 'Price',
-            'continue_link_text': 'Continue',
             'course_modes': course_modes,
-            'course_effort': '6 hours per week, per course',
-            'level_text': 'Level',
-            'effort_text': 'Effort',
-            'course_overview': None,
-            'organization_logo': None,
-            'organization_name': None,
-            'course_level_type': 'Type 1',
-            'close_modal_button_text': 'Close',
             'premium_modes': course_modes,
+            'organization_name': None,
+            'organization_logo': None,
         }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
@@ -2203,7 +2122,6 @@ class TestCourseEnrollmentView(TestCase):
         self._setup_enrollment_client(enrollment_api_client_mock)
 
         # Get landing page
-        course_id = self.demo_course_id
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -2215,11 +2133,8 @@ class TestCourseEnrollmentView(TestCase):
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+            args=[enterprise_customer.uuid, self.demo_course_id],
         )
-        self._login()
-        response = self.client.get(enterprise_landing_page_url)
-        assert response.status_code == 200
 
         # Set up expected context
         course_modes = [
@@ -2235,41 +2150,97 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
-            'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
-            'course_id': course_id,
-            'course_name': self.dummy_demo_course_details_data['name'],
-            'course_organization': self.dummy_demo_course_details_data['org'],
-            'course_short_description': self.dummy_demo_course_details_data['short_description'],
-            'course_pacing': 'Instructor-Paced',
-            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
-            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
-            'confirmation_text': 'Confirm your course',
-            'starts_at_text': 'Starts',
-            'view_course_details_text': 'View Course Details',
-            'select_mode_text': 'Please select one:',
-            'price_text': 'Price',
-            'continue_link_text': 'Continue',
             'course_modes': course_modes,
-            'course_effort': '6 hours per week, per course',
-            'level_text': 'Level',
-            'effort_text': 'Effort',
-            'course_overview': None,
-            'organization_logo': 'logo.png',
-            'organization_name': 'Organization',
-            'course_level_type': 'Type 1',
-            'close_modal_button_text': 'Close',
             'premium_modes': course_modes,
         }
 
-        # Compare expected context with response result
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.get_partial_pipeline')
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
+    def test_get_course_enrollment_page_creates_enterprise_customer_user(
+            self,
+            ecommerce_api_client_mock,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            configuration_helpers_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+
+        # Set up course catalog API client
+        self._setup_course_catalog_client(course_catalog_client_mock)
+
+        # Set up organizations API client
+        self._setup_organizations_client(organizations_helpers_mock)
+
+        configuration_helpers_mock.get_value.return_value = 'edX'
+
+        # Set up course API client
+        self._setup_course_api_client(course_api_client_mock)
+
+        # Set up enrollment API client
+        self._setup_enrollment_client(enrollment_api_client_mock)
+
+        def ensure_enterprise_customer_user_exists(*args, **kwargs):
+            """
+            Ensure that the enterprise customer user exists when the commerce API client is called
+            """
+            assert EnterpriseCustomerUser.objects.all().count() == 1
+            return mock.DEFAULT
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
+        ecommerce_api_client_mock.side_effect = ensure_enterprise_customer_user_exists
+
+        # Ensure that we've started with no EnterpriseCustomerUsers
+        assert EnterpriseCustomerUser.objects.all().count() == 0
+
+        # Get landing page
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        # Set up expected context
+        course_modes = [
+            {
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$50",
+                "description": "Earn a verified certificate!",
+                "premium": True,
+            }
+        ]
+        expected_context = {
+            'enterprise_customer': enterprise_customer,
+            'course_modes': course_modes,
+            'premium_modes': course_modes,
+        }
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
 
 
 @mark.django_db

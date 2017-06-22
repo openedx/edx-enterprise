@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.36.6] - 2017-06-25
+---------------------
+
+* Disable atomic transactions for CourseEnrollmentView to ensure that new EnterpriseCustomerUser records are saved to
+  the database in time for ecommerce API calls.
+
+
 [0.36.5] - 2017-06-23
 ---------------------
 
