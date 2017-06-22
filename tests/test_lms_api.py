@@ -110,10 +110,25 @@ def test_get_course_enrollment():
 
 
 @responses.activate
+@mock.patch('enterprise.lms_api.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 def test_get_enrollment_course_modes():
     course_id = "course-v1:edX+DemoX+Demo_Course"
-    response = {"course_modes": ['a', 'list', 'containing', 'course', 'modes']}
-    expected_return = ['a', 'list', 'containing', 'course', 'modes']
+    response = {
+        "course_modes": [
+            {'slug': 'course'},
+            {'slug': 'a'},
+            {'slug': 'containing'},
+            {'slug': 'list'},
+            {'slug': 'modes'},
+        ]
+    }
+    expected_return = [
+        {'slug': 'a'},
+        {'slug': 'list'},
+        {'slug': 'containing'},
+        {'slug': 'course'},
+        {'slug': 'modes'},
+    ]
     responses.add(
         responses.GET,
         _url(
