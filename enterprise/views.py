@@ -156,6 +156,7 @@ class GrantDataSharingPermissions(View):
         end_link='</a>',
     )
     policy_return_link_text = _('Return to Top')
+    welcome_text = _('Welcome to {platform_name}.')
     enterprise_welcome_text = _(
         "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
         "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
@@ -299,6 +300,7 @@ class GrantDataSharingPermissions(View):
                 _('course completion'),
             ],
             'enterprise_customer': customer,
+            'welcome_text': self.welcome_text.format(platform_name=platform_name),
             'enterprise_welcome_text': self.enterprise_welcome_text.format(
                 enterprise_customer_name=customer.name,
                 platform_name=platform_name,
@@ -376,6 +378,7 @@ class GrantDataSharingPermissions(View):
                 _('course completion'),
             ],
             'enterprise_customer': customer,
+            'welcome_text': self.welcome_text.format(platform_name=platform_name),
             'enterprise_welcome_text': self.enterprise_welcome_text.format(
                 enterprise_customer_name=customer.name,
                 platform_name=platform_name,
@@ -605,7 +608,8 @@ class CourseEnrollmentView(View):
     }
 
     context_data = {
-        'page_title': _('Choose Your Track'),
+        'page_title': _('Confirm your course'),
+        'welcome_text': _('Welcome to {platform_name}.'),
         'enterprise_welcome_text': _(
             "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
             "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
@@ -760,6 +764,7 @@ class CourseEnrollmentView(View):
             'course_start_date': course_start_date,
             'course_image_uri': course_details['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
+            'welcome_text': self.context_data['welcome_text'].format(platform_name=platform_name),
             'enterprise_welcome_text': self.context_data['enterprise_welcome_text'].format(
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.36.7] - 2017-06-25
+---------------------
+
+* UI tweaks to the enterprise landing page and course overview modal.
+
 [0.36.6] - 2017-06-25
 ---------------------
 

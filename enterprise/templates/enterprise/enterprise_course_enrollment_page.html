@@ -23,16 +23,17 @@
     <div class="row">
       <div class="col-3">
         <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
-        <div class="partnered-text">
+        <p class="partnered-text">{{ welcome_text }}</p>
+        <p class="partnered-text">
           {% autoescape off %}{{ enterprise_welcome_text }}{% endautoescape %}
-        </div>
+        </p>
       </div>
       <div class="col-7 border-left">
 
         {# Display success, error, warning or info messages #}
         {% alert_messages messages %}
 
-        <h3 class="course-confirmation-title">{{ confirmation_text }}</h3>
+        <h2 class="course-confirmation-title">{{ confirmation_text }}</h2>
         <div class="media">
           <div class="thumbnail">
             <img class="course-image" src="{{ course_image_uri }}" alt="{{ course_name }}"/>
@@ -86,62 +87,66 @@
   </div>
   <div id="course-details-modal" class="modal" aria-hidden="true">
     <div id="course-details-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
-      <button class="modal-close-button" id="modal-close-button" aria-label="{{ close_modal_button_text }}">{{ close_modal_button_text }}</button>
-      <header class="wrapper">
-        <div class="image">
-          <img src="{{ course_image_uri }}" alt="{{ course_name }}"/>
-        </div>
-        <div class="details">
-          <h1 id="modal-header-text">{{ course_name }}</h1>
-          <p class="short-description">{{ course_short_description }}</p>
-          {% if organization_logo and organization_name %}
-            <div class="organization">
-              <img src="{{ organization_logo }}" alt="{{ organization_name }}" />
-            </div>
-          {% endif %}
-        </div>
-      </header>
-      <div class="body">
-        <div class="details">
-          <ol>
-            {% if premium_modes|length > 0 %}
-              {% with course_mode=premium_modes.0 %}
-                {% if course_mode.original_price %}
-                  <li>
-                    <span class="icon fa fa-tag" aria-hidden="true"></span>
-                    <span class="title">{{ price_text }}</span>
-                    <span class="text">
-                      {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
-                        <strike>{{ course_mode.original_price }}</strike>
-                        <br />
-                        <span class="discount">{{ course_mode.final_price }}</span>
-                      {% else %}
-                        {{ course_mode.original_price }}
-                      {% endif %}
-                    </span>
-                  </li>
-                {% endif %}
-              {% endwith %}
+      <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="{{ close_modal_button_text }}"></button>
+      <div class="course-detail-modal-scrollable">
+
+        <header class="wrapper modal-header">
+          <div class="image">
+            <img src="{{ course_image_uri }}" alt="{{ course_name }}"/>
+          </div>
+          <div class="details">
+            <h1 id="modal-header-text">{{ course_name }}</h1>
+            <p class="short-description">{{ course_short_description }}</p>
+            {% if organization_logo and organization_name %}
+              <div class="organization">
+                <img src="{{ organization_logo }}" alt="{{ organization_name }}" />
+              </div>
             {% endif %}
-            {% if course_level_type %}
-              <li>
-                <span class="icon fa fa-certificate" aria-hidden="true"></span>
-                <span class="title">{{ level_text }}</span>
-                <span class="text">{{ course_level_type }}</span>
-              </li>
-            {% endif %}
-            {% if course_effort %}
-              <li>
-                <span class="icon fa fa-tachometer" aria-hidden="true"></span>
-                <span class="title">{{ effort_text }}</span>
-                <span class="text">{{ course_effort }}</span>
-              </li>
-            {% endif %}
-          </ol>
+          </div>
+        </header>
+        <div class="body">
+          <div class="details">
+            <ol>
+              {% if premium_modes|length > 0 %}
+                {% with course_mode=premium_modes.0 %}
+                  {% if course_mode.original_price %}
+                    <li>
+                      <span class="icon fa fa-tag" aria-hidden="true"></span>
+                      <span class="title">{{ price_text }}</span>
+                      <span class="text">
+                        {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
+                          <strike>{{ course_mode.original_price }}</strike>
+                          <br />
+                          <span class="discount">{{ course_mode.final_price }}</span>
+                        {% else %}
+                          {{ course_mode.original_price }}
+                        {% endif %}
+                      </span>
+                    </li>
+                  {% endif %}
+                {% endwith %}
+              {% endif %}
+              {% if course_level_type %}
+                <li>
+                  <span class="icon fa fa-certificate" aria-hidden="true"></span>
+                  <span class="title">{{ level_text }}</span>
+                  <span class="text">{{ course_level_type }}</span>
+                </li>
+              {% endif %}
+              {% if course_effort %}
+                <li>
+                  <span class="icon fa fa-tachometer" aria-hidden="true"></span>
+                  <span class="title">{{ effort_text }}</span>
+                  <span class="text">{{ course_effort }}</span>
+                </li>
+              {% endif %}
+            </ol>
+          </div>
+          <div class="overview">
+            {{ course_overview|safe }}
+          </div>
         </div>
-        <div class="overview">
-          {{ course_overview|safe }}
-        </div>
+
       </div>
     </div>
   </div>
