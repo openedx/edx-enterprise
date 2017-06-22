@@ -25,3 +25,6 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
     'If you do not consent to share your course data, that information may be shared with '
     '{enterprise_customer_name}.'
 )
+
+# Course mode sorting based on slug
+COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
