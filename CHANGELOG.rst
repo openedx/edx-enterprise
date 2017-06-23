@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.36.5] - 2017-06-23
+---------------------
+
+* Apply automatic session termination logic to enterprise landing page based on enterprise customer configuration.
+
 [0.36.4] - 2017-06-21
 ---------------------
 
