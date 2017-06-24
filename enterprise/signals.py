@@ -6,8 +6,8 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from enterprise.decorators import disable_for_loaddata
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
-from enterprise.utils import disable_for_loaddata
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 

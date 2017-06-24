@@ -20,7 +20,7 @@ except ImportError:
 try:
     from social_core.pipeline.partial import partial
 except ImportError:
-    from enterprise.utils import null_decorator as partial  # pylint:disable=ungrouped-imports
+    from enterprise.decorators import null_decorator as partial  # pylint:disable=ungrouped-imports
 
 try:
     from third_party_auth.pipeline import get as get_partial_pipeline
