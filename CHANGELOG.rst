@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.36.9] - 2017-06-28
+---------------------
+
+* Refactor of automatic session termination logic.
+
 [0.36.8] - 2017-06-28
 ---------------------
 
