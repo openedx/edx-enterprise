@@ -80,8 +80,8 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         super(TestEnterpriseUtils, self).setUp()
         faker = FakerFactory.create()
-        self.provider_id = faker.slug()
-        self.uuid = faker.uuid4()
+        self.provider_id = faker.slug()  # pylint: disable=no-member
+        self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
 
@@ -130,7 +130,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         faker = FakerFactory.create()
         name = faker.name()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
 
         # test that get_identity_provider returns None if third_party_auth is not available.
         identity_provider = utils.get_identity_provider(provider_id=provider_id)
@@ -320,7 +320,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             state=UserDataSharingConsentAudit.ENABLED,
         )
         assert consent_necessary_for_course(user, course_id) is False
-        account_consent.delete()  # pylint: disable=no-member
+        account_consent.delete()
         enrollment.delete()
         assert consent_necessary_for_course(user, course_id) is False
 
@@ -888,7 +888,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test `get_enterprise_customer_for_user` helper method.
         """
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
 
         user = UserFactory()
         ecu = EnterpriseCustomerUserFactory(
@@ -1035,7 +1035,8 @@ class TestEnterpriseUtils(unittest.TestCase):
     @ddt.data(
         {},  # Missing required parameter `enterprise_uuid` arguments in kwargs
         {'enterprise_uuid': ''},  # Required parameter `enterprise_uuid` with empty value in kwargs.
-        {'enterprise_uuid': FakerFactory.create().uuid4()},  # Invalid value of `enterprise_uuid` in kwargs.
+        # pylint: disable=no-member
+        {'enterprise_uuid': FakerFactory.create().uuid4()},   # Invalid value of `enterprise_uuid` in kwargs
     )
     def test_enterprise_login_required_raises_404(self, kwargs):
         """
@@ -1198,7 +1199,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         super(TestSAPSuccessFactorsUtils, self).setUp()
         faker = FakerFactory.create()
         self.user = UserFactory()
-        self.uuid = faker.uuid4()
+        self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
         self.plugin_configuration = SAPSuccessFactorsEnterpriseCustomerConfiguration(
             enterprise_customer=self.customer,

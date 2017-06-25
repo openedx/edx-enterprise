@@ -35,8 +35,8 @@ class SiteFactory(factory.django.DjangoModelFactory):
         model = Site
         django_get_or_create = ("domain",)
 
-    domain = factory.LazyAttribute(lambda x: FAKER.domain_name())
-    name = factory.LazyAttribute(lambda x: FAKER.company())
+    domain = factory.LazyAttribute(lambda x: FAKER.domain_name())  # pylint: disable=no-member
+    name = factory.LazyAttribute(lambda x: FAKER.company())  # pylint: disable=no-member
 
 
 class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
@@ -54,11 +54,11 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCustomer
 
-    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
-    name = factory.LazyAttribute(lambda x: FAKER.company())
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))  # pylint: disable=no-member
+    name = factory.LazyAttribute(lambda x: FAKER.company())  # pylint: disable=no-member
     active = True
     site = factory.SubFactory(SiteFactory)
-    catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
+    catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))  # pylint: disable=no-member
     enable_data_sharing_consent = True
     enforce_data_sharing_consent = EnterpriseCustomer.AT_LOGIN
 
@@ -79,7 +79,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
         model = EnterpriseCustomerUser
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())  # pylint: disable=no-member
 
 
 class UserDataSharingConsentAuditFactory(factory.django.DjangoModelFactory):
@@ -113,7 +113,7 @@ class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
         model = PendingEnterpriseCustomerUser
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    user_email = factory.LazyAttribute(lambda x: FAKER.email())
+    user_email = factory.LazyAttribute(lambda x: FAKER.email())  # pylint: disable=no-member
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -131,14 +131,15 @@ class UserFactory(factory.DjangoModelFactory):
 
         model = User
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
-    email = factory.LazyAttribute(lambda x: FAKER.email())
-    username = factory.LazyAttribute(lambda x: FAKER.user_name())
-    first_name = factory.LazyAttribute(lambda x: FAKER.first_name())
-    last_name = factory.LazyAttribute(lambda x: FAKER.last_name())
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
+    email = factory.LazyAttribute(lambda x: FAKER.email())  # pylint: disable=no-member
+    username = factory.LazyAttribute(lambda x: FAKER.user_name())  # pylint: disable=no-member
+    first_name = factory.LazyAttribute(lambda x: FAKER.first_name())  # pylint: disable=no-member
+    last_name = factory.LazyAttribute(lambda x: FAKER.last_name())  # pylint: disable=no-member
     is_staff = False
     is_active = False
-    date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
+    date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(  # pylint: disable=no-member
+        tzinfo=timezone.utc))
 
 
 class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactory):
@@ -151,7 +152,7 @@ class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactor
         django_get_or_create = ("provider_id",)
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    provider_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    provider_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
 
 
 class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
@@ -164,7 +165,7 @@ class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
     class Meta(object):
         model = PendingEnrollment
 
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
     course_mode = 'audit'
     user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)
 
@@ -184,8 +185,8 @@ class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCustomerEntitlement
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
-    entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
+    entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=no-member
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
 
@@ -203,7 +204,7 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCourseEnrollment
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
     consent_granted = True
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)

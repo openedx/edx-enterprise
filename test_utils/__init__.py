@@ -59,6 +59,7 @@ class APITest(APITestCase):
 
         Returns:
             dict object containing parsed json from response.content
+
         """
         if isinstance(content, bytes):
             content = content.decode('utf-8')

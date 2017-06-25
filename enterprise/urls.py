@@ -9,7 +9,6 @@ from django.conf.urls import include, url
 
 from enterprise.views import CourseEnrollmentView, GrantDataSharingPermissions, HandleConsentEnrollment
 
-
 urlpatterns = [
     url(
         r'^enterprise/grant_data_sharing_permissions',

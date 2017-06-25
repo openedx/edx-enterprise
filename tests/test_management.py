@@ -56,7 +56,7 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 
     def test_enterprise_customer_not_found(self):
         faker = FakerFactory.create()
-        invalid_customer_id = faker.uuid4()
+        invalid_customer_id = faker.uuid4()  # pylint: disable=no-member
         error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
         with raises(CommandError) as excinfo:
             call_command('transmit_courseware_data', '--catalog_user', 'C-3PO', enterprise_customer=invalid_customer_id)
@@ -202,7 +202,7 @@ def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
     call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
 
     # Because there are no IntegratedChannels, the process will end early.
-    assert len(caplog.records) == 0
+    assert not caplog.records
 
 
 @mark.django_db
@@ -234,7 +234,7 @@ def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
     call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
 
     # Because there are no EnterpriseCustomers with a catalog, the process will end early.
-    assert len(caplog.records) == 0
+    assert not caplog.records
 
 
 # Constants used in the parameters for the transmit_learner_data integration tests below.
@@ -288,7 +288,7 @@ class TestTransmitLearnerData(unittest.TestCase):
         self.user = UserFactory()
         self.course_id = COURSE_ID
         self.enterprise_customer = EnterpriseCustomerFactory()
-        self.identity_provider = FakerFactory.create().slug()
+        self.identity_provider = FakerFactory.create().slug()  # pylint: disable=no-member
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.identity_provider,
                                                   enterprise_customer=self.enterprise_customer)
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
@@ -321,7 +321,7 @@ class TestTransmitLearnerData(unittest.TestCase):
 
     def test_enterprise_customer_not_found(self):
         faker = FakerFactory.create()
-        invalid_customer_id = faker.uuid4()
+        invalid_customer_id = faker.uuid4()  # pylint: disable=no-member
         error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
         with raises(CommandError, message=error):
             call_command('transmit_learner_data',

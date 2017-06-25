@@ -29,10 +29,8 @@ from enterprise.views import (
     GrantDataSharingPermissions,
     HttpClientError,
 )
-
 # pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import urlencode
-
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -1234,7 +1232,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
@@ -1302,7 +1300,7 @@ class TestCourseEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
@@ -1388,7 +1386,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
@@ -1436,7 +1434,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
@@ -1476,7 +1474,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
@@ -1519,7 +1517,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -1590,7 +1588,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
@@ -1642,7 +1640,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         ecu = EnterpriseCustomerUserFactory(
@@ -1697,7 +1695,7 @@ class TestCourseEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -1749,7 +1747,7 @@ class TestCourseEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_id = enterprise_customer.uuid
@@ -1818,7 +1816,7 @@ class TestCourseEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
@@ -1890,7 +1888,7 @@ class TestCourseEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -1959,7 +1957,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
@@ -2043,7 +2041,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
@@ -2128,7 +2126,7 @@ class TestCourseEnrollmentView(TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
@@ -2306,7 +2304,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -2347,7 +2345,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -2389,7 +2387,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -2430,7 +2428,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(
@@ -2478,7 +2476,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(
@@ -2530,7 +2528,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             enable_audit_enrollment=True,
         )
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(

@@ -170,7 +170,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         is not available then return identity provider id.
         """
         ec_idp = instance.enterprise_customer_identity_provider
-        return ec_idp and ec_idp.provider_name or ec_idp.provider_id
+        return ec_idp.provider_name or ec_idp.provider_id if ec_idp else False
 
     def enterprise_catalog(self, instance):
         """

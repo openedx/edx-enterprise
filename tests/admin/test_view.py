@@ -181,10 +181,10 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         """
         Assert that linked user record with specified email does not exist.
         """
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 0
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 0
         try:
             user = User.objects.get(email=email)
-            assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0
+            assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0
         except User.DoesNotExist:
             pass
 
@@ -339,7 +339,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
 
         self.assertRedirects(response, self.view_url)
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
     @ddt.unpack
     @ddt.data(
@@ -356,27 +356,27 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: username})
 
         self.assertRedirects(response, self.view_url)
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
 
     def test_post_invalid_email(self):
         # precondition checks:
         self._login()
-        assert len(EnterpriseCustomerUser.objects.all()) == 0  # there're no link records
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0  # there're no pending link records
+        assert EnterpriseCustomerUser.objects.count() == 0  # there're no link records
+        assert PendingEnterpriseCustomerUser.objects.count() == 0  # there're no pending link records
 
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: "invalid_email"})
 
         # TODO: remove suppressions when https://github.com/landscapeio/pylint-django/issues/78 is fixed
         assert response.status_code == 200
         self._test_common_context(response.context)  # pylint: disable=no-member
-        assert len(EnterpriseCustomerUser.objects.all()) == 0
+        assert EnterpriseCustomerUser.objects.count() == 0
         assert response.context[self.context_parameters.MANAGE_LEARNERS_FORM].is_bound  # pylint: disable=no-member
 
     def test_post_invalid_email_form_validation_suppressed(self):
         # precondition checks:
         self._login()
-        assert len(EnterpriseCustomerUser.objects.all()) == 0  # there're no link records
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0  # there're no pending link records
+        assert EnterpriseCustomerUser.objects.count() == 0  # there're no link records
+        assert PendingEnterpriseCustomerUser.objects.count() == 0  # there're no pending link records
 
         invalid_email = "invalid_email"
 
@@ -389,7 +389,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         # TODO: remove suppressions when https://github.com/landscapeio/pylint-django/issues/78 is fixed
         assert response.status_code == 200
         self._test_common_context(response.context)  # pylint: disable=no-member
-        assert len(EnterpriseCustomerUser.objects.all()) == 0
+        assert EnterpriseCustomerUser.objects.count() == 0
         # pylint: disable=no-member
         manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
         assert manage_learners_form.is_bound  # pylint: disable=no-member
@@ -406,22 +406,23 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert response.status_code == 200
         self._test_common_context(response.context)
         manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
+        num_errors = len(manage_learners_form.errors[ManageLearnersForm.Fields.EMAIL_OR_USERNAME])
         assert manage_learners_form.is_bound
         assert ManageLearnersForm.Fields.EMAIL_OR_USERNAME in manage_learners_form.errors
-        assert len(manage_learners_form.errors[ManageLearnersForm.Fields.EMAIL_OR_USERNAME]) >= 1
+        assert num_errors >= 1
 
     def test_post_existing_record(self):
         # precondition checks:
         self._login()
 
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
 
         user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(user_id=user.id)
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
         self._test_post_existing_record_response(response)
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
 
     def test_post_one_existing_one_new_record(self):
         """
@@ -435,33 +436,33 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         # precondition checks:
         self._login()
 
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
 
         user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(user_id=user.id)
-        assert len(EnterpriseCustomerUser.objects.all()) == 1
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert EnterpriseCustomerUser.objects.count() == 1
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
         self.client.post(
             self.view_url,
             data={
                 ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email + ', john@smith.com'
             }
         )
-        assert len(EnterpriseCustomerUser.objects.all()) == 1
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 1
+        assert EnterpriseCustomerUser.objects.count() == 1
+        assert PendingEnterpriseCustomerUser.objects.count() == 1
 
     def test_post_existing_pending_record(self):
         # precondition checks:
         self._login()
 
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
 
         PendingEnterpriseCustomerUserFactory(user_email=email)
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
         self._test_post_existing_record_response(response)
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
     def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True):
         """
@@ -516,11 +517,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
-        assert len(all_enterprise_enrollments) == 1
+        num_enterprise_enrollments = len(all_enterprise_enrollments)
+        assert num_enterprise_enrollments == 1
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
-        assert len(mail.outbox) == 1
+        num_messages = len(mail.outbox)
+        assert num_messages == 1
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -547,11 +550,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
-        assert len(all_enterprise_enrollments) == 1
+        num_enterprise_enrollments = len(all_enterprise_enrollments)
+        assert num_enterprise_enrollments == 1
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
-        assert len(mail.outbox) == 0
+        num_messages = len(mail.outbox)
+        assert num_messages == 0
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -588,11 +593,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
         all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
-        assert len(all_enterprise_enrollments) == 1
+        num_enterprise_enrollments = len(all_enterprise_enrollments)
+        assert num_enterprise_enrollments == 1
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
-        assert len(mail.outbox) == 1
+        num_messages = len(mail.outbox)
+        assert num_messages == 1
 
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
@@ -678,7 +685,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 (messages.SUCCESS, "1 learner was enrolled in {}.".format('Program2'))
             ]
         ))
-        assert len(mail.outbox) == 1
+        num_messages = len(mail.outbox)
+        assert num_messages == 1
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
@@ -688,12 +696,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         catalog_api_instance = catalog_client.return_value
         catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
-        user_email = FAKER.email()
+        user_email = FAKER.email()  # pylint: disable=no-member
         program = FAKE_PROGRAM_RESPONSE2
         expected_courses = get_course_runs_from_program(program)
         mode = "professional"
         self._enroll_user_request(user_email, mode, program_id=program["uuid"], notify=True)
-        assert len(mail.outbox) == 1
+        num_messages = len(mail.outbox)
+        assert num_messages == 1
         assert PendingEnrollment.objects.count() == len(expected_courses)
         assert PendingEnterpriseCustomerUser.objects.count() == 1
 
@@ -792,14 +801,14 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
     def test_post_invalid_headers(self):
         self._login()
 
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no linked users"
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no pending linked users"
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending linked users"
 
         invalid_columns = ["invalid", "header"]
         response = self._perform_request(invalid_columns, [("QWE",), ("ASD", )])
 
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "No users should be linked"
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "No pending linked user records should be created"
+        assert EnterpriseCustomerUser.objects.count() == 0, "No users should be linked"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "No pending linked user records should be created"
 
         expected_message = ValidationMessages.MISSING_EXPECTED_COLUMNS.format(
             expected_columns=", ".join({ManageLearnersForm.CsvColumns.EMAIL}),
@@ -817,12 +826,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         user = UserFactory()
         invalid_email = "invalid"
 
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no linked users"
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no pending linked users"
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending linked users"
 
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
         data = [
-            (FAKER.email(),),  # valid not previously seen email
+            (FAKER.email(),),  # valid not previously seen email;  pylint: disable=no-member
             (user.email,),  # valid user email
             (invalid_email,)  # invalid email
         ]
@@ -853,7 +862,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         user_linked_to_other_ec = UserFactory()
         EnterpriseCustomerUserFactory(user_id=user_linked_to_other_ec.id)
         EnterpriseCustomerUserFactory(user_id=linked_user.id, enterprise_customer=self.enterprise_customer)
-        new_email = FAKER.email()
+        new_email = FAKER.email()  # pylint: disable=no-member
 
         assert EnterpriseCustomerUser.objects.count() == 2, "Precondition check: Two linked users"
         assert EnterpriseCustomerUser.objects.filter(user_id=linked_user.id).exists()
@@ -900,11 +909,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         """
         self._login()
 
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no linked users"
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no pending linked users"
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending linked users"
 
         user_by_email = UserFactory()
-        previously_not_seen_email = FAKER.email()
+        previously_not_seen_email = FAKER.email()  # pylint: disable=no-member
 
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
         data = [
@@ -941,7 +950,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         self._login()
         user = UserFactory.create()
-        unknown_email = FAKER.email()
+        unknown_email = FAKER.email()  # pylint: disable=no-member
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
         data = [(user.email,), (unknown_email,)]
         course_id = "course-v1:EnterpriseX+Training+2017"
@@ -966,7 +975,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
-        assert len(mail.outbox) == 2
+        num_messages = len(mail.outbox)
+        assert num_messages == 2
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -984,7 +994,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         self._login()
         user = UserFactory.create()
-        unknown_email = FAKER.email()
+        unknown_email = FAKER.email()  # pylint: disable=no-member
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
         data = [(user.email,), (unknown_email,)]
         course_id = "course-v1:EnterpriseX+Training+2017"
@@ -1009,7 +1019,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
-        assert len(mail.outbox) == 0
+        num_messages = len(mail.outbox)
+        assert num_messages == 0
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -1036,7 +1047,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         self._login()
         user = UserFactory.create()
-        unknown_email = FAKER.email()
+        unknown_email = FAKER.email()  # pylint: disable=no-member
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
         data = [(user.email,), (unknown_email,)]
         course_id = "course-v1:EnterpriseX+Training+2017"
@@ -1060,7 +1071,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
         assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
-        assert len(mail.outbox) == 0
+        num_messages = len(mail.outbox)
+        assert num_messages == 0
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -1078,7 +1090,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
         self._login()
         user = UserFactory.create()
-        unknown_email = FAKER.email()
+        unknown_email = FAKER.email()  # pylint: disable=no-member
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
         data = [(user.email,), (unknown_email,)]
         program = FAKE_PROGRAM_RESPONSE2
@@ -1124,7 +1136,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
 
     def test_delete_not_linked(self):
         self._login()
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
         query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
 
         response = self.client.delete(self.view_url + "?" + query_string)
@@ -1138,31 +1150,31 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
     def test_delete_linked(self):
         self._login()
 
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
         user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
         query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
 
         response = self.client.delete(self.view_url + "?" + query_string)
 
         assert response.status_code == 200
         assert json.loads(response.content.decode("utf-8")) == {}
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0
 
     def test_delete_linked_pending(self):
         self._login()
 
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
         query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
 
         PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_email=email)
 
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
         response = self.client.delete(self.view_url + "?" + query_string)
 
         assert response.status_code == 200
         assert json.loads(response.content.decode("utf-8")) == {}
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 0
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 0

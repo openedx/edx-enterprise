@@ -148,7 +148,7 @@ class EnterpriseCustomer(TimeStampedModel):
     @property
     def identity_provider(self):
         """
-        Unique slug for the identity provider associated with this enterprise customer.
+        Return the unique slug for the identity provider associated with this enterprise customer.
 
         Returns `None` if enterprise customer does not have any identity provider.
         """
@@ -194,6 +194,7 @@ class EnterpriseCustomer(TimeStampedModel):
             course_run_key (str): The course run id for the course to be displayed.
         Returns:
             (str): Enterprise landing page url.
+
         """
         if configuration_helpers is None:
             raise NotConnectedToOpenEdX(
@@ -284,6 +285,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     Fields:
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_id (:class:`django.db.models.IntegerField`): user identifier
+
     """
 
     enterprise_customer = models.ForeignKey(
@@ -338,6 +340,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 "requires_consent": True if learner must consent to data
                     sharing in order to get benefits of entitlement.
                 "entitlement_id: id of the entitlements available to the learner.
+
         """
         # Check if Enterprise Learner consents to data sharing and store the boolean result
         learner_consent_state = self.data_sharing_consent.first()
@@ -414,6 +417,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     Fields:
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_email (:class:`django.db.models.EmailField`): user email
+
     """
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False)
@@ -498,6 +502,7 @@ def logo_path(instance, filename):
 
     Returns:
         path: path of image file e.g. enterprise/branding/<model.id>/<model_id>_logo.<ext>.lower()
+
     """
     extension = os.path.splitext(filename)[1].lower()
     instance_id = str(instance.id)
@@ -515,6 +520,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
     Fields:
         enterprise_customer (ForeignKey[EnterpriseCustomer]): enterprise customer
         logo (ImageField): enterprise customer image
+
     """
 
     enterprise_customer = models.OneToOneField(
@@ -537,7 +543,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         verbose_name = _("Branding Configuration")
         verbose_name_plural = _("Branding Configurations")
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         """Save the enterprise customer branding config."""
         if self.pk is None:
             logo_image = self.logo
@@ -577,6 +583,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     Fields:
         enterprise_customer (ForeignKey[EnterpriseCustomer]): enterprise customer
         provider_id (:class:`django.db.models.SlugField`): The provider_id string of the identity provider.
+
     """
 
     enterprise_customer = models.OneToOneField(
@@ -779,16 +786,14 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         if self.consent_granted is not None:
             # If the state isn't indeterminate, return immediately.
             return self.consent_granted
-        else:
-            # If it is indeterminate...
 
-            # Check for an account-wide value and use that.
-            consent_state = self.enterprise_customer_user.data_sharing_consent.first()
-            if consent_state is not None:
-                return consent_state.enabled
-            else:
-                # If there isn't an account-wide value, act as though we do not have consent.
-                return False
+        # Check for an account-wide value and use that.
+        consent_state = self.enterprise_customer_user.data_sharing_consent.first()
+        if consent_state is not None:
+            return consent_state.enabled
+
+        # There isn't an account-wide value, so act as though we do not have consent.
+        return False
 
     @property
     def consent_needed(self):
@@ -797,14 +802,14 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         if self.consent_available():
             return False
-        else:
-            enterprise_customer = self.enterprise_customer_user.enterprise_customer
-            return any(
-                [
-                    enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT),
-                    enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN),
-                ]
-            )
+
+        enterprise_customer = self.enterprise_customer_user.enterprise_customer
+        return any(
+            [
+                enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT),
+                enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN),
+            ]
+        )
 
     def __str__(self):
         """
@@ -821,7 +826,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         return self.__str__()
 
-    def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         """
         When saving an EnterpriseCourseEnrollment, update the account-level consent if needed.
         """

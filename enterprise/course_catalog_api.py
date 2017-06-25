@@ -78,6 +78,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             list: List of catalogs available for the user.
+
         """
         return self._load_data('catalogs', default=[])
 
@@ -87,6 +88,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: catalog details if it is available for the user.
+
         """
         return self._load_data('catalogs', default=[], resource_id=catalog_id)
 
@@ -96,6 +98,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: API response with links to next and previous pages.
+
         """
         resource = 'catalogs/{}/courses/'.format(catalog_id)
         return self._load_data(
@@ -112,6 +115,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             list: Courses of the catalog in question
+
         """
         return self._load_data('catalogs/{catalog_id}/courses'.format(catalog_id=catalog_id), default=[])
 
@@ -124,6 +128,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: Details of the course in question.
+
         """
         return self._load_data('courses', resource_id=course_key, many=False)
 
@@ -136,6 +141,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: Course run data provided by Course Catalog API.
+
         """
         return self._load_data('course_runs', resource_id=course_run_id)
 
@@ -148,6 +154,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: Program data provided by Course Catalog API
+
         """
         all_programs = self._load_data('programs', default=[])
         matching_programs = [program for program in all_programs if program.get('title') == program_title]
@@ -167,6 +174,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: Program data provided by Course Catalog API
+
         """
         return self._load_data('programs', resource_id=program_uuid, default=None)
 
@@ -207,6 +215,7 @@ class CourseCatalogApiClient(object):
             # run1 has nothing, run 2 prof, run3 has prof
             get_common_course_modes(['course-v1:run1', 'course-v1:run2', 'course-v1:run3'])
             {}
+
         """
         available_course_modes = None
         for course_run_id in course_run_ids:
@@ -233,6 +242,7 @@ class CourseCatalogApiClient(object):
 
         Returns:
             dict: Deserialized response from Course Catalog API
+
         """
         default_val = default if default != self.DEFAULT_VALUE_SAFEGUARD else {}
         result = get_edx_api_data(

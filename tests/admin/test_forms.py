@@ -578,7 +578,7 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         self.first_site = SiteFactory(domain="first.localhost.com")
         self.second_site = SiteFactory(domain="second.localhost.com")
         self.enterprise_customer = EnterpriseCustomerFactory(site=self.first_site)
-        self.provider_id = FAKER.slug()
+        self.provider_id = FAKER.slug()  # pylint: disable=no-member
 
     def test_no_idp_choices(self):
         """

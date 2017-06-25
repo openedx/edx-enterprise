@@ -8,7 +8,6 @@ from __future__ import absolute_import, unicode_literals
 import ddt
 import mock
 import six
-
 from faker import Factory as FakerFactory
 from pytest import mark, raises
 from rest_framework.reverse import reverse
@@ -132,7 +131,7 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         super(TestEnterpriseCatalogCoursesSerializer, self).setUp()
         faker = FakerFactory.create()
 
-        self.provider_id = faker.slug()
+        self.provider_id = faker.slug()  # pylint: disable=no-member
 
         self.user = factories.UserFactory()
         self.ecu = factories.EnterpriseCustomerUserFactory(

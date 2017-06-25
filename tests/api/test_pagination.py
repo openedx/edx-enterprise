@@ -11,7 +11,6 @@ from rest_framework.test import APIRequestFactory
 from enterprise.api.pagination import get_paginated_response
 from test_utils import APITest
 
-
 DISCOVERY_URI = 'http://testserver.catalogs/api/v1/catalogs'
 ENTERPRISE_URI = 'http://testserver.enterprise/enterprise/api/v1/catalogs/'
 

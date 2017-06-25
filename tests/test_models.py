@@ -233,7 +233,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         Test ``EnterpriseCustomer`` conversion to string.
         """
         faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()
+        customer_uuid = faker.uuid4()  # pylint: disable=no-member
         customer = EnterpriseCustomerFactory(uuid=customer_uuid, name="QWERTY")
         expected_to_str = "<{class_name} {customer_uuid}: {name}>".format(
             class_name=EnterpriseCustomer.__name__,
@@ -247,7 +247,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         Test identity_provider property returns correct value without errors.
         """
         faker = FakerFactory.create()
-        provider_id = faker.slug()
+        provider_id = faker.slug()  # pylint: disable=no-member
         customer = EnterpriseCustomerFactory()
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=customer)
 
@@ -288,16 +288,16 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     def test_link_user_existing_user(self, user_email):
         enterprise_customer = EnterpriseCustomerFactory()
         user = UserFactory(email=user_email)
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no link records should exist"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=user_email)) == 0, \
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no link records should exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).count() == 0, \
             "Precondition check: no pending link records should exist"
 
         EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
         actual_records = EnterpriseCustomerUser.objects.filter(
             enterprise_customer=enterprise_customer, user_id=user.id  # pylint: disable=no-member
         )
-        assert len(actual_records) == 1
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "No pending link records should have been created"
+        assert actual_records.count() == 1
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "No pending links should have been created"
 
     @ddt.data(
         "yoda@jeditemple.net", "luke_skywalker@resistance.org", "darth_vader@empire.com"
@@ -305,16 +305,16 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     def test_link_user_no_user(self, user_email):
         enterprise_customer = EnterpriseCustomerFactory()
 
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no link records should exist"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=user_email)) == 0, \
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no link records should exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).count() == 0, \
             "Precondition check: no pending link records should exist"
 
         EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
         actual_records = PendingEnterpriseCustomerUser.objects.filter(
             enterprise_customer=enterprise_customer, user_email=user_email
         )
-        assert len(actual_records) == 1
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "No pending link records should have been created"
+        assert actual_records.count() == 1
+        assert EnterpriseCustomerUser.objects.count() == 0, "No pending link records should have been created"
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_linked_user(self, email):
@@ -329,8 +329,8 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_no_link(self, email):
-        assert len(EnterpriseCustomerUser.objects.all()) == 0
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
+        assert EnterpriseCustomerUser.objects.count() == 0
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
         assert EnterpriseCustomerUser.objects.get_link_by_email(email) is None
 
     @ddt.data("email1@example.com", "email2@example.com")
@@ -341,17 +341,17 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
         EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)
         EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_id=user1.id)
-        assert len(EnterpriseCustomerUser.objects.all()) == 3
+        assert EnterpriseCustomerUser.objects.count() == 3
 
         query_method = EnterpriseCustomerUser.objects.filter
 
         EnterpriseCustomerUser.objects.unlink_user(enterprise_customer1, email)
         # removes what was asked
-        assert len(query_method(enterprise_customer=enterprise_customer1, user_id=user1.id)) == 0
+        assert query_method(enterprise_customer=enterprise_customer1, user_id=user1.id).count() == 0
         # keeps records of the same user with different EC (though it shouldn't be the case)
-        assert len(query_method(enterprise_customer=enterprise_customer2, user_id=user1.id)) == 1
+        assert query_method(enterprise_customer=enterprise_customer2, user_id=user1.id).count() == 1
         # keeps records of other users
-        assert len(query_method(user_id=user2.id)) == 1
+        assert query_method(user_id=user2.id).count() == 1
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_pending_link(self, email):
@@ -359,15 +359,15 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         enterprise_customer = EnterpriseCustomerFactory()
         PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=email)
         PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=other_email)
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 2
+        assert PendingEnterpriseCustomerUser.objects.count() == 2
 
         query_method = PendingEnterpriseCustomerUser.objects.filter
 
         EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
         # removes what was asked
-        assert len(query_method(enterprise_customer=enterprise_customer, user_email=email)) == 0
+        assert query_method(enterprise_customer=enterprise_customer, user_email=email).count() == 0
         # keeps records of other users
-        assert len(query_method(user_email=other_email)) == 1
+        assert query_method(user_email=other_email).count() == 1
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_existing_user_no_link(self, email):
@@ -375,7 +375,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         enterprise_customer = EnterpriseCustomerFactory()
         query_method = EnterpriseCustomerUser.objects.filter
 
-        assert len(query_method(user_id=user.id)) == 0, "Precondition check: link record exists"
+        assert query_method(user_id=user.id).count() == 0, "Precondition check: link record exists"
 
         with raises(EnterpriseCustomerUser.DoesNotExist):
             EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
@@ -385,7 +385,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         enterprise_customer = EnterpriseCustomerFactory()
         query_method = PendingEnterpriseCustomerUser.objects.filter
 
-        assert len(query_method(user_email=email)) == 0, "Precondition check: link record exists"
+        assert query_method(user_email=email).count() == 0, "Precondition check: link record exists"
 
         with raises(PendingEnterpriseCustomerUser.DoesNotExist):
             EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
@@ -1021,7 +1021,7 @@ class TestCatalogTransmissionAudit(unittest.TestCase):
         Test ``CatalogTransmissionAudit`` conversion to string
         """
         faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()
+        customer_uuid = faker.uuid4()  # pylint: disable=no-member
         course_audit = CatalogTransmissionAudit(
             id=1, enterprise_customer_uuid=customer_uuid, total_courses=50, status='success', error_message=None
         )

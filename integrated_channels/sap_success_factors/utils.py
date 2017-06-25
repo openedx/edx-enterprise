@@ -290,8 +290,7 @@ def get_launch_url(enterprise_customer, course_id):
     """
     if configuration_helpers and configuration_helpers.get_value('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE'):
         return enterprise_customer.get_course_enrollment_url(course_id)
-    else:
-        return get_course_track_selection_url(enterprise_customer, course_id)
+    return get_course_track_selection_url(enterprise_customer, course_id)
 
 
 def get_course_track_selection_url(enterprise_customer, course_id):

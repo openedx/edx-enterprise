@@ -206,7 +206,7 @@ class EnterpriseCustomerManageLearnersView(View):
         try:
             validate_email_to_link(email, form_field_value, ValidationMessages.INVALID_EMAIL_OR_USERNAME)
         except ValidationError as exc:
-            manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc.message)
+            manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc)
         else:
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]
@@ -238,7 +238,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 try:
                     already_linked = validate_email_to_link(email, ignore_existing=True)
                 except ValidationError as exc:
-                    message = _("Error at line {line}: {message}\n").format(line=index + 1, message=exc.message)
+                    message = _("Error at line {line}: {message}\n").format(line=index + 1, message=exc)
                     errors.append(message)
                 else:
                     if already_linked:
@@ -248,7 +248,7 @@ class EnterpriseCustomerManageLearnersView(View):
                     else:
                         emails.add(email)
         except ValidationError as exc:
-            errors.append(exc.message)
+            errors.append(exc)
 
         if errors:
             manage_learners_form.add_error(

@@ -36,60 +36,60 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
 
     def test_handle_user_post_save_no_user_instance_nothing_happens(self):
         # precondition checks
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
-        assert len(EnterpriseCustomerUser.objects.all()) == 0
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.count() == 0
 
         parameters = {"instance": None, "created": False}
         handle_user_post_save(mock.Mock(), **parameters)
 
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
-        assert len(EnterpriseCustomerUser.objects.all()) == 0
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.count() == 0
 
     def test_handle_user_post_save_no_matching_pending_link(self):
         user = UserFactory(email="jackie.chan@hollywood.com")
 
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no pending links available"
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, "Precondition check: no links exists"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending links available"
+        assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no links exists"
 
         parameters = {"instance": user, "created": True}
         handle_user_post_save(mock.Mock(), **parameters)
 
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
-        assert len(EnterpriseCustomerUser.objects.all()) == 0
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.count() == 0
 
     def test_handle_user_post_save_created_user(self):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
         pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Precondition check: pending link exists"
 
         parameters = {"instance": user, "created": True}
         handle_user_post_save(mock.Mock(), **parameters)
 
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
-        assert len(EnterpriseCustomerUser.objects.filter(
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.filter(
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
-        )) == 1
+        ).count() == 1
 
     def test_handle_user_post_save_modified_user_not_linked(self):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
         pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Precondition check: pending link exists"
 
         parameters = {"instance": user, "created": False}
         handle_user_post_save(mock.Mock(), **parameters)
 
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
-        assert len(EnterpriseCustomerUser.objects.filter(
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.filter(
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
-        )) == 1
+        ).count() == 1
 
     @mock.patch('enterprise.lms_api.CourseKey')
     @mock.patch('enterprise.lms_api.CourseEnrollment')
@@ -101,19 +101,20 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
         pending_enrollment = PendingEnrollmentFactory(user=pending_link)
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Precondition check: pending link exists"
-        assert len(PendingEnrollment.objects.filter(user=pending_link)) == 1, 'Check that only one enrollment exists.'
+        assert PendingEnrollment.objects.filter(user=pending_link).count() == 1, \
+            'Precondition check: only one enrollment exists.'
 
         parameters = {'instance': user, "created": False}
         handle_user_post_save(mock.Mock(), **parameters)
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0
-        assert len(EnterpriseCustomerUser.objects.filter(
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.filter(
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
-        )) == 1
-        assert len(PendingEnrollment.objects.all()) == 0
-        assert len(EnterpriseCourseEnrollment.objects.all()) == 1
+        ).count() == 1
+        assert PendingEnrollment.objects.count() == 0
+        assert EnterpriseCourseEnrollment.objects.count() == 1
         mock_course_enrollment.enroll.assert_called_once_with(user, None, mode='audit', check_access=True)
         mock_course_key.from_string.assert_called_once_with(pending_enrollment.course_id)
 
@@ -124,8 +125,8 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         existing_link = EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user.id)
         PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_email=email)
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 1, "Precondition check: links exists"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1, "Precondition check: links exists"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Precondition check: pending link exists"
 
         parameters = {"instance": user, "created": False}
@@ -136,20 +137,20 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         assert link.id == existing_link.id, "Should keep existing link intact"  # pylint: disable=no-member
         assert link.enterprise_customer == enterprise_customer1, "Should keep existing link intact"
 
-        assert len(PendingEnterpriseCustomerUser.objects.all()) == 0, "Should delete pending link"
+        assert PendingEnterpriseCustomerUser.objects.count() == 0, "Should delete pending link"
 
     def test_handle_user_post_save_raw(self):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
         PendingEnterpriseCustomerUserFactory(user_email=email)
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Precondition check: no links exists"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Precondition check: pending link exists"
 
         parameters = {"instance": user, "created": False, "raw": True}
         handle_user_post_save(mock.Mock(), **parameters)
 
-        assert len(EnterpriseCustomerUser.objects.filter(user_id=user.id)) == 0, "Link have been created"
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 1, \
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Link have been created"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Pending link should be kept"

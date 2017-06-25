@@ -103,7 +103,7 @@ class TestEmailConversion(unittest.TestCase):
         assert email_or_username__to__email(email_or_username) == user.email
 
     def test_email_or_username__to__email_something_else(self):
-        email_or_username = FAKER.email()
+        email_or_username = FAKER.email()  # pylint: disable=no-member
 
         assert email_or_username__to__email(email_or_username) == email_or_username
 
@@ -116,10 +116,10 @@ class TestValidateEmailToLink(unittest.TestCase):
     """
 
     def test_validate_email_to_link_normal(self):
-        email = FAKER.email()
-        assert len(PendingEnterpriseCustomerUser.objects.filter(user_email=email)) == 0, \
+        email = FAKER.email()  # pylint: disable=no-member
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 0, \
             "Precondition check - should not have PendingEnterpriseCustomerUser"
-        assert len(EnterpriseCustomerUser.objects.all()) == 0, \
+        assert EnterpriseCustomerUser.objects.count() == 0, \
             "Precondition check - should not have EnterpriseCustomerUser"
 
         exists = validate_email_to_link(email)  # should not raise any Exceptions
@@ -162,7 +162,7 @@ class TestValidateEmailToLink(unittest.TestCase):
 
     @ddt.data(True, False)
     def test_validate_email_to_link_existing_pending_record(self, ignore_existing):
-        email = FAKER.email()
+        email = FAKER.email()  # pylint: disable=no-member
         existing_record = PendingEnterpriseCustomerUserFactory(user_email=email)
         assert PendingEnterpriseCustomerUser.objects.get(user_email=email) == existing_record, \
             "Precondition check - should have PendingEnterpriseCustomerUser"

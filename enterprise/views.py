@@ -786,7 +786,7 @@ class CourseEnrollmentView(View):
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
     @method_decorator(transaction.non_atomic_requests)
-    def dispatch(self, *args, **kwargs):
+    def dispatch(self, *args, **kwargs):  # pylint: disable=arguments-differ
         """
         Disable atomicity for the view.
 
@@ -838,7 +838,8 @@ class CourseEnrollmentView(View):
                 client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
-        elif user_consent_needed:
+
+        if user_consent_needed:
             # For the audit course modes (audit, honor) or for the premium
             # course modes (Verified, Prof Ed) where DSC is required, redirect
             # the learner to course specific DSC with enterprise UUID from
@@ -863,12 +864,12 @@ class CourseEnrollmentView(View):
                     )
                 )
             )
-        else:
-            # For the premium course modes (Verified, Prof Ed) where DSC is
-            # not required, redirect the enterprise learner to the ecommerce
-            # flow in LMS.
-            # Note: LMS start flow automatically detects the paid mode
-            return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
+
+        # For the premium course modes (Verified, Prof Ed) where DSC is
+        # not required, redirect the enterprise learner to the ecommerce
+        # flow in LMS.
+        # Note: LMS start flow automatically detects the paid mode
+        return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
 
     @method_decorator(enterprise_login_required)
     def get(self, request, enterprise_uuid, course_id):
