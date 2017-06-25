@@ -96,8 +96,7 @@ def get_idp_choices():
     first = [("", "-"*7)]
     if Registry:
         return first + [(idp.provider_id, idp.name) for idp in Registry.enabled()]
-    else:
-        return None
+    return None
 
 
 def get_all_field_names(model):
@@ -115,7 +114,7 @@ def get_all_field_names(model):
 
 def disable_for_loaddata(signal_handler):
     """
-    Decorator that turns off signal handlers when loading fixture data.
+    Use this decorator to turn off signal handlers when loading fixture data.
 
     Django docs instruct to avoid further changes to the DB if raw=True as it might not be in a consistent state.
     See https://docs.djangoproject.com/en/dev/ref/signals/#post-save
@@ -124,7 +123,7 @@ def disable_for_loaddata(signal_handler):
     @wraps(signal_handler)
     def wrapper(*args, **kwargs):
         """
-        Function wrapper.
+        Wrap the function.
         """
         if kwargs.get('raw', False):
             return
@@ -134,7 +133,7 @@ def disable_for_loaddata(signal_handler):
 
 def null_decorator(func):
     """
-    Decorator that does nothing to the wrapped function.
+    Use this decorator to stub out decorators for testing.
 
     If we're unable to import social_core.pipeline.partial, which is the case in our CI platform,
     we need to be able to wrap the function with something.
@@ -155,6 +154,7 @@ def get_catalog_admin_url(catalog_id):
     Example:
         >>> get_catalog_admin_url_template(2)
         "http://localhost:18381/admin/catalogs/catalog/2/change/"
+
     """
     return get_catalog_admin_url_template().format(catalog_id=catalog_id)
 
@@ -171,6 +171,7 @@ def get_catalog_admin_url_template():
     Example:
         >>> get_catalog_admin_url_template()
         "http://localhost:18381/admin/catalogs/catalog/{catalog_id}/change/"
+
     """
     api_base_url = getattr(settings, "COURSE_CATALOG_API_URL", "")
 
@@ -191,6 +192,7 @@ def consent_necessary_for_course(user, course_id):
     Args:
         user: The user attempting to access the course
         course_id: The string ID of the course in question
+
     """
     # Get the model on demand, since we can't have a circular dependency
     EnterpriseCourseEnrollment = apps.get_model(  # pylint: disable=invalid-name
@@ -219,6 +221,7 @@ def build_notification_message(template_context, template_configuration=None):
         template_context (dict): A set of data to render
         template_configuration: A database-backed object with templates
             stored that can be used to render a notification.
+
     """
     if (
             template_configuration is not None and
@@ -255,6 +258,7 @@ def get_notification_subject_line(course_name, template_configuration=None):
     Arguments:
         course_name (str): Course name to be rendered into the string
         template_configuration: A database-backed object with a stored subject line template
+
     """
     stock_subject_template = _('You\'ve been enrolled in {course_name}!')
     default_subject_template = getattr(
@@ -296,6 +300,7 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
         enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
         email_connection: An existing Django email connection that can be used without
             creating a new connection for each individual message
+
     """
     if hasattr(user, 'first_name') and hasattr(user, 'username'):
         # PendingEnterpriseCustomerUsers don't have usernames or real names. We should
@@ -351,6 +356,7 @@ def get_reversed_url_by_site(request, site, *args, **kwargs):
         site (site): The site we want to apply to the URL created
         *args: Pass to the standard reverse function
         **kwargs: Pass to the standard reverse function
+
     """
     domain = site.domain
     reversed_url = reverse(*args, **kwargs)
@@ -426,8 +432,7 @@ def is_consent_required_for_user(enterprise_customer_user, course_id=None):
             user record
 
     Returns:
-        Boolean: enterprise customer user required to provide data sharing
-            consent.
+        Boolean: enterprise customer user required to provide data sharing consent.
 
     """
     enterprise_customer = enterprise_customer_user.enterprise_customer
@@ -470,6 +475,7 @@ def get_course_track_selection_url(course_run, query_parameters):
 
     Returns:
         (str): Course track selection url.
+
     """
     try:
         course_root = reverse('course_modes_choose', kwargs={'course_id': course_run['key']})
@@ -499,6 +505,7 @@ def update_query_parameters(url, query_parameters):
     Returns:
         (slug): slug identifier for the identity provider that can be used for identity verification of
             users associated the enterprise customer of the given user.
+
     """
     scheme, netloc, path, query_string, fragment = urlsplit(url)
     url_params = parse_qs(query_string)
@@ -519,11 +526,11 @@ def safe_extract_key(data, key, default=''):
         data (dict): The dictionary from which to extract the key's value.
         key (str): The key for which we need to extract the value from data.
         default: The value to return if the key is not present in data.
+
     """
     if key in data and data[key] is not None:
         return data[key]
-    else:
-        return default
+    return default
 
 
 def filter_audit_course_modes(enterprise_customer, course_modes):
@@ -533,12 +540,12 @@ def filter_audit_course_modes(enterprise_customer, course_modes):
     Arguments:
         enterprise_customer: The EnterpriseCustomer that the enrollment was created using.
         course_modes: iterable with dictionaries containing a required 'mode' key
+
     """
     audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit'])
     if not enterprise_customer.enable_audit_enrollment:
         return [course_mode for course_mode in course_modes if course_mode['mode'] not in audit_modes]
-    else:
-        return course_modes
+    return course_modes
 
 
 def get_enterprise_customer_or_404(enterprise_uuid):
@@ -594,7 +601,7 @@ def enterprise_login_required(view):
     @wraps(view)
     def wrapper(request, *args, **kwargs):
         """
-        Function wrapper.
+        Wrap the decorator.
         """
         if 'enterprise_uuid' not in kwargs:
             raise Http404
@@ -632,7 +639,8 @@ def enterprise_login_required(view):
                     )
                 )
             )
-        elif not decorator_already_processed and sso_provider and sso_provider.drop_existing_session:
+
+        if not decorator_already_processed and sso_provider and sso_provider.drop_existing_session:
             # If the user is logged in, this is their first time hitting the decorator,
             # and the sso provider is configured to drop the session, send them to
             # the logout page with a redirect back to the original view,
@@ -645,8 +653,8 @@ def enterprise_login_required(view):
                     )
                 )
             )
-        else:
-            # Otherwise, they can proceed to the original view.
-            return view(request, *args, **kwargs)
+
+        # Otherwise, they can proceed to the original view.
+        return view(request, *args, **kwargs)
 
     return wrapper

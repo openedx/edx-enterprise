@@ -101,7 +101,7 @@ class JwtLmsApiClient(object):
     @staticmethod
     def refresh_token(func):
         """
-        Method decorator that ensures the JWT token is refreshed when needed.
+        Use this method decorator to ensure the JWT token is refreshed when needed.
         """
         @wraps(func)
         def inner(self, *args, **kwargs):
@@ -141,6 +141,7 @@ class EnrollmentApiClient(LmsApiClient):
             modes (list): A list of course mode dictionaries.
         Returns:
             list: A list with the course modes dictionaries sorted by slug.
+
         """
         def slug_weight(mode):
             """
@@ -150,8 +151,7 @@ class EnrollmentApiClient(LmsApiClient):
             sorting_slugs_size = len(sorting_slugs)
             if mode['slug'] in sorting_slugs:
                 return sorting_slugs_size - sorting_slugs.index(mode['slug'])
-            else:
-                return 0
+            return 0
         # Sort slug weights in descending order
         return sorted(modes, key=slug_weight, reverse=True)
 
@@ -164,6 +164,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         Returns:
             list: A list of course mode dictionaries.
+
         """
         details = self.get_course_details(course_id)
         modes = details.get('course_modes', [])
@@ -180,6 +181,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         Returns:
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+
         """
         return self.client.enrollment.post(
             {
@@ -199,6 +201,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         Returns:
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+
         """
         endpoint = getattr(
             self.client.enrollment,
@@ -231,6 +234,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         Returns:
             list: A list of course objects, along with relevant user-specific enrollment details.
+
         """
         return self.client.enrollment.get(user=username)
 
@@ -368,6 +372,7 @@ class CertificatesApiClient(JwtLmsApiClient):
         * ``is_passing``: True if the certificate has a passing status, False if not.
         * ``download_url``: A string representation of the certificate url.
         * ``grade``: A string representation of a float for the user's course grade.
+
         """
         return self.client.certificates(username).courses(course_id).get()
 
@@ -397,6 +402,7 @@ def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FOR
     Arguments:
         datetime_string: A string to be parsed.
         datetime_format: A datetime format string to be used for parsing
+
     """
     if isinstance(datetime_string, datetime.datetime):
         date_time = datetime_string

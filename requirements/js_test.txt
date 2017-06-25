@@ -8,12 +8,11 @@ argparse==1.4.0           # via jasmine
 chardet==2.3              # via jasmine
 cherrypy==3.8.2           # via jasmine
 click==6.7                # via flask
-django-config-models==0.1.6
-flask==0.12.1             # via jasmine
+flask==0.12.2             # via jasmine
 glob2==0.5                # via jasmine-core
 itsdangerous==0.24        # via flask
-jasmine-core==2.5.2       # via jasmine
-jasmine==2.5.0
+jasmine-core==2.6.4       # via jasmine
+jasmine==2.6.0
 jinja2==2.9.6             # via flask, jasmine
 markupsafe==1.0           # via jinja2
 ordereddict==1.1          # via jasmine-core

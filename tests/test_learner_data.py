@@ -60,7 +60,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
 
     def test_collect_learner_data_no_enrollments(self):
         learner_data = list(self.exporter.collect_learner_data())
-        assert len(learner_data) == 0
+        assert not learner_data
 
     def test_collect_learner_data_without_consent(self):
         EnterpriseCourseEnrollmentFactory(
@@ -69,7 +69,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
             consent_granted=False,
         )
         learner_data = list(self.exporter.collect_learner_data())
-        assert len(learner_data) == 0
+        assert not learner_data
 
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
     def test_collect_learner_data_no_course_details(self, mock_course_api):
@@ -83,7 +83,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
         mock_course_api.return_value.get_course_details.return_value = None
 
         learner_data = list(self.exporter.collect_learner_data())
-        assert len(learner_data) == 0
+        assert not learner_data
 
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')

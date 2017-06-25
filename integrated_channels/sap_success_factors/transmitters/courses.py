@@ -47,12 +47,12 @@ class SuccessFactorsCourseTransmitter(SuccessFactorsTransmitterBase):
 
         return status_code, body
 
-    def transmit(self, course_exporter):
+    def transmit(self, payload):
         """
         Send a course data import call to SAP SuccessFactors using the client.
 
         Args:
-            course_exporter (SapCourseExporter): The OCN course exporter object to send to SAP SuccessFactors
+            payload (SapCourseExporter): The OCN course exporter object to send to SAP SuccessFactors
         """
         CatalogTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
             app_label='sap_success_factors',
@@ -70,12 +70,12 @@ class SuccessFactorsCourseTransmitter(SuccessFactorsTransmitterBase):
         else:
             last_audit_summary = json.loads(last_catalog_transmission.audit_summary)
 
-        audit_summary = course_exporter.resolve_removed_courses(last_audit_summary)
+        audit_summary = payload.resolve_removed_courses(last_audit_summary)
 
         total_transmitted = 0
         errors = []
         status_codes = []
-        for serialized_payload, length in course_exporter.get_serialized_data_blocks():
+        for serialized_payload, length in payload.get_serialized_data_blocks():
             status_code, body = self.transmit_block(serialized_payload)
             status_codes.append(str(status_code))
             error_message = body if status_code >= 400 else ''
@@ -89,7 +89,7 @@ class SuccessFactorsCourseTransmitter(SuccessFactorsTransmitterBase):
 
         catalog_transmission_audit = CatalogTransmissionAudit(
             enterprise_customer_uuid=self.enterprise_configuration.enterprise_customer.uuid,
-            total_courses=len(course_exporter.courses),
+            total_courses=len(payload.courses),
             status=code_string,
             error_message=error_message,
             audit_summary=json.dumps(audit_summary),

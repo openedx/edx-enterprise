@@ -5,7 +5,6 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
 
-
 SERVICE_USERNAMES = (
     'ECOMMERCE_SERVICE_WORKER_USERNAME',
     'ENTERPRISE_SERVICE_WORKER_USERNAME'

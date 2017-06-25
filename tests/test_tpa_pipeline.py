@@ -157,7 +157,7 @@ class TestTpaPipeline(unittest.TestCase):
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request') as fake_ec_getter:
             fake_ec_getter.return_value = self.customer
             assert active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN)
-            fake_ec_getter.return_value = False  # pylint: disable=redefined-variable-type
+            fake_ec_getter.return_value = False
             assert not active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN)
             request.session = {}
             assert not active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN)
@@ -170,11 +170,11 @@ class TestTpaPipeline(unittest.TestCase):
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request') as fake_ec_getter:
             fake_ec_getter.return_value = self.customer
             assert active_provider_requests_data_sharing(request)
-            fake_ec_getter.return_value = False  # pylint: disable=redefined-variable-type
+            fake_ec_getter.return_value = False
             assert not active_provider_requests_data_sharing(request)
             fake_ec = mock.MagicMock()
             fake_ec.requests_data_sharing_consent = False
-            fake_ec_getter.return_value = fake_ec  # pylint: disable=redefined-variable-type
+            fake_ec_getter.return_value = fake_ec
             assert not active_provider_requests_data_sharing(request)
             request.session = {}
             assert not active_provider_requests_data_sharing(request)

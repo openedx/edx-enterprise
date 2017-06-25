@@ -97,6 +97,7 @@ def active_provider_enforces_data_sharing(request, enforcement_location):
         request: HttpRequest object containing request data.
         enforcement_location (str): the point where to see data sharing consent state.
         argument can either be "optional", 'at_login' or 'at_enrollment'
+
     """
     running_pipeline = request.session.get('partial_pipeline_token')
     if running_pipeline:
@@ -151,6 +152,7 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     Returns:
         redirect: If consent is required, but has not been provided, the user
             is redirected to a page where they can provide consent.
+
     """
     def redirect_to_consent():
         """

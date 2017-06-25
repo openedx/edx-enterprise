@@ -115,7 +115,7 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         self.enterprise_customer_user = enterprise_customer_user
         return value
 
-    def save(self):
+    def save(self):  # pylint: disable=arguments-differ
         """
         Save the model with the found EnterpriseCustomerUser.
         """
@@ -178,7 +178,7 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
 
         return value
 
-    def save(self):
+    def save(self):  # pylint: disable=arguments-differ
         """
         Save the EnterpriseCustomerUser.
         """

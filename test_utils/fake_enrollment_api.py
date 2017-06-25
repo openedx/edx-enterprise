@@ -8,6 +8,7 @@ import json
 import re
 
 from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
+
 from django.conf import settings
 
 COURSE_ID_REGEX = r'course-v.:[^/+]+\+[^/+]+\+[^/?]+$'
