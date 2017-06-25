@@ -535,3 +535,21 @@ def get_enterprise_customer_or_404(enterprise_uuid):
         LOGGER.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
         raise Http404
     return enterprise_customer
+
+
+def restart_session_if_required(enterprise_customer, redirect_url):
+    provider_id = enterprise_customer.identity_provider or ''
+
+    try:
+        sso_provider = get_identity_provider(provider_id)
+        if sso_provider and sso_provider.drop_existing_session:
+            return redirect(
+                '{logout_url}?{params}'.format(
+                    logout_url='/logout',
+                    params=urlencode(
+                        {'redirect_url': quote(redirect_url)}
+                    )
+                )
+            )
+    except ValueError:
+        pass

@@ -11,7 +11,7 @@ from requests.utils import quote
 from django.http import Http404
 from django.shortcuts import redirect
 
-from enterprise.utils import get_enterprise_customer_or_404, get_identity_provider
+from enterprise.utils import get_enterprise_customer_or_404, get_identity_provider, restart_session_if_required
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 
@@ -144,21 +144,9 @@ def force_fresh_session(view):
                 # which will send them back to the original view so they
                 # can start a new session.
                 enterprise_customer = get_enterprise_customer_or_404(kwargs.get('enterprise_uuid'))
-                provider_id = enterprise_customer.identity_provider or ''
-
-                try:
-                    sso_provider = get_identity_provider(provider_id)
-                    if sso_provider and sso_provider.drop_existing_session:
-                        return redirect(
-                            '{logout_url}?{params}'.format(
-                                logout_url='/logout',
-                                params=urlencode(
-                                    {'redirect_url': quote(request.get_full_path())}
-                                )
-                            )
-                        )
-                except ValueError:
-                    pass
+                redirect = restart_session_if_required(enterprise_customer, request.get_full_path())
+                if redirect:
+                    return redirect
             else:
                 # If the user has not yet been authenticated,
                 # set a flag on the session to indicate that
