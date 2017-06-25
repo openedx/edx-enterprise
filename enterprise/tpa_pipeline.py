@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, UserDataSharingConsentAudit
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX, restart_session_if_required
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -20,7 +20,7 @@ except ImportError:
 try:
     from social_core.pipeline.partial import partial
 except ImportError:
-    from enterprise.utils import null_decorator as partial  # pylint:disable=ungrouped-imports
+    from enterprise.decorators import null_decorator as partial  # pylint:disable=ungrouped-imports
 
 try:
     from third_party_auth.pipeline import get as get_partial_pipeline
@@ -161,7 +161,7 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         Method redirects the user to a page from which they can provide
         required data sharing consent before proceeding in the pipeline
         """
-        return redirect(reverse('grant_data_sharing_permissions'))
+        return restart_session_if_required(enterprise_customer, reverse('grant_data_sharing_permissions'))
 
     enterprise_customer = get_enterprise_customer_for_running_pipeline({'backend': backend.name, 'kwargs': kwargs})
     if enterprise_customer is None:

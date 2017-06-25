@@ -10,13 +10,39 @@ from __future__ import absolute_import, unicode_literals
 import json
 from pytest import mark
 
+import mock
 from rest_framework.test import APITestCase, APIClient
+import six
+from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-error
 
 from test_utils import factories
-from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-error,wrong-import-order
 
 TEST_USERNAME = 'api_worker'
 TEST_PASSWORD = 'QWERTY'
+
+
+def get_magic_name(value):
+    """
+    Return value suitable for __name__ attribute.
+
+    For python2, __name__ must be str, while for python3 it must be unicode (as there are no str at all).
+
+    Arguments:
+        value basestring: string to "convert"
+
+    Returns:
+        str or unicode
+    """
+    return str(value) if six.PY2 else value
+
+
+def mock_view_function():
+    """
+    Return mock function for views that are decorated.
+    """
+    view_function = mock.Mock()
+    view_function.__name__ = str('view_function') if six.PY2 else 'view_function'
+    return view_function
 
 
 @mark.django_db
