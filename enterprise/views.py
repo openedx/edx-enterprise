@@ -55,7 +55,7 @@ except ImportError:
 # isort:imports-firstparty
 from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
 from enterprise.course_catalog_api import CourseCatalogApiClient
-from enterprise.decorators import enterprise_login_required
+from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnterpriseCourseEnrollment,
@@ -871,6 +871,7 @@ class CourseEnrollmentView(View):
         # Note: LMS start flow automatically detects the paid mode
         return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
 
+    @method_decorator(force_fresh_session)
     @method_decorator(enterprise_login_required)
     def get(self, request, enterprise_uuid, course_id):
         """

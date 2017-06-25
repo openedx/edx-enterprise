@@ -1598,8 +1598,7 @@ class TestCourseEnrollmentView(TestCase):
         response = self.client.get(enterprise_landing_page_url)
         expected_redirect_url = (
             '/login?next=%2Fenterprise%2F{enterprise_customer_uuid}%2Fcourse%2Fcourse-v1'
-            '%253AedX%252BDemoX%252BDemo_Course%2Fenroll%2F%3Ftpa_hint%3D{provider_id}'
-            '%26session_cleared%3Dyes'.format(
+            '%253AedX%252BDemoX%252BDemo_Course%2Fenroll%2F%3Ftpa_hint%3D{provider_id}'.format(
                 enterprise_customer_uuid=enterprise_customer.uuid,
                 provider_id=provider_id,
             )
