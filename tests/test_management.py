@@ -16,6 +16,7 @@ from integrated_channels.integrated_channel.learner_data import BaseLearnerExpor
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from pytest import mark, raises
 from requests.compat import urljoin
+from waffle.testutils import override_switch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -83,14 +84,13 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 
 
 @mark.django_db
+@override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
 @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
 @mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
 @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
-@mock.patch('integrated_channels.sap_success_factors.utils.configuration_helpers')
 @mock.patch('enterprise.models.configuration_helpers')
 def test_transmit_courseware_task_success(
-        fake_config_helpers_1,
-        fake_config_helpers_2,
+        fake_config_helpers,
         fake_client,
         fake_catalog_client,
         track_selection_reverse_mock,
@@ -98,8 +98,7 @@ def test_transmit_courseware_task_success(
     """
     Test the data transmission task.
     """
-    fake_config_helpers_1.get_value.return_value = 'https://example.com'
-    fake_config_helpers_2.get_value.return_value = 1
+    fake_config_helpers.get_value.return_value = 'https://example.com'
     fake_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
     fake_client.return_value.send_course_import.return_value = 200, '{}'
 

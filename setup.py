@@ -60,6 +60,7 @@ setup(
         "edx-drf-extensions",
         "Pillow>=3.1.1",
         "unicodecsv>=0.14.1",
+        "django-waffle",
     ],
     license="AGPL 3.0",
     zip_safe=False,
