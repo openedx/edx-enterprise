@@ -34,9 +34,10 @@
               {% if enterprise_customer.branding_configuration %}
                  <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
               {% endif %}
-              <div class="partnered-text">
-                  {{ enterprise_welcome_text|safe }}
-              </div>
+              <p class="partnered-text">{{ welcome_text }}</p>
+              <p class="partnered-text">
+                {{ enterprise_welcome_text|safe }}
+              </p>
           </div>
           <div class="col-7 border-left">
               <main>

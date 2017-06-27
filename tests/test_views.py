@@ -544,6 +544,7 @@ class TestGrantDataSharingPermissions(TestCase):
                 "enterprise_customer_name": ecu.enterprise_customer.name,
                 "course_specific": True,
                 "enrollment_deferred": enrollment_deferred,
+                "welcome_text": "Welcome to My Platform."
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
@@ -1254,7 +1255,27 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
+            'welcome_text': 'Welcome to edX.',
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'price_text': 'Price',
+            'continue_link_text': 'Continue',
             'course_modes': course_modes,
             'premium_modes': course_modes,
         }
@@ -1332,6 +1353,15 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes[0:1],
@@ -1397,7 +1427,7 @@ class TestCourseEnrollmentView(TestCase):
         assert response.status_code == 200
         expected_context = {
             'platform_name': 'edX',
-            'page_title': 'Choose Your Track',
+            'page_title': 'Confirm your course',
             'course_id': course_id,
             'course_start_date': '',
         }
@@ -1848,6 +1878,15 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes[0:1],
@@ -1979,6 +2018,15 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes,
@@ -2063,6 +2111,15 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes,
@@ -2151,6 +2208,7 @@ class TestCourseEnrollmentView(TestCase):
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes,
+            'page_title': 'Confirm your course',
         }
 
         self._login()
@@ -2231,6 +2289,15 @@ class TestCourseEnrollmentView(TestCase):
             }
         ]
         expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes,
