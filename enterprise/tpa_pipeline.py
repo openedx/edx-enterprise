@@ -137,12 +137,13 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     """
     Perform tasks related to Enterprise-owned SSO signin requests.
 
-    Checks to ensure that the user has provided data sharing consent
-    if the active SSO provider requires it; if not, then the user will
-    be redirected to a page from which they can provide consent.
+    If the enterprise customer associated with the active SSO provider requires data sharing consent at login, ensure
+    that the user has provided consent.
 
-    If consent is not required, then the user in the process of logging
-    in is linked to the Enterprise Customer.
+    If consent is required, and the user has not provided consent, then the user will be redirected to a page from which
+    they can provide consent.
+
+    If consent is not required, then the user in the process of logging in is linked to the Enterprise Customer.
 
     Args:
         backend: The class handling the SSO interaction (SAML, OAuth, etc)
@@ -150,8 +151,8 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         **kwargs: Any remaining pipeline variables
 
     Returns:
-        redirect: If consent is required, but has not been provided, the user
-            is redirected to a page where they can provide consent.
+        redirect: If consent is required at login, but has not been provided, the user is redirected to a page where
+            they can provide consent.
 
     """
     def redirect_to_consent():
@@ -168,8 +169,9 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         # This pipeline element is not being activated as a part of an Enterprise logistration
         return
 
-    if not enterprise_customer.requests_data_sharing_consent:
-        # This enterprise customer attached to this pipeline element does not request data sharing consent;
+    if not (enterprise_customer.requests_data_sharing_consent and
+            enterprise_customer.enforce_data_sharing_consent == EnterpriseCustomer.AT_LOGIN):
+        # This enterprise customer attached to this pipeline element does not request data sharing consent at login;
         # proceed with the creation of a link between the user and the enterprise customer, then exit.
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             enterprise_customer=enterprise_customer,
