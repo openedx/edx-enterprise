@@ -9,20 +9,16 @@ import unittest
 
 import ddt
 import mock
-import six
 from faker import Factory as FakerFactory
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.utils import SapCourseExporter, get_launch_url
 from pytest import mark, raises
 
-from django.contrib.auth.models import AnonymousUser
 from django.core import mail
-from django.http import Http404
-from django.test import RequestFactory, override_settings
+from django.test import override_settings
 
 from enterprise import utils
-from enterprise.django_compatibility import reverse
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -33,7 +29,6 @@ from enterprise.models import (
 )
 from enterprise.utils import (
     consent_necessary_for_course,
-    disable_for_loaddata,
     filter_audit_course_modes,
     get_all_field_names,
     get_enterprise_customer_user,
@@ -84,30 +79,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
-
-    @staticmethod
-    def get_magic_name(value):
-        """
-        Return value suitable for __name__ attribute.
-
-        For python2, __name__ must be str, while for python3 it must be unicode (as there are no str at all).
-
-        Arguments:
-            value basestring: string to "convert"
-
-        Returns:
-            str or unicode
-        """
-        return str(value) if six.PY2 else value
-
-    @staticmethod
-    def mock_view_function():
-        """
-        Return mock function for views that are decorated.
-        """
-        view_function = mock.Mock()
-        view_function.__name__ = str('view_function') if six.PY2 else 'view_function'
-        return view_function
 
     def test_get_idp_choices(self):
         """
@@ -202,16 +173,6 @@ class TestEnterpriseUtils(unittest.TestCase):
     def test_get_all_field_names(self, model, expected_fields):
         actual_field_names = get_all_field_names(model)
         assert actual_field_names == expected_fields
-
-    @ddt.data(True, False)
-    def test_disable_for_loaddata(self, raw):
-        signal_handler_mock = mock.MagicMock()
-        signal_handler_mock.__name__ = self.get_magic_name("Irrelevant")
-        wrapped_handler = disable_for_loaddata(signal_handler_mock)
-
-        wrapped_handler(raw=raw)
-
-        assert signal_handler_mock.called != raw
 
     @ddt.data(
         ("", ""),
@@ -1031,126 +992,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         exporter = BaseCourseExporter(mock_user, mock_plugin_configuration)
         with raises(NotImplementedError):
             exporter.get_serialized_data()
-
-    @ddt.data(
-        {},  # Missing required parameter `enterprise_uuid` arguments in kwargs
-        {'enterprise_uuid': ''},  # Required parameter `enterprise_uuid` with empty value in kwargs.
-        # pylint: disable=no-member
-        {'enterprise_uuid': FakerFactory.create().uuid4()},   # Invalid value of `enterprise_uuid` in kwargs
-    )
-    def test_enterprise_login_required_raises_404(self, kwargs):
-        """
-        Test that the decorator `enterprise_login_required` raises `Http404`
-        error when called with invalid or missing arguments.
-        """
-        view_function = self.mock_view_function()
-        enterprise_dashboard_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[self.customer.uuid, 'course-v1:edX+DemoX+Demo_Course'],
-        )
-        request = RequestFactory().get(enterprise_dashboard_url)
-        request.user = UserFactory(is_active=True)
-
-        with raises(Http404):
-            utils.enterprise_login_required(view_function)(request, **kwargs)
-
-    @mock.patch('enterprise.utils.Registry')
-    def test_enterprise_login_required_redirects_for_anonymous_users(self, mock_registry):
-        """
-        Test that the decorator `enterprise_login_required` returns Http
-        Redirect for anonymous users.
-        """
-        mock_registry.get.return_value.configure_mock(provider_id=self.provider_id, drop_existing_session=False)
-        view_function = self.mock_view_function()
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_dashboard_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[self.customer.uuid, course_id],
-        )
-        request = RequestFactory().get(enterprise_dashboard_url)
-        request.user = AnonymousUser()
-
-        response = utils.enterprise_login_required(view_function)(
-            request, enterprise_uuid=self.customer.uuid, course_id=course_id
-        )
-
-        # Assert that redirect status code 302 is returned when an anonymous
-        # user tries to access enterprise course enrollment page.
-        assert response.status_code == 302
-
-    @mock.patch('enterprise.utils.Registry')
-    def test_enterprise_login_required(self, mock_registry):
-        """
-        Test that the enterprise login decorator calls the view function.
-
-        Test that the decorator `enterprise_login_required` calls the view
-        function when:
-            1. `enterprise_uuid` is provided and corresponding enterprise
-                customer exists in database.
-            2. User making the request is authenticated.
-
-        """
-        mock_registry.get.return_value.configure_mock(provider_id=self.provider_id, drop_existing_session=False)
-        view_function = self.mock_view_function()
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_dashboard_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[self.customer.uuid, course_id],
-        )
-        request = RequestFactory().get(enterprise_dashboard_url)
-        request.user = UserFactory(is_active=True)
-
-        utils.enterprise_login_required(view_function)(
-            request, enterprise_uuid=self.customer.uuid, course_id=course_id
-        )
-
-        # Assert that view function was called.
-        assert view_function.called
-
-    @mock.patch('enterprise.utils.get_identity_provider', side_effect=ValueError)
-    def test_enterprise_login_required_no_sso_provider(self, mock_registry):  # pylint: disable=unused-argument
-        """
-        Test that the enterprise login decorator calls the view function when no sso provider is configured.
-        """
-
-        view_function = self.mock_view_function()
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_dashboard_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[self.customer.uuid, course_id],
-        )
-        request = RequestFactory().get(enterprise_dashboard_url)
-        request.user = UserFactory(is_active=True)
-
-        utils.enterprise_login_required(view_function)(
-            request, enterprise_uuid=self.customer.uuid, course_id=course_id
-        )
-
-        # Assert that view function was called.
-        assert view_function.called
-
-    @mock.patch('enterprise.utils.Registry')
-    def test_enterprise_login_required_with_drop_existing_session(self, mock_registry):
-        """
-        Test that the enterprise login decorator redirects authenticated users with the appropriate provider config.
-        """
-        mock_registry.get.return_value.configure_mock(provider_id=self.provider_id, drop_existing_session=True)
-        view_function = self.mock_view_function()
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_dashboard_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[self.customer.uuid, course_id],
-        )
-        request = RequestFactory().get(enterprise_dashboard_url)
-        request.user = UserFactory(is_active=True)
-
-        response = utils.enterprise_login_required(view_function)(
-            request, enterprise_uuid=self.customer.uuid, course_id=course_id
-        )
-
-        # Assert that redirect status code 302 is returned when a logged in user comes in
-        # with an sso provider set to drop existing sessions
-        assert response.status_code == 302
 
 
 def get_transformed_course_metadata(course_id, status):
