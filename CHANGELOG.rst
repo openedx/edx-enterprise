@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.36.10] - 2017-06-29
+----------------------
+
+* Introducing SAP_USE_ENTERPRISE_ENROLLMENT_PAGE switch via django waffle.
+
 [0.36.9] - 2017-06-28
 ---------------------
 

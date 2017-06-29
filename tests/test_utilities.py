@@ -14,6 +14,7 @@ from integrated_channels.integrated_channel.course_metadata import BaseCourseExp
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.utils import SapCourseExporter, get_launch_url
 from pytest import mark, raises
+from waffle.testutils import override_switch
 
 from django.core import mail
 from django.test import override_settings
@@ -1277,12 +1278,11 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         filtered_course_modes = filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
 
-    @mock.patch('integrated_channels.sap_success_factors.utils.configuration_helpers')
+    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
     @mock.patch('enterprise.models.configuration_helpers')
     def test_get_launch_url_flag_on(
             self,
-            mock_config_helpers_1,
-            mock_config_helpers_2):
+            mock_config_helpers_1):
         """
         Test `get_launch_url` helper method.
         """
@@ -1292,11 +1292,11 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         expected_url = ('https://www.example.com/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
                         'course-v1:edX+DemoX+Demo_Course/enroll/')
         enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid)
-        mock_config_helpers_2.get_value.return_value = 1
 
         launch_url = get_launch_url(enterprise_customer, course_id)
         assert launch_url == expected_url
 
+    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=False)
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
     def test_get_launch_url_flag_off(
             self,

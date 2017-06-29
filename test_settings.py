@@ -34,6 +34,7 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.admin",  # only used in DEBUG mode
     "django.contrib.messages",
+    "waffle",
 
     "enterprise",
     "integrated_channels.integrated_channel",

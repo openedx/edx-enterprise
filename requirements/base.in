@@ -16,3 +16,4 @@ django-object-actions                   # Object actions in Django admin
 edx-rest-api-client                     # For accessing the Enrollment API (and possibly other edX APIs)
 django-config-models==0.1.6
 requests                                # Required for SAPSuccessFactorsAPIClient
+django-waffle                           # Allows ability to add and control flags and switches for features
