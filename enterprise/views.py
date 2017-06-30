@@ -113,10 +113,10 @@ class GrantDataSharingPermissions(View):
     """
 
     page_title = _('Data sharing consent required')
-    consent_message_header = _('Before enrollment is complete...')
+    consent_message_header = _('Consent to share your data')
     requested_permissions_header = _('{enterprise_customer_name} would like to know about:')
     agreement_text = _(
-        'I agree to allow {platform_name} to share data about my enrollment, completion, and performance '
+        'I agree to allow {platform_name} to share data about my enrollment, completion and performance '
         'in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}.'
     )
     continue_text = _('Yes, continue')
@@ -147,6 +147,10 @@ class GrantDataSharingPermissions(View):
         'I may not withdraw my permission but I may elect to unenroll from any courses or programs that are '
         'sponsored by {enterprise_customer_name}.'
     )
+    sharable_items_note_header = _('Please note')
+    sharable_items_notes = [
+        _('If you decline to consent, that fact may be shared with {enterprise_customer_name}.'),
+    ]
     confirmation_modal_header = _('Are you aware...')
     modal_affirm_decline_msg = _('I decline')
     modal_abort_decline_msg = _('View the data sharing policy')
@@ -207,6 +211,13 @@ class GrantDataSharingPermissions(View):
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,
             ),
+            'sharable_items_note_header': self.sharable_items_note_header,
+            'sharable_items_notes': [
+                item.format(
+                    enterprise_customer_name=enterprise_customer.name,
+                    platform_name=platform_name
+                ) for item in self.sharable_items_notes
+            ],
             'confirmation_modal_header': self.confirmation_modal_header,
             'confirmation_modal_affirm_decline_text': self.modal_affirm_decline_msg,
             'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
@@ -267,12 +278,24 @@ class GrantDataSharingPermissions(View):
         # enterprise name in bold text.
         course_specific_context = {
             'consent_request_prompt': _(
-                'To access this course and use your discount, you must first consent to share your '
-                'learning achievements with {bold_start}{enterprise_customer_name}{bold_end}.'
+                'To access this course, you must first consent to share your learning achievements '
+                'with {bold_start}{enterprise_customer_name}{bold_end}.'
             ).format(
                 enterprise_customer_name=customer.name,
                 bold_start='<b>',
                 bold_end='</b>',
+            ),
+            'requested_permissions_header': _(
+                'Per the {start_link}Data Sharing Policy{end_link}, '
+                '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
+            ).format(
+                enterprise_customer_name=customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                start_link='<a href="#consent-policy-dropdown-bar" '
+                           'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">',
+                end_link='</a>',
+
             ),
             'confirmation_alert_prompt': _(
                 'In order to start this course and use your discount, {bold_start}you must{bold_end} consent '
@@ -282,9 +305,7 @@ class GrantDataSharingPermissions(View):
                 bold_start='<b>',
                 bold_end='</b>',
             ),
-            'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
-                enterprise_customer_name=customer.name,
-            ),
+            'confirmation_alert_prompt_warning': '',
             'LANGUAGE_CODE': get_language_from_request(request),
             'platform_name': platform_name,
             'course_id': course_id,
@@ -306,7 +327,8 @@ class GrantDataSharingPermissions(View):
                 platform_name=platform_name,
                 strong_start='<strong>',
                 strong_end='</strong>',
-            )
+            ),
+            'policy_link_template': '',
         }
         context_data.update(course_specific_context)
         if customer.require_account_level_consent:
