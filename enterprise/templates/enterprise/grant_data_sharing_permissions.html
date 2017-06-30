@@ -48,7 +48,7 @@
                       <p>{{ consent_request_prompt|safe }} {{ policy_link_template }}</p>
                     {% endautoescape %}
 
-                    <p>{{ requested_permissions_header }}
+                    <p>{{ requested_permissions_header|safe }}
                       <ul class="consent-items">
                         {% for permission in requested_permissions %}
                           <li>{{ permission }}</li>
@@ -103,8 +103,16 @@
                       {% endfor %}
                     </ul>
                     <p>{{ sharable_items_footer }}</p>
+
+                    <p>{{ sharable_items_note_header }}</p>
+                    <ul class="consent-policy-bulletpoints">
+                      {% for item in sharable_items_notes %}
+                        <li>{{ item }}</li>
+                      {% endfor %}
+                    </ul>
+
                     <p>
-                      <a href="#">{{ policy_return_link_text }}</a>
+                      <a class="pull-right" href="#">{{ policy_return_link_text }}</a>
                     </p>
                   </div>
                 </div>

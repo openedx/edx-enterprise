@@ -205,6 +205,7 @@ class TestGrantDataSharingPermissions(TestCase):
             'confirmation_alert_prompt_warning': expected_warning,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
+            'sharable_items_note_header': 'Please note',
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
@@ -249,6 +250,7 @@ class TestGrantDataSharingPermissions(TestCase):
             'confirmation_alert_prompt_warning': expected_warning,
             'platform_name': 'This Platform',
             'enterprise_customer_name': 'Fake Customer Name',
+            'sharable_items_note_header': 'Please note',
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
@@ -516,21 +518,24 @@ class TestGrantDataSharingPermissions(TestCase):
         response = self.client.get(self.url, data=params)
         assert response.status_code == 200
         expected_prompt = (
-            'To access this course and use your discount, you must first consent to share your '
-            'learning achievements with <b>Starfleet Academy</b>.'
+            'To access this course, you must first consent to share your learning achievements '
+            'with <b>Starfleet Academy</b>.'
         )
         expected_alert = (
             'In order to start this course and use your discount, <b>you must</b> consent to share your '
             'course data with Starfleet Academy.'
         )
-        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
-            enterprise_customer_name='Starfleet Academy'
-        )
+
         for key, value in {
                 "platform_name": "My Platform",
                 "consent_request_prompt": expected_prompt,
+                "requested_permissions_header": (
+                    'Per the <a href="#consent-policy-dropdown-bar" '
+                    'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">'
+                    'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
+                ),
                 'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': expected_warning,
+                'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any My Platform courses or programs that '
@@ -544,7 +549,8 @@ class TestGrantDataSharingPermissions(TestCase):
                 "enterprise_customer_name": ecu.enterprise_customer.name,
                 "course_specific": True,
                 "enrollment_deferred": enrollment_deferred,
-                "welcome_text": "Welcome to My Platform."
+                "welcome_text": "Welcome to My Platform.",
+                'sharable_items_note_header': 'Please note',
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
@@ -611,14 +617,11 @@ class TestGrantDataSharingPermissions(TestCase):
             'In order to start this course and use your discount, <b>you must</b> consent to share your '
             'course data with Starfleet Academy.'
         )
-        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
-            enterprise_customer_name='Starfleet Academy'
-        )
         for key, value in {
                 "platform_name": "My Platform",
                 "consent_request_prompt": expected_prompt,
                 'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': expected_warning,
+                'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any My Platform courses or programs that '
@@ -632,6 +635,8 @@ class TestGrantDataSharingPermissions(TestCase):
                 "enterprise_customer_name": ecu.enterprise_customer.name,
                 "course_specific": True,
                 "enrollment_deferred": enrollment_deferred,
+                "policy_link_template": "",
+                "sharable_items_note_header": "Please note",
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
