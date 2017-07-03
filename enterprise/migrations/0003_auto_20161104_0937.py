@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import django.db.models.deletion
+import django
 from django.db import migrations, models
 
 
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='enterprisecustomer',
             name='site',
-            field=models.ForeignKey(related_name='enterprise_customers', default=1, to='sites.Site'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customers', default=1, to='sites.Site'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -31,6 +31,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='enterprisecustomerbrandingconfiguration',
             name='enterprise_customer',
-            field=models.OneToOneField(related_name='branding_configuration', to='enterprise.EnterpriseCustomer'),
+            field=models.OneToOneField(related_name='branding_configuration', on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomer'),
         ),
     ]

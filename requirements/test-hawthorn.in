@@ -1,0 +1,21 @@
+# This requirements is currently speculative; it includes the minimal
+# changes needed to make the Enterprise application Django 1.11-compatible.
+# As Hawthorn approaches, this file (as well as platform-master.in) will be
+# kept up-to-date to ensure compatibility.
+
+celery==3.1.18                          # Run task workers in other locations
+django>=1.11,<2.0                       # Application server
+djangorestframework==3.6.3              # REST API extensions for Django
+djangorestframework-oauth==1.1.0        # For enterprise REST API endpoint
+django-filter==1.0.4                    # HTTP Request filters for Django and DRF
+django-model-utils==2.3.1               # Provides TimeStampedModel abstract base class
+edx-django-oauth2-provider==1.1.4       # edx Django OAuth2 provider
+edx-drf-extensions==1.2.3               # edX extensions to django rest framework
+unicodecsv==0.14.1                      # Allows exporting CSV with unicode support (a drop-in replacement for built-in csv module)
+Pillow==3.4                             # Image manipulation module, required to use ImageField
+django-extensions==1.5.9                # Required to use TimeStampedModel
+django-simple-history==1.9.0            # History for Django models
+edx-rest-api-client==1.7.1              # For accessing the Enrollment API (and possibly other edX APIs)
+django-config-models==0.1.8
+requests==2.9.1                         # Required for SAPSuccessFactorsAPIClient
+django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features

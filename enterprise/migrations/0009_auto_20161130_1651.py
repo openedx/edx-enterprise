@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import django.db.models.deletion
+import django
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
@@ -43,7 +43,7 @@ class Migration(migrations.Migration):
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, verbose_name='created', editable=False)),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
                 ('state', models.CharField(default='not_set', help_text='Stores whether the user linked to this model has consented to have their information shared with the linked EnterpriseCustomer.', max_length=8, choices=[('not_set', 'Not set'), ('enabled', 'Enabled'), ('disabled', 'Disabled')])),
-                ('user', models.ForeignKey(to='enterprise.EnterpriseCustomerUser')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomerUser')),
             ],
             options={
                 'verbose_name': 'Data Sharing Consent Audit State',

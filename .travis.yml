@@ -7,9 +7,10 @@ python:
   - 3.5
 
 env:
-  - TOXENV=django18
-  - TOXENV=django19
-  - TOXENV=django110
+  - TOXENV=ficus
+  - TOXENV=ginkgo
+  - TOXENV=hawthorn
+  - TOXENV=master
 
 matrix:
   include:

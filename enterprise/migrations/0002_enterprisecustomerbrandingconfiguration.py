@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
 import django.utils.timezone
 from django.db import migrations, models
 
@@ -24,7 +25,7 @@ class Migration(migrations.Migration):
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, verbose_name='created', editable=False)),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
                 ('logo', models.ImageField(validators=[enterprise.validators.validate_image_extension, enterprise.validators.validate_image_size], upload_to=enterprise.models.logo_path, max_length=255, blank=True, help_text='Please add only .PNG files for logo images.', null=True)),
-                ('enterprise_customer', models.OneToOneField(to='enterprise.EnterpriseCustomer')),
+                ('enterprise_customer', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomer')),
             ],
             options={
                 'verbose_name': 'Enterprise Customer Branding',

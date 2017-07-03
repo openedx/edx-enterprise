@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.38.0] - 2017-07-11
+---------------------
+
+* Move to edx-platform release-focused testing
+* Add Django 1.11 support in Hawthorn testing branch
+
 [0.37.1] - 2017-07-11
 ---------------------
 

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
 from django.db import migrations, models
 
 
@@ -14,11 +15,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='enterprisecustomeruser',
             name='enterprise_customer',
-            field=models.ForeignKey(to='enterprise.EnterpriseCustomer', related_name='enterprise_customer_users'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomer', related_name='enterprise_customer_users'),
         ),
         migrations.AlterField(
             model_name='userdatasharingconsentaudit',
             name='user',
-            field=models.ForeignKey(to='enterprise.EnterpriseCustomerUser', related_name='data_sharing_consent'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomerUser', related_name='data_sharing_consent'),
         ),
     ]

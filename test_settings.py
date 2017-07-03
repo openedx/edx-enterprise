@@ -115,6 +115,7 @@ REST_FRAMEWORK = {
 
 # URL for the server that django client listens to by default.
 TEST_SERVER = "http://testserver"
+ALLOWED_HOSTS = ["testserver.enterprise"]
 MEDIA_URL = "/"
 
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
