@@ -592,82 +592,59 @@ class TestEnterpriseCatalogAPIViews(APITest):
 
     @ddt.data(
         (
-            reverse('catalogs-list'), itemgetter('id'), [], [],
+            reverse('catalogs-list'), {}, {'detail': 'The resource you are looking for does not exist.'},
         ),
         (
             reverse('catalogs-list'),
-            itemgetter('id'),
-            [
-                {
-                    'id': 1,
-                    'name': 'Enterprise Dummy Catalog',
-                    'query': '*',
-                    'courses_count': 22,
-                    'viewers': []
-                },
-                {
-                    'id': 2,
-                    'name': 'Enterprise All Biology',
-                    'query': 'title:*Biology*',
-                    'courses_count': 3,
-                    'viewers': []
-                },
-                {
-                    'id': 3,
-                    'name': 'Test User Catalog',
-                    'query': '*',
-                    'courses_count': 22,
-                    'viewers': [
-                        'test-user'
+            {
+                'count': 3,
+                'next': 'http://testserver/enterprise/api/v1/catalogs/?page=3',
+                'previous': 'http://testserver/enterprise/api/v1/catalogs/?page=1',
+                'results':
+                    [
+                        {
+                            'id': 2,
+                            'name': 'Enterprise All Biology',
+                            'query': 'title:*Biology*',
+                            'courses_count': 3,
+                            'viewers': []
+                        },
                     ]
-                },
-            ],
-            [
-                {
-                    'id': 1,
-                    'name': 'Enterprise Dummy Catalog',
-                    'query': '*',
-                    'courses_count': 22,
-                    'viewers': []
-                },
-                {
-                    'id': 2,
-                    'name': 'Enterprise All Biology',
-                    'query': 'title:*Biology*',
-                    'courses_count': 3,
-                    'viewers': []
-                },
-                {
-                    'id': 3,
-                    'name': 'Test User Catalog',
-                    'query': '*',
-                    'courses_count': 22,
-                    'viewers': [
-                        'test-user'
-                    ]
-                },
-            ],
+            },
+            {
+                'count': 3,
+                'next': 'http://testserver/enterprise/api/v1/catalogs/?page=3',
+                'previous': 'http://testserver/enterprise/api/v1/catalogs/?page=1',
+                'results':
+                [
+                    {
+                        'id': 2,
+                        'name': 'Enterprise All Biology',
+                        'query': 'title:*Biology*',
+                        'courses_count': 3,
+                        'viewers': []
+                    },
+                ]
+            },
         )
     )
     @ddt.unpack
-    def test_enterprise_catalogs_list(self, url, sorting_key, mocked_catalogs, expected):
+    def test_enterprise_catalogs_list(self, url, mocked_catalogs, expected_catalogs):
         """
         Make sure enterprise catalog view returns correct data.
 
         Arguments:
-            mocked_catalogs (list): A list of dict elements with each dict element containing catalog information.
-                This list is used to mock catalogs returned by catalog api.
-            expected (list): A list of dict elements with each dict element containing catalog information.
-                This is the list of catalogs expected from enterprise catalog api endpoint.
+            mocked_catalogs (dict): A dict containing catalog information as returned by discovery API.
+            expected_catalogs (dict): A dict elements containing expected catalog information.
         """
         with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
             mock_catalog_api_client.return_value = mock.Mock(
-                get_all_catalogs=mock.Mock(return_value=mocked_catalogs),
+                get_paginated_catalogs=mock.Mock(return_value=mocked_catalogs),
             )
             response = self.client.get(url)
             response = self.load_json(response.content)
 
-            assert sorted(response, key=sorting_key) == sorted(expected, key=sorting_key)
+            assert response == expected_catalogs
 
     @ddt.data(
         (

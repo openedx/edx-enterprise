@@ -193,6 +193,21 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert resource_id is None
         assert actual_result == response_dict
 
+    def test_get_paginated_catalogs(self):
+        """
+        Verify get_paginated_catalogs of CourseCatalogApiClient works as expected.
+        """
+        response_dict = {'very': 'complex', 'json': {'with': 'nested object'}}
+        self.get_data_mock.return_value = response_dict
+
+        actual_result = self.api.get_paginated_catalogs()
+
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == 'catalogs'
+        assert resource_id is None
+        assert actual_result == response_dict
+
     @ddt.data(*EMPTY_RESPONSES)
     def test_get_paginated_catalog_courses_empty_response(self, response):
         """

@@ -217,9 +217,14 @@ class EnterpriseCatalogViewSet(viewsets.ViewSet):
         """
         # fetch all course catalogs.
         catalog_api = CourseCatalogApiClient(request.user)
-        catalogs = catalog_api.get_all_catalogs()
-        serializer = self.serializer_class(catalogs, many=True)
-        return Response(serializer.data)
+        catalogs = catalog_api.get_paginated_catalogs(request.GET)
+
+        if not catalogs:
+            logger.error('Unable to fetch API response from endpoint "/catalogs/".')
+            raise NotFound('The resource you are looking for does not exist.')
+
+        serializer = serializers.CourseCatalogAPIResponseReadOnlySerializer(catalogs)
+        return get_paginated_response(serializer.data, request)
 
     def retrieve(self, request, pk=None):  # pylint: disable=invalid-name
         """

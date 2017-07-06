@@ -16,6 +16,7 @@ from rest_framework.test import APIRequestFactory
 from django.test import override_settings
 
 from enterprise.api.v1.serializers import (
+    CourseCatalogAPIResponseReadOnlySerializer,
     EnterpriseCatalogCoursesReadOnlySerializer,
     EnterpriseCourseCatalogReadOnlySerializer,
     EnterpriseCustomerUserEntitlementSerializer,
@@ -109,6 +110,63 @@ class TestEnterpriseCatalogSerializer(APITest):
         Test create method of EnterpriseCourseCatalogReadOnlySerializer.
 
         Verify that create for EnterpriseCourseCatalogReadOnlySerializer returns
+        successfully without making any changes.
+        """
+        with self.assertNumQueries(0):
+            self.serializer.create(self.validated_data)
+
+
+@mark.django_db
+class TestCourseCatalogAPIResponseReadOnlySerializer(APITest):
+    """
+    Tests for enterprise API serializers.
+    """
+
+    def setUp(self):
+        """
+        Perform operations common for all tests.
+
+        Populate data base for api testing.
+        """
+        super(TestCourseCatalogAPIResponseReadOnlySerializer, self).setUp()
+
+        # instance is none as models for this serializer do not exist in enterprise.
+        self.instance = None
+        self.data = {
+            'count': 1,
+            'next': None,
+            'previous': None,
+            'results': [
+                {
+                    'id': 4,
+                    'name': 'Catalog for user "verified"',
+                    'query': '*',
+                    'courses_count': 2,
+                    'viewers': ['test-user']
+                }
+            ]
+        }
+
+        self.validated_data = self.data
+        self.serializer = CourseCatalogAPIResponseReadOnlySerializer(
+            self.data
+        )
+
+    def test_update(self):
+        """
+        Test update method of CourseCatalogAPIResponseReadOnlySerializer.
+
+        Verify that update for CourseCatalogAPIResponseReadOnlySerializer returns
+        successfully without making any changes.
+        """
+        with self.assertNumQueries(0):
+            self.serializer.update(self.instance, self.validated_data)
+
+    def test_create(self):
+        """
+        Test create method of CourseCatalogAPIResponseReadOnlySerializer.
+
+        Verify that create for CourseCatalogAPIResponseReadOnlySerializer returns
         successfully without making any changes.
         """
         with self.assertNumQueries(0):
