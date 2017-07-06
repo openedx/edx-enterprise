@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-06 02:48-0500\n"
+"POT-Creation-Date: 2017-07-11 10:44-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -627,7 +627,7 @@ msgid ""
 msgstr ""
 
 #: enterprise/templates/enterprise/grant_data_sharing_permissions.html:121
-#: enterprise/views.py:656
+#: enterprise/views.py:655
 msgid "Close"
 msgstr ""
 
@@ -916,10 +916,12 @@ msgstr ""
 msgid "Effort"
 msgstr ""
 
-#: enterprise/views.py:655
+#: enterprise/views.py:763
 #, python-brace-format
-msgid "{hours} hours per week, per course"
-msgstr ""
+msgid "{hours} hour per week, per course"
+msgid_plural "{hours} hours per week, per course"
+msgstr[0] ""
+msgstr[1] ""
 
 #: integrated_channels/integrated_channel/management/commands/__init__.py:48
 msgid ""

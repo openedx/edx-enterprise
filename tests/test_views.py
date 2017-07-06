@@ -1302,6 +1302,95 @@ class TestCourseEnrollmentView(TestCase):
     @mock.patch('enterprise.views.CourseCatalogApiClient')
     @mock.patch('enterprise.views.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
+    def test_get_course_enrollment_page_edge_case_formatting(
+            self,
+            registry_mock,
+            ecommerce_api_client_mock,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            configuration_helpers_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        self._setup_course_catalog_client(course_catalog_client_mock)
+        self._setup_organizations_client(organizations_helpers_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 30.1)
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()  # pylint: disable=no-member
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        # Set up expected context
+        course_modes = [
+            {
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$30.10",
+                "description": "Earn a verified certificate!",
+                "premium": True,
+            }
+        ]
+        expected_context = {
+            'platform_name': 'edX',
+            'page_title': 'Confirm your course',
+            'course_id': self.demo_course_id,
+            'course_name': self.dummy_demo_course_details_data['name'],
+            'course_organization': self.dummy_demo_course_details_data['org'],
+            'course_short_description': self.dummy_demo_course_details_data['short_description'],
+            'course_pacing': 'Instructor-Paced',
+            'course_start_date': parse(self.dummy_demo_course_details_data['start']).strftime('%B %d, %Y'),
+            'course_image_uri': self.dummy_demo_course_details_data['media']['course_image']['uri'],
+            'enterprise_customer': enterprise_customer,
+            'welcome_text': 'Welcome to edX.',
+            'enterprise_welcome_text': (
+                "<strong>Starfleet Academy</strong> has partnered with <strong>edX</strong> to "
+                "offer you high-quality learning opportunities from the world's best universities."
+            ),
+            'confirmation_text': 'Confirm your course',
+            'starts_at_text': 'Starts',
+            'view_course_details_text': 'View Course Details',
+            'select_mode_text': 'Please select one:',
+            'price_text': 'Price',
+            'continue_link_text': 'Continue',
+            'course_modes': course_modes,
+            'premium_modes': course_modes,
+            'course_effort': '1 hour per week, per course',
+        }
+        self.dummy_demo_course_details_data['effort'] = '01:00'
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.get_partial_pipeline')
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_specific_enrollment_view_audit_enabled(
             self,
             registry_mock,

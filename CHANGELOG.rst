@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.37.1] - 2017-07-11
+---------------------
+
+* Update Enterprise landing page styling/language
+
 [0.37.0] - 2017-07-06
 ---------------------
 
