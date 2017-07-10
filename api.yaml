@@ -17,6 +17,38 @@ apigateway_responses:
     statusCode: "500"
   default:
     statusCode: "400"
+apigateway_responses_with_mapping_template:
+  200:
+    responseTemplates:
+      application/json: |
+          #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
+          #macro (updateURL $url)
+              #if($url != '') {
+                  $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
+              } #else {
+                  none
+              }
+              #end
+          #end
+          {
+            "count": $inputRoot.count,
+            "next": "$updateURL$inputRoot.next",
+            "previous": "$updateURL$inputRoot.previous",
+            "results" : $inputRoot.results,
+          }
+    statusCode: "200"
+  401:
+    statusCode: "401"
+  403:
+    statusCode: "403"
+  404:
+    statusCode: "404"
+  429:
+    statusCode: "429"
+  500:
+    statusCode: "500"
+  default:
+    statusCode: "400"
 auth_header:
   in: header
   name: Authorization
@@ -107,6 +139,11 @@ endpoints:
             name: page
             required: false
             type: number
+          -
+            in: query
+            name: page_size
+            required: false
+            type: number
         produces:
           - application/json
           - application/csv
@@ -133,8 +170,26 @@ endpoints:
             integration.request.querystring.limit: method.request.querystring.limit
             integration.request.querystring.offset: method.request.querystring.offset
             integration.request.querystring.page: method.request.querystring.page
+            integration.request.querystring.page_size: method.request.querystring.page_size
           responses:
             200:
+              responseTemplates:
+                application/json: |
+                    #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
+                    #macro (updateURL $url)
+                        #if($url != '') {
+                            $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
+                        } #else {
+                            none
+                        }
+                        #end
+                    #end
+                    {
+                      "count": $inputRoot.count,
+                      "next": "$updateURL$inputRoot.next",
+                      "previous": "$updateURL$inputRoot.previous",
+                      "results" : $inputRoot.results,
+                    }
               statusCode: "200"
             401:
               statusCode: "401"
@@ -174,6 +229,11 @@ endpoints:
             name: page
             required: false
             type: number
+          -
+            in: query
+            name: page_size
+            required: false
+            type: number
         produces:
           - application/json
           - application/csv
@@ -199,8 +259,26 @@ endpoints:
             integration.request.querystring.limit: method.request.querystring.limit
             integration.request.querystring.offset: method.request.querystring.offset
             integration.request.querystring.page: method.request.querystring.page
+            integration.request.querystring.page_size: method.request.querystring.page_size
           responses:
             200:
+              responseTemplates:
+                application/json: |
+                    #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
+                    #macro (updateURL $url)
+                        #if($url != '') {
+                            $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
+                        } #else {
+                            none
+                        }
+                        #end
+                    #end
+                    {
+                      "count": $inputRoot.count,
+                      "next": "$updateURL$inputRoot.next",
+                      "previous": "$updateURL$inputRoot.previous",
+                      "results" : $inputRoot.results,
+                    }
               statusCode: "200"
             401:
               statusCode: "401"
@@ -236,6 +314,11 @@ page_qs_parameter:
   name: page
   required: false
   type: number
+page_size_qs_parameter:
+  in: query
+  name: page_size
+  required: false
+  type: number
 produces:
   - application/json
   - application/csv
@@ -261,8 +344,26 @@ x-amazon-apigateway-integration:
     integration.request.querystring.limit: method.request.querystring.limit
     integration.request.querystring.offset: method.request.querystring.offset
     integration.request.querystring.page: method.request.querystring.page
+    integration.request.querystring.page_size: method.request.querystring.page_size
   responses:
     200:
+      responseTemplates:
+        application/json: |
+            #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
+            #macro (updateURL $url)
+                #if($url != '') {
+                    $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
+                } #else {
+                    none
+                }
+                #end
+            #end
+            {
+              "count": $inputRoot.count,
+              "next": "$updateURL$inputRoot.next",
+              "previous": "$updateURL$inputRoot.previous",
+              "results" : $inputRoot.results,
+            }
       statusCode: "200"
     401:
       statusCode: "401"
@@ -306,8 +407,26 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters:
     integration.request.querystring.limit: method.request.querystring.limit
     integration.request.querystring.offset: method.request.querystring.offset
     integration.request.querystring.page: method.request.querystring.page
+    integration.request.querystring.page_size: method.request.querystring.page_size
   responses:
     200:
+      responseTemplates:
+        application/json: |
+            #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
+            #macro (updateURL $url)
+                #if($url != '') {
+                    $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
+                } #else {
+                    none
+                }
+                #end
+            #end
+            {
+              "count": $inputRoot.count,
+              "next": "$updateURL$inputRoot.next",
+              "previous": "$updateURL$inputRoot.previous",
+              "results" : $inputRoot.results,
+            }
       statusCode: "200"
     401:
       statusCode: "401"

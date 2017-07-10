@@ -27,6 +27,45 @@ apigateway_responses: &apigateway_responses
   500:
     statusCode: "500"
 
+apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_template
+  default:
+    statusCode: "400"
+  200:
+    statusCode: "200"
+    responseTemplates:
+      # Response body mapping template, this template is used for updating
+      # "next" and "previous" urls (both host and url path) while preserving
+      # the protocol (http | https) and querystring parameters.
+      application/json: >
+        #set($inputRoot = $input.path('$'))
+        #set($host = $stageVariables.gateway_host)
+
+        #macro (updateURL $url)
+            #if($url != '') {
+                $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
+            } #else {
+                none
+            }
+            #end
+        #end
+
+        {
+          "count": $inputRoot.count,
+          "next": "$updateURL$inputRoot.next",
+          "previous": "$updateURL$inputRoot.previous",
+          "results": $inputRoot.results,
+        }
+  401:
+    statusCode: "401"
+  403:
+    statusCode: "403"
+  404:
+    statusCode: "404"
+  429:
+    statusCode: "429"
+  500:
+    statusCode: "500"
+
 produces: &produces
   - "application/json"
   - "application/csv"
@@ -77,10 +116,16 @@ page_qs_parameter: &page_qs_parameter
   required: false
   type: "number"
 
+page_size_qs_parameter: &page_size_qs_parameter
+  in: "query"
+  name: "page_size"
+  required: false
+  type: "number"
+
 # AWS API Gateway vendor extension point. This information is used
 #  by https://github.com/awslabs/aws-apigateway-importer.
 x-amazon-apigateway-integration: &apigateway_integration
-  responses: *apigateway_responses
+  responses: *apigateway_responses_with_mapping_template
   httpMethod: "GET"
   type: "http"
   requestParameters:
@@ -88,6 +133,7 @@ x-amazon-apigateway-integration: &apigateway_integration
     integration.request.querystring.limit: "method.request.querystring.limit"
     integration.request.querystring.offset: "method.request.querystring.offset"
     integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
 
 x-amazon-apigateway-integration-with-id: &apigateway_integration_with_id_parameter
   responses: *apigateway_responses
@@ -98,7 +144,7 @@ x-amazon-apigateway-integration-with-id: &apigateway_integration_with_id_paramet
     integration.request.path.id: "method.request.path.id"
 
 x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_integration_with_id_and_querystring_parameters
-  responses: *apigateway_responses
+  responses: *apigateway_responses_with_mapping_template
   httpMethod: "GET"
   type: "http"
   requestParameters:
@@ -107,6 +153,7 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_
     integration.request.querystring.limit: "method.request.querystring.limit"
     integration.request.querystring.offset: "method.request.querystring.offset"
     integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
 
 endpoints:
   v1:
@@ -120,6 +167,7 @@ endpoints:
             - *limit_qs_parameter
             - *offset_qs_parameter
             - *page_qs_parameter
+            - *page_size_qs_parameter
           operationId: "get_enterprise_catalogs"
           responses: *responses
           x-amazon-apigateway-integration:
@@ -149,6 +197,7 @@ endpoints:
             - *limit_qs_parameter
             - *offset_qs_parameter
             - *page_qs_parameter
+            - *page_size_qs_parameter
           operationId: "get_enterprise_catalog_courses"
           responses: *responses
           x-amazon-apigateway-integration:
