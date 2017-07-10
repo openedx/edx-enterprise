@@ -247,6 +247,28 @@ class EnterpriseCourseCatalogReadOnlySerializer(serializers.Serializer):
         pass
 
 
+class CourseCatalogAPIResponseReadOnlySerializer(serializers.Serializer):
+    """
+    Serializer for course catalog api.
+    """
+    count = serializers.IntegerField(read_only=True, help_text=_('Total count of catalogs.'))
+    next = serializers.CharField(read_only=True, help_text=_('URL to fetch next page of catalogs.'))
+    previous = serializers.CharField(read_only=True, help_text=_('URL to fetch previous page of catalogs.'))
+    results = serializers.ListField(read_only=True, help_text=_('list of catalogs.'))
+
+    def create(self, validated_data):
+        """
+        Do not perform any operations for state changing requests.
+        """
+        pass
+
+    def update(self, instance, validated_data):
+        """
+        Do not perform any operations for state changing requests.
+        """
+        pass
+
+
 class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
     """
     Serializer for enterprise customer catalog courses.

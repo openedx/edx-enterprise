@@ -94,7 +94,7 @@ class CourseCatalogApiClient(object):
 
     def get_paginated_catalog_courses(self, catalog_id, querystring=None):
         """
-        Return paginated resopnse for all catalog courses.
+        Return paginated response for all catalog courses.
 
         Returns:
             dict: API response with links to next and previous pages.
@@ -104,6 +104,18 @@ class CourseCatalogApiClient(object):
         return self._load_data(
             resource, default=[], querystring=querystring,
             traverse_pagination=False, many=False,
+        )
+
+    def get_paginated_catalogs(self, querystring=None):
+        """
+        Return a paginated list of course catalogs, including name and ID.
+
+        Returns:
+            dict: Paginated response containing catalogs available for the user.
+
+        """
+        return self._load_data(
+            'catalogs', default=[], querystring=querystring, traverse_pagination=False, many=False
         )
 
     def get_catalog_courses(self, catalog_id):

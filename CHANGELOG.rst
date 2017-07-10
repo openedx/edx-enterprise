@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.37.0] - 2017-07-06
+---------------------
+
+* Update enterprise catalog api endpoint so that api returns paginated catalogs.
+
 [0.36.11] - 2017-06-29
 ----------------------
 

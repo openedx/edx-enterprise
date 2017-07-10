@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-06-30 05:48-0500\n"
+"POT-Creation-Date: 2017-07-06 02:48-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -313,18 +313,34 @@ msgid "Usernames of users with explicit access to view this catalog"
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:254
-msgid "Total count of catalog courses."
+msgid "Total count of catalogs."
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:255
-msgid "URL to fetch next page of courses."
+msgid "URL to fetch next page of catalogs."
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:256
-msgid "URL to fetch previous page of courses."
+msgid "URL to fetch previous page of catalogs."
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:257
+msgid "list of catalogs."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:276
+msgid "Total count of catalog courses."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:277
+msgid "URL to fetch next page of courses."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:278
+msgid "URL to fetch previous page of courses."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:279
 msgid "list of courses."
 msgstr ""
 
