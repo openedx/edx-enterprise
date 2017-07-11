@@ -333,14 +333,16 @@ h2#modal-header-text {
     margin-right: 10px;
 }
 
-.modal-content header {
-    display: table;
-    margin-bottom: 10px;
+.modal-content .modal-header-wrapper {
+    display: flex;
 }
 
-.modal-content header > div {
-    display: table-cell;
-    vertical-align: top;
+.modal-content .modal-header-wrapper .image {
+    flex-basis: 33%;
+}
+
+.modal-content header {
+    margin-bottom: 10px;
 }
 
 .modal-content header .image {
@@ -408,17 +410,22 @@ h2#modal-header-text {
     opacity: .6;
 }
 
-.modal-content .body .details .text {
-    display: block;
-    float: right;
-    width: 55%;
-    padding-left: 10px;
-}
-
 .modal-content .body .details .title,
 .modal-content .body .details .text,
 .modal-content .body .details .text .discount {
     font-size: 13px;
+}
+
+.modal-content .body .details .detail-container {
+    display: flex;
+}
+
+.modal-content .body .details .detail-title-container {
+    flex-basis: 25%;
+}
+
+.modal-content .body .details .detail-value-container {
+    flex-shrink: 1;
 }
 
 .modal-content .body .details .text strike {
@@ -486,7 +493,7 @@ h2#modal-header-text {
         display: block;
         width: 210px;
         float: left;
-        margin-right: 15px;
+        margin-right: 35px;
     }
     .modal-content header .details .organization {
         display: block;

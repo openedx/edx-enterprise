@@ -91,17 +91,19 @@
       <div class="course-detail-modal-scrollable">
 
         <header class="wrapper modal-header">
-          <div class="image">
-            <img src="{{ course_image_uri }}" alt="{{ course_name }}"/>
-          </div>
-          <div class="details">
-            <h1 id="modal-header-text">{{ course_name }}</h1>
-            <p class="short-description">{{ course_short_description }}</p>
-            {% if organization_logo and organization_name %}
-              <div class="organization">
-                <img src="{{ organization_logo }}" alt="{{ organization_name }}" />
-              </div>
-            {% endif %}
+          <div class="modal-header-wrapper">
+            <div class="image">
+              <img src="{{ course_image_uri }}" alt="{{ course_name }}"/>
+            </div>
+            <div class="details">
+              <h1 id="modal-header-text">{{ course_name }}</h1>
+              <p class="short-description">{{ course_short_description }}</p>
+              {% if organization_logo and organization_name %}
+                <div class="organization">
+                  <img src="{{ organization_logo }}" alt="{{ organization_name }}" />
+                </div>
+              {% endif %}
+            </div>
           </div>
         </header>
         <div class="body">
@@ -111,33 +113,50 @@
                 {% with course_mode=premium_modes.0 %}
                   {% if course_mode.original_price %}
                     <li>
-                      <span class="icon fa fa-tag" aria-hidden="true"></span>
-                      <span class="title">{{ price_text }}</span>
-                      <span class="text">
-                        {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
-                          <strike>{{ course_mode.original_price }}</strike>
-                          <br />
-                          <span class="discount">{{ course_mode.final_price }}</span>
-                        {% else %}
-                          {{ course_mode.original_price }}
-                        {% endif %}
-                      </span>
+                      <div class="detail-container">
+                        <div class="detail-title-container">
+                          <span class="icon fa fa-tag" aria-hidden="true"></span>
+                          <span class="title">{{ price_text }}</span>
+                        </div>
+                        <div class="detail-value-container">
+                          <span class="text">
+                            {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
+                              <strike>{{ course_mode.original_price }}</strike>
+                              <span class="discount">{{ course_mode.final_price }}</span>
+                            {% else %}
+                              {{ course_mode.original_price }}
+                            {% endif %}
+                          </span>
+                        </div>
+                      </div>
                     </li>
                   {% endif %}
                 {% endwith %}
               {% endif %}
               {% if course_level_type %}
                 <li>
-                  <span class="icon fa fa-certificate" aria-hidden="true"></span>
-                  <span class="title">{{ level_text }}</span>
-                  <span class="text">{{ course_level_type }}</span>
+                  <div class="detail-container">
+                    <div class="detail-title-container">
+                      <span class="icon fa fa-certificate" aria-hidden="true"></span>
+                      <span class="title">{{ level_text }}</span>
+                    </div>
+                    <div class="detail-value-container">
+                      <span class="text">{{ course_level_type }}</span>
+                    </div>
+                  </div>
                 </li>
               {% endif %}
               {% if course_effort %}
                 <li>
-                  <span class="icon fa fa-tachometer" aria-hidden="true"></span>
-                  <span class="title">{{ effort_text }}</span>
-                  <span class="text">{{ course_effort }}</span>
+                  <div class="detail-container">
+                    <div class="detail-title-container">
+                      <span class="icon fa fa-tachometer" aria-hidden="true"></span>
+                      <span class="title">{{ effort_text }}</span>
+                    </div>
+                    <div class="detail-value-container">
+                      <span class="text">{{ course_effort }}</span>
+                    </div>
+                  </div>
                 </li>
               {% endif %}
             </ol>
