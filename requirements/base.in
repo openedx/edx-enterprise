@@ -1,19 +1,4 @@
-# Core requirements for using this application
+# Core requirements for using this application that are not provided by edx-platform
 
-celery                                  # Run task workers in other locations
-Django>=1.8,<1.11                       # Web application framework
-djangorestframework>=3.2.3,<3.7.0       # REST API extensions for Django
-djangorestframework-oauth               # For enterprise REST API endpoint
-django-filter>=0.11.0,<1.0.0            # HTTP Request filters for Django and DRF
-django-model-utils>=3.0.0,<4.0.0        # Provides TimeStampedModel abstract base class
-edx-django-oauth2-provider              # edx Django OAuth2 provider
-edx-drf-extensions                      # edX extensions to django rest framework
-unicodecsv                              # Allows exporting CSV with unicode support (a drop-in replacement for built-in csv module)
-Pillow                                  # Image manipulation module, required to use ImageField
-django_extensions                       # Required to use TimeStampedModel
-django-simple-history                   # History for Django models
-django-object-actions                   # Object actions in Django admin
-edx-rest-api-client                     # For accessing the Enrollment API (and possibly other edX APIs)
-django-config-models==0.1.6
-requests                                # Required for SAPSuccessFactorsAPIClient
-django-waffle                           # Allows ability to add and control flags and switches for features
+django-object-actions==0.10.0           # Object actions in Django admin
+django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features

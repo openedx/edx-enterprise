@@ -30,8 +30,11 @@ if sys.argv[-1] == "tag":
     os.system("git push --tags")
     sys.exit()
 
-README = open(os.path.join(os.path.dirname(__file__), "README.rst")).read()
-CHANGELOG = open(os.path.join(os.path.dirname(__file__), "CHANGELOG.rst")).read()
+base_path = os.path.dirname(__file__)
+
+README = open(os.path.join(base_path, "README.rst")).read()
+CHANGELOG = open(os.path.join(base_path, "CHANGELOG.rst")).read()
+REQUIREMENTS = open(os.path.join(base_path, 'requirements', 'base.txt'))
 
 setup(
     name="edx-enterprise",
@@ -48,20 +51,7 @@ setup(
         "integrated_channels.sap_success_factors",
     ],
     include_package_data=True,
-    install_requires=[
-        "Django>=1.8.15,<1.11",
-        "djangorestframework>=3.2.3,<3.7.0",
-        "django-config-models==0.1.6",
-        "django-extensions>=1.7.4",
-        "django-filter>=0.11.0,<1.0.0",
-        "django-model-utils>=3.0.0,<4.0.0",
-        "django-object-actions>=0.8.2,<1.0.0",
-        "django-simple-history",
-        "edx-drf-extensions",
-        "Pillow>=3.1.1",
-        "unicodecsv>=0.14.1",
-        "django-waffle",
-    ],
+    install_requires=REQUIREMENTS,
     license="AGPL 3.0",
     zip_safe=False,
     keywords="Django edx",
@@ -70,6 +60,8 @@ setup(
         "Framework :: Django",
         "Framework :: Django :: 1.8",
         "Framework :: Django :: 1.9",
+        "Framework :: Django :: 1.10",
+        "Framework :: Django :: 1.11",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
         "Natural Language :: English",

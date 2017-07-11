@@ -9,7 +9,7 @@ import ddt
 import mock
 from dateutil.parser import parse
 from faker import Factory as FakerFactory
-from pytest import mark, raises
+from pytest import mark
 
 from django.contrib import messages
 from django.core.urlresolvers import NoReverseMatch, reverse
@@ -126,9 +126,8 @@ class TestGrantDataSharingPermissions(TestCase):
         Test that we get the right exception when nothing is patched.
         """
         client = Client()
-        with raises(NotConnectedToOpenEdX) as excinfo:
+        with self.assertRaises(NotConnectedToOpenEdX):
             client.get(self.url)
-        self.assertIsNotNone(excinfo.value)
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.lift_quarantine')
@@ -333,17 +332,12 @@ class TestGrantDataSharingPermissions(TestCase):
         mock_get_ec.return_value = customer
         mock_get_ec2.return_value = customer
         mock_get_rsa.return_value = mock.MagicMock(user=UserFactory())
-        with raises(NoReverseMatch) as excinfo:
+        with self.assertRaises(NoReverseMatch):
             client = Client()
             session = client.session
             session['partial_pipeline_token'] = True
             session.save()
             client.post(self.url)
-        expected = (
-            'Reverse for \'dashboard\' with arguments \'()\' and keyword '
-            'arguments \'{}\' not found. 0 pattern(s) tried: []'
-        )
-        assert str(excinfo.value) == expected
         # Ensure that when consent hasn't been provided, we don't link the user to the Enterprise Customer.
         assert UserDataSharingConsentAudit.objects.all().count() == 0
         assert EnterpriseCustomerUser.objects.all().count() == 0

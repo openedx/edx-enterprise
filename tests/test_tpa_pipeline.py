@@ -8,7 +8,7 @@ import unittest
 
 import ddt
 import mock
-from pytest import mark, raises
+from pytest import mark
 
 from django.contrib import messages
 from django.contrib.messages.storage import fallback
@@ -112,9 +112,8 @@ class TestTpaPipeline(unittest.TestCase):
         with mock.patch('enterprise.tpa_pipeline.Registry') as fake_registry:
             fake_registry.get_from_pipeline.return_value = fake_provider
             assert get_enterprise_customer_for_request(request) == self.customer
-        with raises(NotConnectedToOpenEdX) as excinfo:
+        with self.assertRaises(NotConnectedToOpenEdX):
             get_enterprise_customer_for_request(request)
-        self.assertIsNotNone(excinfo.value)
 
     def test_get_ec_for_sso(self):
         """
@@ -137,9 +136,8 @@ class TestTpaPipeline(unittest.TestCase):
             provider = mock.MagicMock(provider_id='provider_slug')
             fake_registry.get_from_pipeline.return_value = provider
             assert get_enterprise_customer_for_running_pipeline('pipeline') == self.customer
-        with raises(NotConnectedToOpenEdX) as excinfo:
+        with self.assertRaises(NotConnectedToOpenEdX):
             get_enterprise_customer_for_running_pipeline('pipeline')
-        self.assertIsNotNone(excinfo.value)
 
     @mock.patch('enterprise.tpa_pipeline.Registry')
     @mock.patch('enterprise.tpa_pipeline.get_partial_pipeline')

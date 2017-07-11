@@ -139,7 +139,7 @@ def force_fresh_session(view):
     @wraps(view)
     def wrapper(request, *args, **kwargs):
         """
-        Function wrapper.
+        Wrap the function.
         """
         if not request.session.get('is_session_fresh'):
             if request.user.is_authenticated():

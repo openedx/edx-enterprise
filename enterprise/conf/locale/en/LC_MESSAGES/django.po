@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-07-11 10:44-0500\n"
+"POT-Creation-Date: 2017-07-11 11:04-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -400,90 +400,90 @@ msgstr ""
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:115
+#: enterprise/models.py:119
 msgid ""
 "Specifies whether data sharing consent is enabled or disabled for learners "
 "signing in through this enterprise customer. If disabled, consent will not "
 "be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:128
+#: enterprise/models.py:132
 msgid ""
 "Specifies whether data sharing consent is optional, is required at login, or "
 "is required at enrollment."
 msgstr ""
 
-#: enterprise/models.py:136
+#: enterprise/models.py:140
 msgid ""
 "Specifies whether the audit track enrollment option will be displayed in the "
 "course enrollment view."
 msgstr ""
 
-#: enterprise/models.py:143
+#: enterprise/models.py:147
 msgid ""
 "Specifies whether every consent interaction should ask for account-wide "
 "consent, rather than only the specific scope at which the interaction is "
 "happening."
 msgstr ""
 
-#: enterprise/models.py:201
+#: enterprise/models.py:205
 msgid ""
 "This package must be installed in an EdX environment to look up "
 "configuration."
 msgstr ""
 
-#: enterprise/models.py:300
+#: enterprise/models.py:308
 msgid "Enterprise Customer Learner"
 msgstr ""
 
-#: enterprise/models.py:301
+#: enterprise/models.py:309
 msgid "Enterprise Customer Learners"
 msgstr ""
 
-#: enterprise/models.py:534
+#: enterprise/models.py:544
 msgid "Logo images must be in .png format."
 msgstr ""
 
-#: enterprise/models.py:543
+#: enterprise/models.py:553
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:544
+#: enterprise/models.py:554
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:668
+#: enterprise/models.py:682
 msgid ""
 "Stores whether the learner linked to this model has consented to have their "
 "information shared with the linked EnterpriseCustomer."
 msgstr ""
 
-#: enterprise/models.py:710
+#: enterprise/models.py:724
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:711
+#: enterprise/models.py:725
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:718
+#: enterprise/models.py:732
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:759
+#: enterprise/models.py:774
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:764
+#: enterprise/models.py:779
 msgid "Whether the learner has granted consent for this particular course."
 msgstr ""
 
-#: enterprise/models.py:771
+#: enterprise/models.py:786
 msgid "The ID of the course in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:868
+#: enterprise/models.py:883
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -505,7 +505,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:886
+#: enterprise/models.py:901
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "

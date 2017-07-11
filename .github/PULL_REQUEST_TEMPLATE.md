@@ -18,6 +18,8 @@ instructions.
 
 **Merge checklist:**
 
+- [ ] Check that the versions of the requirements in the `platform-master.in` file match edx-platform.
+- [ ] New requirements are in the right place (`base.in` if only used in enterprise; in the correct `platform-****.in` files if they're hosted in edx-platform)
 - [ ] Regenerate requirements with `make upgrade && make requirements` (and make sure to fix any errors).
   **DO NOT** just add dependencies to `requirements/*.txt` files.
 - [ ] All reviewers approved
@@ -33,6 +35,7 @@ instructions.
 - [ ] Create a tag
 - [ ] Check new version is pushed to PyPi after tag-triggered build is finished.
 - [ ] Delete working branch (if not needed anymore)
+- [ ] edx-platform PR (be sure to include edx-platform requirements upgrades that were present in this PR)
 
 **Author concerns:** List any concerns about this PR - inelegant 
 solutions, hacks, quick-and-dirty implementations, concerns about 

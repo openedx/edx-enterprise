@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import django.db.models.deletion
+import django
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
                 ('consent_granted', models.NullBooleanField(help_text='Whether the learner has granted consent for this particular course.')),
                 ('course_id', models.CharField(help_text='The course ID in which the learner was enrolled.', max_length=255)),
-                ('enterprise_customer_user', models.ForeignKey(related_name='enterprise_enrollments', to='enterprise.EnterpriseCustomerUser', help_text='The enterprise learner to which this enrollment is attached.')),
+                ('enterprise_customer_user', models.ForeignKey(related_name='enterprise_enrollments', on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomerUser', help_text='The enterprise learner to which this enrollment is attached.')),
             ],
         ),
         migrations.CreateModel(

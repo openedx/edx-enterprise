@@ -96,7 +96,11 @@ class EnterpriseCustomer(TimeStampedModel):
     )
     active = models.BooleanField(default=True)
     history = HistoricalRecords()
-    site = models.ForeignKey(Site, related_name="enterprise_customers")
+    site = models.ForeignKey(
+        Site,
+        related_name="enterprise_customers",
+        on_delete=models.deletion.CASCADE
+    )
 
     DATA_CONSENT_OPTIONAL = 'optional'
     AT_LOGIN = 'at_login'
@@ -289,7 +293,11 @@ class EnterpriseCustomerUser(TimeStampedModel):
     """
 
     enterprise_customer = models.ForeignKey(
-        EnterpriseCustomer, blank=False, null=False, related_name='enterprise_customer_users'
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='enterprise_customer_users',
+        on_delete=models.deletion.CASCADE
     )
     user_id = models.PositiveIntegerField(null=False, blank=False)
 
@@ -456,6 +464,7 @@ class PendingEnrollment(TimeStampedModel):
     user = models.ForeignKey(
         PendingEnterpriseCustomerUser,
         null=False,
+        on_delete=models.deletion.CASCADE
     )
     course_id = models.CharField(
         max_length=255,
@@ -527,7 +536,8 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name="branding_configuration"
+        related_name="branding_configuration",
+        on_delete=models.deletion.CASCADE
     )
     logo = models.ImageField(
         upload_to=logo_path,
@@ -657,7 +667,11 @@ class UserDataSharingConsentAudit(TimeStampedModel):
         EXTERNALLY_MANAGED,
     ]
 
-    user = models.ForeignKey(EnterpriseCustomerUser, related_name='data_sharing_consent')
+    user = models.ForeignKey(
+        EnterpriseCustomerUser,
+        related_name='data_sharing_consent',
+        on_delete=models.deletion.CASCADE
+    )
 
     state = models.CharField(
         max_length=8,
@@ -755,6 +769,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         blank=False,
         null=False,
         related_name='enterprise_enrollments',
+        on_delete=models.deletion.CASCADE,
         help_text=_(
             "The enterprise learner to which this enrollment is attached."
         )
@@ -890,7 +905,7 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     plaintext_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     html_template = models.TextField(blank=True, help_text=BODY_HELP_TEXT)
     subject_line = models.CharField(max_length=100, blank=True, help_text=SUBJECT_HELP_TEXT)
-    site = models.OneToOneField(Site, related_name="enterprise_enrollment_template")
+    site = models.OneToOneField(Site, related_name="enterprise_enrollment_template", on_delete=models.deletion.CASCADE)
     history = HistoricalRecords()
 
     def render_html_template(self, kwargs):

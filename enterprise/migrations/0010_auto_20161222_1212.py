@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
 import django.utils.timezone
 from django.db import migrations, models
 
@@ -22,7 +23,7 @@ class Migration(migrations.Migration):
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, verbose_name='modified', editable=False)),
                 ('course_id', models.CharField(max_length=255)),
                 ('course_mode', models.CharField(max_length=25)),
-                ('user', models.ForeignKey(to='enterprise.PendingEnterpriseCustomerUser')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.PendingEnterpriseCustomerUser')),
             ],
         ),
         migrations.AlterUniqueTogether(

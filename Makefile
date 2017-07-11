@@ -3,6 +3,9 @@
 
 .DEFAULT_GOAL := help
 
+ALL_PLATFORMS := ficus ginkgo hawthorn master
+TARGET_PLATFORM := master
+
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 try:
@@ -52,15 +55,16 @@ fake_translations: extract_translations dummy_translations compile_translations 
 upgrade: ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	pip install -q pip-tools
 	pip-compile --upgrade -o requirements/base.txt requirements/base.in
-	pip-compile --upgrade -o requirements/dev.txt requirements/base.in requirements/dev.in requirements/quality.in
-	pip-compile --upgrade -o requirements/doc.txt requirements/base.in requirements/doc.in
-	pip-compile --upgrade -o requirements/quality.txt requirements/quality.in
-	pip-compile --upgrade -o requirements/test.txt requirements/base.in requirements/test.in
+	pip-compile --upgrade -o requirements/dev.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/dev.in requirements/quality.in
+	pip-compile --upgrade -o requirements/doc.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/doc.in
+	pip-compile --upgrade -o requirements/quality.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/dev.in requirements/quality.in requirements/doc.in requirements/test.in
 	pip-compile --upgrade -o requirements/travis.txt requirements/travis.in
 	pip-compile --upgrade -o requirements/js_test.txt requirements/js_test.in
-	# Let tox control the Django version for tests
-	sed '/^django==/d' requirements/test.txt > requirements/test.tmp
-	mv requirements/test.tmp requirements/test.txt
+	pip-compile --upgrade -o requirements/test.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/test.in
+
+	for platform in $(ALL_PLATFORMS) ; do \
+		pip-compile --upgrade -o requirements/test-$$platform.txt requirements/base.in requirements/test-$$platform.in requirements/test.in ; \
+	done
 
 pull_translations: ## pull translations from Transifex
 	tx pull -a
@@ -83,6 +87,7 @@ requirements: ## install development environment requirements
 	pip-sync requirements/base.txt requirements/dev.txt requirements/private.* requirements/test.txt
 
 test: clean ## run tests in the current virtualenv
+	pip install -qr requirements/test.txt --exists-action w
 	py.test
 
 diff_cover: test

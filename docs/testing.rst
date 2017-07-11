@@ -43,11 +43,12 @@ test cases:
 
     $ make coverage
 
-To run all tests under certain python and django versions:
+To run all tests under certain python versions and edx-platform dependency environments:
 
 .. code-block:: bash
 
-    $ tox -e py27-django10          # run all tests under python 2.7 and django 1.10
+    $ tox -e py27-platform-ficus    # run all tests under python 2.7 and Ficus dependencies
+    $ tox -e py35-platform-master   # run all tests under python 3.5 and master branch dependencies
 
 Finally, various options to run only subset of tests:
 
