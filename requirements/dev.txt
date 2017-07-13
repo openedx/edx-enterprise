@@ -17,12 +17,12 @@ click==6.7                # via click-log, edx-lint, pip-tools
 configparser==3.5.0       # via pylint
 diff-cover==0.9.11
 distlib==0.2.5            # via caniusepython3
-django-config-models==0.1.8
+django-config-models==0.1.5
 django-extensions==1.5.9
 django-filter==0.11.0
 django-model-utils==2.3.1
 django-object-actions==0.10.0
-django-simple-history==1.9.0
+django-simple-history==1.6.3
 django-waffle==0.12.0
 django==1.8.18
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions

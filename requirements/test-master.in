@@ -12,8 +12,8 @@ edx-drf-extensions==1.2.2               # edX extensions to django rest framewor
 unicodecsv==0.14.1                      # Allows exporting CSV with unicode support (a drop-in replacement for built-in csv module)
 Pillow==3.4                             # Image manipulation module, required to use ImageField
 django-extensions==1.5.9                # Required to use TimeStampedModel
-django-simple-history==1.9.0            # History for Django models
+django-simple-history==1.6.3            # History for Django models
 edx-rest-api-client==1.7.1              # For accessing the Enrollment API (and possibly other edX APIs)
-django-config-models==0.1.8
+django-config-models==0.1.5
 requests==2.9.1                         # Required for SAPSuccessFactorsAPIClient
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
