@@ -11,7 +11,7 @@ from dateutil.parser import parse
 from faker import Factory as FakerFactory
 from pytest import mark
 
-from django.contrib import messages
+from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -32,11 +32,13 @@ from enterprise.views import (
 # pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import urlencode
 from test_utils.factories import (
+    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
+from test_utils.mixins import MessagesMixin
 
 
 def fake_render(request, template, context):  # pylint: disable=unused-argument
@@ -48,7 +50,7 @@ def fake_render(request, template, context):  # pylint: disable=unused-argument
 
 @mark.django_db
 @ddt.ddt
-class TestGrantDataSharingPermissions(TestCase):
+class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     """
     Test GrantDataSharingPermissions.
     """
@@ -62,21 +64,13 @@ class TestGrantDataSharingPermissions(TestCase):
 
     url = reverse('grant_data_sharing_permissions')
 
-    def _assert_request_message(self, request_message, expected_message_tags, expected_message_text):
-        """
-        Verify the request message tags and text.
-        """
-        self.assertEqual(request_message.tags, expected_message_tags)
-        self.assertEqual(request_message.message, expected_message_text)
-
     def _assert_enterprise_linking_messages(self, response, user_is_active=True):
         """
         Verify response messages for a learner when he/she is linked with an
         enterprise depending on whether the learner has activated the linked
         account.
         """
-        # pylint: disable=protected-access
-        response_messages = messages.storage.cookie.CookieStorage(response)._decode(response.cookies['messages'].value)
+        response_messages = self._get_messages_from_response_cookies(response)
         if user_is_active:
             # Verify that request contains the expected success message when a
             # learner with activated account is linked with an enterprise
@@ -84,7 +78,7 @@ class TestGrantDataSharingPermissions(TestCase):
             self._assert_request_message(
                 response_messages[0],
                 'success',
-                '<span>Account created</span> Thank you for creating an account with edX.'
+                '<strong>Account created</strong> Thank you for creating an account with edX.'
             )
         else:
             # Verify that request contains the expected success message and an
@@ -94,12 +88,12 @@ class TestGrantDataSharingPermissions(TestCase):
             self._assert_request_message(
                 response_messages[0],
                 'success',
-                '<span>Account created</span> Thank you for creating an account with edX.'
+                '<strong>Account created</strong> Thank you for creating an account with edX.'
             )
             self._assert_request_message(
                 response_messages[1],
                 'info',
-                '<span>Activate your account</span> Check your inbox for an activation email. '
+                '<strong>Activate your account</strong> Check your inbox for an activation email. '
                 'You will not be able to log back into your account until you have activated it.'
             )
 
@@ -469,14 +463,16 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
-        (False, False),
-        (True, True),
+        (False, False, True),
+        (False, True, False),
+        (True, True, False),
     )
     @ddt.unpack
     def test_get_course_specific_consent(
             self,
             enrollment_deferred,
             supply_customer_uuid,
+            existing_course_enrollment,
             course_api_client_mock,
             mock_config,
             *args
@@ -497,10 +493,11 @@ class TestGrantDataSharingPermissions(TestCase):
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=ecu,
-            course_id=course_id
-        )
+        if existing_course_enrollment:
+            EnterpriseCourseEnrollment.objects.create(
+                enterprise_customer_user=ecu,
+                course_id=course_id
+            )
         params = {
             'course_id': 'course-v1:edX+DemoX+Demo_Course',
             'next': 'https://google.com'
@@ -818,17 +815,24 @@ class TestGrantDataSharingPermissions(TestCase):
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
-    @ddt.data(True, False)
+    @ddt.data(
+        (True, True, '/successful_enrollment'),
+        (False, True, '/successful_enrollment'),
+        (True, False, '/failure_url'),
+        (False, False, '/failure_url'),
+    )
+    @ddt.unpack
     def test_post_course_specific_consent(
             self,
             enrollment_deferred,
+            consent_provided,
+            expected_redirect_url,
             reverse_mock,
             course_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        data_sharing_consent = True
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -849,65 +853,21 @@ class TestGrantDataSharingPermissions(TestCase):
         reverse_mock.return_value = '/dashboard'
         post_data = {
             'course_id': course_id,
-            'data_sharing_consent': data_sharing_consent,
             'redirect_url': '/successful_enrollment',
+            'failure_url': '/failure_url',
         }
         if enrollment_deferred:
             post_data['enrollment_deferred'] = True
-        resp = self.client.post(self.url, post_data)
-        assert resp.url.endswith('/successful_enrollment')  # pylint: disable=no-member
-        assert resp.status_code == 302
-        enrollment.refresh_from_db()
-        assert enrollment.consent_granted is not enrollment_deferred
+        if consent_provided:
+            post_data['data_sharing_consent'] = consent_provided
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
-    @mock.patch('enterprise.views.reverse')
-    def test_post_course_specific_consent_not_provided(
-            self,
-            reverse_mock,
-            course_api_client_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        self._login()
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-        )
-        ecu = EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer
-        )
-        enrollment = EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=ecu,
-            course_id=course_id
-        )
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = {
-            'name': 'edX Demo Course',
-        }
-        reverse_mock.return_value = '/dashboard'
-        resp = self.client.post(
-            self.url,
-            data={
-                'course_id': course_id,
-                'redirect_url': '/successful_enrollment'
-            },
-        )
-        assert resp.url.endswith('/dashboard')  # pylint: disable=no-member
+        resp = self.client.post(self.url, post_data)
+
+        assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
         assert resp.status_code == 302
         enrollment.refresh_from_db()
-        assert enrollment.consent_granted is False
+        if not enrollment_deferred:
+            assert enrollment.consent_granted is consent_provided
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.get_complete_url')
@@ -1042,7 +1002,7 @@ class TestPushCatalogDataToIntegratedChannel(TestCase):
 
 @mark.django_db
 @ddt.ddt
-class TestCourseEnrollmentView(TestCase):
+class TestCourseEnrollmentView(MessagesMixin, TestCase):
     """
     Test CourseEnrollmentView.
     """
@@ -1282,6 +1242,94 @@ class TestCourseEnrollmentView(TestCase):
         self._login()
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.get_partial_pipeline')
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
+    @mock.patch('enterprise.views.get_real_social_auth_object')
+    @mock.patch('enterprise.views.quarantine_session')
+    @mock.patch('enterprise.views.lift_quarantine')
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.messages.configuration_helpers')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.organizations_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.views.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
+    @ddt.data(True, False)
+    def test_get_course_enrollment_page_consent_declined(
+            self,
+            consent_granted,
+            registry_mock,
+            ecommerce_api_client_mock,
+            course_catalog_client_mock,
+            organizations_helpers_mock,
+            enrollment_api_client_mock,
+            course_api_client_mock,
+            configuration_helpers_mock_1,
+            configuration_helpers_mock_2,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        Test consent declined message is rendered.
+        """
+        self._setup_course_catalog_client(course_catalog_client_mock)
+        self._setup_organizations_client(organizations_helpers_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        configuration_helpers_mock_1.get_value.side_effect = [
+            settings.ENTERPRISE_SUPPORT_URL,
+            settings.PLATFORM_NAME
+        ]
+        configuration_helpers_mock_2.get_value.return_value = 'foo'
+        self._setup_course_api_client(course_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()  # pylint: disable=no-member
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_id=self.user.id
+        )
+        __ = EnterpriseCourseEnrollmentFactory(
+            course_id=self.demo_course_id,
+            consent_granted=consent_granted,
+            enterprise_customer_user=enterprise_customer_user
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+
+        messages = self._get_messages_from_response_cookies(response)
+        if consent_granted:
+            assert not messages
+        else:
+            assert messages
+            self._assert_request_message(
+                messages[0],
+                'warning',
+                (
+                    '<strong>We could not enroll you in <em>{course_name}</em>.</strong> '
+                    '<span>If you have questions or concerns about sharing your data, please '
+                    'contact your learning manager at {enterprise_customer_name}, or contact '
+                    '<a href="{enterprise_support_link}" target="_blank">{platform_name} support</a>.</span>'
+                ).format(
+                    course_name=self.dummy_demo_course_details_data['name'],
+                    enterprise_customer_name=enterprise_customer.name,
+                    enterprise_support_link=settings.ENTERPRISE_SUPPORT_URL,
+                    platform_name=settings.PLATFORM_NAME,
+                )
+            )
 
     @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
@@ -1881,15 +1929,18 @@ class TestCourseEnrollmentView(TestCase):
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
             enterprise_id, course_id, urlencode({'course_mode': 'audit'})
         )
+        expected_failure_url = reverse(
+            'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+        )
         self.assertRedirects(
             response,
             expected_url_format.format(
                 urlencode(
                     {
                         'next': consent_enrollment_url,
+                        'failure_url': expected_failure_url,
                         'enterprise_id': enterprise_id,
                         'course_id': course_id,
-                        'enrollment_deferred': True,
                     }
                 )
             ),

@@ -47,7 +47,7 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
     @ddt.data(
         ('success', '<i class="fa fa-check-circle" aria-hidden="true"></i>'),
         ('info', '<i class="fa fa-info-circle" aria-hidden="true"></i>'),
-        ('warning', '<i class="fa fa-exclamation-circle" aria-hidden="true"></i>'),
+        ('warning', '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>'),
         ('error', '<i class="fa fa-times-circle" aria-hidden="true"></i>'),
         ('unknown-status-tag', ''),
     )
@@ -91,7 +91,7 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
                 ('<i class="fa fa-check-circle" aria-hidden="true"></i>', 'This is a dummy success message.'),
                 ('<i class="fa fa-times-circle" aria-hidden="true"></i>', 'This is a dummy error message.'),
                 ('<i class="fa fa-info-circle" aria-hidden="true"></i>', 'This is a dummy info message.'),
-                ('<i class="fa fa-exclamation-circle" aria-hidden="true"></i>', 'This is a dummy warning message.'),
+                ('<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>', 'This is a dummy warning message.'),
             ],
         ),
     )

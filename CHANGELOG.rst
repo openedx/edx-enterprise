@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.38.2] - 2017-07-14
+---------------------
+
+* Add consent declined message to course enrollment landing page.
+
 [0.38.1] - 2017-07-13
 ---------------------
 

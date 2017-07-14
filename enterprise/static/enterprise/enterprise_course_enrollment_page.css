@@ -217,16 +217,15 @@ body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     margin-bottom: 8px;
 }
 
-#messages .fa {
+#messages .alert > .fa {
     position: absolute;
     left: 11px;
     top: 13px;
     font-size: 16px;
 }
 
-#messages .alert > span {
+#messages .alert span {
     display: block;
-    font-weight: 600;
 }
 
 #messages .success {
