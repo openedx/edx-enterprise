@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.38.1] - 2017-07-13
+---------------------
+
+* Remove requirement on too-new django-simple-history version
+* Require slightly older django-config-models version
+
 [0.38.0] - 2017-07-11
 ---------------------
 
