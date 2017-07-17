@@ -293,14 +293,12 @@ class TestEnterpriseAPIViews(APITest):
     ):
         """
         Test that entitlement details route on enterprise learner returns correct data.
-
         This test verifies that entitlements returned by entitlement details route on enterprise learner
         has the expected behavior as listed down.
             1. Empty entitlements list if enterprise customer requires data sharing consent
                 (this includes enforcing data sharing consent at login and at enrollment) and enterprise learner
                  does not consent to share data.
             2. Full list of entitlements for all other cases.
-
         Arguments:
             enable_data_sharing_consent (bool): True if enterprise customer enables data sharing consent,
                 False it does not.
@@ -519,7 +517,6 @@ class TestEnterpriseCatalogAPIViews(APITest):
     def test_enterprise_catalogs_list(self, url, mocked_catalogs, expected_catalogs):
         """
         Make sure enterprise catalog view returns correct data.
-
         Arguments:
             mocked_catalogs (dict): A dict containing catalog information as returned by discovery API.
             expected_catalogs (dict): A dict elements containing expected catalog information.
@@ -561,7 +558,6 @@ class TestEnterpriseCatalogAPIViews(APITest):
     def test_enterprise_catalog_details(self, url, mocked_catalog, expected):
         """
         Make sure enterprise catalog view returns correct data.
-
         Arguments:
             mocked_catalog (dict): This is used to mock catalog returned by catalog api.
             expected (list): This is the expected catalog from enterprise api.
@@ -670,7 +666,6 @@ class TestEnterpriseCatalogAPIViews(APITest):
     def test_enterprise_catalog_courses(self, url, provider_id, enterprise_customer, mocked_catalog_courses, expected):
         """
         Make sure enterprise catalog view returns correct data.
-
         Arguments:
             mocked_catalog_courses: This is used to mock catalog courses returned by catalog api.
             expected: This is the expected catalog courses from enterprise api.

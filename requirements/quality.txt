@@ -42,7 +42,7 @@ edx-drf-extensions==1.2.3
 edx-i18n-tools==0.3.9
 edx-lint==0.5.4
 edx-rest-api-client==1.7.1
-edx-sphinx-theme==1.1.0
+edx-sphinx-theme==1.2.0
 enum34==1.1.6             # via astroid
 factory-boy==2.8.1
 faker==0.7.18             # via factory-boy

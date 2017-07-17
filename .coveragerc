@@ -5,6 +5,8 @@ source=enterprise
 omit =
     test_settings
     enterprise/django_compatibility.py
+    consent/apps.py
+    consent/errors.py
     *migrations*
     *admin/__init__.py
     *static*

@@ -8,17 +8,20 @@ Test utilities.
 from __future__ import absolute_import, unicode_literals
 
 import json
-from pytest import mark
 
 import mock
-from rest_framework.test import APITestCase, APIClient
 import six
-from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-error
+from pytest import mark
+from rest_framework.test import APITestCase, APIClient
+from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-error,ungrouped-imports
 
 from test_utils import factories
 
 TEST_USERNAME = 'api_worker'
 TEST_PASSWORD = 'QWERTY'
+TEST_COURSE = 'course-v1:edX+DemoX+DemoCourse'
+TEST_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
+TEST_USER_ID = 1
 
 
 def get_magic_name(value):
@@ -45,6 +48,14 @@ def mock_view_function():
     return view_function
 
 
+def create_items(factory, items):
+    """
+    Create model instances using given factory.
+    """
+    for item in items:
+        factory.create(**item)
+
+
 @mark.django_db
 class APITest(APITestCase):
     """
@@ -68,11 +79,11 @@ class APITest(APITestCase):
         self.client.logout()
         super(APITest, self).tearDown()
 
-    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD):
+    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
         Create a test user and set its password.
         """
-        self.user = factories.UserFactory(username=username, is_active=True)
+        self.user = factories.UserFactory(username=username, is_active=True, **kwargs)
         self.user.set_password(password)  # pylint: disable=no-member
         self.user.save()  # pylint: disable=no-member
 

@@ -22,7 +22,7 @@ from enterprise.admin.utils import (
 )
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from test_utils.factories import FAKER, EnterpriseCustomerUserFactory, PendingEnterpriseCustomerUserFactory, UserFactory
-from test_utils.file_helpers import MakeCsvStreamContextManager
+from test_utils.file_helpers import MakeCsvStreamContextManager  # pylint: disable=ungrouped-imports
 
 
 class TestParseCSV(unittest.TestCase):
