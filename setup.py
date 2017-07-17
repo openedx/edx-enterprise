@@ -34,7 +34,7 @@ base_path = os.path.dirname(__file__)
 
 README = open(os.path.join(base_path, "README.rst")).read()
 CHANGELOG = open(os.path.join(base_path, "CHANGELOG.rst")).read()
-REQUIREMENTS = open(os.path.join(base_path, 'requirements', 'base.txt'))
+REQUIREMENTS = open(os.path.join(base_path, 'requirements', 'base.txt')).read().splitlines()
 
 setup(
     name="edx-enterprise",

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.38.3] - 2017-07-14
+---------------------
+
+* Fix dependency installation process in setup.py.
+
 [0.38.2] - 2017-07-14
 ---------------------
 
