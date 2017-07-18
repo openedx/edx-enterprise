@@ -532,7 +532,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     'Starfleet Academy, and not to data from any My Platform courses or programs that '
                     'I take on my own. I understand that once I grant my permission to allow data to be shared '
                     'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
-                    'from any courses or programs that are sponsored by Starfleet Academy.'
+                    'from any courses that are sponsored by Starfleet Academy.'
                 ),
                 "course_id": "course-v1:edX+DemoX+Demo_Course",
                 "course_name": "edX Demo Course",
@@ -618,7 +618,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     'Starfleet Academy, and not to data from any My Platform courses or programs that '
                     'I take on my own. I understand that once I grant my permission to allow data to be shared '
                     'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
-                    'from any courses or programs that are sponsored by Starfleet Academy.'
+                    'from any courses that are sponsored by Starfleet Academy.'
                 ),
                 "course_id": "course-v1:edX+DemoX+Demo_Course",
                 "course_name": "edX Demo Course",
