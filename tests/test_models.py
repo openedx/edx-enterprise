@@ -151,9 +151,9 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
         assert self.enrollment.consent_available() is False
 
     @ddt.data(
-        ('at_login', None, 'not_set'),
-        ('at_login', True, 'enabled'),
-        ('at_login', False, 'disabled'),
+        ('at_enrollment', None, 'not_set'),
+        ('at_enrollment', True, 'enabled'),
+        ('at_enrollment', False, 'disabled'),
         ('externally_managed', None, 'external'),
         ('externally_managed', False, 'external'),
         ('externally_managed', True, 'external'),
@@ -465,20 +465,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
 
     @ddt.data(
         (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, [1, 2, 3], [],
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET, [1, 2, 3], [],
-        ),
-        (
             True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": False},
@@ -500,54 +486,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
                 {"entitlement_id": 1, "requires_consent": True},
                 {"entitlement_id": 2, "requires_consent": True},
                 {"entitlement_id": 3, "requires_consent": True},
-            ],
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
             ],
         ),
         (
@@ -574,39 +512,9 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
                 {"entitlement_id": 3, "requires_consent": False},
             ],
         ),
-        (
-            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET, [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]
-        ),
-        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, [], []),
-        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, [], []),
-        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET, [], []),
         (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, [], []),
         (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, [], []),
         (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET, [], []),
-        (True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED, [], []),
-        (True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED, [], []),
-        (True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET, [], []),
         (
             True, EnterpriseCustomer.EXTERNALLY_MANAGED, UserDataSharingConsentAudit.EXTERNALLY_MANAGED, [1, 2, 3],
             [
@@ -635,7 +543,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             enable_data_sharing_consent (bool): True if enterprise customer enables data sharing consent,
                 False it does not.
             enforce_data_sharing_consent (str): string for the location at which enterprise customer enforces
-                data sharing consent, possible values are 'at_login', 'at_enrollment' and 'optional'.
+                data sharing consent, possible values are 'at_enrollment' and 'externally_managed'.
             learner_consent_state (str): string containing the state of learner consent on data sharing,
                 possible values are 'not_set', 'enabled' and 'disabled'.
             entitlements (list): A list of integers pointing to voucher ids generated in E-Commerce CAT tool.

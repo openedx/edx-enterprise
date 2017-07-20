@@ -250,8 +250,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         (None, True, EnterpriseCustomer.AT_ENROLLMENT, True),
         (True, False, EnterpriseCustomer.AT_ENROLLMENT, False),
         (False, False, EnterpriseCustomer.AT_ENROLLMENT, False),
-        (None, True, EnterpriseCustomer.AT_LOGIN, True),
-        (False, False, EnterpriseCustomer.AT_LOGIN, False),
     )
     @ddt.unpack
     def test_consent_necessary_for_course(
@@ -303,10 +301,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, True),
         (False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, False),
         (False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, False),
-        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, False),
-        (True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, True),
-        (False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED, False),
-        (False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED, False),
     )
     @ddt.unpack
     def test_is_consent_required_for_user(
@@ -336,10 +330,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         (True, EnterpriseCustomer.AT_ENROLLMENT, False, True),
         (False, EnterpriseCustomer.AT_ENROLLMENT, True, False),
         (False, EnterpriseCustomer.AT_ENROLLMENT, False, False),
-        (True, EnterpriseCustomer.AT_LOGIN, True, False),
-        (True, EnterpriseCustomer.AT_LOGIN, False, True),
-        (False, EnterpriseCustomer.AT_LOGIN, True, False),
-        (False, EnterpriseCustomer.AT_LOGIN, False, False),
     )
     @ddt.unpack
     def test_is_consent_required_for_user_with_course(

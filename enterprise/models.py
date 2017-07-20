@@ -102,13 +102,9 @@ class EnterpriseCustomer(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
 
-    DATA_CONSENT_OPTIONAL = 'optional'
-    AT_LOGIN = 'at_login'
     AT_ENROLLMENT = 'at_enrollment'
     EXTERNALLY_MANAGED = 'externally_managed'
     DATA_SHARING_CONSENT_CHOICES = (
-        (DATA_CONSENT_OPTIONAL, 'Optional'),
-        (AT_LOGIN, 'At Login'),
         (AT_ENROLLMENT, 'At Enrollment'),
         (EXTERNALLY_MANAGED, 'Managed externally')
     )
@@ -127,7 +123,7 @@ class EnterpriseCustomer(TimeStampedModel):
         max_length=25,
         blank=False,
         choices=DATA_SHARING_CONSENT_CHOICES,
-        default=DATA_CONSENT_OPTIONAL,
+        default=AT_ENROLLMENT,
         help_text=_(
             "Specifies whether data sharing consent is optional, is required "
             "at login, or is required at enrollment."
@@ -179,7 +175,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
         Args:
             enforcement_location (str): the point where to see data sharing consent state.
-            argument can either be "optional", 'at_login' or 'at_enrollment'
+            argument can either be 'at_enrollment' or 'externally_managed'
         """
         return self.requests_data_sharing_consent and self.enforce_data_sharing_consent == enforcement_location
 
@@ -355,16 +351,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
         learner_consent_enabled = learner_consent_state and learner_consent_state.enabled
 
         entitlements = self.enterprise_customer.enterprise_customer_entitlements
-
-        # If Enterprise Customer requires account wide consent then we return either all or no entitlement
-        # depending on learner's consent state
-        if self.enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN):
-            return [
-                {
-                    "entitlement_id": entitlement.entitlement_id,
-                    "requires_consent": not learner_consent_enabled,
-                } for entitlement in entitlements.all() if learner_consent_enabled
-            ]
 
         # If Enterprise Customer requires account course specific consent then we return all entitlements
         # including whether or not to acquire learner's consent.
@@ -819,12 +805,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
             return False
 
         enterprise_customer = self.enterprise_customer_user.enterprise_customer
-        return any(
-            [
-                enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT),
-                enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN),
-            ]
-        )
+        return enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT)
 
     def __str__(self):
         """

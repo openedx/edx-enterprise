@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.38.6] - 2017-07-21
+---------------------
+
+* Remove SSO-related consent capabilities
+
+
 [0.38.5] - 2017-07-19
 ---------------------
 

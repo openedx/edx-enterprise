@@ -34,16 +34,6 @@ def disable_for_loaddata(signal_handler):
     return wrapper
 
 
-def null_decorator(func):
-    """
-    Use this decorator to stub out decorators for testing.
-
-    If we're unable to import social_core.pipeline.partial, which is the case in our CI platform,
-    we need to be able to wrap the function with something.
-    """
-    return func
-
-
 def enterprise_login_required(view):
     """
     View decorator for allowing authenticated user with valid enterprise UUID.
