@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.4] - 2017-08-01
+---------------------
+
+* Create Audit enrollment in E-Commerce system when user enrolls in the audit mode in enterprise landing page.
+
 [0.39.3] - 2017-07-28
 ---------------------
 

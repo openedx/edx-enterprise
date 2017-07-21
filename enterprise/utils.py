@@ -26,7 +26,6 @@ try:
 except ImportError:
     Registry = None
 
-
 LOGGER = logging.getLogger(__name__)
 
 
