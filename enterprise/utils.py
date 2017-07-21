@@ -407,8 +407,7 @@ def is_consent_required_for_user(enterprise_customer_user, course_id=None):
     EnterpriseCustomer = apps.get_model(app_label='enterprise', model_name='EnterpriseCustomer')
 
     # No need for consent, if the enterprise customer doesn't requires DSC.
-    if not (enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_LOGIN) or
-            enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT)):
+    if not enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT):
         return False
 
     # No need for consent, if the enterprise learner has provided account

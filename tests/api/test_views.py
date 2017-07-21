@@ -122,13 +122,13 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_login',
+                'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }],
             [{
                 'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_login', 'enterprise_customer_users': [],
+                'enforce_data_sharing_consent': 'at_enrollment', 'enterprise_customer_users': [],
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False,
                 'site': {
@@ -157,7 +157,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f',
                 'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
                 'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
-                'enterprise_customer__enforce_data_sharing_consent': 'at_login',
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                 'enterprise_customer__site__domain': 'example.com', 'enterprise_customer__site__name': 'example.com',
 
             }],
@@ -166,7 +166,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer': {
                     'uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                    'enforce_data_sharing_consent': 'at_login', 'enterprise_customer_users': [1],
+                    'enforce_data_sharing_consent': 'at_enrollment', 'enterprise_customer_users': [1],
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False,
                     'site': {
@@ -217,23 +217,6 @@ class TestEnterpriseAPIViews(APITest):
 
     @ddt.data(
         (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED,
-            [1, 2, 3],
-            {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED,
-            [1, 2, 3], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET,
-            [1, 2, 3], {"entitlements": []},
-        ),
-        (
             True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
             [1, 2, 3], {"entitlements": [
                 {"entitlement_id": 1, "requires_consent": False},
@@ -255,54 +238,6 @@ class TestEnterpriseAPIViews(APITest):
                 {"entitlement_id": 1, "requires_consent": True},
                 {"entitlement_id": 2, "requires_consent": True},
                 {"entitlement_id": 3, "requires_consent": True},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
             ]},
         ),
         (
@@ -330,42 +265,6 @@ class TestEnterpriseAPIViews(APITest):
             ]},
         ),
         (
-            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.ENABLED,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.DISABLED,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.AT_LOGIN, UserDataSharingConsentAudit.NOT_SET,
-            [], {"entitlements": []},
-        ),
-        (
             True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
             [], {"entitlements": []},
         ),
@@ -375,18 +274,6 @@ class TestEnterpriseAPIViews(APITest):
         ),
         (
             True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.ENABLED,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.DISABLED,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.DATA_CONSENT_OPTIONAL, UserDataSharingConsentAudit.NOT_SET,
             [], {"entitlements": []},
         ),
         (
@@ -418,7 +305,7 @@ class TestEnterpriseAPIViews(APITest):
             enable_data_sharing_consent (bool): True if enterprise customer enables data sharing consent,
                 False it does not.
             enforce_data_sharing_consent (str): string for the location at which enterprise customer enforces
-                data sharing consent, possible values are 'at_login', 'at_enrollment' and 'optional'.
+                data sharing consent, possible values are 'at_enrollment' and 'externally_managed'.
             learner_consent_state (str): string containing the state of learner consent on data sharing,
                 possible values are 'not_set', 'enabled' and 'disabled'.
             entitlements (list): A list of integers pointing to voucher ids generated in E-Commerce CAT tool.
@@ -456,7 +343,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enterprise_customer__uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f',
                     'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
-                    'enterprise_customer__enforce_data_sharing_consent': 'at_login',
+                    'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
                     'enterprise_customer__site__name': 'example.com',
                 }]
@@ -477,7 +364,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enterprise_customer__uuid': 'd3098bfb-2c78-44f1-9eb2-b94475356a3f',
                     'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
-                    'enterprise_customer__enforce_data_sharing_consent': 'at_login',
+                    'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
                     'enterprise_customer__site__name': 'example.com',
                 }]
@@ -496,7 +383,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                    'enforce_data_sharing_consent': 'at_login',
+                    'enforce_data_sharing_consent': 'at_enrollment',
                     'site__domain': 'example.com', 'site__name': 'example.com',
                 }]
             ],
@@ -545,7 +432,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_login',
+                'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }]
         )
@@ -571,7 +458,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'uuid': 'd2098bfb-2c78-44f1-9eb2-b94475356a3f', 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_login',
+                'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }]
         )

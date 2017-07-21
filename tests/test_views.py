@@ -12,23 +12,13 @@ from faker import Factory as FakerFactory
 from pytest import mark
 
 from django.conf import settings
-from django.core.urlresolvers import NoReverseMatch, reverse
-from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.test import Client, TestCase
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, UserDataSharingConsentAudit
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise.views import (
-    CONFIRMATION_ALERT_PROMPT,
-    CONFIRMATION_ALERT_PROMPT_WARNING,
-    CONSENT_REQUEST_PROMPT,
-    LMS_COURSEWARE_URL,
-    LMS_DASHBOARD_URL,
-    LMS_START_PREMIUM_COURSE_FLOW_URL,
-    GrantDataSharingPermissions,
-    HttpClientError,
-)
+from enterprise.views import LMS_COURSEWARE_URL, LMS_DASHBOARD_URL, LMS_START_PREMIUM_COURSE_FLOW_URL, HttpClientError
 # pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import urlencode
 from test_utils.factories import (
@@ -64,6 +54,12 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     url = reverse('grant_data_sharing_permissions')
 
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+
     def _assert_enterprise_linking_messages(self, response, user_is_active=True):
         """
         Verify response messages for a learner when he/she is linked with an
@@ -97,24 +93,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'You will not be able to log back into your account until you have activated it.'
             )
 
-    @mock.patch('enterprise.views.quarantine_session')
-    def test_quarantine(self, mock_quarantine):
-        """
-        Check that ``quarantine`` adds the appropriate items to the session.
-        """
-        request = mock.MagicMock()
-        GrantDataSharingPermissions.quarantine(request)
-        mock_quarantine.assert_called_with(request, ('enterprise.views',))
-
-    @mock.patch('enterprise.views.lift_quarantine')
-    def test_lift_quarantine(self, mock_lift):
-        """
-        Check that ``lift_quarantine`` removes the appropriate items.
-        """
-        request = mock.MagicMock()
-        GrantDataSharingPermissions.lift_quarantine(request)
-        mock_lift.assert_called_with(request)
-
     def test_get_no_patches(self):
         """
         Test that we get the right exception when nothing is patched.
@@ -123,342 +101,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         with self.assertRaises(NotConnectedToOpenEdX):
             client.get(self.url)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.redirect')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_no_customer_redirect(
-            self,
-            config_mock,
-            get_ec_mock,
-            redirect_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test that view redirects to login screen if it can't get an EnterpriseCustomer from the pipeline.
-
-        Note that this test needs to patch `django.shortcuts.redirect`.
-        This is because the target view ('signin_user') only exists in edx-platform.
-        """
-        config_mock.get_value.return_value = 'This Platform'
-        get_ec_mock.return_value = None
-        redirect_url = '/fake/path'
-        mock_response = HttpResponseRedirect(redirect_url)
-        redirect_mock.return_value = mock_response
-        client = Client()
-        response = client.get(self.url)
-        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
-        redirect_mock.assert_called_once_with('signin_user')
-
-    @ddt.data(True, False)
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_render_patched(
-            self,
-            enforces_data_sharing_consent,
-            config_mock,
-            get_ec_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test that we have the appropriate context when rendering the form,
-        for both mandatory and optional data sharing consent.
-        """
-        config_mock.get_value.return_value = 'This Platform'
-        fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=enforces_data_sharing_consent)
-        )
-        fake_ec.name = 'Fake Customer Name'
-        get_ec_mock.return_value = fake_ec
-        client = Client()
-        response = client.get(self.url)
-        expected_prompt = CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
-            enterprise_customer_name=fake_ec.name
-        )
-        expected_alert = CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
-            enterprise_customer_name=fake_ec.name
-        )
-        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
-            enterprise_customer_name=fake_ec.name
-        )
-        expected_context = {
-            'consent_request_prompt': expected_prompt,
-            'confirmation_alert_prompt': expected_alert,
-            'confirmation_alert_prompt_warning': expected_warning,
-            'platform_name': 'This Platform',
-            'enterprise_customer_name': 'Fake Customer Name',
-            'sharable_items_note_header': 'Please note',
-        }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
-
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.configuration_helpers')
-    def test_get_render_patched_optional(
-            self,
-            config_mock,
-            get_ec_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test that we have correct context for an optional form rendering.
-        """
-        config_mock.get_value.return_value = 'This Platform'
-        fake_ec = mock.MagicMock(
-            enforces_data_sharing_consent=mock.MagicMock(return_value=False)
-        )
-        fake_ec.name = 'Fake Customer Name'
-        get_ec_mock.return_value = fake_ec
-        client = Client()
-        response = client.get(self.url)
-        expected_prompt = CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
-            enterprise_customer_name=fake_ec.name
-        )
-        expected_alert = CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
-            enterprise_customer_name=fake_ec.name
-        )
-        expected_warning = CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
-            enterprise_customer_name=fake_ec.name
-        )
-        expected_context = {
-            'consent_request_prompt': expected_prompt,
-            'confirmation_alert_prompt': expected_alert,
-            'confirmation_alert_prompt_warning': expected_warning,
-            'platform_name': 'This Platform',
-            'enterprise_customer_name': 'Fake Customer Name',
-            'sharable_items_note_header': 'Please note',
-        }
-        for key, value in expected_context.items():
-            assert response.context[key] == value  # pylint: disable=no-member
-
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.redirect')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_post_no_customer_redirect(
-            self,
-            mock_get_ec,
-            mock_redirect,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test that when there's no customer for the request, POST redirects to the login screen.
-
-        Note that this test needs to patch `django.shortcuts.redirect`.
-        This is because the target view ('signin_user') only exists in edx-platform.
-        """
-        mock_get_ec.return_value = None
-        redirect_url = '/fake/path'
-        mock_response = HttpResponseRedirect(redirect_url)
-        mock_redirect.return_value = mock_response
-        client = Client()
-        response = client.post(self.url)
-        self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
-        mock_redirect.assert_called_once_with('signin_user')
-
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_post_no_user_404(
-            self,
-            mock_get_ec,
-            mock_get_rsa,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test that when there's no customer for the request, POST gives a 404.
-        """
-        mock_get_ec.return_value = True
-        mock_get_rsa.return_value = None
-        client = Client()
-        response = client.post(self.url)
-        assert response.status_code == 404
-
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_post_patch_real_social_auth_enforced(
-            self,
-            mock_get_ec,
-            mock_get_rsa,
-            mock_get_ec2,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test an enforecd request without consent.
-        """
-        customer = EnterpriseCustomerFactory()
-        mock_get_ec.return_value = customer
-        mock_get_ec2.return_value = customer
-        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory())
-        with self.assertRaises(NoReverseMatch):
-            client = Client()
-            session = client.session
-            session['partial_pipeline_token'] = True
-            session.save()
-            client.post(self.url)
-        # Ensure that when consent hasn't been provided, we don't link the user to the Enterprise Customer.
-        assert UserDataSharingConsentAudit.objects.all().count() == 0
-        assert EnterpriseCustomerUser.objects.all().count() == 0
-
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render')
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_permission_not_required(
-            self,
-            mock_get_ec,
-            mock_get_rsa,
-            mock_get_ec2,
-            mock_url,
-            mock_partial,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test an unenforced request
-        """
-        customer = EnterpriseCustomerFactory(enable_data_sharing_consent=False)
-        mock_get_ec.return_value = customer
-        mock_get_ec2.return_value = customer
-        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory())
-        mock_url.return_value = '/'
-        mock_partial.return_value = {'backend': 'fake_backend'}
-        client = Client()
-        response = client.post(self.url)
-        assert UserDataSharingConsentAudit.objects.all().count() == 1
-        assert EnterpriseCustomerUser.objects.all().count() == 1
-        assert not UserDataSharingConsentAudit.objects.all()[0].enabled
-        assert response.status_code == 302
-
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.render')
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @ddt.data(False, True)
-    def test_post_patch_real_social_auth_enabled(
-            self,
-            user_is_active,
-            mock_get_ec,
-            mock_get_rsa,
-            mock_get_ec2,
-            mock_url,
-            mock_config,
-            mock_partial,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test an enforced request with consent and rendering patched in.
-        """
-        mock_config.get_value.return_value = 'edX'
-        customer = EnterpriseCustomerFactory()
-        mock_get_ec.return_value = customer
-        mock_get_ec2.return_value = customer
-        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory(is_active=user_is_active))
-        mock_url.return_value = '/'
-        client = Client()
-        mock_partial.return_value = {'backend': 'fake_backend'}
-        response = client.post(self.url, {'data_sharing_consent': True})
-        assert UserDataSharingConsentAudit.objects.all().count() == 1
-        assert EnterpriseCustomerUser.objects.all().count() == 1
-        assert UserDataSharingConsentAudit.objects.all()[0].enabled
-        assert response.status_code == 302
-
-        # Now verify that response contains the expected messages when a
-        # learner is linked with an enterprise
-        self._assert_enterprise_linking_messages(response, user_is_active)
-
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.render')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    def test_post_patch_real_social_auth_no_consent_provided(
-            self,
-            mock_get_ec,
-            mock_get_rsa,
-            mock_get_ec2,
-            mock_url,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Test an enforced request with consent and rendering patched in.
-        """
-        customer = EnterpriseCustomerFactory()
-        mock_get_ec.return_value = customer
-        mock_get_ec2.return_value = customer
-        mock_get_rsa.return_value = mock.MagicMock(user=UserFactory())
-        mock_url.return_value = '/'
-        client = Client()
-        session = client.session
-        session['partial_pipeline_token'] = {'backend': 'fake_backend'}
-        session.save()
-        response = client.post(self.url, {'failure_url': 'http://google.com/'})
-        assert UserDataSharingConsentAudit.objects.all().count() == 0
-        assert EnterpriseCustomerUser.objects.all().count() == 0
-        assert response.status_code == 302
-
-    def _login(self):
-        """
-        Log user in.
-        """
-        assert self.client.login(username=self.user.username, password="QWERTY")
-
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -545,13 +187,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -631,13 +266,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
@@ -675,13 +303,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         response = self.client.get(self.url, data=params)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -723,13 +344,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             fetch_redirect_response=False
         )
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -762,13 +376,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -804,13 +411,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
@@ -869,13 +469,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         if not enrollment_deferred:
             assert enrollment.consent_granted is consent_provided
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
@@ -919,13 +512,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             fetch_redirect_response=False
         )
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.views.get_complete_url')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
@@ -1156,12 +742,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         for key, value in default_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1243,12 +824,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.messages.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -1331,12 +907,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 )
             )
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1420,12 +991,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1507,12 +1073,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1570,12 +1131,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -1610,12 +1166,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -1650,12 +1201,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1695,10 +1241,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1726,18 +1268,10 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_inactive_user(
             self,
             registry_mock,
-            lift_quarantine_mock,   # pylint: disable=unused-argument
-            quarantine_session_mock,    # pylint: disable=unused-argument
-            social_auth_object_mock,   # pylint: disable=unused-argument
-            get_ec_for_request_mock,   # pylint: disable=unused-argument
             configuration_helpers_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -1771,11 +1305,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
         self.assertRedirects(response, expected_redirect_url, fetch_redirect_response=False)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1827,17 +1356,23 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             fetch_redirect_response=False,
         )
 
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.is_consent_required_for_user')
     @mock.patch('enterprise.utils.Registry')
+    @ddt.data(
+        ('audit', 'http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course/courseware', False),
+        ('audit', 'http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course/courseware', True),
+        ('professional', 'http://localhost:8000/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', False),
+        ('professional', 'http://localhost:8000/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', True),
+    )
+    @ddt.unpack
     def test_post_course_specific_enrollment_view(
             self,
+            enrollment_mode,
+            expected_redirect_url,
+            enterprise_enrollment_exists,
             registry_mock,
             is_consent_required_mock,  # pylint: disable=invalid-name
             enrollment_api_client_mock,
@@ -1859,6 +1394,12 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        if enterprise_enrollment_exists:
+            EnterpriseCourseEnrollmentFactory(
+                course_id=course_id,
+                enterprise_customer_user__enterprise_customer=enterprise_customer,
+                enterprise_customer_user__user_id=self.user.id
+            )
         faker = FakerFactory.create()
         provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
@@ -1868,20 +1409,17 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
         )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'})
+        response = self.client.post(course_enrollment_page_url, {'course_mode': enrollment_mode})
 
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course/courseware',
+            expected_redirect_url,
             fetch_redirect_response=False
         )
-        enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit')
+        if enrollment_mode == 'audit':
+            enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit')
 
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1948,10 +1486,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -2035,10 +1569,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -2082,12 +1612,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             fetch_redirect_response=False
         )
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -2175,12 +1700,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -2269,12 +1789,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -2353,12 +1868,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -2485,12 +1995,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         """
         registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_without_course_mode(
             self,
@@ -2521,12 +2026,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         redirect_url = LMS_DASHBOARD_URL
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_404(
@@ -2563,12 +2063,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         response = self.client.get(handle_consent_enrollment_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_no_enterprise_user(
@@ -2605,12 +2100,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         response = self.client.get(handle_consent_enrollment_url)
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.get_enterprise_customer_user')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -2655,12 +2145,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         redirect_url = LMS_DASHBOARD_URL
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_audit_course_mode(
@@ -2707,12 +2192,7 @@ class TestHandleConsentEnrollmentView(TestCase):
             course_id=course_id
         ).exists())
 
-    @mock.patch('enterprise.views.get_partial_pipeline')
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_request')
-    @mock.patch('enterprise.views.get_real_social_auth_object')
-    @mock.patch('enterprise.views.quarantine_session')
-    @mock.patch('enterprise.views.lift_quarantine')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_professional_course_mode(

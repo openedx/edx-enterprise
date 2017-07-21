@@ -9,7 +9,6 @@ from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
@@ -32,39 +31,17 @@ except ImportError:
     ecommerce_api_client = None
 
 try:
-    from third_party_auth.pipeline import (
-        get_complete_url,
-        get_real_social_auth_object,
-        lift_quarantine,
-        quarantine_session,
-        get as get_partial_pipeline
-    )
-except ImportError:
-    get_complete_url = None
-    get_real_social_auth_object = None
-    quarantine_session = None
-    lift_quarantine = None
-    get_partial_pipeline = None
-
-try:
     from util import organizations_helpers
 except ImportError:
     organizations_helpers = None
 
 
 # isort:imports-firstparty
-from enterprise.constants import CONFIRMATION_ALERT_PROMPT, CONFIRMATION_ALERT_PROMPT_WARNING, CONSENT_REQUEST_PROMPT
 from enterprise.course_catalog_api import CourseCatalogApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.messages import add_consent_declined_message
-from enterprise.models import (
-    EnterpriseCourseEnrollment,
-    EnterpriseCustomer,
-    EnterpriseCustomerUser,
-    UserDataSharingConsentAudit,
-)
-from enterprise.tpa_pipeline import active_provider_enforces_data_sharing, get_enterprise_customer_for_request
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     filter_audit_course_modes,
@@ -89,11 +66,6 @@ def verify_edx_resources():
     """
     required_methods = {
         'configuration_helpers': configuration_helpers,
-        'get_enterprise_customer_for_request': get_enterprise_customer_for_request,
-        'get_real_social_auth_object': get_real_social_auth_object,
-        'quarantine_session': quarantine_session,
-        'lift_quarantine': lift_quarantine,
-        'get_partial_pipeline': get_partial_pipeline,
     }
 
     for method in required_methods:
@@ -167,20 +139,6 @@ class GrantDataSharingPermissions(View):
         "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
         "opportunities from the world's best universities."
     )
-
-    @staticmethod
-    def quarantine(request):
-        """
-        Set a session variable to quarantine the user to ``enterprise.views``.
-        """
-        quarantine_session(request, ('enterprise.views',))
-
-    @staticmethod
-    def lift_quarantine(request):
-        """
-        Remove the quarantine session variable.
-        """
-        lift_quarantine(request)
 
     def get_default_context(self, enterprise_customer, platform_name):
         """
@@ -360,81 +318,15 @@ class GrantDataSharingPermissions(View):
 
         return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
-    def get_account_consent(self, request):
-        """
-        Render a form to collect consent for account-wide data sharing.
-
-        This method is called when no course ID is passed as a URL parameter; a form will be
-        rendered with messaging around the concept of granting consent for the entire platform.
-        """
-        # Get the OpenEdX platform name
-        platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
-
-        # Get the EnterpriseCustomer for the request.
-        customer = get_enterprise_customer_for_request(request)
-        if customer is None:
-            # If we can't get an EnterpriseCustomer from the pipeline, then we don't really
-            # have enough state to do anything meaningful. Just send the user to the login
-            # screen; if they want to sign in with an Enterprise-linked SSO, they can do
-            # so, and the pipeline will get them back here if they need to be.
-            return redirect('signin_user')
-
-        # Quarantine the user to this module.
-        self.quarantine(request)
-
-        failure_url = request.GET.get('failure_url')
-
-        context_data = self.get_default_context(customer, platform_name)
-
-        account_specific_context = {
-            'consent_request_prompt': CONSENT_REQUEST_PROMPT.format(  # pylint: disable=no-member
-                enterprise_customer_name=customer.name
-            ),
-            'confirmation_alert_prompt': CONFIRMATION_ALERT_PROMPT.format(  # pylint: disable=no-member
-                enterprise_customer_name=customer.name
-            ),
-            'confirmation_alert_prompt_warning': CONFIRMATION_ALERT_PROMPT_WARNING.format(  # pylint: disable=no-member
-                enterprise_customer_name=customer.name,
-            ),
-            'LANGUAGE_CODE': get_language_from_request(request),
-            'platform_name': platform_name,
-            'enterprise_customer_name': customer.name,
-            "course_id": None,
-            "course_specific": False,
-            'enrollment_deferred': False,
-            'failure_url': failure_url,
-            'requested_permissions': [
-                _('your enrollment in all sponsored courses'),
-                _('your learning progress'),
-                _('course completion'),
-            ],
-            'enterprise_customer': customer,
-            'welcome_text': self.welcome_text.format(platform_name=platform_name),
-            'enterprise_welcome_text': self.enterprise_welcome_text.format(
-                enterprise_customer_name=customer.name,
-                platform_name=platform_name,
-                strong_start='<strong>',
-                strong_end='</strong>',
-            ),
-        }
-
-        context_data.update(account_specific_context)
-
-        return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
-
     def get(self, request):
         """
         Render a form to collect user input about data sharing consent.
-
-        Based on a URL parameter, the form rendered will either be course-specific or appropriate
-        for granting consent for all courses sponsored by the EnterpriseCustomer.
         """
         # Verify that all necessary resources are present
         verify_edx_resources()
-        course = request.GET.get('course_id')
-        if course:
-            return self.get_course_specific_consent(request, course)
-        return self.get_account_consent(request)
+        course = request.GET.get('course_id', '')
+
+        return self.get_course_specific_consent(request, course)
 
     @method_decorator(login_required)
     def post_course_specific_consent(self, request, course_id, consent_provided):
@@ -468,92 +360,18 @@ class GrantDataSharingPermissions(View):
 
         return redirect(request.POST.get('redirect_url', reverse('dashboard')))
 
-    def post_account_consent(self, request, consent_provided):
-        """
-        Interpret the account-wide form above, and save it to a UserDataSharingConsentAudit object for later retrieval.
-        """
-        self.lift_quarantine(request)
-
-        # Load the linked EnterpriseCustomer for this request.
-        customer = get_enterprise_customer_for_request(request)
-        if customer is None:
-            # If we can't get an EnterpriseCustomer from the pipeline, then we don't really
-            # have enough state to do anything meaningful. Just send the user to the login
-            # screen; if they want to sign in with an Enterprise-linked SSO, they can do
-            # so, and the pipeline will get them back here if they need to be.
-            return redirect('signin_user')
-
-        # Attempt to retrieve a user being manipulated by the third-party auth
-        # pipeline. Return a 404 if no such user exists.
-        social_auth = get_real_social_auth_object(request)
-        user = getattr(social_auth, 'user', None)
-        if user is None:
-            raise Http404
-
-        if not consent_provided and active_provider_enforces_data_sharing(request, EnterpriseCustomer.AT_LOGIN):
-            # Flush the session to avoid the possibility of accidental login and to abort the pipeline.
-            # pipeline is flushed only if data sharing is enforced, in other cases let the user to login.
-            request.session.flush()
-            failure_url = request.POST.get('failure_url') or reverse('dashboard')
-            return redirect(failure_url)
-
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-            user_id=user.id,
-            enterprise_customer=customer,
-        )
-
-        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
-        messages.success(
-            request,
-            _(
-                '{strong_start}Account created{strong_end} Thank you for creating an account with {platform_name}.'
-            ).format(
-                platform_name=platform_name,
-                strong_start='<strong>',
-                strong_end='</strong>',
-            )
-        )
-        if not user.is_active:
-            messages.info(
-                request,
-                _(
-                    '{strong_start}Activate your account{strong_end} Check your inbox for an activation email. '
-                    'You will not be able to log back into your account until you have activated it.'
-                ).format(strong_start='<strong>', strong_end='</strong>')
-            )
-
-        UserDataSharingConsentAudit.objects.update_or_create(
-            user=enterprise_customer_user,
-            defaults={
-                'state': (
-                    UserDataSharingConsentAudit.ENABLED if consent_provided
-                    else UserDataSharingConsentAudit.DISABLED
-                )
-            }
-        )
-
-        # Resume auth pipeline
-        backend_name = get_partial_pipeline(request).get('backend')
-        return redirect(get_complete_url(backend_name))
-
     def post(self, request):
         """
         Process the above form.
-
-        Use either a course-specific variant if a `course_id` form value is present,
-        or otherwise, an account-wide variant.
         """
         # Verify that all necessary resources are present
         verify_edx_resources()
 
         # If the checkbox is unchecked, no value will be sent
         consent_provided = request.POST.get('data_sharing_consent', False)
-        specific_course = request.POST.get('course_id')
+        specific_course = request.POST.get('course_id', '')
 
-        if specific_course:
-            # We're handing consent only for a particular course
-            return self.post_course_specific_consent(request, specific_course, consent_provided)
-        return self.post_account_consent(request, consent_provided)
+        return self.post_course_specific_consent(request, specific_course, consent_provided)
 
 
 class HandleConsentEnrollment(View):
