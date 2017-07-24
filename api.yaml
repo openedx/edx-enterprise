@@ -21,20 +21,13 @@ apigateway_responses_with_mapping_template:
   200:
     responseTemplates:
       application/json: |
-          #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
-          #macro (updateURL $url)
-              #if($url != '') {
-                  $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
-              } #else {
-                  none
-              }
-              #end
-          #end
+          #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($catalogId = $input.params('id'))
+          #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
           {
             "count": $inputRoot.count,
-            "next": "$updateURL$inputRoot.next",
-            "previous": "$updateURL$inputRoot.previous",
-            "results" : $inputRoot.results,
+            "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+            "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+            "results": $inputRoot.results
           }
     statusCode: "200"
   401:
@@ -175,20 +168,13 @@ endpoints:
             200:
               responseTemplates:
                 application/json: |
-                    #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
-                    #macro (updateURL $url)
-                        #if($url != '') {
-                            $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
-                        } #else {
-                            none
-                        }
-                        #end
-                    #end
+                    #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($catalogId = $input.params('id'))
+                    #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
                     {
                       "count": $inputRoot.count,
-                      "next": "$updateURL$inputRoot.next",
-                      "previous": "$updateURL$inputRoot.previous",
-                      "results" : $inputRoot.results,
+                      "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+                      "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+                      "results": $inputRoot.results
                     }
               statusCode: "200"
             401:
@@ -264,20 +250,13 @@ endpoints:
             200:
               responseTemplates:
                 application/json: |
-                    #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
-                    #macro (updateURL $url)
-                        #if($url != '') {
-                            $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
-                        } #else {
-                            none
-                        }
-                        #end
-                    #end
+                    #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($catalogId = $input.params('id'))
+                    #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
                     {
                       "count": $inputRoot.count,
-                      "next": "$updateURL$inputRoot.next",
-                      "previous": "$updateURL$inputRoot.previous",
-                      "results" : $inputRoot.results,
+                      "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+                      "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+                      "results": $inputRoot.results
                     }
               statusCode: "200"
             401:
@@ -349,20 +328,13 @@ x-amazon-apigateway-integration:
     200:
       responseTemplates:
         application/json: |
-            #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
-            #macro (updateURL $url)
-                #if($url != '') {
-                    $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
-                } #else {
-                    none
-                }
-                #end
-            #end
+            #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($catalogId = $input.params('id'))
+            #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
             {
               "count": $inputRoot.count,
-              "next": "$updateURL$inputRoot.next",
-              "previous": "$updateURL$inputRoot.previous",
-              "results" : $inputRoot.results,
+              "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+              "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+              "results": $inputRoot.results
             }
       statusCode: "200"
     401:
@@ -412,20 +384,13 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters:
     200:
       responseTemplates:
         application/json: |
-            #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
-            #macro (updateURL $url)
-                #if($url != '') {
-                    $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
-                } #else {
-                    none
-                }
-                #end
-            #end
+            #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($catalogId = $input.params('id'))
+            #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
             {
               "count": $inputRoot.count,
-              "next": "$updateURL$inputRoot.next",
-              "previous": "$updateURL$inputRoot.previous",
-              "results" : $inputRoot.results,
+              "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+              "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+              "results": $inputRoot.results
             }
       statusCode: "200"
     401:
