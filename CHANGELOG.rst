@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.0] - 2017-07-24
+---------------------
+
+* Officially include Consent application by ensuring it is installable.
+
 [0.38.7] - 2017-07-22
 ---------------------
 
