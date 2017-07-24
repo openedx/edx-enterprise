@@ -28,3 +28,27 @@ class MessagesMixin(object):
         """
         self.assertEqual(request_message.tags, expected_message_tags)
         self.assertEqual(request_message.message, expected_message_text)
+
+
+class ConsentMixin(object):
+    """
+    Mixin for testing expectations related to consents.
+    """
+
+    def _assert_consent_provided(self, response):
+        """Assert consent is provided."""
+        self.assertTrue(response.data.get('consent_provided'))
+
+    def _assert_consent_not_provided(self, response):
+        """Assert that consent is not provided."""
+        with self.assertRaises(Exception):
+            self._assert_consent_provided(response)
+
+    def _assert_consent_required(self, response):
+        """Assert consent is required."""
+        self.assertTrue(response.data.get('consent_required'))
+
+    def _assert_consent_not_required(self, response):
+        """Assert consent is not required."""
+        with self.assertRaises(Exception):
+            self._assert_consent_required(response)

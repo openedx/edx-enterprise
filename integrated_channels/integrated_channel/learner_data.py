@@ -102,7 +102,7 @@ class BaseLearnerExporter(object):
         for enterprise_enrollment in enrollment_queryset:
 
             # Omit any enrollments where consent has not been granted
-            if not enterprise_enrollment.consent_available():
+            if not enterprise_enrollment.consent_available:
                 continue
 
             course_id = enterprise_enrollment.course_id

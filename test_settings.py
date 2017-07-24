@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     "waffle",
 
     "enterprise",
+    "consent",
     "integrated_channels.integrated_channel",
     "integrated_channels.sap_success_factors",
 )
@@ -101,6 +102,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
 DEFAULT_FROM_EMAIL = 'course_staff@example.com'
 
+USER_THROTTLE_RATE = '60/minute'
+SERVICE_USER_THROTTLE_RATE = '70/minute'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
@@ -109,8 +112,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ),
     'DEFAULT_THROTTLE_RATES': {
-        'user': '50/minute',
-        'service_user': '60/minute',
+        'user': USER_THROTTLE_RATE,
+        'service_user': SERVICE_USER_THROTTLE_RATE,
     },
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%SZ',
 }

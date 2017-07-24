@@ -120,35 +120,35 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
 
     def test_consent_available_consent_stored(self):
         self.enrollment.consent_granted = True
-        assert self.enrollment.consent_available() is True
+        assert self.enrollment.consent_available is True
 
     def test_consent_denied_consent_stored(self):
         self.enrollment.consent_granted = False
-        assert self.enrollment.consent_available() is False
+        assert self.enrollment.consent_available is False
 
     def test_consent_not_stored_audit_available(self):
         UserDataSharingConsentAuditFactory(
             user=self.enterprise_customer_user,
             state='enabled',
         )
-        assert self.enrollment.consent_available() is True
+        assert self.enrollment.consent_available is True
 
     def test_consent_not_stored_audit_available_denied(self):
         UserDataSharingConsentAuditFactory(
             user=self.enterprise_customer_user,
             state='disabled',
         )
-        assert self.enrollment.consent_available() is False
+        assert self.enrollment.consent_available is False
 
     def test_consent_not_stored_audit_available_externally_managed(self):
         UserDataSharingConsentAuditFactory(
             user=self.enterprise_customer_user,
             state='external',
         )
-        assert self.enrollment.consent_available() is True
+        assert self.enrollment.consent_available is True
 
     def test_consent_not_stored_no_audit_available(self):
-        assert self.enrollment.consent_available() is False
+        assert self.enrollment.consent_available is False
 
     @ddt.data(
         ('at_enrollment', None, 'not_set'),

@@ -774,6 +774,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     )
     history = HistoricalRecords()
 
+    @property
     def consent_available(self):
         """
         Determine whether we have consent to share details about this enrollment.
@@ -801,7 +802,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         Determine if consent is necessary, but has not been provided yet.
         """
-        if self.consent_available():
+        if self.consent_available:
             return False
 
         enterprise_customer = self.enterprise_customer_user.enterprise_customer

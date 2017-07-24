@@ -30,7 +30,8 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from test_utils import fake_catalog_api, fake_enrollment_api
+from test_utils import fake_enrollment_api  # pylint: disable=ungrouped-imports
+from test_utils import fake_catalog_api
 from test_utils.factories import (
     FAKER,
     EnterpriseCustomerFactory,

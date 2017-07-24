@@ -20,6 +20,9 @@ class TestEnterpriseAPIThrottling(APITest):
     Tests for enterprise API throttling.
     """
 
+    USER_THROTTLE_RATE = int(settings.USER_THROTTLE_RATE.split('/')[0])
+    SERVICE_USER_THROTTLE_RATE = int(settings.SERVICE_USER_THROTTLE_RATE.split('/')[0])
+
     def setUp(self):
         """
         Perform operations common for all tests.
@@ -46,7 +49,7 @@ class TestEnterpriseAPIThrottling(APITest):
         """
         Make sure throttling works as expected for regular users.
         """
-        self.exhaust_throttle_limit(throttle_limit=50)
+        self.exhaust_throttle_limit(throttle_limit=self.USER_THROTTLE_RATE)
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
 
@@ -58,11 +61,11 @@ class TestEnterpriseAPIThrottling(APITest):
         self.create_user(settings.ENTERPRISE_SERVICE_WORKER_USERNAME, 'QWERTY')
         self.client.login(username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, password='QWERTY')
 
-        self.exhaust_throttle_limit(throttle_limit=50)
+        self.exhaust_throttle_limit(throttle_limit=self.USER_THROTTLE_RATE)
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_200_OK
 
         # Now exhaust remaining service user's throttle limit
-        self.exhaust_throttle_limit(throttle_limit=9)
+        self.exhaust_throttle_limit(throttle_limit=(self.SERVICE_USER_THROTTLE_RATE - self.USER_THROTTLE_RATE - 1))
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS

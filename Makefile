@@ -1,5 +1,5 @@
 .PHONY: clean compile_translations coverage docs dummy_translations extract_translations \
-	fake_translations help pull_translations push_translations quality requirements test test-all upgrade validate
+	fake_translations help pull_translations push_translations quality requirements test test-all upgrade validate isort
 
 .DEFAULT_GOAL := help
 
@@ -98,3 +98,6 @@ test-all: clean jshint quality jasmine
 	tox
 
 validate: quality test ## run tests and quality checks
+
+isort: ## Call isort on packages/files that are checked in quality tests
+	isort --recursive tests test_utils enterprise consent manage.py setup.py test_settings.py

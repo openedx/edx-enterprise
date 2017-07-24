@@ -14,23 +14,26 @@ Change Log
 Unreleased
 ----------
 
+[0.38.7] - 2017-07-22
+---------------------
+
+* Add a new Consent application.
+* Add initial implementation of a generic Consent API.
+
 [0.38.6] - 2017-07-21
 ---------------------
 
 * Remove SSO-related consent capabilities
-
 
 [0.38.5] - 2017-07-19
 ---------------------
 
 * Add page_size in querystring and data mapping template to fix "next" and "previous" urls in API response.
 
-
 [0.38.4] - 2017-07-18
 ---------------------
 
 * Fix DSC Policy Language Needs
-
 
 [0.38.3] - 2017-07-14
 ---------------------
