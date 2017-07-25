@@ -414,6 +414,18 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
         )],
     )
 
+    # Enrollment API enrollment response
+    responses.add(
+        responses.GET,
+        urljoin(lms_api.EnrollmentApiClient.API_BASE_URL,
+                "enrollment/{username},{course_id}".format(username=testcase.user.username,
+                                                           course_id=testcase.course_id)),
+        match_querystring=True,
+        json=dict(
+            mode="verified",
+        ),
+    )
+
     # Certificates API course_grades response
     if certificate:
         responses.add(

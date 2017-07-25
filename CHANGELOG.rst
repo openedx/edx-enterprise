@@ -14,11 +14,15 @@ Change Log
 Unreleased
 ----------
 
+[0.39.7] - 2017-08-04
+---------------------
+
+* Make whether Enterprise Customers get data for audit track enrollments configurable.
+
 [0.39.6] - 2017-08-02
 ---------------------
 
 * Fixed the text cutoff in the bottom of the course info overlay.
-
 
 [0.39.5] - 2017-08-02
 ---------------------
@@ -34,6 +38,7 @@ Unreleased
 ---------------------
 
 * Remove Macro use from swagger api config as it is not supported by AWS.
+
 
 [0.39.2] - 2017-07-27
 ---------------------

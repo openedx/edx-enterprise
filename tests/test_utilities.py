@@ -135,6 +135,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_data_sharing_consent",
                 "enforce_data_sharing_consent",
                 "enable_audit_enrollment",
+                "enable_audit_data_reporting",
                 "require_account_level_consent",
             ]
         ),

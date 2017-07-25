@@ -268,8 +268,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_invalid_params(
             self,
@@ -413,8 +413,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
@@ -471,8 +471,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         if not enrollment_deferred:
             assert enrollment.consent_granted is consent_provided
 
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_no_user(
@@ -514,8 +514,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             fetch_redirect_response=False
         )
 
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_bad_api_response(
