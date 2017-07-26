@@ -14,13 +14,14 @@ from rest_framework.response import Response
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.utils.decorators import method_decorator
 
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend
 from enterprise.api.pagination import get_paginated_response
 from enterprise.api.permissions import IsServiceUserOrReadOnly
 from enterprise.api.throttles import ServiceUserThrottle
-from enterprise.api.v1 import serializers
+from enterprise.api.v1 import decorators, serializers
 from enterprise.course_catalog_api import CourseCatalogApiClient
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -248,8 +249,9 @@ class EnterpriseCatalogViewSet(viewsets.ViewSet):
         serializer = self.serializer_class(catalog)
         return Response(serializer.data)
 
+    @method_decorator(decorators.enterprise_customer_required)
     @detail_route()
-    def courses(self, request, pk=None):  # pylint: disable=invalid-name
+    def courses(self, request, enterprise_customer, pk=None):  # pylint: disable=invalid-name
         """
         Retrieve the list of courses contained within this catalog.
 
@@ -273,5 +275,5 @@ class EnterpriseCatalogViewSet(viewsets.ViewSet):
         serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
 
         # Add enterprise related context for the courses.
-        serializer.update_enterprise_courses(request, pk)
+        serializer.update_enterprise_courses(enterprise_customer, pk)
         return get_paginated_response(serializer.data, request)

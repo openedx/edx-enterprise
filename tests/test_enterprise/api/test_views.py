@@ -689,3 +689,18 @@ class TestEnterpriseCatalogAPIViews(APITest):
             response = self.load_json(response.content)
 
             assert response == expected
+
+    def test_enterprise_catalog_courses_unauthorized(self):
+        """
+        Make sure enterprise catalog view returns correct data.
+        Arguments:
+            mocked_catalog_courses: This is used to mock catalog courses returned by catalog api.
+            expected: This is the expected catalog courses from enterprise api.
+        """
+        response = self.client.get(reverse('catalogs-courses', (1,)))
+        response_content = self.load_json(response.content)
+
+        assert response.status_code == 403
+        assert response_content['detail'] == 'User {username} is not associated with an EnterpriseCustomer.'.format(
+            username=self.user.username
+        )

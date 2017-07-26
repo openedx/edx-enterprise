@@ -278,7 +278,7 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
     previous = serializers.CharField(read_only=True, help_text=_("URL to fetch previous page of courses."))
     results = serializers.ListField(read_only=True, help_text=_("list of courses."))
 
-    def update_enterprise_courses(self, request, catalog_id):
+    def update_enterprise_courses(self, enterprise_customer, catalog_id):
         """
         This method adds enterprise specific metadata for each course.
 
@@ -286,7 +286,6 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
             tpa_hint: a string for identifying Identity Provider.
         """
         courses = []
-        enterprise_customer = utils.get_enterprise_customer_for_user(request.user)
 
         global_context = {
             'tpa_hint': enterprise_customer and enterprise_customer.identity_provider,

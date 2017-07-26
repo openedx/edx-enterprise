@@ -519,7 +519,7 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         serializer data successfully without errors.
         """
         mock_config_helpers.get_value.return_value = ''
-        self.serializer.update_enterprise_courses(self.request, 1)
+        self.serializer.update_enterprise_courses(self.ecu.enterprise_customer, 1)
 
         # Make sure global context passed in to update_course is added to the course.
         assert all('tpa_hint' in course for course in self.serializer.data['results'])
