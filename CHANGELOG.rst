@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.1] - 2017-07-27
+---------------------
+
+* Ensure catalog courses API endpoint users are associated with an EnterpriseCustomer.
+
 [0.39.0] - 2017-07-24
 ---------------------
 
