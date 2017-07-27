@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.2] - 2017-07-27
+---------------------
+
+* Introduce new endpoint to the Enterprise API to query for courses by enterprise id.
+
 [0.39.1] - 2017-07-27
 ---------------------
 
