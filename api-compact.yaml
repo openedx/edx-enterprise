@@ -39,21 +39,17 @@ apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_t
       application/json: >
         #set($inputRoot = $input.path('$'))
         #set($host = $stageVariables.gateway_host)
+        #set($catalogId = $input.params('id'))
 
-        #macro (updateURL $url)
-            #if($url != '') {
-                $url.replaceAll("(^https?://)[^/]*[^?]*(.*$)", "$1$host$context.resourcePath$2")
-            } #else {
-                none
-            }
-            #end
-        #end
+        #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)")
+        #set($updatedURL = "$1$host$context.resourcePath$2")
+        #set($resourceIdMatch = "{id}")
 
         {
           "count": $inputRoot.count,
-          "next": "$updateURL$inputRoot.next",
-          "previous": "$updateURL$inputRoot.previous",
-          "results": $inputRoot.results,
+          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+          "results": $inputRoot.results
         }
   401:
     statusCode: "401"

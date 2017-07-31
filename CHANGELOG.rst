@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.3] - 2017-07-28
+---------------------
+
+* Remove Macro use from swagger api config as it is not supported by AWS.
+
 [0.39.2] - 2017-07-27
 ---------------------
 
