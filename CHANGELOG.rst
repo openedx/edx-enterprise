@@ -2,7 +2,7 @@ Change Log
 ==========
 
 ..
-   All enhancements and patches to edx-enteprise will be documented
+   All enhancements and patches to edx-enterprise will be documented
    in this file.  It adheres to the structure of http://keepachangelog.com/ ,
    but in reStructuredText instead of Markdown (for ease of incorporation into
    Sphinx documentation and the PyPI description).
@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[0.39.4] - 2017-08-01
+---------------------
+
+* Setup Enterprise API gateway for Programs.
+* Setup Enterprise API service endpoint for Programs.
 
 [0.39.3] - 2017-07-28
 ---------------------
