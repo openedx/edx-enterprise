@@ -294,6 +294,20 @@ class CourseCatalogApiClient(object):
 
         return available_course_modes
 
+    def is_course_in_catalog(self, catalog_id, course_run_id):
+        """
+        Determine if the given course run ID is contained in the catalog with the given ID.
+
+        Args:
+            catalog_id (int): The ID of the catalog
+            course_run_id (str): The ID of the course run
+
+        Returns:
+            bool: Whether the course run is contained in the given catalog
+        """
+        resp = self.client.catalogs(catalog_id).contains.get(course_run_id=course_run_id)
+        return resp.get('courses', {}).get(course_run_id, False)
+
     def _load_data(self, resource, default=DEFAULT_VALUE_SAFEGUARD, **kwargs):
         """
         Load data from API client.
