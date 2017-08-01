@@ -10,6 +10,8 @@
 #   /enterprise/api/v1/catalogs/
 #   /enterprise/api/v1/catalogs/{id}/
 #   /enterprise/api/v1/catalogs/{id}/courses/
+#   /enterprise/api/v1/programs/
+#   /enterprise/api/v1/programs/{uuid}/
 
 apigateway_responses: &apigateway_responses
   default:
@@ -27,7 +29,7 @@ apigateway_responses: &apigateway_responses
   500:
     statusCode: "500"
 
-apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_template
+apigateway_responses_with_mapping_template_catalogs: &apigateway_responses_with_mapping_template_catalogs
   default:
     statusCode: "400"
   200:
@@ -62,9 +64,40 @@ apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_t
   500:
     statusCode: "500"
 
-produces: &produces
-  - "application/json"
-  - "application/csv"
+apigateway_responses_with_mapping_template_programs: &apigateway_responses_with_mapping_template_programs
+  default:
+    statusCode: "400"
+  200:
+    statusCode: "200"
+    responseTemplates:
+      # Response body mapping template, this template is used for updating
+      # "next" and "previous" urls (both host and url path) while preserving
+      # the protocol (http | https) and querystring parameters.
+      application/json: >
+        #set($inputRoot = $input.path('$'))
+        #set($host = $stageVariables.gateway_host)
+        #set($programUuid = $input.params('uuid'))
+
+        #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)")
+        #set($updatedURL = "$1$host$context.resourcePath$2")
+        #set($resourceUuidMatch = "{uuid}")
+
+        {
+          "count": $inputRoot.count,
+          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $programUuid)",
+          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $programUuid)",
+          "results": $inputRoot.results
+        }
+  401:
+    statusCode: "401"
+  403:
+    statusCode: "403"
+  404:
+    statusCode: "404"
+  429:
+    statusCode: "429"
+  500:
+    statusCode: "500"
 
 responses: &responses
   200:
@@ -82,11 +115,21 @@ responses: &responses
   500:
     description: "Internal Server Error"
 
+produces: &produces
+  - "application/json"
+  - "application/csv"
+
 id_parameter: &id_parameter
   name: "id"
   in: "path"
   required: true
   type: "number"
+
+uuid_parameter: &uuid_parameter
+  name: "uuid"
+  in: "path"
+  required: true
+  type: "string"
 
 auth_header: &auth_header
   name: "Authorization"
@@ -120,8 +163,19 @@ page_size_qs_parameter: &page_size_qs_parameter
 
 # AWS API Gateway vendor extension point. This information is used
 #  by https://github.com/awslabs/aws-apigateway-importer.
-x-amazon-apigateway-integration: &apigateway_integration
-  responses: *apigateway_responses_with_mapping_template
+x-amazon-apigateway-integration-catalogs: &apigateway_integration_catalogs
+  responses: *apigateway_responses_with_mapping_template_catalogs
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.querystring.limit: "method.request.querystring.limit"
+    integration.request.querystring.offset: "method.request.querystring.offset"
+    integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
+
+x-amazon-apigateway-integration-programs: &apigateway_integration_programs
+  responses: *apigateway_responses_with_mapping_template_programs
   httpMethod: "GET"
   type: "http"
   requestParameters:
@@ -139,8 +193,16 @@ x-amazon-apigateway-integration-with-id: &apigateway_integration_with_id_paramet
     integration.request.header.Authorization: "method.request.header.Authorization"
     integration.request.path.id: "method.request.path.id"
 
+x-amazon-apigateway-integration-with-uuid: &apigateway_integration_with_uuid_parameter
+  responses: *apigateway_responses
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.id: "method.request.path.uuid"
+
 x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_integration_with_id_and_querystring_parameters
-  responses: *apigateway_responses_with_mapping_template
+  responses: *apigateway_responses_with_mapping_template_catalogs
   httpMethod: "GET"
   type: "http"
   requestParameters:
@@ -167,7 +229,7 @@ endpoints:
           operationId: "get_enterprise_catalogs"
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration
+            <<: *apigateway_integration_catalogs
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/"
 
     # /v1/catalogs/{id}/
@@ -199,3 +261,32 @@ endpoints:
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_and_querystring_parameters
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"
+
+    # /v1/programs/
+    enterprisePrograms:
+        get:
+          produces: *produces
+          parameters:
+            - *auth_header
+            - *limit_qs_parameter
+            - *offset_qs_parameter
+            - *page_qs_parameter
+            - *page_size_qs_parameter
+          operationId: "get_enterprise_programs"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            <<: *apigateway_integration_programs
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/programs/"
+
+    # /v1/programs/{uuid}/
+    enterpriseProgramByUuid:
+        get:
+          produces: *produces
+          parameters:
+            - *auth_header
+            - *uuid_parameter
+          operationId: "get_enterprise_program_by_uuid"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            <<: *apigateway_integration_with_uuid_parameter
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/programs/{uuid}/"
