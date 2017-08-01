@@ -91,8 +91,8 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
         ).count() == 1
 
-    @mock.patch('enterprise.lms_api.CourseKey')
-    @mock.patch('enterprise.lms_api.CourseEnrollment')
+    @mock.patch('enterprise.api_client.lms.CourseKey')
+    @mock.patch('enterprise.api_client.lms.CourseEnrollment')
     def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment, mock_course_key):
         mock_course_key.from_string.return_value = None
         mock_course_enrollment.enroll.return_value = None

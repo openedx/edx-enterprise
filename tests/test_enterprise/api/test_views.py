@@ -15,7 +15,7 @@ from django.conf import settings
 from django.test import override_settings
 from django.utils import timezone
 
-from enterprise.lms_api import LMS_API_DATETIME_FORMAT
+from enterprise.api_client.lms import LMS_API_DATETIME_FORMAT
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, UserDataSharingConsentAudit
 from test_utils import TEST_USERNAME, APITest, factories
 

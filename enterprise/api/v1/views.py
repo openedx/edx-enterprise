@@ -22,7 +22,7 @@ from enterprise.api.pagination import get_paginated_response
 from enterprise.api.permissions import IsServiceUserOrReadOnly, IsStaffUserOrLinkedToEnterprise
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import decorators, serializers
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiClient
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 

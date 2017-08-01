@@ -24,7 +24,7 @@ from enterprise.admin.forms import (
     ManageLearnersForm,
 )
 from enterprise.admin.utils import ValidationMessages
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.utils import MultipleProgramMatchError
 from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Tests for enterprise.lms_api.
+Tests for enterprise.api_client.lms.py
 """
 from __future__ import absolute_import, unicode_literals, with_statement
 
@@ -15,7 +15,7 @@ from slumber.exceptions import HttpNotFoundError
 
 from django.conf import settings
 
-from enterprise import lms_api
+from enterprise.api_client import lms as lms_api
 from enterprise.utils import NotConnectedToOpenEdX
 
 URL_BASE_NAMES = {
@@ -109,7 +109,7 @@ def test_get_course_enrollment():
 
 
 @responses.activate
-@mock.patch('enterprise.lms_api.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
+@mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 def test_get_enrollment_course_modes():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     response = {
@@ -306,7 +306,7 @@ def test_jwt_lms_api_client_locally_raises():
         client.connect()
 
 
-@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_jwt_lms_api_client_refresh_token():
 
     class JwtLmsApiClientTest(lms_api.JwtLmsApiClient):
@@ -342,7 +342,7 @@ def test_jwt_lms_api_client_refresh_token():
 
 
 @responses.activate
-@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_grades_not_found():
     username = "DarthVadar"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -358,7 +358,7 @@ def test_get_course_grades_not_found():
 
 
 @responses.activate
-@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_grade_no_results():
     username = "DarthVadar"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -381,7 +381,7 @@ def test_get_course_grade_no_results():
 
 
 @responses.activate
-@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_grade():
     username = "DarthVadar"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -404,7 +404,7 @@ def test_get_course_grade():
 
 
 @responses.activate
-@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_certificate_not_found():
     username = "DarthVadar"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -420,7 +420,7 @@ def test_get_course_certificate_not_found():
 
 
 @responses.activate
-@mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_certificate():
     username = "DarthVadar"
     course_id = "course-v1:edX+DemoX+Demo_Course"

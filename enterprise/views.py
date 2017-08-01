@@ -33,10 +33,10 @@ except ImportError:
 
 
 # isort:imports-firstparty
+from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.messages import add_consent_declined_message
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import (

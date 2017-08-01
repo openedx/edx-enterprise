@@ -11,7 +11,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
-from enterprise.lms_api import parse_lms_api_datetime
+from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCustomerUser
 
 

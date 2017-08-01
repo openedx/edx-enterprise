@@ -43,8 +43,8 @@ class EcommerceApiClient(object):
         """
         if ecommerce_api_client is None:
             raise NotConnectedToOpenEdX(
-                _("To get a ecommerce_api_client, this package must be "
-                  "installed in an Open edX environment.")
+                _('To get a ecommerce_api_client, this package must be '
+                  'installed in an Open edX environment.')
             )
 
         self.user = user
@@ -85,7 +85,7 @@ class EcommerceApiClient(object):
             })
         except (HTTPError, Timeout, HttpClientError):
             LOGGER.error(
-                "Failed to post audit enrollment of user '{username}' in product '{sku}'.".format(
+                'Failed to post audit enrollment of user "{username}" in product "{sku}".'.format(
                     sku=sku,
                     username=request.user.username,
                 )
@@ -93,8 +93,8 @@ class EcommerceApiClient(object):
             messages.error(
                 request,
                 _(
-                    "There was an error completing your enrollment in the course, please try again. "
-                    "If the problem persists, contact {link_start}{platform_name} support{link_end}.",
+                    'There was an error completing your enrollment in the course, please try again. '
+                    'If the problem persists, contact {link_start}{platform_name} support{link_end}.',
                 ).format(
                     link_start='<a href="{support_link}" target="_blank">'.format(
                         support_link=configuration_helpers.get_value('ENTERPRISE_SUPPORT_URL')

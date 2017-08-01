@@ -22,7 +22,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import timezone
 
-from enterprise import lms_api
+from enterprise.api_client import lms as lms_api
 from test_utils.factories import (
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
@@ -360,7 +360,7 @@ def transmit_learner_data_context(command_kwargs, certificate, self_paced, end_d
         command_kwargs['enterprise_customer'] = testcase.enterprise_customer.uuid
 
     # Mock the JWT authentication for LMS API calls
-    with mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock()):
+    with mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock()):
 
         # Yield to the management command test, freezing time to the known NOW.
         with freeze_time(NOW):
