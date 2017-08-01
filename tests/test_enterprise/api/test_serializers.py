@@ -16,10 +16,10 @@ from rest_framework.test import APIRequestFactory
 from django.test import override_settings
 
 from enterprise.api.v1.serializers import (
-    CourseCatalogAPIResponseReadOnlySerializer,
-    EnterpriseCatalogCoursesReadOnlySerializer,
     EnterpriseCourseCatalogReadOnlySerializer,
+    EnterpriseCoursesReadOnlySerializer,
     EnterpriseCustomerUserEntitlementSerializer,
+    ResponsePaginationSerializer,
 )
 from test_utils import APITest, factories
 
@@ -148,7 +148,7 @@ class TestCourseCatalogAPIResponseReadOnlySerializer(APITest):
         }
 
         self.validated_data = self.data
-        self.serializer = CourseCatalogAPIResponseReadOnlySerializer(
+        self.serializer = ResponsePaginationSerializer(
             self.data
         )
 
@@ -175,7 +175,7 @@ class TestCourseCatalogAPIResponseReadOnlySerializer(APITest):
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriseCatalogCoursesSerializer(APITest):
+class TestEnterpriseCoursesSerializer(APITest):
     """
     Tests for enterprise API serializers.
     """
@@ -186,7 +186,7 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
 
         Populate data base for api testing.
         """
-        super(TestEnterpriseCatalogCoursesSerializer, self).setUp()
+        super(TestEnterpriseCoursesSerializer, self).setUp()
         faker = FakerFactory.create()
 
         self.provider_id = faker.slug()  # pylint: disable=no-member
@@ -292,15 +292,15 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         }
 
         self.validated_data = self.data
-        self.serializer = EnterpriseCatalogCoursesReadOnlySerializer(
+        self.serializer = EnterpriseCoursesReadOnlySerializer(
             self.data
         )
 
     def test_update(self):
         """
-        Test update method of EnterpriseCatalogCoursesReadOnlySerializer.
+        Test update method of EnterpriseCoursesReadOnlySerializer.
 
-        Verify that update for EnterpriseCatalogCoursesReadOnlySerializer returns
+        Verify that update for EnterpriseCoursesReadOnlySerializer returns
         successfully without making any changes.
         """
         with self.assertNumQueries(0):
@@ -308,9 +308,9 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
 
     def test_create(self):
         """
-        Test create method of EnterpriseCatalogCoursesReadOnlySerializer.
+        Test create method of EnterpriseCoursesReadOnlySerializer.
 
-        Verify that create for EnterpriseCatalogCoursesReadOnlySerializer returns
+        Verify that create for EnterpriseCoursesReadOnlySerializer returns
         successfully without making any changes.
         """
         with self.assertNumQueries(0):
@@ -380,9 +380,9 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
             mock_config_helpers,
     ):
         """
-        Test update_course_runs method of EnterpriseCatalogCoursesReadOnlySerializer.
+        Test update_course_runs method of EnterpriseCoursesReadOnlySerializer.
 
-        Verify that update_course for EnterpriseCatalogCoursesReadOnlySerializer returns
+        Verify that update_course for EnterpriseCoursesReadOnlySerializer returns
         successfully without errors.
         """
         # Populate database.
@@ -418,9 +418,9 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
     @mock.patch('enterprise.models.configuration_helpers')
     def test_update_course(self, mock_config_helpers, _):
         """
-        Test update_course method of EnterpriseCatalogCoursesReadOnlySerializer.
+        Test update_course method of EnterpriseCoursesReadOnlySerializer.
 
-        Verify that update_course for EnterpriseCatalogCoursesReadOnlySerializer returns
+        Verify that update_course for EnterpriseCoursesReadOnlySerializer returns
         successfully without errors.
         """
         mock_config_helpers.get_value.return_value = ''
@@ -428,7 +428,12 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
             'tpa_hint': self.provider_id
         }
         course = self.data['results'][0]
-        updated_course = self.serializer.update_course(course, 1, self.ecu.enterprise_customer, global_context)
+        updated_course = self.serializer.update_course(
+            course,
+            self.ecu.enterprise_customer,
+            global_context,
+            catalog_id=1
+        )
 
         # Make sure global context passed in to update_course is added to the course.
         assert 'tpa_hint' in updated_course
@@ -441,7 +446,7 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         # Make sure missing `key` in course run raises an exception
         course['course_runs'] = [{}]
         with raises(KeyError):
-            self.serializer.update_course(course, 1, self.ecu.enterprise_customer, global_context)
+            self.serializer.update_course(course, self.ecu.enterprise_customer, global_context, catalog_id=1)
 
     @ddt.data(
         (
@@ -484,9 +489,9 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
     @override_settings(LMS_ROOT_URL='http://testserver/')
     def test_update_course_ddt(self, course, provider_id, global_context, expected_course):
         """
-        Test update_course method of EnterpriseCatalogCoursesReadOnlySerializer.
+        Test update_course method of EnterpriseCoursesReadOnlySerializer.
 
-        Verify that update_course for EnterpriseCatalogCoursesReadOnlySerializer returns
+        Verify that update_course for EnterpriseCoursesReadOnlySerializer returns
         successfully without errors.
         """
         enterprise_customer_id = 'd2fb4cb0-b538-4934-1926-684d48ff5865'
@@ -500,7 +505,12 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         )
 
         with mock.patch('enterprise.utils.reverse', return_value='course_modes/choose/'):
-            updated_course = self.serializer.update_course(course, 1, ecu.enterprise_customer, global_context)
+            updated_course = self.serializer.update_course(
+                course,
+                ecu.enterprise_customer,
+                global_context,
+                catalog_id=1
+            )
 
             # Make sure global context passed in to update_course is added to the course.
             for key, value in six.iteritems(global_context):
@@ -513,13 +523,13 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
     @mock.patch('enterprise.models.configuration_helpers')
     def test_update_enterprise_courses(self, mock_config_helpers, _):
         """
-        Test update_enterprise_courses method of EnterpriseCatalogCoursesReadOnlySerializer.
+        Test update_enterprise_courses method of EnterpriseCoursesReadOnlySerializer.
 
-        Verify that update_enterprise_courses for EnterpriseCatalogCoursesReadOnlySerializer updates
+        Verify that update_enterprise_courses for EnterpriseCoursesReadOnlySerializer updates
         serializer data successfully without errors.
         """
         mock_config_helpers.get_value.return_value = ''
-        self.serializer.update_enterprise_courses(self.ecu.enterprise_customer, 1)
+        self.serializer.update_enterprise_courses(self.ecu.enterprise_customer, catalog_id=1)
 
         # Make sure global context passed in to update_course is added to the course.
         assert all('tpa_hint' in course for course in self.serializer.data['results'])

@@ -30,7 +30,7 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
-from test_utils.fake_catalog_api import get_catalog_courses, get_course_details
+from test_utils.fake_course_discovery_api import get_catalog_courses, get_course_details
 
 
 @mark.django_db
@@ -86,24 +86,29 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
 @mark.django_db
 @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
 @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CatalogsApiClient')
 @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
 @mock.patch('enterprise.models.configuration_helpers')
 def test_transmit_courseware_task_success(
         fake_config_helpers,
-        fake_client,
+        fake_sapfs_client,
         fake_catalog_client,
+        fake_course_client,
         track_selection_reverse_mock,
-        caplog):
+        caplog
+):
     """
     Test the data transmission task.
     """
     fake_config_helpers.get_value.return_value = 'https://example.com'
-    fake_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
-    fake_client.return_value.send_course_import.return_value = 200, '{}'
+    fake_sapfs_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
+    fake_sapfs_client.return_value.send_course_import.return_value = 200, '{}'
 
-    fake_catalog_client.return_value = mock.MagicMock(
+    fake_course_client.return_value = mock.MagicMock(
         get_course_details=get_course_details,
+    )
+    fake_catalog_client.return_value = mock.MagicMock(
         get_catalog_courses=get_catalog_courses,
     )
 
@@ -128,7 +133,7 @@ def test_transmit_courseware_task_success(
 
     call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
 
-    fake_client.return_value.send_course_import.assert_called()
+    fake_sapfs_client.return_value.send_course_import.assert_called()
     assert len(caplog.records) == 9
     expected_dump = (
         '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
@@ -180,13 +185,16 @@ def test_transmit_courseware_task_success(
 
 
 @mark.django_db
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
-def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CatalogsApiClient')
+def test_transmit_courseware_task_no_channel(fake_catalog_client, fake_course_client, caplog):
     """
     Test the data transmission task.
     """
-    fake_catalog_client.return_value = mock.MagicMock(
+    fake_course_client.return_value = mock.MagicMock(
         get_course_details=get_course_details,
+    )
+    fake_catalog_client.return_value = mock.MagicMock(
         get_catalog_courses=get_catalog_courses,
     )
 
@@ -205,13 +213,16 @@ def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
 
 
 @mark.django_db
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
-def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseApiClient')
+@mock.patch('integrated_channels.integrated_channel.course_metadata.CatalogsApiClient')
+def test_transmit_courseware_task_no_catalog(fake_catalog_client, fake_course_client, caplog):
     """
     Test the data transmission task.
     """
-    fake_catalog_client.return_value = mock.MagicMock(
+    fake_course_client.return_value = mock.MagicMock(
         get_course_details=get_course_details,
+    )
+    fake_catalog_client.return_value = mock.MagicMock(
         get_catalog_courses=get_catalog_courses,
     )
 

@@ -19,6 +19,9 @@ from enterprise.lms_api import LMS_API_DATETIME_FORMAT
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, UserDataSharingConsentAudit
 from test_utils import TEST_USERNAME, APITest, factories
 
+CATALOGS_LIST_ENDPOINT = reverse('catalogs-list')
+CATALOGS_DETAIL_ENDPOINT = reverse('catalogs-detail', (1, ))
+CATALOGS_COURSES_ENDPOINT = reverse('catalogs-courses', (1, ))
 DEFAULT_ENTERPRISE_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
 MOCK_CATALOG_COURSE_RESPONSE = {
     'count': 3,
@@ -588,7 +591,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.CourseCatalogApiClient')
+    @mock.patch('enterprise.api.v1.views.CatalogsApiClient')
     def test_enterprise_customer_courses(
             self,
             enterprise_uuid,
@@ -597,7 +600,7 @@ class TestEnterpriseAPIViews(APITest):
             link_user,
             mocked_catalog_courses,
             expected,
-            mock_catalog_api_client
+            mock_catalogs_api_client
     ):
         """
         Make sure the enterprise courses view returns correct data.
@@ -619,7 +622,7 @@ class TestEnterpriseAPIViews(APITest):
                 provider_id='saml-testshib',
             )
 
-        mock_catalog_api_client.return_value = mock.Mock(
+        mock_catalogs_api_client.return_value = mock.Mock(
             get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
         )
         response = self.client.get(url)
@@ -637,10 +640,14 @@ class TestEnterpriseCatalogAPIViews(APITest):
 
     @ddt.data(
         (
-            reverse('catalogs-list'), {}, {'detail': 'The resource you are looking for does not exist.'},
+            CATALOGS_LIST_ENDPOINT,
+            {},
+            {
+                'detail': "Unable to fetch API response from endpoint '{}'.".format(CATALOGS_LIST_ENDPOINT)
+            },
         ),
         (
-            reverse('catalogs-list'),
+            CATALOGS_LIST_ENDPOINT,
             {
                 'count': 3,
                 'next': 'http://testserver/enterprise/api/v1/catalogs/?page=3',
@@ -681,8 +688,8 @@ class TestEnterpriseCatalogAPIViews(APITest):
             mocked_catalogs (dict): A dict containing catalog information as returned by discovery API.
             expected_catalogs (dict): A dict elements containing expected catalog information.
         """
-        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
-            mock_catalog_api_client.return_value = mock.Mock(
+        with mock.patch('enterprise.api.v1.views.CatalogsApiClient') as mock_catalogs_api_client:
+            mock_catalogs_api_client.return_value = mock.Mock(
                 get_paginated_catalogs=mock.Mock(return_value=mocked_catalogs),
             )
             response = self.client.get(url)
@@ -692,12 +699,14 @@ class TestEnterpriseCatalogAPIViews(APITest):
 
     @ddt.data(
         (
-            reverse('catalogs-detail', (1, )),
+            CATALOGS_DETAIL_ENDPOINT,
             {},
-            {'detail': 'The resource you are looking for does not exist.'},
+            {
+                'detail': "Unable to fetch API response from endpoint '{}'.".format(CATALOGS_DETAIL_ENDPOINT)
+            },
         ),
         (
-            reverse('catalogs-detail', (1, )),
+            CATALOGS_DETAIL_ENDPOINT,
             {
                 'id': 1,
                 'name': 'Enterprise Dummy Catalog',
@@ -722,8 +731,8 @@ class TestEnterpriseCatalogAPIViews(APITest):
             mocked_catalog (dict): This is used to mock catalog returned by catalog api.
             expected (list): This is the expected catalog from enterprise api.
         """
-        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
-            mock_catalog_api_client.return_value = mock.Mock(
+        with mock.patch('enterprise.api.v1.views.CatalogsApiClient') as mock_catalogs_api_client:
+            mock_catalogs_api_client.return_value = mock.Mock(
                 get_catalog=mock.Mock(return_value=mocked_catalog),
             )
             response = self.client.get(url)
@@ -733,14 +742,16 @@ class TestEnterpriseCatalogAPIViews(APITest):
 
     @ddt.data(
         (
-            reverse('catalogs-courses', (1, )),
+            CATALOGS_COURSES_ENDPOINT,
             'saml-testshib',
             'd2fb4cb0-b538-4934-1926-684d48ff5865',
             {},
-            {'detail': 'The resource you are looking for does not exist.'},
+            {
+                'detail': "Unable to fetch API response from endpoint '{}'.".format(CATALOGS_COURSES_ENDPOINT)
+            },
         ),
         (
-            reverse('catalogs-courses', (1, )),
+            CATALOGS_COURSES_ENDPOINT,
             'saml-testshib',
             'd2fb4cb0-b538-4934-1926-684d48ff5865',
             MOCK_CATALOG_COURSE_RESPONSE,
@@ -805,8 +816,8 @@ class TestEnterpriseCatalogAPIViews(APITest):
             provider_id=provider_id,
         )
 
-        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
-            mock_catalog_api_client.return_value = mock.Mock(
+        with mock.patch('enterprise.api.v1.views.CatalogsApiClient') as mock_catalogs_api_client:
+            mock_catalogs_api_client.return_value = mock.Mock(
                 get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
             )
             response = self.client.get(url)

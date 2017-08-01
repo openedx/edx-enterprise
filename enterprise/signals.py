@@ -9,7 +9,7 @@ from logging import getLogger
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)
 
 
 @disable_for_loaddata
@@ -38,7 +38,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
             message_template = "User {user} have changed email to match pending Enterprise Customer link, " \
                                "but was already linked to Enterprise Customer {enterprise_customer} - " \
                                "deleting pending link record"
-            logger.info(message_template.format(
+            LOGGER.info(message_template.format(
                 user=user_instance, enterprise_customer=existing_record.enterprise_customer
             ))
             pending_ecu.delete()

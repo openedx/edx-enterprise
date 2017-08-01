@@ -15,7 +15,7 @@ celery==3.1.18
 click-log==0.1.8          # via edx-lint
 click==6.7                # via click-log, edx-lint, pip-tools
 configparser==3.5.0       # via pylint
-diff-cover==0.9.11
+diff-cover==0.9.12
 distlib==0.2.5            # via caniusepython3
 django-config-models==0.1.8
 django-extensions==1.5.9
@@ -73,7 +73,7 @@ slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 tox-battery==0.2.0
 tox==2.7.0
-tqdm==4.14.0              # via twine
+tqdm==4.15.0              # via twine
 twine==1.9.1
 unicodecsv==0.14.1
 virtualenv==15.1.0        # via tox

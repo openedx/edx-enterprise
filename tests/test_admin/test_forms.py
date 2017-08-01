@@ -24,9 +24,9 @@ from enterprise.admin.forms import (
     ManageLearnersForm,
 )
 from enterprise.admin.utils import ValidationMessages
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.course_discovery_api import CatalogsApiClient, CourseRunApiClient, ProgramsApiClient
 from enterprise.utils import MultipleProgramMatchError
-from test_utils import fake_catalog_api, fake_enrollment_api
+from test_utils import fake_course_discovery_api, fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -34,29 +34,47 @@ from test_utils.factories import (
     SiteFactory,
     UserFactory,
 )
-from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE1, FAKE_PROGRAM_RESPONSE2
+from test_utils.fake_course_discovery_api import FAKE_PROGRAM_RESPONSE1, FAKE_PROGRAM_RESPONSE2
 
 FAKER = FakerFactory.create()
 
 
-class TestWithCourseCatalogApiMixin(object):
+class CourseDiscoveryApiMockMixin(object):
     """
-    Mixin class to provide CourseCatalogApiClient mock.
+    Mixin class to provide CatalogsApiClient, CourseRunApiClient, & ProgramsApiClient mocks.
     """
+
     def setUp(self):
         """
-        Build CourseCatalogApiClient mock and register it for deactivation at cleanup.
+        Build CatalogsApiClient mock and register it for deactivation at cleanup.
         """
-        super(TestWithCourseCatalogApiMixin, self).setUp()
-        self.catalog_api = mock.Mock(CourseCatalogApiClient)
-        patcher = mock.patch('enterprise.admin.forms.CourseCatalogApiClient', mock.Mock(return_value=self.catalog_api))
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        super(CourseDiscoveryApiMockMixin, self).setUp()
+        self.catalogs_api = mock.Mock(CatalogsApiClient)
+        self.course_run_api = mock.Mock(CourseRunApiClient)
+        self.programs_api = mock.Mock(ProgramsApiClient)
+        catalogs_patcher = mock.patch(
+            'enterprise.admin.forms.CatalogsApiClient',
+            mock.Mock(return_value=self.catalogs_api)
+        )
+        course_run_patcher = mock.patch(
+            'enterprise.admin.forms.CourseRunApiClient',
+            mock.Mock(return_value=self.course_run_api)
+        )
+        programs_patcher = mock.patch(
+            'enterprise.admin.forms.ProgramsApiClient',
+            mock.Mock(return_value=self.programs_api)
+        )
+        catalogs_patcher.start()
+        course_run_patcher.start()
+        programs_patcher.start()
+        self.addCleanup(catalogs_patcher.stop)
+        self.addCleanup(course_run_patcher.stop)
+        self.addCleanup(programs_patcher.stop)
 
 
 @mark.django_db
 @ddt.ddt
-class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
+class TestManageLearnersForm(CourseDiscoveryApiMockMixin, unittest.TestCase):
     """
     Tests for ManageLearnersForm.
     """
@@ -259,8 +277,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
 
     def test_clean_program_valid_by_uuid(self):
         course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.return_value = {course_mode}
+        self.programs_api.get_program_by_uuid.side_effect = fake_course_discovery_api.get_program_by_uuid
+        self.course_run_api.get_common_course_modes.return_value = {course_mode}
         program_uuid = FAKE_PROGRAM_RESPONSE1.get("uuid")
         form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
         assert form.is_valid()
@@ -268,9 +286,9 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
 
     def test_clean_program_valid_by_title(self):
         course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.return_value = None
-        self.catalog_api.get_program_by_title.side_effect = fake_catalog_api.get_program_by_title
-        self.catalog_api.get_common_course_modes.return_value = {course_mode}
+        self.programs_api.get_program_by_uuid.return_value = None
+        self.programs_api.get_program_by_title.side_effect = fake_course_discovery_api.get_program_by_title
+        self.course_run_api.get_common_course_modes.return_value = {course_mode}
         program_title = FAKE_PROGRAM_RESPONSE1.get("title")
         program_details = FAKE_PROGRAM_RESPONSE1
         form = self._make_bound_form("irrelevant@example.com", program=program_title, course_mode=course_mode)
@@ -280,8 +298,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     @ddt.data(2, 4, 5, 7, 12, 42, 3e5)
     def test_clean_program_course_api_exception(self, program_count):
         course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.return_value = None
-        self.catalog_api.get_program_by_title.side_effect = MultipleProgramMatchError(program_count)
+        self.programs_api.get_program_by_uuid.return_value = None
+        self.programs_api.get_program_by_title.side_effect = MultipleProgramMatchError(program_count)
 
         form = self._make_bound_form("irrelevant@example.com", program="irrelevant", course_mode=course_mode)
         assert not form.is_valid()
@@ -291,8 +309,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
 
     def test_clean_program_invalid(self):
         program_id = "non-existing"
-        self.catalog_api.get_program_by_uuid.return_value = None
-        self.catalog_api.get_program_by_title.return_value = None
+        self.programs_api.get_program_by_uuid.return_value = None
+        self.programs_api.get_program_by_title.return_value = None
         form = self._make_bound_form("irrelevant@example.com", program=program_id)
         assert not form.is_valid()
         assert form.errors == {
@@ -304,7 +322,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         program = FAKE_PROGRAM_RESPONSE1.copy()
         program["status"] = program_status
         program_id = program["uuid"]
-        self.catalog_api.get_program_by_uuid.return_value = program
+        self.programs_api.get_program_by_uuid.return_value = program
         form = self._make_bound_form("irrelevant@example.com", program=program_id)
         assert not form.is_valid()
         assert form.errors == {
@@ -316,7 +334,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     @ddt.data(HttpClientError, HttpServerError)
     def test_clean_program_http_error(self, exception):
         course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = exception
+        self.programs_api.get_program_by_uuid.side_effect = exception
         program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
         form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
         assert not form.is_valid()
@@ -325,8 +343,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         }
 
     def test_validate_program_and_course_mode_missing(self):
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.return_value = {"prof"}
+        self.programs_api.get_program_by_uuid.side_effect = fake_course_discovery_api.get_program_by_uuid
+        self.course_run_api.get_common_course_modes.return_value = {"prof"}
         program_uuid = FAKE_PROGRAM_RESPONSE1.get("uuid")
         form = self._make_bound_form("irrelevant@example.com", program=program_uuid)
         assert not form.is_valid()
@@ -337,8 +355,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     @ddt.data(HttpClientError, HttpServerError)
     def test_validate_program_and_course_mode_http_error(self, exception):
         course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.side_effect = exception
+        self.programs_api.get_program_by_uuid.side_effect = fake_course_discovery_api.get_program_by_uuid
+        self.course_run_api.get_common_course_modes.side_effect = exception
         program = FAKE_PROGRAM_RESPONSE2
         form = self._make_bound_form("irrelevant@example.com", program=program["uuid"], course_mode=course_mode)
         assert not form.is_valid()
@@ -348,8 +366,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
 
     def test_validate_program_and_course_mode_valid(self):
         course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.side_effect = fake_catalog_api.get_common_course_modes
+        self.programs_api.get_program_by_uuid.side_effect = fake_course_discovery_api.get_program_by_uuid
+        self.course_run_api.get_common_course_modes.side_effect = fake_course_discovery_api.get_common_course_modes
         program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
         form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
         assert form.is_valid()
@@ -357,8 +375,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
 
     def test_validate_program_and_course_mode_invalid(self):
         course_mode = "audit"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.side_effect = fake_catalog_api.get_common_course_modes
+        self.programs_api.get_program_by_uuid.side_effect = fake_course_discovery_api.get_program_by_uuid
+        self.course_run_api.get_common_course_modes.side_effect = fake_course_discovery_api.get_common_course_modes
         program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
         form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
         assert not form.is_valid()
@@ -372,8 +390,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     def test_clean_both_course_and_program_passed(self, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.return_value = {"audit"}
+        self.programs_api.get_program_by_uuid.side_effect = fake_course_discovery_api.get_program_by_uuid
+        self.course_run_api.get_common_course_modes.return_value = {"audit"}
 
         program_id = FAKE_PROGRAM_RESPONSE2.get("uuid")
         course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -389,7 +407,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
 
 
 @mark.django_db
-class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
+class TestEnterpriseCustomerAdminForm(CourseDiscoveryApiMockMixin, unittest.TestCase):
     """
     Tests for EnterpriseCustomerAdminForm.
     """
@@ -432,7 +450,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         delattr(EnterpriseCustomerAdminForm, 'user')  # pylint: disable=literal-used-as-attribute
 
     def test_interface_displays_selected_option(self):
-        self.catalog_api.get_all_catalogs.return_value = [
+        self.catalogs_api.get_all_catalogs.return_value = [
             {
                 "id": self.catalog_id,
                 "name": "My Catalog"
@@ -450,7 +468,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         ]
 
     def test_with_mocked_get_edx_data(self):
-        self.catalog_api.get_all_catalogs.return_value = [
+        self.catalogs_api.get_all_catalogs.return_value = [
             {
                 "id": self.catalog_id,
                 "name": "My Catalog"
@@ -472,7 +490,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         Test that when we pass an empty string to the form, it gets saved to the database
         as a null value, rather than being ignored or raising an error.
         """
-        self.catalog_api.get_all_catalogs.return_value = [
+        self.catalogs_api.get_all_catalogs.return_value = [
             {
                 "id": 99,
                 "name": "My Catalog"
@@ -504,7 +522,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         Test that when we pass an empty string to the form, it gets saved to the database
         as a null value, rather than being ignored or raising an error.
         """
-        self.catalog_api.get_all_catalogs.return_value = [
+        self.catalogs_api.get_all_catalogs.return_value = [
             {
                 "id": 99,
                 "name": "My Catalog"
@@ -536,7 +554,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
         Test that when we pass an empty string to the form, it gets saved to the database
         as a null value, rather than being ignored or raising an error.
         """
-        self.catalog_api.get_all_catalogs.return_value = [
+        self.catalogs_api.get_all_catalogs.return_value = [
             {
                 "id": 99,
                 "name": "My Catalog"

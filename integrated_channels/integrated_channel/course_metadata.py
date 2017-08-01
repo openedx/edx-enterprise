@@ -10,7 +10,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.course_discovery_api import CatalogsApiClient, CourseApiClient
 
 
 EXCLUDED_COURSE_DETAIL_KEYS = [
@@ -50,14 +50,15 @@ def get_course_runs(user, enterprise_customer):
     """
     catalog_id = enterprise_customer.catalog
 
-    client = CourseCatalogApiClient(user)
+    catalogs_api_client = CatalogsApiClient(user)
+    course_api_client = CourseApiClient(user)
 
-    catalog_courses = client.get_catalog_courses(catalog_id)
+    catalog_courses = catalogs_api_client.get_catalog_courses(catalog_id)
     LOGGER.info('Retrieving course list for catalog %s', catalog_id)
 
     for course in catalog_courses:
         course_key = course.get('key')
-        course_details = client.get_course_details(course_key)
+        course_details = course_api_client.get_course_details(course_key)
         for run in course_details.get('course_runs', []):
             yield get_complete_course_run_details(course_details, run)
 

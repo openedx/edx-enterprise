@@ -15,7 +15,33 @@ FAKE_PROGRAM_RESPONSE1 = {
     "status": "active",
     "marketing_slug": "program1",
     "marketing_url": "all types/program1",
-    "banner_image": {},  # skipped
+    "is_program_eligible_for_one_click_purchase": True,
+    "hidden": False,
+    "card_image_url": "card_image.jpg",
+    "authoring_organizations": [
+        {
+            "uuid": "12de950c-6fae-49f7-aaa9-778b5fbdae56",
+            "key": "edX",
+            "name": ""
+        }
+    ],
+    "banner_image": {
+        "small": {
+            "url": "small.jpg",
+            "width": 435,
+            "height": 145
+        },
+        "medium": {
+            "url": "medium.jpg",
+            "width": 726,
+            "height": 242
+        },
+        "large": {
+            "url": "large.jpg",
+            "width": 1440,
+            "height": 480
+        },
+    },
     "courses": [
         {
             "key": "Organization+DNDv2",
@@ -26,10 +52,41 @@ FAKE_PROGRAM_RESPONSE1 = {
                     "key": "course-v1:Organization+DNDv2+T1",
                     "uuid": "076cb917-06d6-4713-8a6c-c1712ce2e421",
                     "title": "Drag and Drop Demos",
-                    "image": {},  # skipped
                     "short_description": None,
                     "marketing_url": None,
                     "start": "2015-01-01T00:00:00Z",
+                    "end": "2017-01-01T00:00:00Z",
+                    "enrollment_start": None,
+                    "enrollment_end": None,
+                    "pacing_type": "instructor_paced",
+                    "type": "verified",
+                    "status": "published",
+                    "image": {
+                        "src": "course_run_1.jpg",
+                        "width": None,
+                        "height": None,
+                        "description": None
+                    },
+                    "seats": [
+                        {
+                            "type": "audit",
+                            "price": "2.51",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "credit_provider": None,
+                            "credit_hours": 3,
+                            "sku": "11123331"
+                        },
+                        {
+                            "type": "verified",
+                            "price": "200.00",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "credit_provider": None,
+                            "credit_hours": 3,
+                            "sku": "224322222"
+                        }
+                    ],
                 }
             ],
             "owners": [
@@ -50,10 +107,41 @@ FAKE_PROGRAM_RESPONSE1 = {
                     "key": "course-v1:Organization+VD1+VD1",
                     "uuid": "5b949fc1-aa05-42b0-8c9f-8e6114848ae9",
                     "title": "VectorDraw",
-                    "image": {},  # skipped
                     "short_description": None,
                     "marketing_url": None,
                     "start": "2030-01-01T00:00:00Z",
+                    "end": "2040-01-01T00:00:00Z",
+                    "enrollment_start": None,
+                    "enrollment_end": None,
+                    "pacing_type": "instructor_paced",
+                    "type": "verified",
+                    "status": "published",
+                    "image": {
+                        "src": "course_run_1.jpg",
+                        "width": None,
+                        "height": None,
+                        "description": None
+                    },
+                    "seats": [
+                        {
+                            "type": "audit",
+                            "price": "2.56",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "credit_provider": None,
+                            "credit_hours": 3,
+                            "sku": "11111111"
+                        },
+                        {
+                            "type": "verified",
+                            "price": "100.00",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "credit_provider": None,
+                            "credit_hours": 3,
+                            "sku": "22222222"
+                        }
+                    ],
                 }
             ],
         },
@@ -66,9 +154,41 @@ FAKE_PROGRAM_RESPONSE1 = {
                     "key": "course-v1:Organization+ENT-1+T1",
                     "uuid": "a2128a84-6e20-4fce-958e-80d9461ef835",
                     "title": "Enterprise Tests",
-                    "image": {},  # skipped
                     "short_description": "",
-                    "marketing_url": None
+                    "marketing_url": None,
+                    "start": "2016-01-01T00:00:00Z",
+                    "end": "2018-01-01T00:00:00Z",
+                    "enrollment_start": None,
+                    "enrollment_end": None,
+                    "pacing_type": "instructor_paced",
+                    "type": "verified",
+                    "status": "published",
+                    "image": {
+                        "src": "course_run_1.jpg",
+                        "width": None,
+                        "height": None,
+                        "description": None
+                    },
+                    "seats": [
+                        {
+                            "type": "audit",
+                            "price": "0.00",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "credit_provider": None,
+                            "credit_hours": 3,
+                            "sku": "1232131"
+                        },
+                        {
+                            "type": "verified",
+                            "price": "0.00",
+                            "currency": "USD",
+                            "upgrade_deadline": None,
+                            "credit_provider": None,
+                            "credit_hours": 3,
+                            "sku": "32131323"
+                        }
+                    ],
                 }
             ],
         }
@@ -83,7 +203,33 @@ FAKE_PROGRAM_RESPONSE2 = {
     "status": "active",
     "marketing_slug": "program2",
     "marketing_url": "prof only/program2",
-    "banner_image": {},  # skipped
+    "is_program_eligible_for_one_click_purchase": True,
+    "hidden": False,
+    "card_image_url": "card_image.jpg",
+    "authoring_organizations": [
+        {
+            "uuid": "12de950c-6fae-49f7-aaa9-778b5fbdae56",
+            "key": "edX",
+            "name": ""
+        }
+    ],
+    "banner_image": {
+        "small": {
+            "url": "small.jpg",
+            "width": 435,
+            "height": 145
+        },
+        "medium": {
+            "url": "medium.jpg",
+            "width": 726,
+            "height": 242
+        },
+        "large": {
+            "url": "large.jpg",
+            "width": 1440,
+            "height": 480
+        },
+    },
     "courses": [
         {
             "key": "Organization+VD1",
@@ -94,7 +240,12 @@ FAKE_PROGRAM_RESPONSE2 = {
                     "key": "course-v1:Organization+VD1+VD1",
                     "uuid": "5b949fc1-aa05-42b0-8c9f-8e6114848ae9",
                     "title": "VectorDraw",
-                    "image": {},  # skipped
+                    "image": {
+                        "src": "course_run_1.jpg",
+                        "width": None,
+                        "height": None,
+                        "description": None
+                    },
                     "short_description": None,
                     "marketing_url": None,
                     "start": "2030-01-01T00:00:00Z",
@@ -110,7 +261,12 @@ FAKE_PROGRAM_RESPONSE2 = {
                     "key": "course-v1:Organization+ENT-1+T1",
                     "uuid": "a2128a84-6e20-4fce-958e-80d9461ef835",
                     "title": "Enterprise Tests",
-                    "image": {},  # skipped
+                    "image": {
+                        "src": "course_run_1.jpg",
+                        "width": None,
+                        "height": None,
+                        "description": None
+                    },
                     "short_description": "",
                     "marketing_url": None
                 }

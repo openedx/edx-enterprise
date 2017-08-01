@@ -37,7 +37,7 @@ try:
 except ImportError:
     configuration_helpers = None
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
 

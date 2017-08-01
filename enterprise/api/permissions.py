@@ -10,7 +10,7 @@ from rest_framework import permissions
 from enterprise.api.utils import get_service_usernames
 from enterprise.models import EnterpriseCustomerUser
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)
 
 
 class IsServiceUserOrReadOnly(permissions.IsAuthenticated):
@@ -57,7 +57,7 @@ class IsStaffUserOrLinkedToEnterprise(permissions.IsAuthenticated):
                     path=request.get_full_path()
                 )
             )
-            logger.error(error_message)
+            LOGGER.error(error_message)
             return False
 
         return True
