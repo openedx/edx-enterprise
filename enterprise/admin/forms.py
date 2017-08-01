@@ -23,12 +23,12 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.course_discovery_api import CatalogsApiClient, CourseRunApiClient, ProgramsApiClient
 from enterprise.lms_api import EnrollmentApiClient
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 from enterprise.utils import MultipleProgramMatchError
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)
 
 
 class ManageLearnersForm(forms.Form):
@@ -187,7 +187,7 @@ class ManageLearnersForm(forms.Form):
             return None
 
         try:
-            client = CourseCatalogApiClient(self._user)
+            client = ProgramsApiClient(self._user)
             program = client.get_program_by_uuid(program_id) or client.get_program_by_title(program_id)
         except MultipleProgramMatchError as exc:
             raise ValidationError(ValidationMessages.MULTIPLE_PROGRAM_MATCH.format(program_count=exc.programs_matched))
@@ -274,7 +274,7 @@ class ManageLearnersForm(forms.Form):
 
         course_runs = get_course_runs_from_program(program)
         try:
-            client = CourseCatalogApiClient(self._user)
+            client = CourseRunApiClient(self._user)
             available_modes = client.get_common_course_modes(course_runs)
             course_mode = self.cleaned_data.get(self.Fields.COURSE_MODE)
         except (HttpClientError, HttpServerError):
@@ -328,8 +328,8 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         Once retrieved, these name pairs can be used directly as a value
         for the `choices` argument to a ChoiceField.
         """
-        catalog_api = CourseCatalogApiClient(self.user)
-        catalogs = catalog_api.get_all_catalogs()
+        catalogs_api = CatalogsApiClient(self.user)
+        catalogs = catalogs_api.get_all_catalogs()
         # order catalogs by name.
         catalogs = sorted(catalogs, key=lambda catalog: catalog.get('name', '').lower())
 
@@ -397,7 +397,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
                 "information, contact a system administrator.",
             )
             # Log message for debugging
-            logger.exception(message)
+            LOGGER.exception(message)
 
             raise ValidationError(message)
 

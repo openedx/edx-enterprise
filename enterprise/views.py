@@ -37,7 +37,7 @@ except ImportError:
 
 
 # isort:imports-firstparty
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.course_discovery_api import CourseRunApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.messages import add_consent_declined_message
@@ -53,7 +53,7 @@ from enterprise.utils import (
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)  # pylint: disable=invalid-name
 LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
@@ -407,7 +407,7 @@ class HandleConsentEnrollment(View):
             enrollment_client = EnrollmentApiClient()
             course_modes = enrollment_client.get_course_modes(course_id)
         except HttpClientError:
-            logger.error('Failed to determine available course modes for course ID: %s', course_id)
+            LOGGER.error('Failed to determine available course modes for course ID: %s', course_id)
             raise Http404
 
         # Verify that the request user belongs to the enterprise against the
@@ -516,7 +516,7 @@ class CourseEnrollmentView(View):
                     return '${}'.format(int(price))
                 return '${:0.2f}'.format(price)
         except HttpClientError:
-            logger.error(
+            LOGGER.error(
                 "Failed to get price details for course mode's SKU '{sku}' for username '{username}'".format(
                     sku=mode['sku'], username=request.user.username
                 )
@@ -535,11 +535,11 @@ class CourseEnrollmentView(View):
             client = CourseApiClient()
             course_details = client.get_course_details(course_id)
         except HttpClientError:
-            logger.error('Failed to get course details for course ID: %s', course_id)
+            LOGGER.error('Failed to get course details for course ID: %s', course_id)
             raise Http404
 
         if course_details is None:
-            logger.error('Unable to find course details for course ID: %s', course_id)
+            LOGGER.error('Unable to find course details for course ID: %s', course_id)
             raise Http404
 
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
@@ -548,7 +548,7 @@ class CourseEnrollmentView(View):
             enrollment_client = EnrollmentApiClient()
             modes = enrollment_client.get_course_modes(course_id)
         except HttpClientError:
-            logger.error('Failed to determine available course modes for course ID: %s', course_id)
+            LOGGER.error('Failed to determine available course modes for course ID: %s', course_id)
             raise Http404
 
         course_modes = []
@@ -602,7 +602,8 @@ class CourseEnrollmentView(View):
                 effort_hours,
             ).format(hours=effort_hours)
 
-        course_run = CourseCatalogApiClient(request.user).get_course_run(course_details['course_id'])
+        course_run_api = CourseRunApiClient(request.user)
+        course_run = course_run_api.get_course_run(course_details['course_id'])
 
         course_modes = self.set_final_prices(course_modes, request)
         premium_modes = [mode for mode in course_modes if mode['premium']]
