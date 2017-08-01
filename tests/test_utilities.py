@@ -195,16 +195,16 @@ class TestEnterpriseUtils(unittest.TestCase):
         ),
     )
     @ddt.unpack
-    def test_catalog_admin_url_template(self, catalog_api_url, expected_url):
+    def test_catalog_admin_url_template(self, catalogs_api_url, expected_url):
         """
         Validate that `get_catalog_admin_url_template` utility functions
         returns catalog admin page url template.
 
         Arguments:
-            catalog_api_url (str): course catalog api url coming from DDT data decorator.
+            catalogs_api_url (str): course catalog api url coming from DDT data decorator.
             expected_url (str): django admin catalog details page url coming from DDT data decorator.
         """
-        with override_settings(COURSE_CATALOG_API_URL=catalog_api_url):
+        with override_settings(COURSE_CATALOG_API_URL=catalogs_api_url):
             url = utils.get_catalog_admin_url_template()
             assert url == expected_url
 
@@ -232,16 +232,16 @@ class TestEnterpriseUtils(unittest.TestCase):
         ),
     )
     @ddt.unpack
-    def test_catalog_admin_url(self, catalog_id, catalog_api_url, expected_url):
+    def test_catalog_admin_url(self, catalog_id, catalogs_api_url, expected_url):
         """
         Validate that `get_catalog_admin_url` utility functions returns catalog admin page url.
 
         Arguments:
             catalog_id (int): catalog id coming from DDT data decorator.
-            catalog_api_url (str): course catalog api url coming from DDT data decorator.
+            catalogs_api_url (str): course catalog api url coming from DDT data decorator.
             expected_url (str): django admin catalog details page url coming from DDT data decorator.
         """
-        with override_settings(COURSE_CATALOG_API_URL=catalog_api_url):
+        with override_settings(COURSE_CATALOG_API_URL=catalogs_api_url):
             url = utils.get_catalog_admin_url(catalog_id)
             assert url == expected_url
 
