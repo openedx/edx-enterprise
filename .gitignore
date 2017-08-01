@@ -52,6 +52,7 @@ log/
 logs/
 chromedriver.log
 ghostdriver.log
+geckodriver.log
 
 # Complexity
 output/*.html
