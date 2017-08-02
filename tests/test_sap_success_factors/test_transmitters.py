@@ -188,6 +188,44 @@ class TestSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
 
     @mark.django_db
     @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
+    def test_transmit_updated_existing_event(self, client_mock):
+        """
+        The desired behavior for enrollments that have been updated in some way after they have been
+        initially sent is for them to not get sent again. This could change in the future as we have
+        more granular data available about progress/grades.
+        """
+        client_mock.get_oauth_access_token.return_value = "token", datetime.datetime.utcnow()
+        client_mock_instance = client_mock.return_value
+
+        previous_payload = LearnerDataTransmissionAudit(
+            enterprise_course_enrollment_id=5,
+            sapsf_user_id='sap_user',
+            course_id='course-v1:edX+DemoX+DemoCourse',
+            course_completed=True,
+            completed_timestamp=1486755998,
+            instructor_name='Professor Professorson',
+            grade='Pass',
+            error_message='',
+        )
+        previous_payload.save()
+
+        payload = LearnerDataTransmissionAudit(
+            enterprise_course_enrollment_id=5,
+            sapsf_user_id='sap_user',
+            course_id='course-v1:edX+DemoX+DemoCourse',
+            course_completed=True,
+            completed_timestamp=1486855998,
+            instructor_name='Professor Professorson',
+            grade='Passing even more',
+            error_message='',
+        )
+        transmitter = learner_data.SuccessFactorsLearnerDataTransmitter(self.enterprise_config)
+        response = transmitter.transmit(payload)
+        assert response is None
+        client_mock_instance.send_completion_status.assert_not_called()
+
+    @mark.django_db
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
     def test_transmit_success(self, client_mock):
         client_mock.get_oauth_access_token.return_value = "token", datetime.datetime.utcnow()
         client_mock_instance = client_mock.return_value

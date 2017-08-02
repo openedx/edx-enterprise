@@ -40,11 +40,10 @@ class SuccessFactorsLearnerDataTransmitter(SuccessFactorsTransmitterBase):
 
         previous_transmissions = LearnerDataTransmissionAudit.objects.filter(
             enterprise_course_enrollment_id=enterprise_enrollment_id,
-            completed_timestamp=payload.completed_timestamp,
             error_message=''
         )
         if previous_transmissions.exists():
-            # We've already sent a completion status call for this enrollment and certificate generation
+            # We've already sent a completion status call for this enrollment
             LOGGER.debug('Skipping previously sent enterprise enrollment {}'.format(enterprise_enrollment_id))
             return None
 
