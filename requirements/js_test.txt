@@ -5,18 +5,17 @@
 #    pip-compile --output-file requirements/js_test.txt requirements/js_test.in
 #
 argparse==1.4.0           # via jasmine
-chardet==2.3              # via jasmine
-cherrypy==3.8.2           # via jasmine
-click==6.7                # via flask
-flask==0.12.2             # via jasmine
+cheroot==5.8.0            # via cherrypy
+cherrypy==11.0.0          # via jasmine
 glob2==0.5                # via jasmine-core
-itsdangerous==0.24        # via flask
-jasmine-core==2.6.4       # via jasmine
-jasmine==2.6.0
-jinja2==2.9.6             # via flask, jasmine
+jasmine-core==2.7.0       # via jasmine
+jasmine==2.7.0
+jinja2==2.9.6             # via jasmine
 markupsafe==1.0           # via jinja2
 ordereddict==1.1          # via jasmine-core
+portend==2.1.2            # via cherrypy
+pytz==2017.2              # via tempora
 pyyaml==3.10              # via jasmine
-selenium==2.53.6          # via jasmine
-six==1.10.0               # via jasmine
-werkzeug==0.11.1          # via flask, jasmine
+selenium==3.4.3           # via jasmine
+six==1.10.0               # via cheroot, cherrypy, jasmine, tempora
+tempora==1.8              # via portend
