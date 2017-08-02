@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.5] - 2017-08-02
+---------------------
+
+* Only send one completion status per enrollment for SAP SuccessFactors.
+
 [0.39.4] - 2017-08-01
 ---------------------
 
