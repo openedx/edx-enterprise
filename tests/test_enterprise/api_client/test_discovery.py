@@ -13,7 +13,7 @@ from pytest import raises
 
 from django.contrib.auth.models import User
 
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
 
 
@@ -21,24 +21,24 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
     """
     Test initialization of CourseCatalogAPI.
     """
-    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
-    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
+    @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
+    @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     def test_raise_error_missing_course_discovery_api(self, *args):  # pylint: disable=unused-argument
         message = 'To get a Catalog API client, this package must be installed in an Open edX environment.'
         with raises(NotConnectedToOpenEdX) as excinfo:
             CourseCatalogApiClient(mock.Mock(spec=User))
         assert message == str(excinfo.value)
 
-    @mock.patch('enterprise.course_catalog_api.JwtBuilder')
-    @mock.patch('enterprise.course_catalog_api.get_edx_api_data')
+    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
+    @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
         message = 'To get a CatalogIntegration object, this package must be installed in an Open edX environment.'
         with raises(NotConnectedToOpenEdX) as excinfo:
             CourseCatalogApiClient(mock.Mock(spec=User))
         assert message == str(excinfo.value)
 
-    @mock.patch('enterprise.course_catalog_api.CatalogIntegration')
-    @mock.patch('enterprise.course_catalog_api.JwtBuilder')
+    @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
+    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     def test_raise_error_missing_get_edx_api_data(self, *args):  # pylint: disable=unused-argument
         message = 'To parse a Catalog API response, this package must be installed in an Open edX environment.'
         with raises(NotConnectedToOpenEdX) as excinfo:
@@ -51,7 +51,7 @@ class TestCourseCatalogApi(unittest.TestCase):
     """
     Test course catalog API methods.
     """
-    CATALOG_API_PATCH_PREFIX = "enterprise.course_catalog_api"
+    CATALOG_API_PATCH_PREFIX = "enterprise.api_client.discovery"
 
     EMPTY_RESPONSES = (None, {}, [], set(), "")
 

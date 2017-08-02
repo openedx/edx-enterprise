@@ -7,6 +7,7 @@ from logging import getLogger
 
 from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
+from requests.exceptions import HTTPError, Timeout
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -26,20 +27,16 @@ except ImportError:
     configuration_helpers = None
 
 try:
-    from openedx.core.djangoapps.commerce.utils import ecommerce_api_client
-except ImportError:
-    ecommerce_api_client = None
-
-try:
     from util import organizations_helpers
 except ImportError:
     organizations_helpers = None
 
 
 # isort:imports-firstparty
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiClient
+from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
 from enterprise.messages import add_consent_declined_message
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import (
@@ -440,10 +437,12 @@ class HandleConsentEnrollment(View):
         if selected_course_mode['slug'] in audit_modes:
             # In case of Audit course modes enroll the learner directly through
             # enrollment API client and redirect the learner to dashboard.
-            enrollment_api_client = EnrollmentApiClient()
-            enrollment_api_client.enroll_user_in_course(
-                request.user.username, course_id, selected_course_mode['slug']
-            )
+            try:
+                ecommerce_api_client = EcommerceApiClient(request.user)
+                # Post to E-Commerce for audit enrollment.
+                ecommerce_api_client.post_audit_order_to_ecommerce(request, selected_course_mode['sku'])
+            except (HTTPError, Timeout, HttpClientError):
+                return redirect('enterprise_course_enrollment_page', enterprise_uuid, course_id)
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
@@ -507,21 +506,15 @@ class CourseEnrollmentView(View):
         Get course mode's SKU discounted price after applying any entitlement available for this user.
         """
         try:
-            client = ecommerce_api_client(request.user)
-            endpoint = client.baskets.calculate
-            price_details = endpoint.get(sku=[mode['sku']])
-            price = price_details['total_incl_tax']
-            if price != mode['min_price']:
-                if int(price) == price:
-                    return '${}'.format(int(price))
-                return '${:0.2f}'.format(price)
+            ecommerce_api_client = EcommerceApiClient(request.user)
+            return ecommerce_api_client.get_course_final_price(mode)
         except HttpClientError:
             logger.error(
                 "Failed to get price details for course mode's SKU '{sku}' for username '{username}'".format(
                     sku=mode['sku'], username=request.user.username
                 )
             )
-        return mode['original_price']
+            return mode['original_price']
 
     def get_base_details(self, enterprise_uuid, course_id):
         """
@@ -714,8 +707,13 @@ class CourseEnrollmentView(View):
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
                 )
-            client = EnrollmentApiClient()
-            client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
+
+            try:
+                # Post to E-Commerce for audit enrollment.
+                ecommerce_api_client = EcommerceApiClient(request.user)
+                ecommerce_api_client.post_audit_order_to_ecommerce(request, selected_course_mode['sku'])
+            except (HTTPError, Timeout, HttpClientError):
+                return redirect('enterprise_course_enrollment_page', enterprise_uuid, course_id)
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 

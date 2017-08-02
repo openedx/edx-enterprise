@@ -13,7 +13,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from slumber.exceptions import HttpNotFoundError
 
-from enterprise.lms_api import CourseApiClient, GradesApiClient, CertificatesApiClient
+from enterprise.api_client.lms import CourseApiClient, GradesApiClient, CertificatesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 
 

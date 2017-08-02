@@ -22,7 +22,7 @@ configparser==3.5.0       # via pylint
 cookies==2.2.1            # via responses
 coverage==4.4.1           # via pytest-cov
 ddt==1.1.1
-diff-cover==0.9.11
+diff-cover==0.9.12
 distlib==0.2.5            # via caniusepython3
 django-config-models==0.1.8
 django-extensions==1.5.9
@@ -91,8 +91,8 @@ pyyaml==3.12              # via edx-i18n-tools
 readme-renderer==17.2
 requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
-responses==0.5.1
-restructuredtext-lint==1.0.1  # via doc8
+responses==0.6.0
+restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
 six==1.10.0               # via astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore
@@ -104,7 +104,7 @@ sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.25.0         # via doc8
 tox-battery==0.2.0
 tox==2.7.0
-tqdm==4.14.0              # via twine
+tqdm==4.15.0              # via twine
 twine==1.9.1
 typing==3.6.1             # via sphinx
 unicodecsv==0.14.1

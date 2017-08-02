@@ -17,7 +17,7 @@ from integrated_channels.sap_success_factors.utils import (
 )
 from pytest import raises
 
-from enterprise.lms_api import parse_lms_api_datetime
+from enterprise.api_client.lms import parse_lms_api_datetime
 
 
 @ddt.ddt

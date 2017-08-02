@@ -32,8 +32,8 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
-from enterprise.course_catalog_api import CourseCatalogApiClient
-from enterprise.lms_api import EnrollmentApiClient, parse_lms_api_datetime
+from enterprise.api_client.discovery import CourseCatalogApiClient
+from enterprise.api_client.lms import EnrollmentApiClient, parse_lms_api_datetime
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,

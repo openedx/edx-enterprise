@@ -10,7 +10,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
-from enterprise.course_catalog_api import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiClient
 
 
 EXCLUDED_COURSE_DETAIL_KEYS = [

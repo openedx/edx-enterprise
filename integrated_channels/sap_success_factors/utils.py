@@ -13,8 +13,8 @@ from django.utils import timezone
 from six.moves.urllib.parse import urlencode, urlunparse  # pylint: disable=import-error,wrong-import-order
 from waffle import switch_is_active
 
+from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.django_compatibility import reverse
-from enterprise.lms_api import parse_lms_api_datetime
 from enterprise.utils import safe_extract_key
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
 

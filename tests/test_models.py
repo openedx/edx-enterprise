@@ -78,8 +78,8 @@ class TestPendingEnrollment(unittest.TestCase):
         expected_str = '<PendingEnrollment for email bob@jones.com in course with ID course-v1:edX+DemoX+DemoCourse>'
         assert expected_str == method(self.enrollment)
 
-    @mock.patch('enterprise.lms_api.CourseKey')
-    @mock.patch('enterprise.lms_api.CourseEnrollment')
+    @mock.patch('enterprise.api_client.lms.CourseKey')
+    @mock.patch('enterprise.api_client.lms.CourseEnrollment')
     def test_complete_enrollment(self, mock_course_enrollment, mock_course_key):
         mock_course_key.from_string.return_value = None
         mock_course_enrollment.enroll.return_value = None
@@ -1027,7 +1027,7 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         'integrated_channels.sap_success_factors.transmitters.learner_data.SuccessFactorsLearnerDataTransmitter')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
-    @mock.patch('enterprise.lms_api.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     def test_transmit_learner_data(self, mock_course_api, mock_certificate, mock_transmitter, mock_sap_client):
 
         user = UserFactory()

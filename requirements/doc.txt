@@ -43,7 +43,7 @@ python-dateutil==2.6.1    # via edx-drf-extensions
 pytz==2017.2              # via babel, celery
 readme-renderer==17.2
 requests==2.9.1
-restructuredtext-lint==1.0.1  # via doc8
+restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.10.0               # via bleach, django-extensions, doc8, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client

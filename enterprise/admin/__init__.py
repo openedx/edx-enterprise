@@ -6,9 +6,10 @@ from __future__ import absolute_import, unicode_literals
 
 from django.conf.urls import url
 from django.contrib import admin
-from django.utils.html import format_html
 from django.contrib.auth import settings
+from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django_object_actions import DjangoObjectActions
@@ -18,15 +19,14 @@ from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_
 from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
-from django.core.urlresolvers import reverse
-from enterprise.lms_api import CourseApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (  # pylint:disable=no-name-in-module
     EnrollmentNotificationEmailTemplate, EnterpriseCustomer, EnterpriseCustomerUser,
     EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerIdentityProvider,
     HistoricalUserDataSharingConsentAudit, PendingEnrollment, PendingEnterpriseCustomerUser,
     EnterpriseCustomerEntitlement, EnterpriseCourseEnrollment
 )
-from enterprise.utils import get_all_field_names, get_catalog_admin_url, get_catalog_admin_url_template
+from enterprise.utils import get_all_field_names, get_catalog_admin_url
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
