@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.39.6] - 2017-08-02
+---------------------
+
+* Fixed the text cutoff in the bottom of the course info overlay.
+
+
 [0.39.5] - 2017-08-02
 ---------------------
 

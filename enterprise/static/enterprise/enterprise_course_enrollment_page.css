@@ -320,7 +320,7 @@ h2#modal-header-text {
 }
 
 .modal-content .course-detail-modal-scrollable {
-    max-height: calc(90vh - 30px); /* account for the height of the top bar with the close button */
+    max-height: calc(80vh - 30px); /* account for the height of the top bar with the close button */
     overflow: auto;
     padding: 20px;
     width: 100%;
