@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.39.9] - 2017-08-08
+---------------------
+
+* Added management command "create_enterprise_course_enrollments" for missing enterprise course enrollments.
+
 [0.39.8] - 2017-08-04
 ---------------------
 
