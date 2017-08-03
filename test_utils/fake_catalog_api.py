@@ -6,6 +6,7 @@ Fake responses for course catalog api.
 from __future__ import absolute_import, unicode_literals
 
 from six.moves import reduce as six_reduce
+from test_utils import FAKE_UUIDS
 
 FAKE_PROGRAM_RESPONSE1 = {
     "uuid": "40782a06-1c37-4779-86aa-0a081f014d4d",
@@ -565,6 +566,176 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
         "programs": []
     }
 }
+
+FAKE_CATALOG_COURSE_PAGINATED_RESPONSE = {
+    'count': 3,
+    'next': 'http://testserver/api/v1/catalogs/1/courses?page=3',
+    'previous': 'http://testserver/api/v1/catalogs/1/courses?page=1',
+    'results': [
+        {
+            'owners': [
+                {
+                    'description': None,
+                    'tags': [],
+                    'name': '',
+                    'homepage_url': None,
+                    'key': 'edX',
+                    'certificate_logo_image_url': None,
+                    'marketing_url': None,
+                    'logo_image_url': None,
+                    'uuid': FAKE_UUIDS[1]
+                }
+            ],
+            'uuid': FAKE_UUIDS[2],
+            'title': 'edX Demonstration Course',
+            'prerequisites': [],
+            'image': None,
+            'expected_learning_items': [],
+            'sponsors': [],
+            'modified': '2017-03-03T07:34:19.322916Z',
+            'full_description': None,
+            'subjects': [],
+            'video': None,
+            'key': 'edX+DemoX',
+            'short_description': None,
+            'marketing_url': None,
+            'level_type': None,
+            'course_runs': []
+        }
+    ]
+}
+
+FAKE_SEARCH_ALL_COURSE_RESULT = {
+    "title": "edX Demonstration Course",
+    "min_effort": None,
+    "marketing_url": "course/course-v1:edX+DemoX+Demo_Course/about",
+    "image_url": "https://business.sandbox.edx.org/asset-v1:edX+DemoX+Demo_Course+type"
+                 "@asset+block@images_course_image.jpg",
+    "pacing_type": "instructor_paced",
+    "short_description": None,
+    "subject_uuids": [],
+    "transcript_languages": [],
+    "full_description": None,
+    "seat_types": [
+        "audit",
+        "verified"
+    ],
+    "mobile_available": False,
+    "end": None,
+    "partner": "edx",
+    "max_effort": None,
+    "start": "2013-02-05T05:00:00",
+    "weeks_to_complete": None,
+    "published": True,
+    "content_type": "courserun",
+    "authoring_organization_uuids": [
+        "12de950c-6fae-49f7-aaa9-778c2fbdae56"
+    ],
+    "enrollment_start": None,
+    "staff_uuids": [],
+    "language": None,
+    "number": "DemoX",
+    "type": "verified",
+    "key": "course-v1:edX+DemoX+Demo_Course",
+    "org": "edX",
+    "level_type": None,
+    "program_types": [],
+    "aggregation_key": "courserun:edX+DemoX",
+    "logo_image_urls": [
+        None
+    ],
+    "enrollment_end": None,
+    "availability": "Upcoming"
+}
+
+FAKE_SEARCH_ALL_SHORT_COURSE_RESULT = {
+    "title": "edX Demonstration Course",
+    "full_description": None,
+    "key": "edX+DemoX",
+    "short_description": None,
+    "aggregation_key": "course:edX+DemoX",
+    "content_type": "course"
+}
+
+FAKE_SEARCH_ALL_PROGRAM_RESULT = {
+    "title": "Program Title 1",
+    "marketing_url": "professional-certificate/marketingslug1",
+    "content_type": "program",
+    "card_image_url": "http://wowslider.com/sliders/demo-10/data/images/dock.jpg",
+    "min_hours_effort_per_week": 5,
+    "authoring_organization_uuids": [
+        "12de950c-6fae-49f7-aaa9-778c2fbdae56"
+    ],
+    "hidden": False,
+    "authoring_organizations": [
+        {
+            "marketing_url": None,
+            "homepage_url": None,
+            "tags": [],
+            "certificate_logo_image_url": None,
+            "name": "",
+            "key": "edX",
+            "description": None,
+            "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
+            "logo_image_url": None
+        }
+    ],
+    "staff_uuids": [],
+    "published": True,
+    "uuid": FAKE_UUIDS[3],
+    "max_hours_effort_per_week": 10,
+    "subject_uuids": [],
+    "weeks_to_complete_min": None,
+    "type": "Professional Certificate",
+    "language": [
+        "English"
+    ],
+    "partner": "edx",
+    "subtitle": "Program Subtitle 1",
+    "status": "active",
+    "weeks_to_complete_max": None,
+    "aggregation_key": "program:" + FAKE_UUIDS[3]
+}
+
+FAKE_SEARCH_ALL_RESULTS = {
+    "count": 3,
+    "next": None,
+    "previous": None,
+    "results": [
+        FAKE_SEARCH_ALL_COURSE_RESULT,
+        FAKE_SEARCH_ALL_SHORT_COURSE_RESULT,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT,
+    ]
+}
+
+
+def get_paginated_search_results(querystring):
+    """
+    Fake implementation that returns paginated results consisting of all objects whose keys or values contain the query.
+
+    Arguments:
+        querystring (dict): Query parameters containing query string to match against. Empty string returns all results.
+
+    Returns:
+        dict: Paginated results of the object(s) that match(es) the search results.
+    """
+    query = querystring['q']
+
+    if query == '':
+        return FAKE_SEARCH_ALL_RESULTS
+
+    results = []
+    for result in FAKE_SEARCH_ALL_RESULTS.get('results', []):
+        for key in result:
+            if (query in key or query in str(result[key])) and result not in results:
+                results.append(result)
+
+    return {
+        'count': len(results),
+        'next': FAKE_SEARCH_ALL_RESULTS['next'],
+        'previous': FAKE_SEARCH_ALL_RESULTS['previous'],
+        'results': results
+    }
 
 
 def get_catalog_courses(catalog_id):

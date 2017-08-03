@@ -15,61 +15,14 @@ from rest_framework.test import APIRequestFactory
 
 from django.test import override_settings
 
-from enterprise.api.v1.serializers import (
-    CourseCatalogAPIResponseReadOnlySerializer,
-    EnterpriseCatalogCoursesReadOnlySerializer,
-    EnterpriseCourseCatalogReadOnlySerializer,
-    EnterpriseCustomerUserEntitlementSerializer,
-)
+from enterprise.api.v1.serializers import EnterpriseCatalogCoursesReadOnlySerializer, ImmutableStateSerializer
 from test_utils import APITest, factories
 
 
 @mark.django_db
-class TestEnterpriseCustomerUserEntitlementSerializer(APITest):
+class TestImmutableStateSerializer(APITest):
     """
-    Tests for enterprise API serializers.
-    """
-
-    def setUp(self):
-        """
-        Perform operations common for all tests.
-
-        Populate data base for api testing.
-        """
-        super(TestEnterpriseCustomerUserEntitlementSerializer, self).setUp()
-
-        self.instance = factories.EnterpriseCustomerEntitlementFactory.create()
-        self.validated_data = {"entitlements": [1, 2, 3]}
-
-        self.serializer = EnterpriseCustomerUserEntitlementSerializer(
-            {"entitlements": [1, 2, 3, 4, 5]}
-        )
-
-    def test_update(self):
-        """
-        Test update method of EnterpriseCustomerUserEntitlementSerializer.
-
-        Verify that update for EnterpriseCustomerUserEntitlementSerializer returns
-        successfully without making any changes.
-        """
-        with self.assertNumQueries(0):
-            self.serializer.update(self.instance, self.validated_data)
-
-    def test_create(self):
-        """
-        Test create method of EnterpriseCustomerUserEntitlementSerializer.
-
-        Verify that create for EnterpriseCustomerUserEntitlementSerializer returns
-        successfully without making any changes.
-        """
-        with self.assertNumQueries(0):
-            self.serializer.create(self.validated_data)
-
-
-@mark.django_db
-class TestEnterpriseCatalogSerializer(APITest):
-    """
-    Tests for enterprise API serializers.
+    Tests for enterprise API serializers which are immutable.
     """
 
     def setUp(self):
@@ -78,28 +31,17 @@ class TestEnterpriseCatalogSerializer(APITest):
 
         Populate data base for api testing.
         """
-        super(TestEnterpriseCatalogSerializer, self).setUp()
-
-        # instance is none as models for this serializer do not exist in enterprise.
+        super(TestImmutableStateSerializer, self).setUp()
         self.instance = None
-        self.data = {
-            "id": 4,
-            "name": "Catalog for user 'verified'",
-            "query": "*",
-            "courses_count": 2,
-            "viewers": ['test-user']
-        }
-
+        self.data = {"data": "data"}
         self.validated_data = self.data
-        self.serializer = EnterpriseCourseCatalogReadOnlySerializer(
-            self.data
-        )
+        self.serializer = ImmutableStateSerializer(self.data)
 
     def test_update(self):
         """
-        Test update method of EnterpriseCourseCatalogReadOnlySerializer.
+        Test ``update`` method of ImmutableStateSerializer.
 
-        Verify that update for EnterpriseCourseCatalogReadOnlySerializer returns
+        Verify that ``update`` for ImmutableStateSerializer returns
         successfully without making any changes.
         """
         with self.assertNumQueries(0):
@@ -107,66 +49,9 @@ class TestEnterpriseCatalogSerializer(APITest):
 
     def test_create(self):
         """
-        Test create method of EnterpriseCourseCatalogReadOnlySerializer.
+        Test ``create`` method of ImmutableStateSerializer.
 
-        Verify that create for EnterpriseCourseCatalogReadOnlySerializer returns
-        successfully without making any changes.
-        """
-        with self.assertNumQueries(0):
-            self.serializer.create(self.validated_data)
-
-
-@mark.django_db
-class TestCourseCatalogAPIResponseReadOnlySerializer(APITest):
-    """
-    Tests for enterprise API serializers.
-    """
-
-    def setUp(self):
-        """
-        Perform operations common for all tests.
-
-        Populate data base for api testing.
-        """
-        super(TestCourseCatalogAPIResponseReadOnlySerializer, self).setUp()
-
-        # instance is none as models for this serializer do not exist in enterprise.
-        self.instance = None
-        self.data = {
-            'count': 1,
-            'next': None,
-            'previous': None,
-            'results': [
-                {
-                    'id': 4,
-                    'name': 'Catalog for user "verified"',
-                    'query': '*',
-                    'courses_count': 2,
-                    'viewers': ['test-user']
-                }
-            ]
-        }
-
-        self.validated_data = self.data
-        self.serializer = CourseCatalogAPIResponseReadOnlySerializer(
-            self.data
-        )
-
-    def test_update(self):
-        """
-        Test update method of CourseCatalogAPIResponseReadOnlySerializer.
-
-        Verify that update for CourseCatalogAPIResponseReadOnlySerializer returns
-        successfully without making any changes.
-        """
-        with self.assertNumQueries(0):
-            self.serializer.update(self.instance, self.validated_data)
-
-    def test_create(self):
-        """
-        Test create method of CourseCatalogAPIResponseReadOnlySerializer.
-
-        Verify that create for CourseCatalogAPIResponseReadOnlySerializer returns
+        Verify that ``create`` for ImmutableStateSerializer returns
         successfully without making any changes.
         """
         with self.assertNumQueries(0):
@@ -175,7 +60,7 @@ class TestCourseCatalogAPIResponseReadOnlySerializer(APITest):
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriseCatalogCoursesSerializer(APITest):
+class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
     """
     Tests for enterprise API serializers.
     """
@@ -295,26 +180,6 @@ class TestEnterpriseCatalogCoursesSerializer(APITest):
         self.serializer = EnterpriseCatalogCoursesReadOnlySerializer(
             self.data
         )
-
-    def test_update(self):
-        """
-        Test update method of EnterpriseCatalogCoursesReadOnlySerializer.
-
-        Verify that update for EnterpriseCatalogCoursesReadOnlySerializer returns
-        successfully without making any changes.
-        """
-        with self.assertNumQueries(0):
-            self.serializer.update(self.instance, self.validated_data)
-
-    def test_create(self):
-        """
-        Test create method of EnterpriseCatalogCoursesReadOnlySerializer.
-
-        Verify that create for EnterpriseCatalogCoursesReadOnlySerializer returns
-        successfully without making any changes.
-        """
-        with self.assertNumQueries(0):
-            self.serializer.create(self.validated_data)
 
     @ddt.data(
         (

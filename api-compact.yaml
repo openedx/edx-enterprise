@@ -10,6 +10,9 @@
 #   /enterprise/api/v1/catalogs/
 #   /enterprise/api/v1/catalogs/{id}/
 #   /enterprise/api/v1/catalogs/{id}/courses/
+#   /enterprise/api/v1/enterprise-catalogs/
+#   /enterprise/api/v1/enterprise-catalogs/{uuid}/
+#   /enterprise/api/v1/programs/{uuid}/
 
 apigateway_responses: &apigateway_responses
   default:
@@ -27,7 +30,7 @@ apigateway_responses: &apigateway_responses
   500:
     statusCode: "500"
 
-apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_template
+apigateway_responses_with_mapping_template_for_id: &apigateway_responses_with_mapping_template_for_id
   default:
     statusCode: "400"
   200:
@@ -39,7 +42,7 @@ apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_t
       application/json: >
         #set($inputRoot = $input.path('$'))
         #set($host = $stageVariables.gateway_host)
-        #set($catalogId = $input.params('id'))
+        #set($id = $input.params('id'))
 
         #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)")
         #set($updatedURL = "$1$host$context.resourcePath$2")
@@ -47,8 +50,8 @@ apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_t
 
         {
           "count": $inputRoot.count,
-          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
-          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $catalogId)",
+          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $id)",
+          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceIdMatch, $id)",
           "results": $inputRoot.results
         }
   401:
@@ -62,9 +65,40 @@ apigateway_responses_with_mapping_template: &apigateway_responses_with_mapping_t
   500:
     statusCode: "500"
 
-produces: &produces
-  - "application/json"
-  - "application/csv"
+apigateway_responses_with_mapping_template_for_uuid: &apigateway_responses_with_mapping_template_for_uuid
+  default:
+    statusCode: "400"
+  200:
+    statusCode: "200"
+    responseTemplates:
+      # Response body mapping template, this template is used for updating
+      # "next" and "previous" urls (both host and url path) while preserving
+      # the protocol (http | https) and querystring parameters.
+      application/json: >
+        #set($inputRoot = $input.path('$'))
+        #set($host = $stageVariables.gateway_host)
+        #set($uuid = $input.params('uuid'))
+
+        #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)")
+        #set($updatedURL = "$1$host$context.resourcePath$2")
+        #set($resourceUuidMatch = "{uuid}")
+
+        {
+          "count": $inputRoot.count,
+          "next": "$inputRoot.next.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+          "previous": "$inputRoot.previous.replaceAll($URLMatchRegex, $updatedURL).replace($resourceUuidMatch, $uuid)",
+          "results": $inputRoot.results
+        }
+  401:
+    statusCode: "401"
+  403:
+    statusCode: "403"
+  404:
+    statusCode: "404"
+  429:
+    statusCode: "429"
+  500:
+    statusCode: "500"
 
 responses: &responses
   200:
@@ -82,11 +116,21 @@ responses: &responses
   500:
     description: "Internal Server Error"
 
+produces: &produces
+  - "application/json"
+  - "application/csv"
+
 id_parameter: &id_parameter
   name: "id"
   in: "path"
   required: true
   type: "number"
+
+uuid_parameter: &uuid_parameter
+  name: "uuid"
+  in: "path"
+  required: true
+  type: "string"
 
 auth_header: &auth_header
   name: "Authorization"
@@ -120,8 +164,8 @@ page_size_qs_parameter: &page_size_qs_parameter
 
 # AWS API Gateway vendor extension point. This information is used
 #  by https://github.com/awslabs/aws-apigateway-importer.
-x-amazon-apigateway-integration: &apigateway_integration
-  responses: *apigateway_responses_with_mapping_template
+x-amazon-apigateway-integration-id-response: &apigateway_integration_id
+  responses: *apigateway_responses_with_mapping_template_for_id
   httpMethod: "GET"
   type: "http"
   requestParameters:
@@ -140,7 +184,7 @@ x-amazon-apigateway-integration-with-id: &apigateway_integration_with_id_paramet
     integration.request.path.id: "method.request.path.id"
 
 x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_integration_with_id_and_querystring_parameters
-  responses: *apigateway_responses_with_mapping_template
+  responses: *apigateway_responses_with_mapping_template_for_id
   httpMethod: "GET"
   type: "http"
   requestParameters:
@@ -150,6 +194,25 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_
     integration.request.querystring.offset: "method.request.querystring.offset"
     integration.request.querystring.page: "method.request.querystring.page"
     integration.request.querystring.page_size: "method.request.querystring.page_size"
+
+x-amazon-apigateway-integration-uuid-response: &apigateway_integration_uuid
+  responses: *apigateway_responses_with_mapping_template_for_uuid
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
+
+x-amazon-apigateway-integration-with-uuid: &apigateway_integration_with_uuid_parameter
+  responses: *apigateway_responses
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
+    integration.request.path.uuid: "method.request.path.uuid"
 
 endpoints:
   v1:
@@ -167,7 +230,7 @@ endpoints:
           operationId: "get_enterprise_catalogs"
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration
+            <<: *apigateway_integration_id
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/"
 
     # /v1/catalogs/{id}/
@@ -199,3 +262,47 @@ endpoints:
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_id_and_querystring_parameters
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"
+
+    # /v1/enterprise-catalogs/
+    enterpriseCustomerCatalogs:
+        get:
+          produces: *produces
+          parameters:
+            - *auth_header
+            - *page_qs_parameter
+            - *page_size_qs_parameter
+          operationId: "get_enterprise_customer_catalogs"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            <<: *apigateway_integration_uuid
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/"
+
+    # /v1/enterprise-catalogs/{uuid}/
+    enterpriseCustomerCatalogByUuid:
+        get:
+          produces: *produces
+          parameters:
+            - *auth_header
+            - *page_qs_parameter
+            - *page_size_qs_parameter
+            - *uuid_parameter
+          operationId: "get_enterprise_customer_catalog_by_uuid"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            <<: *apigateway_integration_with_uuid_parameter
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/"
+
+    # /v1/programs/{uuid}/
+    programByUuid:
+        get:
+          produces: *produces
+          parameters:
+            - *auth_header
+            - *page_qs_parameter
+            - *page_size_qs_parameter
+            - *uuid_parameter
+          operationId: "get_program_by_uuid"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            <<: *apigateway_integration_with_uuid_parameter
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/programs/{uuid}/"

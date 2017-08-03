@@ -48,6 +48,13 @@ class CourseCatalogApiClient(object):
     Object builds an API client to make calls to the Catalog API.
     """
 
+    SEARCH_ALL_ENDPOINT = 'search/all/'
+    CATALOGS_ENDPOINT = 'catalogs'
+    CATALOGS_COURSES_ENDPOINT = 'catalogs/{}/courses/'
+    COURSES_ENDPOINT = 'courses'
+    COURSE_RUNS_ENDPOINT = 'course_runs'
+    PROGRAMS_ENDPOINT = 'programs'
+
     DEFAULT_VALUE_SAFEGUARD = object()
 
     def __init__(self, user):
@@ -72,6 +79,22 @@ class CourseCatalogApiClient(object):
         self.user = user
         self.client = course_discovery_api_client(user)
 
+    def get_paginated_search_results(self, querystring=None):
+        """
+        Return paginated search result from all data.
+
+        Returns:
+            dict: API response with search results, as well as links to next and previous pages.
+
+        """
+        return self._load_data(
+            self.SEARCH_ALL_ENDPOINT,
+            default=[],
+            querystring=querystring,
+            traverse_pagination=False,
+            many=False,
+        )
+
     def get_all_catalogs(self):
         """
         Return a list of all course catalogs, including name and ID.
@@ -80,7 +103,10 @@ class CourseCatalogApiClient(object):
             list: List of catalogs available for the user.
 
         """
-        return self._load_data('catalogs', default=[])
+        return self._load_data(
+            self.CATALOGS_ENDPOINT,
+            default=[]
+        )
 
     def get_catalog(self, catalog_id):
         """
@@ -90,7 +116,11 @@ class CourseCatalogApiClient(object):
             dict: catalog details if it is available for the user.
 
         """
-        return self._load_data('catalogs', default=[], resource_id=catalog_id)
+        return self._load_data(
+            self.CATALOGS_ENDPOINT,
+            default=[],
+            resource_id=catalog_id
+        )
 
     def get_paginated_catalog_courses(self, catalog_id, querystring=None):
         """
@@ -100,10 +130,12 @@ class CourseCatalogApiClient(object):
             dict: API response with links to next and previous pages.
 
         """
-        resource = 'catalogs/{}/courses/'.format(catalog_id)
         return self._load_data(
-            resource, default=[], querystring=querystring,
-            traverse_pagination=False, many=False,
+            self.CATALOGS_COURSES_ENDPOINT.format(catalog_id),
+            default=[],
+            querystring=querystring,
+            traverse_pagination=False,
+            many=False,
         )
 
     def get_paginated_catalogs(self, querystring=None):
@@ -115,7 +147,11 @@ class CourseCatalogApiClient(object):
 
         """
         return self._load_data(
-            'catalogs', default=[], querystring=querystring, traverse_pagination=False, many=False
+            self.CATALOGS_ENDPOINT,
+            default=[],
+            querystring=querystring,
+            traverse_pagination=False,
+            many=False
         )
 
     def get_catalog_courses(self, catalog_id):
@@ -129,7 +165,10 @@ class CourseCatalogApiClient(object):
             list: Courses of the catalog in question
 
         """
-        return self._load_data('catalogs/{catalog_id}/courses'.format(catalog_id=catalog_id), default=[])
+        return self._load_data(
+            self.CATALOGS_COURSES_ENDPOINT.format(catalog_id),
+            default=[]
+        )
 
     def get_course_details(self, course_key):
         """
@@ -142,7 +181,11 @@ class CourseCatalogApiClient(object):
             dict: Details of the course in question.
 
         """
-        return self._load_data('courses', resource_id=course_key, many=False)
+        return self._load_data(
+            self.COURSES_ENDPOINT,
+            resource_id=course_key,
+            many=False
+        )
 
     def get_course_run(self, course_run_id):
         """
@@ -155,7 +198,10 @@ class CourseCatalogApiClient(object):
             dict: Course run data provided by Course Catalog API.
 
         """
-        return self._load_data('course_runs', resource_id=course_run_id)
+        return self._load_data(
+            self.COURSE_RUNS_ENDPOINT,
+            resource_id=course_run_id
+        )
 
     def get_program_by_title(self, program_title):
         """
@@ -168,7 +214,7 @@ class CourseCatalogApiClient(object):
             dict: Program data provided by Course Catalog API
 
         """
-        all_programs = self._load_data('programs', default=[])
+        all_programs = self._load_data(self.PROGRAMS_ENDPOINT, default=[])
         matching_programs = [program for program in all_programs if program.get('title') == program_title]
         if len(matching_programs) > 1:
             raise MultipleProgramMatchError(len(matching_programs))
@@ -188,7 +234,11 @@ class CourseCatalogApiClient(object):
             dict: Program data provided by Course Catalog API
 
         """
-        return self._load_data('programs', resource_id=program_uuid, default=None)
+        return self._load_data(
+            self.PROGRAMS_ENDPOINT,
+            resource_id=program_uuid,
+            default=None
+        )
 
     def get_common_course_modes(self, course_run_ids):
         """

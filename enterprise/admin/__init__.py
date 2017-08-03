@@ -24,7 +24,7 @@ from enterprise.models import (  # pylint:disable=no-name-in-module
     EnrollmentNotificationEmailTemplate, EnterpriseCustomer, EnterpriseCustomerUser,
     EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerIdentityProvider,
     HistoricalUserDataSharingConsentAudit, PendingEnrollment, PendingEnterpriseCustomerUser,
-    EnterpriseCustomerEntitlement, EnterpriseCourseEnrollment
+    EnterpriseCustomerEntitlement, EnterpriseCourseEnrollment, EnterpriseCustomerCatalog
 )
 from enterprise.utils import get_all_field_names, get_catalog_admin_url
 
@@ -482,3 +482,25 @@ class PendingEnrollmentAdmin(admin.ModelAdmin):
         Disable deletion for PendingEnrollment.
         """
         return False
+
+
+@admin.register(EnterpriseCustomerCatalog)
+class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerCatalog.
+    """
+
+    class Meta(object):
+        model = EnterpriseCustomerCatalog
+
+    list_display = (
+        'uuid',
+        'enterprise_customer',
+        'query',
+    )
+
+    search_fields = (
+        'uuid',
+        'enterprise_customer__name',
+        'enterprise_customer__uuid',
+    )

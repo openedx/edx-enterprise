@@ -52,6 +52,6 @@ sphinx==1.6.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.25.0         # via doc8
-typing==3.6.1             # via sphinx
+typing==3.6.2             # via sphinx
 unicodecsv==0.14.1
 webencodings==0.5.1       # via html5lib

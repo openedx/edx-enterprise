@@ -34,6 +34,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerCatalog,
     EnterpriseCustomerEntitlement,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
@@ -821,6 +822,34 @@ class TestEnterpriseCustomerEntitlements(unittest.TestCase):
             id=entitlement_id,
         )
         self.assertEqual(method(ec_entitlements), expected_to_str)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerCatalog(unittest.TestCase):
+    """
+    Tests for the EnterpriseCustomerCatalog model.
+    """
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseCustomerCatalog`` conversion to string.
+        """
+        faker = FakerFactory.create()
+        uuid = faker.uuid4()  # pylint: disable=no-member
+        name = 'EnterpriseWithACatalog'
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=uuid,
+            enterprise_customer=EnterpriseCustomerFactory(name=name)
+        )
+        expected_str = "<EnterpriseCustomerCatalog with uuid '{uuid}' for EnterpriseCustomer {name}>".format(
+            uuid=uuid,
+            name=name
+        )
+        self.assertEqual(method(enterprise_catalog), expected_str)
 
 
 @mark.django_db

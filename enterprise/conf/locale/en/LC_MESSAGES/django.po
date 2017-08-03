@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-03 13:50-0500\n"
+"POT-Creation-Date: 2017-08-08 11:48-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -292,56 +292,40 @@ msgstr ""
 msgid "Email {email} is not associated with Enterprise Customer {ec_name}"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:226
-msgid "Enterprise course catalog primary key."
+#: enterprise/api/v1/serializers.py:38
+msgid "Total count of items."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:227
-msgid "Catalog name"
+#: enterprise/api/v1/serializers.py:39
+msgid "URL to fetch next page of items."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:228
-msgid "Query to retrieve catalog contents"
+#: enterprise/api/v1/serializers.py:40
+msgid "URL to fetch previous page of items."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:229
-msgid "Number of courses contained in this catalog"
-msgstr ""
-
-#: enterprise/api/v1/serializers.py:232
-msgid "Usernames of users with explicit access to view this catalog"
-msgstr ""
-
-#: enterprise/api/v1/serializers.py:254
-msgid "Total count of catalogs."
-msgstr ""
-
-#: enterprise/api/v1/serializers.py:255
-msgid "URL to fetch next page of catalogs."
-msgstr ""
-
-#: enterprise/api/v1/serializers.py:256
-msgid "URL to fetch previous page of catalogs."
-msgstr ""
-
-#: enterprise/api/v1/serializers.py:257
-msgid "list of catalogs."
-msgstr ""
-
-#: enterprise/api/v1/serializers.py:276
-msgid "Total count of catalog courses."
+#: enterprise/api/v1/serializers.py:41
+msgid "List of items."
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:277
-msgid "URL to fetch next page of courses."
+msgid "Enterprise course catalog primary key."
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:278
-msgid "URL to fetch previous page of courses."
+msgid "Catalog name"
 msgstr ""
 
 #: enterprise/api/v1/serializers.py:279
-msgid "list of courses."
+msgid "Query to retrieve catalog contents"
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:280
+msgid "Number of courses contained in this catalog"
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:283
+msgid "Usernames of users with explicit access to view this catalog"
 msgstr ""
 
 #: enterprise/api_client/discovery.py:36
@@ -350,13 +334,13 @@ msgid ""
 "environment."
 msgstr ""
 
-#: enterprise/api_client/discovery.py:63
+#: enterprise/api_client/discovery.py:70
 msgid ""
 "To get a CatalogIntegration object, this package must be installed in an "
 "Open edX environment."
 msgstr ""
 
-#: enterprise/api_client/discovery.py:68
+#: enterprise/api_client/discovery.py:75
 msgid ""
 "To parse a Catalog API response, this package must be installed in an Open "
 "edX environment."
@@ -513,7 +497,19 @@ msgstr ""
 msgid "The ID of the course in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:920
+#: enterprise/models.py:933
+msgid "Query to the course discovery service. Leave empty for all results."
+msgstr ""
+
+#: enterprise/models.py:938
+msgid "Enterprise Customer Catalog"
+msgstr ""
+
+#: enterprise/models.py:939
+msgid "Enterprise Customer Catalogs"
+msgstr ""
+
+#: enterprise/models.py:971
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -535,7 +531,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:938
+#: enterprise/models.py:989
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "
