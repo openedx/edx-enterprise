@@ -24,7 +24,7 @@ djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
 doc8==0.8.0
-docutils==0.13.1          # via doc8, readme-renderer, restructuredtext-lint, sphinx
+docutils==0.14            # via doc8, readme-renderer, restructuredtext-lint, sphinx
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
 edx-rest-api-client==1.7.1
