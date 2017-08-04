@@ -27,7 +27,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
-from enterprise.api_client.lms import ThirdPartyAuthApiClient, enroll_user_in_course_locally
+from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise.validators import validate_image_extension, validate_image_size
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
@@ -137,6 +137,13 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_audit_data_reporting = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether to pass-back audit track enrollment data through an integrated channel."
+        )
+    )
+
     require_account_level_consent = models.BooleanField(
         default=False,
         help_text=_(
@@ -185,6 +192,13 @@ class EnterpriseCustomer(TimeStampedModel):
         Determine whether the enterprise customer has enabled the data sharing consent request.
         """
         return self.enable_data_sharing_consent and self.enforce_data_sharing_consent != self.EXTERNALLY_MANAGED
+
+    @property
+    def enables_audit_data_reporting(self):
+        """
+        Determine whether the enterprise customer has enabled the ability to report/pass-back audit track data.
+        """
+        return self.enable_audit_enrollment and self.enable_audit_data_reporting
 
     def get_course_enrollment_url(self, course_run_key):
         """
@@ -324,6 +338,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         if self.user is not None:
             return self.user.email
+        return None
+
+    @property
+    def username(self):
+        """
+        Return linked user's username.
+        """
+        if self.user is not None:
+            return self.user.username
         return None
 
     @property
@@ -806,6 +829,39 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
         enterprise_customer = self.enterprise_customer_user.enterprise_customer
         return enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT)
+
+    @property
+    def audit_reporting_disabled(self):
+        """
+        Specify whether audit track data reporting is disabled for this enrollment.
+
+        * If the enterprise customer associated with this enrollment enables audit track data reporting,
+          simply return False.
+        * If the enterprise customer associated with this enrollment does not enable audit track data reporting,
+          return True if we are dealing with an audit enrollment, and False otherwise.
+
+        :return: True if audit track data reporting is disabled, False otherwise.
+        """
+        if not self.enterprise_customer_user.enterprise_customer.enables_audit_data_reporting:
+            return self.is_audit_enrollment
+
+        # Since audit data reporting is enabled, we always return False here.
+        return False
+
+    @property
+    def is_audit_enrollment(self):
+        """
+        Specify whether the course enrollment associated with this ``EnterpriseCourseEnrollment`` is in audit mode.
+
+        :return: Whether the course enrollment mode is of an audit type.
+        """
+        course_enrollment_api = EnrollmentApiClient()
+        course_enrollment = course_enrollment_api.get_course_enrollment(
+            self.enterprise_customer_user.username,
+            self.course_id
+        )
+        audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
+        return course_enrollment and course_enrollment.get('mode') in audit_modes
 
     def __str__(self):
         """

@@ -339,7 +339,7 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
 
     def update_course_runs(self, course_runs, catalog_id, enterprise_customer):
         """
-        Update Marketing urls in course metadata adn return updated course.
+        Update Marketing urls in course metadata and return updated course.
 
         Arguments:
             course_runs (list): List of course runs.

@@ -2,7 +2,7 @@
 Assist integrated channels with retrieving learner completion data.
 
 Module contains resources for integrated pipelines to retrieve all the
-grade and competion data for enrollments belonging to a particular
+grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 from __future__ import absolute_import, unicode_literals
@@ -66,17 +66,16 @@ class BaseLearnerExporter(object):
         self.get_learner_data_record = plugin_configuration.get_learner_data_record
 
         # The Grades API and Certificates API clients require an OAuth2 access token,
-        #  so cache the client to allow the token to be reused.
+        #  so cache the client to allow the token to be reused. Cache other clients for
+        #  general reuse.
         self.grades_api = None
         self.certificates_api = None
+        self.course_api = None
+        self.course_enrollment_api = None
 
     def collect_learner_data(self):
         """
         Collect learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
-
-        Arguments:
-
-        * ``user``: User authorized to fetch grades from the LMS API.
 
         Yields a learner data object for each enrollment, containing:
 
@@ -97,26 +96,26 @@ class BaseLearnerExporter(object):
 
         # Fetch course details from the Course API, and cache between calls.
         course_details = None
-        course_api = None
 
         for enterprise_enrollment in enrollment_queryset:
-
-            # Omit any enrollments where consent has not been granted
-            if not enterprise_enrollment.consent_available:
-                continue
 
             course_id = enterprise_enrollment.course_id
 
             # Fetch course details from Courses API
             if course_details is None or course_details['course_id'] != course_id:
-                if course_api is None:
-                    course_api = CourseApiClient()
-                course_details = course_api.get_course_details(course_id)
+                if self.course_api is None:
+                    self.course_api = CourseApiClient()
+                course_details = self.course_api.get_course_details(course_id)
 
             if course_details is None:
                 # Course not found, so we have nothing to report.
                 LOGGER.error("No course details found for enrollment %d: %s",
                              enterprise_enrollment.pk, course_id)
+                continue
+
+            # Since the course exists, see if the course enrollment's
+            # configuration may entail skipping data collection.
+            if self._should_skip_enrollment(enterprise_enrollment):
                 continue
 
             # For instructor-paced courses, let the certificate determine course completion
@@ -133,6 +132,23 @@ class BaseLearnerExporter(object):
                 grade=grade,
                 is_passing=is_passing,
             )
+
+    def _should_skip_enrollment(self, enterprise_enrollment):
+        """
+        Specifies whether to skip data collection of the enterprise enrollment due to any configuration reason.
+
+        Reasons for skipping data collection currently include:
+
+        * Data sharing consent not being granted,
+        * Audit track data reporting being disabled for audit enrollments.
+
+        :param enterprise_enrollment: The enterprise enrollment whose configuration is to be checked against.
+        :return: True if we should skip, False otherwise.
+        """
+        return any([
+            not enterprise_enrollment.consent_available,
+            enterprise_enrollment.audit_reporting_disabled,
+        ])
 
     def _collect_certificate_data(self, enterprise_enrollment):
         """

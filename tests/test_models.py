@@ -83,7 +83,7 @@ class TestPendingEnrollment(unittest.TestCase):
     def test_complete_enrollment(self, mock_course_enrollment, mock_course_key):
         mock_course_key.from_string.return_value = None
         mock_course_enrollment.enroll.return_value = None
-        self.enrollment.complete_enrollment()  # pylint: disable=no-member
+        self.enrollment.complete_enrollment()
         mock_course_enrollment.enroll.assert_called_once_with(self.user, None, mode='audit', check_access=True)
         mock_course_key.from_string.assert_called_once_with(self.enrollment.course_id)
 
@@ -178,8 +178,6 @@ class TestEnterpriseCustomerManager(unittest.TestCase):
 
     def tearDown(self):
         super(TestEnterpriseCustomerManager, self).tearDown()
-        # A bug in pylint-django: https://github.com/landscapeio/pylint-django/issues/53
-        # Reports violation on this line: "Instance of 'Manager' has no 'all' member"
         EnterpriseCustomer.objects.all().delete()  # pylint: disable=no-member
 
     def test_active_customers_get_queryset_returns_only_active(self):
@@ -251,7 +249,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         customer = EnterpriseCustomerFactory()
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=customer)
 
-        assert customer.identity_provider == provider_id  # pylint: disable=no-member
+        assert customer.identity_provider == provider_id
 
     def test_no_identity_provider(self):
         """
@@ -261,7 +259,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         if enterprise customer doesn not have an associated identity provider.
         """
         customer = EnterpriseCustomerFactory()
-        assert customer.identity_provider is None  # pylint: disable=no-member
+        assert customer.identity_provider is None
 
     def test_get_course_enrollment_url_no_site_config(self):
         """
@@ -275,8 +273,6 @@ class TestEnterpriseCustomer(unittest.TestCase):
 
 @mark.django_db
 @ddt.ddt
-# TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
-# pylint: disable=no-member
 class TestEnterpriseCustomerUserManager(unittest.TestCase):
     """
     Tests EnterpriseCustomerUserManager.
@@ -294,7 +290,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
         EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
         actual_records = EnterpriseCustomerUser.objects.filter(
-            enterprise_customer=enterprise_customer, user_id=user.id  # pylint: disable=no-member
+            enterprise_customer=enterprise_customer, user_id=user.id
         )
         assert actual_records.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "No pending links should have been created"
@@ -419,29 +415,37 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     )
     def test_user_property_user_exists(self, email):
         user_instance = UserFactory(email=email)
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_instance.id)  # pylint: disable=no-member
-        assert enterprise_customer_user.user == user_instance  # pylint: disable=no-member
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_instance.id)
+        assert enterprise_customer_user.user == user_instance
 
     @ddt.data(1, 42, 1138)
     def test_user_property_user_missing(self, user_id):
         enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_id)
-        assert enterprise_customer_user.user is None  # pylint: disable=no-member
+        assert enterprise_customer_user.user is None
 
     @ddt.data(
         "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
     )
-    # TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
-    # pylint: disable=no-member
     def test_user_email_property_user_exists(self, email):
         user = UserFactory(email=email)
         enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user.id)
         assert enterprise_customer_user.user_email == email
 
-    # TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
-    # pylint: disable=no-member
     def test_user_email_property_user_missing(self):
         enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=42)
         assert enterprise_customer_user.user_email is None
+
+    @ddt.data(
+        "alberteinstein", "richardfeynman", "leosusskind"
+    )
+    def test_username_property_user_exists(self, username):
+        user_instance = UserFactory(username=username)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_instance.id)
+        assert enterprise_customer_user.username == username
+
+    def test_username_property_user_missing(self):
+        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=42)
+        assert enterprise_customer_user.username is None
 
     @ddt.data(
         (None, None, False),
@@ -690,10 +694,10 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo="test1.png"
         )
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test1.png')  # pylint: disable=no-member
+        self.assertEqual(configuration.logo.url, '/test1.png')
         configuration.logo = 'test2.png'
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test2.png')  # pylint: disable=no-member
+        self.assertEqual(configuration.logo.url, '/test2.png')
 
     @ddt.data(
         (False, 2048),
@@ -789,7 +793,7 @@ class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
         mock_method.return_value.configure_mock(name=provider_name)
         ec_idp = EnterpriseCustomerIdentityProviderFactory()
 
-        assert ec_idp.provider_name == provider_name  # pylint: disable=no-member
+        assert ec_idp.provider_name == provider_name
 
 
 @mark.django_db
@@ -1022,14 +1026,16 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
     def test_channel_code(self):
         assert self.config.channel_code() == 'SAP'
 
-    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
     @mock.patch(
         'integrated_channels.sap_success_factors.transmitters.learner_data.SuccessFactorsLearnerDataTransmitter')
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    def test_transmit_learner_data(self, mock_course_api, mock_certificate, mock_transmitter, mock_sap_client):
-
+    def test_transmit_learner_data(
+            self, mock_course_api, mock_certificate_api, mock_enrollment_api, mock_sap_api, mock_sap_transmitter
+    ):
         user = UserFactory()
         course_id = 'course-v1:edX+DemoX+DemoCourse'
         enterprise_customer_user = EnterpriseCustomerUserFactory(
@@ -1055,7 +1061,11 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
             is_passing=True,
             created_date='2017-01-02T03:04:05:00Z'
         )
-        mock_certificate.return_value.get_course_certificate.return_value = certificate
+        mock_certificate_api.return_value.get_course_certificate.return_value = certificate
+
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
+            mode="verified"
+        )
 
         transmission_audit = LearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=enrollment.id,
@@ -1065,9 +1075,9 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
             completed_timestamp=1483326245000,
             grade='A-',
         )
-        mock_sap_client.get_oauth_access_token.return_value = "token", datetime.datetime.utcnow()
-        mock_transmitter_instance = mock_transmitter.return_value
-        mock_transmitter.transmit.return_value = transmission_audit
+        mock_sap_api.get_oauth_access_token.return_value = "token", datetime.datetime.utcnow()
+        mock_transmitter_instance = mock_sap_transmitter.return_value
+        mock_sap_transmitter.transmit.return_value = transmission_audit
 
         # Ensure an inactive config doesn't transmit anything.
         self.config.transmit_learner_data('dummy-user')
