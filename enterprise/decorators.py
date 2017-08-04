@@ -12,7 +12,7 @@ from django.http import Http404
 from django.shortcuts import redirect
 
 from enterprise.utils import get_enterprise_customer_or_404, get_identity_provider
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse  # pylint: disable=import-error
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse  # pylint: disable=import-error
 
 
 def disable_for_loaddata(signal_handler):
@@ -145,11 +145,17 @@ def force_fresh_session(view):
                 try:
                     sso_provider = get_identity_provider(provider_id)
                     if sso_provider and sso_provider.drop_existing_session:
+                        # Parse the current request full path, quote just the path portion,
+                        # then reconstruct the full path string.
+                        # The path and query portions should be the only non-empty strings here.
+                        scheme, netloc, path, params, query, fragment = urlparse(request.get_full_path())
+                        redirect_url = urlunparse((scheme, netloc, quote(path), params, query, fragment))
+
                         return redirect(
                             '{logout_url}?{params}'.format(
                                 logout_url='/logout',
                                 params=urlencode(
-                                    {'redirect_url': quote(request.get_full_path())}
+                                    {'redirect_url': redirect_url}
                                 )
                             )
                         )

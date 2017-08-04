@@ -19,6 +19,7 @@ from django.test import RequestFactory
 
 from enterprise.decorators import disable_for_loaddata, enterprise_login_required, force_fresh_session
 from enterprise.django_compatibility import reverse
+from six.moves.urllib.parse import parse_qs, unquote, urlparse  # pylint: disable=import-error
 from test_utils import get_magic_name, mock_view_function
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 
@@ -210,11 +211,15 @@ class TestEnterpriseDecorators(unittest.TestCase):
         )
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_launch_url = reverse(
+        url_path = reverse(
             'enterprise_course_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
-        request = self._prepare_request(enterprise_launch_url, UserFactory(is_active=True))
+        query = 'foo=bar'
+        # Adding query parameter here to verify
+        # the redirect URL is getting escaped properly.
+        url = '{path}?{query}'.format(path=url_path, query=query)
+        request = self._prepare_request(url, UserFactory(is_active=True))
 
         response = force_fresh_session(view_function)(
             request, enterprise_uuid=self.customer.uuid, course_id=course_id
@@ -224,6 +229,9 @@ class TestEnterpriseDecorators(unittest.TestCase):
             # Assert that redirect status code 302 is returned when a logged in user comes in
             # with an sso provider configured to drop existing sessions
             assert response.status_code == 302
+            # Assert the redirect URL query string is intact.
+            redirect_url_query = parse_qs(urlparse(response.url).query)
+            assert urlparse(unquote(redirect_url_query['redirect_url'][0])).query == query
         else:
             # Assert that view function was called.
             assert view_function.called
