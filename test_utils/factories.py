@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 from uuid import UUID
 
 import factory
+from consent.models import DataSharingConsent
 from faker import Factory as FakerFactory
 
 from django.contrib.auth.models import User
@@ -33,6 +34,10 @@ class SiteFactory(factory.django.DjangoModelFactory):
     """
 
     class Meta(object):
+        """
+        Meta for ``SiteFactory``.
+        """
+
         model = Site
         django_get_or_create = ("domain",)
 
@@ -91,6 +96,9 @@ class UserDataSharingConsentAuditFactory(factory.django.DjangoModelFactory):
     """
 
     class Meta(object):
+        """
+        Meta for ``UserDataSharingConsentAuditFactory``.
+        """
 
         model = UserDataSharingConsentAudit
 
@@ -149,6 +157,10 @@ class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactor
     """
 
     class Meta(object):
+        """
+        Meta for ``EnterpriseCustomerIdentityProviderFactory``.
+        """
+
         model = EnterpriseCustomerIdentityProvider
         django_get_or_create = ("provider_id",)
 
@@ -164,6 +176,10 @@ class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
     """
 
     class Meta(object):
+        """
+        Meta for ``PendingEnrollmentFactory``.
+        """
+
         model = PendingEnrollment
 
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
@@ -228,3 +244,23 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))  # pylint: disable=no-member
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     query = ''
+
+
+class DataSharingConsentFactory(factory.django.DjangoModelFactory):
+    """
+    ``DataSharingConsent`` factory.
+
+    Creates an instance of ``DataSharingConsent`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``DataSharingConsentFactory``.
+        """
+
+        model = DataSharingConsent
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    username = factory.LazyAttribute(lambda x: FAKER.user_name())  # pylint: disable=no-member
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
+    granted = True

@@ -125,6 +125,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer_identity_provider",
                 "enterprise_customer_entitlements",
                 "enterprise_customer_catalog",
+                "enterprise_customer_consent",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
                 "modified",

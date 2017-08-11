@@ -11,6 +11,7 @@ from operator import itemgetter
 
 import ddt
 import mock
+from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from faker import Factory as FakerFactory
 from integrated_channels.integrated_channel.models import (
     EnterpriseCustomerPluginConfiguration,
@@ -28,6 +29,7 @@ from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
+from django.test.testcases import TransactionTestCase
 
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -43,6 +45,7 @@ from enterprise.models import (
 )
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils.factories import (
+    DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerEntitlementFactory,
     EnterpriseCustomerFactory,
@@ -890,6 +893,107 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         """
         expected_str = '<EnrollmentNotificationEmailTemplate for site with ID 1>'
         assert expected_str == method(self.template)
+
+
+@mark.django_db
+class TestDataSharingConsentManager(unittest.TestCase):
+    """
+    Tests for the custom Data Sharing Consent Manager.
+    """
+
+    def setUp(self):
+        super(TestDataSharingConsentManager, self).setUp()
+        DataSharingConsentFactory(
+            enterprise_customer=EnterpriseCustomerFactory(
+                name='rich_enterprise'
+            ),
+            username='lowly_bob',
+            course_id='hard_course_2017'
+        )
+
+    def test_get_returns_proxy_when_consent_doesnt_exist(self):
+        """
+        Test that ``get`` on custom manager returns a ``ProxyDataSharingConsent`` object when
+        the searched-for ``DataSharingConsent`` object doesn't exist.
+        """
+        dsc = DataSharingConsent.objects.get(username='lowly_bob')
+        proxy_dsc = DataSharingConsent.objects.get(username='optimistic_bob')
+        assert isinstance(dsc, DataSharingConsent)
+        assert isinstance(proxy_dsc, ProxyDataSharingConsent)
+        assert dsc != proxy_dsc
+
+    def test_get_returns_consent_when_it_exists(self):
+        """
+        Test that ``get`` on custom manager returns a ``DataSharingConsent`` object when the searched-for
+        ``DataSharingConsent`` object exists.
+        """
+        dsc = DataSharingConsent.objects.get(username='lowly_bob')
+        same_dsc = DataSharingConsent.objects.get(username='lowly_bob')
+        assert isinstance(same_dsc, DataSharingConsent)
+        assert dsc == same_dsc
+
+
+@ddt.ddt
+class TestProxyDataSharingConsent(TransactionTestCase):
+    """
+    Tests of the ``ProxyDataSharingConsent`` class (pseudo-model).
+    """
+
+    def setUp(self):
+        super(TestProxyDataSharingConsent, self).setUp()
+        self.proxy_dsc = ProxyDataSharingConsent(
+            enterprise_customer=EnterpriseCustomerFactory(
+                name='rich_enterprise'
+            ),
+            username='lowly_bob',
+            course_id='hard_course_2017'
+        )
+
+    def test_commit(self):
+        """
+        Test that ``ProxyDataSharingConsent``'s ``commit`` method properly creates/saves/returns a new
+        ``DataSharingConsent`` instance, or returns ``None`` for any validation errors (i.e. conflict).
+        """
+        new_dsc = self.proxy_dsc.commit()
+        no_dsc = self.proxy_dsc.commit()
+        assert DataSharingConsent.objects.count() == 1
+        assert DataSharingConsent.objects.all().first() == new_dsc
+        assert no_dsc is None
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``ProxyDataSharingConsent`` conversion to string
+        """
+        expected_to_str = "<ProxyDataSharingConsent for user lowly_bob of Enterprise rich_enterprise>"
+        assert expected_to_str == method(self.proxy_dsc)
+
+
+@mark.django_db
+@ddt.ddt
+class TestDataSharingConsent(unittest.TestCase):
+    """
+    Tests of the ``DataSharingConsent`` model.
+    """
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``DataSharingConsent`` conversion to string
+        """
+        dsc = DataSharingConsentFactory(
+            enterprise_customer=EnterpriseCustomerFactory(
+                name='rich_enterprise'
+            ),
+            username='lowly_bob',
+            course_id='hard_course_2017'
+        )
+        expected_to_str = "<DataSharingConsent for user lowly_bob of Enterprise rich_enterprise>"
+        assert expected_to_str == method(dsc)
 
 
 @mark.django_db
