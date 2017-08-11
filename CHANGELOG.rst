@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.1] - 2017-08-11
+---------------------
+
+* Add new unified DataSharingConsent model to the `consent` app.
+
 [0.40.0] - 2017-08-08
 ---------------------
 
