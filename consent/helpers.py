@@ -5,62 +5,60 @@ Helper functions for the Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
+from django.apps import apps
 from django.contrib.auth.models import User
 
-# Will be using internal models at a later time.
-from enterprise.models import (
-    EnterpriseCourseEnrollment,
-    EnterpriseCustomer,
-    EnterpriseCustomerUser,
-    UserDataSharingConsentAudit,
-)
+from enterprise.utils import get_enterprise_customer
 
 
-def consent_exists(user_id, course_id, enterprise_customer_uuid):
+def consent_exists(username, course_id, enterprise_customer_uuid):
     """
     Get whether any consent is associated with an ``EnterpriseCustomer``.
 
-    :param user_id: The user that grants consent.
+    :param username: The user that grants consent.
     :param course_id: The course for which consent is granted.
     :param enterprise_customer_uuid: The consent requester.
     :return: Whether any consent (provided or unprovided) exists.
     """
-    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
-    enterprise_course_enrollment = get_enterprise_course_enrollment(user_id, course_id, enterprise_customer)
-    return bool(enterprise_course_enrollment or get_user_dsc_audit(user_id, enterprise_customer))
+    # pylint: disable=invalid-name
+    EnterpriseCourseEnrollment = apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
+    if EnterpriseCourseEnrollment.objects.filter(
+            course_id=course_id,
+            enterprise_customer_user__user_id=get_user_id(username),
+            enterprise_customer_user__enterprise_customer__uuid=enterprise_customer_uuid,
+    ).exists():
+        # We're not creating consent records when we do proxy enrollment, so check for
+        # whether a situation in which any record related to the overall consent scenario exists,
+        # even if a DataSharingConsent instance doesn't.
+        return True
+
+    consent = get_data_sharing_consent(username, course_id, enterprise_customer_uuid)
+    return consent.exists if consent else False
 
 
-def consent_provided(user_id, course_id, enterprise_customer_uuid):
+def consent_provided(username, course_id, enterprise_customer_uuid):
     """
     Get whether consent is provided by the user to the Enterprise customer.
 
-    :param user_id: The user that grants consent.
+    :param username: The user that grants consent.
     :param course_id: The course for which consent is granted.
     :param enterprise_customer_uuid: The consent requester.
     :return: Whether consent is provided to the Enterprise customer by the user for a course.
     """
-    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
-    enterprise_course_enrollment = get_enterprise_course_enrollment(user_id, course_id, enterprise_customer)
-    provided = enterprise_course_enrollment is not None and enterprise_course_enrollment.consent_available
-
-    if enterprise_course_enrollment is None:
-        user_data_consent_audit = get_user_dsc_audit(user_id, enterprise_customer)
-        provided = user_data_consent_audit is not None and user_data_consent_audit.enabled
-
-    return provided
+    consent = get_data_sharing_consent(username, course_id, enterprise_customer_uuid)
+    return consent.granted if consent else False
 
 
-def consent_required(user_id, course_id, enterprise_customer_uuid):
+def consent_required(username, course_id, enterprise_customer_uuid):
     """
     Get whether consent is required by the ``EnterpriseCustomer``.
 
-    :param request_user: The user making the request related to consent.
-    :param user_id: The user that grants consent.
+    :param username: The user that grants consent.
     :param course_id: The course for which consent is granted.
     :param enterprise_customer_uuid: The consent requester.
     :return: Whether consent is required for a course by an Enterprise customer from a user.
     """
-    if consent_provided(user_id, course_id, enterprise_customer_uuid):
+    if consent_provided(username, course_id, enterprise_customer_uuid):
         return False
 
     enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
@@ -84,68 +82,23 @@ def get_user_id(username):
         return None
 
 
-def get_enterprise_customer(uuid):
+def get_data_sharing_consent(username, course_id, enterprise_customer_uuid):
     """
-    Get the ``EnterpriseCustomer`` instance associated with ``uuid``.
+    Get the data sharing consent object associated with a certain user of a customer for a course.
 
-    :param uuid: The universally unique ID of the enterprise customer.
-    :return: The ``EnterpriseCustomer`` instance, or ``None`` if it doesn't exist.
+    :param username: The user that grants consent.
+    :param course_id: The course for which consent is granted.
+    :param enterprise_customer_uuid: The consent requester.
+    :return: The data sharing consent object, or None if the enterprise customer for the given UUID does not exist.
     """
+    # Prevent circular imports.
+    EnterpriseCustomer = apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+    DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')  # pylint: disable=invalid-name
     try:
-        return EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+        return DataSharingConsent.objects.get(
+            username=username,
+            course_id=course_id,
+            enterprise_customer__uuid=enterprise_customer_uuid
+        )
     except EnterpriseCustomer.DoesNotExist:
-        return None
-
-
-def get_enterprise_customer_user(enterprise_customer, user_id):
-    """
-    Get the ``EnterpriseCustomerUser`` instance associated with params.
-
-    :param enterprise_customer: The ``EnterpriseCustomer`` associated with this user.
-    :param user_id: The ID of the user.
-    :return: The ``EnterpriseCustomerUser`` instance, or ``None`` if it doesn't exist.
-    """
-    try:
-        return EnterpriseCustomerUser.objects.get(
-            enterprise_customer=enterprise_customer,
-            user_id=user_id
-        )
-    except EnterpriseCustomerUser.DoesNotExist:
-        return None
-
-
-def get_enterprise_course_enrollment(user_id, course_id, enterprise_customer):
-    """
-    Get the ``EnterpriseCourseEnrollment`` instance associated with params.
-
-    :param user_id: The ID of the user.
-    :param course_id: The ID of the course.
-    :param enterprise_customer: The ``EnterpriseCustomer`` associated with the user and course.
-    :return: The ``EnterpriseCourseEnrollment`` instance, or ``None`` if it doesn't exist.
-    """
-    try:
-        return EnterpriseCourseEnrollment.objects.get(
-            enterprise_customer_user__enterprise_customer=enterprise_customer,
-            enterprise_customer_user__user_id=user_id,
-            course_id=course_id
-        )
-    except EnterpriseCourseEnrollment.DoesNotExist:
-        return None
-
-
-def get_user_dsc_audit(user_id, enterprise_customer):
-    """
-    Get the ``UserDataSharingConsentAudit`` instance associated with params.
-
-    :param user_id: The ID of the user.
-    :param course_id: The ID of the course.
-    :param enterprise_customer: The EnterpriseCustomer associated with the user.
-    :return: The ``UserDataSharingConsentAudit`` instance, or ``None`` if it doesn't exist.
-    """
-    try:
-        return UserDataSharingConsentAudit.objects.get(
-            user__enterprise_customer=enterprise_customer,
-            user__user_id=user_id
-        )
-    except UserDataSharingConsentAudit.DoesNotExist:
         return None

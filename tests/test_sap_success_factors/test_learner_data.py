@@ -18,6 +18,7 @@ from slumber.exceptions import HttpNotFoundError
 from django.utils import timezone
 
 from test_utils.factories import (
+    DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -47,6 +48,12 @@ class TestBaseLearnerExporter(unittest.TestCase):
             user_id=self.user.id,
             enterprise_customer=self.enterprise_customer,
         )
+        self.data_sharing_consent = DataSharingConsentFactory(
+            username=self.user.username,
+            course_id=self.course_id,
+            enterprise_customer=self.enterprise_customer,
+            granted=True,
+        )
         config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
             enterprise_customer=self.enterprise_customer,
             sapsf_base_url='enterprise.successfactors.com',
@@ -71,6 +78,9 @@ class TestBaseLearnerExporter(unittest.TestCase):
             course_id=self.course_id,
             consent_granted=False,
         )
+
+        self.data_sharing_consent.granted = False
+        self.data_sharing_consent.save()
 
         # Return random course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -284,12 +294,20 @@ class TestBaseLearnerExporter(unittest.TestCase):
             course_id=self.course_id,
             consent_granted=True,
         )
+
         course_id2 = 'course-v1:edX+DemoX+DemoCourse2'
         enrollment2 = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=course_id2,
             consent_granted=True,
         )
+        DataSharingConsentFactory(
+            username=self.enterprise_customer_user.username,
+            course_id=course_id2,
+            enterprise_customer=self.enterprise_customer,
+            granted=True
+        )
+
         enrollment3 = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=EnterpriseCustomerUserFactory(
                 user_id=UserFactory(username='R2D2').id,
@@ -297,6 +315,12 @@ class TestBaseLearnerExporter(unittest.TestCase):
             ),
             course_id=self.course_id,
             consent_granted=True,
+        )
+        DataSharingConsentFactory(
+            username='R2D2',
+            course_id=self.course_id,
+            enterprise_customer=self.enterprise_customer,
+            granted=True
         )
 
         def get_course_details(course_id):

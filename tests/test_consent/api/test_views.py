@@ -13,6 +13,7 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 
 from test_utils import (
+    FAKE_UUIDS,
     TEST_COURSE,
     TEST_PASSWORD,
     TEST_USER_ID,
@@ -60,14 +61,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.data(
         # Missing `username` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
@@ -81,16 +76,10 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             400
         ),
-        # Missing `enterprise_customer` input.
+        # Missing `enterprise_customer_uuid` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
@@ -106,14 +95,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
         # Missing `course_id` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
@@ -127,7 +110,6 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             400
         ),
-        # No consent in an enterprise course enrollment nor in an audit.
         (
             None,
             [{}],
@@ -146,15 +128,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent given for an enterprise course enrollment & enabled for customer at enrollment.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -171,15 +151,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment & enabled for customer at enrollment.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -196,16 +175,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment & not enabled for customer at enrollment.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -222,16 +199,15 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment & not enabled for customer at enrollment.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -248,15 +224,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent given for an enterprise course enrollment & enabled for customer while externally managed.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -273,15 +247,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment & enabled for customer while externally managed.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -298,16 +271,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment & not enabled for customer (externally managed).
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -324,212 +295,15 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment & not enabled for customer (externally managed).
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': False
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent given for an audit where enterprise forces DSC at enrollment.
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'state': 'enabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an audit where enterprise forces DSC at enrollment.
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'state': 'disabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: True,
-            },
-            200
-        ),
-        # Consent given for an audit where enterprise disabled DSC at enrollment.
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enable_data_sharing_consent': False,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'state': 'enabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an audit where enterprise disabled DSC at enrollment.
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enable_data_sharing_consent': False,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'state': 'disabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent given for an audit where enterprise forces DSC (externally managed).
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'state': 'enabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an audit where enterprise forces DSC (externally managed).
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'state': 'disabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent given for an audit where enterprise disabled DSC (externally managed).
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enable_data_sharing_consent': False,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'state': 'enabled'
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an audit where enterprise disabled DSC (externally managed).
-        (
-            factories.UserDataSharingConsentAuditFactory,
-            [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enable_data_sharing_consent': False,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'state': 'disabled'
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -557,12 +331,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
 
     @ddt.data(
         (
-            factories.UserDataSharingConsentAuditFactory,
+            factories.DataSharingConsentFactory,
             [{
-                'user__user_id': TEST_USER_ID,
-                'user__enterprise_customer__uuid': TEST_UUID,
-                'user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'state': 'disabled'
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -597,14 +373,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.data(
         # Missing `username` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
@@ -618,16 +388,10 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             400
         ),
-        # Missing `enterprise_customer` input.
+        # Missing `enterprise_customer_uuid` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
@@ -643,14 +407,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
         # Missing `course_id` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
@@ -664,12 +422,34 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             400
         ),
-        # No consent in an enterprise course enrollment (at enrollment).
-        # Expect new consent resource to be created with consent provided (at enrollment).
+        # Invalid `enterprise_customer_uuid` input.
         (
-            factories.EnterpriseCustomerUserFactory,
+            factories.DataSharingConsentFactory,
             [{
-                'user_id': TEST_USER_ID,
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[0],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[0],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
                 'enterprise_customer__uuid': TEST_UUID,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
             }],
@@ -688,12 +468,126 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             200
         ),
-        # No consent in an enterprise course enrollment (at enrollment).
-        # No consent should be created, because consent is disabled.
         (
             factories.EnterpriseCustomerUserFactory,
             [{
                 'user_id': TEST_USER_ID,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[4],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[4],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.EnterpriseCustomerUserFactory,
+            [{
+                'user_id': TEST_USER_ID,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[4],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[4],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.EnterpriseCustomerUserFactory,
+            [{
+                'user_id': TEST_USER_ID,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[4],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[4],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: True,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: True,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
                 'enterprise_customer__uuid': TEST_UUID,
                 'enterprise_customer__enable_data_sharing_consent': False,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
@@ -707,18 +601,42 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: True,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: True,
                 DSCView.CONSENT_GRANTED: False,
                 DSCView.CONSENT_REQUIRED: False,
             },
             200
         ),
-        # No consent in an enterprise course enrollment (externally managed).
-        # Because consent doesn't need to be given, it won't be saved if POSTed.
         (
-            factories.EnterpriseCustomerUserFactory,
+            factories.DataSharingConsentFactory,
             [{
-                'user_id': TEST_USER_ID,
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
                 'enterprise_customer__uuid': TEST_UUID,
                 'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
             }],
@@ -731,18 +649,41 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: True,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: True,
                 DSCView.CONSENT_GRANTED: False,
                 DSCView.CONSENT_REQUIRED: False,
             },
             200
         ),
-        # No consent in an enterprise course enrollment (externally managed).
-        # Because consent doesn't need to be given, it won't be saved if POSTed.
         (
-            factories.EnterpriseCustomerUserFactory,
+            factories.DataSharingConsentFactory,
             [{
-                'user_id': TEST_USER_ID,
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
                 'enterprise_customer__uuid': TEST_UUID,
                 'enterprise_customer__enable_data_sharing_consent': False,
                 'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
@@ -756,208 +697,21 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: False,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent already given for an enterprise course enrollment (at enrollment).
-        # Expect nothing to change.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
                 DSCView.CONSENT_EXISTS: True,
                 DSCView.CONSENT_GRANTED: True,
                 DSCView.CONSENT_REQUIRED: False,
             },
             200
         ),
-        # Consent not given for an enterprise course enrollment (at enrollment).
-        # Expect consent to be given (at enrollment).
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent already given for an enterprise course enrollment (at enrollment).
-        # Expect nothing to change.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an enterprise course enrollment (at enrollment).
-        # Expect nothing to change, since consent is not presently enabled.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent already given for an enterprise course enrollment (externally managed).
-        # Expect nothing to change.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': True
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an enterprise course enrollment (externally managed).
-        # Because consent doesn't need to be given, it won't be saved if POSTed.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': False
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent already given for an enterprise course enrollment (externally managed).
-        # Expect nothing to change.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': True
-            }],
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-            },
-            {
-                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
-                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
-                DSCView.CONSENT_EXISTS: True,
-                DSCView.CONSENT_GRANTED: True,
-                DSCView.CONSENT_REQUIRED: False,
-            },
-            200
-        ),
-        # Consent not given for an enterprise course enrollment (externally managed).
-        # Because consent doesn't need to be given, it won't be saved if POSTed.
-        (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1024,14 +778,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.data(
         # Missing `username` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
@@ -1045,16 +793,10 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             400
         ),
-        # Missing `enterprise_customer` input.
+        # Missing `enterprise_customer_uuid` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
@@ -1070,14 +812,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
         # Missing `course_id` input.
         (
-            factories.EnterpriseCourseEnrollmentFactory,
-            [{
-                'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
-            }],
+            factories.DataSharingConsentFactory,
+            [{}],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
@@ -1091,6 +827,29 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             },
             400
         ),
+        # Invalid `enterprise_customer_uuid` input.
+        (
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': TEST_COURSE,
+                'enterprise_customer__uuid': TEST_UUID,
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[0],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: FAKE_UUIDS[0],
+                DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200
+        ),
         (
             factories.EnterpriseCustomerUserFactory,
             [{
@@ -1182,13 +941,12 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1206,13 +964,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1230,14 +988,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1255,14 +1012,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1280,13 +1037,12 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1304,13 +1060,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1328,14 +1084,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': True
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1353,14 +1108,14 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             200
         ),
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enable_data_sharing_consent': False,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enable_data_sharing_consent': False,
+                'enterprise_customer__enforce_data_sharing_consent': 'externally_managed',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
@@ -1391,13 +1146,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
 
     @ddt.data(
         (
-            factories.EnterpriseCourseEnrollmentFactory,
+            factories.DataSharingConsentFactory,
             [{
+                'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
-                'enterprise_customer_user__user_id': TEST_USER_ID,
-                'enterprise_customer_user__enterprise_customer__uuid': TEST_UUID,
-                'enterprise_customer_user__enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
-                'consent_granted': False
+                'enterprise_customer__uuid': TEST_UUID,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'granted': False
             }],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,

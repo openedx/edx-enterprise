@@ -11,6 +11,7 @@ from uuid import uuid4
 import six
 from simple_history.models import HistoricalRecords
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -29,6 +30,7 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
+from enterprise.decorators import deprecated
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise.validators import validate_image_extension, validate_image_size
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
@@ -38,7 +40,7 @@ try:
 except ImportError:
     configuration_helpers = None
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
 
@@ -386,8 +388,12 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
         """
         # Check if Enterprise Learner consents to data sharing and store the boolean result
-        learner_consent_state = self.data_sharing_consent.first()
-        learner_consent_enabled = learner_consent_state and learner_consent_state.enabled
+        DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')  # pylint: disable=invalid-name
+        learner_consent_enabled = DataSharingConsent.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            username=self.username,
+            granted=True,
+        ).exists()
 
         entitlements = self.enterprise_customer.enterprise_customer_entitlements
 
@@ -712,7 +718,8 @@ class UserDataSharingConsentAudit(TimeStampedModel):
     history = HistoricalRecords()
 
     @property
-    def enabled(self):
+    @deprecated('See consent.models.DataSharingConsent.')
+    def enabled(self):  # pragma: no cover
         """
         Determine whether the user has enabled data sharing.
         """
@@ -814,7 +821,8 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     history = HistoricalRecords()
 
     @property
-    def consent_available(self):
+    @deprecated('See consent.models.DataSharingConsent.')
+    def consent_available(self):  # pragma: no cover
         """
         Determine whether we have consent to share details about this enrollment.
 
@@ -837,7 +845,8 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         return False
 
     @property
-    def consent_needed(self):
+    @deprecated('See consent.models.DataSharingConsent.')
+    def consent_needed(self):  # pragma: no cover
         """
         Determine if consent is necessary, but has not been provided yet.
         """

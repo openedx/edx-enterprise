@@ -13,6 +13,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from slumber.exceptions import HttpNotFoundError
 
+from consent.models import DataSharingConsent
 from enterprise.api_client.lms import CourseApiClient, GradesApiClient, CertificatesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 
@@ -113,9 +114,13 @@ class BaseLearnerExporter(object):
                              enterprise_enrollment.pk, course_id)
                 continue
 
-            # Since the course exists, see if the course enrollment's
-            # configuration may entail skipping data collection.
-            if self._should_skip_enrollment(enterprise_enrollment):
+            consent = DataSharingConsent.objects.get(
+                username=enterprise_enrollment.enterprise_customer_user.username,
+                course_id=enterprise_enrollment.course_id,
+                enterprise_customer=enterprise_enrollment.enterprise_customer_user.enterprise_customer
+            )
+
+            if not consent.granted or enterprise_enrollment.audit_reporting_disabled:
                 continue
 
             # For instructor-paced courses, let the certificate determine course completion
@@ -132,23 +137,6 @@ class BaseLearnerExporter(object):
                 grade=grade,
                 is_passing=is_passing,
             )
-
-    def _should_skip_enrollment(self, enterprise_enrollment):
-        """
-        Specifies whether to skip data collection of the enterprise enrollment due to any configuration reason.
-
-        Reasons for skipping data collection currently include:
-
-        * Data sharing consent not being granted,
-        * Audit track data reporting being disabled for audit enrollments.
-
-        :param enterprise_enrollment: The enterprise enrollment whose configuration is to be checked against.
-        :return: True if we should skip, False otherwise.
-        """
-        return any([
-            not enterprise_enrollment.consent_available,
-            enterprise_enrollment.audit_reporting_disabled,
-        ])
 
     def _collect_certificate_data(self, enterprise_enrollment):
         """
