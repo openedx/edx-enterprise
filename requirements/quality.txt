@@ -84,14 +84,14 @@ pyparsing==2.2.0          # via packaging
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytest-django==3.1.2
-pytest==3.2.0             # via pytest-catchlog, pytest-cov, pytest-django
+pytest==3.2.1             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.1    # via edx-drf-extensions, faker, freezegun
 pytz==2017.2              # via babel, celery
 pyyaml==3.12              # via edx-i18n-tools
 readme-renderer==17.2
 requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
-responses==0.6.1
+responses==0.7.0
 restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
@@ -111,4 +111,4 @@ unicodecsv==0.14.1
 virtualenv==15.1.0        # via tox
 webencodings==0.5.1       # via html5lib
 wheel==0.29.0
-wrapt==1.10.10            # via astroid
+wrapt==1.10.11            # via astroid

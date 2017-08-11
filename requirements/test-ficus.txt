@@ -39,11 +39,11 @@ pyjwt==1.5.2              # via djangorestframework-jwt, edx-rest-api-client
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytest-django==3.1.2
-pytest==3.2.0             # via pytest-catchlog, pytest-cov, pytest-django
+pytest==3.2.1             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.1    # via edx-drf-extensions, faker, freezegun
 pytz==2017.2              # via celery
 requests==2.9.1
-responses==0.6.1
+responses==0.7.0
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.10.0               # via django-extensions, faker, freezegun, mock, python-dateutil, responses
 slumber==0.7.1            # via edx-rest-api-client
