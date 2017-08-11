@@ -2,3 +2,4 @@
 
 django-object-actions==0.10.0           # Object actions in Django admin
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
+edx-opaque-keys==0.4.0                  # edX plugins for handling course keys

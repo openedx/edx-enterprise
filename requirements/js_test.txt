@@ -7,7 +7,7 @@
 argparse==1.4.0           # via jasmine
 cheroot==5.8.3            # via cherrypy
 cherrypy==11.0.0          # via jasmine
-glob2==0.5                # via jasmine-core
+glob2==0.6                # via jasmine-core
 jasmine-core==2.7.0       # via jasmine
 jasmine==2.7.0
 jinja2==2.9.6             # via jasmine
@@ -18,4 +18,4 @@ pytz==2017.2              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.5.0           # via jasmine
 six==1.10.0               # via cheroot, cherrypy, jasmine, tempora
-tempora==1.8              # via portend
+tempora==1.9              # via portend

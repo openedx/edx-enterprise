@@ -5,3 +5,4 @@ edx-lint                  # edX pylint rules and plugins
 isort                     # to standardize order of imports
 pycodestyle               # PEP 8 compliance validation
 pydocstyle                # PEP 257 compliance validation
+testfixtures              # Mock objects for unit tests and doc tests

@@ -50,4 +50,5 @@ shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.10.0               # via django-extensions, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 stevedore==1.25.0         # via edx-opaque-keys
+testfixtures==5.1.1
 unicodecsv==0.14.1

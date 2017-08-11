@@ -254,7 +254,9 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
                     'sap_success_factors',
                     'SAPSuccessFactorsGlobalConfiguration'
                 ).current().provider_id,
-                'launchURL': get_launch_url(x['enterprise_customer'], x['key']),
+                'launchURL': get_launch_url(
+                    x['enterprise_customer'], x['key'], safe_extract_key(x, 'enrollment_url')
+                ),
                 'contentTitle': safe_extract_key(x, 'title'),
                 'contentID': x['key'],
                 'launchType': 3,
@@ -276,16 +278,18 @@ class SapCourseExporter(BaseCourseExporter):  # pylint: disable=abstract-method
     }
 
 
-def get_launch_url(enterprise_customer, course_id):
+def get_launch_url(enterprise_customer, course_id, enrollment_url=None):
     """
     Given an EnterpriseCustomer and a course ID, determine the appropriate launch url.
 
     Args:
         enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer that a URL needs to be built for
         course_id (str): The string identifier of the course in question
+        enrollment_url (str): Enterprise landing page url for the given course from enterprise courses API
     """
     if switch_is_active('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE'):
-        return enterprise_customer.get_course_enrollment_url(course_id)
+        return enrollment_url or enterprise_customer.get_course_enrollment_url(course_id)
+
     return get_course_track_selection_url(enterprise_customer, course_id)
 
 

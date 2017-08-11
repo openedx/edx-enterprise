@@ -10,8 +10,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
-from enterprise.api_client.discovery import CourseCatalogApiClient
-
+from enterprise.api_client.enterprise import EnterpriseApiClient
 
 EXCLUDED_COURSE_DETAIL_KEYS = [
     'course_runs',
@@ -41,25 +40,20 @@ def get_course_runs(user, enterprise_customer):
     """
     List the course runs the given enterprise customer has in its catalog.
 
-    Args:
-        user: A Django user requesting the course list
+    Arguments:
         enterprise_customer: The given Enterprise Customer
 
     Returns:
         iterable: An iterable containing the details of each course run.
     """
-    catalog_id = enterprise_customer.catalog
+    client = EnterpriseApiClient(user)
 
-    client = CourseCatalogApiClient(user)
+    enterprise_courses = client.get_enterprise_courses(enterprise_customer, traverse=True).get('results', [])
+    LOGGER.info('Retrieving course list for enterprise %s', enterprise_customer.name)
 
-    catalog_courses = client.get_catalog_courses(catalog_id)
-    LOGGER.info('Retrieving course list for catalog %s', catalog_id)
-
-    for course in catalog_courses:
-        course_key = course.get('key')
-        course_details = client.get_course_details(course_key)
-        for run in course_details.get('course_runs', []):
-            yield get_complete_course_run_details(course_details, run)
+    for course_detail in enterprise_courses:
+        for run in course_detail.get('course_runs', []):
+            yield get_complete_course_run_details(course_detail, run)
 
 
 class BaseCourseExporter(object):

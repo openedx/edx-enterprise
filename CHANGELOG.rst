@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.5] - 2017-08-23
+---------------------
+
+* Update SAP course export to use enterprise courses API.
+
 [0.40.4] - 2017-08-23
 ---------------------
 

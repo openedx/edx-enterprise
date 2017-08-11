@@ -9,7 +9,7 @@ amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
 argparse==1.4.0           # via caniusepython3
 astroid==1.5.2            # via edx-lint, pylint, pylint-celery, pylint-plugin-utils
-babel==2.4.0              # via sphinx
+babel==2.5.0              # via sphinx
 backports.functools-lru-cache==1.4  # via astroid, caniusepython3, pylint
 billiard==3.3.0.23        # via celery
 bleach==2.0.0             # via readme-renderer
@@ -104,6 +104,7 @@ sphinx==1.6.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.25.0         # via doc8, edx-opaque-keys
+testfixtures==5.1.1
 tox-battery==0.2.0
 tox==2.7.0
 tqdm==4.15.0              # via twine

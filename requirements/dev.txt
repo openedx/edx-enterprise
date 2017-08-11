@@ -75,6 +75,7 @@ six==1.10.0               # via astroid, diff-cover, django-extensions, edx-i18n
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.25.0         # via edx-opaque-keys
+testfixtures==5.1.1
 tox-battery==0.2.0
 tox==2.7.0
 tqdm==4.15.0              # via twine

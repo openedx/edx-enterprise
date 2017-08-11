@@ -7,7 +7,7 @@
 alabaster==0.7.10         # via sphinx
 amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
-babel==2.4.0              # via sphinx
+babel==2.5.0              # via sphinx
 billiard==3.3.0.23        # via celery
 bleach==2.0.0             # via readme-renderer
 celery==3.1.18
@@ -54,6 +54,7 @@ sphinx==1.6.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.25.0         # via doc8, edx-opaque-keys
+testfixtures==5.1.1
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1
 webencodings==0.5.1       # via html5lib
