@@ -12,10 +12,40 @@ from django.utils.translation import ugettext_lazy as _
 from enterprise import models, utils
 
 
+class ImmutableStateSerializer(serializers.Serializer):
+    """
+    Base serializer for any serializer that inhibits state changing requests.
+    """
+
+    def create(self, validated_data):
+        """
+        Do not perform any operations for state changing requests.
+        """
+        pass
+
+    def update(self, instance, validated_data):
+        """
+        Do not perform any operations for state changing requests.
+        """
+        pass
+
+
+class ResponsePaginationSerializer(ImmutableStateSerializer):
+    """
+    Serializer for responses that require pagination.
+    """
+
+    count = serializers.IntegerField(read_only=True, help_text=_('Total count of items.'))
+    next = serializers.CharField(read_only=True, help_text=_('URL to fetch next page of items.'))
+    previous = serializers.CharField(read_only=True, help_text=_('URL to fetch previous page of items.'))
+    results = serializers.ListField(read_only=True, help_text=_('List of items.'))
+
+
 class SiteSerializer(serializers.ModelSerializer):
     """
     Serializer for Site model.
     """
+
     class Meta:
         model = Site
         fields = (
@@ -27,6 +57,7 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model.
     """
+
     class Meta:
         model = User
         fields = (
@@ -38,6 +69,7 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
     """
     Serializer for EnterpriseCustomerBrandingConfiguration model.
     """
+
     class Meta:
         model = models.EnterpriseCustomerBrandingConfiguration
         fields = (
@@ -49,6 +81,7 @@ class EnterpriseCustomerEntitlementSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerEntitlement model.
     """
+
     class Meta:
         model = models.EnterpriseCustomerEntitlement
         fields = (
@@ -60,6 +93,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomer model.
     """
+
     class Meta:
         model = models.EnterpriseCustomer
         fields = (
@@ -79,6 +113,7 @@ class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCourseEnrollment model.
     """
+
     class Meta:
         model = models.EnterpriseCourseEnrollment
         fields = (
@@ -90,11 +125,13 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
     """
     Serializer for writing to the EnterpriseCourseEnrollment model.
     """
+
     class Meta:
         model = models.EnterpriseCourseEnrollment
         fields = (
             'username', 'course_id', 'consent_granted'
         )
+
     username = serializers.CharField(max_length=30)
     enterprise_customer_user = None
 
@@ -129,10 +166,23 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         )
 
 
+class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCustomerCatalog`` model.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomerCatalog
+        fields = (
+            'uuid', 'enterprise_customer', 'query',
+        )
+
+
 class UserDataSharingConsentAuditSerializer(serializers.ModelSerializer):
     """
     Serializer for UserDataSharingConsentAudit model.
     """
+
     class Meta:
         model = models.UserDataSharingConsentAudit
         fields = (
@@ -144,6 +194,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerUser model.
     """
+
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
@@ -159,11 +210,13 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
     """
     Serializer for writing to the EnterpriseCustomerUser model.
     """
+
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
             'enterprise_customer', 'username'
         )
+
     username = serializers.CharField(max_length=30)
     user = None
 
@@ -191,37 +244,35 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         ecu.save()
 
 
-class EnterpriseCustomerUserEntitlementSerializer(serializers.Serializer):
+class EnterpriseCustomerUserEntitlementSerializer(ImmutableStateSerializer):
     """
     Serializer for the entitlements of EnterpriseCustomerUser.
 
     This Serializer is for read only endpoint of enterprise learner's entitlements
     It will ignore any state changing requests like POST, PUT and PATCH.
     """
+
     entitlements = serializers.ListField(
         child=serializers.DictField()
     )
 
-    def create(self, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
-
-    def update(self, instance, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
     user = UserSerializer(read_only=True)
     enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
     data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True, read_only=True)
 
 
-class EnterpriseCourseCatalogReadOnlySerializer(serializers.Serializer):
+class EnterpriseCustomerCatalogApiReadOnlySerializer(ResponsePaginationSerializer):
+    """
+    Paginated serializer for Enterprise Catalog API responses.
+    """
+    pass
+
+
+class CourseCatalogApiResponseReadOnlySerializer(ImmutableStateSerializer):
     """
     Serializer for enterprise customer catalog.
     """
+
     # pylint: disable=invalid-name
     id = serializers.IntegerField(read_only=True, help_text=_('Enterprise course catalog primary key.'))
     name = serializers.CharField(help_text=_('Catalog name'))
@@ -234,49 +285,11 @@ class EnterpriseCourseCatalogReadOnlySerializer(serializers.Serializer):
         child=serializers.CharField(),
     )
 
-    def create(self, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
 
-    def update(self, instance, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
-
-
-class CourseCatalogAPIResponseReadOnlySerializer(serializers.Serializer):
-    """
-    Serializer for course catalog api.
-    """
-    count = serializers.IntegerField(read_only=True, help_text=_('Total count of catalogs.'))
-    next = serializers.CharField(read_only=True, help_text=_('URL to fetch next page of catalogs.'))
-    previous = serializers.CharField(read_only=True, help_text=_('URL to fetch previous page of catalogs.'))
-    results = serializers.ListField(read_only=True, help_text=_('list of catalogs.'))
-
-    def create(self, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
-
-    def update(self, instance, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
-
-
-class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
+class EnterpriseCatalogCoursesReadOnlySerializer(ResponsePaginationSerializer):
     """
     Serializer for enterprise customer catalog courses.
     """
-    count = serializers.IntegerField(read_only=True, help_text=_('Total count of catalog courses.'))
-    next = serializers.CharField(read_only=True, help_text=_("URL to fetch next page of courses."))
-    previous = serializers.CharField(read_only=True, help_text=_("URL to fetch previous page of courses."))
-    results = serializers.ListField(read_only=True, help_text=_("list of courses."))
 
     def update_enterprise_courses(self, enterprise_customer, catalog_id):
         """
@@ -383,15 +396,3 @@ class EnterpriseCatalogCoursesReadOnlySerializer(serializers.Serializer):
             updated_course_runs.append(course_run)
 
         return updated_course_runs
-
-    def create(self, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass
-
-    def update(self, instance, validated_data):
-        """
-        Do not perform any operations for state changing requests.
-        """
-        pass

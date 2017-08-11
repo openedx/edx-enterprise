@@ -8,6 +8,7 @@ Test utilities.
 from __future__ import absolute_import, unicode_literals
 
 import json
+import uuid
 
 import mock
 import six
@@ -17,6 +18,7 @@ from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-
 
 from test_utils import factories
 
+FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
 TEST_USERNAME = 'api_worker'
 TEST_PASSWORD = 'QWERTY'
 TEST_COURSE = 'course-v1:edX+DemoX+DemoCourse'

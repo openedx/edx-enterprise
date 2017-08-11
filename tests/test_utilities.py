@@ -124,6 +124,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "branding_configuration",
                 "enterprise_customer_identity_provider",
                 "enterprise_customer_entitlements",
+                "enterprise_customer_catalog",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
                 "modified",

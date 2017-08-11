@@ -14,6 +14,14 @@ Change Log
 Unreleased
 ----------
 
+[0.40.0] - 2017-08-08
+---------------------
+
+* Add Enterprise API Gateway for new Enterprise Catalogs and Programs endpoints.
+* Add /enterprise/api/v1/enterprise-catalogs/ endpoint.
+* Add /enterprise/api/v1/enterprise-catalogs/{uuid}/ endpoint.
+* Add /enterprise/api/v1/programs/{uuid}/ endpoint.
+
 [0.39.9] - 2017-08-08
 ---------------------
 

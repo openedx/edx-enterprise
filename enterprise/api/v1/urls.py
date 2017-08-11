@@ -7,16 +7,15 @@ from rest_framework.routers import DefaultRouter
 
 from enterprise.api.v1 import views
 
-# Pylint considers module level variable as "Constant" and expects them to be upper-cased
-# that is why we have disabled 'invalid-name' check for variable definition below.
 router = DefaultRouter()  # pylint: disable=invalid-name
 router.register("site", views.SiteViewSet, 'site')
 router.register("auth-user", views.UserViewSet, 'auth-user')
-router.register(
-    "enterprise-course-enrollment",
-    views.EnterpriseCourseEnrollmentViewSet,
-    'enterprise-course-enrollment'
-)
+router.register("enterprise-customer-catalog", views.EnterpriseCustomerCatalogViewSet, 'enterprise-customer-catalog')
+router.register("enterprise-catalogs", views.EnterpriseCustomerCatalogApiViewSet, 'enterprise-catalogs')
+# Since Programs is under the umbrella of the course discovery service's common search endpoint,
+# we can delegate our Programs endpoint to the view set that uses that search endpoint.
+router.register("programs", views.EnterpriseCustomerCatalogApiViewSet, 'programs')
+router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')
 router.register("user-data-sharing-consent", views.UserDataSharingConsentAuditViewSet, 'user-data-sharing-consent')
@@ -30,4 +29,4 @@ router.register(
     views.EnterpriseCustomerEntitlementViewSet,
     'enterprise-customer-entitlement',
 )
-router.register("catalogs", views.EnterpriseCatalogViewSet, 'catalogs')
+router.register("catalogs", views.EnterpriseCourseCatalogViewSet, 'catalogs')

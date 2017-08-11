@@ -908,6 +908,57 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
 
 @python_2_unicode_compatible
+class EnterpriseCustomerCatalog(TimeStampedModel):
+    """
+    Store catalog information from course discovery specifically for Enterprises.
+
+    We use this model to consolidate course catalog information, which includes
+    information about catalogs, courses, programs, and possibly more in the
+    future, as the course discovery service evolves.
+    """
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False
+    )
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        related_name='enterprise_customer_catalog',
+        on_delete=models.deletion.CASCADE
+    )
+    query = models.TextField(
+        help_text=_('Query to the course discovery service. Leave empty for all results.')
+    )
+    history = HistoricalRecords()
+
+    class Meta(object):
+        verbose_name = _("Enterprise Customer Catalog")
+        verbose_name_plural = _("Enterprise Customer Catalogs")
+        app_label = 'enterprise'
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return (
+            "<EnterpriseCustomerCatalog with uuid '{uuid}' "
+            "for EnterpriseCustomer {enterprise_customer_name}>".format(
+                uuid=self.uuid,
+                enterprise_customer_name=self.enterprise_customer.name
+            )
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
 class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     """
     Store optional templates to use when emailing users about course enrollment events.

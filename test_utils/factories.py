@@ -15,6 +15,7 @@ from django.utils import timezone
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
+    EnterpriseCustomerCatalog,
     EnterpriseCustomerEntitlement,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
@@ -208,3 +209,22 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
     consent_granted = True
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
+
+
+class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerCatalog factory.
+
+    Creates an instance of EnterpriseCustomerCatalog with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for EnterpriseCustomerCatalog.
+        """
+
+        model = EnterpriseCustomerCatalog
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))  # pylint: disable=no-member
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    query = ''
