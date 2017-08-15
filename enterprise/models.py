@@ -4,11 +4,13 @@ Database models for enterprise.
 """
 from __future__ import absolute_import, unicode_literals
 
+import collections
 import os
 from logging import getLogger
 from uuid import uuid4
 
 import six
+from jsonfield.fields import JSONField
 from simple_history.models import HistoricalRecords
 
 from django.apps import apps
@@ -203,7 +205,7 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
 
-    def get_course_enrollment_url(self, course_run_key):
+    def get_course_run_enrollment_url(self, course_run_key):
         """
         Return enterprise landing page url for the given course.
 
@@ -223,6 +225,30 @@ class EnterpriseCustomer(TimeStampedModel):
                 'enterprise_course_enrollment_page',
                 kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
             )
+        )
+
+    def get_program_enrollment_url(self, program_uuid):
+        """
+        Return enterprise landing page url for the given program.
+
+        Arguments:
+            program_uuid (str): The program UUID.
+        Returns:
+            (str): Enterprise program landing page url.
+        """
+        if configuration_helpers is None:
+            raise NotConnectedToOpenEdX(
+                _("This package must be installed in an EdX environment to look up configuration.")
+            )
+
+        return urljoin(
+            configuration_helpers.get_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            '/enterprise/{}/program/{}/enroll'.format(self.uuid, program_uuid)
+            # TODO: Replace above with the reverse statement below, once the program enrollment landing page is created.
+            # reverse(
+            #     'enterprise_program_enrollment_page',
+            #     kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}
+            # )
         )
 
     def catalog_contains_course(self, course_id):
@@ -948,6 +974,12 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         default=uuid4,
         editable=False
     )
+    title = models.CharField(
+        default='All Content',
+        max_length=20,
+        blank=False,
+        null=False
+    )
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
         blank=False,
@@ -955,8 +987,16 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         related_name='enterprise_customer_catalog',
         on_delete=models.deletion.CASCADE
     )
-    query = models.TextField(
-        help_text=_('Query to the course discovery service. Leave empty for all results.')
+    content_filter = JSONField(
+        default={},
+        blank=True,
+        null=True,
+        load_kwargs={'object_pairs_hook': collections.OrderedDict},
+        help_text=_(
+            "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
+            "specified as a Json object. An empty Json object means that all available content items will be "
+            "included in the catalog."
+        )
     )
     history = HistoricalRecords()
 
@@ -982,6 +1022,65 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    def get_paginated_content(self, query_parameters):
+        """
+        Return paginated discovery service search results.
+
+        Arguments:
+            query_parameters (dict): Additional query parameters to add to the search API call, e.g. page.
+        Returns:
+            dict: The paginated discovery service search results.
+        """
+        query = self.content_filter.copy()
+        query.update(query_parameters)
+        return CourseCatalogApiServiceClient().get_paginated_search_results(query)
+
+    def contains_content(self, unique_field_name, unique_field_value):
+        """
+        Return true if this catalog contains the content item.
+
+        Arguments:
+            unique_field_name (str): The name of the field on the catalog content item
+                                     that stores the item's unique identifier, e.g. "key", "uuid".
+            unique_field_value (str): The unique identifier of the catalog content item.
+
+        Returns:
+            bool: True if this catalog contains the given content item, else false.
+        """
+        updated_content_filter = self.content_filter.copy()
+        updated_content_filter[unique_field_name] = unique_field_value
+        if CourseCatalogApiServiceClient().get_paginated_search_results(updated_content_filter):
+            return True
+        return False
+
+    def get_course_run(self, course_run_id):
+        """
+        Get all of the metadata for the given course run.
+
+        Arguments:
+            course_run_id (str): The course run key which identifies the course run.
+
+        Return:
+            dict: The course run metadata.
+        """
+        if not self.contains_content('key', course_run_id):
+            return None
+        return CourseCatalogApiServiceClient().get_course_run(course_run_id)
+
+    def get_program(self, program_uuid):
+        """
+        Get all of the metadata for the given program.
+
+        Arguments:
+            program_uuid (str): The program UUID which identifies the program.
+
+        Return:
+            dict: The program metadata.
+        """
+        if not self.contains_content('uuid', program_uuid):
+            return None
+        return CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
 
 
 @python_2_unicode_compatible

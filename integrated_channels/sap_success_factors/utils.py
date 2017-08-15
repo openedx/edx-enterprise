@@ -288,7 +288,7 @@ def get_launch_url(enterprise_customer, course_id, enrollment_url=None):
         enrollment_url (str): Enterprise landing page url for the given course from enterprise courses API
     """
     if switch_is_active('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE'):
-        return enrollment_url or enterprise_customer.get_course_enrollment_url(course_id)
+        return enrollment_url or enterprise_customer.get_course_run_enrollment_url(course_id)
 
     return get_course_track_selection_url(enterprise_customer, course_id)
 

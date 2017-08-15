@@ -10,11 +10,7 @@ from enterprise.api.v1 import views
 router = DefaultRouter()  # pylint: disable=invalid-name
 router.register("site", views.SiteViewSet, 'site')
 router.register("auth-user", views.UserViewSet, 'auth-user')
-router.register("enterprise-customer-catalog", views.EnterpriseCustomerCatalogViewSet, 'enterprise-customer-catalog')
-router.register("enterprise-catalogs", views.EnterpriseCustomerCatalogApiViewSet, 'enterprise-catalogs')
-# Since Programs is under the umbrella of the course discovery service's common search endpoint,
-# we can delegate our Programs endpoint to the view set that uses that search endpoint.
-router.register("programs", views.EnterpriseCustomerCatalogApiViewSet, 'programs')
+router.register("enterprise-catalogs", views.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs')
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')

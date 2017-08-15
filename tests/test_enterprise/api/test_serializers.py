@@ -257,12 +257,17 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             provider_id=provider_id,
         )
         course_run_url = 'course_modes/choose/course-v1:edX+DemoX+1T2017/'
+        enterprise_context = {
+            'tpa_hint': provider_id,
+            'enterprise_id': enterprise_customer_uuid,
+            'catalog_id': catalog_id
+        }
 
         with mock.patch('enterprise.utils.reverse', return_value=course_run_url):
             updated_course_runs = self.serializer.update_course_runs(
                 course_runs=[course_run],
-                catalog_id=catalog_id,
                 enterprise_customer=ec_identity_provider.enterprise_customer,
+                enterprise_context=enterprise_context,
             )
 
             assert len(updated_course_runs) == 1
@@ -290,10 +295,11 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         """
         mock_config_helpers.get_value.return_value = ''
         global_context = {
-            'tpa_hint': self.provider_id
+            'tpa_hint': self.provider_id,
+            'catalog_id': 1,
         }
         course = self.data['results'][0]
-        updated_course = self.serializer.update_course(course, 1, self.ecu.enterprise_customer, global_context)
+        updated_course = self.serializer.update_course(course, self.ecu.enterprise_customer, global_context)
 
         # Make sure global context passed in to update_course is added to the course.
         assert 'tpa_hint' in updated_course
@@ -306,7 +312,7 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         # Make sure missing `key` in course run raises an exception
         course['course_runs'] = [{}]
         with raises(KeyError):
-            self.serializer.update_course(course, 1, self.ecu.enterprise_customer, global_context)
+            self.serializer.update_course(course, self.ecu.enterprise_customer, global_context)
 
     @ddt.data(
         (
@@ -365,7 +371,7 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         )
 
         with mock.patch('enterprise.utils.reverse', return_value='course_modes/choose/'):
-            updated_course = self.serializer.update_course(course, 1, ecu.enterprise_customer, global_context)
+            updated_course = self.serializer.update_course(course, ecu.enterprise_customer, global_context)
 
             # Make sure global context passed in to update_course is added to the course.
             for key, value in six.iteritems(global_context):
@@ -384,7 +390,7 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         serializer data successfully without errors.
         """
         mock_config_helpers.get_value.return_value = ''
-        self.serializer.update_enterprise_courses(self.ecu.enterprise_customer, 1)
+        self.serializer.update_enterprise_courses(self.ecu.enterprise_customer, catalog_id=1)
 
         # Make sure global context passed in to update_course is added to the course.
         assert all('tpa_hint' in course for course in self.serializer.data['results'])

@@ -495,12 +495,13 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
     list_display = (
         'uuid',
+        'title',
         'enterprise_customer',
-        'query',
     )
 
     search_fields = (
         'uuid',
+        'title',
         'enterprise_customer__name',
         'enterprise_customer__uuid',
     )

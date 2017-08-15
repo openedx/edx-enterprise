@@ -19,3 +19,4 @@ requests==2.9.1                         # Required for SAPSuccessFactorsAPIClien
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
 edx-opaque-keys==0.4.0                  # Helpers for parsing course run IDs
 testfixtures                            # Mock objects for unit tests and doc tests
+jsonfield==2.0.2                        # Provides a Django model field which serializes/deserializes JSON objects

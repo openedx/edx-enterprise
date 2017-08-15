@@ -34,6 +34,7 @@ freezegun==0.3.9
 funcsigs==1.0.2           # via mock
 idna==2.6                 # via email-validator
 ipaddress==1.0.18         # via faker
+jsonfield==2.0.2
 kombu==3.0.37             # via celery
 mock==2.0.0
 pbr==3.1.1                # via mock, stevedore
