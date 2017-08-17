@@ -6,6 +6,7 @@ Tests for the Consent application's` API permissions.
 from __future__ import absolute_import, unicode_literals
 
 import ddt
+import mock
 from consent.api.v1.views import DataSharingConsentView as DSCView
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -37,6 +38,10 @@ class TestConsentAPIPermissions(APITest):
         self.create_user(username=TEST_USERNAME, password=TEST_PASSWORD, id=TEST_USER_ID)
         self.client = APIClient()
         self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
+        discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiClient')
+        self.discovery_client = discovery_client_class.start().return_value
+        self.discovery_client.course_in_catalog.return_value = True
+        self.addCleanup(discovery_client_class.stop)
         factories.EnterpriseCourseEnrollmentFactory.create(
             course_id=TEST_COURSE,
             enterprise_customer_user__user_id=TEST_USER_ID,

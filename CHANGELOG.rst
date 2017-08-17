@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.2] - 2017-08-16
+---------------------
+
+* Increase capability and compatibility of Consent API.
+
 [0.40.1] - 2017-08-11
 ---------------------
 

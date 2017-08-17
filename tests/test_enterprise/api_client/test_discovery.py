@@ -397,3 +397,22 @@ class TestCourseCatalogApi(unittest.TestCase):
 
         actual_result = self.api.get_common_course_modes(course_runs)
         assert actual_result == expected_result
+
+    @mock.patch('enterprise.api_client.discovery.course_discovery_api_client')
+    @ddt.data(
+        (23, 'course-id', {'courses': {}}, False),
+        (45, 'fancy-course', {'courses': {'fancy-course': True}}, True),
+        (93, 'my-course', {'courses': {'my-course': False}}, False)
+    )
+    @ddt.unpack
+    def test_is_course_in_catalog(self, catalog_id, course_id, api_resp, expected, mock_discovery_client_factory):
+        """
+        Test the API client that checks to determine if a given course ID is present
+        in the given catalog.
+        """
+        discovery_client = mock_discovery_client_factory.return_value
+        discovery_client.catalogs.return_value.contains.get.return_value = api_resp
+        self.api = CourseCatalogApiClient(self.user_mock)
+        assert self.api.is_course_in_catalog(catalog_id, course_id) == expected
+        discovery_client.catalogs.assert_called_once_with(catalog_id)
+        discovery_client.catalogs.return_value.contains.get.assert_called_once_with(course_run_id=course_id)

@@ -50,10 +50,11 @@ def consent_provided(user_id, course_id, enterprise_customer_uuid):
     return provided
 
 
-def consent_required(user_id, course_id, enterprise_customer_uuid):
+def consent_required(request_user, user_id, course_id, enterprise_customer_uuid):
     """
     Get whether consent is required by the ``EnterpriseCustomer``.
 
+    :param request_user: The user making the request related to consent.
     :param user_id: The user that grants consent.
     :param course_id: The course for which consent is granted.
     :param enterprise_customer_uuid: The consent requester.
@@ -63,7 +64,11 @@ def consent_required(user_id, course_id, enterprise_customer_uuid):
         return False
 
     enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
-    return enterprise_customer is not None and enterprise_customer.enforces_data_sharing_consent('at_enrollment')
+    return bool(
+        (enterprise_customer is not None) and
+        (enterprise_customer.enforces_data_sharing_consent('at_enrollment')) and
+        (enterprise_customer.catalog_contains_course_run(request_user, course_id))
+    )
 
 
 def get_user_id(username):

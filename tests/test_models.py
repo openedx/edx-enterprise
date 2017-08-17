@@ -274,6 +274,36 @@ class TestEnterpriseCustomer(unittest.TestCase):
         with raises(NotConnectedToOpenEdX, message=error):
             customer.get_course_enrollment_url('course_id')
 
+    @ddt.data(
+        ('course_exists', True),
+        ('fake_course', False),
+        ('course_also_exists', True)
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseCatalogApiClient')
+    def test_catalog_contains_course_run(self, course_id, expected_result, mock_catalog_api_class):
+        """
+        Test catalog_contains_course_run method on the EnterpriseCustomer.
+        """
+        def is_course_in_catalog(_catalog_id, course_id):
+            """
+            Return true if the course is one of a couple options; otherwise false.
+            """
+            return course_id in {'course_exists', 'course_also_exists'}
+
+        mock_catalog_api = mock_catalog_api_class.return_value
+        mock_catalog_api.is_course_in_catalog.side_effect = is_course_in_catalog
+
+        customer = EnterpriseCustomerFactory()
+        user = UserFactory()
+        assert customer.catalog_contains_course_run(user, course_id) == expected_result
+
+        mock_catalog_api_class.assert_called_once_with(user)
+        mock_catalog_api.is_course_in_catalog.assert_called_once_with(customer.catalog, course_id)
+
+        catalogless_customer = EnterpriseCustomerFactory(catalog=None)
+        assert catalogless_customer.catalog_contains_course_run(user, course_id) is False
+
 
 @mark.django_db
 @ddt.ddt

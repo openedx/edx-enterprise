@@ -18,7 +18,7 @@ from consent.helpers import (
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
 from enterprise.api.throttles import ServiceUserThrottle
@@ -91,6 +91,8 @@ class DataSharingConsentView(APIView):
         "enterprise customer uuid '{enterprise_customer_uuid}'."
     )
 
+    QUERY_PARAM_METHODS = {'GET', 'DELETE'}
+
     def get_required_query_params(self, request):
         """
         Gets ``username``, ``course_id``, and ``enterprise_customer_uuid``,
@@ -100,14 +102,32 @@ class DataSharingConsentView(APIView):
         :return: The ``username``, ``course_id``, and ``enterprise_customer_uuid`` from the request.
 
         """
-        if request.method == 'GET':
-            username = request.query_params.get(self.REQUIRED_PARAM_USERNAME, '')
-            course_id = request.query_params.get(self.REQUIRED_PARAM_COURSE_ID, '')
-            enterprise_customer_uuid = request.query_params.get(self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
+        if request.method in self.QUERY_PARAM_METHODS:
+            username = request.query_params.get(
+                self.REQUIRED_PARAM_USERNAME,
+                request.data.get(self.REQUIRED_PARAM_USERNAME, '')
+            )
+            course_id = request.query_params.get(
+                self.REQUIRED_PARAM_COURSE_ID,
+                request.data.get(self.REQUIRED_PARAM_COURSE_ID, '')
+            )
+            enterprise_customer_uuid = request.query_params.get(
+                self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER,
+                request.data.get(self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
+            )
         else:
-            username = request.data.get(self.REQUIRED_PARAM_USERNAME, '')
-            course_id = request.data.get(self.REQUIRED_PARAM_COURSE_ID, '')
-            enterprise_customer_uuid = request.data.get(self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
+            username = request.data.get(
+                self.REQUIRED_PARAM_USERNAME,
+                request.query_params.get(self.REQUIRED_PARAM_USERNAME, '')
+            )
+            course_id = request.data.get(
+                self.REQUIRED_PARAM_COURSE_ID,
+                request.query_params.get(self.REQUIRED_PARAM_COURSE_ID, '')
+            )
+            enterprise_customer_uuid = request.data.get(
+                self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER,
+                request.query_params.get(self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
+            )
         if not (username and course_id and enterprise_customer_uuid):
             raise ConsentAPIRequestError(
                 self.MISSING_REQUIRED_PARAMS_MSG.format(
@@ -149,6 +169,7 @@ class DataSharingConsentView(APIView):
 
         """
         try:
+            # Ensure that we got the required explicit parameters in the API
             username, course_id, enterprise_customer_uuid = self.get_required_query_params(request)
         except ConsentAPIRequestError as invalid_request:
             return Response({'error': str(invalid_request)}, status=HTTP_400_BAD_REQUEST)
@@ -156,7 +177,8 @@ class DataSharingConsentView(APIView):
         user_id = get_user_id(username)
         exists = consent_exists(user_id, course_id, enterprise_customer_uuid)
         provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
-        required = consent_required(user_id, course_id, enterprise_customer_uuid)
+        required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+
         return Response({
             self.REQUIRED_PARAM_USERNAME: username,
             self.REQUIRED_PARAM_COURSE_ID: course_id,
@@ -164,7 +186,7 @@ class DataSharingConsentView(APIView):
             self.CONSENT_EXISTS: exists,
             self.CONSENT_GRANTED: provided,
             self.CONSENT_REQUIRED: required
-        }, status=(HTTP_200_OK if exists else HTTP_404_NOT_FOUND))
+        }, status=HTTP_200_OK)
 
     def post(self, request):
         """
@@ -187,19 +209,34 @@ class DataSharingConsentView(APIView):
 
         """
         try:
+            # Ensure that we got the required explicit parameters in the API
             username, course_id, enterprise_customer_uuid = self.get_required_query_params(request)
         except ConsentAPIRequestError as invalid_request:
             return Response({'error': str(invalid_request)}, status=HTTP_400_BAD_REQUEST)
 
+        # Determine whether consent is needed and if it's been provided already.
         user_id = get_user_id(username)
-        self.set_consent_state(True, user_id, course_id, enterprise_customer_uuid)
+        exists = consent_exists(user_id, course_id, enterprise_customer_uuid)
         provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
-        required = consent_required(user_id, course_id, enterprise_customer_uuid)
+
+        required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+
+        if required:
+            # If and only if the given EnterpriseCustomer requires data sharing consent
+            # for the given course, then, since we've received a POST request, set the
+            # consent state for the EC/user/course combo.
+            self.set_consent_state(True, user_id, course_id, enterprise_customer_uuid)
+            # Get the current values to be returned in the API, since we likely
+            # mutated them as a result of the above method call.
+            provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
+            required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+            exists = True
+
         return Response({
             self.REQUIRED_PARAM_USERNAME: username,
             self.REQUIRED_PARAM_COURSE_ID: course_id,
             self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: enterprise_customer_uuid,
-            self.CONSENT_EXISTS: True,
+            self.CONSENT_EXISTS: exists,
             self.CONSENT_GRANTED: provided,
             self.CONSENT_REQUIRED: required
         })
@@ -232,7 +269,9 @@ class DataSharingConsentView(APIView):
         user_id = get_user_id(username)
         self.set_consent_state(False, user_id, course_id, enterprise_customer_uuid)
         provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
-        required = consent_required(user_id, course_id, enterprise_customer_uuid)
+
+        required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+
         return Response({
             self.REQUIRED_PARAM_USERNAME: username,
             self.REQUIRED_PARAM_COURSE_ID: course_id,
