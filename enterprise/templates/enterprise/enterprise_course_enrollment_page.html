@@ -36,15 +36,15 @@
         <h2 class="course-confirmation-title">{{ confirmation_text }}</h2>
         <div class="media">
           <div class="thumbnail">
-            <img class="course-image" src="{{ course_image_uri }}" alt="{{ course_name }}"/>
+            <img class="course-image" src="{{ course_image_uri }}" alt="{{ course_title }}"/>
           </div>
           <div class="media-content">
-            <div class="course-title">{{ course_name }}</div>
+            <div class="course-title">{{ course_title }}</div>
           </div>
         </div>
         <div class="course-detail">
           <div class="course-org">
-            {{ course_organization }}
+            {{ organization_name }}
           </div>
           <div class="course-info">
             <i class="fa fa-clock-o" aria-hidden="true"></i>
@@ -93,10 +93,10 @@
         <header class="wrapper modal-header">
           <div class="modal-header-wrapper">
             <div class="image">
-              <img src="{{ course_image_uri }}" alt="{{ course_name }}"/>
+              <img src="{{ course_image_uri }}" alt="{{ course_title }}"/>
             </div>
             <div class="details">
-              <h1 id="modal-header-text">{{ course_name }}</h1>
+              <h1 id="modal-header-text">{{ course_title }}</h1>
               <p class="short-description">{{ course_short_description }}</p>
               {% if organization_logo and organization_name %}
                 <div class="organization">
@@ -162,7 +162,37 @@
             </ol>
           </div>
           <div class="overview">
-            {{ course_overview|safe }}
+            {% if course_full_description %}
+              <h2>{{ course_full_description_text }}</h2>
+              <div>{% autoescape off %}{{ course_full_description }}{% endautoescape %}</div>
+            {% endif %}
+            {% if expected_learning_items %}
+              <h2>{{ expected_learning_items_text }}</h2>
+              <ul>
+              {% for item in expected_learning_items %}
+                <li>{{ item }}</li>
+              {% endfor %}
+              </ul>
+            {% endif %}
+            {% if staff %}
+              <h2>{{ staff_text }}</h2>
+              <div class="staff-container">
+                {% for person in staff %}
+                  <div class="row">
+                    <div class="col-3">
+                      <img src="{{ person.profile_image_url }}" alt="{{ person.given_name }} {{ person.family_name }}" />
+                    </div>
+                    <div class="col-7">
+                      <h2>{{ person.given_name }} {{ person.family_name }}</h2>
+                      {% if person.position %}
+                        <p>{{ person.position.title }} at {{ person.position.organization_name }}</p>
+                      {% endif %}
+                      <p>{{ person.bio }}</p>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
         </div>
 

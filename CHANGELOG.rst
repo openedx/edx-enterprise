@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.3] - 2017-08-21
+---------------------
+
+* Change landing page course modal to use discovery api for populating course details.
+
 [0.40.2] - 2017-08-16
 ---------------------
 

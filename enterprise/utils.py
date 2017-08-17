@@ -8,6 +8,8 @@ import logging
 import re
 from uuid import UUID
 
+from opaque_keys.edx.keys import CourseKey
+
 from django.apps import apps
 from django.conf import settings
 from django.core import mail
@@ -533,3 +535,31 @@ def get_enterprise_customer_or_404(enterprise_uuid):
         LOGGER.error('Unable to find enterprise customer for UUID: %s', enterprise_uuid)
         raise Http404
     return enterprise_customer
+
+
+def get_course_id_from_course_run_id(course_run_id):
+    """
+    Given a course run id, return the corresponding course id.
+
+    Args:
+        course_run_id (str): The course run ID.
+
+    Returns:
+        (str): The course ID.
+    """
+    course_run_key = CourseKey.from_string(course_run_id)
+    return '{org}+{course}'.format(org=course_run_key.org, course=course_run_key.course)
+
+
+def clean_html_for_template_rendering(text):
+    """
+    Given html text that will be rendered as a variable in a template, strip out characters that impact rendering.
+
+    Arguments:
+        text (str): The text to clean.
+
+    Returns:
+        (str): The cleaned text.
+    """
+    # Sometimes there are random new lines between tags that don't render nicely.
+    return text.replace('>\\n<', '><')

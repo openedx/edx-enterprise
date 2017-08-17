@@ -7,9 +7,10 @@ from __future__ import absolute_import, unicode_literals
 from edx_rest_api_client.client import EdxRestApiClient
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX
+from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_course_id_from_course_run_id
 
 try:
     from openedx.core.lib.token_utils import JwtBuilder
@@ -59,7 +60,7 @@ class CourseCatalogApiClient(object):
 
     def __init__(self, user):
         """
-        Create an Course Catalog API client, authenticated with the API token from Django settings.
+        Create an Course Catalog API client setup with authentication for the specified user.
 
         This method retrieves an authenticated API client that can be used
         to access the course catalog API. It raises an exception to be caught at
@@ -170,12 +171,37 @@ class CourseCatalogApiClient(object):
             default=[]
         )
 
-    def get_course_details(self, course_key):
+    def get_course_and_course_run(self, course_run_id):
         """
-        Return the details of a single course by key - not a course run key.
+        Return the course and course run metadata for the given course run ID.
+
+        Arguments:
+            course_run_id (str): The course run ID.
+
+        Returns:
+            tuple: The course metadata and the course run metadata.
+        """
+        # Parse the course ID from the course run ID.
+        course_id = get_course_id_from_course_run_id(course_run_id)
+        # Retrieve the course metadata from the catalog service.
+        course = self.get_course_details(course_id)
+
+        course_run = None
+        if course:
+            # Find the specified course run.
+            course_run = None
+            course_runs = [course_run for course_run in course['course_runs'] if course_run['key'] == course_run_id]
+            if course_runs:
+                course_run = course_runs[0]
+
+        return course, course_run
+
+    def get_course_details(self, course_id):
+        """
+        Return the details of a single course by id - not a course run id.
 
         Args:
-            course_key (str): The unique key for the course in question.
+            course_id (str): The unique id for the course in question.
 
         Returns:
             dict: Details of the course in question.
@@ -183,7 +209,7 @@ class CourseCatalogApiClient(object):
         """
         return self._load_data(
             self.COURSES_ENDPOINT,
-            resource_id=course_key,
+            resource_id=course_id,
             many=False
         )
 
@@ -328,3 +354,30 @@ class CourseCatalogApiClient(object):
             **kwargs
         )
         return result or default_val
+
+
+class CourseCatalogApiServiceClient(CourseCatalogApiClient):
+    """
+    Catalog API client which uses the configured Catalog service user.
+    """
+
+    def __init__(self):
+        """
+        Create an Course Catalog API client setup with authentication for the
+        configured catalog service user.
+        """
+        if CatalogIntegration is None:
+            raise NotConnectedToOpenEdX(
+                _("To get a CatalogIntegration object, this package must be "
+                  "installed in an Open edX environment.")
+            )
+
+        catalog_integration = CatalogIntegration.current()
+        if catalog_integration.enabled:
+            try:
+                user = catalog_integration.get_service_user()
+                super(CourseCatalogApiServiceClient, self).__init__(user)
+            except ObjectDoesNotExist:
+                raise ImproperlyConfigured(_("The configured CatalogIntegration service user does not exist."))
+        else:
+            raise ImproperlyConfigured(_("There is no active CatalogIntegration."))

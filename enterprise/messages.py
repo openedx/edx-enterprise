@@ -13,23 +13,23 @@ except ImportError:
     configuration_helpers = None
 
 
-def add_consent_declined_message(request, enterprise_customer, course_details):
+def add_consent_declined_message(request, enterprise_customer, course_run):
     """
     Add a message to the Django messages store indicating that the user has declined data sharing consent.
 
     Arguments:
         request (HttpRequest): The current request.
         enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer associated with this request.
-        course_details (dict): A dictionary containing information about the course the user had declined consent for.
+        course_run (dict): A dictionary containing information about the course run the user had declined consent for.
     """
     messages.warning(
         request,
         _(
-            '{strong_start}We could not enroll you in {em_start}{course_name}{em_end}.{strong_end} '
+            '{strong_start}We could not enroll you in {em_start}{course_title}{em_end}.{strong_end} '
             '{span_start}If you have questions or concerns about sharing your data, please contact your learning '
             'manager at {enterprise_customer_name}, or contact {link_start}{platform_name} support{link_end}.{span_end}'
         ).format(
-            course_name=course_details.get('name'),
+            course_title=course_run['title'],
             em_start='<em>',
             em_end='</em>',
             enterprise_customer_name=enterprise_customer.name,

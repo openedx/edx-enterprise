@@ -12,8 +12,9 @@ import mock
 from pytest import raises
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
-from enterprise.api_client.discovery import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
 from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
 
 
@@ -193,7 +194,7 @@ class TestCourseCatalogApi(unittest.TestCase):
         Verify get_course_details of CourseCatalogApiClient works as expected for empty responses.
         """
         self.get_data_mock.return_value = response
-        assert self.api.get_course_details(course_key='edX+DemoX') == {}
+        assert self.api.get_course_details(course_id='edX+DemoX') == {}
 
     def test_get_catalog(self):
         """
@@ -416,3 +417,87 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert self.api.is_course_in_catalog(catalog_id, course_id) == expected
         discovery_client.catalogs.assert_called_once_with(catalog_id)
         discovery_client.catalogs.return_value.contains.get.assert_called_once_with(course_run_id=course_id)
+
+    @ddt.data(
+        (
+            "course-v1:JediAcademy+AppliedTelekinesis+T1",
+            {"course_runs": [{"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}]},
+            "JediAcademy+AppliedTelekinesis",
+            {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
+        ),
+        (
+            "course-v1:JediAcademy+AppliedTelekinesis+T1",
+            {},
+            "JediAcademy+AppliedTelekinesis",
+            None
+        ),
+        (
+            "course-v1:JediAcademy+AppliedTelekinesis+T1",
+            {"course_runs": [
+                {"key": "course-v1:JediAcademy+AppliedTelekinesis+T222"},
+                {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
+            ]},
+            "JediAcademy+AppliedTelekinesis",
+            {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
+        ),
+        (
+            "course-v1:JediAcademy+AppliedTelekinesis+T1",
+            {"course_runs": []},
+            "JediAcademy+AppliedTelekinesis",
+            None
+        )
+    )
+    @ddt.unpack
+    def test_get_course_and_course_run(
+            self,
+            course_run_id,
+            response_dict,
+            expected_resource_id,
+            expected_course_run
+    ):
+        """
+        Verify get_course_and_course_run of CourseCatalogApiClient works as expected.
+        """
+        self.get_data_mock.return_value = response_dict
+        expected_result = response_dict, expected_course_run
+
+        actual_result = self.api.get_course_and_course_run(course_run_id)
+
+        assert self.get_data_mock.call_count == 1
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == CourseCatalogApiClient.COURSES_ENDPOINT
+        assert resource_id == expected_resource_id
+        assert actual_result == expected_result
+
+
+class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
+    """
+    Test initialization of CourseCatalogAPIServiceClient.
+    """
+    def test_raise_error_missing_catalog_integration(self, *args):  # pylint: disable=unused-argument
+        with self.assertRaises(NotConnectedToOpenEdX):
+            CourseCatalogApiServiceClient()
+
+    @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
+    def test_raise_error_catalog_integration_disabled(self, mock_catalog_integration):
+        mock_catalog_integration.current.return_value = mock.Mock(enabled=False)
+        with self.assertRaises(ImproperlyConfigured):
+            CourseCatalogApiServiceClient()
+
+    @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
+    def test_raise_error_object_does_not_exist(self, mock_catalog_integration):
+        mock_integration_config = mock.Mock(enabled=True)
+        mock_integration_config.get_service_user.side_effect = ObjectDoesNotExist
+        mock_catalog_integration.current.return_value = mock_integration_config
+        with self.assertRaises(ImproperlyConfigured):
+            CourseCatalogApiServiceClient()
+
+    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
+    @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
+    @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
+    def test_success(self, mock_catalog_integration, *args):  # pylint: disable=unused-argument
+        mock_integration_config = mock.Mock(enabled=True)
+        mock_integration_config.get_service_user.return_value = mock.Mock(spec=User)
+        mock_catalog_integration.current.return_value = mock_integration_config
+        CourseCatalogApiServiceClient()

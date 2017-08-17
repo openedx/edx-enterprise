@@ -41,6 +41,7 @@ edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
 edx-i18n-tools==0.3.9
 edx-lint==0.5.4
+edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.2.0
 enum34==1.1.6             # via astroid
@@ -80,6 +81,7 @@ pylint-celery==0.3        # via edx-lint
 pylint-django==0.7.2      # via edx-lint
 pylint-plugin-utils==0.2.6  # via pylint-celery, pylint-django
 pylint==1.7.1             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
+pymongo==3.5.0            # via edx-opaque-keys
 pyparsing==2.2.0          # via packaging
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
@@ -95,13 +97,13 @@ responses==0.7.0
 restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
-six==1.10.0               # via astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore
+six==1.10.0               # via astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle, sphinx
 sphinx==1.6.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.25.0         # via doc8
+stevedore==1.25.0         # via doc8, edx-opaque-keys
 tox-battery==0.2.0
 tox==2.7.0
 tqdm==4.15.0              # via twine
