@@ -9,11 +9,15 @@
 {% block extrahead %}
   <script type="text/javascript">
     var courseId;
+    var programId;
     var successUrl = {{ redirect_url|default:"null"|escapejs }};
     var failureUrl = {{ failure_url|default:"null"|escapejs }};
     var enrollmentDeferred = {{ enrollment_deferred|yesno:"true,false" }};
     {% if course_specific and course_id %}
       courseId = "{{ course_id }}";
+    {% endif %}
+    {% if program_specific and program_uuid %}
+      programId = "{{ program_uuid }}";
     {% endif %}
   </script>
   <script type="text/javascript" src="{% static  'common/js/vendor/jquery.js' %}"></script>
@@ -68,8 +72,14 @@
                       <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>{{ continue_text }}</button>
                       <button type="button" class="failure-link background-input" id="failure-link">{{ abort_text }}</button>
 
+                      <input type="hidden" name="enterprise_customer_uuid" value="{{ enterprise_customer.uuid }}" />
+
                       {% if course_specific and course_id %}
                         <input type="hidden" name="course_id" value="{{ course_id }}" />
+                      {% endif %}
+
+                      {% if program_specific and program_uuid %}
+                        <input type="hidden" name="program_uuid" value="{{ program_uuid }}" />
                       {% endif %}
 
                       {% if redirect_url %}

@@ -68,11 +68,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username='',
-                    course_id=TEST_COURSE,
-                    enterprise_customer_uuid=TEST_UUID
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("'username'")
             },
             400
         ),
@@ -85,11 +81,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username=TEST_USERNAME,
-                    course_id=TEST_COURSE,
-                    enterprise_customer_uuid=None
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("'enterprise_customer_uuid'")
             },
             400
         ),
@@ -102,11 +94,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username=TEST_USERNAME,
-                    course_id='',
-                    enterprise_customer_uuid=TEST_UUID
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("one of 'course_id' or 'program_uuid'")
             },
             400
         ),
@@ -332,6 +320,286 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.data(
         (
             factories.DataSharingConsentFactory,
+            [
+                {
+                    'username': TEST_USERNAME,
+                    'course_id': 'org1+course',
+                },
+                {
+                    'username': TEST_USERNAME,
+                    'course_id': 'org2+othercourse',
+                },
+            ],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: True,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200,
+            ['org1+course', 'org2+othercourse']
+        ),
+        (
+            None,
+            [],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: '93492267-33eb-4062-bffe-f29917fc0661',
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: '93492267-33eb-4062-bffe-f29917fc0661',
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200,
+            ['org1+course', 'org2+othercourse']
+        ),
+        (
+            factories.DataSharingConsentFactory,
+            [
+                {
+                    'username': TEST_USERNAME,
+                    'course_id': 'org1+course',
+                },
+                {
+                    'username': TEST_USERNAME,
+                    'course_id': 'org2+othercourse',
+                },
+            ],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
+                DSCView.CONSENT_EXISTS: False,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            200,
+            []
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
+    def test_consent_api_get_program(
+            self,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            expected_status_code,
+            program_courses,
+            catalog_client_class,
+    ):
+        """Test the expected behavior of the program consent GET endpoint."""
+        api_catalog_client = catalog_client_class.return_value
+        api_catalog_client.get_program_course_keys.return_value = program_courses
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=TEST_UUID,
+            enforce_data_sharing_consent='at_enrollment'
+        )
+        for item in items:
+            item.update(enterprise_customer=enterprise_customer)
+        if factory:
+            create_items(factory, items)
+        response = self.client.get(self.path, request_body)
+        api_catalog_client.get_program_course_keys.assert_called_once_with(request_body['program_uuid'])
+        self._assert_expectations(response, expected_response_body, expected_status_code)
+
+    @ddt.data(
+        (
+            {
+                'uuid': TEST_UUID,
+                'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment'
+            },
+            None,
+            [],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-program',
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-program',
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: True,
+                DSCView.CONSENT_REQUIRED: False,
+            },
+            [
+                {
+                    'request': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                    },
+                    'response': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: 'edX+DemoX',
+                        DSCView.CONSENT_EXISTS: True,
+                        DSCView.CONSENT_GRANTED: True,
+                        DSCView.CONSENT_REQUIRED: False,
+                    }
+                },
+                {
+                    'request': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: 'edX+DemoX',
+                    },
+                    'response': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: 'edX+DemoX',
+                        DSCView.CONSENT_EXISTS: True,
+                        DSCView.CONSENT_GRANTED: True,
+                        DSCView.CONSENT_REQUIRED: False,
+                    }
+                },
+            ],
+            200,
+            ['edX+DemoX']
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
+    def test_consent_api_post_program_endpoint(
+            self,
+            enterprise_kwargs,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            followup_checks,
+            expected_status_code,
+            program_courses,
+            catalog_client_class,
+    ):
+        """Test the expected behavior of the program consent POST endpoint."""
+        api_catalog_client = catalog_client_class.return_value
+        api_catalog_client.get_program_course_keys.return_value = program_courses
+        enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
+        for item in items:
+            item.update(enterprise_customer=enterprise_customer)
+        if factory:
+            create_items(factory, items)
+        response = self.client.post(self.path, request_body)
+        self._assert_expectations(response, expected_response_body, expected_status_code)
+        for check in followup_checks:
+            response = self.client.get(self.path, check['request'])
+            self._assert_expectations(response, check['response'], 200)
+
+    @ddt.data(
+        (
+            {
+                'uuid': TEST_UUID,
+                'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment'
+            },
+            factories.DataSharingConsentFactory,
+            [{
+                'username': TEST_USERNAME,
+                'course_id': 'edX+DemoX',
+                'granted': True
+            }],
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-program',
+            },
+            {
+                DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-program',
+                DSCView.CONSENT_EXISTS: True,
+                DSCView.CONSENT_GRANTED: False,
+                DSCView.CONSENT_REQUIRED: True,
+            },
+            [
+                {
+                    'request': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
+                    },
+                    'response': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: 'edX+DemoX',
+                        DSCView.CONSENT_EXISTS: True,
+                        DSCView.CONSENT_GRANTED: False,
+                        DSCView.CONSENT_REQUIRED: True,
+                    }
+                },
+                {
+                    'request': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: 'edX+DemoX',
+                    },
+                    'response': {
+                        DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
+                        DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
+                        DSCView.REQUIRED_PARAM_COURSE_ID: 'edX+DemoX',
+                        DSCView.CONSENT_EXISTS: True,
+                        DSCView.CONSENT_GRANTED: False,
+                        DSCView.CONSENT_REQUIRED: True,
+                    }
+                },
+            ],
+            200,
+            ['edX+DemoX']
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
+    def test_consent_api_delete_program_endpoint(
+            self,
+            enterprise_kwargs,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            followup_checks,
+            expected_status_code,
+            program_courses,
+            catalog_client_class,
+    ):
+        """Test the expected behavior of the program consent DELETE endpoint."""
+        api_catalog_client = catalog_client_class.return_value
+        api_catalog_client.get_program_course_keys.return_value = program_courses
+        enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
+        for item in items:
+            item.update(enterprise_customer=enterprise_customer)
+        if factory:
+            create_items(factory, items)
+        response = self.client.delete(self.path, request_body)
+        self._assert_expectations(response, expected_response_body, expected_status_code)
+        for check in followup_checks:
+            response = self.client.get(self.path, check['request'])
+            self._assert_expectations(response, check['response'], 200)
+
+    @ddt.data(
+        (
+            factories.DataSharingConsentFactory,
             [{
                 'username': TEST_USERNAME,
                 'course_id': TEST_COURSE,
@@ -380,11 +648,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username='',
-                    course_id=TEST_COURSE,
-                    enterprise_customer_uuid=TEST_UUID
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("'username'")
             },
             400
         ),
@@ -397,11 +661,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username=TEST_USERNAME,
-                    course_id=TEST_COURSE,
-                    enterprise_customer_uuid=None
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("'enterprise_customer_uuid'")
             },
             400
         ),
@@ -414,11 +674,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username=TEST_USERNAME,
-                    course_id='',
-                    enterprise_customer_uuid=TEST_UUID
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("one of 'course_id' or 'program_uuid'")
             },
             400
         ),
@@ -785,11 +1041,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username='',
-                    course_id=TEST_COURSE,
-                    enterprise_customer_uuid=TEST_UUID
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("'username'")
             },
             400
         ),
@@ -802,11 +1054,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_COURSE_ID: TEST_COURSE,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username=TEST_USERNAME,
-                    course_id=TEST_COURSE,
-                    enterprise_customer_uuid=None
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("'enterprise_customer_uuid'")
             },
             400
         ),
@@ -819,11 +1067,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
                 DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
             },
             {
-                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format(
-                    username=TEST_USERNAME,
-                    course_id='',
-                    enterprise_customer_uuid=TEST_UUID
-                )
+                'error': DSCView.MISSING_REQUIRED_PARAMS_MSG.format("one of 'course_id' or 'program_uuid'")
             },
             400
         ),

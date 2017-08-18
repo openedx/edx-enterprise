@@ -114,7 +114,7 @@ class BaseLearnerExporter(object):
                              enterprise_enrollment.pk, course_id)
                 continue
 
-            consent = DataSharingConsent.objects.get(
+            consent = DataSharingConsent.objects.proxied_get(
                 username=enterprise_enrollment.enterprise_customer_user.username,
                 course_id=enterprise_enrollment.course_id,
                 enterprise_customer=enterprise_enrollment.enterprise_customer_user.enterprise_customer

@@ -11,6 +11,8 @@ from operator import itemgetter
 
 import ddt
 import mock
+from consent.errors import InvalidProxyConsent
+from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from faker import Factory as FakerFactory
 from integrated_channels.integrated_channel.models import (
@@ -281,7 +283,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
-    def test_catalog_contains_course_run(self, course_id, expected_result, mock_catalog_api_class):
+    def test_catalog_contains_course(self, course_id, expected_result, mock_catalog_api_class):
         """
         Test catalog_contains_course_run method on the EnterpriseCustomer.
         """
@@ -295,13 +297,13 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api.is_course_in_catalog.side_effect = is_course_in_catalog
 
         customer = EnterpriseCustomerFactory()
-        assert customer.catalog_contains_course_run(course_id) == expected_result
+        assert customer.catalog_contains_course(course_id) == expected_result
 
         mock_catalog_api_class.assert_called_once()
         mock_catalog_api.is_course_in_catalog.assert_called_once_with(customer.catalog, course_id)
 
         catalogless_customer = EnterpriseCustomerFactory(catalog=None)
-        assert catalogless_customer.catalog_contains_course_run(course_id) is False
+        assert catalogless_customer.catalog_contains_course(course_id) is False
 
 
 @mark.django_db
@@ -965,22 +967,22 @@ class TestDataSharingConsentManager(unittest.TestCase):
 
     def test_get_returns_proxy_when_consent_doesnt_exist(self):
         """
-        Test that ``get`` on custom manager returns a ``ProxyDataSharingConsent`` object when
+        Test that ``proxied_get`` on custom manager returns a ``ProxyDataSharingConsent`` object when
         the searched-for ``DataSharingConsent`` object doesn't exist.
         """
-        dsc = DataSharingConsent.objects.get(username='lowly_bob')
-        proxy_dsc = DataSharingConsent.objects.get(username='optimistic_bob')
+        dsc = DataSharingConsent.objects.proxied_get(username='lowly_bob')
+        proxy_dsc = DataSharingConsent.objects.proxied_get(username='optimistic_bob')
         assert isinstance(dsc, DataSharingConsent)
         assert isinstance(proxy_dsc, ProxyDataSharingConsent)
         assert dsc != proxy_dsc
 
     def test_get_returns_consent_when_it_exists(self):
         """
-        Test that ``get`` on custom manager returns a ``DataSharingConsent`` object when the searched-for
+        Test that ``proxied_get`` on custom manager returns a ``DataSharingConsent`` object when the searched-for
         ``DataSharingConsent`` object exists.
         """
-        dsc = DataSharingConsent.objects.get(username='lowly_bob')
-        same_dsc = DataSharingConsent.objects.get(username='lowly_bob')
+        dsc = DataSharingConsent.objects.proxied_get(username='lowly_bob')
+        same_dsc = DataSharingConsent.objects.proxied_get(username='lowly_bob')
         assert isinstance(same_dsc, DataSharingConsent)
         assert dsc == same_dsc
 
@@ -1007,13 +1009,13 @@ class TestProxyDataSharingConsent(TransactionTestCase):
     def test_commit_and_synonyms(self, func):
         """
         Test that ``ProxyDataSharingConsent``'s ``commit`` method (and any synonyms) properly creates/saves/returns
-        a new ``DataSharingConsent`` instance, or returns ``None`` for any validation errors (i.e. conflict).
+        a new ``DataSharingConsent`` instance, and if updating an existing instance, returns that same model instance.
         """
         new_dsc = getattr(self.proxy_dsc, func)()
-        no_dsc = getattr(self.proxy_dsc, func)()
+        no_new_dsc = getattr(self.proxy_dsc, func)()
         assert DataSharingConsent.objects.count() == 1
         assert DataSharingConsent.objects.all().first() == new_dsc
-        assert no_dsc is None
+        assert no_new_dsc.pk == new_dsc.pk
 
     @ddt.data(
         {
@@ -1043,6 +1045,89 @@ class TestProxyDataSharingConsent(TransactionTestCase):
         """
         expected_to_str = "<ProxyDataSharingConsent for user lowly_bob of Enterprise rich_enterprise>"
         assert expected_to_str == method(self.proxy_dsc)
+
+    def test_from_children_error(self):
+        """
+        Test ``ProxyDataSharingConsent.from_children`` method
+        """
+        with raises(InvalidProxyConsent):
+            ProxyDataSharingConsent.from_children(
+                'fake-program-id',
+                mock.MagicMock(username='thing', enterprise_customer='otherthing'),
+                mock.MagicMock(username='different_username', enterprise_customer='otherthing'),
+            )
+
+    @ddt.data(
+        (
+            'my_program_id',
+            [
+                mock.MagicMock(exists=False, granted=False, username='john', enterprise_customer='fake'),
+                mock.MagicMock(exists=False, granted=False, username='john', enterprise_customer='fake'),
+            ],
+            {
+                'exists': False,
+                'granted': False
+            }
+        ),
+        (
+            'my_program_id',
+            [
+                mock.MagicMock(exists=False, granted=True, username='john', enterprise_customer='fake'),
+                mock.MagicMock(exists=True, granted=True, username='john', enterprise_customer='fake'),
+            ],
+            {
+                'exists': True,
+                'granted': True
+            }
+        ),
+        (
+            'my_program_id',
+            [
+                mock.MagicMock(exists=True, granted=True, username='john', enterprise_customer='fake'),
+                mock.MagicMock(exists=True, granted=False, username='john', enterprise_customer='fake'),
+            ],
+            {
+                'exists': True,
+                'granted': False
+            }
+        ),
+        (
+            'my_program_id',
+            [
+                mock.MagicMock(exists=True, granted=True, username='john', enterprise_customer='fake'),
+                mock.MagicMock(exists=True, granted=True, username='john', enterprise_customer='fake'),
+            ],
+            {
+                'exists': True,
+                'granted': True
+            }
+        ),
+    )
+    @ddt.unpack
+    def test_from_children(self, program_uuid, children, expected_attrs):
+        proxy_dsc = ProxyDataSharingConsent.from_children(program_uuid, *children)
+        for attr, val in expected_attrs.items():
+            assert getattr(proxy_dsc, attr) == val
+
+    @ddt.data(
+        True, False
+    )
+    def test_consent_exists_proxy_enrollment(self, user_exists):
+        """
+        If we did proxy enrollment, we return ``True`` for the consent existence question.
+        """
+        if user_exists:
+            UserFactory(id=1)
+        ece = EnterpriseCourseEnrollmentFactory(enterprise_customer_user__user_id=1)
+        consent_exists = get_data_sharing_consent(
+            ece.enterprise_customer_user.username,
+            ece.enterprise_customer_user.enterprise_customer.uuid,
+            course_id=ece.course_id,
+        ).exists
+        if user_exists:
+            assert consent_exists
+        else:
+            assert not consent_exists
 
 
 @mark.django_db

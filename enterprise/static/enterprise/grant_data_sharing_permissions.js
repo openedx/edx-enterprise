@@ -89,6 +89,7 @@ function loadConsentPage() {
         successUrl: successUrl,
         failureUrl: failureUrl,
         courseId: courseId,
+        programId: programId,
     };
     analytics.track("edx.bi.user.consent_form.shown", formDetails);
     analytics.trackForm($("#data-sharing"), function () {
