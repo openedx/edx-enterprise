@@ -24,6 +24,7 @@ djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
+edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 factory-boy==2.9.2
 faker==0.7.18             # via factory-boy
@@ -32,10 +33,11 @@ funcsigs==1.0.2           # via mock
 ipaddress==1.0.18         # via faker
 kombu==3.0.37             # via celery
 mock==2.0.0
-pbr==3.1.1                # via mock
+pbr==3.1.1                # via mock, stevedore
 pillow==3.4
 py==1.4.34                # via pytest, pytest-catchlog
 pyjwt==1.5.2              # via djangorestframework-jwt, edx-rest-api-client
+pymongo==3.5.0            # via edx-opaque-keys
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytest-django==3.1.2
@@ -45,6 +47,7 @@ pytz==2017.2              # via celery, django
 requests==2.9.1
 responses==0.7.0
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.10.0               # via django-extensions, faker, freezegun, mock, python-dateutil, responses
+six==1.10.0               # via django-extensions, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
+stevedore==1.25.0         # via edx-opaque-keys
 unicodecsv==0.14.1

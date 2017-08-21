@@ -11,7 +11,7 @@ from requests.exceptions import HTTPError, Timeout
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404
@@ -26,14 +26,9 @@ try:
 except ImportError:
     configuration_helpers = None
 
-try:
-    from util import organizations_helpers
-except ImportError:
-    organizations_helpers = None
-
 
 # isort:imports-firstparty
-from enterprise.api_client.discovery import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
@@ -41,6 +36,7 @@ from enterprise.messages import add_consent_declined_message
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import (
     NotConnectedToOpenEdX,
+    clean_html_for_template_rendering,
     filter_audit_course_modes,
     get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
@@ -200,10 +196,11 @@ class GrantDataSharingPermissions(View):
               EnterpriseCustomer doesn't exist.
         """
         try:
-            client = CourseApiClient()
-            course_details = client.get_course_details(course_id)
+            # Make sure course run exists.
+            CourseApiClient().get_course_details(course_id)
         except HttpClientError:
             raise Http404
+
         next_url = request.GET.get('next')
         failure_url = request.GET.get('failure_url')
 
@@ -236,7 +233,6 @@ class GrantDataSharingPermissions(View):
             customer = get_object_or_404(EnterpriseCustomer, uuid=enterprise_uuid)
 
         platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
-        course_name = course_details['name']
         context_data = self.get_default_context(customer, platform_name)
         # Translators: bold_start and bold_end are HTML tags for specifying
         # enterprise name in bold text.
@@ -273,7 +269,6 @@ class GrantDataSharingPermissions(View):
             'LANGUAGE_CODE': get_language_from_request(request),
             'platform_name': platform_name,
             'course_id': course_id,
-            'course_name': course_name,
             'redirect_url': next_url,
             'enterprise_customer_name': customer.name,
             'course_specific': True,
@@ -459,19 +454,12 @@ class CourseEnrollmentView(View):
     information.
     """
 
-    pacing_options = {
-        'instructor': _('Instructor-Paced'),
-        'self': _('Self-Paced')
+    PACING_FORMAT = {
+        'instructor_paced': _('Instructor-Paced'),
+        'self_paced': _('Self-Paced')
     }
-
-    context_data = {
+    STATIC_TEXT_FORMAT = {
         'page_title': _('Confirm your course'),
-        'welcome_text': _('Welcome to {platform_name}.'),
-        'enterprise_welcome_text': _(
-            "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
-            "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
-            "opportunities from the world's best universities."
-        ),
         'confirmation_text': _('Confirm your course'),
         'starts_at_text': _('Starts'),
         'view_course_details_text': _('View Course Details'),
@@ -488,7 +476,16 @@ class CourseEnrollmentView(View):
         'level_text': _('Level'),
         'effort_text': _('Effort'),
         'close_modal_button_text': _('Close'),
+        'expected_learning_items_text': _("What you'll learn"),
+        'course_full_description_text': _('About This Course'),
+        'staff_text': _('Course Staff'),
     }
+    WELCOME_TEXT_FORMAT = _('Welcome to {platform_name}.')
+    ENT_WELCOME_TEXT_FORMAT = _(
+        "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
+        "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
+        "opportunities from the world's best universities."
+    )
 
     def set_final_prices(self, modes, request):
         """
@@ -516,32 +513,31 @@ class CourseEnrollmentView(View):
             )
             return mode['original_price']
 
-    def get_base_details(self, enterprise_uuid, course_id):
+    def get_base_details(self, enterprise_uuid, course_run_id):
         """
         Retrieve fundamental details used by both POST and GET versions of this view.
 
-        Specifically, take an EnterpriseCustomer UUID and a course ID, and transform those
+        Specifically, take an EnterpriseCustomer UUID and a course run ID, and transform those
         into an actual EnterpriseCustomer, a set of details about the course, and a list
-        of the available course modes for that course.
+        of the available course modes for that course run.
         """
         try:
-            client = CourseApiClient()
-            course_details = client.get_course_details(course_id)
-        except HttpClientError:
-            logger.error('Failed to get course details for course ID: %s', course_id)
+            course, course_run = CourseCatalogApiServiceClient().get_course_and_course_run(course_run_id)
+        except (HttpClientError, ImproperlyConfigured):
+            logger.error('Failed to get metadata for course run: %s', course_run_id)
             raise Http404
 
-        if course_details is None:
-            logger.error('Unable to find course details for course ID: %s', course_id)
+        if course is None or course_run is None:
+            logger.error('Unable to find metadata for course run: %s', course_run_id)
             raise Http404
 
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
 
         try:
             enrollment_client = EnrollmentApiClient()
-            modes = enrollment_client.get_course_modes(course_id)
+            modes = enrollment_client.get_course_modes(course_run_id)
         except HttpClientError:
-            logger.error('Failed to determine available course modes for course ID: %s', course_id)
+            logger.error('Failed to determine available course modes for course run: %s', course_run_id)
             raise Http404
 
         course_modes = []
@@ -556,11 +552,11 @@ class CourseEnrollmentView(View):
             if mode['min_price']:
                 price_text = '${}'.format(mode['min_price'])
             else:
-                price_text = self.context_data['free_price_text']
+                price_text = self.STATIC_TEXT_FORMAT['free_price_text']
             if mode['slug'] in audit_modes:
-                description = self.context_data['audit_text']
+                description = self.STATIC_TEXT_FORMAT['audit_text']
             else:
-                description = self.context_data['verified_text']
+                description = self.STATIC_TEXT_FORMAT['verified_text']
             course_modes.append({
                 'mode': mode['slug'],
                 'min_price': mode['min_price'],
@@ -572,81 +568,84 @@ class CourseEnrollmentView(View):
                 'premium': mode['slug'] not in audit_modes
             })
 
-        return enterprise_customer, course_details, course_modes
+        return enterprise_customer, course, course_run, course_modes
 
-    def get_enterprise_course_enrollment_page(self, request, enterprise_customer, course_details, course_modes,
+    def get_enterprise_course_enrollment_page(self, request, enterprise_customer, course, course_run, course_modes,
                                               enterprise_course_enrollment):
         """
         Render enterprise specific course track selection page.
         """
         platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         course_start_date = ''
-        if course_details['start']:
-            course_start_date = parse(course_details['start']).strftime('%B %d, %Y')
+        if course_run['start']:
+            course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
 
-        try:
-            effort_hours = int(course_details['effort'].split(':')[0])
-        except (AttributeError, ValueError):
-            course_effort = ''
-        else:
+        # Format the course effort string using the min/max effort
+        # fields for the course run.
+        course_effort = ''
+        min_effort = course_run['min_effort'] or ''
+        max_effort = course_run['max_effort'] or ''
+        effort_hours = '{min}-{max}'.format(min=min_effort, max=max_effort).strip('-')
+        if effort_hours:
+            # If we are dealing with just one of min/max effort
+            # cast the hours value to a string so that pluralization
+            # is handled appropriately when formatting the full
+            # course effort string below.
+            if '-' not in effort_hours:
+                effort_hours = int(effort_hours)
             course_effort = ungettext(
-                '{hours} hour per week, per course',
-                '{hours} hours per week, per course',
+                '{hours} hour per week',
+                '{hours} hours per week',
                 effort_hours,
             ).format(hours=effort_hours)
 
-        course_run = CourseCatalogApiClient(request.user).get_course_run(course_details['course_id'])
-
+        # Retrieve the enterprise-discounted price from ecommerce.
         course_modes = self.set_final_prices(course_modes, request)
         premium_modes = [mode for mode in course_modes if mode['premium']]
 
-        try:
-            organization = organizations_helpers.get_organization(course_details['org'])
-            organization_logo = organization['logo'].url
+        # Parse organization name and logo.
+        organization_name = ''
+        organization_logo = ''
+        if course['owners']:
+            # The owners key contains the organizations associated with the course.
+            # We pick the first one in the list here to meet UX requirements.
+            organization = course['owners'][0]
             organization_name = organization['name']
-        except (TypeError, ValidationError, ValueError):
-            organization_logo = None
-            organization_name = None
+            organization_logo = organization['logo_image_url']
 
+        # Add a message to the message display queue if the learner
+        # has gone through the data sharing consent flow and declined
+        # to give data sharing consent.
         if enterprise_course_enrollment and not enterprise_course_enrollment.consent_granted:
-            add_consent_declined_message(request, enterprise_customer, course_details)
+            add_consent_declined_message(request, enterprise_customer, course_run)
 
         context_data = {
-            'page_title': self.context_data['page_title'],
             'LANGUAGE_CODE': get_language_from_request(request),
             'platform_name': platform_name,
-            'course_id': course_details['course_id'],
-            'course_name': course_details['name'],
-            'course_organization': course_details['org'],
-            'course_short_description': course_details['short_description'] or '',
-            'course_pacing': self.pacing_options.get(course_details['pacing'], ''),
+            'course_title': course_run['title'],
+            'course_short_description': course_run['short_description'] or '',
+            'course_pacing': self.PACING_FORMAT.get(course_run['pacing_type'], ''),
             'course_start_date': course_start_date,
-            'course_image_uri': course_details['media']['course_image']['uri'],
+            'course_image_uri': course_run['image']['src'],
             'enterprise_customer': enterprise_customer,
-            'welcome_text': self.context_data['welcome_text'].format(platform_name=platform_name),
-            'enterprise_welcome_text': self.context_data['enterprise_welcome_text'].format(
+            'welcome_text': self.WELCOME_TEXT_FORMAT.format(platform_name=platform_name),
+            'enterprise_welcome_text': self.ENT_WELCOME_TEXT_FORMAT.format(
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,
                 strong_start='<strong>',
                 strong_end='</strong>',
             ),
-            'confirmation_text': self.context_data['confirmation_text'],
-            'starts_at_text': self.context_data['starts_at_text'],
-            'view_course_details_text': self.context_data['view_course_details_text'],
-            'select_mode_text': self.context_data['select_mode_text'],
-            'price_text': self.context_data['price_text'],
-            'continue_link_text': self.context_data['continue_link_text'],
             'course_modes': filter_audit_course_modes(enterprise_customer, course_modes),
             'course_effort': course_effort,
-            'level_text': self.context_data['level_text'],
-            'effort_text': self.context_data['effort_text'],
-            'course_overview': course_details['overview'],
+            'course_full_description': clean_html_for_template_rendering(course_run['full_description']),
             'organization_logo': organization_logo,
             'organization_name': organization_name,
             'course_level_type': course_run.get('level_type', ''),
-            'close_modal_button_text': self.context_data['close_modal_button_text'],
             'premium_modes': premium_modes,
+            'expected_learning_items': course['expected_learning_items'],
+            'staff': course_run['staff'],
         }
+        context_data.update(self.STATIC_TEXT_FORMAT)
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
     @method_decorator(transaction.non_atomic_requests)
@@ -667,7 +666,7 @@ class CourseEnrollmentView(View):
         """
         Process a submitted track selection form for the enterprise.
         """
-        enterprise_customer, course, course_modes = self.get_base_details(enterprise_uuid, course_id)
+        enterprise_customer, course, course_run, course_modes = self.get_base_details(enterprise_uuid, course_id)
 
         # Create a link between the user and the enterprise customer if it
         # does not already exist.
@@ -693,8 +692,8 @@ class CourseEnrollmentView(View):
                 break
 
         if not selected_course_mode:
-            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_modes,
-                                                              enterprise_course_enrollment)
+            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_run,
+                                                              course_modes, enterprise_course_enrollment)
 
         user_consent_needed = is_consent_required_for_user(enterprise_customer_user, course_id)
         if not selected_course_mode.get('premium') and not user_consent_needed:
@@ -770,7 +769,7 @@ class CourseEnrollmentView(View):
         # Verify that all necessary resources are present
         verify_edx_resources()
 
-        enterprise_customer, course, modes = self.get_base_details(enterprise_uuid, course_id)
+        enterprise_customer, course, course_run, modes = self.get_base_details(enterprise_uuid, course_id)
 
         # Create a link between the user and the enterprise customer if it does not already exist.  Ensure that the link
         # is saved to the database prior to invoking get_final_price() on the displayed course modes, so that the
@@ -797,5 +796,5 @@ class CourseEnrollmentView(View):
             # info page.
             return redirect(LMS_COURSE_URL.format(course_id=course_id))
 
-        return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, modes,
+        return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_run, modes,
                                                           enterprise_course_enrollment)

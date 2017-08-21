@@ -8,6 +8,119 @@ from __future__ import absolute_import, unicode_literals
 from six.moves import reduce as six_reduce
 from test_utils import FAKE_UUIDS
 
+FAKE_COURSE_RUN = {
+    'key': 'course-v1:edX+DemoX+Demo_Course',
+    'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
+    'title': 'edX Demonstration Course',
+    'image': {
+        'description': None,
+        'height': None,
+        'src': 'http://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
+        'width': None
+    },
+    'short_description': 'This course demonstrates many features of the edX platform.',
+    'marketing_url': 'course/demo-course?utm_source=edx&utm_medium=affiliate_partner',
+    'seats': [
+        {
+            'type': 'audit',
+            'price': '0.00',
+            'currency': 'USD',
+            'upgrade_deadline': None,
+            'credit_provider': None,
+            'credit_hours': None,
+            'sku': '68EFFFF'
+        },
+        {
+            'type': 'verified',
+            'price': '149.00',
+            'currency': 'USD',
+            'upgrade_deadline': '2018-08-03T16:44:26.595896Z',
+            'credit_provider': None,
+            'credit_hours': None,
+            'sku': '8CF08E5'
+        }
+    ],
+    'start': '2013-02-05T05:00:00Z',
+    'end': '2017-12-31T18:00:00Z',
+    'enrollment_start': None,
+    'enrollment_end': None,
+    'pacing_type': 'instructor_paced',
+    'type': 'verified',
+    'status': 'published',
+    'course': 'edX+DemoX',
+    'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    'announcement': None,
+    'video': None,
+    'content_language': None,
+    'transcript_languages': [],
+    'instructors': [],
+    'staff': [
+        {
+            'uuid': '51df1077-1b8d-4f86-8305-8adbc82b72e9',
+            'given_name': 'Anant',
+            'family_name': 'Agarwal',
+            'bio': "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+            'profile_image_url': 'https://www.edx.org/sites/default/files/executive/photo/anant-agarwal.jpg',
+            'slug': 'anant-agarwal',
+            'position': {
+                'title': 'CEO',
+                'organization_name': 'edX'
+            },
+            'profile_image': {},
+            'works': [],
+            'urls': {
+                'twitter': None,
+                'facebook': None,
+                'blog': None
+            },
+            'email': None
+        }
+    ],
+    'min_effort': 5,
+    'max_effort': 6,
+    'modified': '2017-08-18T00:32:33.754662Z',
+    'level_type': 'Type 1',
+    'availability': 'Current',
+    'mobile_available': False,
+    'hidden': False,
+    'reporting_type': 'mooc',
+    'eligible_for_financial_aid': True
+}
+FAKE_COURSE = {
+    'key': 'edX+DemoX',
+    'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
+    'title': 'edX Demonstration Course',
+    'course_runs': [FAKE_COURSE_RUN],
+    'owners': [
+        {
+            'uuid': '2bd367cf-c58e-400c-ac99-fb175405f7fa',
+            'key': 'edX',
+            'name': 'edX',
+            'certificate_logo_image_url': None,
+            'description': '',
+            'homepage_url': None,
+            'tags': [],
+            'logo_image_url': 'https://foo.com/bar.png',
+            'marketing_url': None
+        }
+    ],
+    'image': None,
+    'short_description': 'This course demonstrates many features of the edX platform.',
+    'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+    'level_type': None,
+    'subjects': [],
+    'prerequisites': [],
+    'expected_learning_items': [
+        'XBlocks',
+        'Peer Assessment'
+    ],
+    'video': None,
+    'sponsors': [],
+    'modified': '2017-08-18T00:23:21.111991Z',
+    'marketing_url': None,
+    'programs': []
+}
+
 FAKE_PROGRAM_RESPONSE1 = {
     "uuid": "40782a06-1c37-4779-86aa-0a081f014d4d",
     "title": "Program1",
@@ -810,3 +923,28 @@ def get_common_course_modes(course_runs):
     ]
 
     return six_reduce(lambda left, right: left & right, course_run_modes)
+
+
+def setup_course_catalog_api_client_mock(mock, course_overrides=None, course_run_overrides=None):
+    """
+    Set up the Course Catalog API client mock.
+
+    Arguments:
+        mock (Mock): The mock course catalog api client.
+        course_overrides (dict): Dictionary containing overrides of the fake course metadata values.
+        course_run_overrides (dict): Dictionary containing overrides of the fake course run metadata values.
+    """
+    client = mock.return_value
+
+    fake_course = FAKE_COURSE.copy()
+    fake_course_run = FAKE_COURSE_RUN.copy()
+
+    # Apply overrides to default fake course catalog metadata.
+    if course_overrides:
+        fake_course.update(course_overrides)
+    if course_run_overrides:
+        fake_course_run.update(course_run_overrides)
+
+    # Mock course catalog api functions.
+    client.get_course_run.return_value = fake_course_run
+    client.get_course_and_course_run.return_value = (fake_course, fake_course_run)

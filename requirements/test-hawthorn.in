@@ -19,3 +19,4 @@ edx-rest-api-client==1.7.1              # For accessing the Enrollment API (and 
 django-config-models==0.1.8
 requests==2.9.1                         # Required for SAPSuccessFactorsAPIClient
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
+edx-opaque-keys==0.4.0                  # Helpers for parsing course run IDs

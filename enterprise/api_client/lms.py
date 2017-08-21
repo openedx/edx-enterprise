@@ -390,7 +390,7 @@ def enroll_user_in_course_locally(user, course_id, mode):
     use to create a callback. Once we're able to depend on having Django 1.9, we
     can shift over to that, but for right now, we have to do it this way.
     """
-    if CourseKey is None and CourseEnrollment is None:
+    if CourseEnrollment is None:
         raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
     CourseEnrollment.enroll(user, CourseKey.from_string(course_id), mode=mode, check_access=True)
 

@@ -320,7 +320,7 @@ h2#modal-header-text {
 }
 
 .modal-content .course-detail-modal-scrollable {
-    max-height: calc(80vh - 30px); /* account for the height of the top bar with the close button */
+    max-height: calc(70vh - 30px); /* account for the height of the top bar with the close button */
     overflow: auto;
     padding: 20px;
     width: 100%;
@@ -443,22 +443,8 @@ h2#modal-header-text {
     font-size: 16px;
 }
 
-.modal-content .body .overview .teacher {
-    padding-left: 125px;
-    position: relative;
-    min-height: 117px;
-    margin-bottom: 15px;
-}
-
-.modal-content .body .overview .teacher h3 {
-    font-weight: bold;
-    margin-bottom: 10px;
-}
-
-.modal-content .body .overview .teacher .teacher-image {
-    position: absolute;
-    left: 0;
-    top: 0;
+.modal-content .body .overview .col-7 {
+    padding-left: 0;
 }
 
 .modal-content .body .overview h1,
