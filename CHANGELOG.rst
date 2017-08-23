@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.4] - 2017-08-23
+---------------------
+
+* Fix 500 server error on enterprise course enrollment page.
+
 [0.40.3] - 2017-08-21
 ---------------------
 
