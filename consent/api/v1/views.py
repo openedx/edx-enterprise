@@ -177,7 +177,7 @@ class DataSharingConsentView(APIView):
         user_id = get_user_id(username)
         exists = consent_exists(user_id, course_id, enterprise_customer_uuid)
         provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
-        required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+        required = consent_required(user_id, course_id, enterprise_customer_uuid)
 
         return Response({
             self.REQUIRED_PARAM_USERNAME: username,
@@ -219,7 +219,7 @@ class DataSharingConsentView(APIView):
         exists = consent_exists(user_id, course_id, enterprise_customer_uuid)
         provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
 
-        required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+        required = consent_required(user_id, course_id, enterprise_customer_uuid)
 
         if required:
             # If and only if the given EnterpriseCustomer requires data sharing consent
@@ -229,7 +229,7 @@ class DataSharingConsentView(APIView):
             # Get the current values to be returned in the API, since we likely
             # mutated them as a result of the above method call.
             provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
-            required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+            required = consent_required(user_id, course_id, enterprise_customer_uuid)
             exists = True
 
         return Response({
@@ -270,7 +270,7 @@ class DataSharingConsentView(APIView):
         self.set_consent_state(False, user_id, course_id, enterprise_customer_uuid)
         provided = consent_provided(user_id, course_id, enterprise_customer_uuid)
 
-        required = consent_required(request.user, user_id, course_id, enterprise_customer_uuid)
+        required = consent_required(user_id, course_id, enterprise_customer_uuid)
 
         return Response({
             self.REQUIRED_PARAM_USERNAME: username,

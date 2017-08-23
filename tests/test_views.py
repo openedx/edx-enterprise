@@ -886,6 +886,69 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
+    def test_get_course_enrollment_page_no_effort_no_owners(
+            self,
+            registry_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            course_catalog_client_mock,
+            configuration_helpers_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        setup_course_catalog_api_client_mock(
+            course_catalog_client_mock,
+            course_run_overrides={'min_effort': None, 'max_effort': None},
+            course_overrides={'owners': []}
+        )
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 30.1)
+        configuration_helpers_mock.get_value.return_value = 'edX'
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()  # pylint: disable=no-member
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        # Set up expected context
+        course_modes = [
+            {
+                "mode": "professional",
+                "title": "Professional Track",
+                "original_price": "$100",
+                "min_price": 100,
+                "sku": "sku-professional",
+                "final_price": "$30.10",
+                "description": "Earn a verified certificate!",
+                "premium": True,
+            }
+        ]
+        expected_context = {
+            'enterprise_customer': enterprise_customer,
+            'course_modes': course_modes,
+            'premium_modes': course_modes,
+            'course_effort': '',
+            'organization_name': '',
+            'organization_logo': ''
+        }
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.configuration_helpers')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
     def test_get_course_specific_enrollment_view_audit_enabled(
             self,
             registry_mock,

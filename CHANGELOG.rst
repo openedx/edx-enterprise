@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.6] - 2017-08-23
+---------------------
+
+* Update Consent API to use Discovery worker user for auth, rather than request user.
+
 [0.40.5] - 2017-08-23
 ---------------------
 

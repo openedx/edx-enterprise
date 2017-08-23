@@ -280,7 +280,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         ('course_also_exists', True)
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.CourseCatalogApiClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_catalog_contains_course_run(self, course_id, expected_result, mock_catalog_api_class):
         """
         Test catalog_contains_course_run method on the EnterpriseCustomer.
@@ -295,14 +295,13 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api.is_course_in_catalog.side_effect = is_course_in_catalog
 
         customer = EnterpriseCustomerFactory()
-        user = UserFactory()
-        assert customer.catalog_contains_course_run(user, course_id) == expected_result
+        assert customer.catalog_contains_course_run(course_id) == expected_result
 
-        mock_catalog_api_class.assert_called_once_with(user)
+        mock_catalog_api_class.assert_called_once()
         mock_catalog_api.is_course_in_catalog.assert_called_once_with(customer.catalog, course_id)
 
         catalogless_customer = EnterpriseCustomerFactory(catalog=None)
-        assert catalogless_customer.catalog_contains_course_run(user, course_id) is False
+        assert catalogless_customer.catalog_contains_course_run(course_id) is False
 
 
 @mark.django_db

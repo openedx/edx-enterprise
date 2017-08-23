@@ -27,7 +27,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
-from enterprise.api_client.discovery import CourseCatalogApiClient
+from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise.validators import validate_image_extension, validate_image_size
@@ -223,7 +223,7 @@ class EnterpriseCustomer(TimeStampedModel):
             )
         )
 
-    def catalog_contains_course_run(self, request_user, course_run_id):
+    def catalog_contains_course_run(self, course_run_id):
         """
         Determine if the course run in question is contained in this enterprise's catalog.
 
@@ -236,7 +236,7 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         if self.catalog is None:
             return False
-        client = CourseCatalogApiClient(request_user)
+        client = CourseCatalogApiServiceClient()
         return client.is_course_in_catalog(self.catalog, course_run_id)
 
 
