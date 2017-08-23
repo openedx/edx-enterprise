@@ -9,6 +9,7 @@ import unittest
 
 import ddt
 import mock
+from opaque_keys.edx.keys import CourseKey
 from pytest import mark
 
 from enterprise.models import (
@@ -91,15 +92,14 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
         ).count() == 1
 
-    @mock.patch('enterprise.api_client.lms.CourseKey')
     @mock.patch('enterprise.api_client.lms.CourseEnrollment')
-    def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment, mock_course_key):
-        mock_course_key.from_string.return_value = None
+    def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment):
         mock_course_enrollment.enroll.return_value = None
         email = "fake_email@edx.org"
         user = UserFactory(id=1, email=email)
         pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
-        pending_enrollment = PendingEnrollmentFactory(user=pending_link)
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        PendingEnrollmentFactory(user=pending_link, course_id=course_id)
 
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
@@ -115,8 +115,9 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         ).count() == 1
         assert PendingEnrollment.objects.count() == 0
         assert EnterpriseCourseEnrollment.objects.count() == 1
-        mock_course_enrollment.enroll.assert_called_once_with(user, None, mode='audit', check_access=True)
-        mock_course_key.from_string.assert_called_once_with(pending_enrollment.course_id)
+        mock_course_enrollment.enroll.assert_called_once_with(
+            user, CourseKey.from_string(course_id), mode='audit', check_access=True
+        )
 
     def test_handle_user_post_save_modified_user_already_linked(self):
         email = "jackie.chan@hollywood.com"

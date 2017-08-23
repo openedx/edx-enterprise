@@ -16,8 +16,10 @@ from integrated_channels.integrated_channel.learner_data import BaseLearnerExpor
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from pytest import mark, raises
 from requests.compat import urljoin
+from testfixtures import LogCapture
 from waffle.testutils import override_switch
 
+from django.conf import settings
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import timezone
@@ -30,11 +32,11 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
-from test_utils.fake_catalog_api import get_catalog_courses, get_course_details
+from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
 @mark.django_db
-class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
+class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseMockMixin):
     """
     Test the transmit_courseware_data management command.
     """
@@ -82,158 +84,109 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase):
         call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
         mock_data_task.delay.assert_called_once_with('C-3PO', 'SAP', 1)
 
+    @responses.activate
+    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
+    @mock.patch('enterprise.models.configuration_helpers')
+    def test_transmit_courseware_task_success(
+            self,
+            fake_config_helpers,
+            fake_sap_client,
+            track_selection_reverse_mock,
+    ):
+        """
+        Test the data transmission task.
+        """
+        fake_config_helpers.get_value.return_value = 'https://example.com'
+        fake_sap_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
+        fake_sap_client.return_value.send_course_import.return_value = 200, '{}'
 
-@mark.django_db
-@override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
-@mock.patch('integrated_channels.sap_success_factors.utils.reverse')
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
-@mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
-@mock.patch('enterprise.models.configuration_helpers')
-def test_transmit_courseware_task_success(
-        fake_config_helpers,
-        fake_client,
-        fake_catalog_client,
-        track_selection_reverse_mock,
-        caplog):
-    """
-    Test the data transmission task.
-    """
-    fake_config_helpers.get_value.return_value = 'https://example.com'
-    fake_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
-    fake_client.return_value.send_course_import.return_value = 200, '{}'
+        track_selection_reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=course_run_ids
+        )
+        expected_dump = (
+            '{"ocnCourses": [{"content": [{"contentID": "'+course_run_ids[0]+'", '
+            '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '
+            '"'+settings.LMS_ROOT_URL+'/enterprise/'+uuid+'/course/'+course_run_ids[0]+'/enroll/'
+            '", "mobileEnabled": false, "providerID": "EDX"}], "courseID": "'+course_run_ids[0]+'"'
+            ', "description": [{"locale": "English", "value": "edX Demonstration Course"}], '
+            '"price": [], "providerID": "EDX", "revisionNumber": 1, "schedule": '
+            '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
+            '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
+            '"value": "edX Demonstration Course"}]}, {"content": [{"contentID": '
+            '"'+course_run_ids[1]+'", "contentTitle": "edX Demonstration Course", "launchType": 3, '
+            '"launchURL": "'+settings.LMS_ROOT_URL+'/enterprise/'+uuid+'/course/'
+            ''+course_run_ids[1]+'/enroll/", "mobileEnabled": false, "providerID": "EDX"}], '
+            '"courseID": "'+course_run_ids[1]+'", "description": [{"locale": "English", '
+            '"value": "edX Demonstration Course"}], "price": [], "providerID": "EDX", '
+            '"revisionNumber": 1, "schedule": [{"active": true, "endDate": 2147483647000, '
+            '"startDate": 1360040400000}], "status": "ACTIVE", "thumbnailURI": "", '
+            '"title": [{"locale": "English", "value": "edX Demonstration Course"}]}]}'
+        )
+        expected_messages = [
+            'Processing courses for integrated channel using configuration: '
+            '<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
+            'Retrieving course list for enterprise {}'.format(self.enterprise_customer.name),
+            'Processing course with ID {}'.format(course_run_ids[0]),
+            'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
+            'CustomerConfiguration for Enterprise Veridian Dynamics>',
+            'Processing course with ID {}'.format(course_run_ids[1]),
+            'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
+            'CustomerConfiguration for Enterprise Veridian Dynamics>',
+            expected_dump,
+        ]
 
-    fake_catalog_client.return_value = mock.MagicMock(
-        get_course_details=get_course_details,
-        get_catalog_courses=get_catalog_courses,
-    )
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+            for index, message in enumerate(expected_messages):
+                assert message in log_capture.records[index].getMessage()
 
-    track_selection_reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
+    @responses.activate
+    def test_transmit_courseware_task_no_channel(self):
+        """
+        Test the data transmission task without any integrated channel.
+        """
+        user = UserFactory(username='john_doe')
+        EnterpriseCustomerFactory(
+            catalog=1,
+            name='Veridian Dynamics',
+        )
 
-    caplog.set_level(logging.INFO)
+        # Remove all integrated channels
+        SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.all().delete()
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('transmit_courseware_data', '--catalog_user', user.username)
 
-    UserFactory(username='C-3PO')
-    enterprise_customer = EnterpriseCustomerFactory(
-        catalog=1,
-        name='Veridian Dynamics',
-        site__domain='example.com'
-    )
-    SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
-        enterprise_customer=enterprise_customer,
-        sapsf_base_url='http://enterprise.successfactors.com/',
-        key='key',
-        secret='secret',
-        active=True,
-    )
-    uuid = str(enterprise_customer.uuid)
+            # Because there are no IntegratedChannels, the process will end early.
+            assert not log_capture.records
 
-    call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+    @responses.activate
+    def test_transmit_courseware_task_no_catalog(self):
+        """
+        Test the data transmission task with enterprise customer which have no
+        course catalog.
+        """
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_ids = ['course-v1:edX+DemoX+Demo_Course']
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=course_run_ids
+        )
+        integrated_channel_enterprise = self.integrated_channel.enterprise_customer
+        integrated_channel_enterprise.catalog = None
+        integrated_channel_enterprise.save()
 
-    fake_client.return_value.send_course_import.assert_called()
-    assert len(caplog.records) == 9
-    expected_dump = (
-        '{"ocnCourses": [{"content": [{"contentID": "course-v1:edX+DemoX+Demo_Course", '
-        '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": "htt'
-        'ps://example.com/enterprise/'+uuid+'/course/course-v1:edX+DemoX+Demo_Course/enroll/'
-        '", "mobileEnabled": false, "providerID": "EDX"}], "courseID": "course-v1:edX+De'
-        'moX+Demo_Course", "description": [{"locale": "English", "value": "edX Demonst'
-        'ration Course"}], "price": [], "providerID": "EDX", "revisionNumber": 1, "sch'
-        'edule": [{"active": true, "endDate": 2147483647000, "startDate": 136004040000'
-        '0}], "status": "ACTIVE", "thumbnailURI": "http://192.168.1.187:8000/asset-v1:'
-        'edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg", "title": [{"'
-        'locale": "English", "value": "edX Demonstration Course"}]}, {"content": [{"co'
-        'ntentID": "course-v1:foobar+fb1+fbv1", "contentTitle": "Other Course Name", "'
-        'launchType": 3, "launchURL": "https://example.com/enterprise/'+uuid+'/course/'
-        'course-v1:foobar+fb1+fbv1/enroll/", "mobileEnabled": false, "providerID": "EDX"}], "c'
-        'ourseID": "course-v1:foobar+fb1+fbv1", "description": [{"locale": "English", '
-        '"value": "This is a really cool course. Like, we promise."}], "price": [], "p'
-        'roviderID": "EDX", "revisionNumber": 1, "schedule": [{"active": true, "endDat'
-        'e": 2147483647000, "startDate": 1420070400000}], "status": "ACTIVE", "thumbna'
-        'ilURI": "http://192.168.1.187:8000/asset-v1:foobar+fb1+fbv1+type@asset+block@'
-        'images_course_image.jpg", "title": [{"locale": "English", "value": "Other Cou'
-        'rse Name"}]}, {"content": [{"contentID": "course-v1:test+course3+fbv1", "conte'
-        'ntTitle": "Other Course Name", "launchType": 3, "launchURL": "https://example'
-        '.com/enterprise/'+uuid+'/course/course-v1:test+course3+fbv1/enroll/", "mobileEnabled": '
-        'false, "providerID": "EDX"}], "courseID": "course-v1:test+course3+fbv1", "de'
-        'scription": [{"locale": "English", "value": "This is a really cool course. Li'
-        'ke, we promise."}], "price": [], "providerID": "EDX", "revisionNumber": 1, "s'
-        'chedule": [{"active": true, "endDate": 2147483647000, "startDate": 1420070400'
-        '000}], "status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English"'
-        ', "value": "Other Course Name"}]}]}'
-    )
-    expected_messages = [
-        'Processing courses for integrated channel using configuration: '
-        '<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
-        'Retrieving course list for catalog 1',
-        'Processing course with ID course-v1:edX+DemoX+Demo_Course',
-        'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
-        'CustomerConfiguration for Enterprise Veridian Dynamics>',
-        'Processing course with ID course-v1:foobar+fb1+fbv1',
-        'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
-        'CustomerConfiguration for Enterprise Veridian Dynamics>',
-        'Processing course with ID course-v1:test+course3+fbv1',
-        'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
-        'CustomerConfiguration for Enterprise Veridian Dynamics>',
-        expected_dump,
-    ]
-    for i, msg in enumerate(expected_messages):
-        assert msg in caplog.records[i].message
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('transmit_courseware_data', '--catalog_user', self.user.username)
 
-
-@mark.django_db
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
-def test_transmit_courseware_task_no_channel(fake_catalog_client, caplog):
-    """
-    Test the data transmission task.
-    """
-    fake_catalog_client.return_value = mock.MagicMock(
-        get_course_details=get_course_details,
-        get_catalog_courses=get_catalog_courses,
-    )
-
-    caplog.set_level(logging.INFO)
-
-    UserFactory(username='C-3PO')
-    EnterpriseCustomerFactory(
-        catalog=1,
-        name='Veridian Dynamics',
-    )
-
-    call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
-
-    # Because there are no IntegratedChannels, the process will end early.
-    assert not caplog.records
-
-
-@mark.django_db
-@mock.patch('integrated_channels.integrated_channel.course_metadata.CourseCatalogApiClient')
-def test_transmit_courseware_task_no_catalog(fake_catalog_client, caplog):
-    """
-    Test the data transmission task.
-    """
-    fake_catalog_client.return_value = mock.MagicMock(
-        get_course_details=get_course_details,
-        get_catalog_courses=get_catalog_courses,
-    )
-
-    caplog.set_level(logging.INFO)
-
-    UserFactory(username='C-3PO')
-    enterprise_customer = EnterpriseCustomerFactory(
-        catalog=None,
-        name='Veridian Dynamics',
-    )
-    SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
-        enterprise_customer=enterprise_customer,
-        sapsf_base_url='http://enterprise.successfactors.com/',
-        key='key',
-        secret='secret',
-        active=True,
-    )
-
-    call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
-
-    # Because there are no EnterpriseCustomers with a catalog, the process will end early.
-    assert not caplog.records
+            # Because there are no EnterpriseCustomers with a catalog, the process will end early.
+            assert not log_capture.records
 
 
 # Constants used in the parameters for the transmit_learner_data integration tests below.
