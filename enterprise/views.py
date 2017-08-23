@@ -637,7 +637,7 @@ class CourseEnrollmentView(View):
             ),
             'course_modes': filter_audit_course_modes(enterprise_customer, course_modes),
             'course_effort': course_effort,
-            'course_full_description': clean_html_for_template_rendering(course_run['full_description']),
+            'course_full_description': clean_html_for_template_rendering(course_run['full_description'] or ''),
             'organization_logo': organization_logo,
             'organization_name': organization_name,
             'course_level_type': course_run.get('level_type', ''),
