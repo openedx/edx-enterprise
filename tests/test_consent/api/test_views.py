@@ -35,7 +35,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     path = settings.TEST_SERVER + reverse(endpoint_name)
 
     def setUp(self):
-        discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiClient')
+        discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiServiceClient')
         self.discovery_client = discovery_client_class.start().return_value
         self.discovery_client.is_course_in_catalog.return_value = True
         self.addCleanup(discovery_client_class.stop)

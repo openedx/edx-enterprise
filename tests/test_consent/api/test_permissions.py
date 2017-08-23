@@ -38,7 +38,7 @@ class TestConsentAPIPermissions(APITest):
         self.create_user(username=TEST_USERNAME, password=TEST_PASSWORD, id=TEST_USER_ID)
         self.client = APIClient()
         self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
-        discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiClient')
+        discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiServiceClient')
         self.discovery_client = discovery_client_class.start().return_value
         self.discovery_client.course_in_catalog.return_value = True
         self.addCleanup(discovery_client_class.stop)
