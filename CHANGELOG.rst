@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.40.7] - 2017-08-23
+---------------------
+
+* Fix bug causing 500 error on course enrollment page when the course does not have a course image configured.
+
 [0.40.6] - 2017-08-23
 ---------------------
 

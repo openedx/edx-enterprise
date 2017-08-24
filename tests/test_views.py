@@ -886,7 +886,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
-    def test_get_course_enrollment_page_no_effort_no_owners(
+    def test_get_course_enrollment_page_with_empty_fields(
             self,
             registry_mock,
             ecommerce_api_client_mock,
@@ -897,7 +897,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     ):  # pylint: disable=unused-argument
         setup_course_catalog_api_client_mock(
             course_catalog_client_mock,
-            course_run_overrides={'min_effort': None, 'max_effort': None},
+            course_run_overrides={'min_effort': None, 'max_effort': None, 'image': None},
             course_overrides={'owners': []}
         )
         self._setup_ecommerce_client(ecommerce_api_client_mock, 30.1)
@@ -936,7 +936,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'premium_modes': course_modes,
             'course_effort': '',
             'organization_name': '',
-            'organization_logo': ''
+            'organization_logo': '',
+            'course_image_uri': '',
         }
 
         self._login()
