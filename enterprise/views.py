@@ -599,6 +599,9 @@ class CourseEnrollmentView(View):
                 effort_hours,
             ).format(hours=effort_hours)
 
+        # Parse course run image.
+        course_run_image = course_run['image'] or {}
+
         # Retrieve the enterprise-discounted price from ecommerce.
         course_modes = self.set_final_prices(course_modes, request)
         premium_modes = [mode for mode in course_modes if mode['premium']]
@@ -626,7 +629,7 @@ class CourseEnrollmentView(View):
             'course_short_description': course_run['short_description'] or '',
             'course_pacing': self.PACING_FORMAT.get(course_run['pacing_type'], ''),
             'course_start_date': course_start_date,
-            'course_image_uri': course_run['image']['src'],
+            'course_image_uri': course_run_image.get('src', ''),
             'enterprise_customer': enterprise_customer,
             'welcome_text': self.WELCOME_TEXT_FORMAT.format(platform_name=platform_name),
             'enterprise_welcome_text': self.ENT_WELCOME_TEXT_FORMAT.format(
