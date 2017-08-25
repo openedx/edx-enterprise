@@ -65,10 +65,19 @@ class ProxyDataSharingConsent(ConsentModelMixin):
 
     objects = DataSharingConsentManager()
 
-    def __init__(self, enterprise_customer=None, username='', course_id='', granted=False):
+    def __init__(self, enterprise_customer=None, username='', course_id='', granted=False, **kwargs):
         """
         Initialize a proxy version of ``DataSharingConsent`` which behaves similarly but does not exist in the DB.
         """
+        ec_keys = {}
+        for key in kwargs:
+            if str(key).startswith('enterprise_customer__'):
+                enterprise_customer_detail = key[len('enterprise_customer__'):]
+                ec_keys[enterprise_customer_detail] = kwargs[key]
+
+        if ec_keys:
+            enterprise_customer = EnterpriseCustomer.objects.get(**ec_keys)  # pylint: disable=no-member
+
         self.enterprise_customer = enterprise_customer
         self.username = username
         self.course_id = course_id
@@ -92,6 +101,12 @@ class ProxyDataSharingConsent(ConsentModelMixin):
             return consent
         except (ValidationError, IntegrityError):
             return None
+
+    def save(self, *args, **kwargs):  # pylint: disable=unused-argument
+        """
+        Synonym function for ``commit``.
+        """
+        return self.commit()
 
 
 class Consent(TimeStampedModel):

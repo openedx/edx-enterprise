@@ -16,6 +16,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.api_client.lms import LMS_API_DATETIME_FORMAT
+from enterprise.decorators import ignore_warning
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, UserDataSharingConsentAudit
 from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, factories, fake_catalog_api
 
@@ -318,6 +319,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
+    @ignore_warning(DeprecationWarning)
     def test_enterprise_learner_entitlements(
             self, enable_data_sharing_consent, enforce_data_sharing_consent,
             learner_consent_state, entitlements, expected_json

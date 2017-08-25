@@ -5,6 +5,8 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from consent.helpers import consent_required
+from consent.models import DataSharingConsent
 from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
 from requests.exceptions import HTTPError, Timeout
@@ -41,12 +43,11 @@ from enterprise.utils import (
     get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
-    is_consent_required_for_user,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 
-logger = getLogger(__name__)  # pylint: disable=invalid-name
+LOGGER = getLogger(__name__)
 LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
@@ -215,9 +216,9 @@ class GrantDataSharingPermissions(View):
                     enterprise_customer_user__user_id=request.user.id,
                     course_id=course_id
                 )
-                if not enrollment.consent_needed:
-                    raise Http404
                 customer = enrollment.enterprise_customer_user.enterprise_customer
+                if not consent_required(enrollment.enterprise_customer_user.username, course_id, customer.uuid):
+                    raise Http404
             except EnterpriseCourseEnrollment.DoesNotExist:
                 # Enrollment is not deferred, but we don't have
                 # an EnterpriseCourseEnrollment yet, so we carry
@@ -323,7 +324,7 @@ class GrantDataSharingPermissions(View):
     @method_decorator(login_required)
     def post_course_specific_consent(self, request, course_id, consent_provided):
         """
-        Interpret the course-specific form above and save it to en EnterpriseCourseEnrollment object.
+        Interpret the course-specific form above and save it to an EnterpriseCourseEnrollment object.
         """
         try:
             client = CourseApiClient()
@@ -341,9 +342,14 @@ class GrantDataSharingPermissions(View):
             EnterpriseCourseEnrollment.objects.update_or_create(
                 enterprise_customer_user=enterprise_customer_user,
                 course_id=course_id,
+            )
+            DataSharingConsent.objects.update_or_create(
+                username=request.user.username,
+                course_id=course_id,
+                enterprise_customer=enterprise_customer,
                 defaults={
-                    'consent_granted': consent_provided,
-                }
+                    'granted': consent_provided
+                },
             )
 
         if not consent_provided:
@@ -399,7 +405,7 @@ class HandleConsentEnrollment(View):
             enrollment_client = EnrollmentApiClient()
             course_modes = enrollment_client.get_course_modes(course_id)
         except HttpClientError:
-            logger.error('Failed to determine available course modes for course ID: %s', course_id)
+            LOGGER.error('Failed to determine available course modes for course ID: %s', course_id)
             raise Http404
 
         # Verify that the request user belongs to the enterprise against the
@@ -423,9 +429,14 @@ class HandleConsentEnrollment(View):
         EnterpriseCourseEnrollment.objects.update_or_create(
             enterprise_customer_user=enterprise_customer_user,
             course_id=course_id,
+        )
+        DataSharingConsent.objects.update_or_create(
+            username=enterprise_customer_user.username,
+            course_id=course_id,
+            enterprise_customer=enterprise_customer_user.enterprise_customer,
             defaults={
-                'consent_granted': True,
-            }
+                'granted': True
+            },
         )
 
         audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
@@ -506,7 +517,7 @@ class CourseEnrollmentView(View):
             ecommerce_api_client = EcommerceApiClient(request.user)
             return ecommerce_api_client.get_course_final_price(mode)
         except HttpClientError:
-            logger.error(
+            LOGGER.error(
                 "Failed to get price details for course mode's SKU '{sku}' for username '{username}'".format(
                     sku=mode['sku'], username=request.user.username
                 )
@@ -524,11 +535,11 @@ class CourseEnrollmentView(View):
         try:
             course, course_run = CourseCatalogApiServiceClient().get_course_and_course_run(course_run_id)
         except (HttpClientError, ImproperlyConfigured):
-            logger.error('Failed to get metadata for course run: %s', course_run_id)
+            LOGGER.error('Failed to get metadata for course run: %s', course_run_id)
             raise Http404
 
         if course is None or course_run is None:
-            logger.error('Unable to find metadata for course run: %s', course_run_id)
+            LOGGER.error('Unable to find metadata for course run: %s', course_run_id)
             raise Http404
 
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
@@ -537,7 +548,7 @@ class CourseEnrollmentView(View):
             enrollment_client = EnrollmentApiClient()
             modes = enrollment_client.get_course_modes(course_run_id)
         except HttpClientError:
-            logger.error('Failed to determine available course modes for course run: %s', course_run_id)
+            LOGGER.error('Failed to determine available course modes for course run: %s', course_run_id)
             raise Http404
 
         course_modes = []
@@ -570,8 +581,16 @@ class CourseEnrollmentView(View):
 
         return enterprise_customer, course, course_run, course_modes
 
-    def get_enterprise_course_enrollment_page(self, request, enterprise_customer, course, course_run, course_modes,
-                                              enterprise_course_enrollment):
+    def get_enterprise_course_enrollment_page(
+            self,
+            request,
+            enterprise_customer,
+            course,
+            course_run,
+            course_modes,
+            enterprise_course_enrollment,
+            data_sharing_consent
+    ):
         """
         Render enterprise specific course track selection page.
         """
@@ -619,7 +638,7 @@ class CourseEnrollmentView(View):
         # Add a message to the message display queue if the learner
         # has gone through the data sharing consent flow and declined
         # to give data sharing consent.
-        if enterprise_course_enrollment and not enterprise_course_enrollment.consent_granted:
+        if enterprise_course_enrollment and not data_sharing_consent.granted:
             add_consent_declined_message(request, enterprise_customer, course_run)
 
         context_data = {
@@ -678,6 +697,12 @@ class CourseEnrollmentView(View):
             user_id=request.user.id
         )
 
+        data_sharing_consent = DataSharingConsent.objects.get(
+            username=enterprise_customer_user.username,
+            course_id=course_id,
+            enterprise_customer=enterprise_customer
+        )
+
         try:
             enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
                 enterprise_customer_user__enterprise_customer=enterprise_customer,
@@ -695,10 +720,17 @@ class CourseEnrollmentView(View):
                 break
 
         if not selected_course_mode:
-            return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_run,
-                                                              course_modes, enterprise_course_enrollment)
+            return self.get_enterprise_course_enrollment_page(
+                request,
+                enterprise_customer,
+                course,
+                course_run,
+                course_modes,
+                enterprise_course_enrollment,
+                data_sharing_consent
+            )
 
-        user_consent_needed = is_consent_required_for_user(enterprise_customer_user, course_id)
+        user_consent_needed = consent_required(enterprise_customer_user.username, course_id, enterprise_customer.uuid)
         if not selected_course_mode.get('premium') and not user_consent_needed:
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
@@ -778,10 +810,16 @@ class CourseEnrollmentView(View):
         # is saved to the database prior to invoking get_final_price() on the displayed course modes, so that the
         # ecommerce service knows this user belongs to an enterprise customer.
         with transaction.atomic():
-            EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
                 enterprise_customer=enterprise_customer,
                 user_id=request.user.id
             )
+
+        data_sharing_consent = DataSharingConsent.objects.get(
+            username=enterprise_customer_user.username,
+            course_id=course_id,
+            enterprise_customer=enterprise_customer
+        )
 
         enrollment_client = EnrollmentApiClient()
         enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
@@ -799,5 +837,12 @@ class CourseEnrollmentView(View):
             # info page.
             return redirect(LMS_COURSE_URL.format(course_id=course_id))
 
-        return self.get_enterprise_course_enrollment_page(request, enterprise_customer, course, course_run, modes,
-                                                          enterprise_course_enrollment)
+        return self.get_enterprise_course_enrollment_page(
+            request,
+            enterprise_customer,
+            course,
+            course_run,
+            modes,
+            enterprise_course_enrollment,
+            data_sharing_consent,
+        )

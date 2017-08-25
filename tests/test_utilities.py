@@ -21,27 +21,24 @@ from django.test import override_settings
 
 from enterprise import utils
 from enterprise.models import (
-    EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
-    UserDataSharingConsentAudit,
 )
 from enterprise.utils import (
-    consent_necessary_for_course,
     filter_audit_course_modes,
     get_all_field_names,
+    get_enterprise_customer,
     get_enterprise_customer_user,
-    is_consent_required_for_user,
 )
+from test_utils import TEST_UUID, create_items
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
     SiteFactory,
-    UserDataSharingConsentAuditFactory,
     UserFactory,
 )
 
@@ -249,43 +246,18 @@ class TestEnterpriseUtils(unittest.TestCase):
             assert url == expected_url
 
     @ddt.data(
-        (True, True, EnterpriseCustomer.AT_ENROLLMENT, False),
-        (None, True, EnterpriseCustomer.AT_ENROLLMENT, True),
-        (True, False, EnterpriseCustomer.AT_ENROLLMENT, False),
-        (False, False, EnterpriseCustomer.AT_ENROLLMENT, False),
+        (EnterpriseCustomerFactory, [{'uuid': TEST_UUID}], True),
+        (None, [{}], False)
     )
     @ddt.unpack
-    def test_consent_necessary_for_course(
-            self,
-            consent_provided_state,
-            ec_consent_enabled,
-            ec_consent_enforcement,
-            expected_result
-    ):
-        user = UserFactory()
-        enterprise_customer = EnterpriseCustomerFactory(
-            enable_data_sharing_consent=ec_consent_enabled,
-            enforce_data_sharing_consent=ec_consent_enforcement,
-        )
-        enterprise_user = EnterpriseCustomerUserFactory(
-            user_id=user.id,
-            enterprise_customer=enterprise_customer
-        )
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enrollment = EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=enterprise_user,
-            consent_granted=consent_provided_state,
-            course_id=course_id
-        )
-        assert consent_necessary_for_course(user, course_id) is expected_result
-        account_consent = UserDataSharingConsentAuditFactory(
-            user=enterprise_user,
-            state=UserDataSharingConsentAudit.ENABLED,
-        )
-        assert consent_necessary_for_course(user, course_id) is False
-        account_consent.delete()
-        enrollment.delete()
-        assert consent_necessary_for_course(user, course_id) is False
+    def test_get_enterprise_customer(self, factory, items, returns_obj):
+        if factory:
+            create_items(factory, items)
+        enterprise_customer = get_enterprise_customer(TEST_UUID)
+        if returns_obj:
+            self.assertIsNotNone(enterprise_customer)
+        else:
+            self.assertIsNone(enterprise_customer)
 
     def test_get_enterprise_customer_user(self):
         user = UserFactory()
@@ -298,66 +270,6 @@ class TestEnterpriseUtils(unittest.TestCase):
             enterprise_customer=enterprise_customer
         )
         assert get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
-
-    @ddt.data(
-        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, False),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, True),
-        (False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, False),
-        (False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, False),
-    )
-    @ddt.unpack
-    def test_is_consent_required_for_user(
-            self,
-            ec_consent_enabled,
-            ec_consent_enforcement,
-            learner_consent_state,
-            expected_result
-    ):
-        user = UserFactory()
-        enterprise_customer = EnterpriseCustomerFactory(
-            enable_data_sharing_consent=ec_consent_enabled,
-            enforce_data_sharing_consent=ec_consent_enforcement,
-        )
-        enterprise_customer_user = EnterpriseCustomerUserFactory(
-            user_id=user.id,
-            enterprise_customer=enterprise_customer
-        )
-        UserDataSharingConsentAuditFactory(
-            user=enterprise_customer_user,
-            state=learner_consent_state,
-        )
-        assert is_consent_required_for_user(enterprise_customer_user) is expected_result
-
-    @ddt.data(
-        (True, EnterpriseCustomer.AT_ENROLLMENT, True, False),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, False, True),
-        (False, EnterpriseCustomer.AT_ENROLLMENT, True, False),
-        (False, EnterpriseCustomer.AT_ENROLLMENT, False, False),
-    )
-    @ddt.unpack
-    def test_is_consent_required_for_user_with_course(
-            self,
-            ec_consent_enabled,
-            ec_consent_enforcement,
-            learner_consent_state,
-            expected_result
-    ):
-        user = UserFactory()
-        enterprise_customer = EnterpriseCustomerFactory(
-            enable_data_sharing_consent=ec_consent_enabled,
-            enforce_data_sharing_consent=ec_consent_enforcement,
-        )
-        enterprise_customer_user = EnterpriseCustomerUserFactory(
-            user_id=user.id,
-            enterprise_customer=enterprise_customer
-        )
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=enterprise_customer_user,
-            consent_granted=learner_consent_state,
-            course_id=course_id
-        )
-        assert is_consent_required_for_user(enterprise_customer_user, course_id) is expected_result
 
     @ddt.data(
         (

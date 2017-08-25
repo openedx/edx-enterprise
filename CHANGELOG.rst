@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.41.0] - 2017-08-24
+---------------------
+
+* Migrate the codebase to the new `consent.models.DataSharingConsent` model for when dealing with consent.
+
 [0.40.7] - 2017-08-23
 ---------------------
 

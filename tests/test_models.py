@@ -502,7 +502,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
 
     @ddt.data(
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
+            True,
+            EnterpriseCustomer.AT_ENROLLMENT,
+            True,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
@@ -510,7 +513,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             ],
         ),
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, [1, 2, 3],
+            True,
+            EnterpriseCustomer.AT_ENROLLMENT,
+            False,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": True},
                 {"entitlement_id": 2, "requires_consent": True},
@@ -518,7 +524,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             ],
         ),
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET, [1, 2, 3],
+            True,
+            EnterpriseCustomer.AT_ENROLLMENT,
+            None,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": True},
                 {"entitlement_id": 2, "requires_consent": True},
@@ -526,7 +535,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             ],
         ),
         (
-            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, [1, 2, 3],
+            False,
+            EnterpriseCustomer.AT_ENROLLMENT,
+            True,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
@@ -534,7 +546,10 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             ],
         ),
         (
-            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, [1, 2, 3],
+            False,
+            EnterpriseCustomer.AT_ENROLLMENT,
+            False,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
@@ -542,18 +557,24 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             ],
         ),
         (
-            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET, [1, 2, 3],
+            False,
+            EnterpriseCustomer.AT_ENROLLMENT,
+            None,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
                 {"entitlement_id": 3, "requires_consent": False},
             ],
         ),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED, [], []),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED, [], []),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET, [], []),
+        (True, EnterpriseCustomer.AT_ENROLLMENT, True, [], []),
+        (True, EnterpriseCustomer.AT_ENROLLMENT, False, [], []),
+        (True, EnterpriseCustomer.AT_ENROLLMENT, None, [], []),
         (
-            True, EnterpriseCustomer.EXTERNALLY_MANAGED, UserDataSharingConsentAudit.EXTERNALLY_MANAGED, [1, 2, 3],
+            True,
+            EnterpriseCustomer.EXTERNALLY_MANAGED,
+            True,
+            [1, 2, 3],
             [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
@@ -581,21 +602,24 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
                 False it does not.
             enforce_data_sharing_consent (str): string for the location at which enterprise customer enforces
                 data sharing consent, possible values are 'at_enrollment' and 'externally_managed'.
-            learner_consent_state (str): string containing the state of learner consent on data sharing,
-                possible values are 'not_set', 'enabled' and 'disabled'.
+            learner_consent_state (bool): the state of learner consent on data sharing,
             entitlements (list): A list of integers pointing to voucher ids generated in E-Commerce CAT tool.
             expected_entitlements (list): A list of integers pointing to voucher ids expected to be
                 returned by the model.
         """
-        user_id = 1
         enterprise_customer = EnterpriseCustomerFactory(
             enable_data_sharing_consent=enable_data_sharing_consent,
             enforce_data_sharing_consent=enforce_data_sharing_consent,
         )
-        UserDataSharingConsentAuditFactory(
-            user__id=user_id,
-            user__enterprise_customer=enterprise_customer,
-            state=learner_consent_state,
+        user = UserFactory(id=1)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        DataSharingConsentFactory(
+            username=enterprise_customer_user.username,
+            enterprise_customer=enterprise_customer,
+            granted=learner_consent_state,
         )
         for entitlement in entitlements:
             EnterpriseCustomerEntitlementFactory(
@@ -603,7 +627,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
                 entitlement_id=entitlement,
             )
 
-        enterprise_customer_user = EnterpriseCustomerUser.objects.get(id=user_id)
         assert sorted(enterprise_customer_user.entitlements, key=itemgetter('entitlement_id')) == \
             sorted(expected_entitlements, key=itemgetter('entitlement_id'))
 
@@ -978,16 +1001,38 @@ class TestProxyDataSharingConsent(TransactionTestCase):
             course_id='hard_course_2017'
         )
 
-    def test_commit(self):
+    @ddt.data(
+        'commit', 'save'
+    )
+    def test_commit_and_synonyms(self, func):
         """
-        Test that ``ProxyDataSharingConsent``'s ``commit`` method properly creates/saves/returns a new
-        ``DataSharingConsent`` instance, or returns ``None`` for any validation errors (i.e. conflict).
+        Test that ``ProxyDataSharingConsent``'s ``commit`` method (and any synonyms) properly creates/saves/returns
+        a new ``DataSharingConsent`` instance, or returns ``None`` for any validation errors (i.e. conflict).
         """
-        new_dsc = self.proxy_dsc.commit()
-        no_dsc = self.proxy_dsc.commit()
+        new_dsc = getattr(self.proxy_dsc, func)()
+        no_dsc = getattr(self.proxy_dsc, func)()
         assert DataSharingConsent.objects.count() == 1
         assert DataSharingConsent.objects.all().first() == new_dsc
         assert no_dsc is None
+
+    @ddt.data(
+        {
+            'enterprise_customer__name': 'rich_enterprise',
+            'enterprise_customer__enable_data_sharing_consent': True,
+        },
+        {
+            'enterprise_customer__name': 'rich_enterprise',
+            'enterprise_customer__enable_data_sharing_consent': True,
+            'lets_see_if__this': 'is_ignored',
+        }
+    )
+    def test_create_new_proxy_with_composite_query(self, kwargs):
+        """
+        Test that we can use composite queries for enterprise customers.
+        """
+        proxy_dsc = ProxyDataSharingConsent(**kwargs)
+        the_only_enterprise_customer = EnterpriseCustomer.objects.all().first()  # pylint: disable=no-member
+        assert the_only_enterprise_customer == proxy_dsc.enterprise_customer
 
     @ddt.data(
         str, repr

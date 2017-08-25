@@ -26,6 +26,7 @@ from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
 from test_utils.factories import (
+    DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -251,6 +252,11 @@ class TestTransmitLearnerData(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
             consent_granted=True,
+        )
+        self.consent = DataSharingConsentFactory(
+            username=self.user.username,
+            course_id=self.course_id,
+            enterprise_customer=self.enterprise_customer
         )
         self.integrated_channel = SAPSuccessFactorsEnterpriseCustomerConfiguration(
             enterprise_customer=self.enterprise_customer,
