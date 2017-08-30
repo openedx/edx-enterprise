@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.42.0] - 2017-08-24
+---------------------
+
+* Do not create baskets and orders for audit enrollments.
+
 [0.41.0] - 2017-08-24
 ---------------------
 

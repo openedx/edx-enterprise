@@ -9,7 +9,6 @@ from consent.helpers import consent_required
 from consent.models import DataSharingConsent
 from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
-from requests.exceptions import HTTPError, Timeout
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -443,12 +442,10 @@ class HandleConsentEnrollment(View):
         if selected_course_mode['slug'] in audit_modes:
             # In case of Audit course modes enroll the learner directly through
             # enrollment API client and redirect the learner to dashboard.
-            try:
-                ecommerce_api_client = EcommerceApiClient(request.user)
-                # Post to E-Commerce for audit enrollment.
-                ecommerce_api_client.post_audit_order_to_ecommerce(request, selected_course_mode['sku'])
-            except (HTTPError, Timeout, HttpClientError):
-                return redirect('enterprise_course_enrollment_page', enterprise_uuid, course_id)
+            enrollment_api_client = EnrollmentApiClient()
+            enrollment_api_client.enroll_user_in_course(
+                request.user.username, course_id, selected_course_mode['slug']
+            )
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
@@ -742,12 +739,8 @@ class CourseEnrollmentView(View):
                     course_id=course_id,
                 )
 
-            try:
-                # Post to E-Commerce for audit enrollment.
-                ecommerce_api_client = EcommerceApiClient(request.user)
-                ecommerce_api_client.post_audit_order_to_ecommerce(request, selected_course_mode['sku'])
-            except (HTTPError, Timeout, HttpClientError):
-                return redirect('enterprise_course_enrollment_page', enterprise_uuid, course_id)
+            client = EnrollmentApiClient()
+            client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 

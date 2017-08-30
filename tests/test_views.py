@@ -8,7 +8,6 @@ import mock
 from dateutil.parser import parse
 from faker import Factory as FakerFactory
 from pytest import mark
-from requests.exceptions import HTTPError
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -29,7 +28,6 @@ from test_utils.factories import (
     UserFactory,
 )
 from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN, setup_course_catalog_api_client_mock
-from test_utils.fake_ecommerce_api import setup_post_order_to_ecommerce
 from test_utils.mixins import MessagesMixin
 
 
@@ -1369,7 +1367,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         consent_required_mock.return_value = False
         configuration_helpers_mock.get_value.return_value = 'edX'
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
-        setup_post_order_to_ecommerce(ecommerce_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
         enrollment_client.get_course_enrollment.return_value = None
@@ -1404,54 +1401,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             fetch_redirect_response=False
         )
         if enrollment_mode == 'audit':
-            enrollment_client.enroll_user_in_course.assert_not_called()
-
-    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.views.consent_required')
-    @mock.patch('enterprise.utils.Registry')
-    def test_post_course_specific_enrollment_view_ecommerce_api_error(
-            self,
-            registry_mock,
-            consent_required_mock,
-            enrollment_api_client_mock,
-            catalog_api_client_mock,
-            configuration_helpers_mock,
-            ecommerce_api_client_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        consent_required_mock.return_value = False
-        configuration_helpers_mock.get_value.return_value = 'edX'
-        setup_course_catalog_api_client_mock(catalog_api_client_mock)
-        ecommerce_api_client_mock.side_effect = HTTPError
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enrollment_client.get_course_enrollment.return_value = None
-
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-            enable_audit_enrollment=True,
-        )
-        provider_id = FakerFactory.create().slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
-        self._login()
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
-        )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'})
-
-        assert response.status_code == 302
-        self.assertRedirects(
-            response,
-            course_enrollment_page_url,
-            fetch_redirect_response=False
-        )
+            enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit')
 
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
@@ -1959,14 +1909,12 @@ class TestHandleConsentEnrollmentView(TestCase):
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_audit_course_mode(
             self,
             registry_mock,
             enrollment_api_client_mock,
-            ecommerce_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -1990,7 +1938,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         )
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        setup_post_order_to_ecommerce(ecommerce_api_client_mock)
         self._login()
         handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
             consent_enrollment_url=reverse(
@@ -2007,53 +1954,6 @@ class TestHandleConsentEnrollmentView(TestCase):
             enterprise_customer_user__user_id=enterprise_customer_user.user_id,
             course_id=course_id
         ).exists())
-
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.utils.Registry')
-    def test_handle_consent_enrollment_with_ecommerce_api_error(
-            self,
-            registry_mock,
-            enrollment_api_client_mock,
-            ecommerce_api_client_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Verify that user is redirected to course in case the provided
-        course mode is audit track.
-        """
-        course_id = self.demo_course_id
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-            enable_audit_enrollment=True,
-        )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
-        EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer
-        )
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        ecommerce_api_client_mock.side_effect = HTTPError
-        self._login()
-        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
-            consent_enrollment_url=reverse(
-                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-            ),
-            params=urlencode({'course_mode': 'audit'})
-        )
-        response = self.client.get(handle_consent_enrollment_url)
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
-        )
-        self.assertRedirects(response, course_enrollment_page_url, fetch_redirect_response=False)
 
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.EnrollmentApiClient')
