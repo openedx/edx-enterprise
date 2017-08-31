@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.43.0] - 2017-08-31
+---------------------
+
+* Add architecture for program-scoped data sharing consent.
+
 [0.42.0] - 2017-08-24
 ---------------------
 

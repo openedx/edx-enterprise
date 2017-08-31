@@ -27,3 +27,9 @@ class DataSharingConsentAPIError(ConsentAPIRequestError):
     """There was an error with a request to the DSC API."""
 
     pass
+
+
+class InvalidProxyConsent(Exception):
+    """A proxy consent object with the given details could not be created."""
+
+    pass

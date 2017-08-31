@@ -35,6 +35,7 @@ django==1.8.18
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
+dnspython==1.15.0         # via email-validator
 doc8==0.8.0
 docutils==0.14            # via doc8, readme-renderer, restructuredtext-lint, sphinx
 edx-django-oauth2-provider==1.1.4
@@ -44,14 +45,16 @@ edx-lint==0.5.4
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.2.0
+email-validator==1.0.2    # via faker
 enum34==1.1.6             # via astroid
 factory-boy==2.9.2
-faker==0.7.18             # via factory-boy
+faker==0.8.1              # via factory-boy
 first==2.0.1              # via pip-tools
 freezegun==0.3.9
 funcsigs==1.0.2           # via mock
 futures==3.1.1            # via caniusepython3
 html5lib==0.999999999     # via bleach
+idna==2.6                 # via email-validator
 imagesize==0.7.1          # via sphinx
 inflect==0.2.5            # via jinja2-pluralize
 ipaddress==1.0.18         # via faker
@@ -64,12 +67,12 @@ markupsafe==1.0           # via jinja2
 mccabe==0.6.1             # via pylint
 mock==2.0.0
 packaging==16.8           # via caniusepython3
-path.py==10.3.1           # via edx-i18n-tools
+path.py==10.4             # via edx-i18n-tools
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
 pip-tools==1.9.0
 pkginfo==1.4.1            # via twine
-pluggy==0.4.0             # via tox
+pluggy==0.5.1             # via tox
 pockets==0.5.1            # via sphinxcontrib-napoleon
 polib==1.0.8              # via edx-i18n-tools
 py==1.4.34                # via pytest, pytest-catchlog, tox
@@ -81,7 +84,7 @@ pylint-celery==0.3        # via edx-lint
 pylint-django==0.7.2      # via edx-lint
 pylint-plugin-utils==0.2.6  # via pylint-celery, pylint-django
 pylint==1.7.1             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
-pymongo==3.5.0            # via edx-opaque-keys
+pymongo==3.5.1            # via edx-opaque-keys
 pyparsing==2.2.0          # via packaging
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
@@ -110,6 +113,7 @@ tox==2.7.0
 tqdm==4.15.0              # via twine
 twine==1.9.1
 typing==3.6.2             # via sphinx
+ukpostcodeparser==1.1.1   # via faker
 unicodecsv==0.14.1
 virtualenv==15.1.0        # via tox
 webencodings==0.5.1       # via html5lib

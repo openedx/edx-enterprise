@@ -40,6 +40,210 @@ def fake_render(request, template, context):  # pylint: disable=unused-argument
 
 @mark.django_db
 @ddt.ddt
+class TestProgramDataSharingPermissions(TestCase):
+    """
+    Test the user-facing program consent view
+    """
+
+    url = reverse('grant_data_sharing_permissions')
+
+    valid_get_params = {
+        'enterprise_customer_uuid': 'fake-uuid',
+        'next': 'https://google.com/',
+        'failure_url': 'https://facebook.com/',
+        'program_uuid': 'fake-program-uuid',
+    }
+    valid_post_params = {
+        'enterprise_customer_uuid': 'fake-uuid',
+        'redirect_url': 'https://google.com/',
+        'failure_url': 'https://facebook.com/',
+        'program_uuid': 'fake-program-uuid',
+        'data_sharing_consent': 'true',
+    }
+
+    def setUp(self):
+        self.user = UserFactory.create(username='john', is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.client = Client()
+        config = mock.patch('enterprise.views.configuration_helpers')
+        self.configuration_helpers = config.start()
+        self.addCleanup(config.stop)
+        get_dsc = mock.patch('enterprise.views.get_data_sharing_consent')
+        self.get_data_sharing_consent = get_dsc.start()
+        self.addCleanup(get_dsc.stop)
+        super(TestProgramDataSharingPermissions, self).setUp()
+
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+
+    def _mock_get_program_by_uuid(self):
+        """
+        Mock the calls needed to get a program from the Course Discovery API
+        """
+        discovery_client_class = mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+        return_val = discovery_client_class.start().return_value.get_program_by_uuid
+        self.addCleanup(discovery_client_class.stop)
+        return return_val
+
+    @ddt.data(
+        'enterprise_customer_uuid',
+        'next',
+        'failure_url',
+        'program_uuid',
+    )
+    def test_get_program_consent_missing_parameter(self, missing_parameter):
+        self._mock_get_program_by_uuid().return_value = True
+        valid_get_params = self.valid_get_params.copy()
+        valid_get_params.pop(missing_parameter)
+        self._login()
+        response = self.client.get(self.url, valid_get_params)
+        assert response.status_code == 404
+
+    def test_get_consent_program_does_not_exist(self):
+        self._mock_get_program_by_uuid().side_effect = HttpClientError
+        self._login()
+        response = self.client.get(self.url, self.valid_get_params)
+        assert response.status_code == 404
+
+    def test_get_program_consent_no_ec(self):
+        self.get_data_sharing_consent.return_value = None
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        response = self.client.get(self.url, self.valid_get_params)
+        assert response.status_code == 404
+
+    def test_get_program_consent_not_required(self):
+        self.get_data_sharing_consent.return_value.consent_required.return_value = False
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        response = self.client.get(self.url, self.valid_get_params)
+        assert response.status_code == 404
+
+    @ddt.data(
+        'enterprise_customer_uuid',
+        'redirect_url',
+        'failure_url',
+        'program_uuid',
+    )
+    def test_post_program_consent_missing_parameter(self, missing_parameter):
+        self._mock_get_program_by_uuid().return_value = True
+        valid_post_params = self.valid_post_params.copy()
+        valid_post_params.pop(missing_parameter)
+        self._login()
+        response = self.client.post(self.url, valid_post_params)
+        assert response.status_code == 404
+
+    def test_post_consent_program_does_not_exist(self):
+        self._mock_get_program_by_uuid().side_effect = HttpClientError
+        self._login()
+        response = self.client.post(self.url, self.valid_post_params)
+        assert response.status_code == 404
+
+    def test_post_program_consent_no_ec(self):
+        self.get_data_sharing_consent.return_value = None
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        response = self.client.post(self.url, self.valid_post_params)
+        assert response.status_code == 404
+
+    def test_post_program_consent_not_required(self):
+        self.get_data_sharing_consent.return_value.consent_required.return_value = False
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        response = self.client.get(self.url, self.valid_post_params)
+        assert response.status_code == 404
+
+    def test_post_program_consent(self):
+        consent_record = self.get_data_sharing_consent.return_value
+        consent_record.consent_required.return_value = True
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        response = self.client.post(self.url, self.valid_post_params, follow=False)
+        consent_record.save.assert_called_once()
+        self.assertRedirects(response, 'https://google.com/', fetch_redirect_response=False)
+
+    def test_post_program_consent_not_provided(self):
+        consent_record = self.get_data_sharing_consent.return_value
+        consent_record.consent_required.return_value = True
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        params = self.valid_post_params.copy()
+        params.pop('data_sharing_consent')
+        response = self.client.post(self.url, params, follow=False)
+        consent_record.save.assert_called_once()
+        self.assertRedirects(response, 'https://facebook.com/', fetch_redirect_response=False)
+
+    def test_post_program_consent_deferred(self):
+        consent_record = self.get_data_sharing_consent.return_value
+        consent_record.consent_required.return_value = True
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        params = self.valid_post_params.copy()
+        params['enrollment_deferred'] = 'True'
+        response = self.client.post(self.url, params, follow=False)
+        consent_record.save.assert_not_called()
+        self.assertRedirects(response, 'https://google.com/', fetch_redirect_response=False)
+
+    @ddt.data(False, True)
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    def test_get_program_consent(self, enrollment_deferred, mock_render):  # pylint: disable=unused-argument
+        self.get_data_sharing_consent.return_value.consent_required.return_value = True
+        enterprise_customer = self.get_data_sharing_consent.return_value.enterprise_customer
+        enterprise_customer.name = 'Starfleet Academy'
+        self._mock_get_program_by_uuid().return_value = True
+        self._login()
+        self.configuration_helpers.get_value.return_value = "My Platform"
+        params = self.valid_get_params.copy()
+        if enrollment_deferred:
+            params.update({'enrollment_deferred': True})
+        response = self.client.get(self.url, params)
+        assert response.status_code == 200
+
+        expected_prompt = (
+            'To access this program, you must first consent to share your learning achievements '
+            'with <b>Starfleet Academy</b>.'
+        )
+        expected_alert = (
+            'In order to start this program and use your discount, <b>you must</b> consent to share your '
+            'program data with Starfleet Academy.'
+        )
+
+        for key, value in {
+                "platform_name": "My Platform",
+                "consent_request_prompt": expected_prompt,
+                "requested_permissions_header": (
+                    'Per the <a href="#consent-policy-dropdown-bar" '
+                    'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">'
+                    'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
+                ),
+                'confirmation_alert_prompt': expected_alert,
+                'confirmation_alert_prompt_warning': '',
+                'sharable_items_footer': (
+                    'My permission applies only to data from courses or programs that are sponsored by '
+                    'Starfleet Academy, and not to data from any My Platform courses or programs that '
+                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
+                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
+                    'from any courses that are sponsored by Starfleet Academy.'
+                ),
+                "program_uuid": params.get('program_uuid'),
+                "redirect_url": "https://google.com/",
+                "failure_url": "https://facebook.com/",
+                "enterprise_customer_name": enterprise_customer.name,
+                "program_specific": True,
+                "enrollment_deferred": enrollment_deferred,
+                "welcome_text": "Welcome to My Platform.",
+                'sharable_items_note_header': 'Please note',
+                "enterprise_customer": enterprise_customer
+        }.items():
+            assert response.context[key] == value  # pylint:disable=no-member
+
+
+@mark.django_db
+@ddt.ddt
 class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     """
     Test GrantDataSharingPermissions.
@@ -191,89 +395,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
-    @ddt.data(
-        (False, False),
-        (True, True),
-    )
-    @ddt.unpack
-    def test_get_course_specific_consent_ec_requires_account_level(
-            self,
-            enrollment_deferred,
-            supply_customer_uuid,
-            course_api_client_mock,
-            course_catalog_api_client_mock,
-            mock_config,
-            *args
-    ):  # pylint: disable=unused-argument
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        mock_config.get_value.return_value = 'My Platform'
-        course_catalog_api_client_mock.return_value.course_in_catalog.return_value = True
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = {
-            'name': 'edX Demo Course',
-        }
-        self._login()
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-            require_account_level_consent=True,
-        )
-        ecu = EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer
-        )
-        EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=ecu,
-            course_id=course_id
-        )
-        params = {
-            'course_id': 'course-v1:edX+DemoX+Demo_Course',
-            'next': 'https://google.com'
-        }
-        if enrollment_deferred:
-            params['enrollment_deferred'] = True
-        if supply_customer_uuid:
-            params['enterprise_id'] = str(enterprise_customer.uuid)
-        response = self.client.get(self.url, data=params)
-        assert response.status_code == 200
-        expected_prompt = (
-            'To access this and other courses sponsored by <b>Starfleet Academy</b>, and to '
-            'use the discounts available to you, you must first consent to share your '
-            'learning achievements with <b>Starfleet Academy</b>.'
-        )
-        expected_alert = (
-            'In order to start this course and use your discount, <b>you must</b> consent to share your '
-            'course data with Starfleet Academy.'
-        )
-        for key, value in {
-                "platform_name": "My Platform",
-                "consent_request_prompt": expected_prompt,
-                'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': '',
-                'sharable_items_footer': (
-                    'My permission applies only to data from courses or programs that are sponsored by '
-                    'Starfleet Academy, and not to data from any My Platform courses or programs that '
-                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
-                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
-                    'from any courses that are sponsored by Starfleet Academy.'
-                ),
-                "course_id": "course-v1:edX+DemoX+Demo_Course",
-                "redirect_url": "https://google.com",
-                "enterprise_customer_name": ecu.enterprise_customer.name,
-                "course_specific": True,
-                "enrollment_deferred": enrollment_deferred,
-                "policy_link_template": "",
-                "sharable_items_note_header": "Please note",
-        }.items():
-            assert response.context[key] == value  # pylint:disable=no-member
-
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.configuration_helpers')
-    @mock.patch('enterprise.views.CourseApiClient')
-    def test_get_course_specific_consent_invalid_params(
+    def test_get_course_specific_consent_invalid_get_params(
             self,
             course_api_client_mock,
             mock_config,
