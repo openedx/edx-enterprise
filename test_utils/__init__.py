@@ -20,6 +20,8 @@ from pytest import mark
 from rest_framework.test import APITestCase, APIClient
 from six.moves.urllib.parse import parse_qs, urljoin, urlsplit  # pylint: disable=import-error,ungrouped-imports
 
+from django.shortcuts import render
+
 from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
@@ -109,6 +111,13 @@ def update_search_with_enterprise_context(search_result):
         elif content_type == 'courserun':
             update_course_run_with_enterprise_context(item)
     return search_result
+
+
+def fake_render(request, template, context):  # pylint: disable=unused-argument
+    """
+    Switch the request to use a template that does not depend on edx-platform.
+    """
+    return render(request, 'enterprise/emails/user_notification.html', context=context)
 
 
 @mark.django_db
