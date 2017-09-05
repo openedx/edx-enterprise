@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Custom `Django Admin actions`_ used in enterprise app.
 

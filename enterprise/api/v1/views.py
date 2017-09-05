@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Views for enterprise api version 1 endpoint.
 """

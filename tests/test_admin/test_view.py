@@ -150,7 +150,7 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         Test set up - installs common dependencies.
         """
         super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
-        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user = UserFactory.create(is_staff=True, is_active=True, id=1)
         self.user.set_password("QWERTY")
         self.user.save()
         self.enterprise_customer = EnterpriseCustomerFactory()
@@ -276,6 +276,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 user_id=UserFactory(
                     username='bob',
                     email='bob@thing.com',
+                    id=2,
                 ).id,
             ),
             EnterpriseCustomerUserFactory(
@@ -283,6 +284,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 user_id=UserFactory(
                     username='frank',
                     email='iloveschool@example.com',
+                    id=3,
                 ).id,
             ),
             EnterpriseCustomerUserFactory(
@@ -290,6 +292,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 user_id=UserFactory(
                     username='angela',
                     email='cats@cats.org',
+                    id=4,
                 ).id,
             ),
         ]
@@ -352,7 +355,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._login()
         self._assert_no_record(email)  # there're no record with current email
 
-        user = UserFactory(username=username, email=email)
+        user = UserFactory(username=username, email=email, id=2)
 
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: username})
 
@@ -367,11 +370,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: "invalid_email"})
 
-        # TODO: remove suppressions when https://github.com/landscapeio/pylint-django/issues/78 is fixed
         assert response.status_code == 200
-        self._test_common_context(response.context)  # pylint: disable=no-member
+        self._test_common_context(response.context)
         assert EnterpriseCustomerUser.objects.count() == 0
-        assert response.context[self.context_parameters.MANAGE_LEARNERS_FORM].is_bound  # pylint: disable=no-member
+        assert response.context[self.context_parameters.MANAGE_LEARNERS_FORM].is_bound
 
     def test_post_invalid_email_form_validation_suppressed(self):
         # precondition checks:
@@ -387,13 +389,11 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: invalid_email}
             )
 
-        # TODO: remove suppressions when https://github.com/landscapeio/pylint-django/issues/78 is fixed
         assert response.status_code == 200
-        self._test_common_context(response.context)  # pylint: disable=no-member
+        self._test_common_context(response.context)
         assert EnterpriseCustomerUser.objects.count() == 0
-        # pylint: disable=no-member
         manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
-        assert manage_learners_form.is_bound  # pylint: disable=no-member
+        assert manage_learners_form.is_bound
         assert manage_learners_form.errors == {
             ManageLearnersForm.Fields.EMAIL_OR_USERNAME: [
                 ValidationMessages.INVALID_EMAIL_OR_USERNAME.format(argument=invalid_email)
@@ -418,7 +418,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         email = FAKER.email()  # pylint: disable=no-member
 
-        user = UserFactory(email=email)
+        user = UserFactory(email=email, id=2)
         EnterpriseCustomerUserFactory(user_id=user.id)
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
@@ -439,7 +439,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         email = FAKER.email()  # pylint: disable=no-member
 
-        user = UserFactory(email=email)
+        user = UserFactory(email=email, id=2)
         EnterpriseCustomerUserFactory(user_id=user.id)
         assert EnterpriseCustomerUser.objects.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 0
@@ -504,7 +504,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory()
+        user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -537,7 +537,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
 
-        user = UserFactory()
+        user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -580,7 +580,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory()
+        user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -619,7 +619,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory()
+        user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -652,7 +652,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory()
+        user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -675,7 +675,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         catalog_api_instance = catalog_client.return_value
         catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
-        user = UserFactory()
+        user = UserFactory(id=2)
         program = FAKE_PROGRAM_RESPONSE2
         expected_courses = get_course_runs_from_program(program)
         mode = "professional"
@@ -720,7 +720,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         catalog_api_instance = catalog_client.return_value
         catalog_api_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         catalog_api_instance.get_common_course_modes.side_effect = {"professional"}
-        user = UserFactory()
+        user = UserFactory(id=2)
         program = FAKE_PROGRAM_RESPONSE2
         expected_courses = get_course_runs_from_program(program)
         mode = "professional"
@@ -824,7 +824,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     def test_post_invalid_email_error_skips_all(self):
         self._login()
-        user = UserFactory()
+        user = UserFactory(id=2)
         invalid_email = "invalid"
 
         assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
@@ -858,9 +858,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             a message will be created.
         """
         self._login()
-        user = UserFactory()
-        linked_user = UserFactory()
-        user_linked_to_other_ec = UserFactory()
+        user = UserFactory(id=2)
+        linked_user = UserFactory(id=3)
+        user_linked_to_other_ec = UserFactory(id=4)
         EnterpriseCustomerUserFactory(user_id=user_linked_to_other_ec.id)
         EnterpriseCustomerUserFactory(user_id=linked_user.id, enterprise_customer=self.enterprise_customer)
         new_email = FAKER.email()  # pylint: disable=no-member
@@ -913,7 +913,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending linked users"
 
-        user_by_email = UserFactory()
+        user_by_email = UserFactory(id=2)
         previously_not_seen_email = FAKER.email()  # pylint: disable=no-member
 
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
@@ -1152,7 +1152,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         self._login()
 
         email = FAKER.email()  # pylint: disable=no-member
-        user = UserFactory(email=email)
+        user = UserFactory(email=email, id=2)
         EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
         query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
 

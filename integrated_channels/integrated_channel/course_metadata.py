@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Assist integrated channels with retrieving course metadata.
 
@@ -48,7 +49,10 @@ def get_course_runs(user, enterprise_customer):
     """
     client = EnterpriseApiClient(user)
 
-    enterprise_courses = client.get_enterprise_courses(enterprise_customer, traverse=True).get('results', [])
+    enterprise_courses = client.get_enterprise_courses(
+        enterprise_customer,
+        traverse_pagination=True
+    ).get('results', [])
     LOGGER.info('Retrieving course list for enterprise %s', enterprise_customer.name)
 
     for course_detail in enterprise_courses:

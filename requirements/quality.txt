@@ -50,6 +50,7 @@ enum34==1.1.6             # via astroid
 factory-boy==2.9.2
 faker==0.8.3              # via factory-boy
 first==2.0.1              # via pip-tools
+flaky==3.3.0
 freezegun==0.3.9
 funcsigs==1.0.2           # via mock
 futures==3.1.1            # via caniusepython3

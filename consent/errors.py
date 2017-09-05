@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Errors thrown by the APIs in the Consent application.
 """

@@ -22,3 +22,4 @@ django-waffle==0.12.0                   # Allows ability to add and control flag
 edx-opaque-keys==0.4.0                  # Helpers for parsing course run IDs
 testfixtures                            # Mock objects for unit tests and doc tests
 jsonfield==2.0.2                        # Provides a Django model field which serializes/deserializes JSON objects
+flaky==3.3.0                            # Rerun flaky tests automatically if they fail, up to a limit

@@ -11,6 +11,7 @@ import unittest
 
 import requests
 import responses
+from flaky import flaky
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
@@ -54,6 +55,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             secret=self.client_secret
         )
 
+    @flaky(max_runs=3)
     @mark.django_db
     @responses.activate  # pylint: disable=no-member
     def test_get_oauth_access_token(self):

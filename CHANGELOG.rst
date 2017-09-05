@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.44.0] - 2017-09-08
+---------------------
+
+* Added MVP version of the Programs Enrollment Landing Page.
+
 [0.43.5] - 2017-09-08
 ---------------------
 

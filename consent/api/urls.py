@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 URL definitions for edX Enterprise's Consent API endpoint.
 """

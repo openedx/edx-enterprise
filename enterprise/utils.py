@@ -10,7 +10,7 @@ import re
 from uuid import UUID
 
 from opaque_keys.edx.keys import CourseKey
-from six import iteritems
+from six import iteritems  # pylint: disable=ungrouped-imports
 
 from django.apps import apps
 from django.conf import settings
@@ -20,8 +20,9 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
+from django.utils.translation import ungettext
 
-# pylint: disable=import-error,wrong-import-order,ungrouped-imports
+# pylint: disable=import-error,wrong-import-order
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunparse, urlunsplit
 
 try:
@@ -555,3 +556,41 @@ def traverse_pagination(response, endpoint):
         next_page = response.get('next')
 
     return results
+
+
+def ungettext_min_max(singular, plural, range_text, min_val, max_val):
+    """
+    Return grammatically correct, translated text based off of a minimum and maximum value.
+
+    Example:
+        min = 1, max = 1, singular = '{} hour required for this course', plural = '{} hours required for this course'
+        output = '1 hour required for this course'
+
+        min = 2, max = 2, singular = '{} hour required for this course', plural = '{} hours required for this course'
+        output = '2 hours required for this course'
+
+        min = 2, max = 4, info_text = '{}-{} hours required for this course'
+        output = '2-4 hours required for this course'
+
+    Expects ``range_text`` to already have a translation function called on it.
+
+    Returns ``None`` if either of the input values are ``None``.
+    """
+    if min_val is None or max_val is None:
+        return None
+    if min_val == max_val:
+        return ungettext(singular, plural, min_val).format(min_val)
+    return range_text.format(min_val, max_val)
+
+
+def format_price(price, currency='$'):
+    """
+    Format the price to have the appropriate currency and digits..
+
+    :param price: The price amount.
+    :param currency: The currency for the price.
+    :return: A formatted price string, i.e. '$10', '$10.52'.
+    """
+    if int(price) == price:
+        return '{}{}'.format(currency, int(price))
+    return '{}{:0.2f}'.format(currency, price)

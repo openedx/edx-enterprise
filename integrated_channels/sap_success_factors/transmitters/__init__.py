@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Package for transmitting data to SuccessFactors.
 """

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Throttle classes for enterprise API.
 """

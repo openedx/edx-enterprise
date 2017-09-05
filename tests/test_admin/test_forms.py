@@ -138,8 +138,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         ("user2", "user2@example.com"),
     )
     def test_clean_existing_username(self, username, expected_email):
-        UserFactory(username="user1", email="user1@example.com")
-        UserFactory(username="user2", email="user2@example.com")
+        UserFactory(username="user1", email="user1@example.com", id=1)
+        UserFactory(username="user2", email="user2@example.com", id=2)
 
         form = self._make_bound_form(username)
         assert form.is_valid()

@@ -134,6 +134,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint: disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -190,6 +191,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.messages.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
@@ -273,6 +275,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -336,6 +339,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -400,6 +404,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -467,6 +472,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -515,6 +521,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint: disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.utils.Registry')
@@ -550,6 +557,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.utils.Registry')
@@ -585,6 +593,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -624,6 +633,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -650,6 +660,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_inactive_user(
@@ -688,6 +699,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
         self.assertRedirects(response, expected_redirect_url, fetch_redirect_response=False)
 
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -982,6 +994,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1051,6 +1064,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')

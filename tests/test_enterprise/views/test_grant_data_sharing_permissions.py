@@ -89,6 +89,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             client.get(self.url)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -178,6 +179,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint:disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_invalid_get_params(
@@ -220,6 +222,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_unauthenticated_user(
@@ -266,6 +269,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_bad_api_response(
@@ -303,6 +307,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -348,6 +353,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
@@ -413,6 +419,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             assert enrollment.consent_granted is consent_provided
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
@@ -461,6 +468,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
@@ -538,6 +546,9 @@ class TestProgramDataSharingPermissions(TestCase):
         config = mock.patch('enterprise.views.configuration_helpers')
         self.configuration_helpers = config.start()
         self.addCleanup(config.stop)
+        program_data_extender = mock.patch('enterprise.views.ProgramDataExtender')
+        self.program_data_extender = program_data_extender.start()
+        self.addCleanup(program_data_extender.stop)
         get_dsc = mock.patch('enterprise.views.get_data_sharing_consent')
         self.get_data_sharing_consent = get_dsc.start()
         self.addCleanup(get_dsc.stop)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Module tests classes responsible for transmitting data to integrated channels.
 """

@@ -89,6 +89,7 @@ EDX_API_KEY = "PUT_YOUR_API_KEY_HERE"
 COURSE_CATALOG_API_URL = "http://localhost:18381/api/v1/"
 
 LMS_ROOT_URL = "http://localhost:8000"
+ECOMMERCE_PUBLIC_URL_ROOT = "http://localhost:18130"
 
 ENTERPRISE_ENROLLMENT_API_URL = LMS_ROOT_URL + "/api/enrollment/v1/"
 
@@ -104,8 +105,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
 DEFAULT_FROM_EMAIL = 'course_staff@example.com'
 
-USER_THROTTLE_RATE = '60/minute'
-SERVICE_USER_THROTTLE_RATE = '70/minute'
+USER_THROTTLE_RATE = '80/minute'
+SERVICE_USER_THROTTLE_RATE = '90/minute'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,

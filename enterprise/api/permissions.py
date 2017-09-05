@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Permission classes for the Enterprise API.
 """

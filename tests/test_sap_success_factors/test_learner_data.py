@@ -41,7 +41,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
     YESTERDAY_TIMESTAMP = NOW_TIMESTAMP - 24*60*60*1000
 
     def setUp(self):
-        self.user = UserFactory(username='C3PO')
+        self.user = UserFactory(username='C3PO', id=1)
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.enterprise_customer = EnterpriseCustomerFactory()
         self.enterprise_customer_user = EnterpriseCustomerUserFactory(
@@ -310,7 +310,7 @@ class TestBaseLearnerExporter(unittest.TestCase):
 
         enrollment3 = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=EnterpriseCustomerUserFactory(
-                user_id=UserFactory(username='R2D2').id,
+                user_id=UserFactory(username='R2D2', id=2).id,
                 enterprise_customer=self.enterprise_customer,
             ),
             course_id=self.course_id,

@@ -31,6 +31,7 @@ from enterprise.utils import (
     get_all_field_names,
     get_enterprise_customer,
     get_enterprise_customer_user,
+    ungettext_min_max,
 )
 from test_utils import TEST_UUID, create_items
 from test_utils.factories import (
@@ -757,7 +758,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         faker = FakerFactory.create()
         provider_id = faker.slug()  # pylint: disable=no-member
 
-        user = UserFactory()
+        user = UserFactory(id=1)
         ecu = EnterpriseCustomerUserFactory(
             user_id=user.id,
         )
@@ -774,7 +775,7 @@ class TestEnterpriseUtils(unittest.TestCase):
 
         # Assert that None is returned if user is not associated with any enterprise customer
         self.assertEqual(
-            utils.get_enterprise_customer_for_user(auth_user=UserFactory()),
+            utils.get_enterprise_customer_for_user(auth_user=UserFactory(id=2)),
             None,
         )
 
@@ -898,6 +899,21 @@ class TestEnterpriseUtils(unittest.TestCase):
         exporter = BaseCourseExporter(mock_user, mock_plugin_configuration)
         with raises(NotImplementedError):
             exporter.get_serialized_data()
+
+    @ddt.data(
+        ('{} hour', '{} hours', '{}-{} hours', 2, 4, '2-4 hours'),
+        ('{} hour', '{} hours', '{}-{} hours', 2, 2, '2 hours'),
+        ('{} hour', '{} hours', '{}-{} hours', 1, 1, '1 hour'),
+        ('{} hour', '{} hours', '{}-{} hours', None, 1, None),
+        ('{} hour', '{} hours', '{}-{} hours', 1, None, None),
+        ('{} hour', '{} hours', '{}-{} hours', None, None, None),
+    )
+    @ddt.unpack
+    def test_ungettext_min_max(self, singular, plural, range_text, min_val, max_val, expected_output):
+        """
+        ``ungettext_min_max`` returns the appropriate strings depending on a certain min & max.
+        """
+        assert ungettext_min_max(singular, plural, range_text, min_val, max_val) == expected_output
 
 
 def get_transformed_course_metadata(course_id, status):

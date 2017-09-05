@@ -14,7 +14,7 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 from django.core.cache import cache
 
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
 from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 
@@ -30,25 +30,17 @@ class EnterpriseMockMixin(object):
         super(EnterpriseMockMixin, self).setUp()
         cache.clear()
 
-    def build_enterprise_customer_courses_url(self, enterprise_uuid, limit=None, offset=None):
+    def build_enterprise_api_url(self, resource, *args, **kwargs):
         """
-        DRY method to make enterprise customer courses url.
+        DRY method to make Enterprise API URLs.
 
         Example URL: 'enterprise/api/v1/enterprise-customer/{enterprise_uuid}/courses'
         """
-        if limit and offset:
-            enterprise_customer_courses_url = '{lms_root_url}{enterprise_api_uri}?limit={limit}&offset={offset}'.format(
-                lms_root_url=settings.LMS_ROOT_URL,
-                enterprise_api_uri=reverse('enterprise-customer-courses', args=[enterprise_uuid]),
-                limit=limit,
-                offset=offset,
-            )
-        else:
-            enterprise_customer_courses_url = settings.LMS_ROOT_URL + reverse(
-                'enterprise-customer-courses', args=[enterprise_uuid]
-            )
-
-        return enterprise_customer_courses_url
+        return '{lms_root_url}{enterprise_api_uri}{params}'.format(
+            lms_root_url=settings.LMS_ROOT_URL,
+            enterprise_api_uri=reverse(resource, args=args),
+            params=('?' + urlencode(kwargs)) if kwargs else '',
+        )
 
     def build_fake_enterprise_course_detail(self, enterprise_uuid, course_run_key):
         """
@@ -160,15 +152,15 @@ class EnterpriseMockMixin(object):
             next_page_url = None
             if offset < len(course_run_ids):
                 # Not a last page so there will be more courses for another page
-                next_page_url = self.build_enterprise_customer_courses_url(
-                    enterprise_uuid, limit=1, offset=offset
+                next_page_url = self.build_enterprise_api_url(
+                    'enterprise-customer-courses', enterprise_uuid, limit=1, offset=offset
                 )
 
             previous_page_url = None
             if course_index != 0:
                 # Not a first page so there will always be courses on previous page
-                previous_page_url = self.build_enterprise_customer_courses_url(
-                    enterprise_uuid, limit=1, offset=course_index
+                previous_page_url = self.build_enterprise_api_url(
+                    'enterprise-customer-courses', enterprise_uuid, limit=1, offset=course_index
                 )
 
             paginated_api_response = {
@@ -179,11 +171,23 @@ class EnterpriseMockMixin(object):
             }
             responses.add(
                 responses.GET,
-                url=self.build_enterprise_customer_courses_url(enterprise_uuid),
+                url=self.build_enterprise_api_url('enterprise-customer-courses', enterprise_uuid),
                 json=paginated_api_response,
                 status=200,
                 content_type='application/json',
             )
+
+    def mock_empty_response(self, resource, *args, **kwargs):
+        """
+        DRY function to register an empty response from some Enterprise API endpoint.
+        """
+        responses.add(
+            responses.GET,
+            url=self.build_enterprise_api_url(resource, *args, **kwargs),
+            json={},
+            status=200,
+            content_type='application/json',
+        )
 
 
 # pylint: disable=dangerous-default-value

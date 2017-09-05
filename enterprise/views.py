@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 User-facing views for the Enterprise app.
 """
@@ -21,32 +22,42 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import get_language_from_request, ungettext
 from django.views.generic import View
 
-try:
-    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-except ImportError:
-    configuration_helpers = None
-
-
-# isort:imports-firstparty
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.messages import add_consent_declined_message
+from enterprise.messages import (
+    add_consent_declined_message,
+    add_missing_price_information_message,
+    add_not_one_click_purchasable_message,
+)
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     clean_html_for_template_rendering,
     filter_audit_course_modes,
+    format_price,
     get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
+    ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
+try:
+    from openedx.core.djangoapps.programs.utils import ProgramDataExtender
+except ImportError:
+    ProgramDataExtender = None
+
+try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
 
 LOGGER = getLogger(__name__)
+BASKET_URL = urljoin(settings.ECOMMERCE_PUBLIC_URL_ROOT, '/basket/add/')
 LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
+LMS_PROGRAMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard/programs/{uuid}')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
 LMS_COURSE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
@@ -58,6 +69,7 @@ def verify_edx_resources():
     """
     required_methods = {
         'configuration_helpers': configuration_helpers,
+        'ProgramDataExtender': ProgramDataExtender,
     }
 
     for method in required_methods:
@@ -77,6 +89,25 @@ def get_global_context(request):
         'LANGUAGE_CODE': get_language_from_request(request),
         'platform_name': configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME),
     }
+
+
+class NonAtomicView(View):
+    """
+    A base class view for views that disable atomicity in requests.
+    """
+
+    @method_decorator(transaction.non_atomic_requests)
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Disable atomicity for the view.
+
+        Since we have settings.ATOMIC_REQUESTS enabled, Django wraps all view functions in an atomic transaction, so
+        they can be rolled back if anything fails.
+
+        However, we need to be able to save data in the middle of get/post(), so that it's available for calls to
+        external APIs.  To allow this, we need to disable atomicity at the top dispatch level.
+        """
+        return super(NonAtomicView, self).dispatch(request, *args, **kwargs)
 
 
 class GrantDataSharingPermissions(View):
@@ -267,7 +298,6 @@ class GrantDataSharingPermissions(View):
                 start_link='<a href="#consent-policy-dropdown-bar" '
                            'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">',
                 end_link='</a>',
-
             ),
             'confirmation_alert_prompt': _(
                 'In order to start this course and use your discount, {bold_start}you must{bold_end} consent '
@@ -562,7 +592,7 @@ class HandleConsentEnrollment(View):
         return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
 
 
-class CourseEnrollmentView(View):
+class CourseEnrollmentView(NonAtomicView):
     """
     Enterprise landing page view.
 
@@ -725,7 +755,7 @@ class CourseEnrollmentView(View):
         # has gone through the data sharing consent flow and declined
         # to give data sharing consent.
         if enterprise_course_enrollment and not data_sharing_consent.granted:
-            add_consent_declined_message(request, enterprise_customer, course_run)
+            add_consent_declined_message(request, enterprise_customer, course_run.get('title', ''))
 
         context_data = {
             'course_title': course_run['title'],
@@ -761,19 +791,6 @@ class CourseEnrollmentView(View):
         context_data.update(global_context_data)
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
-    @method_decorator(transaction.non_atomic_requests)
-    def dispatch(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        """
-        Disable atomicity for the view.
-
-        Since we have settings.ATOMIC_REQUESTS enabled, Django wraps all view functions in an atomic transaction, so
-        they can be rolled back if anything fails.
-
-        However, the we need to be able to save data in the middle of get/post(), so that it's available for calls to
-        external APIs.  To allow this, we need to disable atomicity at the top dispatch level.
-        """
-        return super(CourseEnrollmentView, self).dispatch(*args, **kwargs)
-
     @method_decorator(enterprise_login_required)
     def post(self, request, enterprise_uuid, course_id):
         """
@@ -781,8 +798,7 @@ class CourseEnrollmentView(View):
         """
         enterprise_customer, course, course_run, course_modes = self.get_base_details(enterprise_uuid, course_id)
 
-        # Create a link between the user and the enterprise customer if it
-        # does not already exist.
+        # Create a link between the user and the enterprise customer if it does not already exist.
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             enterprise_customer=enterprise_customer,
             user_id=request.user.id
@@ -933,3 +949,272 @@ class CourseEnrollmentView(View):
             enterprise_course_enrollment,
             data_sharing_consent,
         )
+
+
+class ProgramEnrollmentView(NonAtomicView):
+    """
+    Enterprise Program Enrollment landing page view.
+
+    This view will display information pertaining to program enrollment,
+    including the Enterprise offering the program, its (reduced) price,
+    the courses within it, and whether one is already enrolled in them,
+    and other several pieces of Enterprise context.
+    """
+
+    actions = {
+        'purchase_unenrolled_courses': _('Purchase all unenrolled courses'),
+        'purchase_program': _('Pursue the program'),
+    }
+
+    items = {
+        'enrollment': _('enrollment'),
+        'program_enrollment': _('program enrollment'),
+    }
+
+    context_data = {
+        'welcome_text': _('Welcome to {platform_name}.'),
+        'enterprise_welcome_text': _(
+            "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
+            "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
+            "opportunities from the world's best universities."
+        ),
+        'page_title': _('Confirm your {item}'),
+        'organization_text': _('Presented by {organization}'),
+        'item_bullet_points': [
+            _('Credit- and Certificate-eligible'),
+            _('Self-paced; courses can be taken in any order'),
+        ],
+        'purchase_text': _('{purchase_action} for'),
+        'discount_provider': _('Discount provided by {strong_start}{provider}{strong_end}.'),
+        'enrolled_in_course_and_paid_text': _('enrolled'),
+        'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
+        'expected_learning_items_header': _("What you'll learn"),
+        'view_expected_learning_items_text': _('See More'),
+        'hide_expected_learning_items_text': _('See Less'),
+        'confirm_button_text': _('Confirm Program'),
+        'summary_header': _('Program Summary'),
+        'price_text': _('Price'),
+        'length_text': _('Length'),
+        'length_info_text': _('{}-{} weeks per course'),
+        'effort_text': _('Effort'),
+        'effort_info_text': _('{}-{} hours per week, per course'),
+        'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
+    }
+
+    def get_program_details(self, request, program_uuid):
+        """
+        Retrieve fundamental details used by both POST and GET versions of this view.
+
+        Specifically:
+
+        * Take the program UUID and get specific details about the program.
+        * Determine whether the learner is enrolled in the program.
+        """
+        try:
+            program_details = CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
+        except ImproperlyConfigured:
+            raise Http404
+
+        if program_details is None:
+            raise Http404
+
+        # Extend our program details with context we'll need for display or for deciding redirects.
+        program_details = ProgramDataExtender(program_details, request.user).extend()
+
+        # TODO: Upstream this additional context to the platform's `ProgramDataExtender` so we can avoid this here.
+        program_details['enrolled_in_program'] = False
+        enrollment_count = 0
+        for course in program_details['courses']:
+            course_run = course['course_runs'][0]
+            if course_run['is_enrolled'] and course_run['upgrade_url'] is None:
+                # We're enrolled in the program if we have certificate-eligible enrollment in even 1 of its courses.
+                program_details['enrolled_in_program'] = True
+                enrollment_count += 1
+
+        # We're certificate eligible for the program if we have certificate-eligible enrollment in all of its courses.
+        program_details['certificate_eligible_for_program'] = (
+            enrollment_count == len(program_details['courses'])
+        )
+        return program_details
+
+    def get_enterprise_program_enrollment_page(self, request, enterprise_customer, program_details):
+        """
+        Render Enterprise-specific program enrollment page.
+        """
+        # Safely make the assumption that we can use the first authoring organization.
+        organizations = program_details['authoring_organizations']
+        organization = organizations[0] if organizations else {}
+        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        program_title = program_details['title']
+
+        # Make any modifications for singular/plural-dependent text.
+        program_courses = program_details['courses']
+        course_count = len(program_courses)
+        course_count_text = ungettext(
+            '{count} Course',
+            '{count} Courses',
+            course_count,
+        ).format(count=course_count)
+        effort_info_text = ungettext_min_max(
+            '{} hour per week, per course',
+            '{} hours per week, per course',
+            self.context_data['effort_info_text'],
+            program_details.get('min_hours_effort_per_week'),
+            program_details.get('max_hours_effort_per_week'),
+        )
+        length_info_text = ungettext_min_max(
+            '{} week per course',
+            '{} weeks per course',
+            self.context_data['length_info_text'],
+            program_details.get('weeks_to_complete_min'),
+            program_details.get('weeks_to_complete_max'),
+        )
+
+        # Update some enrollment-related text requirements.
+        if program_details['enrolled_in_program']:
+            purchase_action = self.actions['purchase_unenrolled_courses']
+            item = self.items['enrollment']
+        else:
+            purchase_action = self.actions['purchase_program']
+            item = self.items['program_enrollment']
+
+        # Add any warning messages.
+        program_data_sharing_consent = get_data_sharing_consent(
+            request.user.username,
+            enterprise_customer.uuid,
+            program_uuid=program_details['uuid'],
+        )
+        if program_data_sharing_consent.exists and not program_data_sharing_consent.granted:
+            add_consent_declined_message(request, enterprise_customer, program_title)
+
+        discount_data = program_details.get('discount_data', {})
+        if discount_data.get('total_incl_tax_excl_discounts') is None:
+            add_missing_price_information_message(request, program_title)
+
+        one_click_purchase_eligibility = program_details.get('is_learner_eligible_for_one_click_purchase', False)
+        if not one_click_purchase_eligibility:
+            add_not_one_click_purchasable_message(request, enterprise_customer, program_title)
+
+        # Update our context with the above calculated details and more.
+        context_data = self.context_data.copy()
+        context_data.update(get_global_context(request))
+        context_data.update({
+            'enterprise_welcome_text': self.context_data['enterprise_welcome_text'].format(
+                strong_start='<strong>',
+                strong_end='</strong>',
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+            ),
+            'discount_provider': self.context_data['discount_provider'].format(
+                strong_start='<strong>',
+                strong_end='</strong>',
+                provider=enterprise_customer.name,
+            ),
+            'enterprise_customer': enterprise_customer,
+            'organization_name': organization.get('name'),
+            'organization_logo': organization.get('logo_image_url'),
+            'organization_text': self.context_data['organization_text'].format(organization=organization.get('name')),
+            'welcome_text': self.context_data['welcome_text'].format(platform_name=platform_name),
+            'page_title': self.context_data['page_title'].format(item=item),
+            'program_title': program_title,
+            'program_subtitle': program_details['subtitle'],
+            'program_overview': program_details['overview'],
+            'program_price': format_price(discount_data.get('total_incl_tax_excl_discounts', 0)),
+            'program_discounted_price': format_price(discount_data.get('total_incl_tax', 0)),
+            'is_discounted': discount_data.get('is_discounted', False),
+            'courses': program_courses,
+            'item_bullet_points': self.context_data['item_bullet_points'],
+            'purchase_text': self.context_data['purchase_text'].format(purchase_action=purchase_action),
+            'expected_learning_items': program_details['expected_learning_items'],
+            'course_count_text': course_count_text,
+            'length_info_text': length_info_text,
+            'effort_info_text': effort_info_text,
+            'is_learner_eligible_for_one_click_purchase': one_click_purchase_eligibility,
+        })
+        return render(request, 'enterprise/enterprise_program_enrollment_page.html', context=context_data)
+
+    @method_decorator(force_fresh_session)
+    @method_decorator(enterprise_login_required)
+    def get(self, request, enterprise_uuid, program_uuid):
+        """
+        Show Program Landing page for the Enterprise's Program.
+
+        Render the Enterprise's Program Enrollment page for a specific program.
+        The Enterprise and Program are both selected by their respective UUIDs.
+
+        Unauthenticated learners will be redirected to enterprise-linked SSO.
+
+        A 404 will be raised if any of the following conditions are met:
+            * No enterprise customer UUID query parameter ``enterprise_uuid`` found in request.
+            * No enterprise customer found against the enterprise customer
+                uuid ``enterprise_uuid`` in the request kwargs.
+            * No Program can be found given ``program_uuid`` either at all or associated with
+                the Enterprise..
+        """
+        verify_edx_resources()
+
+        # Create a link between the user and the enterprise customer if it does not already exist.
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        with transaction.atomic():
+            EnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer=enterprise_customer,
+                user_id=request.user.id
+            )
+
+        program_details = self.get_program_details(request, program_uuid)
+        if program_details['certificate_eligible_for_program']:
+            # The user is already enrolled in the program, so redirect to the program's dashboard.
+            return redirect(LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid))
+
+        return self.get_enterprise_program_enrollment_page(request, enterprise_customer, program_details)
+
+    @method_decorator(enterprise_login_required)
+    def post(self, request, enterprise_uuid, program_uuid):
+        """
+        Process a submitted track selection form for the enterprise.
+        """
+        verify_edx_resources()
+
+        # Create a link between the user and the enterprise customer if it does not already exist.
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        with transaction.atomic():
+            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer=enterprise_customer,
+                user_id=request.user.id
+            )
+
+        program_details = self.get_program_details(request, program_uuid)
+        if program_details['certificate_eligible_for_program']:
+            # The user is already enrolled in the program, so redirect to the program's dashboard.
+            return redirect(LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid))
+
+        basket_page = '{basket_url}?{params}'.format(
+            basket_url=BASKET_URL,
+            params=urlencode(
+                [tuple(['sku', sku]) for sku in program_details['skus']] +
+                [tuple(['bundle', program_uuid])]
+            )
+        )
+        if get_data_sharing_consent(
+                enterprise_customer_user.username,
+                enterprise_customer.uuid,
+                program_uuid=program_uuid,
+        ).consent_required():
+            return redirect(
+                '{grant_data_sharing_url}?{params}'.format(
+                    grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
+                    params=urlencode(
+                        {
+                            'next': basket_page,
+                            'failure_url': reverse(
+                                'enterprise_program_enrollment_page',
+                                args=[enterprise_customer.uuid, program_uuid]
+                            ),
+                            'enterprise_customer_uuid': enterprise_customer.uuid,
+                            'program_uuid': program_uuid,
+                        }
+                    )
+                )
+            )
+
+        return redirect(basket_page)

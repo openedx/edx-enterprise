@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Assist integrated channels with retrieving learner completion data.
 
