@@ -72,8 +72,10 @@
                 {{ price_text }}:
                 {% if course_mode.final_price and course_mode.original_price != course_mode.final_price %}
                   <strike>{{ course_mode.original_price }}</strike> {{ course_mode.final_price }}
+                  <div>{{discount_text|safe }}</div>
                 {% else %}
                   {{ course_mode.original_price }}
+                  <div>{{no_discount_text}}</div>
                 {% endif %}
               </span>
               <span class="description">{{ course_mode.description }}</span>
