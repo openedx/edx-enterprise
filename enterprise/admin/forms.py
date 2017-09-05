@@ -156,6 +156,7 @@ class ManageLearnersForm(forms.Form):
                 email,
                 email_or_username,
                 ValidationMessages.INVALID_EMAIL_OR_USERNAME,
+                ignore_existing=True
             )
 
         return email
