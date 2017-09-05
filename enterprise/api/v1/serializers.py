@@ -3,13 +3,17 @@ Serializers for enterprise api version 1.
 """
 from __future__ import absolute_import, unicode_literals
 
+import copy
+
 from rest_framework import serializers
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise import models, utils
+from enterprise import models
+from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
+from enterprise.utils import update_query_parameters
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -174,8 +178,60 @@ class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerCatalog
         fields = (
-            'uuid', 'enterprise_customer', 'query',
+            'uuid', 'title', 'enterprise_customer',
         )
+
+
+class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSerializer):
+    """
+    Serializer for the ``EnterpriseCustomerCatalog`` model which includes
+    the catalog's discovery service search query results.
+    """
+
+    def to_representation(self, instance):
+        """
+        Serialize the EnterpriseCustomerCatalog object.
+
+        Arguments:
+            instance (EnterpriseCustomerCatalog): The EnterpriseCustomerCatalog to serialize.
+
+        Returns:
+            dict: The EnterpriseCustomerCatalog converted to a dict.
+        """
+        request = self.context['request']
+        enterprise_customer = instance.enterprise_customer
+
+        representation = super(EnterpriseCustomerCatalogDetailSerializer, self).to_representation(instance)
+
+        # Retrieve the EnterpriseCustomerCatalog search results from the discovery service.
+        paginated_content = instance.get_paginated_content(request.GET)
+        count = paginated_content['count']
+        search_results = paginated_content['results']
+
+        # Add the Enterprise enrollment URL to each content item returned from the discovery service.
+        for item in search_results:
+            content_type = item['content_type']
+            if content_type == 'courserun':
+                item['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(item['key'])
+            elif content_type == 'program':
+                item['enrollment_url'] = enterprise_customer.get_program_enrollment_url(item['uuid'])
+
+        # Build pagination URLs
+        previous_url = None
+        next_url = None
+        page = int(request.GET.get('page', '1'))
+        request_uri = request.build_absolute_uri()
+        if paginated_content['previous']:
+            previous_url = update_query_parameters(request_uri, {'page': page - 1})
+        if paginated_content['next']:
+            next_url = update_query_parameters(request_uri, {'page': page + 1})
+
+        representation['count'] = count
+        representation['previous'] = previous_url
+        representation['next'] = next_url
+        representation['results'] = search_results
+
+        return representation
 
 
 class UserDataSharingConsentAuditSerializer(serializers.ModelSerializer):
@@ -261,13 +317,6 @@ class EnterpriseCustomerUserEntitlementSerializer(ImmutableStateSerializer):
     data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True, read_only=True)
 
 
-class EnterpriseCustomerCatalogApiReadOnlySerializer(ResponsePaginationSerializer):
-    """
-    Paginated serializer for Enterprise Catalog API responses.
-    """
-    pass
-
-
 class CourseCatalogApiResponseReadOnlySerializer(ImmutableStateSerializer):
     """
     Serializer for enterprise customer catalog.
@@ -286,113 +335,61 @@ class CourseCatalogApiResponseReadOnlySerializer(ImmutableStateSerializer):
     )
 
 
-class EnterpriseCatalogCoursesReadOnlySerializer(ResponsePaginationSerializer):
+class EnterpriseCatalogCoursesReadOnlySerializer(ResponsePaginationSerializer, EnterpriseCourseContextSerializerMixin):
     """
     Serializer for enterprise customer catalog courses.
     """
+    pass
 
-    def update_enterprise_courses(self, enterprise_customer, catalog_id):
+
+class CourseRunDetailSerializer(ImmutableStateSerializer):
+    """
+    Serializer for course run data retrieved from the discovery service course_run detail API endpoint.
+
+    This serializer updates the course run data with the EnterpriseCustomer-specific enrollment page URL
+    for the given course run.
+    """
+
+    def to_representation(self, instance):
         """
-        This method adds enterprise specific metadata for each course.
-
-        We are adding following field in all the courses.
-            tpa_hint: a string for identifying Identity Provider.
-        """
-        courses = []
-
-        global_context = {
-            'tpa_hint': enterprise_customer and enterprise_customer.identity_provider,
-            'enterprise_id': enterprise_customer and enterprise_customer.uuid,
-            'catalog_id': catalog_id,
-        }
-
-        for course in self.data['results']:
-            courses.append(
-                self.update_course(course, catalog_id, enterprise_customer, global_context)
-            )
-        self.data['results'] = courses
-
-    def update_course(self, course, catalog_id, enterprise_customer, global_context):
-        """
-        Update course metadata of the given course and return updated course.
+        Return the updated course run data dictionary.
 
         Arguments:
-            course (dict): Course Metadata returned by course catalog API
-            catalog_id (int): identifier of the catalog given course belongs to.
-            enterprise_customer (EnterpriseCustomer): enterprise customer instance.
-            global_context (dict): Global attributes that should be added to all the courses.
+            instance (dict): The course run data.
 
         Returns:
-            (dict): Updated course metadata
+            dict: The updated course run data.
         """
-        # extract course runs from course metadata and
-        # Replace course's course runs with the updated course runs
-        course['course_runs'] = self.update_course_runs(
-            course_runs=course.get('course_runs') or [],
-            catalog_id=catalog_id,
-            enterprise_customer=enterprise_customer,
+        updated_course_run = copy.deepcopy(instance)
+        enterprise_customer = self.context['enterprise_customer']
+        updated_course_run['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(
+            updated_course_run['key']
         )
+        return updated_course_run
 
-        # Update marketing urls in course metadata to include enterprise related info.
-        if course.get('marketing_url'):
-            course.update({
-                "marketing_url": utils.update_query_parameters(
-                    course.get('marketing_url'),
-                    {
-                        'tpa_hint': enterprise_customer and enterprise_customer.identity_provider,
-                        'enterprise_id': enterprise_customer and enterprise_customer.uuid,
-                        'catalog_id': catalog_id,
-                    },
-                ),
-            })
 
-        # now add global context to the course.
-        course.update(global_context)
-        return course
+class ProgramDetailSerializer(ImmutableStateSerializer):
+    """
+    Serializer for program data retrieved from the discovery service program detail API endpoint.
 
-    def update_course_runs(self, course_runs, catalog_id, enterprise_customer):
+    This serializer updates the program data and child course run data with EnterpriseCustomer-specific
+    enrollment page URLs for the given content types.
+    """
+
+    def to_representation(self, instance):
         """
-        Update Marketing urls in course metadata and return updated course.
+        Return the updated program data dictionary.
 
         Arguments:
-            course_runs (list): List of course runs.
-            catalog_id (int): Course catalog identifier.
-            enterprise_customer (EnterpriseCustomer): enterprise customer instance.
+            instance (dict): The program data.
 
         Returns:
-            (dict): Dictionary containing updated course metadata.
+            dict: The updated program data.
         """
-        updated_course_runs = []
-
-        query_parameters = {
-            'tpa_hint': enterprise_customer and enterprise_customer.identity_provider,
-            'enterprise_id': enterprise_customer and enterprise_customer.uuid,
-            'catalog_id': catalog_id,
-        }
-
-        for course_run in course_runs:
-            track_selection_url = utils.get_course_track_selection_url(
-                course_run=course_run,
-                query_parameters=query_parameters,
-            )
-
-            enrollment_url = enterprise_customer.get_course_enrollment_url(course_run.get('key'))
-
-            # Add/update track selection url in course run metadata.
-            course_run.update({
-                'track_selection_url': track_selection_url,
-                'enrollment_url': enrollment_url
-            })
-
-            # Update marketing urls in course metadata to include enterprise related info.
-            if course_run.get('marketing_url'):
-                course_run.update({
-                    "marketing_url": utils.update_query_parameters(
-                        course_run.get('marketing_url'), query_parameters
-                    ),
-                })
-
-            # Add updated course run to the list.
-            updated_course_runs.append(course_run)
-
-        return updated_course_runs
+        updated_program = copy.deepcopy(instance)
+        enterprise_customer = self.context['enterprise_customer']
+        updated_program['enrollment_url'] = enterprise_customer.get_program_enrollment_url(updated_program['uuid'])
+        for course in updated_program['courses']:
+            for course_run in course['course_runs']:
+                course_run['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(course_run['key'])
+        return updated_program

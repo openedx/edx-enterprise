@@ -27,3 +27,21 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
             users = User.objects.filter(**query_parameters).values_list('id', flat=True)
             queryset = queryset.filter(user_id__in=users)
         return queryset
+
+
+class IsStaffOrLinkedToEnterpriseCustomerFilterBackend(filters.BaseFilterBackend):
+    """
+    Filter based on the requesting user's status as staff or linkage to a related EnterpriseCustomer.
+
+    Using this backend will ensure that results returned are owned by an EnterpriseCustomer which
+    the requesting user is linked to.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        """ Filter the queryset. """
+        user = request.user
+        if not user.is_staff:
+            return queryset.filter(
+                enterprise_customer__enterprise_customer_users__user_id=user.id
+            )
+        return queryset

@@ -15,6 +15,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
+from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 
 class EnterpriseMockMixin(object):
@@ -183,3 +184,25 @@ class EnterpriseMockMixin(object):
                 status=200,
                 content_type='application/json',
             )
+
+
+# pylint: disable=dangerous-default-value
+def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], title=u'All Content',
+                                         enterprise_customer_uuid=FAKE_UUIDS[0], previous_url=None, next_url=None,
+                                         paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
+                                         include_enterprise_context=False):
+    """
+    Return fake EnterpriseCustomerCatalog detail API result.
+    """
+    if include_enterprise_context:
+        paginated_content = update_search_with_enterprise_context(paginated_content)
+
+    return {
+        'count': paginated_content['count'],
+        'previous': previous_url,
+        'next': next_url,
+        'uuid': enterprise_catalog_uuid,
+        'title': title,
+        'enterprise_customer': enterprise_customer_uuid,
+        'results': paginated_content['results'],
+    }

@@ -11,8 +11,9 @@
 #   /enterprise/api/v1/catalogs/{id}/
 #   /enterprise/api/v1/catalogs/{id}/courses/
 #   /enterprise/api/v1/enterprise-catalogs/
-#   /enterprise/api/v1/enterprise-catalogs/{uuid}/
-#   /enterprise/api/v1/programs/{uuid}/
+#   /enterprise/api/v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/
+#   /enterprise/api/v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/course-runs/{course_run_id}/
+#   /enterprise/api/v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/programs/{program_uuid}/
 
 apigateway_responses: &apigateway_responses
   default:
@@ -126,6 +127,24 @@ id_parameter: &id_parameter
   required: true
   type: "number"
 
+enterprise_customer_catalog_uuid_parameter: &enterprise_customer_catalog_uuid_parameter
+  name: "enterprise_customer_catalog_uuid"
+  in: "path"
+  required: true
+  type: "string"
+
+course_run_id_parameter: &course_run_id_parameter
+  name: "course_run_id"
+  in: "path"
+  required: true
+  type: "string"
+
+program_uuid_parameter: &program_uuid_parameter
+  name: "program_uuid"
+  in: "path"
+  required: true
+  type: "string"
+
 uuid_parameter: &uuid_parameter
   name: "uuid"
   in: "path"
@@ -195,12 +214,13 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters: &apigateway_
     integration.request.querystring.page: "method.request.querystring.page"
     integration.request.querystring.page_size: "method.request.querystring.page_size"
 
-x-amazon-apigateway-integration-uuid-response: &apigateway_integration_uuid
+x-amazon-apigateway-integration-enterprise-customer-catalog-detail: &apigateway_integration_enterprise_customer_catalog_detail
   responses: *apigateway_responses_with_mapping_template_for_uuid
   httpMethod: "GET"
   type: "http"
   requestParameters:
     integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.uuid: "method.request.path.uuid"
     integration.request.querystring.page: "method.request.querystring.page"
     integration.request.querystring.page_size: "method.request.querystring.page_size"
 
@@ -210,9 +230,31 @@ x-amazon-apigateway-integration-with-uuid: &apigateway_integration_with_uuid_par
   type: "http"
   requestParameters:
     integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.uuid: "method.request.path.uuid"
     integration.request.querystring.page: "method.request.querystring.page"
     integration.request.querystring.page_size: "method.request.querystring.page_size"
-    integration.request.path.uuid: "method.request.path.uuid"
+
+x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-program-uuid-parameters: &apigateway_integration_with_enterprise_customer_catalog_uuid_and_program_uuid_parameters
+  responses: *apigateway_responses
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.enterprise_customer_catalog_uuid: "method.request.path.enterprise_customer_catalog_uuid"
+    integration.request.path.program_uuid: "method.request.path.program_uuid"
+    integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
+
+x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course-run-id-parameters: &apigateway_integration_with_enterprise_customer_catalog_uuid_and_course_run_id_parameters
+  responses: *apigateway_responses
+  httpMethod: "GET"
+  type: "http"
+  requestParameters:
+    integration.request.header.Authorization: "method.request.header.Authorization"
+    integration.request.path.enterprise_customer_catalog_uuid: "method.request.path.enterprise_customer_catalog_uuid"
+    integration.request.path.course_run_id: "method.request.path.course_run_id"
+    integration.request.querystring.page: "method.request.querystring.page"
+    integration.request.querystring.page_size: "method.request.querystring.page_size"
 
 endpoints:
   v1:
@@ -274,7 +316,7 @@ endpoints:
           operationId: "get_enterprise_customer_catalogs"
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration_uuid
+            <<: *apigateway_integration_with_uuid_parameter
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/"
 
     # /v1/enterprise-catalogs/{uuid}/
@@ -283,26 +325,43 @@ endpoints:
           produces: *produces
           parameters:
             - *auth_header
+            - *uuid_parameter
             - *page_qs_parameter
             - *page_size_qs_parameter
-            - *uuid_parameter
           operationId: "get_enterprise_customer_catalog_by_uuid"
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_uuid_parameter
+            <<: *apigateway_integration_enterprise_customer_catalog_detail
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/"
 
-    # /v1/programs/{uuid}/
-    programByUuid:
+    # /v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/course-runs/{course_run_id}/
+    enterpriseCustomerCatalogCourseRunByUuid:
         get:
           produces: *produces
           parameters:
             - *auth_header
+            - *enterprise_customer_catalog_uuid_parameter
+            - *course_run_id_parameter
             - *page_qs_parameter
             - *page_size_qs_parameter
-            - *uuid_parameter
-          operationId: "get_program_by_uuid"
+          operationId: "get_enterprise_customer_catalog_course_run_by_id"
           responses: *responses
           x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_uuid_parameter
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/programs/{uuid}/"
+            <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_course_run_id_parameters
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/course-runs/{course_run_id}/"
+
+    # /v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/programs/{program_uuid}/
+    enterpriseCustomerCatalogProgramByUuid:
+        get:
+          produces: *produces
+          parameters:
+            - *auth_header
+            - *enterprise_customer_catalog_uuid_parameter
+            - *program_uuid_parameter
+            - *page_qs_parameter
+            - *page_size_qs_parameter
+          operationId: "get_enterprise_customer_catalog_program_by_uuid"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_program_uuid_parameters
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{enterprise_customer_catalog_uuid}/programs/{program_uuid}/"

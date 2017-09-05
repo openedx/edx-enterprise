@@ -267,14 +267,23 @@ class TestEnterpriseCustomer(unittest.TestCase):
         customer = EnterpriseCustomerFactory()
         assert customer.identity_provider is None
 
-    def test_get_course_enrollment_url_no_site_config(self):
+    def test_get_course_run_enrollment_url_no_site_config(self):
         """
-        Test get_course_enrollment_url when the site_configuration package could not be imported.
+        Test get_course_run_enrollment_url when the site_configuration package could not be imported.
         """
         customer = EnterpriseCustomerFactory()
         error = 'This package must be installed in an EdX environment to look up configuration.'
         with raises(NotConnectedToOpenEdX, message=error):
-            customer.get_course_enrollment_url('course_id')
+            customer.get_course_run_enrollment_url('course_id')
+
+    def test_get_program_enrollment_url_no_site_config(self):
+        """
+        Test get_program_enrollment_url when the site_configuration package could not be imported.
+        """
+        customer = EnterpriseCustomerFactory()
+        error = 'This package must be installed in an EdX environment to look up configuration.'
+        with raises(NotConnectedToOpenEdX, message=error):
+            customer.get_program_enrollment_url('program_id')
 
     @ddt.data(
         ('course_exists', True),
@@ -285,7 +294,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_catalog_contains_course(self, course_id, expected_result, mock_catalog_api_class):
         """
-        Test catalog_contains_course_run method on the EnterpriseCustomer.
+        Test catalog_contains_course method on the EnterpriseCustomer.
         """
         def is_course_in_catalog(_catalog_id, course_id):
             """

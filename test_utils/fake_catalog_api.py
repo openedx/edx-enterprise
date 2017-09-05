@@ -5,8 +5,10 @@ Fake responses for course catalog api.
 
 from __future__ import absolute_import, unicode_literals
 
+import copy
+
 from six.moves import reduce as six_reduce
-from test_utils import FAKE_UUIDS
+from test_utils import FAKE_UUIDS, update_course_run_with_enterprise_context, update_program_with_enterprise_context
 
 FAKE_COURSE_RUN = {
     'key': 'course-v1:edX+DemoX+Demo_Course',
@@ -86,6 +88,9 @@ FAKE_COURSE_RUN = {
     'reporting_type': 'mooc',
     'eligible_for_financial_aid': True
 }
+FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT = copy.deepcopy(FAKE_COURSE_RUN)
+update_course_run_with_enterprise_context(FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT)
+
 FAKE_COURSE = {
     'key': 'edX+DemoX',
     'uuid': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
@@ -122,7 +127,7 @@ FAKE_COURSE = {
 }
 
 FAKE_PROGRAM_RESPONSE1 = {
-    "uuid": "40782a06-1c37-4779-86aa-0a081f014d4d",
+    "uuid": FAKE_UUIDS[2],
     "title": "Program1",
     "subtitle": "",
     "type": "All types",
@@ -135,57 +140,74 @@ FAKE_PROGRAM_RESPONSE1 = {
             "key": "Organization+DNDv2",
             "uuid": "7fe4f68a-abd0-433f-ac9e-1559c12b96e7",
             "title": "Drag and Drop Demos",
-            "course_runs": [
-                {
-                    "key": "course-v1:Organization+DNDv2+T1",
-                    "uuid": "076cb917-06d6-4713-8a6c-c1712ce2e421",
-                    "title": "Drag and Drop Demos",
-                    "image": {},  # skipped
-                    "short_description": None,
-                    "marketing_url": None,
-                    "start": "2015-01-01T00:00:00Z",
-                }
-            ],
-            "owners": [
-                {
-                    "uuid": "cd13a803-c524-4719-ba2c-c1c452b18244",
-                    "key": "Organization",
-                    "name": ""
-                }
-            ],
-            "image": None
+            "course_runs": [{"key": "course-v1:Organization+DNDv2+Run1"}],
         },
         {
             "key": "Organization+VD1",
             "uuid": "6d681f1d-856d-4955-8786-a9f3fed6a48f",
             "title": "VectorDraw",
-            "course_runs": [
-                {
-                    "key": "course-v1:Organization+VD1+VD1",
-                    "uuid": "5b949fc1-aa05-42b0-8c9f-8e6114848ae9",
-                    "title": "VectorDraw",
-                    "image": {},  # skipped
-                    "short_description": None,
-                    "marketing_url": None,
-                    "start": "2030-01-01T00:00:00Z",
-                }
-            ],
+            "course_runs": [{"key": "course-v1:Organization+VD1+Run1"}],
         },
         {
-            "key": "course-v1:Organization+ENT-1+T1",
+            "key": "Organization+ENT-1+T1",
             "uuid": "7f27580c-f475-413b-851a-529ac90f0bb8",
             "title": "Enterprise Tests",
-            "course_runs": [
-                {
-                    "key": "course-v1:Organization+ENT-1+T1",
-                    "uuid": "a2128a84-6e20-4fce-958e-80d9461ef835",
-                    "title": "Enterprise Tests",
-                    "image": {},  # skipped
-                    "short_description": "",
-                    "marketing_url": None
-                }
-            ],
+            "course_runs": [{"key": "course-v1:Organization+ENT-1+Run1"}],
         }
+    ],
+    "authoring_organizations": [
+        {
+            "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
+            "key": "edX",
+            "name": "",
+            "certificate_logo_image_url": None,
+            "description": None,
+            "homepage_url": None,
+            "tags": [],
+            "logo_image_url": None,
+            "marketing_url": None
+        }
+    ],
+    "card_image_url": "http://wowslider.com/sliders/demo-10/data/images/dock.jpg",
+    "is_program_eligible_for_one_click_purchase": False,
+    "overview": "This is a test Program.",
+    "min_hours_effort_per_week": 5,
+    "max_hours_effort_per_week": 10,
+    "video": {
+        "src": "http://www.youtube.com/watch?v=3_yD_cEKoCk",
+        "description": None,
+        "image": None
+    },
+    "expected_learning_items": [],
+    "faq": [],
+    "credit_backing_organizations": [
+        {
+            "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
+            "key": "edX",
+            "name": "",
+            "certificate_logo_image_url": None,
+            "description": None,
+            "homepage_url": None,
+            "tags": [],
+            "logo_image_url": None,
+            "marketing_url": None
+        }
+    ],
+    "corporate_endorsements": [],
+    "job_outlook_items": [],
+    "individual_endorsements": [],
+    "languages": [
+        "en-us"
+    ],
+    "transcript_languages": [
+        "en-us"
+    ],
+    "subjects": [],
+    "price_ranges": [],
+    "staff": [],
+    "credit_redemption_overview": "This is a test Program.",
+    "applicable_seat_types": [
+        "audit"
     ],
 }
 
@@ -344,6 +366,10 @@ FAKE_COURSE_RUNS_RESPONSE = [
     }
 ]
 
+FAKE_PROGRAM_RESPONSE1_WITH_ENTERPRISE_CONTEXT = FAKE_PROGRAM_RESPONSE1
+FAKE_PROGRAM_RESPONSE2_WITH_ENTERPRISE_CONTEXT = FAKE_PROGRAM_RESPONSE2
+update_program_with_enterprise_context(FAKE_PROGRAM_RESPONSE1_WITH_ENTERPRISE_CONTEXT)
+update_program_with_enterprise_context(FAKE_PROGRAM_RESPONSE2_WITH_ENTERPRISE_CONTEXT)
 FAKE_PROGRAM_RESPONSES = {
     FAKE_PROGRAM_RESPONSE1["uuid"]: FAKE_PROGRAM_RESPONSE1,
     FAKE_PROGRAM_RESPONSE2["uuid"]: FAKE_PROGRAM_RESPONSE2,
@@ -821,34 +847,16 @@ FAKE_SEARCH_ALL_RESULTS = {
     ]
 }
 
-
-def get_paginated_search_results(querystring):
-    """
-    Fake implementation that returns paginated results consisting of all objects whose keys or values contain the query.
-
-    Arguments:
-        querystring (dict): Query parameters containing query string to match against. Empty string returns all results.
-
-    Returns:
-        dict: Paginated results of the object(s) that match(es) the search results.
-    """
-    query = querystring['q']
-
-    if query == '':
-        return FAKE_SEARCH_ALL_RESULTS
-
-    results = []
-    for result in FAKE_SEARCH_ALL_RESULTS.get('results', []):
-        for key in result:
-            if (query in key or query in str(result[key])) and result not in results:
-                results.append(result)
-
-    return {
-        'count': len(results),
-        'next': FAKE_SEARCH_ALL_RESULTS['next'],
-        'previous': FAKE_SEARCH_ALL_RESULTS['previous'],
-        'results': results
-    }
+FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION = {
+    "count": 3,
+    "next": "https://fake.server/api/v1/?page=1",
+    "previous": "https://fake.server/api/v1/?page=3",
+    "results": [
+        FAKE_SEARCH_ALL_COURSE_RESULT,
+        FAKE_SEARCH_ALL_SHORT_COURSE_RESULT,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT,
+    ]
+}
 
 
 def get_catalog_courses(catalog_id):

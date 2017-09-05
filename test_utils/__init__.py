@@ -7,14 +7,18 @@ Test utilities.
 
 from __future__ import absolute_import, unicode_literals
 
+import copy
 import json
 import uuid
+
+from django.conf import settings
+from django.core.urlresolvers import reverse
 
 import mock
 import six
 from pytest import mark
 from rest_framework.test import APITestCase, APIClient
-from six.moves.urllib.parse import parse_qs, urlsplit  # pylint: disable=import-error,ungrouped-imports
+from six.moves.urllib.parse import parse_qs, urljoin, urlsplit  # pylint: disable=import-error,ungrouped-imports
 
 from test_utils import factories
 
@@ -56,6 +60,55 @@ def create_items(factory, items):
     """
     for item in items:
         factory.create(**item)
+
+
+def update_course_run_with_enterprise_context(course_run):
+    """
+    Populate a fake course run response with any necessary Enterprise context for testing purposes.
+
+    Arguments:
+        course_run (dict): The course_run to populate with enterprise context.
+    """
+    course_run['enrollment_url'] = urljoin(
+        settings.LMS_ROOT_URL,
+        reverse(
+            'enterprise_course_enrollment_page',
+            kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'course_id': course_run['key']}
+        )
+    )
+
+
+def update_program_with_enterprise_context(program):
+    """
+    Populate a fake program response with any necessary Enterprise context for testing purposes.
+
+    Arguments:
+        program (dict): The program to populate with enterprise context.
+    """
+    program['enrollment_url'] = urljoin(
+        settings.LMS_ROOT_URL,
+        '/enterprise/{}/program/{}/enroll'.format(FAKE_UUIDS[0], program['uuid'])
+    )
+    for course in program.get('courses', []):
+        for course_run in course['course_runs']:
+            update_course_run_with_enterprise_context(course_run)
+
+
+def update_search_with_enterprise_context(search_result):
+    """
+    Populate fake discovery search result response with any necessary Enterprise context for testing purposes.
+
+    Arguments:
+        search_result (dict): The search result to populate with enterprise context.
+    """
+    search_result = copy.deepcopy(search_result)
+    for item in search_result['results']:
+        content_type = item['content_type']
+        if content_type == 'program':
+            update_program_with_enterprise_context(item)
+        elif content_type == 'courserun':
+            update_course_run_with_enterprise_context(item)
+    return search_result
 
 
 @mark.django_db

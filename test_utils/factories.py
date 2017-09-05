@@ -243,7 +243,7 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))  # pylint: disable=no-member
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    query = ''
+    content_filter = {}
 
 
 class DataSharingConsentFactory(factory.django.DjangoModelFactory):
