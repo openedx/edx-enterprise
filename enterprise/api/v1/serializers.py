@@ -161,12 +161,10 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         Save the model with the found EnterpriseCustomerUser.
         """
         course_id = self.validated_data['course_id']
-        consent_granted = self.validated_data['consent_granted']
 
         models.EnterpriseCourseEnrollment.objects.get_or_create(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=course_id,
-            consent_granted=consent_granted,
         )
 
 

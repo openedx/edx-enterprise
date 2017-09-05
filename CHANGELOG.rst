@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.43.1] - 2017-09-05
+---------------------
+
+* Remove support for writing consent_granted in enterprise-course-enrollment api.
+
 [0.43.0] - 2017-08-31
 ---------------------
 
