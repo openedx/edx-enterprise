@@ -14,11 +14,15 @@ Change Log
 Unreleased
 ----------
 
+[0.43.3] - 2017-09-06
+---------------------
+
+* Ensure that segment is loaded and firing page events for all user facing enterprise views.
+
 [0.43.2] - 2017-09-06
 ---------------------
 
 * Display the enterprise discounted text on the course enrollment landing page.
-
 
 [0.43.1] - 2017-09-05
 ---------------------

@@ -126,7 +126,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'close_modal_button_text': 'Close',
             'discount_text': 'Discount provided by <strong>Starfleet Academy</strong>',
             'no_discount_text': "Receive an instructor-signed certificate and support edX's mission to increase access"
-                                " to high-quality education for everyone."
+                                " to high-quality education for everyone.",
+            'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }
         default_context.update(expected_context)
         assert response.status_code == 200

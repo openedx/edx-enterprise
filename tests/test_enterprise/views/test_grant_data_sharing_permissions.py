@@ -9,6 +9,7 @@ import ddt
 import mock
 from pytest import mark
 
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
@@ -173,6 +174,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 "enrollment_deferred": enrollment_deferred,
                 "welcome_text": "Welcome to My Platform.",
                 'sharable_items_note_header': 'Please note',
+                'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
@@ -705,6 +707,7 @@ class TestProgramDataSharingPermissions(TestCase):
                 "enrollment_deferred": enrollment_deferred,
                 "welcome_text": "Welcome to My Platform.",
                 'sharable_items_note_header': 'Please note',
-                "enterprise_customer": enterprise_customer
+                "enterprise_customer": enterprise_customer,
+                'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
