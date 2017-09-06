@@ -9,10 +9,11 @@ import logging
 from functools import wraps
 from time import time
 
-import requests
 from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
-from slumber.exceptions import HttpNotFoundError
+from requests import Session
+from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
+from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
 from django.conf import settings
 from django.utils import timezone
@@ -49,7 +50,7 @@ class LmsApiClient(object):
         """
         Create an LMS API client, authenticated with the API token from Django settings.
         """
-        session = requests.Session()
+        session = Session()
         session.headers = {"X-Edx-Api-Key": settings.EDX_API_KEY}
         self.client = EdxRestApiClient(
             self.API_BASE_URL, append_slash=self.APPEND_SLASH, session=session
@@ -127,7 +128,14 @@ class EnrollmentApiClient(LmsApiClient):
         Returns:
             dict: A dictionary containing details about the course, in an enrollment context (allowed modes, etc.)
         """
-        return self.client.course(course_id).get()
+        try:
+            return self.client.course(course_id).get()
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to retrieve course enrollment details for course %s due to: %s',
+                course_id, str(exc)
+            )
+            return {}
 
     def _sort_course_modes(self, modes):
         """
@@ -255,8 +263,8 @@ class CourseApiClient(LmsApiClient):
         """
         try:
             return self.client.courses(course_id).get()
-        except HttpNotFoundError:
-            LOGGER.error('details not found for course=%s', course_id)
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception('Details not found for course %s due to: %s', course_id, str(exc))
             return None
 
 

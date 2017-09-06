@@ -10,13 +10,14 @@ import mock
 from dateutil.parser import parse
 from faker import Factory as FakerFactory
 from pytest import mark
+from slumber.exceptions import HttpClientError
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
-from enterprise.views import HttpClientError
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils import fake_render
 from test_utils.factories import (
@@ -565,7 +566,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         """
         configuration_helpers_mock.get_value.return_value = 'edX'
         course_client = catalog_api_client_mock.return_value
-        course_client.get_course_and_course_run.side_effect = HttpClientError
+        course_client.get_course_and_course_run.side_effect = ImproperlyConfigured
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -603,7 +604,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         configuration_helpers_mock.get_value.return_value = 'edX'
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.side_effect = HttpClientError
+        enrollment_client.get_course_modes.return_value = {}
 
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',

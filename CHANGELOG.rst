@@ -14,11 +14,15 @@ Change Log
 Unreleased
 ----------
 
+[0.43.5] - 2017-09-08
+---------------------
+
+* Wrapped API error handling into the clients themselves.
+
 [0.43.4] - 2017-09-07
 ---------------------
 
 * Removed the text if there is no discount on the course enrollment landing page.
-
 
 [0.43.3] - 2017-09-06
 ---------------------

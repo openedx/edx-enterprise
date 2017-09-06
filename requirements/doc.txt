@@ -40,7 +40,7 @@ pbr==3.1.1                # via stevedore
 pillow==3.4
 pockets==0.5.1            # via sphinxcontrib-napoleon
 pygments==2.2.0           # via readme-renderer, sphinx
-pyjwt==1.5.2              # via djangorestframework-jwt, edx-rest-api-client
+pyjwt==1.5.3              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.5.1            # via edx-opaque-keys
 python-dateutil==2.6.1    # via edx-drf-extensions
 pytz==2017.2              # via babel, celery
@@ -54,8 +54,8 @@ snowballstemmer==1.2.1    # via sphinx
 sphinx==1.6.3             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.25.0         # via doc8, edx-opaque-keys
-testfixtures==5.1.1
+stevedore==1.26.0         # via doc8, edx-opaque-keys
+testfixtures==5.2.0
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1
 webencodings==0.5.1       # via html5lib

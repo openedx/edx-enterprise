@@ -8,7 +8,6 @@ from logging import getLogger
 from consent.helpers import consent_required, get_data_sharing_consent
 from consent.models import DataSharingConsent
 from dateutil.parser import parse
-from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -210,10 +209,7 @@ class GrantDataSharingPermissions(View):
               supplied (via the enrollment_deferred GET parameter) or the supplied
               EnterpriseCustomer doesn't exist.
         """
-        try:
-            # Make sure course run exists.
-            CourseApiClient().get_course_details(course_id)
-        except HttpClientError:
+        if not CourseApiClient().get_course_details(course_id):
             raise Http404
 
         next_url = request.GET.get('next')
@@ -321,14 +317,10 @@ class GrantDataSharingPermissions(View):
         if not (enterprise_uuid and failure_url and success_url):
             raise Http404
 
-        try:
-            # Make sure program exists.
-            CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
-        except HttpClientError:
+        if not CourseCatalogApiServiceClient.program_exists(program_uuid):
             raise Http404
 
         consent_record = get_data_sharing_consent(username, enterprise_uuid, program_uuid=program_uuid)
-
         if consent_record is None or not consent_record.consent_required():
             raise Http404
 
@@ -413,10 +405,7 @@ class GrantDataSharingPermissions(View):
         """
         Interpret the course-specific form above and save it to an EnterpriseCourseEnrollment object.
         """
-        try:
-            client = CourseApiClient()
-            client.get_course_details(course_id)
-        except HttpClientError:
+        if not CourseApiClient().get_course_details(course_id):
             raise Http404
 
         enrollment_deferred = request.POST.get('enrollment_deferred')
@@ -450,10 +439,7 @@ class GrantDataSharingPermissions(View):
         """
         Interpret the program-specific form above and save it to an EnterpriseCourseEnrollment object.
         """
-        try:
-            # Make sure program exists.
-            CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
-        except HttpClientError:
+        if not CourseCatalogApiServiceClient.program_exists(program_uuid):
             raise Http404
 
         enterprise_uuid = request.POST.get('enterprise_customer_uuid')
@@ -525,11 +511,9 @@ class HandleConsentEnrollment(View):
         if not enrollment_course_mode:
             return redirect(LMS_DASHBOARD_URL)
 
-        try:
-            enrollment_client = EnrollmentApiClient()
-            course_modes = enrollment_client.get_course_modes(course_id)
-        except HttpClientError:
-            LOGGER.error('Failed to determine available course modes for course ID: %s', course_id)
+        enrollment_api_client = EnrollmentApiClient()
+        course_modes = enrollment_api_client.get_course_modes(course_id)
+        if not course_modes:
             raise Http404
 
         # Verify that the request user belongs to the enterprise against the
@@ -567,7 +551,6 @@ class HandleConsentEnrollment(View):
         if selected_course_mode['slug'] in audit_modes:
             # In case of Audit course modes enroll the learner directly through
             # enrollment API client and redirect the learner to dashboard.
-            enrollment_api_client = EnrollmentApiClient()
             enrollment_api_client.enroll_user_in_course(
                 request.user.username, course_id, selected_course_mode['slug']
             )
@@ -628,24 +611,9 @@ class CourseEnrollmentView(View):
         result = []
         for mode in modes:
             if mode['premium']:
-                mode['final_price'] = self.get_final_price(mode, request)
+                mode['final_price'] = EcommerceApiClient(request.user).get_course_final_price(mode)
             result.append(mode)
         return result
-
-    def get_final_price(self, mode, request):
-        """
-        Get course mode's SKU discounted price after applying any entitlement available for this user.
-        """
-        try:
-            ecommerce_api_client = EcommerceApiClient(request.user)
-            return ecommerce_api_client.get_course_final_price(mode)
-        except HttpClientError:
-            LOGGER.error(
-                "Failed to get price details for course mode's SKU '{sku}' for username '{username}'".format(
-                    sku=mode['sku'], username=request.user.username
-                )
-            )
-            return mode['original_price']
 
     def get_base_details(self, enterprise_uuid, course_run_id):
         """
@@ -657,21 +625,16 @@ class CourseEnrollmentView(View):
         """
         try:
             course, course_run = CourseCatalogApiServiceClient().get_course_and_course_run(course_run_id)
-        except (HttpClientError, ImproperlyConfigured):
-            LOGGER.error('Failed to get metadata for course run: %s', course_run_id)
+        except ImproperlyConfigured:
             raise Http404
 
-        if course is None or course_run is None:
-            LOGGER.error('Unable to find metadata for course run: %s', course_run_id)
+        if not course or not course_run:
             raise Http404
 
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
 
-        try:
-            enrollment_client = EnrollmentApiClient()
-            modes = enrollment_client.get_course_modes(course_run_id)
-        except HttpClientError:
-            LOGGER.error('Failed to determine available course modes for course run: %s', course_run_id)
+        modes = EnrollmentApiClient().get_course_modes(course_run_id)
+        if not modes:
             raise Http404
 
         course_modes = []
@@ -931,7 +894,7 @@ class CourseEnrollmentView(View):
         enterprise_customer, course, course_run, modes = self.get_base_details(enterprise_uuid, course_id)
 
         # Create a link between the user and the enterprise customer if it does not already exist.  Ensure that the link
-        # is saved to the database prior to invoking get_final_price() on the displayed course modes, so that the
+        # is saved to the database prior to getting the final price of the displayed course modes, so that the
         # ecommerce service knows this user belongs to an enterprise customer.
         with transaction.atomic():
             enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(

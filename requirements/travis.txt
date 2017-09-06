@@ -9,10 +9,10 @@ chardet==3.0.4            # via requests
 codecov==2.0.9
 coverage==4.4.1           # via codecov
 idna==2.6                 # via requests
-pluggy==0.5.1             # via tox
+pluggy==0.5.2             # via tox
 py==1.4.34                # via tox
 requests==2.18.4          # via codecov
 tox-battery==0.2.0
-tox==2.7.0
+tox==2.8.1
 urllib3==1.22             # via requests
 virtualenv==15.1.0        # via tox

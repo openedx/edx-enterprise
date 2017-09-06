@@ -7,6 +7,8 @@ from __future__ import absolute_import, unicode_literals
 
 import copy
 
+import mock
+
 from six.moves import reduce as six_reduce
 from test_utils import FAKE_UUIDS, update_course_run_with_enterprise_context, update_program_with_enterprise_context
 
@@ -933,16 +935,16 @@ def get_common_course_modes(course_runs):
     return six_reduce(lambda left, right: left & right, course_run_modes)
 
 
-def setup_course_catalog_api_client_mock(mock, course_overrides=None, course_run_overrides=None):
+def setup_course_catalog_api_client_mock(client_mock, course_overrides=None, course_run_overrides=None):
     """
     Set up the Course Catalog API client mock.
 
     Arguments:
-        mock (Mock): The mock course catalog api client.
+        client_mock (Mock): The mock course catalog api client.
         course_overrides (dict): Dictionary containing overrides of the fake course metadata values.
         course_run_overrides (dict): Dictionary containing overrides of the fake course run metadata values.
     """
-    client = mock.return_value
+    client = client_mock.return_value
 
     fake_course = FAKE_COURSE.copy()
     fake_course_run = FAKE_COURSE_RUN.copy()
@@ -956,3 +958,41 @@ def setup_course_catalog_api_client_mock(mock, course_overrides=None, course_run
     # Mock course catalog api functions.
     client.get_course_run.return_value = fake_course_run
     client.get_course_and_course_run.return_value = (fake_course, fake_course_run)
+
+
+class CourseDiscoveryApiTestMixin(object):
+    """
+    Mixin for course discovery API test classes.
+    """
+
+    CATALOG_API_PATCH_PREFIX = "enterprise.api_client.discovery"
+
+    def _make_catalog_api_location(self, catalog_api_member):
+        """
+        Return path for `catalog_api_member` to mock.
+        """
+        return "{}.{}".format(self.CATALOG_API_PATCH_PREFIX, catalog_api_member)
+
+    def _make_patch(self, patch_location, new=None):
+        """
+        Patch `patch_location`, register the patch to stop at test cleanup and return mock object.
+        """
+        patch_mock = new if new is not None else mock.Mock()
+        patcher = mock.patch(patch_location, patch_mock)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        return patch_mock
+
+    @staticmethod
+    def _get_important_parameters(get_data_mock):
+        """
+        Return important (i.e. varying) parameters to get_edx_api_data.
+        """
+        args, kwargs = get_data_mock.call_args
+
+        # This test is to make sure that all calls to get_edx_api_data are made using kwargs
+        # and there is no positional argument. This is required as changes in get_edx_api_data's
+        # signature are breaking edx-enterprise and using kwargs would reduce that.
+        assert args == ()
+
+        return kwargs.get('resource', None), kwargs.get('resource_id', None)

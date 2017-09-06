@@ -67,6 +67,22 @@ def test_get_enrollment_course_details():
 
 
 @responses.activate
+def test_get_enrollment_course_details_with_exception():
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "course/{}".format(course_id),
+        ),
+        status=400
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.get_course_details(course_id)
+    assert actual_response == {}
+
+
+@responses.activate
 def test_enroll_user_in_course():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"

@@ -15,7 +15,6 @@ from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise.views import HttpClientError
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -284,7 +283,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         client = course_api_client_mock.return_value
-        client.get_course_details.side_effect = HttpClientError
+        client.get_course_details.return_value = None
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -493,7 +492,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
         )
         client = course_api_client_mock.return_value
-        client.get_course_details.side_effect = HttpClientError
+        client.get_course_details.return_value = None
         reverse_mock.return_value = '/dashboard'
         resp = self.client.post(
             self.url,
@@ -542,6 +541,9 @@ class TestProgramDataSharingPermissions(TestCase):
         get_dsc = mock.patch('enterprise.views.get_data_sharing_consent')
         self.get_data_sharing_consent = get_dsc.start()
         self.addCleanup(get_dsc.stop)
+        program_exists = mock.patch('enterprise.views.CourseCatalogApiServiceClient.program_exists')
+        self.program_exists = program_exists.start()
+        self.addCleanup(program_exists.stop)
         super(TestProgramDataSharingPermissions, self).setUp()
 
     def _login(self):
@@ -550,15 +552,6 @@ class TestProgramDataSharingPermissions(TestCase):
         """
         assert self.client.login(username=self.user.username, password="QWERTY")
 
-    def _mock_get_program_by_uuid(self):
-        """
-        Mock the calls needed to get a program from the Course Discovery API
-        """
-        discovery_client_class = mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-        return_val = discovery_client_class.start().return_value.get_program_by_uuid
-        self.addCleanup(discovery_client_class.stop)
-        return return_val
-
     @ddt.data(
         'enterprise_customer_uuid',
         'next',
@@ -566,7 +559,7 @@ class TestProgramDataSharingPermissions(TestCase):
         'program_uuid',
     )
     def test_get_program_consent_missing_parameter(self, missing_parameter):
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         valid_get_params = self.valid_get_params.copy()
         valid_get_params.pop(missing_parameter)
         self._login()
@@ -574,21 +567,21 @@ class TestProgramDataSharingPermissions(TestCase):
         assert response.status_code == 404
 
     def test_get_consent_program_does_not_exist(self):
-        self._mock_get_program_by_uuid().side_effect = HttpClientError
+        self.program_exists.return_value = False
         self._login()
         response = self.client.get(self.url, self.valid_get_params)
         assert response.status_code == 404
 
     def test_get_program_consent_no_ec(self):
         self.get_data_sharing_consent.return_value = None
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         response = self.client.get(self.url, self.valid_get_params)
         assert response.status_code == 404
 
     def test_get_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         response = self.client.get(self.url, self.valid_get_params)
         assert response.status_code == 404
@@ -600,7 +593,7 @@ class TestProgramDataSharingPermissions(TestCase):
         'program_uuid',
     )
     def test_post_program_consent_missing_parameter(self, missing_parameter):
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         valid_post_params = self.valid_post_params.copy()
         valid_post_params.pop(missing_parameter)
         self._login()
@@ -608,21 +601,21 @@ class TestProgramDataSharingPermissions(TestCase):
         assert response.status_code == 404
 
     def test_post_consent_program_does_not_exist(self):
-        self._mock_get_program_by_uuid().side_effect = HttpClientError
+        self.program_exists.return_value = False
         self._login()
         response = self.client.post(self.url, self.valid_post_params)
         assert response.status_code == 404
 
     def test_post_program_consent_no_ec(self):
         self.get_data_sharing_consent.return_value = None
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         response = self.client.post(self.url, self.valid_post_params)
         assert response.status_code == 404
 
     def test_post_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         response = self.client.get(self.url, self.valid_post_params)
         assert response.status_code == 404
@@ -630,7 +623,7 @@ class TestProgramDataSharingPermissions(TestCase):
     def test_post_program_consent(self):
         consent_record = self.get_data_sharing_consent.return_value
         consent_record.consent_required.return_value = True
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         response = self.client.post(self.url, self.valid_post_params, follow=False)
         consent_record.save.assert_called_once()
@@ -639,7 +632,7 @@ class TestProgramDataSharingPermissions(TestCase):
     def test_post_program_consent_not_provided(self):
         consent_record = self.get_data_sharing_consent.return_value
         consent_record.consent_required.return_value = True
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         params = self.valid_post_params.copy()
         params.pop('data_sharing_consent')
@@ -650,7 +643,7 @@ class TestProgramDataSharingPermissions(TestCase):
     def test_post_program_consent_deferred(self):
         consent_record = self.get_data_sharing_consent.return_value
         consent_record.consent_required.return_value = True
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         params = self.valid_post_params.copy()
         params['enrollment_deferred'] = 'True'
@@ -664,7 +657,7 @@ class TestProgramDataSharingPermissions(TestCase):
         self.get_data_sharing_consent.return_value.consent_required.return_value = True
         enterprise_customer = self.get_data_sharing_consent.return_value.enterprise_customer
         enterprise_customer.name = 'Starfleet Academy'
-        self._mock_get_program_by_uuid().return_value = True
+        self.program_exists.return_value = True
         self._login()
         self.configuration_helpers.get_value.return_value = "My Platform"
         params = self.valid_get_params.copy()

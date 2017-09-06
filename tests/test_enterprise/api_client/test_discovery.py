@@ -10,12 +10,14 @@ import unittest
 import ddt
 import mock
 from pytest import raises
+from slumber.exceptions import HttpClientError
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
 from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
+from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 
 
 class TestCourseCatalogApiInitialization(unittest.TestCase):
@@ -42,29 +44,12 @@ class TestCourseCatalogApiInitialization(unittest.TestCase):
 
 
 @ddt.ddt
-class TestCourseCatalogApi(unittest.TestCase):
+class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
     """
     Test course catalog API methods.
     """
-    CATALOG_API_PATCH_PREFIX = "enterprise.api_client.discovery"
 
     EMPTY_RESPONSES = (None, {}, [], set(), "")
-
-    def _make_catalog_api_location(self, catalog_api_member):
-        """
-        Return path for `catalog_api_member` to mock.
-        """
-        return "{}.{}".format(self.CATALOG_API_PATCH_PREFIX, catalog_api_member)
-
-    def _make_patch(self, patch_location, new=None):
-        """
-        Patch `patch_location`, register the patch to stop at test cleanup and return mock object
-        """
-        patch_mock = new if new is not None else mock.Mock()
-        patcher = mock.patch(patch_location, patch_mock)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        return patch_mock
 
     def setUp(self):
         super(TestCourseCatalogApi, self).setUp()
@@ -74,20 +59,6 @@ class TestCourseCatalogApi(unittest.TestCase):
         self.jwt_builder_mock = self._make_patch(self._make_catalog_api_location("JwtBuilder"))
 
         self.api = CourseCatalogApiClient(self.user_mock)
-
-    @staticmethod
-    def _get_important_parameters(get_data_mock):
-        """
-        Return important (i.e. varying) parameters to get_edx_api_data
-        """
-        args, kwargs = get_data_mock.call_args
-
-        # This test is to make sure that all calls to get_edx_api_data are made using kwargs
-        # and there is no positional argument. This is required as changes in get_edx_api_data's
-        # signature are breaking edx-enterprise and using kwargs would reduce that.
-        assert args == ()
-
-        return kwargs.get('resource', None), kwargs.get('resource_id', None)
 
     @staticmethod
     def _make_course_run(key, *seat_types):
@@ -536,6 +507,14 @@ class TestCourseCatalogApi(unittest.TestCase):
         assert resource_id == expected_resource_id
         assert actual_result == expected_result
 
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_load_data_with_exception(self, default):
+        """
+        ``_load_data`` returns a default value given an exception.
+        """
+        self.get_data_mock.side_effect = HttpClientError
+        assert self.api._load_data('', default=default) == default  # pylint: disable=protected-access
+
 
 class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
     """
@@ -567,3 +546,39 @@ class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
         mock_integration_config.get_service_user.return_value = mock.Mock(spec=User)
         mock_catalog_integration.current.return_value = mock_integration_config
         CourseCatalogApiServiceClient()
+
+
+@ddt.ddt
+class TestCourseCatalogApiService(CourseDiscoveryApiTestMixin, unittest.TestCase):
+    """
+    Tests for the CourseCatalogAPIServiceClient.
+    """
+
+    def setUp(self):
+        """
+        Set up mocks for the test suite.
+        """
+        super(TestCourseCatalogApiService, self).setUp()
+        self.user_mock = mock.Mock(spec=User)
+        self.get_data_mock = self._make_patch(self._make_catalog_api_location("get_edx_api_data"))
+        self.jwt_builder_mock = self._make_patch(self._make_catalog_api_location("JwtBuilder"))
+        self.integration_config_mock = mock.Mock(enabled=True)
+        self.integration_config_mock.get_service_user.return_value = self.user_mock
+        self.integration_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
+        self.integration_mock.current.return_value = self.integration_config_mock
+        self.api = CourseCatalogApiServiceClient()
+
+    @ddt.data({}, {'program': 'data'})
+    def test_program_exists_no_exception(self, response):
+        """
+        The client should return the appropriate boolean value for program existence depending on the response.
+        """
+        self.get_data_mock.return_value = response
+        assert CourseCatalogApiServiceClient.program_exists('a-s-d-f') == bool(response)
+
+    def test_program_exists_with_exception(self):
+        """
+        The client should capture improper configuration for the class method and return False.
+        """
+        self.integration_mock.current.return_value.enabled = False
+        assert not CourseCatalogApiServiceClient.program_exists('a-s-d-f')
