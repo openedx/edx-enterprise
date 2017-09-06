@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-31 12:01-0500\n"
+"POT-Creation-Date: 2017-09-06 05:18-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -829,12 +829,12 @@ msgstr ""
 msgid "Return to Top"
 msgstr ""
 
-#: enterprise/views.py:129 enterprise/views.py:604
+#: enterprise/views.py:129 enterprise/views.py:606
 #, python-brace-format
 msgid "Welcome to {platform_name}."
 msgstr ""
 
-#: enterprise/views.py:131 enterprise/views.py:606
+#: enterprise/views.py:131 enterprise/views.py:608
 #, python-brace-format
 msgid ""
 "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
@@ -959,7 +959,19 @@ msgstr ""
 msgid "Course Staff"
 msgstr ""
 
-#: enterprise/views.py:726
+#: enterprise/views.py:603
+msgid ""
+"Receive an instructor-signed certificate and support edX's mission to "
+"increase access to high-quality education for everyone."
+msgstr ""
+
+#: enterprise/views.py:612
+#, python-brace-format
+msgid ""
+"Discount provided by {strong_start}{enterprise_customer_name}{strong_end}"
+msgstr ""
+
+#: enterprise/views.py:729
 #, python-brace-format
 msgid "{hours} hour per week"
 msgid_plural "{hours} hours per week"

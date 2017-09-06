@@ -600,6 +600,8 @@ class CourseEnrollmentView(View):
         'expected_learning_items_text': _("What you'll learn"),
         'course_full_description_text': _('About This Course'),
         'staff_text': _('Course Staff'),
+        'no_discount_text': _("Receive an instructor-signed certificate and support edX's mission to increase access"
+                              " to high-quality education for everyone.")
     }
     WELCOME_TEXT_FORMAT = _('Welcome to {platform_name}.')
     ENT_WELCOME_TEXT_FORMAT = _(
@@ -607,6 +609,7 @@ class CourseEnrollmentView(View):
         "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
         "opportunities from the world's best universities."
     )
+    ENT_DISCOUNT_TEXT_FORMAT = _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}')
 
     def set_final_prices(self, modes, request):
         """
@@ -776,6 +779,11 @@ class CourseEnrollmentView(View):
             'premium_modes': premium_modes,
             'expected_learning_items': course['expected_learning_items'],
             'staff': course_run['staff'],
+            'discount_text': self.ENT_DISCOUNT_TEXT_FORMAT.format(
+                enterprise_customer_name=enterprise_customer.name,
+                strong_start='<strong>',
+                strong_end='</strong>',
+            )
         }
         context_data.update(self.STATIC_TEXT_FORMAT)
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
