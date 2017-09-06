@@ -69,6 +69,17 @@ def verify_edx_resources():
             )
 
 
+def get_global_context(request):
+    """
+    Get the set of variables that are needed by default across views.
+    """
+    return {
+        'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+        'LANGUAGE_CODE': get_language_from_request(request),
+        'platform_name': configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME),
+    }
+
+
 class GrantDataSharingPermissions(View):
     """
     Provide a form and form handler for data sharing consent.
@@ -133,11 +144,13 @@ class GrantDataSharingPermissions(View):
         "opportunities from the world's best universities."
     )
 
-    def get_default_context(self, enterprise_customer, platform_name):
+    def get_default_context(self, enterprise_customer, request):
         """
         Get the set of variables that will populate the template by default.
         """
-        return {
+        global_context_data = get_global_context(request)
+        platform_name = global_context_data['platform_name']
+        context_data = {
             'page_title': self.page_title,
             'consent_message_header': self.consent_message_header,
             'requested_permissions_header': self.requested_permissions_header.format(
@@ -175,8 +188,10 @@ class GrantDataSharingPermissions(View):
             'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
             'policy_link_template': self.policy_link_template,
             'policy_return_link_text': self.policy_return_link_text,
-            'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }
+
+        context_data.update(global_context_data)
+        return context_data
 
     @method_decorator(login_required)
     def get_course_specific_consent(self, request, course_id):
@@ -232,8 +247,9 @@ class GrantDataSharingPermissions(View):
             enterprise_uuid = request.GET.get('enterprise_id')
             customer = get_object_or_404(EnterpriseCustomer, uuid=enterprise_uuid)
 
-        platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
-        context_data = self.get_default_context(customer, platform_name)
+        context_data = self.get_default_context(customer, request)
+        platform_name = context_data['platform_name']
+
         # Translators: bold_start and bold_end are HTML tags for specifying
         # enterprise name in bold text.
         course_specific_context = {
@@ -266,8 +282,6 @@ class GrantDataSharingPermissions(View):
                 bold_end='</b>',
             ),
             'confirmation_alert_prompt_warning': '',
-            'LANGUAGE_CODE': get_language_from_request(request),
-            'platform_name': platform_name,
             'course_id': course_id,
             'redirect_url': next_url,
             'enterprise_customer_name': customer.name,
@@ -320,8 +334,8 @@ class GrantDataSharingPermissions(View):
 
         customer = consent_record.enterprise_customer
 
-        platform_name = configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME)
-        context_data = self.get_default_context(customer, platform_name)
+        context_data = self.get_default_context(customer, request)
+        platform_name = context_data['platform_name']
 
         # Translators: bold_start and bold_end are HTML tags for specifying
         # enterprise name in bold text.
@@ -355,8 +369,6 @@ class GrantDataSharingPermissions(View):
                 bold_end='</b>',
             ),
             'confirmation_alert_prompt_warning': '',
-            'LANGUAGE_CODE': get_language_from_request(request),
-            'platform_name': platform_name,
             'program_uuid': program_uuid,
             'redirect_url': success_url,
             'enterprise_customer_name': customer.name,
@@ -755,8 +767,6 @@ class CourseEnrollmentView(View):
             add_consent_declined_message(request, enterprise_customer, course_run)
 
         context_data = {
-            'LANGUAGE_CODE': get_language_from_request(request),
-            'platform_name': platform_name,
             'course_title': course_run['title'],
             'course_short_description': course_run['short_description'] or '',
             'course_pacing': self.PACING_FORMAT.get(course_run['pacing_type'], ''),
@@ -786,6 +796,8 @@ class CourseEnrollmentView(View):
             )
         }
         context_data.update(self.STATIC_TEXT_FORMAT)
+        global_context_data = get_global_context(request)
+        context_data.update(global_context_data)
         return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
 
     @method_decorator(transaction.non_atomic_requests)
