@@ -125,8 +125,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'course_level_type': 'Type 1',
             'close_modal_button_text': 'Close',
             'discount_text': 'Discount provided by <strong>Starfleet Academy</strong>',
-            'no_discount_text': "Receive an instructor-signed certificate and support edX's mission to increase access"
-                                " to high-quality education for everyone.",
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }
         default_context.update(expected_context)
