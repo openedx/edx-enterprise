@@ -612,8 +612,6 @@ class CourseEnrollmentView(View):
         'expected_learning_items_text': _("What you'll learn"),
         'course_full_description_text': _('About This Course'),
         'staff_text': _('Course Staff'),
-        'no_discount_text': _("Receive an instructor-signed certificate and support edX's mission to increase access"
-                              " to high-quality education for everyone.")
     }
     WELCOME_TEXT_FORMAT = _('Welcome to {platform_name}.')
     ENT_WELCOME_TEXT_FORMAT = _(
