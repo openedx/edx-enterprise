@@ -14,7 +14,7 @@ from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment
-from enterprise.views import LMS_COURSEWARE_URL, LMS_DASHBOARD_URL, LMS_START_PREMIUM_COURSE_FLOW_URL, HttpClientError
+from enterprise.views import LMS_COURSEWARE_URL, LMS_DASHBOARD_URL, LMS_START_PREMIUM_COURSE_FLOW_URL
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils.factories import (
     EnterpriseCustomerFactory,
@@ -112,7 +112,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         """
         course_id = self.demo_course_id
         enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.side_effect = HttpClientError
+        enrollment_client.get_course_modes.return_value = {}
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,

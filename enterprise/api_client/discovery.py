@@ -4,9 +4,13 @@ Utilities to get details from the course catalog API.
 """
 from __future__ import absolute_import, unicode_literals
 
+from logging import getLogger
+
 from edx_rest_api_client.client import EdxRestApiClient
+from edx_rest_api_client.exceptions import SlumberBaseException
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
+from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
@@ -28,6 +32,9 @@ try:
     from openedx.core.lib.edx_api_utils import get_edx_api_data
 except ImportError:
     get_edx_api_data = None
+
+
+LOGGER = getLogger(__name__)
 
 
 def course_discovery_api_client(user):
@@ -377,13 +384,19 @@ class CourseCatalogApiClient(object):
 
         """
         default_val = default if default != self.DEFAULT_VALUE_SAFEGUARD else {}
-        result = get_edx_api_data(
-            api_config=CatalogIntegration.current(),
-            resource=resource,
-            api=self.client,
-            **kwargs
-        )
-        return result or default_val
+        try:
+            return get_edx_api_data(
+                api_config=CatalogIntegration.current(),
+                resource=resource,
+                api=self.client,
+                **kwargs
+            ) or default_val
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to load data from resource %s with kwargs %s due to: %s',
+                resource, kwargs, str(exc)
+            )
+            return default_val
 
 
 class CourseCatalogApiServiceClient(CourseCatalogApiClient):
@@ -411,3 +424,13 @@ class CourseCatalogApiServiceClient(CourseCatalogApiClient):
                 raise ImproperlyConfigured(_("The configured CatalogIntegration service user does not exist."))
         else:
             raise ImproperlyConfigured(_("There is no active CatalogIntegration."))
+
+    @classmethod
+    def program_exists(cls, program_uuid):
+        """
+        Get whether the program exists or not.
+        """
+        try:
+            return bool(cls().get_program_by_uuid(program_uuid))
+        except ImproperlyConfigured:
+            return False

@@ -6,6 +6,9 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
+from slumber.exceptions import SlumberBaseException
+
 from django.utils.translation import ugettext as _
 
 from enterprise.utils import NotConnectedToOpenEdX
@@ -49,9 +52,12 @@ class EcommerceApiClient(object):
             str: Discounted price of the course mode.
 
         """
-        endpoint = self.client.baskets.calculate
-        price_details = endpoint.get(sku=[mode['sku']])
-        price = price_details['total_incl_tax']
+        try:
+            price_details = self.client.baskets.calculate.get(sku=[mode['sku']])
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception('Failed to get price details for sku %s due to: %s', mode['sku'], str(exc))
+            price_details = {}
+        price = price_details.get('total_incl_tax', mode['min_price'])
         if price != mode['min_price']:
             if int(price) == price:
                 return '${}'.format(int(price))
