@@ -20,18 +20,11 @@
       programId = "{{ program_uuid }}";
     {% endif %}
   </script>
-  <script type="text/javascript" src="{% static  'common/js/vendor/jquery.js' %}"></script>
   <script type="text/javascript" src="{% static  'js/vendor/jquery.cookie.js' %}"></script>
   <script type="text/javascript" src="{% static  'enterprise/grant_data_sharing_permissions.js' %}"></script>
 {% endblock %}
 
 {% block contents %}
-  <header class="logo-container" aria-label="{{ page_title }}">
-    <h1>
-      <img src="{% static 'images/logo.png' %}" alt="{{ platform_name }}"/>
-    </h1>
-  </header>
-  <hr class="pinstripe"/>
   <div class="enterprise-container">
       <div class="row">
           <div class="col-3">
