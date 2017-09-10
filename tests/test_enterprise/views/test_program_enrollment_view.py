@@ -136,6 +136,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                 "credit",
             ],
         }
+        self.configuration_helpers_order = ['edX', 'edX', settings.ENTERPRISE_TAGLINE]
         super(TestProgramEnrollmentView, self).setUp()
 
     def _login(self):
@@ -240,6 +241,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
             'enterprise_customer': enterprise_customer,
             'platform_name': 'Test platform',
+            'tagline': "High-quality online learning opportunities from the world's best universities",
             'organization_name': 'Authoring Organization',
             'organization_logo': 'images/logo_image_url.jpg',
             'welcome_text': 'Welcome to Test platform.',

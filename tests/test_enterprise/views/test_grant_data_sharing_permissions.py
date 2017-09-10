@@ -37,6 +37,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
+        self.configuration_helpers_order = ['My Platform', settings.ENTERPRISE_TAGLINE]
         super(TestGrantDataSharingPermissions, self).setUp()
 
     url = reverse('grant_data_sharing_permissions')
@@ -149,6 +150,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         for key, value in {
                 "platform_name": "Test platform",
+                "tagline": "High-quality online learning opportunities from the world's best universities",
                 "consent_request_prompt": expected_prompt,
                 "requested_permissions_header": (
                     'Per the <a href="#consent-policy-dropdown-bar" '

@@ -83,6 +83,10 @@ def get_global_context(request):
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
         'platform_name': get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME),
+        'tagline': get_configuration_value(
+            "ENTERPRISE_TAGLINE",
+            getattr(settings, "ENTERPRISE_TAGLINE", '')  # Remove the `getattr` when setting is upstreamed.
+        ),
     }
 
 

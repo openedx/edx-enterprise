@@ -59,6 +59,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 "sku": "sku-audit",
             },
         ]
+        self.configuration_helpers_order = ['edX', 'edX', settings.ENTERPRISE_TAGLINE]
         super(TestCourseEnrollmentView, self).setUp()
 
     def _login(self):
@@ -102,6 +103,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         fake_organization = FAKE_COURSE['owners'][0]
         default_context = {
             'platform_name': 'Test platform',
+            'tagline': "High-quality online learning opportunities from the world's best universities",
             'page_title': 'Confirm your course',
             'course_title': FAKE_COURSE_RUN['title'],
             'course_short_description': FAKE_COURSE_RUN['short_description'],
@@ -471,7 +473,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         course_id = self.demo_course_id
         self._setup_enrollment_client(enrollment_api_client_mock)
-        self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,

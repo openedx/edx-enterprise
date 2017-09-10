@@ -10,9 +10,14 @@
       {% stylesheet 'style-vendor' %}
       {% stylesheet 'style-main-v2' %}
        <link rel="stylesheet" href="{% static 'css/vendor/font-awesome.css' %}"/>
+       <link rel="stylesheet" href="{% static 'enterprise/base.css' %}" />
     {% endblock %}
 
     {% block extrastyles %}{% endblock %}
+
+    {% block head %}
+      <script type="text/javascript" src="{% static 'common/js/vendor/jquery.js' %}"></script>
+    {% endblock %}
 
     {% block extrahead %}{% endblock %}
 
@@ -20,6 +25,16 @@
   </head>
 
   <body>
+    {% block header %}
+      <header class="logo-container" aria-label="{{ page_title }}">
+        <h1>
+          <img src="{% static 'images/logo.png' %}" alt="{{ platform_name }}" />
+          <span id="header-tagline">{{ tagline }}</span>
+        </h1>
+      </header>
+      <hr class="pinstripe"/>
+    {% endblock %}
+
     {% block contents %}{% endblock %}
   </body>
 </html>
