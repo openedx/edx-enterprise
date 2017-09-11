@@ -11,7 +11,7 @@ from slumber.exceptions import SlumberBaseException
 
 from django.utils.translation import ugettext as _
 
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX, format_price
 
 try:
     from openedx.core.djangoapps.commerce.utils import ecommerce_api_client
@@ -44,7 +44,7 @@ class EcommerceApiClient(object):
         self.user = user
         self.client = ecommerce_api_client(user)
 
-    def get_course_final_price(self, mode):
+    def get_course_final_price(self, mode, currency='$'):
         """
         Get course mode's SKU discounted price after applying any entitlement available for this user.
 
@@ -59,7 +59,5 @@ class EcommerceApiClient(object):
             price_details = {}
         price = price_details.get('total_incl_tax', mode['min_price'])
         if price != mode['min_price']:
-            if int(price) == price:
-                return '${}'.format(int(price))
-            return '${:0.2f}'.format(price)
+            return format_price(price, currency)
         return mode['original_price']

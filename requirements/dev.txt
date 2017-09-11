@@ -36,6 +36,7 @@ edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 enum34==1.1.6             # via astroid
 first==2.0.1              # via pip-tools
+flaky==3.3.0
 futures==3.1.1            # via caniusepython3
 inflect==0.2.5            # via jinja2-pluralize
 isort==4.2.15

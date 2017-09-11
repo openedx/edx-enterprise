@@ -243,12 +243,10 @@ class EnterpriseCustomer(TimeStampedModel):
 
         return urljoin(
             configuration_helpers.get_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
-            '/enterprise/{}/program/{}/enroll'.format(self.uuid, program_uuid)
-            # TODO: Replace above with the reverse statement below, once the program enrollment landing page is created.
-            # reverse(
-            #     'enterprise_program_enrollment_page',
-            #     kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}
-            # )
+            reverse(
+                'enterprise_program_enrollment_page',
+                kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}
+            )
         )
 
     def catalog_contains_course(self, course_id):

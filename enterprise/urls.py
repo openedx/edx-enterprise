@@ -7,7 +7,12 @@ from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from django.conf.urls import include, url
 
-from enterprise.views import CourseEnrollmentView, GrantDataSharingPermissions, HandleConsentEnrollment
+from enterprise.views import (
+    CourseEnrollmentView,
+    GrantDataSharingPermissions,
+    HandleConsentEnrollment,
+    ProgramEnrollmentView,
+)
 
 urlpatterns = [
     url(
@@ -20,11 +25,18 @@ urlpatterns = [
             settings.COURSE_ID_PATTERN
         ),
         HandleConsentEnrollment.as_view(),
-        name='enterprise_handle_consent_enrollment'),
+        name='enterprise_handle_consent_enrollment'
+    ),
     url(
         r'^enterprise/(?P<enterprise_uuid>[^/]+)/course/{}/enroll/$'.format(settings.COURSE_ID_PATTERN),
         CourseEnrollmentView.as_view(),
-        name='enterprise_course_enrollment_page'),
+        name='enterprise_course_enrollment_page'
+    ),
+    url(
+        r'^enterprise/(?P<enterprise_uuid>[^/]+)/program/(?P<program_uuid>[^/]+)/enroll/$',
+        ProgramEnrollmentView.as_view(),
+        name='enterprise_program_enrollment_page'
+    ),
     url(
         r'^enterprise/api/',
         include('enterprise.api.urls'),
@@ -32,7 +44,7 @@ urlpatterns = [
     ),
 ]
 
-# Because ROOT_URLCONF points here, we are including the urls from the integrated_channels app here for now.
+# Because ROOT_URLCONF points here, we are including the urls from the other apps here for now.
 urlpatterns += [
     url(
         r'',

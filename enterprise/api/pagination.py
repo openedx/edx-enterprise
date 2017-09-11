@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Pagination helpers for enterprise api.
 """

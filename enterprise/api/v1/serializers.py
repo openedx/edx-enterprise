@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Serializers for enterprise api version 1.
 """

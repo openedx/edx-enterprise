@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 URL definitions for enterprise API endpoint.
 """

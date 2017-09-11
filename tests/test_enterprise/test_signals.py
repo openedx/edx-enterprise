@@ -134,8 +134,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         handle_user_post_save(mock.Mock(), **parameters)
 
         link = EnterpriseCustomerUser.objects.get(user_id=user.id)
-        # TODO: remove suppression when https://github.com/landscapeio/pylint-django/issues/78 is fixed
-        assert link.id == existing_link.id, "Should keep existing link intact"  # pylint: disable=no-member
+        assert link.id == existing_link.id, "Should keep existing link intact"
         assert link.enterprise_customer == enterprise_customer1, "Should keep existing link intact"
 
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "Should delete pending link"

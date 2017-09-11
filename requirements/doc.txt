@@ -30,6 +30,7 @@ edx-drf-extensions==1.2.3
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.2.0
+flaky==3.3.0
 html5lib==0.999999999     # via bleach
 imagesize==0.7.1          # via sphinx
 jinja2==2.9.6             # via sphinx

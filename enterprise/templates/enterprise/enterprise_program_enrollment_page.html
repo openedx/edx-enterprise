@@ -1,0 +1,145 @@
+{% extends 'enterprise/base.html' %}
+
+{% load staticfiles enterprise %}
+
+{% block extrastyles %}
+  <link rel="stylesheet" href="{% static 'enterprise/enterprise_program_enrollment_page.css' %}" />
+{% endblock %}
+
+{% block extrahead %}
+  <script type="text/javascript" src="{% static 'common/js/vendor/jquery.js' %}"></script>
+  <script type="text/javascript" src="{% static 'enterprise/enterprise_program_enrollment_page.js' %}"></script>
+{% endblock %}
+
+{% block contents %}
+  <header class="logo-container" aria-label="{{ page_title }}">
+    <h1>
+      <img src="{% static 'images/logo.png' %}" alt="{{ platform_name }}"/>
+    </h1>
+  </header>
+  <hr class="pinstripe"/>
+
+  <div class="enterprise-container">
+    <div class="row">
+      <div class="col-3">
+        <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
+        <p class="partnered-text">{{ welcome_text }}</p>
+        <p class="partnered-text">{% autoescape off %}{{ enterprise_welcome_text }}{% endautoescape %}</p>
+      </div>
+
+      <div class="col-7 border-left">
+        <div class="program-detail-container">
+          {# Display success, error, warning or info messages #}
+          {% alert_messages messages %}
+
+          {% if is_learner_eligible_for_one_click_purchase %}
+          <h2 class="program-confirmation-title">{{ page_title }}</h2>
+
+          <div class="program-detail">
+            <div class="program-title">{{ program_title }}</div>
+            <div class="program-org">{{ organization_text }}</div>
+            <div class="program-overview">{{ program_overview }}</div>
+            <ul class="program-bullet-points">
+              {# Common bullet points #}
+              <li><span class="bullet-item"><a href="#course-list" class="text-underline">{{ course_count_text }}</a></span></li>
+
+              {# Extra bullet points #}
+              {% for bullet_point in item_bullet_points %}
+                <li><span class="bullet-item">{{ bullet_point }}</span></li>
+              {% endfor %}
+            </ul>
+            <div class="program-price">
+              <strong>{{ purchase_text }}</strong>
+              {% if is_discounted %}
+                <strong>
+                  <span class="original-price"><s>{{ program_price }}</s></span> <span class="final-price">{{ program_discounted_price }}</span>
+                </strong><br>
+                {% autoescape off %}{{ discount_provider }}{% endautoescape %}
+              {% else %}
+                <strong>{{ program_price }}</strong>
+              {% endif %}
+            </div>
+          </div>
+
+          <form method="POST">
+            <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+            <button class="btn-confirm">{{ confirm_button_text }}</button>
+          </form>
+          {% else %}
+          <h4 class="ineligible-program-text">{{ program_not_eligible_for_one_click_purchase_text }}</h4>
+          {% endif %}
+        </div>
+
+        {# Program Summary Box #}
+        <div class="program-summary-container">
+          {% if is_learner_eligible_for_one_click_purchase %}
+          <div class="program-summary-header"><strong>{{ summary_header }}</strong></div>
+          <table class="program-summary">
+            <tbody>
+
+              {# Courses #}
+              <tr id="course-list-row">
+                <td class="summary-item">{{ course_count_text }}:</td>
+                <td class="summary-content" id="course-list">
+                  {% for course in courses %}
+                    <div class="course-item">
+                    {% if course.course_runs.0.is_enrolled %}
+                      {% if course.course_runs.0.upgrade_url == None %}
+                        <span class="enrolled-and-paid-course"><s>{{ course.title }}</s></span> <strong>({{ enrolled_in_course_and_paid_text }})</strong>
+                      {% else %}
+                        {{ course.title }}<br>
+                        <strong>({{ enrolled_in_course_and_unpaid_text }})</strong>
+                      {% endif %}
+                    {% else %}
+                      {{ course.title }}
+                    {% endif %}
+                    </div>
+                  {% endfor %}
+                </td>
+              </tr>
+
+              <tr class="row-separator"><td colspan="2"><div class="table-row-separator"></div></td></tr>
+
+              {# Price #}
+              <tr id="price-row">
+                <td class="summary-item">{{ price_text }}:</td>
+                <td class="summary-content">
+                  {{ purchase_text }}
+                  {% if is_discounted %}
+                    <strong>
+                      <span class="original-price"><s>{{ program_price }}</s></span> <span class="final-price">{{ program_discounted_price }}</span>
+                    </strong><br>
+                    {% autoescape off %}{{ discount_provider }}{% endautoescape %}
+                  {% else %}
+                    <strong>{{ program_price }}</strong>
+                  {% endif %}
+                  <div class="table-row-separator"></div>
+                </td>
+              </tr>
+
+              <tr class="row-separator"><td colspan="2"><div class="table-row-separator"></div></td></tr>
+
+              {# Length #}
+              <tr id="length-row">
+                <td class="summary-item">{{ length_text }}:</td>
+                <td class="summary-content">
+                  {{ length_info_text }}
+                  <div class="table-row-separator"></div>
+                </td>
+              </tr>
+
+              <tr class="row-separator"><td colspan="2"><div class="table-row-separator"></div></td></tr>
+
+              {# Effort #}
+              <tr id="effort-row">
+                <td class="summary-item">{{ effort_text }}:</td>
+                <td class="summary-content">{{ effort_info_text }}</td>
+              </tr>
+            </tbody>
+          </table>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

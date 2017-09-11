@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Test the Enterprise management commands and related functions.
 """
@@ -237,8 +238,8 @@ class TestTransmitLearnerData(unittest.TestCase):
     Test the transmit_learner_data management command.
     """
     def setUp(self):
-        self.api_user = UserFactory(username='staff_user')
-        self.user = UserFactory()
+        self.api_user = UserFactory(username='staff_user', id=1)
+        self.user = UserFactory(id=2)
         self.course_id = COURSE_ID
         self.enterprise_customer = EnterpriseCustomerFactory()
         self.identity_provider = FakerFactory.create().slug()  # pylint: disable=no-member

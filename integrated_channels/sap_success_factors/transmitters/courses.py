@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Class for transmitting course data to SuccessFactors.
 """

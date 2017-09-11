@@ -9,10 +9,11 @@ import ddt
 from pytest import mark
 from rest_framework import status
 from rest_framework.reverse import reverse
+from rest_framework.test import APIClient
 
 from django.conf import settings
 
-from test_utils import APITest, factories
+from test_utils import TEST_EMAIL, TEST_PASSWORD, TEST_USERNAME, APITest, factories
 
 
 @ddt.ddt
@@ -21,8 +22,14 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
     """
     Tests for enterprise API throttling.
     """
-    username = 'test_user'
-    email = 'test_user@example.com'
+
+    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+        """
+        Create a test user and set its password.
+        """
+        self.user = factories.UserFactory(username=username, is_active=True, **kwargs)
+        self.user.set_password(password)  # pylint: disable=no-member
+        self.user.save()  # pylint: disable=no-member
 
     def setUp(self):
         """
@@ -30,18 +37,17 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
 
         Populate data base for api testing.
         """
-        super(TestEnterpriseCustomerUserFilterBackend, self).setUp()
-        self.test_user = factories.UserFactory(username=self.username, email=self.email, is_active=True)
-
+        self.create_user(email=TEST_EMAIL, id=1)
         enterprise_customer = factories.EnterpriseCustomerFactory()
-        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=self.test_user.id)
-
+        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=self.user.id)
         self.url = settings.TEST_SERVER + reverse('enterprise-learner-list')
+        self.client = APIClient()
+        self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
 
     @ddt.data(
-        (username, email, 1),
-        (username, '', 1),
-        ('', email, 1),
+        (TEST_USERNAME, TEST_EMAIL, 1),
+        (TEST_USERNAME, '', 1),
+        ('', TEST_EMAIL, 1),
         ('', '', 1),
         ('dummy', '', 0),
         ('dummy', 'dummy@example.com', 0),

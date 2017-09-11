@@ -26,6 +26,7 @@ from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
 TEST_USERNAME = 'api_worker'
+TEST_EMAIL = 'test@email.com'
 TEST_PASSWORD = 'QWERTY'
 TEST_COURSE = 'course-v1:edX+DemoX+DemoCourse'
 TEST_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
@@ -89,7 +90,10 @@ def update_program_with_enterprise_context(program):
     """
     program['enrollment_url'] = urljoin(
         settings.LMS_ROOT_URL,
-        '/enterprise/{}/program/{}/enroll'.format(FAKE_UUIDS[0], program['uuid'])
+        reverse(
+            'enterprise_program_enrollment_page',
+            kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'program_uuid': program['uuid']}
+        )
     )
     for course in program.get('courses', []):
         for course_run in course['course_runs']:

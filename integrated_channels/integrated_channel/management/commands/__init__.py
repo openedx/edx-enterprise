@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Enterprise Integrated Channel management commands.
 """

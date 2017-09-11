@@ -376,7 +376,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_existing_user(self, email):
         other_email = "other_email@example.com"
-        user1, user2 = UserFactory(email=email), UserFactory(email=other_email)
+        user1, user2 = UserFactory(email=email, id=1), UserFactory(email=other_email, id=2)
         enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
         EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
         EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)

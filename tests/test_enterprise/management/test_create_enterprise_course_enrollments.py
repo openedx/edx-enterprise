@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Tests for the djagno management command `create_enterprise_course_enrollments`.
 """

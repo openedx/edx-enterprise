@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Decorators for Enterprise API views.
 """

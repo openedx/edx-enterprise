@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Django admin integration for integrated_channel app.
 """
