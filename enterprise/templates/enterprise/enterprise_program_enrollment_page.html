@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block extrahead %}
-  <script type="text/javascript" src="{% static 'enterprise/enterprise_program_enrollment_page.js' %}"></script>
+  <script type="text/javascript" src="{% static 'enterprise/course_modal.js' %}"></script>
 {% endblock %}
 
 {% block contents %}
@@ -70,29 +70,32 @@
             <tbody>
 
               {# Courses #}
+              {% if courses %}
               <tr id="course-list-row">
                 <td class="summary-item">{{ course_count_text }}:</td>
                 <td class="summary-content" id="course-list">
                   {% for course in courses %}
                     <div class="course-item">
-                    {% if course.course_runs.0.is_enrolled %}
-                      {% if course.course_runs.0.upgrade_url == None %}
-                        <span class="enrolled-and-paid-course"><s>{{ course.title }}</s></span> <strong>({{ enrolled_in_course_and_paid_text }})</strong>
+                      {% if course.course_runs.0.is_enrolled %}
+                        {% if course.course_runs.0.upgrade_url == None %}
+                          <span class="enrolled-and-paid-course"><s>{{ course.title }}</s></span> <strong>({{ enrolled_in_course_and_paid_text }})</strong>
+                        {% else %}
+                          {{ course.title }}<br>
+                          <strong>({{ enrolled_in_course_and_unpaid_text }})</strong>
+                        {% endif %}
                       {% else %}
-                        {{ course.title }}<br>
-                        <strong>({{ enrolled_in_course_and_unpaid_text }})</strong>
+                        {{ course.title|link_to_modal:forloop.counter0 }}
                       {% endif %}
-                    {% else %}
-                      {{ course.title }}
-                    {% endif %}
+                      <br>{{ course.weeks_to_complete }}
                     </div>
                   {% endfor %}
                 </td>
               </tr>
-
               <tr class="row-separator"><td colspan="2"><div class="table-row-separator"></div></td></tr>
+              {% endif %}
 
               {# Price #}
+              {% if program_price %}
               <tr id="price-row">
                 <td class="summary-item">{{ price_text }}:</td>
                 <td class="summary-content">
@@ -105,28 +108,29 @@
                   {% else %}
                     <strong>{{ program_price }}</strong>
                   {% endif %}
-                  <div class="table-row-separator"></div>
                 </td>
               </tr>
-
               <tr class="row-separator"><td colspan="2"><div class="table-row-separator"></div></td></tr>
+              {% endif %}
 
               {# Length #}
+              {% if length_info_text %}
               <tr id="length-row">
                 <td class="summary-item">{{ length_text }}:</td>
                 <td class="summary-content">
                   {{ length_info_text }}
-                  <div class="table-row-separator"></div>
                 </td>
               </tr>
-
               <tr class="row-separator"><td colspan="2"><div class="table-row-separator"></div></td></tr>
+              {% endif %}
 
               {# Effort #}
+              {% if effort_info_text %}
               <tr id="effort-row">
                 <td class="summary-item">{{ effort_text }}:</td>
                 <td class="summary-content">{{ effort_info_text }}</td>
               </tr>
+              {% endif %}
             </tbody>
           </table>
           {% endif %}
@@ -134,4 +138,9 @@
       </div>
     </div>
   </div>
+  {% for course in courses %}
+    {% with index=forloop.counter0 %}
+      {% course_modal course %}
+    {% endwith %}
+  {% endfor %}
 {% endblock %}

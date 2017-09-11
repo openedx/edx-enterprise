@@ -73,3 +73,6 @@ tests/__init__.py
 
 # Development task artifacts
 default.db
+
+# Geckodriver for Jasmine
+geckodriver/

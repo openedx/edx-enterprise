@@ -895,8 +895,10 @@ class TestEnterpriseUtils(unittest.TestCase):
         ('{} hour', '{} hours', '{}-{} hours', 2, 4, '2-4 hours'),
         ('{} hour', '{} hours', '{}-{} hours', 2, 2, '2 hours'),
         ('{} hour', '{} hours', '{}-{} hours', 1, 1, '1 hour'),
-        ('{} hour', '{} hours', '{}-{} hours', None, 1, None),
-        ('{} hour', '{} hours', '{}-{} hours', 1, None, None),
+        ('{} hour', '{} hours', '{}-{} hours', None, 1, '1 hour'),
+        ('{} hour', '{} hours', '{}-{} hours', 1, None, '1 hour'),
+        ('{} hour', '{} hours', '{}-{} hours', None, 3, '3 hours'),
+        ('{} hour', '{} hours', '{}-{} hours', 3, None, '3 hours'),
         ('{} hour', '{} hours', '{}-{} hours', None, None, None),
     )
     @ddt.unpack

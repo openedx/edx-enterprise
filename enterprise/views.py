@@ -720,24 +720,14 @@ class CourseEnrollmentView(NonAtomicView):
         if course_run['start']:
             course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
 
-        # Format the course effort string using the min/max effort
-        # fields for the course run.
-        course_effort = ''
-        min_effort = course_run['min_effort'] or ''
-        max_effort = course_run['max_effort'] or ''
-        effort_hours = '{min}-{max}'.format(min=min_effort, max=max_effort).strip('-')
-        if effort_hours:
-            # If we are dealing with just one of min/max effort
-            # cast the hours value to a string so that pluralization
-            # is handled appropriately when formatting the full
-            # course effort string below.
-            if '-' not in effort_hours:
-                effort_hours = int(effort_hours)
-            course_effort = ungettext(
-                '{hours} hour per week',
-                '{hours} hours per week',
-                effort_hours,
-            ).format(hours=effort_hours)
+        # Format the course effort string using the min/max effort fields for the course run.
+        course_effort = ungettext_min_max(
+            '{} hour per week',
+            '{} hours per week',
+            '{}-{} hours per week',
+            course_run['min_effort'] or None,
+            course_run['max_effort'] or None,
+        ) or ''
 
         # Parse course run image.
         course_run_image = course_run['image'] or {}
@@ -993,7 +983,7 @@ class ProgramEnrollmentView(NonAtomicView):
         'discount_provider': _('Discount provided by {strong_start}{provider}{strong_end}.'),
         'enrolled_in_course_and_paid_text': _('enrolled'),
         'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
-        'expected_learning_items_header': _("What you'll learn"),
+        'expected_learning_items_text': _("What you'll learn"),
         'view_expected_learning_items_text': _('See More'),
         'hide_expected_learning_items_text': _('See Less'),
         'confirm_button_text': _('Confirm Program'),
@@ -1003,8 +993,63 @@ class ProgramEnrollmentView(NonAtomicView):
         'length_info_text': _('{}-{} weeks per course'),
         'effort_text': _('Effort'),
         'effort_info_text': _('{}-{} hours per week, per course'),
+        'level_text': _('Level'),
+        'course_full_description_text': _('About This Course'),
+        'staff_text': _('Course Staff'),
+        'close_modal_button_text': _('Close'),
         'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
     }
+
+    @staticmethod
+    def extend_course(course):
+        """
+        Extend a course with more details needed for the program landing page.
+
+        In particular, we add the following:
+
+        * `course_image_uri`
+        * `course_title`
+        * `course_level_type`
+        * `course_short_description`
+        * `course_full_description`
+        * `course_effort`
+        * `expected_learning_items`
+        * `staff`
+        """
+        try:
+            catalog_api_client = CourseCatalogApiServiceClient()
+        except ImproperlyConfigured:
+            raise Http404
+        else:
+            course_run_id = course['course_runs'][0]['key']
+            course_details, course_run_details = catalog_api_client.get_course_and_course_run(course_run_id)
+            if not course_details or not course_run_details:
+                raise Http404
+
+        weeks_to_complete = course_run_details['weeks_to_complete']
+        course_run_image = course_run_details['image'] or {}
+        course.update({
+            'course_image_uri': course_run_image.get('src', ''),
+            'course_title': course_run_details['title'],
+            'course_level_type': course_run_details.get('level_type', ''),
+            'course_short_description': course_run_details['short_description'] or '',
+            'course_full_description': clean_html_for_template_rendering(course_run_details['full_description'] or ''),
+            'expected_learning_items': course_details.get('expected_learning_items', []),
+            'staff': course_run_details.get('staff', []),
+            'course_effort': ungettext_min_max(
+                '{} hour per week',
+                '{} hours per week',
+                '{}-{} hours per week',
+                course_run_details['min_effort'] or None,
+                course_run_details['max_effort'] or None,
+            ) or '',
+            'weeks_to_complete': ungettext(
+                '{} week',
+                '{} weeks',
+                weeks_to_complete
+            ).format(weeks_to_complete) if weeks_to_complete else '',
+        })
+        return course
 
     def get_program_details(self, request, program_uuid):
         """
@@ -1014,14 +1059,15 @@ class ProgramEnrollmentView(NonAtomicView):
 
         * Take the program UUID and get specific details about the program.
         * Determine whether the learner is enrolled in the program.
+        * Determine whether the learner is certificate eligible for the program.
         """
         try:
             program_details = CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
         except ImproperlyConfigured:
             raise Http404
-
-        if program_details is None:
-            raise Http404
+        else:
+            if program_details is None:
+                raise Http404
 
         # Extend our program details with context we'll need for display or for deciding redirects.
         program_details = ProgramDataExtender(program_details, request.user).extend()
@@ -1029,17 +1075,19 @@ class ProgramEnrollmentView(NonAtomicView):
         # TODO: Upstream this additional context to the platform's `ProgramDataExtender` so we can avoid this here.
         program_details['enrolled_in_program'] = False
         enrollment_count = 0
-        for course in program_details['courses']:
-            course_run = course['course_runs'][0]
-            if course_run['is_enrolled'] and course_run['upgrade_url'] is None:
-                # We're enrolled in the program if we have certificate-eligible enrollment in even 1 of its courses.
+        for extended_course in program_details['courses']:
+            # We need to extend our course data further for modals and other displays.
+            extended_course.update(ProgramEnrollmentView.extend_course(extended_course))
+
+            # We're enrolled in the program if we have certificate-eligible enrollment in even 1 of its courses.
+            extended_course_run = extended_course['course_runs'][0]
+            if extended_course_run['is_enrolled'] and extended_course_run['upgrade_url'] is None:
                 program_details['enrolled_in_program'] = True
                 enrollment_count += 1
 
         # We're certificate eligible for the program if we have certificate-eligible enrollment in all of its courses.
-        program_details['certificate_eligible_for_program'] = (
-            enrollment_count == len(program_details['courses'])
-        )
+        program_details['certificate_eligible_for_program'] = (enrollment_count == len(program_details['courses']))
+
         return program_details
 
     def get_enterprise_program_enrollment_page(self, request, enterprise_customer, program_details):

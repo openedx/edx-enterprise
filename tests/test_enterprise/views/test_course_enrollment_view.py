@@ -473,6 +473,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         course_id = self.demo_course_id
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
