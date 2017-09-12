@@ -336,6 +336,39 @@ class TestEnterpriseAPIViews(APITest):
         if status_code == 200:
             self.assertDictEqual(request_data, response)
 
+    def test_get_enterprise_customer_user_contains_consent_records(self):
+        user = factories.UserFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+        factories.DataSharingConsentFactory(
+            username=user.username,
+            enterprise_customer=enterprise_customer,
+            course_id=TEST_COURSE,
+            granted=True
+        )
+
+        expected_json = [{
+            'username': user.username,
+            'enterprise_customer_uuid': FAKE_UUIDS[0],
+            'exists': True,
+            'course_id': TEST_COURSE,
+            'consent_provided': True,
+            'consent_required': False
+        }]
+
+        response = self.client.get(
+            '{host}{path}?username={username}'.format(
+                host=settings.TEST_SERVER,
+                path=reverse('enterprise-learner-list'),
+                username=user.username
+            )
+        )
+        response = self.load_json(response.content)
+        assert expected_json == response['results'][0]['data_sharing_consent_records']
+
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @ddt.data(
         (TEST_USERNAME, 201),
@@ -565,7 +598,7 @@ class TestEnterpriseAPIViews(APITest):
 
             }],
             [{
-                'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent': [],
+                'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent_records': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
