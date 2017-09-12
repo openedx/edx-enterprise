@@ -40,9 +40,12 @@ matrix:
 
 cache:
   - pip
+  - directories:
+    - node_modules
 
 install:
   - pip install -r requirements/travis.txt
+  - npm install
 
 script:
   - if env | grep RUNJSHINT; then make jshint; else tox; fi

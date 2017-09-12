@@ -12,9 +12,9 @@
 #   - dist/**/*.js
 #
 src_files:
-  - spec/vendor/jquery.js
-  - spec/vendor/jasmine-jquery.js
-  - spec/vendor/mock-ajax.js
+  - node_modules/jquery/dist/jquery.min.js
+  - node_modules/jasmine-jquery/lib/jasmine-jquery.js
+  - node_modules/jasmine-ajax/lib/mock-ajax.js
   - spec/vendor/analytics-mock.js
   - enterprise/static/enterprise/*.js
   - enterprise/static/enterprise/admin/*.js

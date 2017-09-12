@@ -309,8 +309,49 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                 "XBlocks",
                 "Peer Assessment"
             ],
-            'view_expected_learning_items_text': 'See More',
-            'hide_expected_learning_items_text': 'See Less',
+            'expected_learning_items_show_count': 2,
+            'corporate_endorsements_text': 'Real Career Impact',
+            'corporate_endorsements': [
+                {
+                    "corporation_name": "Bob's Company",
+                    "statement": "",
+                    "image": {
+                        "src": "http://evonexus.org/wp-content/uploads/2016/01/IBM-logo-1024x576.jpg",
+                        "description": None,
+                        "height": None,
+                        "width": None,
+                    },
+                    "individual_endorsements": [
+                        {
+                            "endorser": {
+                                "uuid": "789aa881-e44b-4675-9377-fa103c12bbfc",
+                                "given_name": "Bob",
+                                "family_name": "the Builder",
+                                "bio": "Working hard on a daily basis!",
+                                "profile_image_url": None,
+                                "slug": "bob-the-builder",
+                                "position": {
+                                    "title": "Engineer",
+                                    "organization_name": "Bob's Company",
+                                    "organization_id": 1
+                                },
+                                "profile_image": {},
+                                "works": [],
+                                "urls": {
+                                    "facebook": None,
+                                    "twitter": None,
+                                    "blog": None,
+                                },
+                                "email": None
+                            },
+                            "quote": "Life is hard for us engineers. Period."
+                        }
+                    ]
+                }
+            ],
+            'corporate_endorsements_show_count': 1,
+            'see_more_text': 'See More',
+            'see_less_text': 'See Less',
             'confirm_button_text': 'Confirm Program',
             'summary_header': 'Program Summary',
             'price_text': 'Price',

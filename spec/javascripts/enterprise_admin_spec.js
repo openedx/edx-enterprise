@@ -4,10 +4,10 @@ var gettext = function (arg) {
 };
 var interpolate = function (arg) {
     return arg;
-}
+};
 $.cookie = function (arg) {
     return null;
-}
+};
 
 describe("Manage Learners form", function () {
 
@@ -37,8 +37,8 @@ describe("Manage Learners form", function () {
     };
 
     function expectOptionIn($select, optionValue, optionName) {
-        var $option = optionValue
-            ? $select.children("option[value="+optionValue+"]")
+        var $option = optionValue ?
+            $select.children("option[value="+optionValue+"]")
             : $select.children("option").filter(function() { return !$(this).val(); });
 
         expect($option).toExist();
@@ -146,7 +146,7 @@ describe("Manage Learners form", function () {
         $("#learner-unlink-button").click();
         var request = jasmine.Ajax.requests.mostRecent();
         expect(request.url).toBe('?unlink_email=escaped%2Bemail%40google.com');
-    })
+    });
 
     describe("program ID and course ID inputs interaction", function() {
         function testInputs($sourceInput, $otherInput, eventType) {
@@ -208,7 +208,7 @@ describe("Manage Learners form", function () {
                 done();
             }, 600);
         });
-    })
+    });
 });
 
 describe("Enroll checkboxes", function () {
@@ -232,13 +232,13 @@ describe("Enroll checkboxes", function () {
 
     describe("when submitting the form and there is a value in the email box", function () {
         beforeEach(function (done) {
-            $("#id_email_or_username").val('john@smith.com')
+            $("#id_email_or_username").val('john@smith.com');
             result = addCheckedLearnersToEnrollBox();
             done();
         }, 5000);
 
         it("keeps the value that was already in the box", function () {
-            expect($("#id_email_or_username").val()).toBe("john@smith.com")
+            expect($("#id_email_or_username").val()).toBe("john@smith.com");
         });
-    })
+    });
 });

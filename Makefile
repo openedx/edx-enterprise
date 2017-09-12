@@ -82,6 +82,7 @@ jasmine: ## run Javascript tests
 jshint: ## run Javascript linting
 	./node_modules/jshint/bin/jshint -v || npm install jshint
 	./node_modules/jshint/bin/jshint enterprise
+	./node_modules/jshint/bin/jshint spec
 
 requirements: ## install development environment requirements
 	pip install -qr requirements/dev.txt --exists-action w

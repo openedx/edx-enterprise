@@ -10,7 +10,8 @@
     font-weight: bold;
 }
 
-.program-detail .program-org {
+.program-detail .program-org,
+.program-metadata-header-text {
     font-size: 1.2em;
     font-weight: 600;
 }
@@ -25,12 +26,12 @@
     margin: 1em 0;
 }
 
-.program-detail .program-bullet-points .bullet-item {
+.program-bullet-points .bullet-item {
     font-size: 16px;
     margin-left: 20px;
 }
 
-.program-detail .program-bullet-points .bullet-item a {
+.program-bullet-points .bullet-item a {
     font-size: 16px;
 }
 
@@ -48,7 +49,58 @@
     color: #3c763d;
 }
 
+.program-metadata-item ~ .program-metadata-item {
+    margin-top: 20px;
+}
+
+.program-metadata-header {
+    margin: 10px 0;
+    padding: 5px 0;
+    border-bottom: 2px solid #cccccc;
+}
+
+.endorsement-container ~ .endorsement-container {
+    padding-top: 10px;
+}
+
+.endorsement-image {
+    height: 80px;
+    width: auto;
+    display: block;
+    margin: 10px 0;
+}
+
+.individual-endorsement-quote {
+    margin: 10px 0;
+    font-size: 16px;
+    font-weight: 300;
+}
+
+.endorser {
+    width: 100%;
+    margin: 10px 0;
+}
+
+.endorser-description-container {
+    padding-left: 50px;
+}
+
+.endorser-description {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.expand-list-link-container * {
+    font-size: 16px;
+    color: #2489c2;
+}
+
+.expand-list-link-container *:hover {
+    color: #0b5c8a;
+}
+
 .program-summary-container {
+    margin-top: 20px;
     margin-left: -10px;
 }
 

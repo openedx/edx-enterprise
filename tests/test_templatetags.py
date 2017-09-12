@@ -52,6 +52,7 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
         ('info', '<i class="fa fa-info-circle" aria-hidden="true"></i>'),
         ('warning', '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>'),
         ('error', '<i class="fa fa-times-circle" aria-hidden="true"></i>'),
+        ('plus-circle', '<i class="fa fa-plus-circle" aria-hidden="true"></i>'),
         ('unknown-status-tag', ''),
     )
     @ddt.unpack

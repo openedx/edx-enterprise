@@ -12,7 +12,8 @@ MESSAGE_ICONS = {
     'success': 'fa-check-circle',
     'info': 'fa-info-circle',
     'warning': 'fa-exclamation-triangle',
-    'error': 'fa-times-circle'
+    'error': 'fa-times-circle',
+    'plus-circle': 'fa-plus-circle',
 }
 
 

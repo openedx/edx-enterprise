@@ -11,9 +11,17 @@ s {
     text-decoration: line-through;
 }
 
+q {
+    font-style: italic;
+}
+
 body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
     background-color: white;
     padding-bottom: 100px;
+}
+
+body.open-modal {
+    overflow: hidden;
 }
 
 .text-underline {
@@ -291,7 +299,7 @@ h2.modal-header-text {
 }
 
 .modal-content .course-detail-modal-scrollable {
-    max-height: calc(70vh - 30px); /* account for the height of the top bar with the close button */
+    max-height: calc(50vh - 30px); /* account for the height of the top bar with the close button */
     overflow: auto;
     padding: 20px;
     width: 100%;
