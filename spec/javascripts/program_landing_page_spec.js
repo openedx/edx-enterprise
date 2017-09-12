@@ -4,7 +4,8 @@ describe("Program Enrollment Landing Page spec", function () {
         loadFixtures("program_enrollment.html");
     });
     describe("course details modal", function() {
-        var $expandLink = $('#test-expand-link'),
+        var $expandButton = $('#test-expand-button'),
+            $expandButtonText = $('#test-expand-button-text'),
             $seeMoreText = $('#see-more-text'),
             $seeLessText = $('#see-less-text'),
             $ul = $('#test-ul'),
@@ -12,17 +13,17 @@ describe("Program Enrollment Landing Page spec", function () {
 
         it("should show the #see-more-text text on the expand-list link " +
             "at page load", function () {
-            expect($expandLink.text()).toEqual($seeMoreText.text());
+            expect($expandButtonText.text()).toEqual($seeMoreText.text());
         });
         it("should show the #see-less-text text on the expand-list-link " +
             "when clicked while text is #see-more-text", function () {
-            $expandLink.click();
-            expect($expandLink.text()).toEqual($seeLessText.text());
+            $expandButton.click();
+            expect($expandButtonText.text()).toEqual($seeLessText.text());
         });
         it("should show the #see-more-text text on the expand-list-link " +
             "when clicked while text is #see-less-text", function () {
-            $expandLink.dblclick();
-            expect($expandLink.text()).toEqual($seeMoreText.text());
+            $expandButton.dblclick();
+            expect($expandButtonText.text()).toEqual($seeMoreText.text());
         });
         it("should hide items in the expandable item past the data-alwaysshow index " +
             "at page load", function () {
@@ -34,7 +35,7 @@ describe("Program Enrollment Landing Page spec", function () {
         });
         it("should show items in the expandable item past the data-alwaysshow index " +
             "when the list is hidden and the expand-list link is clicked", function() {
-            $expandLink.click();
+            $expandButton.click();
             $ul.children().each(function(index) {
                 if (index > showIndex) {
                     expect($(this)).toBeVisible();
@@ -43,7 +44,7 @@ describe("Program Enrollment Landing Page spec", function () {
         });
         it("should hide items in the expandable item past the data-alwaysshow index " +
             "when the list is showing and the expand-list link is clicked", function () {
-            $expandLink.dblclick();
+            $expandButton.dblclick();
             $ul.children().each(function(index) {
                 if (index > showIndex) {
                     expect($(this)).toBeHidden();

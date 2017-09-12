@@ -54,7 +54,6 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         self.demo_course_ids = [self.demo_course_id1, self.demo_course_id2]
         self.dummy_program_uuid = FAKE_PROGRAM_RESPONSE3['uuid']
         self.dummy_program = FAKE_PROGRAM_RESPONSE3
-        self.configuration_helpers_order = ['edX', 'edX', settings.ENTERPRISE_TAGLINE]
         super(TestProgramEnrollmentView, self).setUp()
 
     def _login(self):
@@ -157,16 +156,23 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         expected_context = {
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+            'LMS_ROOT_URL': 'http://localhost:8000',
             'enterprise_customer': enterprise_customer,
             'platform_name': 'Test platform',
+            'program_type_logo': 'http://localhost:18381/media/media/program_types/logo_images/'
+                                 'professional-certificate.medium.png',
+            'platform_description': 'Test description',
+            'program_type_description_header': 'What is an Test platform Professional Certificate?',
+            'platform_description_header': 'What is Test platform?',
             'tagline': "High-quality online learning opportunities from the world's best universities",
+            'header_logo_alt_text': 'Test platform home page',
             'organization_name': 'Authoring Organization',
             'organization_logo': 'images/logo_image_url.jpg',
-            'welcome_text': 'Welcome to Test platform.',
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>Test platform</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
+            'program_type': 'Professional Certificate',
+            'program_type_description': 'Designed by industry leaders and top universities to enhance '
+                                        'professional skills, Professional Certificates develop the '
+                                        'proficiency and expertise that employers are looking for with '
+                                        'specialized training and professional education.',
             'page_title': 'Confirm your program enrollment',
             'program_title': 'Program Title 1',
             'program_subtitle': 'Program Subtitle 1',
@@ -691,6 +697,27 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(program_enrollment_page_url)
         assert response.status_code == 404
 
+    @mock.patch('enterprise.views.ProgramDataExtender')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    def test_get_program_enrollment_page_for_non_existing_program_type(
+            self,
+            course_catalog_api_client_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program type.
+        """
+        course_catalog_api_client_mock.return_value.get_program_type_by_slug.return_value = None
+        enterprise_customer = EnterpriseCustomerFactory()
+        program_enrollment_page_url = reverse(
+            'enterprise_program_enrollment_page',
+            args=[enterprise_customer.uuid, self.dummy_program_uuid],
+        )
+
+        self._login()
+        response = self.client.get(program_enrollment_page_url)
+        assert response.status_code == 404
+
     def test_get_program_enrollment_page_for_invalid_ec_uuid(self):
         """
         The user will see the HTTP 404 (Not Found) page in case of an invalid enterprise customer UUID.
@@ -794,7 +821,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         """
         We raise a 404 when there are Discovery API-related errors.
         """
-        course_catalog_api_client_mock.return_value.get_program_by_uuid.side_effect = ImproperlyConfigured
+        course_catalog_api_client_mock.side_effect = ImproperlyConfigured
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -925,7 +952,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     def test_extend_course_no_course_details_returned_from_discovery(self, course_catalog_api_client_mock):
         """
-        We raise a 404 when there are Discovery API returns no course details in ``extend_course``.
+        We raise a 404 when the Discovery API returns no course details in ``extend_course``.
         """
         course_catalog_api_client_mock.return_value.get_course_and_course_run.return_value = None, None
         with self.assertRaises(Http404):

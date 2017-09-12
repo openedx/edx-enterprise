@@ -1,0 +1,10 @@
+{% load enterprise %}
+
+<div class="expand-list-link-container">
+  <form action="{{ href }}" class="expand-list-link">
+    <button type="submit" aria-controls="{{ href }}" aria-expanded="false">
+      {% fa_icon 'plus-circle' %}
+      <span class="text-underline">{{ value }}</span>
+    </button>
+  </form>
+</div>

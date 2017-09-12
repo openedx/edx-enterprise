@@ -1,3 +1,8 @@
+/**
+ * Perform a jQuery slide toggle on any elements that come after the `afterIndex`.
+ * @param $element The element on whose children to perform the slide toggles on.
+ * @param afterIndex The index of the child after which all children will be slide toggled.
+ */
 function slideToggleElementsAfter($element, afterIndex) {
     $element.children().each(function(index) {
         if (index > afterIndex) {
@@ -6,13 +11,32 @@ function slideToggleElementsAfter($element, afterIndex) {
     });
 }
 
+/**
+ * Switch an existing class of an element with another.
+ * @param $element The element whose class to switch.
+ * @param currentClass The class to switch out.
+ * @param newClass The class to switch in.
+ */
+function switchClass($element, currentClass, newClass) {
+    $element.removeClass(currentClass);
+    $element.addClass(newClass);
+}
+
 function toggleLinkText($element) {
     var seeMoreText = $('#see-more-text').text(),
-        seeLessText = $('#see-less-text').text();
+        seeLessText = $('#see-less-text').text(),
+        $faIcon = $element.prev('.fa'),
+        $expandable = $element.closest('.expand-list-link-container').prev('.expandable');
     if ($element.text() === seeMoreText) {
         $element.text(seeLessText);
+        switchClass($faIcon, 'fa-plus-circle', 'fa-minus-circle');
+        $element.parent().attr('aria-expanded', 'true');
+        $expandable.focus();
     } else {
         $element.text(seeMoreText);
+        switchClass($faIcon, 'fa-minus-circle', 'fa-plus-circle');
+        $element.parent().attr('aria-expanded', 'false');
+        $element.parent().focus();
     }
 }
 

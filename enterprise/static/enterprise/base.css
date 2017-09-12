@@ -28,6 +28,35 @@ body.open-modal {
     text-decoration: underline;
 }
 
+.expand-list-link button {
+    background: none;
+    border: none;
+}
+
+.logo-container {
+    padding-top: 10px;
+    width: 100%;
+    max-width: 768px;
+    min-width: 300px;
+    height: auto;
+    margin: 0 auto;
+    color: #383838;
+}
+
+@media (max-width: 768px) {
+    .logo-container {
+        text-align: center;
+    }
+
+    #header-tagline {
+        text-align: left;
+    }
+
+    .enterprise-container {
+        padding: 0 30px 30px 30px;
+    }
+}
+
 @media (min-width: 768px) {
     [class*='col-'] {
         float: left;
@@ -57,16 +86,6 @@ body.open-modal {
     border-top: 2px solid #0075b4;
 }
 
-.logo-container {
-    padding-top: 10px;
-    width: 70%;
-    max-width: 768px;
-    min-width: 300px;
-    height: auto;
-    margin: 0 auto;
-    color: #383838;
-}
-
 #header-tagline {
     font-size: 14px;
     margin-left: 0.5em;
@@ -77,7 +96,7 @@ body.open-modal {
 
 .consent-title {
     font-size: 24px;
-    color: #065683;
+    color: #126F9A;
 }
 
 .enterprise-container:after,
@@ -101,7 +120,7 @@ body.open-modal {
 }
 
 .enterprise-container a {
-    color: #2489c2;
+    color: #126F9A;
 }
 
 .enterprise-container a:hover {
@@ -110,6 +129,7 @@ body.open-modal {
 
 .enterprise-logo {
     width: auto;
+    max-width: 150px;
     height: 100px;
 }
 
@@ -171,7 +191,7 @@ body.open-modal {
 }
 
 .btn-confirm {
-    background: #0075B4;
+    background: #126F9A;
     border: none;
     color: #fff;
     border-radius: 5px;
@@ -286,7 +306,7 @@ body.open-modal {
     content: '';
     height: 30px;
     display: block;
-    background: #0075B4;
+    background: #126F9A;
     position: absolute;
     left: 0;
     top: 0;
@@ -328,7 +348,7 @@ h2.modal-header-text {
 }
 
 .modal-content header .image img {
-    border: 1px solid #6488bb;
+    border: 1px solid #126F9A;
     max-width: 210px;
 }
 
@@ -356,7 +376,7 @@ h2.modal-header-text {
 }
 
 .modal-content .body .details {
-    border: 1px solid rgb(0, 117, 180);
+    border: 1px solid #126F9A;
     margin-bottom: 20px;
 }
 
@@ -433,7 +453,7 @@ h2.modal-header-text {
 }
 
 .modal-content .body a {
-    color: #0075B4;
+    color: #126F9A;
     display: inline-block;
     text-decoration: underline;
     border: none;

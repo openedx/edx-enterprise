@@ -338,6 +338,31 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         with raises(CourseCatalogApiError):
             self.api.get_program_by_title("Apollo")
 
+    @ddt.data("MicroMasters Certificate", "Professional Certificate", "XSeries Certificate")
+    def test_get_program_type_by_slug(self, slug):
+        """
+        Verify get_program_type_by_slug of CourseCatalogApiClient works as expected.
+        """
+        response_dict = {"very": "complex", "json": {"with": " nested object"}}
+        self.get_data_mock.return_value = response_dict
+
+        actual_result = self.api.get_program_type_by_slug(slug)
+
+        assert self.get_data_mock.call_count == 1
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == CourseCatalogApiClient.PROGRAM_TYPES_ENDPOINT
+        assert resource_id is slug
+        assert actual_result == response_dict
+
+    @ddt.data(*EMPTY_RESPONSES)
+    def test_get_program_type_by_slug_empty_response(self, response):
+        """
+        Verify get_program_type_by_slug of CourseCatalogApiClient works as expected for empty responses.
+        """
+        self.get_data_mock.return_value = response
+        assert self.api.get_program_type_by_slug('slug') is None
+
     @ddt.unpack
     @ddt.data(
         # single run

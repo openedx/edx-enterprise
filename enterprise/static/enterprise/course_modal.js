@@ -2,7 +2,7 @@ function focusableElementsSelector() {
     return [
         'a[href], area[href], input:not([disabled]), select:not([disabled]),',
         'textarea:not([disabled]), button:not([disabled]), iframe, object, embed,',
-        '*[tabindex], *[contenteditable]'
+        '*[contenteditable]'
     ].join(' ');
 }
 
@@ -29,7 +29,7 @@ function toggleModal(modalSelector, index, visible) {
 
     $(modalSelector).attr('aria-hidden', ariaHidden);
     $(focusSelector).focus();
-    setTabIndexing('.enterprise-container', ariaHidden, tabIndex);
+    setTabIndexing('.enterprise-container, .logo-container', ariaHidden, tabIndex);
 }
 
 function showModal(modalSelector, index) {
@@ -55,7 +55,7 @@ function setUpCourseDetailsModal() {
             var target = $(event.target);
             if (target.hasClass('modal') || target.hasClass('modal-close-button')) {
                 event.preventDefault();
-                hideModal(modalSelector);
+                hideModal(modalSelector, index);
             }
         });
 
@@ -63,7 +63,7 @@ function setUpCourseDetailsModal() {
         $(document).keydown(function(event) {
             if ($(modalSelector).is(':visible') && event.keyCode === 27) {
                 event.preventDefault();
-                hideModal(modalSelector);
+                hideModal(modalSelector, index);
             }
         });
     });

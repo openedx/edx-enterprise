@@ -26,9 +26,9 @@
 
   <body>
     {% block header %}
-      <header class="logo-container" aria-label="{{ page_title }}">
+      <header class="logo-container">
         <h1>
-          <img src="{% static 'images/logo.png' %}" alt="{{ platform_name }}" />
+          <a href="{{ LMS_ROOT_URL }}"><img src="{% static 'images/logo.png' %}" alt="{{ header_logo_alt_text }}" /></a>
           <span id="header-tagline">{{ tagline }}</span>
         </h1>
       </header>

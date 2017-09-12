@@ -53,6 +53,7 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
         ('warning', '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i>'),
         ('error', '<i class="fa fa-times-circle" aria-hidden="true"></i>'),
         ('plus-circle', '<i class="fa fa-plus-circle" aria-hidden="true"></i>'),
+        ('minus-circle', '<i class="fa fa-minus-circle" aria-hidden="true"></i>'),
         ('unknown-status-tag', ''),
     )
     @ddt.unpack
@@ -213,6 +214,30 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
         template = Template("{% load enterprise %} {% course_modal course %}")
         rendered = template.render(Context({'course': course, 'index': 0}))
         for content in expected_modal_contents:
+            assert content in rendered.strip()
+
+    @ddt.data(
+        (
+            'Click me!',
+            '#getmeoutofhere',
+            [
+                '<div class="expand-list-link-container">',
+                '<form action="#getmeoutofhere" class="expand-list-link">',
+                '<button type="submit" aria-controls="#getmeoutofhere" aria-expanded="false">',
+                '<i class="fa fa-plus-circle" aria-hidden="true"></i>',
+                '<span class="text-underline">Click me!</span>',
+                ''
+            ]
+        ),
+    )
+    @ddt.unpack
+    def test_expand_button(self, value, href, expected_contents):
+        """
+        The expand button template tag returns the correct template for buttons used to expand content.
+        """
+        template = Template("{% load enterprise %} {% expand_button value href %}")
+        rendered = template.render(Context({'value': value, 'href': href}))
+        for content in expected_contents:
             assert content in rendered.strip()
 
 

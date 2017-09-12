@@ -76,6 +76,7 @@ TEMPLATES = [
 ]
 
 PLATFORM_NAME = "Test platform"
+PLATFORM_DESCRIPTION = "Test description"
 
 ROOT_URLCONF = "enterprise.urls"
 

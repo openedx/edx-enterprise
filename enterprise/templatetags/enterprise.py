@@ -14,6 +14,7 @@ MESSAGE_ICONS = {
     'warning': 'fa-exclamation-triangle',
     'error': 'fa-times-circle',
     'plus-circle': 'fa-plus-circle',
+    'minus-circle': 'fa-minus-circle',
 }
 
 
@@ -68,6 +69,22 @@ def course_modal(context, course=None):
             'premium_modes': course.get('premium_modes', []),
         })
     return context
+
+
+@register.inclusion_tag('enterprise/templatetags/expand_button.html')
+def expand_button(value, href):
+    """
+    Django template tag that returns a button used to expand/collapse a container.
+
+    You may pass in the ID of the container that this button controls, and a button text value.
+
+    Usage:
+        {% expand_button 'Click me!' '#id' %}
+    """
+    return {
+        'value': value,
+        'href': href,
+    }
 
 
 @register.filter(needs_autoescape=True)

@@ -262,7 +262,7 @@ FAKE_PROGRAM_RESPONSE3 = {
     "uuid": "52ad909b-c57d-4ff1-bab3-999813a2479b",
     "title": "Program Title 1",
     "subtitle": "Program Subtitle 1",
-    "type": "Verified Certificate",
+    "type": "Professional Certificate",
     "status": "active",
     "marketing_slug": "marketingslug1",
     "marketing_url": "verified-certificate/marketingslug1",
@@ -378,6 +378,38 @@ FAKE_PROGRAM_RESPONSE3 = {
         "professional",
         "credit",
     ],
+}
+
+FAKE_PROGRAM_TYPE = {
+    "name": "Professional Certificate",
+    "logo_image": {
+        "small": {
+            "height": 64,
+            "width": 64,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.small.png"
+        },
+        "medium": {
+            "height": 128,
+            "width": 128,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.medium.png"
+        },
+        "large": {
+            "height": 256,
+            "width": 256,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.large.png"
+        },
+        "x-small": {
+            "height": 32,
+            "width": 32,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.x-small.png"
+        }
+    },
+    "applicable_seat_types": [
+        "verified",
+        "professional",
+        "credit"
+    ],
+    "slug": "professional-certificate"
 }
 
 FAKE_COURSE_RUNS_RESPONSE = [
@@ -1063,6 +1095,7 @@ def setup_course_catalog_api_client_mock(
         course_overrides=None,
         course_run_overrides=None,
         program_overrides=None,
+        program_type_overrides=None,
 ):
     """
     Set up the Course Catalog API client mock.
@@ -1077,6 +1110,7 @@ def setup_course_catalog_api_client_mock(
     fake_course = FAKE_COURSE.copy()
     fake_course_run = FAKE_COURSE_RUN.copy()
     fake_program = FAKE_PROGRAM_RESPONSE3.copy()
+    fake_program_type = FAKE_PROGRAM_TYPE.copy()
 
     # Apply overrides to default fake course catalog metadata.
     if course_overrides:
@@ -1085,12 +1119,15 @@ def setup_course_catalog_api_client_mock(
         fake_course_run.update(course_run_overrides)
     if program_overrides:
         fake_program.update(program_overrides)
+    if program_type_overrides:
+        fake_program_type.update(program_type_overrides)
 
     # Mock course catalog api functions.
     client.get_course_run.return_value = fake_course_run
     client.get_course_and_course_run.return_value = (fake_course, fake_course_run)
     client.get_program_course_keys.return_value = [course['key'] for course in fake_program['courses']]
     client.get_program_by_uuid.return_value = fake_program
+    client.get_program_type_by_slug.return_value = fake_program_type
 
 
 class CourseDiscoveryApiTestMixin(object):

@@ -18,6 +18,7 @@ from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import get_language_from_request, ungettext
 from django.views.generic import View
@@ -41,6 +42,7 @@ from enterprise.utils import (
     get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
+    get_program_type_description,
     ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
@@ -79,14 +81,21 @@ def get_global_context(request):
     """
     Get the set of variables that are needed by default across views.
     """
+    platform_name = get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME)
     return {
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
-        'platform_name': get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME),
         'tagline': get_configuration_value(
             "ENTERPRISE_TAGLINE",
             getattr(settings, "ENTERPRISE_TAGLINE", '')  # Remove the `getattr` when setting is upstreamed.
         ),
+        'platform_description': get_configuration_value(
+            "PLATFORM_DESCRIPTION",
+            getattr(settings, "PLATFORM_DESCRIPTION", '')  # Remove `getattr` when variable is upstreamed.
+        ),
+        'LMS_ROOT_URL': settings.LMS_ROOT_URL,
+        'platform_name': platform_name,
+        'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
     }
 
 
@@ -967,12 +976,8 @@ class ProgramEnrollmentView(NonAtomicView):
     }
 
     context_data = {
-        'welcome_text': _('Welcome to {platform_name}.'),
-        'enterprise_welcome_text': _(
-            "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
-            "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
-            "opportunities from the world's best universities."
-        ),
+        'program_type_description_header': _('What is an {platform_name} {program_type}?'),
+        'platform_description_header': _('What is {platform_name}?'),
         'page_title': _('Confirm your {item}'),
         'organization_text': _('Presented by {organization}'),
         'item_bullet_points': [
@@ -1023,11 +1028,11 @@ class ProgramEnrollmentView(NonAtomicView):
             catalog_api_client = CourseCatalogApiServiceClient()
         except ImproperlyConfigured:
             raise Http404
-        else:
-            course_run_id = course['course_runs'][0]['key']
-            course_details, course_run_details = catalog_api_client.get_course_and_course_run(course_run_id)
-            if not course_details or not course_run_details:
-                raise Http404
+
+        course_run_id = course['course_runs'][0]['key']
+        course_details, course_run_details = catalog_api_client.get_course_and_course_run(course_run_id)
+        if not course_details or not course_run_details:
+            raise Http404
 
         weeks_to_complete = course_run_details['weeks_to_complete']
         course_run_image = course_run_details['image'] or {}
@@ -1065,12 +1070,17 @@ class ProgramEnrollmentView(NonAtomicView):
         * Determine whether the learner is certificate eligible for the program.
         """
         try:
-            program_details = CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
+            course_catalog_api_client = CourseCatalogApiServiceClient()
         except ImproperlyConfigured:
             raise Http404
-        else:
-            if program_details is None:
-                raise Http404
+
+        program_details = course_catalog_api_client.get_program_by_uuid(program_uuid)
+        if program_details is None:
+            raise Http404
+
+        program_type = course_catalog_api_client.get_program_type_by_slug(slugify(program_details['type']))
+        if program_type is None:
+            raise Http404
 
         # Extend our program details with context we'll need for display or for deciding redirects.
         program_details = ProgramDataExtender(program_details, request.user).extend()
@@ -1090,7 +1100,7 @@ class ProgramEnrollmentView(NonAtomicView):
 
         # We're certificate eligible for the program if we have certificate-eligible enrollment in all of its courses.
         program_details['certificate_eligible_for_program'] = (enrollment_count == len(program_details['courses']))
-
+        program_details['type_details'] = program_type
         return program_details
 
     def get_enterprise_program_enrollment_page(self, request, enterprise_customer, program_details):
@@ -1102,6 +1112,8 @@ class ProgramEnrollmentView(NonAtomicView):
         organization = organizations[0] if organizations else {}
         platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         program_title = program_details['title']
+        program_type_details = program_details['type_details']
+        program_type = program_type_details['name']
 
         # Make any modifications for singular/plural-dependent text.
         program_courses = program_details['courses']
@@ -1155,11 +1167,12 @@ class ProgramEnrollmentView(NonAtomicView):
         context_data = self.context_data.copy()
         context_data.update(get_global_context(request))
         context_data.update({
-            'enterprise_welcome_text': self.context_data['enterprise_welcome_text'].format(
-                strong_start='<strong>',
-                strong_end='</strong>',
-                enterprise_customer_name=enterprise_customer.name,
+            'program_type_description_header': self.context_data['program_type_description_header'].format(
                 platform_name=platform_name,
+                program_type=program_type,
+            ),
+            'platform_description_header': self.context_data['platform_description_header'].format(
+                platform_name=platform_name
             ),
             'discount_provider': self.context_data['discount_provider'].format(
                 strong_start='<strong>',
@@ -1170,8 +1183,10 @@ class ProgramEnrollmentView(NonAtomicView):
             'organization_name': organization.get('name'),
             'organization_logo': organization.get('logo_image_url'),
             'organization_text': self.context_data['organization_text'].format(organization=organization.get('name')),
-            'welcome_text': self.context_data['welcome_text'].format(platform_name=platform_name),
             'page_title': self.context_data['page_title'].format(item=item),
+            'program_type_logo': program_type_details['logo_image'].get('medium', {}).get('url', ''),
+            'program_type': program_type,
+            'program_type_description': get_program_type_description(program_type),
             'program_title': program_title,
             'program_subtitle': program_details['subtitle'],
             'program_overview': program_details['overview'],

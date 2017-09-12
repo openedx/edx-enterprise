@@ -22,7 +22,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-# pylint: disable=import-error,wrong-import-order
+from enterprise.constants import PROGRAM_TYPE_DESCRIPTION
+# pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 try:
@@ -619,3 +620,18 @@ def get_request_value(request, key, default=None):
     if request.method in ['GET', 'DELETE']:
         return request.query_params.get(key, request.data.get(key, default))
     return request.data.get(key, request.query_params.get(key, default))
+
+
+def get_program_type_description(program_type):
+    """
+    Get the pre-set description associated with this program type.
+
+    :param program_type: The type of the program. Should be one of:
+
+    * "MicroMasters Certificate"
+    * "Professional Certificate"
+    * "XSeries Certificate"
+
+    :return: The description associated with the program type. If none exists, then the empty string.
+    """
+    return PROGRAM_TYPE_DESCRIPTION.get(program_type, '')

@@ -79,10 +79,10 @@ snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.26.0         # via edx-opaque-keys
 testfixtures==5.2.0
 tox-battery==0.2.0
-tox==2.8.1
+tox==2.8.2
 tqdm==4.15.0              # via twine
 twine==1.9.1
 unicodecsv==0.14.1
 virtualenv==15.1.0        # via tox
-wheel==0.29.0
+wheel==0.30.0
 wrapt==1.10.11            # via astroid

@@ -98,7 +98,7 @@
     white-space: nowrap;
     padding-left: 2%;
     font-size: 18px;
-    color: #0075B4;
+    color: #126F9A;
 }
 
 .dropdown-icon-container {
@@ -114,7 +114,7 @@
 
 #consent-policy-dropdown-icon {
     font-size: 18px;
-    color: #0075B4;
+    color: #126F9A;
     padding-top: 12%;
     padding-left: 5%;
 }
@@ -160,14 +160,14 @@ body.open-modal {
 .header {
     text-align: center;
     line-height: 60px;
-    border-bottom: 2px solid #48bef4;
+    border-bottom: 2px solid #126F9A;
     color: #ccc;
     margin-bottom: 30px;
 }
 
 .consent-title {
     font-size: 20px !important;
-    color: #2489c2 !important;
+    color: #126F9A !important;
     font-weight: normal;
     margin-bottom: 10px;
 }
