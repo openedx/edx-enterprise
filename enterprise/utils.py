@@ -12,6 +12,8 @@ from uuid import UUID
 
 import analytics
 import pytz
+from Crypto import Random
+from Crypto.Cipher import AES
 from eventtracking import tracker
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
@@ -694,3 +696,26 @@ def is_course_run_enrollable(course_run):
     return (not end or end > now) and \
            (not enrollment_start or enrollment_start < now) and \
            (not enrollment_end or enrollment_end > now)
+
+
+def generate_aes_initialization_vector():
+    """
+    Genrates an Initialization Vector (iv) to be used for AES encryption.
+    """
+    return Random.new().read(AES.block_size)
+
+
+def encrypt_string(string, iv):  # pylint: disable=invalid-name
+    """
+    Encrypts the given string using the configured secret.
+    """
+    aes = AES.new(settings.ENTERPRISE_REPORTING_SECRET, AES.MODE_CFB, iv)
+    return aes.encrypt(string)
+
+
+def decrypt_string(string, iv):   # pylint: disable=invalid-name
+    """
+    Decrypts the given string using the configured secret.
+    """
+    aes = AES.new(settings.ENTERPRISE_REPORTING_SECRET, AES.MODE_CFB, iv)
+    return aes.decrypt(string).decode('utf8')

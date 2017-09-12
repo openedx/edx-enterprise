@@ -122,6 +122,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer_entitlements",
                 "enterprise_customer_catalogs",
                 "enterprise_enrollment_template",
+                "enterprisecustomerreportingconfiguration",
                 "enterprise_customer_consent",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
@@ -1076,6 +1077,16 @@ class TestEnterpriseUtils(unittest.TestCase):
         - True if none of the above plus, optionally, if any of the values are NULL.
         """
         assert utils.is_course_run_enrollable(course_run) == expected_enrollment_eligibility
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def test_encrypt_and_decrypt_string(self):
+        """
+        Test the encrypt_string and decrypt_string functions.
+        """
+        test_string = 'test_string'
+        iv = utils.generate_aes_initialization_vector()   # pylint: disable=invalid-name
+        encrypted_string = utils.encrypt_string(test_string, iv)
+        assert test_string == utils.decrypt_string(encrypted_string, iv)
 
 
 def get_transformed_course_metadata(course_id, status):

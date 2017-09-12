@@ -31,6 +31,7 @@ from pytest import mark, raises
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
+from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 
 from enterprise.models import (
@@ -40,6 +41,7 @@ from enterprise.models import (
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerEntitlement,
+    EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
     logo_path,
@@ -1367,3 +1369,100 @@ class TestSAPSuccessFactorsGlobalConfiguration(unittest.TestCase):
         )
         expected_to_str = "<SAPSuccessFactorsGlobalConfiguration with id 2>"
         assert expected_to_str == method(config)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
+    """
+    Tests of the EnterpriseCustomerReportingConfiguration model.
+    """
+
+    @ddt.data(
+        str, repr
+    )
+    def test_string_conversion(self, method):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` conversion to string
+        """
+        enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY,
+            day_of_month=1,
+            hour_of_day=1,
+        )
+
+        expected_to_str = "<EnterpriseCustomerReportingConfiguration for Enterprise {}>".format(
+            enterprise_customer.name
+        )
+        assert expected_to_str == method(config)
+
+    @ddt.data(
+        (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_DAILY, 1, 1, None, None, None),
+        (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_WEEKLY, 1, 1, None, 1, None),
+        (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_WEEKLY, None, None, None, None,
+         'Day of week must be set if the frequency is weekly.'),
+        (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY, 1, 1, 1, None, None),
+        (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY, None, None, None, None,
+         'Day of month must be set if the frequency is monthly.'),
+        ('invalid_frequency', None, None, None, None, 'Frequency must be set to either daily, weekly, or monthly.'),
+    )
+    @ddt.unpack
+    def test_clean(
+            self,
+            frequency,
+            day_of_month,
+            day_of_week,
+            expected_day_of_month,
+            expected_day_of_week,
+            expected_error_message,
+    ):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function
+        """
+        enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            frequency=frequency,
+            day_of_month=day_of_month,
+            day_of_week=day_of_week,
+            hour_of_day=1,
+        )
+
+        if expected_error_message:
+            with self.assertRaises(ValidationError) as validation_error:
+                config.clean()
+                self.assertEqual(validation_error.exception.messages[0], expected_error_message)
+        else:
+            config.clean()
+
+        assert config.day_of_month == expected_day_of_month
+        assert config.day_of_week == expected_day_of_week
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def test_save(self):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` custom save function
+        """
+        enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
+            email='test@edx.org',
+            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY,
+            day_of_month=1,
+            hour_of_day=1,
+        )
+
+        assert not config.password
+        config.save()
+        assert EnterpriseCustomerReportingConfiguration.objects.count() == 1
+        assert EnterpriseCustomerReportingConfiguration.objects.first().password

@@ -3,15 +3,16 @@
 Database models for Enterprise Integrated Channel.
 """
 from __future__ import absolute_import, unicode_literals
+
 import logging
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
+
 from model_utils.models import TimeStampedModel
 
 from enterprise.models import EnterpriseCustomer
-
 
 LOGGER = logging.getLogger(__name__)
 

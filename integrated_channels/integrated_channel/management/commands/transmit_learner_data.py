@@ -7,7 +7,8 @@ from __future__ import absolute_import, unicode_literals
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
-from . import IntegratedChannelCommandMixin, celery_task, INTEGRATED_CHANNEL_CHOICES
+
+from . import INTEGRATED_CHANNEL_CHOICES, IntegratedChannelCommandMixin, celery_task
 
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):

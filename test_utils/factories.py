@@ -19,6 +19,7 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerEntitlement,
     EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
@@ -244,3 +245,26 @@ class DataSharingConsentFactory(factory.django.DjangoModelFactory):
     username = factory.LazyAttribute(lambda x: FAKER.user_name())  # pylint: disable=no-member
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
     granted = True
+
+
+class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerReportingConfiguration factory.
+
+    Creates an instance of EnterpriseCustomerReportingConfiguration with minimal boilerplate
+    uses this class' attributes as default parameters for EnterpriseCustomerReportingConfiguration constructor.
+    """
+
+    class Meta(object):
+        """
+        Meta for EnterpriseCustomerReportingConfiguration.
+        """
+
+        model = EnterpriseCustomerReportingConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
+    active = True  # pylint: disable=no-member
+    email = factory.LazyAttribute(lambda x: FAKER.email())  # pylint: disable=no-member
+    day_of_month = 1  # pylint: disable=no-member
+    hour_of_day = 1  # pylint: disable=no-member
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)

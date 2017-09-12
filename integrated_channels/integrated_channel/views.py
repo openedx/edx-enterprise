@@ -4,6 +4,7 @@ Views for Enterprise Integrated Channel.
 """
 
 from __future__ import absolute_import, unicode_literals
+
 from rest_framework.views import APIView
 
 

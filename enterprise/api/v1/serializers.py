@@ -395,3 +395,18 @@ class ProgramDetailSerializer(ImmutableStateSerializer):
             for course_run in course['course_runs']:
                 course_run['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(course_run['key'])
         return updated_program
+
+
+class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCustomerReportingConfiguration model.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomerReportingConfiguration
+        fields = (
+            'enterprise_customer', 'active', 'delivery_method', 'email', 'frequency', 'day_of_month', 'day_of_week',
+            'hour_of_day', 'initialization_vector', 'password'
+        )
+
+    enterprise_customer = EnterpriseCustomerSerializer()
