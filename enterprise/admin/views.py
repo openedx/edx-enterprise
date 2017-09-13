@@ -19,6 +19,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
@@ -43,7 +44,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import get_reversed_url_by_site, send_email_notification_message
+from enterprise.utils import get_configuration_value_for_site, send_email_notification_message
 
 
 class TemplatePreviewView(View):
@@ -508,16 +509,13 @@ class EnterpriseCustomerManageLearnersView(View):
                 ).format(course_id)
             )
             return
-        course_url = course_details.get('marketing_url')
-        if course_url is None:
-            # If we didn't get a useful path to the course on a marketing site from the catalog API,
-            # then we should build a path to the course on the LMS directly.
-            course_url = get_reversed_url_by_site(
-                request,
-                enterprise_customer.site,
-                'about_course',
-                args=(course_id,),
-            )
+        course_path = urlquote('/courses/{course_id}/course'.format(course_id=course_id))
+        lms_root_url = get_configuration_value_for_site(enterprise_customer.site, 'LMS_ROOT_URL')
+        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
+            site=lms_root_url,
+            login_or_register='{login_or_register}',  # We don't know the value at this time
+            course_path=course_path
+        )
         course_name = course_details.get('title')
 
         try:
@@ -525,18 +523,20 @@ class EnterpriseCustomerManageLearnersView(View):
         except (TypeError, ValueError):
             course_start = None
             logging.exception(
-                "None or empty value passed as course start date.\nCourse Details:\n{course_details}".format(
+                'None or empty value passed as course start date.\nCourse Details:\n{course_details}'.format(
                     course_details=course_details,
                 )
             )
 
         with mail.get_connection() as email_conn:
             for user in users:
+                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
+                destination_url = destination_url.format(login_or_register=login_or_register)
                 send_email_notification_message(
                     user=user,
                     enrolled_in={
                         'name': course_name,
-                        'url': course_url,
+                        'url': destination_url,
                         'type': 'course',
                         'start': course_start,
                     },
@@ -556,17 +556,27 @@ class EnterpriseCustomerManageLearnersView(View):
         """
         program_name = program_details.get('title')
         program_branding = program_details.get('type')
-        program_url = program_details.get('marketing_url')
+        program_uuid = program_details.get('uuid')
+
+        lms_root_url = get_configuration_value_for_site(enterprise_customer.site, 'LMS_ROOT_URL')
+        program_path = urlquote('/dashboard/programs/{program_uuid}/'.format(program_uuid=program_uuid))
+        destination_url = '{site}/{login_or_register}?next={program_path}'.format(
+            site=lms_root_url,
+            login_or_register='{login_or_register}',
+            program_path=program_path
+        )
         program_type = 'program'
         program_start = get_earliest_start_date_from_program(program_details)
 
         with mail.get_connection() as email_conn:
             for user in users:
+                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
+                destination_url = destination_url.format(login_or_register=login_or_register)
                 send_email_notification_message(
                     user=user,
                     enrolled_in={
                         'name': program_name,
-                        'url': program_url,
+                        'url': destination_url,
                         'type': program_type,
                         'start': program_start,
                         'branding': program_branding,

@@ -741,7 +741,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
-    def test_post_enroll_user_into_program(self, catalog_client, views_client, views_catalog_client):
+    def test_post_enroll_user_into_program(
+            self,
+            catalog_client,
+            views_client,
+            views_catalog_client
+    ):
         views_catalog_instance = views_catalog_client.return_value
         views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         views_instance = views_client.return_value
@@ -784,7 +789,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
-    def test_post_enroll_user_into_program_error(self, catalog_client, views_client, views_catalog_client):
+    def test_post_enroll_user_into_program_error(
+            self,
+            catalog_client,
+            views_client,
+            views_catalog_client
+    ):
         views_catalog_instance = views_catalog_client.return_value
         views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
         views_instance = views_client.return_value
