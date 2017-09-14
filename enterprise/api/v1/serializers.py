@@ -253,12 +253,24 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'id', 'enterprise_customer', 'user_id', 'user', 'data_sharing_consent'
+            'id', 'enterprise_customer', 'user_id', 'user', 'data_sharing_consent_records'
         )
 
     user = UserSerializer()
     enterprise_customer = EnterpriseCustomerSerializer()
-    data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True)
+    data_sharing_consent_records = serializers.SerializerMethodField()
+
+    def get_data_sharing_consent_records(self, obj):
+        """
+        Return serialization of EnterpriseCustomerUser.data_sharing_consent_records property.
+
+        Arguments:
+            EnterpriseCustomerUser: The EnterpriseCustomerUser.
+
+        Returns:
+            list of dict: The serialized DataSharingConsent records associated with the EnterpriseCustomerUser.
+        """
+        return [record.serialize() for record in obj.data_sharing_consent_records]
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
@@ -313,7 +325,6 @@ class EnterpriseCustomerUserEntitlementSerializer(ImmutableStateSerializer):
 
     user = UserSerializer(read_only=True)
     enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
-    data_sharing_consent = UserDataSharingConsentAuditSerializer(many=True, read_only=True)
 
 
 class CourseCatalogApiResponseReadOnlySerializer(ImmutableStateSerializer):

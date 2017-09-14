@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.45.0] - 2017-09-14
+---------------------
+
+* Modified enterprise-learner API endpoint to include the new DataSharingConsent model data.
+
 [0.44.0] - 2017-09-08
 ---------------------
 

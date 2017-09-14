@@ -439,6 +439,20 @@ class EnterpriseCustomerUser(TimeStampedModel):
             } for entitlement in entitlements.all()
             ]
 
+    @property
+    def data_sharing_consent_records(self):
+        """
+        Return the DataSharingConsent records associated with this EnterpriseCustomerUser.
+
+        Returns:
+            QuerySet (DataSharingConsent): The filtered DataSharingConsent QuerySet.
+        """
+        DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')  # pylint: disable=invalid-name
+        return DataSharingConsent.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            username=self.username
+        )
+
     def __str__(self):
         """
         Return human-readable string representation.
