@@ -14,7 +14,6 @@ router.register("enterprise-catalogs", views.EnterpriseCustomerCatalogViewSet, '
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')
-router.register("user-data-sharing-consent", views.UserDataSharingConsentAuditViewSet, 'user-data-sharing-consent')
 router.register(
     "enterprise-customer-branding",
     views.EnterpriseCustomerBrandingConfigurationViewSet,

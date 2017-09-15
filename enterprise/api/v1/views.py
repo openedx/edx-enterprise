@@ -152,7 +152,7 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
     queryset = models.EnterpriseCourseEnrollment.objects.all()
 
     FIELDS = (
-        'enterprise_customer_user', 'consent_granted', 'course_id'
+        'enterprise_customer_user', 'course_id'
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
@@ -216,7 +216,6 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
             (HttpResponse): Response object containing a list of learner's entitlements.
         """
         enterprise_customer_user = self.get_object()
-
         instance = {"entitlements": enterprise_customer_user.entitlements}
         serializer = serializers.EnterpriseCustomerUserEntitlementSerializer(instance, context={'request': request})
         return Response(serializer.data)
@@ -232,21 +231,6 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
 
     FIELDS = (
         'enterprise_customer',
-    )
-    filter_fields = FIELDS
-    ordering_fields = FIELDS
-
-
-class UserDataSharingConsentAuditViewSet(EnterpriseReadOnlyModelViewSet):
-    """
-    API views for the ``user-data-sharing-consent`` API endpoint.
-    """
-
-    queryset = models.UserDataSharingConsentAudit.objects.all()
-    serializer_class = serializers.UserDataSharingConsentAuditSerializer
-
-    FIELDS = (
-        'user', 'state',
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS

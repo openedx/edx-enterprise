@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` decorators.
 from __future__ import absolute_import, unicode_literals
 
 import unittest
+import warnings
 from importlib import import_module
 
 import ddt
@@ -17,14 +18,19 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.test import RequestFactory
 
-from enterprise.decorators import disable_for_loaddata, enterprise_login_required, force_fresh_session
+from enterprise.decorators import (
+    deprecated,
+    disable_for_loaddata,
+    enterprise_login_required,
+    force_fresh_session,
+    ignore_warning,
+)
 from enterprise.django_compatibility import reverse
 from six.moves.urllib.parse import parse_qs, unquote, urlparse  # pylint: disable=import-error
 from test_utils import get_magic_name, mock_view_function
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 
 
-@mark.django_db
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseDecorators(unittest.TestCase):
@@ -52,6 +58,33 @@ class TestEnterpriseDecorators(unittest.TestCase):
         session_key = request.COOKIES.get(settings.SESSION_COOKIE_NAME)
         request.session = self.session_engine.SessionStore(session_key)
         return request
+
+    def test_deprecated(self):
+        """
+        Calling a deprecated function emits a warning.
+        """
+        def func():
+            """ Function to be decorated. """
+            pass
+        with warnings.catch_warnings(record=True) as warning:
+            warnings.simplefilter('always')
+            deprecated('Yep!')(func)()
+            assert len(warning) is 1
+            assert issubclass(warning[0].category, DeprecationWarning)
+            assert str(warning[0].message) == 'You called the deprecated function `func`. Yep!'
+
+    def test_ignore_warning(self):
+        """
+        Emitted warnings from a function are ignored.
+        """
+        def func():
+            """ Function to be decorated. """
+            pass
+        with warnings.catch_warnings(record=True) as warning:
+            warnings.simplefilter('always')
+            ignore_warning(DeprecationWarning)(func)()
+            deprecated('Yep!')(func)()
+            assert len(warning) is 0
 
     @ddt.data(True, False)
     def test_disable_for_loaddata(self, raw):

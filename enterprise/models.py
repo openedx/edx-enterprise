@@ -32,7 +32,6 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
-from enterprise.decorators import deprecated
 from enterprise.utils import get_configuration_value
 from enterprise.validators import validate_image_extension, validate_image_size
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
@@ -141,14 +140,6 @@ class EnterpriseCustomer(TimeStampedModel):
         default=False,
         help_text=_(
             "Specifies whether to pass-back audit track enrollment data through an integrated channel."
-        )
-    )
-
-    require_account_level_consent = models.BooleanField(
-        default=False,
-        help_text=_(
-            "Specifies whether every consent interaction should ask for account-wide consent, rather than only "
-            "the specific scope at which the interaction is happening."
         )
     )
 
@@ -692,81 +683,6 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
 
 
 @python_2_unicode_compatible
-class UserDataSharingConsentAudit(TimeStampedModel):
-    """
-    Store consent information for an EnterpriseCustomerUser.
-
-    Object that exists to store the canonical state of whether a particular
-    user has given consent for their course data to be shared with a particular
-    enterprise customer.
-    """
-
-    class Meta(object):
-        app_label = 'enterprise'
-        verbose_name = "Data Sharing Consent Audit State"
-        verbose_name_plural = "Data Sharing Consent Audit States"
-
-    NOT_SET = 'not_set'
-    ENABLED = 'enabled'
-    DISABLED = 'disabled'
-    EXTERNALLY_MANAGED = 'external'
-    STATE_CHOICES = (
-        (NOT_SET, 'Not set'),
-        (ENABLED, 'Enabled'),
-        (DISABLED, 'Disabled'),
-        (EXTERNALLY_MANAGED, 'Managed Externally'),
-    )
-
-    ENABLED_STATES = [
-        ENABLED,
-        EXTERNALLY_MANAGED,
-    ]
-
-    user = models.ForeignKey(
-        EnterpriseCustomerUser,
-        related_name='data_sharing_consent',
-        on_delete=models.deletion.CASCADE
-    )
-
-    state = models.CharField(
-        max_length=8,
-        blank=False,
-        choices=STATE_CHOICES,
-        default=NOT_SET,
-        help_text=_(
-            "Stores whether the learner linked to this model has consented to "
-            "have their information shared with the linked EnterpriseCustomer."
-        )
-    )
-
-    history = HistoricalRecords()
-
-    @property
-    @deprecated('See consent.models.DataSharingConsent.')
-    def enabled(self):  # pragma: no cover
-        """
-        Determine whether the user has enabled data sharing.
-        """
-        return self.state in self.ENABLED_STATES
-
-    def __str__(self):
-        """
-        Return human-readable string representation.
-        """
-        return '<UserDataSharingConsentAudit for {} and {}: {}>'.format(
-            self.user.user_email,
-            self.user.enterprise_customer.name,
-            self.state,
-        )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
-
-
-@python_2_unicode_compatible
 class EnterpriseCustomerEntitlement(TimeStampedModel):
     """
     Enterprise Customer Entitlement is a relationship between and Enterprise customer and its entitlements.
@@ -830,11 +746,6 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
             "The enterprise learner to which this enrollment is attached."
         )
     )
-    consent_granted = models.NullBooleanField(
-        help_text=_(
-            "Whether the learner has granted consent for this particular course."
-        )
-    )
     course_id = models.CharField(
         max_length=255,
         blank=False,
@@ -843,42 +754,6 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         )
     )
     history = HistoricalRecords()
-
-    @property
-    @deprecated('See consent.models.DataSharingConsent.')
-    def consent_available(self):  # pragma: no cover
-        """
-        Determine whether we have consent to share details about this enrollment.
-
-        If we have a definitive consent state stored on this enrollment directly
-        (that is, if at enrollment the user explicitly chose to grant or deny consent
-        at enrollment), then we'll use that value and not go any further. However, if
-        the user did not do so, then we'll check to see if we have an account-wide
-        consent state that we can use to make that determination.
-        """
-        if self.consent_granted is not None:
-            # If the state isn't indeterminate, return immediately.
-            return self.consent_granted
-
-        # Check for an account-wide value and use that.
-        consent_state = self.enterprise_customer_user.data_sharing_consent.first()
-        if consent_state is not None:
-            return consent_state.enabled
-
-        # There isn't an account-wide value, so act as though we do not have consent.
-        return False
-
-    @property
-    @deprecated('See consent.models.DataSharingConsent.')
-    def consent_needed(self):  # pragma: no cover
-        """
-        Determine if consent is necessary, but has not been provided yet.
-        """
-        if self.consent_available:
-            return False
-
-        enterprise_customer = self.enterprise_customer_user.enterprise_customer
-        return enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT)
 
     @property
     def audit_reporting_disabled(self):
@@ -927,34 +802,6 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         Return string representation of the enrollment.
         """
         return self.__str__()
-
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        """
-        When saving an EnterpriseCourseEnrollment, update the account-level consent if needed.
-        """
-        enterprise_customer = self.enterprise_customer_user.enterprise_customer
-
-        if enterprise_customer.enforce_data_sharing_consent == EnterpriseCustomer.EXTERNALLY_MANAGED:
-            # If the consent is externally managed, create a record indicating external consent.
-            account_consent_equivalent = UserDataSharingConsentAudit.EXTERNALLY_MANAGED
-        elif self.consent_granted:
-            # If explicit consent has been provided, create a record indicating that.
-            account_consent_equivalent = UserDataSharingConsentAudit.ENABLED
-        elif self.consent_granted is not None:
-            # If consent was declined, create a record indicating that.
-            account_consent_equivalent = UserDataSharingConsentAudit.DISABLED
-        else:
-            # If no explicit consent state was set, indicate that.
-            account_consent_equivalent = UserDataSharingConsentAudit.NOT_SET
-
-        # This is an awful hack. Once we migrate to the planned generic consent architecture, it can DIAF.
-        if enterprise_customer.require_account_level_consent:
-            UserDataSharingConsentAudit.objects.update_or_create(
-                user=self.enterprise_customer_user,
-                defaults={'state': account_consent_equivalent}
-            )
-
-        super(EnterpriseCourseEnrollment, self).save(*args, **kwargs)
 
 
 @python_2_unicode_compatible

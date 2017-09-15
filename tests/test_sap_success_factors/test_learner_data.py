@@ -76,7 +76,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=False,
         )
 
         self.data_sharing_consent.granted = False
@@ -101,7 +100,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         # Return no course details
@@ -119,7 +117,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         # Raise 404 - no certificate found
@@ -154,7 +151,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         # Return a mock certificate
@@ -196,7 +192,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         # Return instructor-paced course details
@@ -245,7 +240,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         # Mock self-paced course details
@@ -292,14 +286,12 @@ class TestBaseLearnerExporter(unittest.TestCase):
         enrollment1 = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         course_id2 = 'course-v1:edX+DemoX+DemoCourse2'
         enrollment2 = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=course_id2,
-            consent_granted=True,
         )
         DataSharingConsentFactory(
             username=self.enterprise_customer_user.username,
@@ -314,7 +306,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
                 enterprise_customer=self.enterprise_customer,
             ),
             course_id=self.course_id,
-            consent_granted=True,
         )
         DataSharingConsentFactory(
             username='R2D2',
@@ -417,7 +408,6 @@ class TestBaseLearnerExporter(unittest.TestCase):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
 
         # Set the audit track data passback configuration

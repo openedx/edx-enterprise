@@ -324,7 +324,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=ecu,
             course_id=course_id,
-            consent_granted=True,
         )
         DataSharingConsentFactory(
             username=self.user.username,
@@ -368,12 +367,11 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        enrollment = EnterpriseCourseEnrollment.objects.create(
+        EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=ecu,
             course_id=course_id,
-            consent_granted=consent_provided,
         )
-        DataSharingConsentFactory(
+        dsc = DataSharingConsentFactory(
             username=self.user.username,
             course_id=course_id,
             enterprise_customer=enterprise_customer,
@@ -398,9 +396,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
         assert resp.status_code == 302
-        enrollment.refresh_from_db()
         if not enrollment_deferred:
-            assert enrollment.consent_granted is consent_provided
+            assert dsc.granted is consent_provided
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -472,14 +469,15 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        enrollment = EnterpriseCourseEnrollment.objects.create(
+        EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=ecu,
             course_id=course_id
         )
-        DataSharingConsentFactory(
+        dsc = DataSharingConsentFactory(
             username=self.user.username,
             course_id=course_id,
             enterprise_customer=enterprise_customer,
+            granted=False,
         )
         client = course_api_client_mock.return_value
         client.get_course_details.return_value = None
@@ -493,8 +491,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             },
         )
         assert resp.status_code == 404
-        enrollment.refresh_from_db()
-        assert enrollment.consent_granted is None
+        dsc.refresh_from_db()
+        assert dsc.granted is False
 
 
 @mark.django_db

@@ -122,7 +122,7 @@ class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCourseEnrollment
         fields = (
-            'enterprise_customer_user', 'consent_granted', 'course_id'
+            'enterprise_customer_user', 'course_id'
         )
 
 
@@ -134,7 +134,7 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCourseEnrollment
         fields = (
-            'username', 'course_id', 'consent_granted'
+            'username', 'course_id',
         )
 
     username = serializers.CharField(max_length=30)
@@ -231,18 +231,6 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         representation['results'] = search_results
 
         return representation
-
-
-class UserDataSharingConsentAuditSerializer(serializers.ModelSerializer):
-    """
-    Serializer for UserDataSharingConsentAudit model.
-    """
-
-    class Meta:
-        model = models.UserDataSharingConsentAudit
-        fields = (
-            'user', 'state', 'enabled'
-        )
 
 
 class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
