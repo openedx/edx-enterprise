@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.4] - 2017-09-20
+---------------------
+
+* Abstract away usage of `configuration_helpers`.
+
 [0.46.3] - 2017-09-19
 ---------------------
 

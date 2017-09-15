@@ -29,6 +29,7 @@ from enterprise.models import (
 from enterprise.utils import (
     filter_audit_course_modes,
     get_all_field_names,
+    get_configuration_value,
     get_enterprise_customer,
     get_enterprise_customer_user,
     ungettext_min_max,
@@ -915,6 +916,20 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         assert ungettext_min_max(singular, plural, range_text, min_val, max_val) == expected_output
 
+    @mock.patch('enterprise.utils.configuration_helpers')
+    def test_get_configuration_value_with_openedx(self, config_mock):
+        """
+        ``get_configuration_value`` returns the appropriate non-default value when connected to Open edX.
+        """
+        config_mock.get_value.return_value = 'value'
+        assert get_configuration_value('value', default='default') == 'value'
+
+    def test_get_configuration_value_without_openedx(self):
+        """
+        ``get_configuration_value`` returns a default value of 'default' when not connected to Open edX.
+        """
+        assert get_configuration_value('value', default='default') == 'default'
+
 
 def get_transformed_course_metadata(course_id, status):
     """
@@ -1200,17 +1215,13 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         assert len(filtered_course_modes) == 5
 
     @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
-    @mock.patch('enterprise.models.configuration_helpers')
-    def test_get_launch_url_flag_on(
-            self,
-            mock_config_helpers_1):
+    def test_get_launch_url_flag_on(self):
         """
         Test `get_launch_url` helper method.
         """
-        mock_config_helpers_1.get_value.return_value = 'https://www.example.com'
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_uuid = '47432370-0a6e-4d95-90fe-77b4fe64de2c'
-        expected_url = ('https://www.example.com/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
+        expected_url = ('http://localhost:8000/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
                         'course-v1:edX+DemoX+Demo_Course/enroll/')
         enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid)
 

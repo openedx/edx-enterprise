@@ -8,10 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.utils.translation import ugettext as _
 
-try:
-    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-except ImportError:
-    configuration_helpers = None
+from enterprise.utils import get_configuration_value
 
 
 def add_consent_declined_message(request, enterprise_customer, item):
@@ -35,12 +32,12 @@ def add_consent_declined_message(request, enterprise_customer, item):
             em_end='</em>',
             enterprise_customer_name=enterprise_customer.name,
             link_start='<a href="{support_link}" target="_blank">'.format(
-                support_link=configuration_helpers.get_value(
+                support_link=get_configuration_value(
                     'ENTERPRISE_SUPPORT_URL',
                     getattr(settings, 'ENTERPRISE_SUPPORT_URL', '')  # Remove the `getattr` when setting is upstreamed.
                 ),
             ),
-            platform_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
+            platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
             link_end='</a>',
             span_start='<span>',
             span_end='</span>',
@@ -68,12 +65,12 @@ def add_missing_price_information_message(request, item):
             em_start='<em>',
             em_end='</em>',
             link_start='<a href="{support_link}" target="_blank">'.format(
-                support_link=configuration_helpers.get_value(
+                support_link=get_configuration_value(
                     'ENTERPRISE_SUPPORT_URL',
                     getattr(settings, 'ENTERPRISE_SUPPORT_URL', '')  # Remove the `getattr` when setting is upstreamed.
                 ),
             ),
-            platform_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
+            platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
             link_end='</a>',
             span_start='<span>',
             span_end='</span>',
@@ -106,12 +103,12 @@ def add_not_one_click_purchasable_message(request, enterprise_customer, program_
             em_start='<em>',
             em_end='</em>',
             link_start='<a href="{support_link}" target="_blank">'.format(
-                support_link=configuration_helpers.get_value(
+                support_link=get_configuration_value(
                     'ENTERPRISE_SUPPORT_URL',
                     getattr(settings, 'ENTERPRISE_SUPPORT_URL', '')  # Remove the `getattr` when setting is upstreamed.
                 ),
             ),
-            platform_name=configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME),
+            platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
             link_end='</a>',
             span_start='<span>',
             span_end='</span>',

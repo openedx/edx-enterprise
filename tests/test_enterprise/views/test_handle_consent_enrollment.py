@@ -66,7 +66,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_without_course_mode(
             self,
@@ -98,7 +97,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_404(
@@ -136,7 +134,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_no_enterprise_user(
@@ -174,7 +171,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.get_enterprise_customer_user')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -220,7 +216,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_audit_course_mode(
@@ -268,7 +263,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         ).exists())
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_professional_course_mode(
