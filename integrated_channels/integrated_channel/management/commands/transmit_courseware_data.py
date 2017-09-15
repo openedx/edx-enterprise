@@ -66,9 +66,10 @@ def send_data_task(username, channel_code, channel_pk):
     """
     Task to send course data to each linked integrated channel
 
-    Args:
-        user: The user whose access token to use for course discovery API access
-        enterprise_customer: The EnterpriseCustomer whose integrated channels we need to send.
+    Arguments:
+        channel_code (str): Capitalized identifier for the integrated channel
+        channel_pk (str): Primary key for identifying integrated channel
+
     """
     user = User.objects.get(username=username)
     channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
@@ -78,4 +79,13 @@ def send_data_task(username, channel_code, channel_pk):
         channel,
     )
 
-    channel.transmit_course_data(user)
+    try:
+        channel.transmit_course_data(user)
+    except Exception:  # pylint: disable=broad-except
+        exception_message = 'Transmission of course metadata failed for user "{username}" and for integrated ' \
+                            'channel with code "{channel_code}" and id "{channel_pk}".'.format(
+                                username=username,
+                                channel_code=channel_code,
+                                channel_pk=channel_pk,
+                            )
+        LOGGER.exception(exception_message)

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.2] - 2017-09-19
+---------------------
+
+* Add exception handling for transmit course metadata task.
+
 [0.46.1] - 2017-09-18
 ---------------------
 

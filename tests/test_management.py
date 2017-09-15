@@ -89,6 +89,89 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
     @responses.activate
     @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.models.configuration_helpers')
+    @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
+    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
+    def test_transmit_courseware_task_with_error(
+            self,
+            fake_sap_client,
+            track_selection_reverse_mock,
+            fake_config_helpers,
+    ):
+        """
+        Verify the data transmission task for integrated channels with error.
+
+        Test that the management command `transmit_courseware_data` transmits
+        courses metadata related to other integrated channels even if an
+        integrated channel fails to transmit due to some error.
+        """
+        fake_config_helpers.get_value.return_value = 'https://example.com'
+        fake_sap_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
+        fake_sap_client.return_value.send_course_import.return_value = 200, '{}'
+        track_selection_reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
+
+        # Mock first integrated channel with failure
+        enterprise_uuid_for_failure = str(self.enterprise_customer.uuid)
+        self.mock_ent_courses_api_with_error(
+            enterprise_uuid=enterprise_uuid_for_failure
+        )
+
+        # Now create a new integrated channel with a new enterprise and mock
+        # enterprise courses API to send failure response
+        course_run_id_for_success = 'course-v1:edX+DemoX+Demo_Course_1'
+        dummy_enterprise_customer = EnterpriseCustomerFactory(
+            catalog=1,
+            name='Dummy Enterprise',
+        )
+        enterprise_uuid_for_success = str(dummy_enterprise_customer.uuid)
+        SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.create(
+            enterprise_customer=dummy_enterprise_customer,
+            sapsf_base_url='http://enterprise.successfactors.com/',
+            key='key',
+            secret='secret',
+            active=True,
+        )
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=enterprise_uuid_for_success,
+            course_run_ids=[course_run_id_for_success]
+        )
+
+        expected_dump = (
+            '{"ocnCourses": [{"content": [{"contentID": "'+course_run_id_for_success+'", '
+            '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '
+            '"'+settings.LMS_ROOT_URL+'/enterprise/'+enterprise_uuid_for_success+'/'
+            'course/'+course_run_id_for_success+'/enroll/", "mobileEnabled": '
+            'false, "providerID": "EDX"}], "courseID": "'+course_run_id_for_success+'"'
+            ', "description": [{"locale": "English", "value": "edX Demonstration Course"}], '
+            '"price": [], "providerID": "EDX", "revisionNumber": 1, "schedule": '
+            '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
+            '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
+            '"value": "edX Demonstration Course"}]}]}'
+        )
+        # Verify that first integrated channel logs failure but the second
+        # integrated channel still successfully transmits courseware data.
+        expected_messages = [
+            'Processing courses for integrated channel using configuration: '
+            '<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
+            'Transmission of course metadata failed for user "C-3PO" and for integrated channel with '
+            'code "SAP" and id "1".',
+            'Processing courses for integrated channel using configuration: '
+            '<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>',
+            'Retrieving course list for enterprise {}'.format(dummy_enterprise_customer.name),
+            'Processing course with ID {}'.format(course_run_id_for_success),
+            'Sending course with plugin configuration <SAPSuccessFactorsEnterprise'
+            'CustomerConfiguration for Enterprise Dummy Enterprise>',
+            expected_dump,
+        ]
+
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('transmit_courseware_data', '--catalog_user', 'C-3PO')
+            for index, message in enumerate(expected_messages):
+                assert message in log_capture.records[index].getMessage()
+
+    @responses.activate
+    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
     @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
     @mock.patch('enterprise.models.configuration_helpers')
