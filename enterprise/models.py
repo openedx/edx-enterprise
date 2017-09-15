@@ -302,9 +302,10 @@ class EnterpriseCustomerUserManager(models.Manager):
         """
         try:
             existing_user = User.objects.get(email=user_email)
-            self.create(enterprise_customer=enterprise_customer, user_id=existing_user.id)
+            self.get_or_create(enterprise_customer=enterprise_customer, user_id=existing_user.id)
         except User.DoesNotExist:
-            PendingEnterpriseCustomerUser.objects.create(enterprise_customer=enterprise_customer, user_email=user_email)
+            PendingEnterpriseCustomerUser.objects.get_or_create(enterprise_customer=enterprise_customer,
+                                                                user_email=user_email)
 
     def unlink_user(self, enterprise_customer, user_email):
         """

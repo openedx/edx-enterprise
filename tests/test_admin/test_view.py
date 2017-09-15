@@ -404,13 +404,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         Test view POST response for common parts.
         """
-        assert response.status_code == 200
-        self._test_common_context(response.context)
-        manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
-        num_errors = len(manage_learners_form.errors[ManageLearnersForm.Fields.EMAIL_OR_USERNAME])
-        assert manage_learners_form.is_bound
-        assert ManageLearnersForm.Fields.EMAIL_OR_USERNAME in manage_learners_form.errors
-        assert num_errors >= 1
+        assert response.status_code == 302
 
     def test_post_existing_record(self):
         # precondition checks:
@@ -419,7 +413,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         email = FAKER.email()  # pylint: disable=no-member
 
         user = UserFactory(email=email, id=2)
-        EnterpriseCustomerUserFactory(user_id=user.id)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
         self._test_post_existing_record_response(response)
@@ -457,8 +451,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._login()
 
         email = FAKER.email()  # pylint: disable=no-member
-
-        PendingEnterpriseCustomerUserFactory(user_email=email)
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_email=email)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
         response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
@@ -525,6 +518,87 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert enrollment.course_id == course_id
         num_messages = len(mail.outbox)
         assert num_messages == 1
+
+    def _post_multi_enroll(self, forms_client, views_client, course_catalog_client, create_user):
+        """
+        Enroll an enterprise learner or pending learner in multiple courses.
+        """
+        courses = {
+            "course-v1:HarvardX+CoolScience+2016": {
+                "title": "Cool Science",
+                "start": "2017-01-01T12:00:00Z",
+                "marketing_url": "http://localhost:8000/courses/course-v1:HarvardX+CoolScience+2016",
+                "mode": "verified"
+            },
+            "course-v1:edX+DemoX+Demo_Course": {
+                "title": "edX Demo Course",
+                "start": "2013-02-05T05:00:00Z",
+                "marketing_url": "http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course",
+                "mode": "audit"
+            }
+        }
+        catalog_instance = course_catalog_client.return_value
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_count = 0
+        user = None
+        user_email = FAKER.email()  # pylint: disable=no-member
+        if create_user:
+            user = UserFactory(email=user_email)
+
+        for course_id in courses:
+            catalog_instance.get_course_run.return_value = courses[course_id]
+            mode = courses[course_id]['mode']
+            enrollment_count += 1
+
+            if user:
+                response = self._enroll_user_request(user, mode, course_id=course_id)
+                if enrollment_count == 1:
+                    views_instance.enroll_user_in_course.assert_called_once()
+                views_instance.enroll_user_in_course.assert_called_with(
+                    user.username,
+                    course_id,
+                    mode,
+                )
+                self._assert_django_messages(response, set([
+                    (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
+                ]))
+            else:
+                response = self._enroll_user_request(user_email, mode, course_id=course_id, notify=True)
+
+            if user:
+                all_enrollments = EnterpriseCourseEnrollment.objects.all()
+            else:
+                all_enrollments = PendingEnrollment.objects.all()
+
+            num_enrollments = len(all_enrollments)
+            assert num_enrollments == enrollment_count
+            enrollment = all_enrollments[enrollment_count - 1]
+            if user:
+                assert enrollment.enterprise_customer_user.user == user
+            assert enrollment.course_id == course_id
+            num_messages = len(mail.outbox)
+            assert num_messages == enrollment_count
+
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_multi_enroll_user(self, forms_client, views_client, course_catalog_client):
+        """
+        Test that an existing learner can be enrolled in multiple courses.
+        """
+        self._post_multi_enroll(forms_client, views_client, course_catalog_client, True)
+
+    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_multi_enroll_pending_user(self, forms_client, views_client, course_catalog_client):
+        """
+        Test that a pending learner can be enrolled in multiple courses.
+        """
+        self._post_multi_enroll(forms_client, views_client, course_catalog_client, False)
 
     @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")

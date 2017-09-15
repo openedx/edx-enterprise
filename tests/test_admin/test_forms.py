@@ -154,27 +154,21 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     )
     def test_clean_user_already_linked(self, form_entry, existing_username, existing_email):
         user = UserFactory(username=existing_username, email=existing_email)
-        existing_record = EnterpriseCustomerUserFactory(user_id=user.id)  # pylint: disable=no-member
+        EnterpriseCustomerUserFactory(user_id=user.id)  # pylint: disable=no-member
 
         form = self._make_bound_form(form_entry)
-        assert not form.is_valid()
-        errors = form.errors
-        error_message = ValidationMessages.USER_ALREADY_REGISTERED.format(
-            email=existing_email, ec_name=existing_record.enterprise_customer.name
-        )
-        assert errors == {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: [error_message]}
+        assert form.is_valid()
+        cleaned_data = form.clean()
+        assert cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME] == existing_email
 
     @ddt.data("user1@example.com", "qwe@asd.com",)
     def test_clean_existing_pending_link(self, existing_email):
-        existing_record = PendingEnterpriseCustomerUserFactory(user_email=existing_email)
+        PendingEnterpriseCustomerUserFactory(user_email=existing_email)
 
         form = self._make_bound_form(existing_email)
-        assert not form.is_valid()
-        errors = form.errors
-        error_message = ValidationMessages.USER_ALREADY_REGISTERED.format(
-            email=existing_email, ec_name=existing_record.enterprise_customer.name
-        )
-        assert errors == {ManageLearnersForm.Fields.EMAIL_OR_USERNAME: [error_message]}
+        assert form.is_valid()
+        cleaned_data = form.clean()
+        assert cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME] == existing_email
 
     def test_clean_both_username_and_file(self):
         form = self._make_bound_form("irrelevant@example.com", file_attached=True)
