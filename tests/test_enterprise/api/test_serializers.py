@@ -13,10 +13,12 @@ from pytest import mark, raises
 from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 
+from django.conf import settings
+from django.contrib.auth.models import Permission
 from django.test import override_settings
 
 from enterprise.api.v1.serializers import EnterpriseCatalogCoursesReadOnlySerializer, ImmutableStateSerializer
-from test_utils import APITest, factories
+from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, factories
 
 
 @mark.django_db
@@ -388,3 +390,37 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         # Make sure global context passed in to update_course is added to the course.
         assert all('tpa_hint' in course for course in self.serializer.data['results'])
         assert all(course['tpa_hint'] == self.provider_id for course in self.serializer.data['results'])
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerUserWriteSerializer(APITest):
+    """
+    Tests for the ``EnterpriseCustomerUserWriteSerializer``.
+    """
+
+    @ddt.data(
+        (TEST_USERNAME, 201),
+        ('non-existing-username', 400),
+    )
+    @ddt.unpack
+    @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
+    def test_validate_username(self, username, expected_status_code):
+        """
+        Success for POSTing with users (determined by username) depends on whether the user exists.
+        """
+        self.user.is_staff = True
+        self.user.save()
+        permission = Permission.objects.get(name='Can add Enterprise Customer Learner')
+        self.user.user_permissions.add(permission)
+        factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'username': username,
+        }
+
+        response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
+        assert response.status_code == expected_status_code
+        response = self.load_json(response.content)
+        if expected_status_code == 201:
+            self.assertDictEqual(data, response)

@@ -937,6 +937,21 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         assert utils.get_configuration_value_for_site(SiteFactory(), 'key', 'default') == 'default'
 
+    @ddt.data('GET', 'DELETE')
+    def test_get_request_value_query_params(self, method):
+        """
+        Request value is retrieved from the query parameters and not posted data for certain methods.
+        """
+        request = mock.MagicMock(method=method, query_params={'key': 'query_params'}, data={'key': 'data'})
+        assert utils.get_request_value(request, 'key') == 'query_params'
+
+    def test_get_request_value_data(self):
+        """
+        Request value is retrieved from the posted data and not from the query parameters for certain methods.
+        """
+        request = mock.MagicMock(method='POST', query_params={'key': 'query_params'}, data={'key': 'data'})
+        assert utils.get_request_value(request, 'key') == 'data'
+
 
 def get_transformed_course_metadata(course_id, status):
     """

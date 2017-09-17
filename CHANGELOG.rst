@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.47.1] - 2017-09-25
+---------------------
+
+* Add proper permissions/filtering schemes for all of our endpoints.
+
 [0.47.0] - 2017-09-21
 ---------------------
 

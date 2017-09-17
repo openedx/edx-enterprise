@@ -14,14 +14,12 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from django.conf import settings
-from django.contrib.sites.models import Site
 from django.http import Http404
 from django.utils.decorators import method_decorator
 
 from enterprise import models
-from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, IsStaffOrLinkedToEnterpriseCustomerFilterBackend
+from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.pagination import get_paginated_response
-from enterprise.api.permissions import IsServiceUserOrReadOnly, IsStaffUserOrLinkedToEnterprise
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import decorators, serializers
 from enterprise.api_client.discovery import CourseCatalogApiClient
@@ -62,7 +60,9 @@ class EnterpriseModelViewSet(EnterpriseViewSet):
     Base class for attribute and method definitions common to all view sets.
     """
 
-    filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend)
+    filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, UserFilterBackend,)
+    permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
+    USER_ID_FILTER = 'id'
 
 
 class EnterpriseReadOnlyModelViewSet(EnterpriseModelViewSet, viewsets.ReadOnlyModelViewSet):
@@ -77,7 +77,7 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     Base class for all read/write Enterprise model view sets.
     """
 
-    permission_classes = (permissions.IsAuthenticated, IsServiceUserOrReadOnly,)
+    permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
 
 
 class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
@@ -88,6 +88,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
 
+    USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
         'uuid', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent',
         'enforce_data_sharing_consent',
@@ -95,19 +96,14 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
     filter_fields = FIELDS
     ordering_fields = FIELDS
 
-    @detail_route(
-        permission_classes=[permissions.IsAuthenticated, IsServiceUserOrReadOnly, IsStaffUserOrLinkedToEnterprise],
-        authentication_classes=[JwtAuthentication, BearerAuthentication, SessionAuthentication],
-        throttle_classes=[ServiceUserThrottle],
-    )  # pylint: disable=invalid-name,unused-argument
-    def courses(self, request, pk=None):
+    @detail_route()
+    def courses(self, request, pk=None):  # pylint: disable=unused-argument,invalid-name
         """
         Retrieve the list of courses contained within the catalog linked to this enterprise.
 
         Only courses with active course runs are returned. A course run is considered active if it is currently
         open for enrollment, or will open in the future.
         """
-
         enterprise_customer = self.get_object()
         self.check_object_permissions(request, enterprise_customer)
         self.ensure_data_exists(
@@ -151,6 +147,7 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
 
     queryset = models.EnterpriseCourseEnrollment.objects.all()
 
+    USER_ID_FILTER = 'enterprise_customer_user__user_id'
     FIELDS = (
         'enterprise_customer_user', 'course_id'
     )
@@ -164,19 +161,6 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
         if self.request.method in ('GET', ):
             return serializers.EnterpriseCourseEnrollmentReadOnlySerializer
         return serializers.EnterpriseCourseEnrollmentWriteSerializer
-
-
-class SiteViewSet(EnterpriseReadOnlyModelViewSet):
-    """
-    API views for the ``site`` API endpoint.
-    """
-
-    queryset = Site.objects.all()
-    serializer_class = serializers.SiteSerializer
-
-    FIELDS = ('domain', 'name', )
-    filter_fields = FIELDS
-    ordering_fields = FIELDS
 
 
 class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
@@ -229,6 +213,7 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
     queryset = models.EnterpriseCustomerBrandingConfiguration.objects.all()
     serializer_class = serializers.EnterpriseCustomerBrandingConfigurationSerializer
 
+    USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
         'enterprise_customer',
     )
@@ -244,6 +229,7 @@ class EnterpriseCustomerEntitlementViewSet(EnterpriseReadOnlyModelViewSet):
     queryset = models.EnterpriseCustomerEntitlement.objects.all()
     serializer_class = serializers.EnterpriseCustomerEntitlementSerializer
 
+    USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
         'enterprise_customer', 'entitlement_id',
     )
@@ -256,11 +242,8 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     API Views for performing search through course discovery at the ``enterprise-catalogs`` API endpoint.
     """
     queryset = models.EnterpriseCustomerCatalog.objects.all()
-    filter_backends = (
-        filters.OrderingFilter,
-        filters.DjangoFilterBackend,
-        IsStaffOrLinkedToEnterpriseCustomerFilterBackend
-    )
+
+    USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
         'uuid', 'enterprise_customer',
     )

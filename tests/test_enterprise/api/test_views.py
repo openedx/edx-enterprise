@@ -8,15 +8,26 @@ from operator import itemgetter
 
 import ddt
 import mock
+from pytest import mark
 from rest_framework.reverse import reverse
 
 from django.conf import settings
+from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
-from test_utils import FAKE_UUIDS, TEST_COURSE, TEST_USERNAME, APITest, factories, fake_catalog_api, fake_enterprise_api
+from test_utils import (
+    FAKE_UUIDS,
+    TEST_COURSE,
+    TEST_PASSWORD,
+    TEST_USERNAME,
+    APITest,
+    factories,
+    fake_catalog_api,
+    fake_enterprise_api,
+)
 
 CATALOGS_LIST_ENDPOINT = reverse('catalogs-list')
 CATALOGS_DETAIL_ENDPOINT = reverse('catalogs-detail', (1, ))
@@ -39,17 +50,26 @@ ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollme
 ENTERPRISE_CUSTOMER_COURSES_ENDPOINT = reverse('enterprise-customer-courses', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT = reverse('enterprise-customer-entitlement-list')
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
+ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitlements', (1,))
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
-SITE_LIST_ENDPOINT = reverse('site-list')
 
 
 @ddt.ddt
+@mark.django_db
 class TestEnterpriseAPIViews(APITest):
     """
     Tests for enterprise api views.
     """
     # Get current datetime, so that all tests can use same datetime.
     now = timezone.now()
+
+    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+        """
+        Create a test user and set its password.
+        """
+        self.user = factories.UserFactory(username=username, is_active=True, is_staff=True, **kwargs)
+        self.user.set_password(password)  # pylint: disable=no-member
+        self.user.save()  # pylint: disable=no-member
 
     def create_items(self, factory, items):
         """
@@ -139,7 +159,8 @@ class TestEnterpriseAPIViews(APITest):
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @ddt.data(
         (
-            # Test a valid request
+            # A valid request.
+            True,
             [
                 factories.EnterpriseCustomerUserFactory,
                 [{
@@ -159,7 +180,8 @@ class TestEnterpriseAPIViews(APITest):
             201
         ),
         (
-            # Test a bad request due to an invalid user
+            # A bad request due to an invalid user.
+            True,
             [
                 factories.EnterpriseCustomerUserFactory,
                 [{
@@ -179,7 +201,30 @@ class TestEnterpriseAPIViews(APITest):
             400
         ),
         (
-            # Test a bad request due to no existing EnterpriseCustomerUser
+            # A rejected request due to missing model permissions.
+            False,
+            [
+                factories.EnterpriseCustomerUserFactory,
+                [{
+                    'id': 1, 'user_id': 0,
+                    'enterprise_customer__uuid': FAKE_UUIDS[0],
+                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
+                    'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                    'enterprise_customer__site__domain': 'example.com',
+                    'enterprise_customer__site__name': 'example.com',
+                }]
+            ],
+            {
+                'username': TEST_USERNAME,
+                'consent_granted': True,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            },
+            403
+        ),
+        (
+            # A bad request due to a non-existing EnterpriseCustomerUser.
+            True,
             [
                 factories.EnterpriseCustomerFactory,
                 [{
@@ -197,7 +242,7 @@ class TestEnterpriseAPIViews(APITest):
         )
     )
     @ddt.unpack
-    def test_post_enterprise_course_enrollment(self, factory, request_data, status_code):
+    def test_post_enterprise_course_enrollment(self, has_permissions, factory, request_data, status_code):
         """
         Make sure service users can post new EnterpriseCourseEnrollments.
         """
@@ -206,16 +251,18 @@ class TestEnterpriseAPIViews(APITest):
             factory_data[0]['user_id'] = self.user.pk  # pylint: disable=no-member
 
         self.create_items(*factory)
+        if has_permissions:
+            permission = Permission.objects.get(name='Can add enterprise course enrollment')
+            self.user.user_permissions.add(permission)
 
         response = self.client.post(
             settings.TEST_SERVER + ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT,
             data=request_data
         )
-
         assert response.status_code == status_code
         response = self.load_json(response.content)
 
-        if status_code == 200:
+        if status_code == 201:
             self.assertDictEqual(request_data, response)
 
     def test_get_enterprise_customer_user_contains_consent_records(self):
@@ -244,7 +291,7 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.get(
             '{host}{path}?username={username}'.format(
                 host=settings.TEST_SERVER,
-                path=reverse('enterprise-learner-list'),
+                path=ENTERPRISE_LEARNER_LIST_ENDPOINT,
                 username=user.username
             )
         )
@@ -253,33 +300,28 @@ class TestEnterpriseAPIViews(APITest):
 
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @ddt.data(
-        (TEST_USERNAME, 201),
-        ('does_not_exist', 400)
+        (True, 201),
+        (False, 403)
     )
     @ddt.unpack
-    def test_post_enterprise_customer_user(self, username, status_code):
+    def test_post_enterprise_customer_user(self, has_permissions, status_code):
         """
         Make sure service users can post new EnterpriseCustomerUsers.
         """
-        self.create_items(
-            factories.EnterpriseCustomerFactory,
-            [{
-                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
-                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_enrollment',
-                'site__domain': 'example.com', 'site__name': 'example.com',
-            }]
-        )
+        factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
         data = {
             'enterprise_customer': FAKE_UUIDS[0],
-            'username': username,
+            'username': TEST_USERNAME,
         }
-        response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
+        if has_permissions:
+            permission = Permission.objects.get(name='Can add Enterprise Customer Learner')
+            self.user.user_permissions.add(permission)
 
+        response = self.client.post(settings.TEST_SERVER + ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
         response = self.load_json(response.content)
 
-        if status_code == 200:
+        if status_code == 201:
             self.assertDictEqual(data, response)
 
     def test_post_enterprise_customer_user_logged_out(self):
@@ -300,15 +342,37 @@ class TestEnterpriseAPIViews(APITest):
             'enterprise_customer': FAKE_UUIDS[0],
             'username': self.user.username
         }
-        response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
+        response = self.client.post(settings.TEST_SERVER + ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
     @ddt.data(
         (
             FAKE_UUIDS[0],
+            1,
+            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
+            False,
+            False,
+            {},
+            {'detail': 'Not found.'}
+        ),
+        (
+            FAKE_UUIDS[0],
+            None,
+            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
+            False,
+            True,
+            {},
+            {'detail': (
+                "No catalog is associated with Enterprise Pied Piper from endpoint "
+                "'/enterprise/api/v1/enterprise-customer/" + FAKE_UUIDS[0] + "/courses/'."
+            )}
+        ),
+        (
+            FAKE_UUIDS[0],
             None,
             ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
             True,
+            False,
             {},
             {'detail': (
                 "No catalog is associated with Enterprise Pied Piper from endpoint "
@@ -320,13 +384,6 @@ class TestEnterpriseAPIViews(APITest):
             1,
             ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
             False,
-            {},
-            {'detail': 'User must be a staff user or associated with the specified Enterprise.'}
-        ),
-        (
-            FAKE_UUIDS[0],
-            1,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
             True,
             {},
             {'detail': (
@@ -338,6 +395,69 @@ class TestEnterpriseAPIViews(APITest):
             FAKE_UUIDS[0],
             1,
             ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
+            True,
+            False,
+            {},
+            {'detail': (
+                "Unable to fetch API response for catalog courses for Enterprise Pied Piper from endpoint "
+                "'/enterprise/api/v1/enterprise-customer/" + FAKE_UUIDS[0] + "/courses/'."
+            )},
+        ),
+        (
+            FAKE_UUIDS[0],
+            1,
+            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
+            True,
+            False,
+            fake_catalog_api.FAKE_CATALOG_COURSE_PAGINATED_RESPONSE,
+            {
+                'count': 3,
+                'next': ('http://testserver/enterprise/api/v1/enterprise-customer/'
+                         + FAKE_UUIDS[0] + '/courses/?page=3'),
+                'previous': ('http://testserver/enterprise/api/v1/enterprise-customer/'
+                             + FAKE_UUIDS[0] + '/courses/?page=1'),
+                'results': [
+                    {
+                        'owners': [
+                            {
+                                'description': None,
+                                'tags': [],
+                                'name': '',
+                                'homepage_url': None,
+                                'key': 'edX',
+                                'certificate_logo_image_url': None,
+                                'marketing_url': None,
+                                'logo_image_url': None,
+                                'uuid': FAKE_UUIDS[1]
+                            }
+                        ],
+                        'tpa_hint': None,
+                        'catalog_id': 1,
+                        'enterprise_id': FAKE_UUIDS[0],
+                        'uuid': FAKE_UUIDS[2],
+                        'title': 'edX Demonstration Course',
+                        'prerequisites': [],
+                        'image': None,
+                        'expected_learning_items': [],
+                        'sponsors': [],
+                        'modified': '2017-03-03T07:34:19.322916Z',
+                        'full_description': None,
+                        'subjects': [],
+                        'video': None,
+                        'key': 'edX+DemoX',
+                        'short_description': None,
+                        'marketing_url': None,
+                        'level_type': None,
+                        'course_runs': []
+                    }
+                ]
+            }
+        ),
+        (
+            FAKE_UUIDS[0],
+            1,
+            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
+            False,
             True,
             fake_catalog_api.FAKE_CATALOG_COURSE_PAGINATED_RESPONSE,
             {
@@ -391,7 +511,8 @@ class TestEnterpriseAPIViews(APITest):
             enterprise_uuid,
             catalog,
             url,
-            link_user,
+            is_staff,
+            is_linked_to_enterprise,
             mocked_catalog_courses,
             expected,
             mock_catalog_api_client
@@ -405,7 +526,9 @@ class TestEnterpriseAPIViews(APITest):
             name='Pied Piper',
         )
 
-        if link_user:
+        self.user.is_staff = is_staff
+        self.user.save()
+        if is_linked_to_enterprise:
             factories.EnterpriseCustomerUserFactory(
                 user_id=self.user.id,
                 enterprise_customer=enterprise_customer,
@@ -426,13 +549,6 @@ class TestEnterpriseAPIViews(APITest):
 
     @ddt.data(
         (
-            factories.SiteFactory,
-            SITE_LIST_ENDPOINT,
-            itemgetter('domain'),
-            [{'domain': 'example.com', 'name': 'example.com'}],
-            [{'domain': 'example.com', 'name': 'example.com'}],
-        ),
-        (
             factories.EnterpriseCustomerFactory,
             ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
             itemgetter('uuid'),
@@ -445,7 +561,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_enrollment', 'enterprise_customer_users': [],
+                'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False,
                 'site': {
@@ -472,7 +588,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-                    'enforce_data_sharing_consent': 'at_enrollment', 'enterprise_customer_users': [1],
+                    'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False,
                     'site': {
@@ -572,7 +688,11 @@ class TestEnterpriseAPIViews(APITest):
         assert response == expected_results
 
     @ddt.data(
-        (False, False, {'detail': 'Not found.'}),
+        (
+            False,
+            False,
+            {'detail': 'Not found.'},
+        ),
         (
             False,
             True,
@@ -591,8 +711,13 @@ class TestEnterpriseAPIViews(APITest):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
-    def test_enterprise_customer_catalogs_detail(self, is_staff, is_linked_to_enterprise, expected_result,
-                                                 mock_catalog_api_client):
+    def test_enterprise_customer_catalogs_detail(
+            self,
+            is_staff,
+            is_linked_to_enterprise,
+            expected_result,
+            mock_catalog_api_client,
+    ):
         """
         Make sure the Enterprise Customer's Catalog view correctly returns details about specific catalogs based on
         the content filter.
@@ -609,8 +734,8 @@ class TestEnterpriseAPIViews(APITest):
             uuid=FAKE_UUIDS[1],
             enterprise_customer=enterprise_customer
         )
-        if is_staff:
-            self.user.is_staff = True
+        if not is_staff:
+            self.user.is_staff = False
             self.user.save()
         if is_linked_to_enterprise:
             factories.EnterpriseCustomerUserFactory(
