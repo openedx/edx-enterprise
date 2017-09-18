@@ -14,7 +14,6 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.http import Http404
 from django.utils.decorators import method_decorator
@@ -176,21 +175,6 @@ class SiteViewSet(EnterpriseReadOnlyModelViewSet):
     serializer_class = serializers.SiteSerializer
 
     FIELDS = ('domain', 'name', )
-    filter_fields = FIELDS
-    ordering_fields = FIELDS
-
-
-class UserViewSet(EnterpriseReadOnlyModelViewSet):
-    """
-    API views for the ``auth-user`` API endpoint.
-    """
-
-    queryset = User.objects.all()
-    serializer_class = serializers.UserSerializer
-
-    FIELDS = (
-        'username', 'first_name', 'last_name', 'email', 'is_staff', 'is_active'
-    )
     filter_fields = FIELDS
     ordering_fields = FIELDS
 

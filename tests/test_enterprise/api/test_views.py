@@ -4,7 +4,6 @@ Tests for the `edx-enterprise` api module.
 """
 from __future__ import absolute_import, unicode_literals
 
-import datetime
 from operator import itemgetter
 
 import ddt
@@ -15,13 +14,11 @@ from django.conf import settings
 from django.test import override_settings
 from django.utils import timezone
 
-from enterprise.api_client.lms import LMS_API_DATETIME_FORMAT
 from enterprise.decorators import ignore_warning
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, UserDataSharingConsentAudit
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from test_utils import FAKE_UUIDS, TEST_COURSE, TEST_USERNAME, APITest, factories, fake_catalog_api, fake_enterprise_api
 
-AUTH_USER_LIST_ENDPOINT = reverse('auth-user-list')
 CATALOGS_LIST_ENDPOINT = reverse('catalogs-list')
 CATALOGS_DETAIL_ENDPOINT = reverse('catalogs-detail', (1, ))
 CATALOGS_COURSES_ENDPOINT = reverse('catalogs-courses', (1, ))
@@ -62,78 +59,6 @@ class TestEnterpriseAPIViews(APITest):
         """
         for item in items:
             factory.create(**item)
-
-    @ddt.data(
-        (
-            factories.UserFactory,
-            AUTH_USER_LIST_ENDPOINT,
-            itemgetter('username'),
-            [
-                {
-                    'username': 'test_user_1',
-                    'first_name': 'Test 1',
-                    'last_name': 'User',
-                    'email': 'test1@example.com',
-                    'is_staff': True,
-                    'is_active': False,
-                    'date_joined': now - datetime.timedelta(days=10),
-                },
-                {
-                    'username': 'test_user_2',
-                    'first_name': 'Test 2',
-                    'last_name': 'User',
-                    'email': 'test2@example.com',
-                    'is_staff': False,
-                    'is_active': True,
-                    'date_joined': now - datetime.timedelta(days=20),
-                },
-            ],
-            [
-                {
-                    'username': 'test_user_1',
-                    'first_name': 'Test 1',
-                    'last_name': 'User',
-                    'email': 'test1@example.com',
-                    'is_staff': True,
-                    'is_active': False,
-                    'date_joined': (now - datetime.timedelta(days=10)).strftime(LMS_API_DATETIME_FORMAT),
-                },
-                {
-                    'username': 'test_user_2',
-                    'first_name': 'Test 2',
-                    'last_name': 'User',
-                    'email': 'test2@example.com',
-                    'is_staff': False,
-                    'is_active': True,
-                    'date_joined': (now - datetime.timedelta(days=20)).strftime(LMS_API_DATETIME_FORMAT),
-                },
-            ],
-        ),
-    )
-    @ddt.unpack
-    def test_user_view(self, factory, url, sorting_key, model_items, expected_json):
-        """
-        Make sure API end point 'user' returns all of the expected fields.
-        """
-        self.create_items(factory, model_items)
-        response = self.client.get(settings.TEST_SERVER + url)
-        response = self.load_json(response.content)
-
-        # We need to account for the user created in setUp
-        expected_json.append({
-            'username': self.user.username,
-            'first_name': self.user.first_name,
-            'last_name': self.user.last_name,
-            'email': self.user.email,
-            'is_staff': self.user.is_staff,
-            'is_active': self.user.is_active,
-            'date_joined': self.user.date_joined.strftime(LMS_API_DATETIME_FORMAT),
-        })
-
-        for user in response['results']:
-            user.pop('id', None)
-
-        assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
 
     @ddt.data(
         (
