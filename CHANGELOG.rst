@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[0.46.1] - 2017-09-18
+---------------------
+
+* Remove the `auth-user` endpoint completely.
+
 [0.46.0] - 2017-09-15
 ---------------------
 
