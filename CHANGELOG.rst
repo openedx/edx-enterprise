@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.3] - 2017-09-19
+---------------------
+
+* Make bulk enrollment emails more intelligent
+
 [0.46.2] - 2017-09-19
 ---------------------
 
