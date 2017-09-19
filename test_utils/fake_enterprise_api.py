@@ -177,6 +177,18 @@ class EnterpriseMockMixin(object):
                 content_type='application/json',
             )
 
+    def mock_ent_courses_api_with_error(self, enterprise_uuid):
+        """
+        DRY function to register enterprise courses API to return error response.
+        """
+        responses.add(
+            responses.GET,
+            url=self.build_enterprise_api_url('enterprise-customer-courses', enterprise_uuid),
+            json={},
+            status=500,
+            content_type='application/json',
+        )
+
     def mock_empty_response(self, resource, *args, **kwargs):
         """
         DRY function to register an empty response from some Enterprise API endpoint.
