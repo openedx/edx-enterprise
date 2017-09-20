@@ -654,12 +654,18 @@ class CourseEnrollmentView(NonAtomicView):
             raise Http404
 
         if not course or not course_run:
+            LOGGER.warning('Failed to fetch course "{course}" or course run "{course_run}" details'.format(
+                course=course, course_run=course_run
+            ))
             raise Http404
 
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
 
         modes = EnrollmentApiClient().get_course_modes(course_run_id)
         if not modes:
+            LOGGER.warning('Unable to get course modes for course run id {course_run_id}.'.format(
+                course_run_id=course_run_id
+            ))
             raise Http404
 
         course_modes = []

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.6] - 2017-09-21
+---------------------
+
+* Added some log messages to trace possible 404 issue.
+
 [0.46.5] - 2017-09-21
 ---------------------
 
