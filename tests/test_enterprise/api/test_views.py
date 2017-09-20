@@ -647,10 +647,9 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.configuration_helpers')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_customer_catalogs_detail(self, is_staff, is_linked_to_enterprise, expected_result,
-                                                 mock_catalog_api_client, mock_configuration_helpers):
+                                                 mock_catalog_api_client):
         """
         Make sure the Enterprise Customer's Catalog view correctly returns details about specific catalogs based on
         the content filter.
@@ -676,9 +675,6 @@ class TestEnterpriseAPIViews(APITest):
                 enterprise_customer=enterprise_customer
             )
 
-        mock_configuration_helpers.get_value = mock.Mock(
-            return_value=settings.LMS_ROOT_URL
-        )
         mock_catalog_api_client.return_value = mock.Mock(
             get_paginated_search_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
@@ -689,9 +685,8 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response == expected_result
 
-    @mock.patch('enterprise.models.configuration_helpers')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
-    def test_enterprise_customer_catalogs_detail_pagination(self, mock_catalog_api_client, mock_configuration_helpers):
+    def test_enterprise_customer_catalogs_detail_pagination(self, mock_catalog_api_client):
         """
         Verify the EnterpriseCustomerCatalog detail view returns the correct paging URLs.
         """
@@ -707,9 +702,6 @@ class TestEnterpriseAPIViews(APITest):
             enterprise_customer=enterprise_customer
         )
 
-        mock_configuration_helpers.get_value = mock.Mock(
-            return_value=settings.LMS_ROOT_URL
-        )
         mock_catalog_api_client.return_value = mock.Mock(
             get_paginated_search_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION
@@ -749,11 +741,9 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.configuration_helpers')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_course_run_detail(self, is_staff, is_linked_to_enterprise, is_course_run_in_catalog,
-                                                  mocked_course_run, expected_result, mock_catalog_api_client,
-                                                  mock_configuration_helpers):
+                                                  mocked_course_run, expected_result, mock_catalog_api_client):
         """
         The ``programs`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses.
@@ -775,9 +765,6 @@ class TestEnterpriseAPIViews(APITest):
         if is_course_run_in_catalog:
             search_results = fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
 
-        mock_configuration_helpers.get_value = mock.Mock(
-            return_value=settings.LMS_ROOT_URL
-        )
         mock_catalog_api_client.return_value = mock.Mock(
             get_paginated_search_results=mock.Mock(return_value=search_results),
             get_course_run=mock.Mock(return_value=mocked_course_run),
@@ -812,11 +799,10 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.configuration_helpers')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_program_detail(self, is_staff, is_linked_to_enterprise, has_existing_catalog,
                                                is_program_in_catalog, mocked_program, expected_result,
-                                               mock_catalog_api_client, mock_configuration_helpers):
+                                               mock_catalog_api_client):
         """
         The ``programs`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses.
@@ -843,9 +829,6 @@ class TestEnterpriseAPIViews(APITest):
         if is_program_in_catalog:
             search_results = fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
 
-        mock_configuration_helpers.get_value = mock.Mock(
-            return_value=settings.LMS_ROOT_URL
-        )
         mock_catalog_api_client.return_value = mock.Mock(
             get_paginated_search_results=mock.Mock(return_value=search_results),
             get_program_by_uuid=mock.Mock(return_value=mocked_program),

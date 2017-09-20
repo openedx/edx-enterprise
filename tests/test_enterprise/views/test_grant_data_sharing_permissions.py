@@ -90,7 +90,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
@@ -106,11 +105,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             existing_course_enrollment,
             course_api_client_mock,
             course_catalog_api_client_mock,
-            mock_config,
             *args
     ):  # pylint: disable=unused-argument
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        mock_config.get_value.return_value = 'My Platform'
         course_catalog_api_client_mock.return_value.course_in_catalog.return_value = True
         client = course_api_client_mock.return_value
         client.get_course_details.return_value = {
@@ -151,7 +148,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
         for key, value in {
-                "platform_name": "My Platform",
+                "platform_name": "Test platform",
                 "consent_request_prompt": expected_prompt,
                 "requested_permissions_header": (
                     'Per the <a href="#consent-policy-dropdown-bar" '
@@ -162,7 +159,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
-                    'Starfleet Academy, and not to data from any My Platform courses or programs that '
+                    'Starfleet Academy, and not to data from any Test platform courses or programs that '
                     'I take on my own. I understand that once I grant my permission to allow data to be shared '
                     'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
                     'from any courses that are sponsored by Starfleet Academy.'
@@ -172,7 +169,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 "enterprise_customer_name": ecu.enterprise_customer.name,
                 "course_specific": True,
                 "enrollment_deferred": enrollment_deferred,
-                "welcome_text": "Welcome to My Platform.",
+                "welcome_text": "Welcome to Test platform.",
                 'sharable_items_note_header': 'Please note',
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }.items():
@@ -180,16 +177,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_invalid_get_params(
             self,
             course_api_client_mock,
-            mock_config,
             *args
     ):  # pylint: disable=unused-argument
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        mock_config.get_value.return_value = 'My Platform'
         client = course_api_client_mock.return_value
         client.get_course_details.return_value = {
             'name': 'edX Demo Course',
@@ -223,16 +217,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_unauthenticated_user(
             self,
             course_api_client_mock,
-            mock_config,
             *args
     ):  # pylint: disable=unused-argument
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        mock_config.get_value.return_value = 'My Platform'
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -270,17 +261,14 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_bad_api_response(
             self,
             course_api_client_mock,
-            mock_config,
             *args
     ):  # pylint: disable=unused-argument
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        mock_config.get_value.return_value = 'My Platform'
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -309,18 +297,15 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_not_needed(
             self,
             course_api_client_mock,
-            mock_config,
             course_catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        mock_config.get_value.return_value = 'My Platform'
         course_catalog_api_client = course_catalog_api_client_mock.return_value
         course_catalog_api_client.is_course_in_catalog.return_value = False
         enterprise_customer = EnterpriseCustomerFactory(
@@ -354,7 +339,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
@@ -420,7 +404,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_no_user(
@@ -469,7 +452,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.configuration_helpers')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_bad_api_response(
@@ -543,9 +525,6 @@ class TestProgramDataSharingPermissions(TestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
-        config = mock.patch('enterprise.views.configuration_helpers')
-        self.configuration_helpers = config.start()
-        self.addCleanup(config.stop)
         program_data_extender = mock.patch('enterprise.views.ProgramDataExtender')
         self.program_data_extender = program_data_extender.start()
         self.addCleanup(program_data_extender.stop)
@@ -670,7 +649,6 @@ class TestProgramDataSharingPermissions(TestCase):
         enterprise_customer.name = 'Starfleet Academy'
         self.program_exists.return_value = True
         self._login()
-        self.configuration_helpers.get_value.return_value = "My Platform"
         params = self.valid_get_params.copy()
         if enrollment_deferred:
             params.update({'enrollment_deferred': True})
@@ -687,7 +665,7 @@ class TestProgramDataSharingPermissions(TestCase):
         )
 
         for key, value in {
-                "platform_name": "My Platform",
+                "platform_name": "Test platform",
                 "consent_request_prompt": expected_prompt,
                 "requested_permissions_header": (
                     'Per the <a href="#consent-policy-dropdown-bar" '
@@ -698,7 +676,7 @@ class TestProgramDataSharingPermissions(TestCase):
                 'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
-                    'Starfleet Academy, and not to data from any My Platform courses or programs that '
+                    'Starfleet Academy, and not to data from any Test platform courses or programs that '
                     'I take on my own. I understand that once I grant my permission to allow data to be shared '
                     'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
                     'from any courses that are sponsored by Starfleet Academy.'
@@ -709,7 +687,7 @@ class TestProgramDataSharingPermissions(TestCase):
                 "enterprise_customer_name": enterprise_customer.name,
                 "program_specific": True,
                 "enrollment_deferred": enrollment_deferred,
-                "welcome_text": "Welcome to My Platform.",
+                "welcome_text": "Welcome to Test platform.",
                 'sharable_items_note_header': 'Please note',
                 "enterprise_customer": enterprise_customer,
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,

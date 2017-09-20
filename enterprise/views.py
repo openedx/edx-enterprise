@@ -37,6 +37,7 @@ from enterprise.utils import (
     clean_html_for_template_rendering,
     filter_audit_course_modes,
     format_price,
+    get_configuration_value,
     get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
@@ -48,11 +49,6 @@ try:
     from openedx.core.djangoapps.programs.utils import ProgramDataExtender
 except ImportError:
     ProgramDataExtender = None
-
-try:
-    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-except ImportError:
-    configuration_helpers = None
 
 LOGGER = getLogger(__name__)
 BASKET_URL = urljoin(settings.ECOMMERCE_PUBLIC_URL_ROOT, '/basket/add/')
@@ -68,7 +64,6 @@ def verify_edx_resources():
     Ensure that all necessary resources to render the view are present.
     """
     required_methods = {
-        'configuration_helpers': configuration_helpers,
         'ProgramDataExtender': ProgramDataExtender,
     }
 
@@ -87,7 +82,7 @@ def get_global_context(request):
     return {
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
-        'platform_name': configuration_helpers.get_value("PLATFORM_NAME", settings.PLATFORM_NAME),
+        'platform_name': get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME),
     }
 
 
@@ -710,7 +705,7 @@ class CourseEnrollmentView(NonAtomicView):
         """
         Render enterprise specific course track selection page.
         """
-        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         course_start_date = ''
         if course_run['start']:
             course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
@@ -1044,7 +1039,7 @@ class ProgramEnrollmentView(NonAtomicView):
         # Safely make the assumption that we can use the first authoring organization.
         organizations = program_details['authoring_organizations']
         organization = organizations[0] if organizations else {}
-        platform_name = configuration_helpers.get_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         program_title = program_details['title']
 
         # Make any modifications for singular/plural-dependent text.

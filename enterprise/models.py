@@ -33,14 +33,9 @@ from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
 from enterprise.decorators import deprecated
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import get_configuration_value
 from enterprise.validators import validate_image_extension, validate_image_size
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
-
-try:
-    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-except ImportError:
-    configuration_helpers = None
 
 LOGGER = getLogger(__name__)
 
@@ -214,13 +209,8 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise landing page url.
         """
-        if configuration_helpers is None:
-            raise NotConnectedToOpenEdX(
-                _("This package must be installed in an EdX environment to look up configuration.")
-            )
-
         return urljoin(
-            configuration_helpers.get_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
             reverse(
                 'enterprise_course_enrollment_page',
                 kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
@@ -236,13 +226,8 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise program landing page url.
         """
-        if configuration_helpers is None:
-            raise NotConnectedToOpenEdX(
-                _("This package must be installed in an EdX environment to look up configuration.")
-            )
-
         return urljoin(
-            configuration_helpers.get_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
             reverse(
                 'enterprise_program_enrollment_page',
                 kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}

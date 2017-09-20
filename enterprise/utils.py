@@ -26,6 +26,11 @@ from django.utils.translation import ungettext
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunparse, urlunsplit
 
 try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
+
+try:
     # Try to import identity provider registry if third_party_auth is present
     from third_party_auth.provider import Registry
 except ImportError:
@@ -611,3 +616,10 @@ def get_configuration_value_for_site(site, key, default=None):
     if hasattr(site, 'configuration'):
         return site.configuration.get_value(key, default)
     return default
+
+
+def get_configuration_value(val_name, default=None, **kwargs):
+    """
+    Get a configuration value, or fall back to ``default`` if it doesn't exist.
+    """
+    return configuration_helpers.get_value(val_name, default, **kwargs) if configuration_helpers else default

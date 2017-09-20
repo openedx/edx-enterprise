@@ -89,14 +89,12 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
     @responses.activate
     @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    @mock.patch('enterprise.models.configuration_helpers')
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
     @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
     def test_transmit_courseware_task_with_error(
             self,
             fake_sap_client,
             track_selection_reverse_mock,
-            fake_config_helpers,
     ):
         """
         Verify the data transmission task for integrated channels with error.
@@ -105,7 +103,6 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
         courses metadata related to other integrated channels even if an
         integrated channel fails to transmit due to some error.
         """
-        fake_config_helpers.get_value.return_value = 'https://example.com'
         fake_sap_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
         fake_sap_client.return_value.send_course_import.return_value = 200, '{}'
         track_selection_reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
@@ -174,17 +171,14 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
     @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
-    @mock.patch('enterprise.models.configuration_helpers')
     def test_transmit_courseware_task_success(
             self,
-            fake_config_helpers,
             fake_sap_client,
             track_selection_reverse_mock,
     ):
         """
         Test the data transmission task.
         """
-        fake_config_helpers.get_value.return_value = 'https://example.com'
         fake_sap_client.get_oauth_access_token.return_value = "token", datetime.utcnow()
         fake_sap_client.return_value.send_course_import.return_value = 200, '{}'
 
