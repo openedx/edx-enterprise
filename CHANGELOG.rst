@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.7] - 2017-09-21
+---------------------
+
+* Step 1 in safe deployment of removing old consent models: make `require_account_level_consent` nullable.
+
 [0.46.6] - 2017-09-21
 ---------------------
 
