@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.47.0] - 2017-09-21
+---------------------
+
+* Step 3 in safe deployment of removing old consent models: make migrations to delete the outstanding fields/models.
+
 [0.46.8] - 2017-09-21
 ---------------------
 
