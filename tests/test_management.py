@@ -329,7 +329,6 @@ class TestTransmitLearnerData(unittest.TestCase):
         self.enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
-            consent_granted=True,
         )
         self.consent = DataSharingConsentFactory(
             username=self.user.username,

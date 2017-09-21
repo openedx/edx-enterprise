@@ -22,7 +22,6 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
-    UserDataSharingConsentAudit,
 )
 
 FAKER = FakerFactory.create()
@@ -86,24 +85,6 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())  # pylint: disable=no-member
-
-
-class UserDataSharingConsentAuditFactory(factory.django.DjangoModelFactory):
-    """
-    UserDataSharingConsentAuditFactory.
-
-    Creates an instance of UserDataSharingConsentAudit with minimal boilerplate.
-    """
-
-    class Meta(object):
-        """
-        Meta for ``UserDataSharingConsentAuditFactory``.
-        """
-
-        model = UserDataSharingConsentAudit
-
-    user = factory.SubFactory(EnterpriseCustomerUserFactory)
-    state = 'not_set'
 
 
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
@@ -223,7 +204,6 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
 
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
-    consent_granted = True
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
 
 

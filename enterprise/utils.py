@@ -23,7 +23,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 # pylint: disable=import-error,wrong-import-order
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunparse, urlunsplit
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -293,31 +293,6 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
         html_message=html_msg,
         connection=email_connection
     )
-
-
-def get_reversed_url_by_site(request, site, *args, **kwargs):
-    """
-    Get a function to do a standard Django `reverse`, and then apply that path to another site's domain.
-
-    We use urlparse to split the url into its individual components, and then replace
-    the netloc with the domain for the site in question. We then unparse the result
-    into a URL string.
-
-    Arguments:
-        request: The Django request currently being processed
-        site (site): The site we want to apply to the URL created
-        *args: Pass to the standard reverse function
-        **kwargs: Pass to the standard reverse function
-
-    """
-    domain = site.domain
-    reversed_url = reverse(*args, **kwargs)
-    full_url = request.build_absolute_uri(reversed_url)
-    parsed = urlparse(full_url)
-    final_url = urlunparse(
-        parsed._replace(netloc=domain)
-    )
-    return final_url
 
 
 def get_enterprise_customer(uuid):

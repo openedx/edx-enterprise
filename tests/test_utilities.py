@@ -26,14 +26,6 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
 )
-from enterprise.utils import (
-    filter_audit_course_modes,
-    get_all_field_names,
-    get_configuration_value,
-    get_enterprise_customer,
-    get_enterprise_customer_user,
-    ungettext_min_max,
-)
 from test_utils import TEST_UUID, create_items
 from test_utils.factories import (
     EnterpriseCustomerFactory,
@@ -137,13 +129,11 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enforce_data_sharing_consent",
                 "enable_audit_enrollment",
                 "enable_audit_data_reporting",
-                "require_account_level_consent",
             ]
         ),
         (
             EnterpriseCustomerUser,
             [
-                "data_sharing_consent",
                 "enterprise_enrollments",
                 "id",
                 "created",
@@ -174,7 +164,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         ),
     )
     def test_get_all_field_names(self, model, expected_fields):
-        actual_field_names = get_all_field_names(model)
+        actual_field_names = utils.get_all_field_names(model)
         assert actual_field_names == expected_fields
 
     @ddt.data(
@@ -255,7 +245,7 @@ class TestEnterpriseUtils(unittest.TestCase):
     def test_get_enterprise_customer(self, factory, items, returns_obj):
         if factory:
             create_items(factory, items)
-        enterprise_customer = get_enterprise_customer(TEST_UUID)
+        enterprise_customer = utils.get_enterprise_customer(TEST_UUID)
         if returns_obj:
             self.assertIsNotNone(enterprise_customer)
         else:
@@ -265,13 +255,13 @@ class TestEnterpriseUtils(unittest.TestCase):
         user = UserFactory()
         enterprise_customer = EnterpriseCustomerFactory()
 
-        assert get_enterprise_customer_user(user.id, enterprise_customer.uuid) is None
+        assert utils.get_enterprise_customer_user(user.id, enterprise_customer.uuid) is None
 
         enterprise_customer_user = EnterpriseCustomerUserFactory(
             user_id=user.id,
             enterprise_customer=enterprise_customer
         )
-        assert get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
+        assert utils.get_enterprise_customer_user(user.id, enterprise_customer.uuid) == enterprise_customer_user
 
     @ddt.data(
         (
@@ -914,7 +904,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         ``ungettext_min_max`` returns the appropriate strings depending on a certain min & max.
         """
-        assert ungettext_min_max(singular, plural, range_text, min_val, max_val) == expected_output
+        assert utils.ungettext_min_max(singular, plural, range_text, min_val, max_val) == expected_output
 
     @mock.patch('enterprise.utils.configuration_helpers')
     def test_get_configuration_value_with_openedx(self, config_mock):
@@ -922,13 +912,30 @@ class TestEnterpriseUtils(unittest.TestCase):
         ``get_configuration_value`` returns the appropriate non-default value when connected to Open edX.
         """
         config_mock.get_value.return_value = 'value'
-        assert get_configuration_value('value', default='default') == 'value'
+        assert utils.get_configuration_value('value', default='default') == 'value'
 
     def test_get_configuration_value_without_openedx(self):
         """
         ``get_configuration_value`` returns a default value of 'default' when not connected to Open edX.
         """
-        assert get_configuration_value('value', default='default') == 'default'
+        assert utils.get_configuration_value('value', default='default') == 'default'
+
+    def test_get_configuration_value_for_site_with_configuration(self):
+        """
+        ``get_configuration_value_for_site`` returns the key's value or the default in the site configuration.
+
+        We do not test whether we get back the key's value or the default in particular, but just that
+        the function returns a value through the configuration, rather than the default.
+        """
+        site = SiteFactory()
+        site.configuration = mock.MagicMock(get_value=mock.MagicMock(return_value='value'))
+        assert utils.get_configuration_value_for_site(site, 'key', 'default') == 'value'
+
+    def test_get_configuration_value_for_site_without_configuration(self):
+        """
+        ``get_configuration_value_for_site`` returns the default because of no site configuration.
+        """
+        assert utils.get_configuration_value_for_site(SiteFactory(), 'key', 'default') == 'default'
 
 
 def get_transformed_course_metadata(course_id, status):
@@ -1202,7 +1209,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         # when the audit enrollment flag is disabled
         self.customer.enable_audit_enrollment = False
         # course modes are filtered out if their mode is in the ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES setting
-        filtered_course_modes = filter_audit_course_modes(self.customer, course_modes)
+        filtered_course_modes = utils.filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 2
         result = [course_mode['number'] for course_mode in filtered_course_modes]
         expected = [0, 3]
@@ -1211,7 +1218,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         # when the audit enrollment flag is enabled
         self.customer.enable_audit_enrollment = True
         # audit course modes are not filtered out
-        filtered_course_modes = filter_audit_course_modes(self.customer, course_modes)
+        filtered_course_modes = utils.filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
 
     @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)

@@ -20,11 +20,17 @@ from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustom
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
-from enterprise.models import (  # pylint:disable=no-name-in-module
-    EnrollmentNotificationEmailTemplate, EnterpriseCustomer, EnterpriseCustomerUser,
-    EnterpriseCustomerBrandingConfiguration, EnterpriseCustomerIdentityProvider,
-    HistoricalUserDataSharingConsentAudit, PendingEnrollment, PendingEnterpriseCustomerUser,
-    EnterpriseCustomerEntitlement, EnterpriseCourseEnrollment, EnterpriseCustomerCatalog
+from enterprise.models import (
+    EnrollmentNotificationEmailTemplate,
+    EnterpriseCustomer,
+    EnterpriseCustomerUser,
+    EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerIdentityProvider,
+    PendingEnrollment,
+    PendingEnterpriseCustomerUser,
+    EnterpriseCustomerEntitlement,
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomerCatalog
 )
 from enterprise.utils import get_all_field_names, get_catalog_admin_url
 
@@ -221,36 +227,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         return customer_urls + super(EnterpriseCustomerAdmin, self).get_urls()
 
 
-class HistoricalUserDataSharingConsentAuditInlineAdmin(admin.TabularInline):
-    """
-    Inline admin view for UserDataSharingConsentAudit
-    """
-
-    model = HistoricalUserDataSharingConsentAudit
-
-    fields = (
-        'state',
-        'history_date',
-    )
-
-    readonly_fields = (
-        'state',
-        'history_date',
-    )
-
-    def has_add_permission(self, request):
-        """
-        Disable add permission for HistoricalUserDataSharingConsentAudit.
-        """
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """
-        Disable deletability for HistoricalUserDataSharingConsentAudit.
-        """
-        return False
-
-
 @admin.register(EnterpriseCustomerUser)
 class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     """
@@ -276,10 +252,6 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'username',
         'created',
         'enrolled_courses',
-    )
-
-    inlines = (
-        HistoricalUserDataSharingConsentAuditInlineAdmin,
     )
 
     def username(self, enterprise_customer_user):
@@ -424,13 +396,11 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     readonly_fields = (
         'enterprise_customer_user',
         'course_id',
-        'consent_granted',
     )
 
     list_display = (
         'enterprise_customer_user',
         'course_id',
-        'consent_granted',
     )
 
     search_fields = ('enterprise_customer_user__user_id', 'course_id',)

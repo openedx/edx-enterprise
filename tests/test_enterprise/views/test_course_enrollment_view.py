@@ -224,7 +224,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
         EnterpriseCourseEnrollmentFactory(
             course_id=self.demo_course_id,
-            consent_granted=consent_granted,
             enterprise_customer_user=enterprise_customer_user
         )
         DataSharingConsentFactory(

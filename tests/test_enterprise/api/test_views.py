@@ -14,8 +14,7 @@ from django.conf import settings
 from django.test import override_settings
 from django.utils import timezone
 
-from enterprise.decorators import ignore_warning
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider, UserDataSharingConsentAudit
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from test_utils import FAKE_UUIDS, TEST_COURSE, TEST_USERNAME, APITest, factories, fake_catalog_api, fake_enterprise_api
 
@@ -42,7 +41,6 @@ ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT = reverse('enterprise-customer-ent
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 SITE_LIST_ENDPOINT = reverse('site-list')
-USER_DATA_SHARING_CONSENT_LIST_ENDPOINT = reverse('user-data-sharing-consent-list')
 
 
 @ddt.ddt
@@ -62,7 +60,7 @@ class TestEnterpriseAPIViews(APITest):
 
     @ddt.data(
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
+            True, EnterpriseCustomer.AT_ENROLLMENT, True,
             [1, 2, 3], {"entitlements": [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
@@ -70,7 +68,7 @@ class TestEnterpriseAPIViews(APITest):
             ]},
         ),
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED,
+            True, EnterpriseCustomer.AT_ENROLLMENT, False,
             [1, 2, 3], {"entitlements": [
                 {"entitlement_id": 1, "requires_consent": True},
                 {"entitlement_id": 2, "requires_consent": True},
@@ -78,15 +76,7 @@ class TestEnterpriseAPIViews(APITest):
             ]},
         ),
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": True},
-                {"entitlement_id": 2, "requires_consent": True},
-                {"entitlement_id": 3, "requires_consent": True},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
+            False, EnterpriseCustomer.AT_ENROLLMENT, True,
             [1, 2, 3], {"entitlements": [
                 {"entitlement_id": 1, "requires_consent": False},
                 {"entitlement_id": 2, "requires_consent": False},
@@ -94,35 +84,11 @@ class TestEnterpriseAPIViews(APITest):
             ]},
         ),
         (
-            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.ENABLED,
+            True, EnterpriseCustomer.AT_ENROLLMENT, None,
             [], {"entitlements": []},
         ),
         (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.DISABLED,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.AT_ENROLLMENT, UserDataSharingConsentAudit.NOT_SET,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.EXTERNALLY_MANAGED, UserDataSharingConsentAudit.EXTERNALLY_MANAGED,
+            True, EnterpriseCustomer.EXTERNALLY_MANAGED, True,
             [1, 2, 3],
             {"entitlements": [
                 {"entitlement_id": 1, "requires_consent": False},
@@ -132,7 +98,6 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @ignore_warning(DeprecationWarning)
     def test_enterprise_learner_entitlements(
             self, enable_data_sharing_consent, enforce_data_sharing_consent,
             learner_consent_state, entitlements, expected_json
@@ -145,33 +110,28 @@ class TestEnterpriseAPIViews(APITest):
                 (this includes enforcing data sharing consent at login and at enrollment) and enterprise learner
                  does not consent to share data.
             2. Full list of entitlements for all other cases.
-        Arguments:
-            enable_data_sharing_consent (bool): True if enterprise customer enables data sharing consent,
-                False it does not.
-            enforce_data_sharing_consent (str): string for the location at which enterprise customer enforces
-                data sharing consent, possible values are 'at_enrollment' and 'externally_managed'.
-            learner_consent_state (str): string containing the state of learner consent on data sharing,
-                possible values are 'not_set', 'enabled' and 'disabled'.
-            entitlements (list): A list of integers pointing to voucher ids generated in E-Commerce CAT tool.
-            expected_json (dict): A dict with structure and values corresponding to
-                the expected json from API endpoint.
         """
-        user_id = 1
+        user_id = self.user.id + 1
         enterprise_customer = factories.EnterpriseCustomerFactory(
             enable_data_sharing_consent=enable_data_sharing_consent,
             enforce_data_sharing_consent=enforce_data_sharing_consent,
         )
-        factories.UserDataSharingConsentAuditFactory(
-            user__id=user_id,
-            user__enterprise_customer=enterprise_customer,
-            state=learner_consent_state,
+        user = factories.UserFactory(id=user_id)
+        ecu = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        factories.DataSharingConsentFactory(
+            username=user.username,
+            enterprise_customer=enterprise_customer,
+            granted=learner_consent_state,
         )
         for entitlement in entitlements:
             factories.EnterpriseCustomerEntitlementFactory(
                 enterprise_customer=enterprise_customer,
                 entitlement_id=entitlement,
             )
-        url = reverse('enterprise-learner-entitlements', (user_id, ))
+        url = reverse('enterprise-learner-entitlements', (ecu.id, ))
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert sorted(response) == sorted(expected_json)
@@ -194,7 +154,6 @@ class TestEnterpriseAPIViews(APITest):
             ],
             {
                 'username': TEST_USERNAME,
-                'consent_granted': True,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
             201
@@ -215,7 +174,6 @@ class TestEnterpriseAPIViews(APITest):
             ],
             {
                 'username': 'does_not_exist',
-                'consent_granted': True,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
             400
@@ -233,7 +191,6 @@ class TestEnterpriseAPIViews(APITest):
             ],
             {
                 'username': TEST_USERNAME,
-                'consent_granted': True,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
             400
@@ -497,18 +454,6 @@ class TestEnterpriseAPIViews(APITest):
             }],
         ),
         (
-            factories.UserDataSharingConsentAuditFactory,
-            USER_DATA_SHARING_CONSENT_LIST_ENDPOINT,
-            itemgetter('user'),
-            [{
-                'state': 'enabled',
-                'user__id': 1,
-            }],
-            [{
-                'state': 'enabled', 'enabled': True, 'user': 1,
-            }],
-        ),
-        (
             factories.EnterpriseCustomerUserFactory,
             ENTERPRISE_LEARNER_LIST_ENDPOINT,
             itemgetter('user_id'),
@@ -555,12 +500,10 @@ class TestEnterpriseAPIViews(APITest):
             itemgetter('enterprise_customer_user'),
             [{
                 'enterprise_customer_user__id': 1,
-                'consent_granted': True,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             }],
             [{
                 'enterprise_customer_user': 1,
-                'consent_granted': True,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             }],
         ),

@@ -43,7 +43,6 @@ from enterprise.models import (
     EnterpriseCustomerEntitlement,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
-    UserDataSharingConsentAudit,
     logo_path,
 )
 from test_utils.factories import (
@@ -55,7 +54,6 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     PendingEnrollmentFactory,
     PendingEnterpriseCustomerUserFactory,
-    UserDataSharingConsentAuditFactory,
     UserFactory,
 )
 
@@ -123,57 +121,6 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
         )
         assert expected_str == method(self.enrollment)
 
-    def test_consent_available_consent_stored(self):
-        self.enrollment.consent_granted = True
-        assert self.enrollment.consent_available is True
-
-    def test_consent_denied_consent_stored(self):
-        self.enrollment.consent_granted = False
-        assert self.enrollment.consent_available is False
-
-    def test_consent_not_stored_audit_available(self):
-        UserDataSharingConsentAuditFactory(
-            user=self.enterprise_customer_user,
-            state='enabled',
-        )
-        assert self.enrollment.consent_available is True
-
-    def test_consent_not_stored_audit_available_denied(self):
-        UserDataSharingConsentAuditFactory(
-            user=self.enterprise_customer_user,
-            state='disabled',
-        )
-        assert self.enrollment.consent_available is False
-
-    def test_consent_not_stored_audit_available_externally_managed(self):
-        UserDataSharingConsentAuditFactory(
-            user=self.enterprise_customer_user,
-            state='external',
-        )
-        assert self.enrollment.consent_available is True
-
-    def test_consent_not_stored_no_audit_available(self):
-        assert self.enrollment.consent_available is False
-
-    @ddt.data(
-        ('at_enrollment', None, 'not_set'),
-        ('at_enrollment', True, 'enabled'),
-        ('at_enrollment', False, 'disabled'),
-        ('externally_managed', None, 'external'),
-        ('externally_managed', False, 'external'),
-        ('externally_managed', True, 'external'),
-    )
-    @ddt.unpack
-    def test_create_related_consent_audit(self, requirement, this_state, expected_value):
-        assert UserDataSharingConsentAudit.objects.count() == 0
-        self.enterprise_customer_user.enterprise_customer.require_account_level_consent = True
-        self.enterprise_customer_user.enterprise_customer.enforce_data_sharing_consent = requirement
-        self.enterprise_customer_user.save()
-        self.enrollment.consent_granted = this_state
-        self.enrollment.save()
-        assert UserDataSharingConsentAudit.objects.count() == 1
-        assert UserDataSharingConsentAudit.objects.first().state == expected_value
-
 
 @mark.django_db
 class TestEnterpriseCustomerManager(unittest.TestCase):
@@ -198,27 +145,6 @@ class TestEnterpriseCustomerManager(unittest.TestCase):
         self.assertIn(customer1, active_customers)
         self.assertIn(customer2, active_customers)
         self.assertNotIn(inactive_customer, active_customers)
-
-
-@mark.django_db
-@ddt.ddt
-class TestUserDataSharingConsentAudit(unittest.TestCase):
-    """
-    Tests of the UserDataSharingConsent model.
-    """
-    @ddt.data(
-        str, repr
-    )
-    def test_string_conversion(self, method):
-        """
-        Test ``UserDataSharingConsentAudit`` conversion to string
-        """
-        user = UserFactory(email='bob@jones.com')
-        enterprise_customer = EnterpriseCustomerFactory(name='EvilCorp')
-        ec_user = EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
-        audit = UserDataSharingConsentAuditFactory(user=ec_user)
-        expected_to_str = "<UserDataSharingConsentAudit for bob@jones.com and EvilCorp: not_set>"
-        assert expected_to_str == method(audit)
 
 
 @mark.django_db
@@ -1327,7 +1253,6 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         enrollment = EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=enterprise_customer_user,
             course_id=course_id,
-            consent_granted=True,
         )
 
         # Mock instructor-paced course details
