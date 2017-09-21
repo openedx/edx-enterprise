@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.5] - 2017-09-21
+---------------------
+
+* Remove old account-level consent features as well as consent from EnterpriseCourseEnrollment.
+
 [0.46.4] - 2017-09-20
 ---------------------
 
