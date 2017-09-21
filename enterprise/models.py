@@ -143,16 +143,6 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
-    require_account_level_consent = models.NullBooleanField(
-        default=False,
-        blank=True,
-        null=True,
-        help_text=_(
-            "Specifies whether every consent interaction should ask for account-wide consent, rather than only "
-            "the specific scope at which the interaction is happening."
-        )
-    )
-
     @property
     def identity_provider(self):
         """

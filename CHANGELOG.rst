@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.46.8] - 2017-09-21
+---------------------
+
+* Step 2 in safe deployment of removing old consent models: remove `require_account_level_consent`, but no migration.
+
 [0.46.7] - 2017-09-21
 ---------------------
 
