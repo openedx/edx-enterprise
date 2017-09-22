@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0026_remove_old_consent'),
+        ('enterprise', '0026_make_require_account_level_consent_nullable'),
     ]
 
     operations = [
