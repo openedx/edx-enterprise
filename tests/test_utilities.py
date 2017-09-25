@@ -116,7 +116,6 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer_identity_provider",
                 "enterprise_customer_entitlements",
                 "enterprise_customer_catalog",
-                "enterprise_enrollment_template",
                 "enterprise_customer_consent",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
@@ -395,7 +394,9 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(spec=[])
+        enterprise_customer = mock.MagicMock(
+            site=mock.MagicMock(spec=[])
+        )
         enterprise_customer.name = enterprise_customer_name
         if user is None:
             with raises(TypeError):
@@ -534,11 +535,13 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
         enterprise_customer = mock.MagicMock(
-            enterprise_enrollment_template=mock.MagicMock(
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line='New course! {course_name}!'
+            site=mock.MagicMock(
+                enterprise_enrollment_template=mock.MagicMock(
+                    render_all_templates=mock.MagicMock(
+                        return_value=(('plaintext_value', '<b>HTML value</b>', ))
+                    ),
+                    subject_line='New course! {course_name}!'
+                )
             )
         )
         enterprise_customer.name = enterprise_customer_name
@@ -705,13 +708,15 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
         enterprise_customer = mock.MagicMock(
-            enterprise_enrollment_template=mock.MagicMock(
-                plaintext_template='',
-                html_template='<b>hi there</b>',
-                render_all_templates=mock.MagicMock(
-                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
-                ),
-                subject_line=subject_line
+            site=mock.MagicMock(
+                enterprise_enrollment_template=mock.MagicMock(
+                    plaintext_template='',
+                    html_template='<b>hi there</b>',
+                    render_all_templates=mock.MagicMock(
+                        return_value=(('plaintext_value', '<b>HTML value</b>', ))
+                    ),
+                    subject_line=subject_line
+                )
             )
         )
         enterprise_customer.name = enterprise_customer_name

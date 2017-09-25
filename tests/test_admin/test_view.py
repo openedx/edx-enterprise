@@ -37,6 +37,7 @@ from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
+    SiteFactory,
     UserFactory,
 )
 from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE2
@@ -65,7 +66,7 @@ class TestPreviewTemplateView(TestCase):
                 ' Program Variant{% endif %}</body></html>'
             ),
             subject_line='Enrollment Notification',
-            enterprise_customer=EnterpriseCustomerFactory(),
+            site=SiteFactory(),
         )
         super(TestPreviewTemplateView, self).setUp()
 

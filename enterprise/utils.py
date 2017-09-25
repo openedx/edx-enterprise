@@ -277,13 +277,13 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
         'organization_name': enterprise_customer.name,
     }
     try:
-        enterprise_template_config = enterprise_customer.enterprise_enrollment_template
+        site_template_configuration = enterprise_customer.site.enterprise_enrollment_template
     except (ObjectDoesNotExist, AttributeError):
-        enterprise_template_config = None
+        site_template_configuration = None
 
-    plain_msg, html_msg = build_notification_message(msg_context, enterprise_template_config)
+    plain_msg, html_msg = build_notification_message(msg_context, site_template_configuration)
 
-    subject_line = get_notification_subject_line(enrolled_in['name'], enterprise_template_config)
+    subject_line = get_notification_subject_line(enrolled_in['name'], site_template_configuration)
 
     return mail.send_mail(
         subject_line,
