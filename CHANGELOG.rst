@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[0.48.1] - 2017-09-25
+---------------------
+
+* Step 1 in making enrollment email template linked to enterprise. Make 'site' nullable, add 'enterprise_customer'.
+
 
 [0.48.0] - 2017-09-25
 ---------------------
