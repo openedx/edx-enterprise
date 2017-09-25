@@ -834,7 +834,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
 
     def setUp(self):
         self.template = EnrollmentNotificationEmailTemplate.objects.create(
-            site=Site.objects.get(id=1),
+            enterprise_customer=EnterpriseCustomerFactory(),
             plaintext_template=(
                 'This is a template - testing {{ course_name }}, {{ other_value }}'
             ),
@@ -861,7 +861,9 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         """
         Test conversion to string.
         """
-        expected_str = '<EnrollmentNotificationEmailTemplate for site with ID 1>'
+        expected_str = '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with UUID {}>'.format(
+            self.template.enterprise_customer.uuid
+        )
         assert expected_str == method(self.template)
 
 
