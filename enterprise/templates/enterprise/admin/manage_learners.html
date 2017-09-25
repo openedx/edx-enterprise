@@ -2,8 +2,9 @@
 {% load i18n static admin_urls %}
 
 {% block extrastyle %}
-<link rel="stylesheet" type="text/css" href="{% static 'enterprise/admin/manage_learners.css' %}"/>
-<link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}"/>
+  {# TODO: When we move to be a service, use the webpack loader's `render_bundle`. #}
+  <link rel="stylesheet" type="text/css" href="{% static 'enterprise/bundles/main-admin.style.css' %}"/>
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}"/>
 {% endblock %}
 
 {% block extrahead %}
@@ -157,7 +158,7 @@ global Javascript variables that can be used in any of the loaded packages.
 {% endblock %}
 
 {% block footer %}
-{{ block.super }}
-<!-- See comment in extrahead block -->
-<script language="JavaScript" type="text/javascript" src="{% static 'enterprise/admin/manage_learners.js' %}"></script>
+  {{ block.super }}
+  <!-- See comment in extrahead block -->
+  <script language="JavaScript" type="text/javascript" src="{% static 'enterprise/js/manage_learners.js' %}"></script>
 {% endblock %}

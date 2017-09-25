@@ -51,7 +51,7 @@ packaging==16.8           # via caniusepython3
 path.py==10.4             # via edx-i18n-tools
 pbr==3.1.1                # via stevedore
 pillow==3.4
-pip-tools==1.9.0
+pip-tools==1.10.1
 pkginfo==1.4.1            # via twine
 pluggy==0.5.2             # via tox
 polib==1.0.8              # via edx-i18n-tools
@@ -73,14 +73,14 @@ requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
-six==1.10.0               # via astroid, diff-cover, django-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, packaging, pip-tools, pydocstyle, pylint, python-dateutil, singledispatch, stevedore
+six==1.11.0               # via astroid, diff-cover, django-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, packaging, pip-tools, pydocstyle, pylint, python-dateutil, singledispatch, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
-stevedore==1.26.0         # via edx-opaque-keys
+stevedore==1.27.0         # via edx-opaque-keys
 testfixtures==5.2.0
 tox-battery==0.2.0
-tox==2.8.2
-tqdm==4.15.0              # via twine
+tox==2.9.1
+tqdm==4.17.1              # via twine
 twine==1.9.1
 unicodecsv==0.14.1
 virtualenv==15.1.0        # via tox

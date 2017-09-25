@@ -22,6 +22,7 @@ instructions.
 - [ ] New requirements are in the right place (`base.in` if only used in enterprise; in the correct `platform-****.in` files if they're hosted in edx-platform)
 - [ ] Regenerate requirements with `make upgrade && make requirements` (and make sure to fix any errors).
   **DO NOT** just add dependencies to `requirements/*.txt` files.
+- [ ] Called `make static` for webpack bundling if any static content was updated.
 - [ ] All reviewers approved
 - [ ] CI build is green
 - [ ] Version bumped

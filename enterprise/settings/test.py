@@ -10,11 +10,19 @@ from __future__ import absolute_import, unicode_literals
 from os.path import abspath, dirname, join
 
 
-def root(*args):
+def here(*args):
     """
-    Get the absolute path of the given path relative to the project root.
+    Return the absolute path to a directory from this file.
     """
     return join(abspath(dirname(__file__)), *args)
+
+
+def root(*args):
+    """
+    Return the absolute path to some file from the project's root.
+    """
+    return abspath(join(abspath(here('../..')), *args))
+
 
 DATABASES = {
     "default": {
@@ -34,6 +42,7 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.admin",  # only used in DEBUG mode
     "django.contrib.messages",
+    "django.contrib.staticfiles",
     "waffle",
 
     "enterprise",
@@ -74,6 +83,10 @@ TEMPLATES = [
         }
     },
 ]
+
+STATIC_ROOT = root('enterprise/assets')
+
+STATIC_URL = '/enterprise/static/'
 
 PLATFORM_NAME = "Test platform"
 PLATFORM_DESCRIPTION = "Test description"

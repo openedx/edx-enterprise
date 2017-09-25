@@ -22,18 +22,15 @@ django==1.11.5
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
-dnspython==1.15.0         # via email-validator
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
-email-validator==1.0.2    # via faker
 factory-boy==2.9.2
-faker==0.8.3              # via factory-boy
+faker==0.8.4              # via factory-boy
 flaky==3.3.0
 freezegun==0.3.9
 funcsigs==1.0.2           # via mock
-idna==2.6                 # via email-validator
 ipaddress==1.0.18         # via faker
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
@@ -50,10 +47,10 @@ pytest==3.2.2             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.1    # via edx-drf-extensions, faker, freezegun
 pytz==2017.2              # via celery, django
 requests==2.9.1
-responses==0.7.0
+responses==0.8.0
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.10.0               # via django-extensions, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
+six==1.11.0               # via django-extensions, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
-stevedore==1.26.0         # via edx-opaque-keys
+stevedore==1.27.0         # via edx-opaque-keys
 testfixtures==5.2.0
 unicodecsv==0.14.1

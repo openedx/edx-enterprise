@@ -1,0 +1,263 @@
+/* Base CSS files for Enterprise templates. */
+// TODO: Continue to take advantage of SASS features and refactor our CSS.
+
+* {
+  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 16px;
+}
+
+strong {
+  font-weight: 600;
+}
+
+s {
+  text-decoration: line-through;
+}
+
+q {
+  font-style: italic;
+}
+
+body,
+.zebra-stripe > :nth-child(2n+1),
+.depth-0 {
+  background-color: white;
+  padding-bottom: 100px;
+}
+
+.text-underline {
+  text-decoration: underline;
+}
+
+.expand-list-link button {
+  background: none;
+  border: none;
+}
+
+.logo-container {
+  padding-top: 10px;
+  width: 100%;
+  max-width: 768px;
+  min-width: 300px;
+  height: auto;
+  margin: 0 auto;
+  color: #383838;
+}
+
+.pinstripe {
+  border-top: 2px solid #0075b4;
+}
+
+#header-tagline {
+  font-size: 14px;
+  margin-left: 0.5em;
+  width: 300px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.consent-title {
+  font-size: 24px;
+  color: $blue;
+}
+
+.row:after {
+  content: " ";
+  display: table;
+  clear: both;
+}
+
+.enterprise-container {
+  min-width: 300px;
+  max-width: 768px;
+  margin: 0 auto;
+  line-height: 1.5;
+  font-size: 14px;
+  color: #383838;
+
+  &:after {
+    content: " ";
+    display: table;
+    clear: both;
+  }
+
+  * {
+    font-size: 14px;
+  }
+
+  a {
+    color: $blue;
+
+    &:hover {
+      color: #0b5c8a;
+    }
+  }
+}
+
+.enterprise-logo {
+  width: auto;
+  max-width: 150px;
+  height: 100px;
+}
+
+.partnered-text {
+  font-size: 16px;
+  color: #414141;
+  margin-top: 5px;
+  margin-bottom: 20px;
+
+  strong {
+    font-size: 1.05em;
+  }
+}
+
+.media {
+  margin-bottom: 10px;
+  display: table;
+  width: 100%;
+
+  .thumbnail,
+  .media-content {
+    display: table-cell;
+    vertical-align: top;
+  }
+
+  .thumbnail {
+    width: 55px;
+    padding-top: 6px;
+  }
+
+  .media-content {
+    padding-left: 15px;
+
+    .course-title {
+      margin-bottom: 5px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+  }
+}
+
+.radio-block {
+  margin-bottom: 15px;
+
+  .radio,
+  label {
+    display: table-cell;
+    vertical-align: top;
+  }
+
+  .radio {
+    width: 25px;
+    padding-top: 5px;
+  }
+
+  label > span {
+    display: block;
+  }
+}
+
+.btn-confirm {
+  background: $blue;
+  border: none;
+  color: #fff;
+  border-radius: 5px;
+  margin: 10px 0;
+  padding: 10px 15px;
+  box-shadow: none;
+  font-weight: bold;
+
+  &:hover,
+  &:focus {
+    cursor: pointer;
+    background: #0b5177;
+  }
+}
+
+/* Move into its own file. */
+
+#messages {
+  .alert {
+    position: relative;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid transparent;
+    box-shadow: none;
+    border-radius: 2px;
+    margin-bottom: 8px;
+
+    & > .fa {
+      position: absolute;
+      left: 11px;
+      top: 13px;
+      font-size: 16px;
+    }
+
+    span {
+      display: block;
+    }
+  }
+
+  .success {
+    background-color: #ecfaec;
+    border-color: #b9edb9;
+    color: #3c763d;
+  }
+
+  .info {
+    background-color: #f2f8fb;
+    border-color: #cce3f0;
+    color: #31708f;
+  }
+
+  .warning {
+    background-color: #fcf8e3;
+    border-color: #faebcc;
+    color: #8a6d3b;
+  }
+
+  .error {
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    color: #a94442;
+  }
+}
+
+@media (max-width: map-get($container-max-widths, md)) {
+  .logo-container {
+      text-align: center;
+  }
+
+  #header-tagline {
+      text-align: left;
+  }
+
+  .enterprise-container {
+      padding: 0 30px 30px 30px;
+  }
+}
+
+@media (min-width: map-get($container-max-widths, md)) {
+  [class*='col-'] {
+    float: left;
+    display: inline;
+
+    &.col-3 {
+      width: 30%;
+      padding-left: 0;
+      padding-right: 30px;
+    }
+
+    &.col-7 {
+      padding-left: 30px;
+      width: 70%;
+    }
+  }
+
+  .border-left {
+      border-left: 1px solid #D9D9D9;
+  }
+
+  .enterprise-logo {
+      display: block;
+  }
+}

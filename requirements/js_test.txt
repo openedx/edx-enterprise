@@ -13,9 +13,9 @@ jasmine==2.8.0
 jinja2==2.9.6             # via jasmine
 markupsafe==1.0           # via jinja2
 ordereddict==1.1          # via jasmine-core
-portend==2.1.2            # via cherrypy
+portend==2.2              # via cherrypy
 pytz==2017.2              # via tempora
 pyyaml==3.10              # via jasmine
-selenium==3.5.0           # via jasmine
-six==1.10.0               # via cheroot, cherrypy, jasmine, tempora
+selenium==3.6.0           # via jasmine
+six==1.11.0               # via cheroot, cherrypy, jasmine, tempora
 tempora==1.9              # via portend

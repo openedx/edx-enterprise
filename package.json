@@ -1,13 +1,24 @@
 {
   "name": "edx-enterprise",
+  "version": "0.48.1",
   "license": "AGPL-3.0",
   "repository": {
     "type": "git",
     "url": "git://github.com/edx/edx-enterprise"
   },
+  "dependencies": {
+    "@edx/edx-bootstrap": "^0.3.0"
+  },
   "devDependencies": {
-    "jquery": "2.2.4",
-    "jasmine-jquery": "2.1.1",
-    "jasmine-ajax": "3.1.1"
+    "css-loader": "^0.28.7",
+    "extract-text-webpack-plugin": "^3.0.0",
+    "jasmine-ajax": "^3.1.1",
+    "jasmine-jquery": "^2.1.1",
+    "jquery": "^2.2.4",
+    "jshint": "^2.9.5",
+    "node-sass": "^4.5.3",
+    "sass-loader": "^6.0.6",
+    "style-loader": "^0.18.2",
+    "webpack": "^3.6.0"
   }
 }

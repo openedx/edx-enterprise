@@ -27,7 +27,7 @@ To run just the code quality checks:
 
 .. code-block:: bash
 
-    $ make quality
+    $ tox -e quality
 
 To run the unit tests under every supported Python version and the code
 quality checks:

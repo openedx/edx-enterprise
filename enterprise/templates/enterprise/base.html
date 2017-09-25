@@ -1,7 +1,11 @@
 {% load theme_pipeline staticfiles %}
 
 <!DOCTYPE html>
-<html lang="{{ LANGUAGE_CODE|default:"en-us" }}">
+<!--[if lt IE 7]><html lang="{{ LANGUAGE_CODE|default:"en-us" }}" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>   <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>   <html lang="{{ LANGUAGE_CODE|default:"en-us" }}" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}" class="no-js"> <!--<![endif]-->
   <head>
   {% block title %}<title>{{ page_title }} | {{ platform_name }}</title>{% endblock %}
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -9,8 +13,9 @@
     {% block styles %}
       {% stylesheet 'style-vendor' %}
       {% stylesheet 'style-main-v2' %}
-       <link rel="stylesheet" href="{% static 'css/vendor/font-awesome.css' %}"/>
-       <link rel="stylesheet" href="{% static 'enterprise/base.css' %}" />
+      <link rel="stylesheet" type="text/css" href="{% static 'css/vendor/font-awesome.css' %}"/>
+      {# TODO: When we move to be a service, use the webpack loader's `render_bundle`. #}
+      <link rel="stylesheet" type="text/css" href="{% static 'enterprise/bundles/main.style.css' %}"/>
     {% endblock %}
 
     {% block extrastyles %}{% endblock %}
@@ -36,5 +41,7 @@
     {% endblock %}
 
     {% block contents %}{% endblock %}
+    <script type="text/javascript" src="{% static 'common/js/vendor/popper.js' %}"></script>
+    <script type="text/javascript" src="{% static 'common/js/vendor/bootstrap.js' %}"></script>
   </body>
 </html>

@@ -3,7 +3,8 @@ branch = True
 data_file = .coverage
 source=enterprise
 omit =
-    test_settings
+    enterprise/settings*
+    enterprise/conf*
     enterprise/django_compatibility.py
     consent/apps.py
     consent/errors.py

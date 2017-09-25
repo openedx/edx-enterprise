@@ -1,5 +1,4 @@
 describe("Data sharing consent page", function () {
-
     beforeEach(function () {
         jasmine.getFixtures().fixturesPath = "__spec__/fixtures";
         loadFixtures("data_sharing_consent.html");
@@ -7,7 +6,6 @@ describe("Data sharing consent page", function () {
     });
 
     describe("main submission button", function () {
-        
         it("is disabled on page load", function () {
             expect($("#consent-button")).toBeDisabled();
         });
@@ -27,37 +25,16 @@ describe("Data sharing consent page", function () {
 
     describe("modal confirmation div", function () {
         it("is not shown when the page is loaded", function () {
-            expect($("#consent-confirmation-modal")).toBeHidden();
-        });
-        it("is shown when the failure link is clicked", function () {
-            $("#failure-link").click();
-            expect($("#consent-confirmation-modal")).not.toBeHidden();
-        });
-        it("exits when clicked", function () {
-            $("#consent-confirmation-modal").show();
-            $("#consent-confirmation-modal").click();
-            expect($("#consent-confirmation-modal")).toBeHidden();
+            expect($("#consent-confirmation-modal")).not.toHaveClass('show');
         });
 
         describe("review policy link", function () {
-
             beforeEach(function () {
                 $("#consent-confirmation-modal").show();
             });
 
             it("is visible when the modal is open", function () {
                 expect($("#review-policy-link")).not.toBeHidden();
-            });
-
-            it("hides the modal when clicked", function () {
-                $("#review-policy-link").click();
-                expect($("#consent-confirmation-modal")).toBeHidden();
-            });
-
-            it("shows the data consent policy when clicked", function () {
-                $("#review-policy-link").click();
-                expect($("#consent-confirmation-modal")).toBeHidden();
-                expect($(".consent-policy")).not.toBeHidden();
             });
         });
     });
@@ -66,12 +43,14 @@ describe("Data sharing consent page", function () {
         it("is not shown when the page is loaded", function () {
             expect($(".consent-policy")).toBeHidden();
         });
+
         it("is shown when the dropdown button is clicked", function () {
             $("#consent-policy-dropdown-bar").click();
             expect($(".consent-policy")).not.toBeHidden();
             console.log($("#consent-policy-dropdown-icon"));
             expect($("#consent-policy-dropdown-icon")).toHaveClass("fa-chevron-down");
         });
+
         it("is hidden when the dropdown button is clicked after it's been opened", function () {
             $("#consent-policy-dropdown-bar").click();
             expect($(".consent-policy")).not.toBeHidden();

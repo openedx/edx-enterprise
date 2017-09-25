@@ -1,0 +1,23 @@
+/* Bootstrap */
+// The ordering matters!
+// Bootstrap imports should come after edx-bootstrap imports.
+// Bootstrap's modals require Bootstrap variables & mixins.
+@import '~@edx/edx-bootstrap/sass/open-edx/theme';
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/mixins';
+@import '~bootstrap/scss/modal';
+
+/* Utilities */
+@import 'partials/utilities/variables';
+@import 'partials/utilities/mixins';
+
+/* Enterprise Overrides */
+@import 'base';
+
+/* Components */
+@import 'partials/components/course_modal';
+
+/* Views */
+@import 'partials/views/data_sharing_consent';
+@import 'partials/views/course_landing_page';
+@import 'partials/views/program_landing_page';

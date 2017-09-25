@@ -77,3 +77,10 @@ default.db
 
 # Geckodriver for Jasmine
 geckodriver/
+
+# Static assets
+enterprise/assets/
+enterprise/static/enterprise/bundles/*.js
+
+# TODO: When we move to be a service, ignore this too.
+#enterprise/static/enterprise/bundles/
