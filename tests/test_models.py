@@ -28,7 +28,6 @@ from integrated_channels.sap_success_factors.models import (
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 
-from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
