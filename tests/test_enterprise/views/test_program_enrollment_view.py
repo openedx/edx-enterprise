@@ -15,8 +15,10 @@ from pytest import mark
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.test import Client, TestCase
 
+from enterprise.views import ProgramEnrollmentView
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils import fake_render
 from test_utils.factories import (
@@ -26,6 +28,7 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
+from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE3, setup_course_catalog_api_client_mock
 from test_utils.mixins import MessagesMixin
 
 
@@ -44,98 +47,13 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
-        self.demo_course_id1 = 'course-v1:edX+DemoX+Demo_Course'
-        self.demo_course_1 = {
-            "key": self.demo_course_id1,
-            "uuid": "a312ec52-74ef-434b-b848-f110eb90b672",
-            "title": "edX Demonstration Course",
-            "course_runs": [
-                {
-                    "key": self.demo_course_id1,
-                    "uuid": "a276c25f-c640-4943-98dd-6c9ad8c71bb9",
-                    "title": "edX Demonstration Course",
-                    "short_description": "",
-                    "marketing_url": "course/edxdemo?utm_medium=affiliate_partner&utm_source=staff",
-                    "seats": [],
-                    "start": "2016-01-01T00:00:00Z",
-                    "end": "2018-01-01T00:00:00Z",
-                    "enrollment_start": None,
-                    "enrollment_end": None,
-                    "pacing_type": "self_paced",
-                    "type": None,
-                    "status": "published",
-                },
-            ],
-        }
-        self.demo_course_id2 = 'course-v1:edX+DemoX+Demo_Course2'
-        self.demo_course_2 = {
-            "key": self.demo_course_id2,
-            "uuid": "b312ec52-74ef-434b-b848-f110eb90b672",
-            "title": "edX Demonstration Course 2",
-            "course_runs": [
-                {
-                    "key": self.demo_course_id2,
-                    "uuid": "b276c25f-c640-4943-98dd-6c9ad8c71bb9",
-                    "title": "edX Demonstration Course 2",
-                    "short_description": "",
-                    "marketing_url": "course/edxdemo?utm_medium=affiliate_partner&utm_source=staff",
-                    "seats": [],
-                    "start": "2016-01-01T00:00:00Z",
-                    "end": "2018-01-01T00:00:00Z",
-                    "enrollment_start": None,
-                    "enrollment_end": None,
-                    "pacing_type": "self_paced",
-                    "type": None,
-                    "status": "published",
-                },
-            ],
-        }
-        self.demo_course_ids = [
-            self.demo_course_id1,
-            self.demo_course_id2,
-        ]
-        self.dummy_program_uuid = "52ad909b-c57d-4ff1-bab3-999813a2479b"
-        self.dummy_program = {
-            "uuid": self.dummy_program_uuid,
-            "title": "Program Title 1",
-            "subtitle": "Program Subtitle 1",
-            "type": "Verified Certificate",
-            "status": "active",
-            "marketing_slug": "marketingslug1",
-            "marketing_url": "verified-certificate/marketingslug1",
-            "courses": [
-                self.demo_course_1,
-                self.demo_course_2,
-            ],
-            "authoring_organizations": [
-                {
-                    "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
-                    "key": "edX",
-                    "name": "Authoring Organization",
-                    "certificate_logo_image_url": 'awesome/certificate/logo/url.jpg',
-                    "description": 'Such author, much authoring',
-                    "homepage_url": 'homepage.com/url',
-                    "logo_image_url": 'images/logo_image_url.jpg',
-                    "marketing_url": 'marketing/url',
-                },
-            ],
-            "expected_learning_items": [
-                "Blocks",
-                "XBlocks",
-                "Peer Assessment"
-            ],
-            "is_program_eligible_for_one_click_purchase": True,
-            "overview": "This is a test Program.",
-            "weeks_to_complete_min": 4,
-            "weeks_to_complete_max": 6,
-            "min_hours_effort_per_week": 5,
-            "max_hours_effort_per_week": 10,
-            "applicable_seat_types": [
-                "verified",
-                "professional",
-                "credit",
-            ],
-        }
+        self.demo_course_1 = FAKE_PROGRAM_RESPONSE3['courses'][0]
+        self.demo_course_2 = FAKE_PROGRAM_RESPONSE3['courses'][1]
+        self.demo_course_id1 = FAKE_PROGRAM_RESPONSE3['courses'][0]['key']
+        self.demo_course_id2 = FAKE_PROGRAM_RESPONSE3['courses'][1]['key']
+        self.demo_course_ids = [self.demo_course_id1, self.demo_course_id2]
+        self.dummy_program_uuid = FAKE_PROGRAM_RESPONSE3['uuid']
+        self.dummy_program = FAKE_PROGRAM_RESPONSE3
         super(TestProgramEnrollmentView, self).setUp()
 
     def _login(self):
@@ -233,20 +151,28 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         The Enterprise Program landing page is rendered appropriately given some context.
         """
         self._setup_program_data_extender(program_data_extender_mock)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_1)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         expected_context = {
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+            'LMS_ROOT_URL': 'http://localhost:8000',
             'enterprise_customer': enterprise_customer,
             'platform_name': 'Test platform',
+            'program_type_logo': 'http://localhost:18381/media/media/program_types/logo_images/'
+                                 'professional-certificate.medium.png',
+            'platform_description': 'Test description',
+            'program_type_description_header': 'What is an Test platform Professional Certificate?',
+            'platform_description_header': 'What is Test platform?',
+            'tagline': "High-quality online learning opportunities from the world's best universities",
+            'header_logo_alt_text': 'Test platform home page',
             'organization_name': 'Authoring Organization',
             'organization_logo': 'images/logo_image_url.jpg',
-            'welcome_text': 'Welcome to Test platform.',
-            'enterprise_welcome_text': (
-                "<strong>Starfleet Academy</strong> has partnered with <strong>Test platform</strong> to "
-                "offer you high-quality learning opportunities from the world's best universities."
-            ),
+            'program_type': 'Professional Certificate',
+            'program_type_description': 'Designed by industry leaders and top universities to enhance '
+                                        'professional skills, Professional Certificates develop the '
+                                        'proficiency and expertise that employers are looking for with '
+                                        'specialized training and professional education.',
             'page_title': 'Confirm your program enrollment',
             'program_title': 'Program Title 1',
             'program_subtitle': 'Program Subtitle 1',
@@ -259,6 +185,41 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                     "key": 'course-v1:edX+DemoX+Demo_Course',
                     "uuid": "a312ec52-74ef-434b-b848-f110eb90b672",
                     "title": "edX Demonstration Course",
+                    'course_title': 'edX Demonstration Course',
+                    'course_short_description': 'This course demonstrates many features of the edX platform.',
+                    'course_full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                    'course_image_uri': 'http://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type'
+                                        '@asset+block@images_course_image.jpg',
+                    'course_level_type': 'Type 1',
+                    'weeks_to_complete': '10 weeks',
+                    'course_effort': '5-6 hours per week',
+                    'staff': [
+                        {
+                            'uuid': '51df1077-1b8d-4f86-8305-8adbc82b72e9',
+                            'given_name': 'Anant',
+                            'family_name': 'Agarwal',
+                            'bio': "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                            'profile_image_url': 'https://www.edx.org/sites/default/files/executive/photo/'
+                                                 'anant-agarwal.jpg',
+                            'slug': 'anant-agarwal',
+                            'position': {
+                                'title': 'CEO',
+                                'organization_name': 'edX'
+                            },
+                            'profile_image': {},
+                            'works': [],
+                            'urls': {
+                                'twitter': None,
+                                'facebook': None,
+                                'blog': None
+                            },
+                            'email': None
+                        }
+                    ],
+                    'expected_learning_items': [
+                        'XBlocks',
+                        'Peer Assessment',
+                    ],
                     "course_runs": [
                         {
                             "key": 'course-v1:edX+DemoX+Demo_Course',
@@ -283,6 +244,41 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                     "key": 'course-v1:edX+DemoX+Demo_Course2',
                     "uuid": "b312ec52-74ef-434b-b848-f110eb90b672",
                     "title": "edX Demonstration Course 2",
+                    'course_title': 'edX Demonstration Course',
+                    'course_short_description': 'This course demonstrates many features of the edX platform.',
+                    'course_full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                    'course_image_uri': 'http://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type'
+                                        '@asset+block@images_course_image.jpg',
+                    'course_level_type': 'Type 1',
+                    'course_effort': '5-6 hours per week',
+                    'weeks_to_complete': '10 weeks',
+                    'staff': [
+                        {
+                            'uuid': '51df1077-1b8d-4f86-8305-8adbc82b72e9',
+                            'given_name': 'Anant',
+                            'family_name': 'Agarwal',
+                            'bio': "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                            'profile_image_url': 'https://www.edx.org/sites/default/files/executive/photo/'
+                                                 'anant-agarwal.jpg',
+                            'slug': 'anant-agarwal',
+                            'position': {
+                                'title': 'CEO',
+                                'organization_name': 'edX'
+                            },
+                            'profile_image': {},
+                            'works': [],
+                            'urls': {
+                                'twitter': None,
+                                'facebook': None,
+                                'blog': None
+                            },
+                            'email': None
+                        }
+                    ],
+                    'expected_learning_items': [
+                        'XBlocks',
+                        'Peer Assessment',
+                    ],
                     "course_runs": [
                         {
                             "key": 'course-v1:edX+DemoX+Demo_Course2',
@@ -313,14 +309,55 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             ],
             'enrolled_in_course_and_paid_text': 'enrolled',
             'enrolled_in_course_and_unpaid_text': 'already enrolled, must pay for certificate',
-            'expected_learning_items_header': "What you'll learn",
+            'expected_learning_items_text': "What you'll learn",
             'expected_learning_items': [
                 "Blocks",
                 "XBlocks",
                 "Peer Assessment"
             ],
-            'view_expected_learning_items_text': 'See More',
-            'hide_expected_learning_items_text': 'See Less',
+            'expected_learning_items_show_count': 2,
+            'corporate_endorsements_text': 'Real Career Impact',
+            'corporate_endorsements': [
+                {
+                    "corporation_name": "Bob's Company",
+                    "statement": "",
+                    "image": {
+                        "src": "http://evonexus.org/wp-content/uploads/2016/01/IBM-logo-1024x576.jpg",
+                        "description": None,
+                        "height": None,
+                        "width": None,
+                    },
+                    "individual_endorsements": [
+                        {
+                            "endorser": {
+                                "uuid": "789aa881-e44b-4675-9377-fa103c12bbfc",
+                                "given_name": "Bob",
+                                "family_name": "the Builder",
+                                "bio": "Working hard on a daily basis!",
+                                "profile_image_url": None,
+                                "slug": "bob-the-builder",
+                                "position": {
+                                    "title": "Engineer",
+                                    "organization_name": "Bob's Company",
+                                    "organization_id": 1
+                                },
+                                "profile_image": {},
+                                "works": [],
+                                "urls": {
+                                    "facebook": None,
+                                    "twitter": None,
+                                    "blog": None,
+                                },
+                                "email": None
+                            },
+                            "quote": "Life is hard for us engineers. Period."
+                        }
+                    ]
+                }
+            ],
+            'corporate_endorsements_show_count': 1,
+            'see_more_text': 'See More',
+            'see_less_text': 'See Less',
             'confirm_button_text': 'Confirm Program',
             'summary_header': 'Program Summary',
             'price_text': 'Price',
@@ -329,6 +366,10 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             'effort_text': 'Effort',
             'effort_info_text': '5-10 hours per week, per course',
             'program_not_eligible_for_one_click_purchase_text': 'Program not eligible for one-click purchase.',
+            'level_text': 'Level',
+            'course_full_description_text': 'About This Course',
+            'staff_text': 'Course Staff',
+            'close_modal_button_text': 'Close',
             'is_learner_eligible_for_one_click_purchase': True,
         }
         program_enrollment_page_url = reverse(
@@ -359,8 +400,8 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             "is_enrolled": True,
             "upgrade_url": None,
         })
-        self._setup_course_catalog_client(course_catalog_api_client_mock_1)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         expected_context = {
             'page_title': 'Confirm your enrollment',
@@ -370,6 +411,41 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                     "key": 'course-v1:edX+DemoX+Demo_Course',
                     "uuid": "a312ec52-74ef-434b-b848-f110eb90b672",
                     "title": "edX Demonstration Course",
+                    'course_title': 'edX Demonstration Course',
+                    'course_short_description': 'This course demonstrates many features of the edX platform.',
+                    'course_full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                    'course_image_uri': 'http://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type'
+                                        '@asset+block@images_course_image.jpg',
+                    'course_level_type': 'Type 1',
+                    'course_effort': '5-6 hours per week',
+                    'weeks_to_complete': '10 weeks',
+                    'staff': [
+                        {
+                            'uuid': '51df1077-1b8d-4f86-8305-8adbc82b72e9',
+                            'given_name': 'Anant',
+                            'family_name': 'Agarwal',
+                            'bio': "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                            'profile_image_url': 'https://www.edx.org/sites/default/files/executive/photo/'
+                                                 'anant-agarwal.jpg',
+                            'slug': 'anant-agarwal',
+                            'position': {
+                                'title': 'CEO',
+                                'organization_name': 'edX'
+                            },
+                            'profile_image': {},
+                            'works': [],
+                            'urls': {
+                                'twitter': None,
+                                'facebook': None,
+                                'blog': None
+                            },
+                            'email': None
+                        }
+                    ],
+                    'expected_learning_items': [
+                        'XBlocks',
+                        'Peer Assessment',
+                    ],
                     "course_runs": [
                         {
                             "key": 'course-v1:edX+DemoX+Demo_Course',
@@ -394,6 +470,41 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                     "key": 'course-v1:edX+DemoX+Demo_Course2',
                     "uuid": "b312ec52-74ef-434b-b848-f110eb90b672",
                     "title": "edX Demonstration Course 2",
+                    'course_title': 'edX Demonstration Course',
+                    'course_short_description': 'This course demonstrates many features of the edX platform.',
+                    'course_full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+                    'course_image_uri': 'http://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type'
+                                        '@asset+block@images_course_image.jpg',
+                    'course_level_type': 'Type 1',
+                    'course_effort': '5-6 hours per week',
+                    'weeks_to_complete': '10 weeks',
+                    'staff': [
+                        {
+                            'uuid': '51df1077-1b8d-4f86-8305-8adbc82b72e9',
+                            'given_name': 'Anant',
+                            'family_name': 'Agarwal',
+                            'bio': "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+                            'profile_image_url': 'https://www.edx.org/sites/default/files/executive/photo/'
+                                                 'anant-agarwal.jpg',
+                            'slug': 'anant-agarwal',
+                            'position': {
+                                'title': 'CEO',
+                                'organization_name': 'edX'
+                            },
+                            'profile_image': {},
+                            'works': [],
+                            'urls': {
+                                'twitter': None,
+                                'facebook': None,
+                                'blog': None
+                            },
+                            'email': None
+                        }
+                    ],
+                    'expected_learning_items': [
+                        'XBlocks',
+                        'Peer Assessment',
+                    ],
                     "course_runs": [
                         {
                             "key": 'course-v1:edX+DemoX+Demo_Course2',
@@ -442,8 +553,8 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         The DSC-declined message is rendered if DSC is not given.
         """
         self._setup_program_data_extender(program_data_extender_mock)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_1)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         enterprise_customer_user = EnterpriseCustomerUserFactory(
             enterprise_customer=enterprise_customer,
@@ -498,8 +609,8 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         """
         program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock)
         program_data_extender_mock.return_value.extend.return_value['discount_data'] = {}
-        self._setup_course_catalog_client(course_catalog_api_client_mock_1)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -540,7 +651,8 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock)
         program_data_extender_mock.return_value.extend.return_value['is_learner_eligible_for_one_click_purchase'] \
             = False
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -575,6 +687,27 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program.
         """
         course_catalog_api_client_mock.return_value.get_program_by_uuid.return_value = None
+        enterprise_customer = EnterpriseCustomerFactory()
+        program_enrollment_page_url = reverse(
+            'enterprise_program_enrollment_page',
+            args=[enterprise_customer.uuid, self.dummy_program_uuid],
+        )
+
+        self._login()
+        response = self.client.get(program_enrollment_page_url)
+        assert response.status_code == 404
+
+    @mock.patch('enterprise.views.ProgramDataExtender')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    def test_get_program_enrollment_page_for_non_existing_program_type(
+            self,
+            course_catalog_api_client_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program type.
+        """
+        course_catalog_api_client_mock.return_value.get_program_type_by_slug.return_value = None
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -662,8 +795,8 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                 "is_enrolled": True,
                 "upgrade_url": None,
             })
-        self._setup_course_catalog_client(course_catalog_api_client_mock_1)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -688,7 +821,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         """
         We raise a 404 when there are Discovery API-related errors.
         """
-        course_catalog_api_client_mock.return_value.get_program_by_uuid.side_effect = ImproperlyConfigured
+        course_catalog_api_client_mock.side_effect = ImproperlyConfigured
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -718,8 +851,8 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                 "is_enrolled": True,
                 "upgrade_url": None,
             })
-        self._setup_course_catalog_client(course_catalog_api_client_mock_1)
-        self._setup_course_catalog_client(course_catalog_api_client_mock_2)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
             'enterprise_program_enrollment_page',
@@ -749,7 +882,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         The user is redirected to the DSC page when DSC is needed.
         """
         self._setup_program_data_extender(program_data_extender_mock)
-        self._setup_course_catalog_client(course_catalog_api_client_mock)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock)
         self._setup_get_data_sharing_consent(get_dsc_mock, required=True)
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
@@ -790,7 +923,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         The user is redirected to the basket page when something needs to be bought.
         """
         self._setup_program_data_extender(program_data_extender_mock)
-        self._setup_course_catalog_client(course_catalog_api_client_mock)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock)
         self._setup_get_data_sharing_consent(get_dsc_mock, required=False)
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
@@ -806,3 +939,21 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             'http://localhost:18130/basket/add/?sku=sku1&sku=sku2&bundle=52ad909b-c57d-4ff1-bab3-999813a2479b',
             fetch_redirect_response=False
         )
+
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    def test_extend_course_discovery_error(self, course_catalog_api_client_mock):
+        """
+        We raise a 404 when there are Discovery API-related errors in the ``extend_course`` function.
+        """
+        course_catalog_api_client_mock.side_effect = ImproperlyConfigured
+        with self.assertRaises(Http404):
+            ProgramEnrollmentView.extend_course({})
+
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    def test_extend_course_no_course_details_returned_from_discovery(self, course_catalog_api_client_mock):
+        """
+        We raise a 404 when the Discovery API returns no course details in ``extend_course``.
+        """
+        course_catalog_api_client_mock.return_value.get_course_and_course_run.return_value = None, None
+        with self.assertRaises(Http404):
+            ProgramEnrollmentView.extend_course({'course_runs': [{'key': 'edX+DemoX+2017'}]})

@@ -64,6 +64,7 @@ class CourseCatalogApiClient(object):
     COURSES_ENDPOINT = 'courses'
     COURSE_RUNS_ENDPOINT = 'course_runs'
     PROGRAMS_ENDPOINT = 'programs'
+    PROGRAM_TYPES_ENDPOINT = 'program_types'
 
     DEFAULT_VALUE_SAFEGUARD = object()
 
@@ -290,6 +291,23 @@ class CourseCatalogApiClient(object):
         if not program_details:
             return []
         return [course['key'] for course in program_details.get('courses', [])]
+
+    def get_program_type_by_slug(self, slug):
+        """
+        Get a program type by its slug.
+
+        Arguments:
+            slug (str): The slug to identify the program type.
+
+        Returns:
+            dict: A program type object.
+
+        """
+        return self._load_data(
+            self.PROGRAM_TYPES_ENDPOINT,
+            resource_id=slug,
+            default=None,
+        )
 
     def get_common_course_modes(self, course_run_ids):
         """

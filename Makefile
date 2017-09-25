@@ -49,7 +49,7 @@ dummy_translations: ## generate dummy translation (.po) files
 extract_translations: ## extract strings to be translated, outputting .mo files
 	rm -rf docs/_build
 	./manage.py makemessages -l en -v1 -d django
-	./manage.py makemessages -l en -v1 -d djangojs
+	./manage.py makemessages -l en -v1 -d djangojs -i "node_modules/*"
 
 fake_translations: extract_translations dummy_translations compile_translations ## generate and compile dummy translation files
 
@@ -80,8 +80,9 @@ jasmine: ## run Javascript tests
 	tox -e jasmine
 
 jshint: ## run Javascript linting
-	./node_modules/jshint/bin/jshint -v || npm install jshint
+	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint
 	./node_modules/jshint/bin/jshint enterprise
+	./node_modules/jshint/bin/jshint spec
 
 requirements: ## install development environment requirements
 	pip install -qr requirements/dev.txt --exists-action w

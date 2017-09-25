@@ -149,6 +149,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         for key, value in {
                 "platform_name": "Test platform",
+                "platform_description": "Test description",
+                "tagline": "High-quality online learning opportunities from the world's best universities",
+                "header_logo_alt_text": "Test platform home page",
                 "consent_request_prompt": expected_prompt,
                 "requested_permissions_header": (
                     'Per the <a href="#consent-policy-dropdown-bar" '
@@ -172,6 +175,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 "welcome_text": "Welcome to Test platform.",
                 'sharable_items_note_header': 'Please note',
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+                'LMS_ROOT_URL': 'http://localhost:8000',
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
@@ -664,6 +668,7 @@ class TestProgramDataSharingPermissions(TestCase):
 
         for key, value in {
                 "platform_name": "Test platform",
+                "platform_description": "Test description",
                 "consent_request_prompt": expected_prompt,
                 "requested_permissions_header": (
                     'Per the <a href="#consent-policy-dropdown-bar" '

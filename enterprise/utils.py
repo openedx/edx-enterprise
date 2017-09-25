@@ -22,7 +22,8 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-# pylint: disable=import-error,wrong-import-order
+from enterprise.constants import PROGRAM_TYPE_DESCRIPTION
+# pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 try:
@@ -549,17 +550,24 @@ def ungettext_min_max(singular, plural, range_text, min_val, max_val):
         min = 2, max = 2, singular = '{} hour required for this course', plural = '{} hours required for this course'
         output = '2 hours required for this course'
 
-        min = 2, max = 4, info_text = '{}-{} hours required for this course'
+        min = 2, max = 4, range_text = '{}-{} hours required for this course'
         output = '2-4 hours required for this course'
+
+        min = None, max = 2, plural = '{} hours required for this course'
+        output = '2 hours required for this course'
 
     Expects ``range_text`` to already have a translation function called on it.
 
-    Returns ``None`` if either of the input values are ``None``.
+    Returns:
+        ``None`` if both of the input values are ``None``.
+        ``singular`` formatted if both are equal or one of the inputs, but not both, are ``None``, and the value is 1.
+        ``plural`` formatted if both are equal or one of its inputs, but not both, are ``None``, and the value is > 1.
+        ``range_text`` formatted if min != max and both are valid values.
     """
-    if min_val is None or max_val is None:
+    if min_val is None and max_val is None:
         return None
-    if min_val == max_val:
-        return ungettext(singular, plural, min_val).format(min_val)
+    if min_val == max_val or min_val is None or max_val is None:
+        return ungettext(singular, plural, min_val or max_val).format(min_val or max_val)
     return range_text.format(min_val, max_val)
 
 
@@ -612,3 +620,18 @@ def get_request_value(request, key, default=None):
     if request.method in ['GET', 'DELETE']:
         return request.query_params.get(key, request.data.get(key, default))
     return request.data.get(key, request.query_params.get(key, default))
+
+
+def get_program_type_description(program_type):
+    """
+    Get the pre-set description associated with this program type.
+
+    :param program_type: The type of the program. Should be one of:
+
+    * "MicroMasters Certificate"
+    * "Professional Certificate"
+    * "XSeries Certificate"
+
+    :return: The description associated with the program type. If none exists, then the empty string.
+    """
+    return PROGRAM_TYPE_DESCRIPTION.get(program_type, '')

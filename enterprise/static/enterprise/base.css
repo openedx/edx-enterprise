@@ -1,0 +1,493 @@
+* {
+    font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+}
+
+strong {
+    font-weight: 600;
+}
+
+s {
+    text-decoration: line-through;
+}
+
+q {
+    font-style: italic;
+}
+
+body, .zebra-stripe > :nth-child(2n+1), .depth-0 {
+    background-color: white;
+    padding-bottom: 100px;
+}
+
+body.open-modal {
+    overflow: hidden;
+}
+
+.text-underline {
+    text-decoration: underline;
+}
+
+.expand-list-link button {
+    background: none;
+    border: none;
+}
+
+.logo-container {
+    padding-top: 10px;
+    width: 100%;
+    max-width: 768px;
+    min-width: 300px;
+    height: auto;
+    margin: 0 auto;
+    color: #383838;
+}
+
+@media (max-width: 768px) {
+    .logo-container {
+        text-align: center;
+    }
+
+    #header-tagline {
+        text-align: left;
+    }
+
+    .enterprise-container {
+        padding: 0 30px 30px 30px;
+    }
+}
+
+@media (min-width: 768px) {
+    [class*='col-'] {
+        float: left;
+    }
+
+    [class*='col-'].col-3 {
+        width: 30%;
+        padding-left: 0;
+        padding-right: 30px;
+    }
+
+    [class*='col-'].col-7 {
+        padding-left: 30px;
+        width: 70%;
+    }
+
+    .border-left {
+        border-left: 1px solid #D9D9D9;
+    }
+
+    .enterprise-logo {
+        display: block;
+    }
+}
+
+.pinstripe {
+    border-top: 2px solid #0075b4;
+}
+
+#header-tagline {
+    font-size: 14px;
+    margin-left: 0.5em;
+    width: 300px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.consent-title {
+    font-size: 24px;
+    color: #126F9A;
+}
+
+.enterprise-container:after,
+.row:after {
+    content: " ";
+    display: table;
+    clear: both;
+}
+
+.enterprise-container {
+    min-width: 300px;
+    max-width: 768px;
+    margin: 0 auto;
+    line-height: 1.5;
+    font-size: 14px;
+    color: #383838;
+}
+
+.enterprise-container * {
+    font-size: 14px;
+}
+
+.enterprise-container a {
+    color: #126F9A;
+}
+
+.enterprise-container a:hover {
+    color: #0b5c8a;
+}
+
+.enterprise-logo {
+    width: auto;
+    max-width: 150px;
+    height: 100px;
+}
+
+.partnered-text {
+    font-size: 16px;
+    color: #414141;
+    margin-top: 5px;
+    margin-bottom: 20px;
+}
+
+.partnered-text strong {
+    font-size: 1.05em;
+}
+
+.media {
+    margin-bottom: 10px;
+    display: table;
+    width: 100%;
+}
+
+.media .thumbnail,
+.media .media-content {
+    display: table-cell;
+    vertical-align: top;
+}
+
+.media .thumbnail {
+    width: 55px;
+    padding-top: 6px;
+}
+
+.media .media-content {
+    padding-left: 15px;
+}
+
+.media .media-content .course-title {
+    margin-bottom: 5px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.radio-block {
+    margin-bottom: 15px;
+}
+
+.radio-block .radio,
+.radio-block label {
+    display: table-cell;
+    vertical-align: top;
+}
+
+.radio-block .radio {
+    width: 25px;
+    padding-top: 5px;
+}
+
+.radio-block label > span {
+    display: block;
+}
+
+.btn-confirm {
+    background: #126F9A;
+    border: none;
+    color: #fff;
+    border-radius: 5px;
+    margin: 10px 0;
+    padding: 10px 15px;
+    box-shadow: none;
+    font-weight: bold;
+}
+
+.btn-confirm:hover,
+.btn-confirm:focus {
+    cursor: pointer;
+    background: #0b5177;
+}
+
+#messages .alert {
+    position: relative;
+    padding: 10px 10px 10px 35px;
+    border: 1px solid transparent;
+    box-shadow: none;
+    border-radius: 2px;
+    margin-bottom: 8px;
+}
+
+#messages .alert > .fa {
+    position: absolute;
+    left: 11px;
+    top: 13px;
+    font-size: 16px;
+}
+
+#messages .alert span {
+    display: block;
+}
+
+#messages .success {
+  background-color: #ecfaec;
+  border-color: #b9edb9;
+  color: #3c763d;
+}
+
+#messages .info {
+  background-color: #f2f8fb;
+  border-color: #cce3f0;
+  color: #31708f;
+}
+
+#messages .warning {
+  background-color: #fcf8e3;
+  border-color: #faebcc;
+  color: #8a6d3b;
+}
+
+#messages .error {
+  background-color: #f2dede;
+  border-color: #ebccd1;
+  color: #a94442;
+}
+
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: -10%;
+    top: -10%;
+    width: 120%; /* Full width */
+    height: 120%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+}
+
+.modal-close-button {
+    position: absolute;
+    top: 0;
+    right: 3px;
+    color: white;
+    font-size: 1.5em !important;
+    border: none;
+    line-height: normal !important;
+    padding: 2px 5px;
+    background-color: transparent;
+}
+
+.modal-close-button:hover {
+    top: -1px;
+    right: -1px;
+}
+
+.modal-close-button:focus {
+    outline: none;
+}
+
+.modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    transform: translate(-50%, -50%);
+    background-color: #f5f5f5;
+    margin: auto;
+    max-height: 550px;
+    max-width: 700px;
+    min-width: 500px;
+    overflow: hidden;
+    width: 80%;
+    padding-top: 30px;
+}
+
+.modal-content:before {
+    content: '';
+    height: 30px;
+    display: block;
+    background: #126F9A;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+}
+
+h2.modal-header-text {
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.modal-content .course-detail-modal-scrollable {
+    max-height: calc(50vh - 30px); /* account for the height of the top bar with the close button */
+    overflow: auto;
+    padding: 20px;
+    width: 100%;
+}
+
+.data-consent-checkbox {
+    float: left;
+    margin-top: 4px;
+    margin-right: 10px;
+}
+
+.modal-content .modal-header-wrapper {
+    display: flex;
+}
+
+.modal-content .modal-header-wrapper .image {
+    flex-basis: 33%;
+}
+
+.modal-content header {
+    margin-bottom: 10px;
+}
+
+.modal-content header .image {
+    display: none;
+}
+
+.modal-content header .image img {
+    border: 1px solid #126F9A;
+    max-width: 210px;
+}
+
+.modal-content header .details .organization {
+    display: none;
+}
+
+.modal-content header .details .organization img {
+    height: 25px;
+}
+
+.modal-content header .details h1.modal-header-text {
+    font-weight: bold;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.modal-content header .details .short-description {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.modal-content .body {
+    padding-right: 60px;
+}
+
+.modal-content .body .details {
+    border: 1px solid #126F9A;
+    margin-bottom: 20px;
+}
+
+.modal-content .body .details ol {
+    list-style: none;
+    margin: 0;
+    padding: 0 10px;
+}
+
+.modal-content .body .details li {
+    border-bottom: 1px dotted gray;
+    padding: 15px 10px;
+}
+
+.modal-content .body .details li:last-child {
+    border-bottom: none;
+}
+
+.modal-content .body .details li:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+.modal-content .body .details .icon {
+    display: none;
+    font-weight: bold;
+    margin-right: 10px;
+    opacity: .6;
+}
+
+.modal-content .body .details .title,
+.modal-content .body .details .text,
+.modal-content .body .details .text .discount {
+    font-size: 13px;
+}
+
+.modal-content .body .details .detail-container {
+    display: flex;
+}
+
+.modal-content .body .details .detail-title-container {
+    flex-basis: 25%;
+}
+
+.modal-content .body .details .detail-value-container {
+    flex-shrink: 1;
+}
+
+.modal-content .body .details .text strike {
+    font-size: 11px;
+}
+
+.modal-content .body .details .text .discount {
+    color: green;
+}
+
+.modal-content .body .overview * {
+    font-size: 14px;
+}
+
+.modal-content .body .details ol li span {
+    font-size: 16px;
+}
+
+.modal-content .body .overview .col-7 {
+    padding-left: 0;
+}
+
+.modal-content .body .overview h1,
+.modal-content .body .overview h2 {
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.modal-content .body a {
+    color: #126F9A;
+    display: inline-block;
+    text-decoration: underline;
+    border: none;
+    background-color:rgba(0,0,0,0);
+    padding: 0 !important;
+    vertical-align: bottom;
+    font-size: 16px;
+}
+
+.modal-content .body a {
+    font-weight: normal;
+}
+
+.modal-content .body a {
+    font-weight: normal;
+}
+
+@media (min-width: 768px) {
+    .modal-content header {
+        margin-bottom: 25px;
+    }
+
+    .modal-content header .image {
+        display: block;
+        width: 210px;
+        float: left;
+        margin-right: 35px;
+    }
+
+    .modal-content header .details .organization {
+        display: block;
+    }
+
+    .modal-content .body .details .icon {
+        display: inline;
+    }
+}

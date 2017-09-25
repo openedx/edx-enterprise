@@ -82,6 +82,7 @@ FAKE_COURSE_RUN = {
     ],
     'min_effort': 5,
     'max_effort': 6,
+    'weeks_to_complete': 10,
     'modified': '2017-08-18T00:32:33.754662Z',
     'level_type': 'Type 1',
     'availability': 'Current',
@@ -255,6 +256,160 @@ FAKE_PROGRAM_RESPONSE2 = {
             ],
         }
     ],
+}
+
+FAKE_PROGRAM_RESPONSE3 = {
+    "uuid": "52ad909b-c57d-4ff1-bab3-999813a2479b",
+    "title": "Program Title 1",
+    "subtitle": "Program Subtitle 1",
+    "type": "Professional Certificate",
+    "status": "active",
+    "marketing_slug": "marketingslug1",
+    "marketing_url": "verified-certificate/marketingslug1",
+    "courses": [
+        {
+            "key": 'course-v1:edX+DemoX+Demo_Course',
+            "uuid": "a312ec52-74ef-434b-b848-f110eb90b672",
+            "title": "edX Demonstration Course",
+            "course_runs": [
+                {
+                    "key": 'course-v1:edX+DemoX+Demo_Course',
+                    "uuid": "a276c25f-c640-4943-98dd-6c9ad8c71bb9",
+                    "title": "edX Demonstration Course",
+                    "short_description": "",
+                    "marketing_url": "course/edxdemo?utm_medium=affiliate_partner&utm_source=staff",
+                    "seats": [],
+                    "start": "2016-01-01T00:00:00Z",
+                    "end": "2018-01-01T00:00:00Z",
+                    "enrollment_start": None,
+                    "enrollment_end": None,
+                    "pacing_type": "self_paced",
+                    "type": None,
+                    "status": "published",
+                },
+            ],
+        },
+        {
+            "key": 'course-v1:edX+DemoX+Demo_Course2',
+            "uuid": "b312ec52-74ef-434b-b848-f110eb90b672",
+            "title": "edX Demonstration Course 2",
+            "course_runs": [
+                {
+                    "key": 'course-v1:edX+DemoX+Demo_Course2',
+                    "uuid": "b276c25f-c640-4943-98dd-6c9ad8c71bb9",
+                    "title": "edX Demonstration Course 2",
+                    "short_description": "",
+                    "marketing_url": "course/edxdemo?utm_medium=affiliate_partner&utm_source=staff",
+                    "seats": [],
+                    "start": "2016-01-01T00:00:00Z",
+                    "end": "2018-01-01T00:00:00Z",
+                    "enrollment_start": None,
+                    "enrollment_end": None,
+                    "pacing_type": "self_paced",
+                    "type": None,
+                    "status": "published",
+                },
+            ],
+        },
+    ],
+    "authoring_organizations": [
+        {
+            "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
+            "key": "edX",
+            "name": "Authoring Organization",
+            "certificate_logo_image_url": 'awesome/certificate/logo/url.jpg',
+            "description": 'Such author, much authoring',
+            "homepage_url": 'homepage.com/url',
+            "logo_image_url": 'images/logo_image_url.jpg',
+            "marketing_url": 'marketing/url',
+        },
+    ],
+    "expected_learning_items": [
+        "Blocks",
+        "XBlocks",
+        "Peer Assessment"
+    ],
+    'corporate_endorsements': [
+        {
+            "corporation_name": "Bob's Company",
+            "statement": "",
+            "image": {
+                "src": "http://evonexus.org/wp-content/uploads/2016/01/IBM-logo-1024x576.jpg",
+                "description": None,
+                "height": None,
+                "width": None,
+            },
+            "individual_endorsements": [
+                {
+                    "endorser": {
+                        "uuid": "789aa881-e44b-4675-9377-fa103c12bbfc",
+                        "given_name": "Bob",
+                        "family_name": "the Builder",
+                        "bio": "Working hard on a daily basis!",
+                        "profile_image_url": None,
+                        "slug": "bob-the-builder",
+                        "position": {
+                            "title": "Engineer",
+                            "organization_name": "Bob's Company",
+                            "organization_id": 1
+                        },
+                        "profile_image": {},
+                        "works": [],
+                        "urls": {
+                            "facebook": None,
+                            "twitter": None,
+                            "blog": None,
+                        },
+                        "email": None
+                    },
+                    "quote": "Life is hard for us engineers. Period."
+                }
+            ]
+        }
+    ],
+    "is_program_eligible_for_one_click_purchase": True,
+    "overview": "This is a test Program.",
+    "weeks_to_complete_min": 4,
+    "weeks_to_complete_max": 6,
+    "min_hours_effort_per_week": 5,
+    "max_hours_effort_per_week": 10,
+    "applicable_seat_types": [
+        "verified",
+        "professional",
+        "credit",
+    ],
+}
+
+FAKE_PROGRAM_TYPE = {
+    "name": "Professional Certificate",
+    "logo_image": {
+        "small": {
+            "height": 64,
+            "width": 64,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.small.png"
+        },
+        "medium": {
+            "height": 128,
+            "width": 128,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.medium.png"
+        },
+        "large": {
+            "height": 256,
+            "width": 256,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.large.png"
+        },
+        "x-small": {
+            "height": 32,
+            "width": 32,
+            "url": "http://localhost:18381/media/media/program_types/logo_images/professional-certificate.x-small.png"
+        }
+    },
+    "applicable_seat_types": [
+        "verified",
+        "professional",
+        "credit"
+    ],
+    "slug": "professional-certificate"
 }
 
 FAKE_COURSE_RUNS_RESPONSE = [
@@ -935,7 +1090,13 @@ def get_common_course_modes(course_runs):
     return six_reduce(lambda left, right: left & right, course_run_modes)
 
 
-def setup_course_catalog_api_client_mock(client_mock, course_overrides=None, course_run_overrides=None):
+def setup_course_catalog_api_client_mock(
+        client_mock,
+        course_overrides=None,
+        course_run_overrides=None,
+        program_overrides=None,
+        program_type_overrides=None,
+):
     """
     Set up the Course Catalog API client mock.
 
@@ -948,16 +1109,25 @@ def setup_course_catalog_api_client_mock(client_mock, course_overrides=None, cou
 
     fake_course = FAKE_COURSE.copy()
     fake_course_run = FAKE_COURSE_RUN.copy()
+    fake_program = FAKE_PROGRAM_RESPONSE3.copy()
+    fake_program_type = FAKE_PROGRAM_TYPE.copy()
 
     # Apply overrides to default fake course catalog metadata.
     if course_overrides:
         fake_course.update(course_overrides)
     if course_run_overrides:
         fake_course_run.update(course_run_overrides)
+    if program_overrides:
+        fake_program.update(program_overrides)
+    if program_type_overrides:
+        fake_program_type.update(program_type_overrides)
 
     # Mock course catalog api functions.
     client.get_course_run.return_value = fake_course_run
     client.get_course_and_course_run.return_value = (fake_course, fake_course_run)
+    client.get_program_course_keys.return_value = [course['key'] for course in fake_program['courses']]
+    client.get_program_by_uuid.return_value = fake_program
+    client.get_program_type_by_slug.return_value = fake_program_type
 
 
 class CourseDiscoveryApiTestMixin(object):

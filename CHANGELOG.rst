@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.48.0] - 2017-09-25
+---------------------
+
+* Add extra details to the program enrollment landing page.
+
 [0.47.1] - 2017-09-25
 ---------------------
 

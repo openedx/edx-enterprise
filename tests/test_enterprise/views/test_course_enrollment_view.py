@@ -102,6 +102,9 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         fake_organization = FAKE_COURSE['owners'][0]
         default_context = {
             'platform_name': 'Test platform',
+            'platform_description': 'Test description',
+            'tagline': "High-quality online learning opportunities from the world's best universities",
+            'header_logo_alt_text': "Test platform home page",
             'page_title': 'Confirm your course',
             'course_title': FAKE_COURSE_RUN['title'],
             'course_short_description': FAKE_COURSE_RUN['short_description'],
@@ -127,6 +130,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'close_modal_button_text': 'Close',
             'discount_text': 'Discount provided by <strong>Starfleet Academy</strong>',
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+            'LMS_ROOT_URL': 'http://localhost:8000',
         }
         default_context.update(expected_context)
         assert response.status_code == 200
@@ -489,6 +493,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 200
         expected_context = {
             'platform_name': 'Test platform',
+            'platform_description': 'Test description',
             'page_title': 'Confirm your course',
             'course_start_date': '',
         }

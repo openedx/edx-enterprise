@@ -76,6 +76,7 @@ TEMPLATES = [
 ]
 
 PLATFORM_NAME = "Test platform"
+PLATFORM_DESCRIPTION = "Test description"
 
 ROOT_URLCONF = "enterprise.urls"
 
@@ -98,6 +99,8 @@ ENTERPRISE_PUBLIC_ENROLLMENT_API_URL = ENTERPRISE_ENROLLMENT_API_URL
 ENTERPRISE_API_CACHE_TIMEOUT = 60
 
 ENTERPRISE_SUPPORT_URL = "http://foo"
+
+ENTERPRISE_TAGLINE = "High-quality online learning opportunities from the world's best universities"
 
 OAUTH_ID_TOKEN_EXPIRATION = 60*60  # in seconds
 

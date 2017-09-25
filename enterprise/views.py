@@ -18,6 +18,7 @@ from django.db import transaction
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.decorators import method_decorator
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import get_language_from_request, ungettext
 from django.views.generic import View
@@ -41,6 +42,7 @@ from enterprise.utils import (
     get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
+    get_program_type_description,
     ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
@@ -79,10 +81,21 @@ def get_global_context(request):
     """
     Get the set of variables that are needed by default across views.
     """
+    platform_name = get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME)
     return {
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
-        'platform_name': get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME),
+        'tagline': get_configuration_value(
+            "ENTERPRISE_TAGLINE",
+            getattr(settings, "ENTERPRISE_TAGLINE", '')  # Remove the `getattr` when setting is upstreamed.
+        ),
+        'platform_description': get_configuration_value(
+            "PLATFORM_DESCRIPTION",
+            getattr(settings, "PLATFORM_DESCRIPTION", '')  # Remove `getattr` when variable is upstreamed.
+        ),
+        'LMS_ROOT_URL': settings.LMS_ROOT_URL,
+        'platform_name': platform_name,
+        'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
     }
 
 
@@ -716,24 +729,14 @@ class CourseEnrollmentView(NonAtomicView):
         if course_run['start']:
             course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
 
-        # Format the course effort string using the min/max effort
-        # fields for the course run.
-        course_effort = ''
-        min_effort = course_run['min_effort'] or ''
-        max_effort = course_run['max_effort'] or ''
-        effort_hours = '{min}-{max}'.format(min=min_effort, max=max_effort).strip('-')
-        if effort_hours:
-            # If we are dealing with just one of min/max effort
-            # cast the hours value to a string so that pluralization
-            # is handled appropriately when formatting the full
-            # course effort string below.
-            if '-' not in effort_hours:
-                effort_hours = int(effort_hours)
-            course_effort = ungettext(
-                '{hours} hour per week',
-                '{hours} hours per week',
-                effort_hours,
-            ).format(hours=effort_hours)
+        # Format the course effort string using the min/max effort fields for the course run.
+        course_effort = ungettext_min_max(
+            '{} hour per week',
+            '{} hours per week',
+            '{}-{} hours per week',
+            course_run['min_effort'] or None,
+            course_run['max_effort'] or None,
+        ) or ''
 
         # Parse course run image.
         course_run_image = course_run['image'] or {}
@@ -973,12 +976,8 @@ class ProgramEnrollmentView(NonAtomicView):
     }
 
     context_data = {
-        'welcome_text': _('Welcome to {platform_name}.'),
-        'enterprise_welcome_text': _(
-            "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
-            "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
-            "opportunities from the world's best universities."
-        ),
+        'program_type_description_header': _('What is an {platform_name} {program_type}?'),
+        'platform_description_header': _('What is {platform_name}?'),
         'page_title': _('Confirm your {item}'),
         'organization_text': _('Presented by {organization}'),
         'item_bullet_points': [
@@ -989,9 +988,12 @@ class ProgramEnrollmentView(NonAtomicView):
         'discount_provider': _('Discount provided by {strong_start}{provider}{strong_end}.'),
         'enrolled_in_course_and_paid_text': _('enrolled'),
         'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
-        'expected_learning_items_header': _("What you'll learn"),
-        'view_expected_learning_items_text': _('See More'),
-        'hide_expected_learning_items_text': _('See Less'),
+        'expected_learning_items_text': _("What you'll learn"),
+        'expected_learning_items_show_count': 2,
+        'corporate_endorsements_text': _('Real Career Impact'),
+        'corporate_endorsements_show_count': 1,
+        'see_more_text': _('See More'),
+        'see_less_text': _('See Less'),
         'confirm_button_text': _('Confirm Program'),
         'summary_header': _('Program Summary'),
         'price_text': _('Price'),
@@ -999,8 +1001,63 @@ class ProgramEnrollmentView(NonAtomicView):
         'length_info_text': _('{}-{} weeks per course'),
         'effort_text': _('Effort'),
         'effort_info_text': _('{}-{} hours per week, per course'),
+        'level_text': _('Level'),
+        'course_full_description_text': _('About This Course'),
+        'staff_text': _('Course Staff'),
+        'close_modal_button_text': _('Close'),
         'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
     }
+
+    @staticmethod
+    def extend_course(course):
+        """
+        Extend a course with more details needed for the program landing page.
+
+        In particular, we add the following:
+
+        * `course_image_uri`
+        * `course_title`
+        * `course_level_type`
+        * `course_short_description`
+        * `course_full_description`
+        * `course_effort`
+        * `expected_learning_items`
+        * `staff`
+        """
+        try:
+            catalog_api_client = CourseCatalogApiServiceClient()
+        except ImproperlyConfigured:
+            raise Http404
+
+        course_run_id = course['course_runs'][0]['key']
+        course_details, course_run_details = catalog_api_client.get_course_and_course_run(course_run_id)
+        if not course_details or not course_run_details:
+            raise Http404
+
+        weeks_to_complete = course_run_details['weeks_to_complete']
+        course_run_image = course_run_details['image'] or {}
+        course.update({
+            'course_image_uri': course_run_image.get('src', ''),
+            'course_title': course_run_details['title'],
+            'course_level_type': course_run_details.get('level_type', ''),
+            'course_short_description': course_run_details['short_description'] or '',
+            'course_full_description': clean_html_for_template_rendering(course_run_details['full_description'] or ''),
+            'expected_learning_items': course_details.get('expected_learning_items', []),
+            'staff': course_run_details.get('staff', []),
+            'course_effort': ungettext_min_max(
+                '{} hour per week',
+                '{} hours per week',
+                '{}-{} hours per week',
+                course_run_details['min_effort'] or None,
+                course_run_details['max_effort'] or None,
+            ) or '',
+            'weeks_to_complete': ungettext(
+                '{} week',
+                '{} weeks',
+                weeks_to_complete
+            ).format(weeks_to_complete) if weeks_to_complete else '',
+        })
+        return course
 
     def get_program_details(self, request, program_uuid):
         """
@@ -1010,13 +1067,19 @@ class ProgramEnrollmentView(NonAtomicView):
 
         * Take the program UUID and get specific details about the program.
         * Determine whether the learner is enrolled in the program.
+        * Determine whether the learner is certificate eligible for the program.
         """
         try:
-            program_details = CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
+            course_catalog_api_client = CourseCatalogApiServiceClient()
         except ImproperlyConfigured:
             raise Http404
 
+        program_details = course_catalog_api_client.get_program_by_uuid(program_uuid)
         if program_details is None:
+            raise Http404
+
+        program_type = course_catalog_api_client.get_program_type_by_slug(slugify(program_details['type']))
+        if program_type is None:
             raise Http404
 
         # Extend our program details with context we'll need for display or for deciding redirects.
@@ -1025,17 +1088,19 @@ class ProgramEnrollmentView(NonAtomicView):
         # TODO: Upstream this additional context to the platform's `ProgramDataExtender` so we can avoid this here.
         program_details['enrolled_in_program'] = False
         enrollment_count = 0
-        for course in program_details['courses']:
-            course_run = course['course_runs'][0]
-            if course_run['is_enrolled'] and course_run['upgrade_url'] is None:
-                # We're enrolled in the program if we have certificate-eligible enrollment in even 1 of its courses.
+        for extended_course in program_details['courses']:
+            # We need to extend our course data further for modals and other displays.
+            extended_course.update(ProgramEnrollmentView.extend_course(extended_course))
+
+            # We're enrolled in the program if we have certificate-eligible enrollment in even 1 of its courses.
+            extended_course_run = extended_course['course_runs'][0]
+            if extended_course_run['is_enrolled'] and extended_course_run['upgrade_url'] is None:
                 program_details['enrolled_in_program'] = True
                 enrollment_count += 1
 
         # We're certificate eligible for the program if we have certificate-eligible enrollment in all of its courses.
-        program_details['certificate_eligible_for_program'] = (
-            enrollment_count == len(program_details['courses'])
-        )
+        program_details['certificate_eligible_for_program'] = (enrollment_count == len(program_details['courses']))
+        program_details['type_details'] = program_type
         return program_details
 
     def get_enterprise_program_enrollment_page(self, request, enterprise_customer, program_details):
@@ -1047,6 +1112,8 @@ class ProgramEnrollmentView(NonAtomicView):
         organization = organizations[0] if organizations else {}
         platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         program_title = program_details['title']
+        program_type_details = program_details['type_details']
+        program_type = program_type_details['name']
 
         # Make any modifications for singular/plural-dependent text.
         program_courses = program_details['courses']
@@ -1100,11 +1167,12 @@ class ProgramEnrollmentView(NonAtomicView):
         context_data = self.context_data.copy()
         context_data.update(get_global_context(request))
         context_data.update({
-            'enterprise_welcome_text': self.context_data['enterprise_welcome_text'].format(
-                strong_start='<strong>',
-                strong_end='</strong>',
-                enterprise_customer_name=enterprise_customer.name,
+            'program_type_description_header': self.context_data['program_type_description_header'].format(
                 platform_name=platform_name,
+                program_type=program_type,
+            ),
+            'platform_description_header': self.context_data['platform_description_header'].format(
+                platform_name=platform_name
             ),
             'discount_provider': self.context_data['discount_provider'].format(
                 strong_start='<strong>',
@@ -1115,8 +1183,10 @@ class ProgramEnrollmentView(NonAtomicView):
             'organization_name': organization.get('name'),
             'organization_logo': organization.get('logo_image_url'),
             'organization_text': self.context_data['organization_text'].format(organization=organization.get('name')),
-            'welcome_text': self.context_data['welcome_text'].format(platform_name=platform_name),
             'page_title': self.context_data['page_title'].format(item=item),
+            'program_type_logo': program_type_details['logo_image'].get('medium', {}).get('url', ''),
+            'program_type': program_type,
+            'program_type_description': get_program_type_description(program_type),
             'program_title': program_title,
             'program_subtitle': program_details['subtitle'],
             'program_overview': program_details['overview'],
@@ -1127,6 +1197,7 @@ class ProgramEnrollmentView(NonAtomicView):
             'item_bullet_points': self.context_data['item_bullet_points'],
             'purchase_text': self.context_data['purchase_text'].format(purchase_action=purchase_action),
             'expected_learning_items': program_details['expected_learning_items'],
+            'corporate_endorsements': program_details['corporate_endorsements'],
             'course_count_text': course_count_text,
             'length_info_text': length_info_text,
             'effort_info_text': effort_info_text,

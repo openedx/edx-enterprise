@@ -28,3 +28,24 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
 
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
+
+PROGRAM_TYPE_DESCRIPTION = {
+    'MicroMasters Certificate': _(
+        'A series of Master’s-level courses to advance your career, '
+        'created by top universities and recognized by companies. '
+        'MicroMasters Programs are credit-eligible, provide in-demand '
+        'knowledge and may be applied to accelerate a Master’s Degree.'
+    ),
+    'Professional Certificate': _(
+        'Designed by industry leaders and top universities to enhance '
+        'professional skills, Professional Certificates develop the '
+        'proficiency and expertise that employers are looking for with '
+        'specialized training and professional education.'
+    ),
+    'XSeries Certificate': _(
+        'Created by world-renowned experts and top universities, XSeries '
+        'are designed to provide a deep understanding of key subjects '
+        'through a series of courses. Complete the series to earn a valuable '
+        'XSeries Certificate that illustrates your achievement.'
+    ),
+}

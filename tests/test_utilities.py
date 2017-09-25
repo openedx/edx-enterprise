@@ -895,8 +895,10 @@ class TestEnterpriseUtils(unittest.TestCase):
         ('{} hour', '{} hours', '{}-{} hours', 2, 4, '2-4 hours'),
         ('{} hour', '{} hours', '{}-{} hours', 2, 2, '2 hours'),
         ('{} hour', '{} hours', '{}-{} hours', 1, 1, '1 hour'),
-        ('{} hour', '{} hours', '{}-{} hours', None, 1, None),
-        ('{} hour', '{} hours', '{}-{} hours', 1, None, None),
+        ('{} hour', '{} hours', '{}-{} hours', None, 1, '1 hour'),
+        ('{} hour', '{} hours', '{}-{} hours', 1, None, '1 hour'),
+        ('{} hour', '{} hours', '{}-{} hours', None, 3, '3 hours'),
+        ('{} hour', '{} hours', '{}-{} hours', 3, None, '3 hours'),
         ('{} hour', '{} hours', '{}-{} hours', None, None, None),
     )
     @ddt.unpack
@@ -951,6 +953,40 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         request = mock.MagicMock(method='POST', query_params={'key': 'query_params'}, data={'key': 'data'})
         assert utils.get_request_value(request, 'key') == 'data'
+
+    @ddt.data(
+        (
+            'MicroMasters Certificate',
+            'A series of Master’s-level courses to advance your career, '
+            'created by top universities and recognized by companies. '
+            'MicroMasters Programs are credit-eligible, provide in-demand '
+            'knowledge and may be applied to accelerate a Master’s Degree.',
+        ),
+        (
+            'Professional Certificate',
+            'Designed by industry leaders and top universities to enhance '
+            'professional skills, Professional Certificates develop the '
+            'proficiency and expertise that employers are looking for with '
+            'specialized training and professional education.',
+        ),
+        (
+            'XSeries Certificate',
+            'Created by world-renowned experts and top universities, XSeries '
+            'are designed to provide a deep understanding of key subjects '
+            'through a series of courses. Complete the series to earn a valuable '
+            'XSeries Certificate that illustrates your achievement.',
+        ),
+        (
+            'Random Certificate',
+            '',
+        )
+    )
+    @ddt.unpack
+    def test_get_program_type_description(self, program_type, expected_description):
+        """
+        ``get_program_type_description`` should return the appropriate description for any program type.
+        """
+        assert utils.get_program_type_description(program_type) == expected_description
 
 
 def get_transformed_course_metadata(course_id, status):
