@@ -28,6 +28,7 @@ from integrated_channels.sap_success_factors.models import (
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 
+from django.contrib.sites.models import Site
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
@@ -833,7 +834,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
 
     def setUp(self):
         self.template = EnrollmentNotificationEmailTemplate.objects.create(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            site=Site.objects.get(id=1),
             plaintext_template=(
                 'This is a template - testing {{ course_name }}, {{ other_value }}'
             ),
@@ -860,9 +861,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         """
         Test conversion to string.
         """
-        expected_str = '<EnrollmentNotificationEmailTemplate for EnterpriseCustomer with ID {}>'.format(
-            self.template.enterprise_customer.uuid
-        )
+        expected_str = '<EnrollmentNotificationEmailTemplate for site with ID 1>'
         assert expected_str == method(self.template)
 
 
