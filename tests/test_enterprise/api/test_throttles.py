@@ -35,7 +35,7 @@ class TestEnterpriseAPIThrottling(APITest):
         enterprise_customer = factories.EnterpriseCustomerFactory()
         factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=user.id)
 
-        self.url = settings.TEST_SERVER + reverse('site-list')
+        self.url = settings.TEST_SERVER + reverse('enterprise-customer-list')
 
     def exhaust_throttle_limit(self, throttle_limit):
         """

@@ -15,6 +15,7 @@ from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
 from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.utils import get_request_value
 
 
 class DataSharingConsentView(APIView):
@@ -78,8 +79,6 @@ class DataSharingConsentView(APIView):
 
     MISSING_REQUIRED_PARAMS_MSG = "Some required parameter(s) missing: {}"
 
-    QUERY_PARAM_METHODS = {'GET', 'DELETE'}
-
     def get_consent_record(self, request):
         """
         Get the consent record relevant to the request at hand.
@@ -100,40 +99,10 @@ class DataSharingConsentView(APIView):
         :param request: The request to this endpoint.
         :return: The ``username``, ``course_id``, and ``enterprise_customer_uuid`` from the request.
         """
-        if request.method in self.QUERY_PARAM_METHODS:
-            username = request.query_params.get(
-                self.REQUIRED_PARAM_USERNAME,
-                request.data.get(self.REQUIRED_PARAM_USERNAME, '')
-            )
-            course_id = request.query_params.get(
-                self.REQUIRED_PARAM_COURSE_ID,
-                request.data.get(self.REQUIRED_PARAM_COURSE_ID, '')
-            )
-            program_uuid = request.query_params.get(
-                self.REQUIRED_PARAM_PROGRAM_UUID,
-                request.data.get(self.REQUIRED_PARAM_PROGRAM_UUID, '')
-            )
-            enterprise_customer_uuid = request.query_params.get(
-                self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER,
-                request.data.get(self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
-            )
-        else:
-            username = request.data.get(
-                self.REQUIRED_PARAM_USERNAME,
-                request.query_params.get(self.REQUIRED_PARAM_USERNAME, '')
-            )
-            course_id = request.data.get(
-                self.REQUIRED_PARAM_COURSE_ID,
-                request.query_params.get(self.REQUIRED_PARAM_COURSE_ID, '')
-            )
-            program_uuid = request.data.get(
-                self.REQUIRED_PARAM_PROGRAM_UUID,
-                request.query_params.get(self.REQUIRED_PARAM_PROGRAM_UUID, '')
-            )
-            enterprise_customer_uuid = request.data.get(
-                self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER,
-                request.query_params.get(self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
-            )
+        username = get_request_value(request, self.REQUIRED_PARAM_USERNAME, '')
+        course_id = get_request_value(request, self.REQUIRED_PARAM_COURSE_ID, '')
+        program_uuid = get_request_value(request, self.REQUIRED_PARAM_PROGRAM_UUID, '')
+        enterprise_customer_uuid = get_request_value(request, self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
         if not (username and (course_id or program_uuid) and enterprise_customer_uuid):
             raise ConsentAPIRequestError(
                 self.get_missing_params_message([

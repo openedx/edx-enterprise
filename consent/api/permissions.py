@@ -7,6 +7,8 @@ from __future__ import absolute_import, unicode_literals
 
 from rest_framework import permissions
 
+from enterprise.utils import get_request_value
+
 
 class IsUserInRequest(permissions.BasePermission):
     """
@@ -14,11 +16,7 @@ class IsUserInRequest(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        if request.method == 'GET':
-            username_in_request = request.query_params.get('username')
-        else:
-            username_in_request = request.data.get('username')
-        if request.user.username == username_in_request:
+        if request.user.username == get_request_value(request, 'username', ''):
             return True
 
 
