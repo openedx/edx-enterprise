@@ -403,7 +403,7 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/"
     enterpriseCustomerCatalogCourseRunByUuid:
       get:
         operationId: get_enterprise_customer_catalog_course_run_by_id
@@ -475,7 +475,7 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/course-runs/{course_run_id}/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/"
     enterpriseCustomerCatalogProgramByUuid:
       get:
         operationId: get_enterprise_customer_catalog_program_by_uuid
@@ -547,7 +547,7 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/programs/{program_uuid}/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/"
     enterpriseCustomerCatalogs:
       get:
         operationId: get_enterprise_customer_catalogs
@@ -617,7 +617,7 @@ endpoints:
             default:
               statusCode: "400"
           type: http
-          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/"
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/"
 id_parameter:
   in: path
   name: id

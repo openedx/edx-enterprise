@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.50.0] - 2017-10-03
+---------------------
+
+* Add contains_content_items endpoint to EnterpriseCustomerViewSet and EnterpriseCustomerCatalogViewSet.
+
 [0.49.0] - 2017-10-02
 ---------------------
 

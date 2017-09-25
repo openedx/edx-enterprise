@@ -72,14 +72,14 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
 
     _make_run = _make_course_run.__func__  # unwrapping to use within class definition
 
-    def test_get_paginated_search_results(self):
+    def test_get_search_results(self):
         """
-        Verify get_paginated_search_results of CourseCatalogApiClient works as expected.
+        Verify get_search_results of CourseCatalogApiClient works as expected.
         """
         querystring = 'very'
         response_dict = {"very": "complex", "json": {"with": " nested object"}}
         self.get_data_mock.return_value = response_dict
-        actual_result = self.api.get_paginated_search_results(querystring=querystring)
+        actual_result = self.api.get_search_results(querystring=querystring)
         assert self.get_data_mock.call_count == 1
         resource, resource_id = self._get_important_parameters(self.get_data_mock)
         assert resource == CourseCatalogApiClient.SEARCH_ALL_ENDPOINT
@@ -87,12 +87,12 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         assert actual_result == response_dict
 
     @ddt.data(*EMPTY_RESPONSES)
-    def test_get_paginated_search_results_empty_response(self, response):
+    def test_get_search_results_empty_response(self, response):
         """
-        Verify get_paginated_catalog_courses of CourseCatalogApiClient works as expected for empty responses.
+        Verify get_search_results of CourseCatalogApiClient works as expected for empty responses.
         """
         self.get_data_mock.return_value = response
-        assert self.api.get_paginated_search_results(querystring='querystring') == []
+        assert self.api.get_search_results(querystring='querystring') == []
 
     def test_get_all_catalogs(self):
         """

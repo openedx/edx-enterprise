@@ -9,7 +9,7 @@ from rest_framework.routers import DefaultRouter
 from enterprise.api.v1 import views
 
 router = DefaultRouter()  # pylint: disable=invalid-name
-router.register("enterprise-catalogs", views.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs')
+router.register("enterprise_catalogs", views.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs')
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')

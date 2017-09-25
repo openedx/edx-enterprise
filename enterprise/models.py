@@ -829,7 +829,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name='enterprise_customer_catalog',
+        related_name='enterprise_customer_catalogs',
         on_delete=models.deletion.CASCADE
     )
     content_filter = JSONField(
@@ -879,25 +879,36 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         query = self.content_filter.copy()
         query.update(query_parameters)
-        return CourseCatalogApiServiceClient().get_paginated_search_results(query)
+        return CourseCatalogApiServiceClient().get_search_results(query, traverse_pagination=False)
 
-    def contains_content(self, unique_field_name, unique_field_value):
+    def contains_content_items(self, content_id_field_name, content_id_values):
         """
-        Return true if this catalog contains the content item.
+        Return True if this catalog contains the items identified by `content_id_field_name` and `content_id_values`.
 
         Arguments:
-            unique_field_name (str): The name of the field on the catalog content item
-                                     that stores the item's unique identifier, e.g. "key", "uuid".
-            unique_field_value (str): The unique identifier of the catalog content item.
+            content_id_field_name (str): The name of the field on the catalog content item
+                                         that stores the item's unique identifier, e.g. "key", "uuid".
+            content_id_values (list): The unique identifiers of the catalog content items.
 
         Returns:
-            bool: True if this catalog contains the given content item, else false.
+            bool: True if this catalog contains the given content items, else false.
         """
-        updated_content_filter = self.content_filter.copy()
-        updated_content_filter[unique_field_name] = unique_field_value
-        if CourseCatalogApiServiceClient().get_paginated_search_results(updated_content_filter):
-            return True
-        return False
+        # Check the content_filter defined for this catalog to see if the
+        # unique key is a part of the filter that defines this catalog.
+        content_ids_in_catalog = set(self.content_filter.get(content_id_field_name, []))
+        if not content_ids_in_catalog:
+            # Otherwise add the unique key values to the content_filter and query
+            # the discovery service for the existence of the content.
+            updated_content_filter = self.content_filter.copy()
+            updated_content_filter[content_id_field_name] = content_id_values
+            results = CourseCatalogApiServiceClient().get_search_results(updated_content_filter)
+            if results:
+                content_ids_in_catalog = {content[content_id_field_name] for content in results}
+
+        # Diff the content IDs found in the catalog with the set of
+        # IDs which we are checking for existence.
+        intersection = set(content_id_values) & content_ids_in_catalog
+        return len(intersection) == len(content_id_values)
 
     def get_course_run(self, course_run_id):
         """
@@ -909,7 +920,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course run metadata.
         """
-        if not self.contains_content('key', course_run_id):
+        if not self.contains_content_items('key', [course_run_id]):
             return None
         return CourseCatalogApiServiceClient().get_course_run(course_run_id)
 
@@ -923,7 +934,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The program metadata.
         """
-        if not self.contains_content('uuid', program_uuid):
+        if not self.contains_content_items('uuid', [program_uuid]):
             return None
         return CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
 

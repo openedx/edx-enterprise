@@ -10,10 +10,10 @@
 #   /enterprise/api/v1/catalogs/
 #   /enterprise/api/v1/catalogs/{id}/
 #   /enterprise/api/v1/catalogs/{id}/courses/
-#   /enterprise/api/v1/enterprise-catalogs/
-#   /enterprise/api/v1/enterprise-catalogs/{uuid}/
-#   /enterprise/api/v1/enterprise-catalogs/{uuid}/course-runs/{course_run_id}/
-#   /enterprise/api/v1/enterprise-catalogs/{uuid}/programs/{program_uuid}/
+#   /enterprise/api/v1/enterprise_catalogs/
+#   /enterprise/api/v1/enterprise_catalogs/{uuid}/
+#   /enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/
+#   /enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/
 
 apigateway_responses: &apigateway_responses
   default:
@@ -331,7 +331,7 @@ endpoints:
             <<: *apigateway_integration_with_id_and_querystring_parameters
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"
 
-    # /v1/enterprise-catalogs/
+    # /v1/enterprise_catalogs/
     enterpriseCustomerCatalogs:
         get:
           produces: *produces
@@ -343,9 +343,9 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_enterprise_customer_catalog_list
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/"
 
-    # /v1/enterprise-catalogs/{uuid}/
+    # /v1/enterprise_catalogs/{uuid}/
     enterpriseCustomerCatalogByUuid:
         get:
           produces: *produces
@@ -358,9 +358,9 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_enterprise_customer_catalog_detail
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/"
 
-    # /v1/enterprise-catalogs/{uuid}/course-runs/{course_run_id}/
+    # /v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/
     enterpriseCustomerCatalogCourseRunByUuid:
         get:
           produces: *produces
@@ -374,9 +374,9 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_course_run_id_parameters
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/course-runs/{course_run_id}/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/"
 
-    # /v1/enterprise-catalogs/{uuid}/programs/{program_uuid}/
+    # /v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/
     enterpriseCustomerCatalogProgramByUuid:
         get:
           produces: *produces
@@ -390,4 +390,4 @@ endpoints:
           responses: *responses
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_program_uuid_parameters
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-catalogs/{uuid}/programs/{program_uuid}/"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/"

@@ -17,7 +17,7 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
@@ -37,6 +37,10 @@ ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
     'enterprise-catalogs-detail',
     kwargs={'pk': FAKE_UUIDS[1]}
 )
+ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT = reverse(
+    'enterprise-catalogs-contains-content-items',
+    kwargs={'pk': FAKE_UUIDS[1]}
+)
 ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT = reverse(
     # pylint: disable=anomalous-backslash-in-string
     'enterprise-catalogs-course-runs/(?P<course-id>[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+)',
@@ -50,6 +54,10 @@ ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollme
 ENTERPRISE_CUSTOMER_COURSES_ENDPOINT = reverse('enterprise-customer-courses', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT = reverse('enterprise-customer-entitlement-list')
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
+ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
+    'enterprise-customer-contains-content-items',
+    kwargs={'pk': FAKE_UUIDS[0]}
+)
 ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitlements', (1,))
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 
@@ -642,7 +650,7 @@ class TestEnterpriseAPIViews(APITest):
     @ddt.unpack
     def test_enterprise_customer_catalogs_list(self, is_staff, is_linked_to_enterprise):
         """
-        ``enterprise-catalogs``'s list endpoint should serialize the ``EnterpriseCustomerCatalog`` model.
+        ``enterprise_catalogs``'s list endpoint should serialize the ``EnterpriseCustomerCatalog`` model.
         """
         catalog_uuid = FAKE_UUIDS[1]
         catalog_title = 'All Content'
@@ -744,7 +752,7 @@ class TestEnterpriseAPIViews(APITest):
             )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_paginated_search_results=mock.Mock(
+            get_search_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
             ),
         )
@@ -771,7 +779,7 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_paginated_search_results=mock.Mock(
+            get_search_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION
             ),
         )
@@ -785,6 +793,128 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         assert response == expected_result
+
+    @ddt.data(
+        (False, {'course_run_ids': ['fake1', 'fake2']}, None),
+        (False, {'program_uuids': ['fake1', 'fake2']}, None),
+        (
+            True,
+            {
+                'course_run_ids': [
+                    fake_catalog_api.FAKE_COURSE_RUN['key'],
+                    fake_catalog_api.FAKE_COURSE_RUN2['key']
+                ]
+            },
+            [fake_catalog_api.FAKE_COURSE_RUN, fake_catalog_api.FAKE_COURSE_RUN2]
+        ),
+        (
+            True,
+            {
+                'program_uuids': [
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                ]
+            },
+            [fake_catalog_api.FAKE_PROGRAM_RESPONSE1, fake_catalog_api.FAKE_PROGRAM_RESPONSE2]
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_enterprise_catalog_contains_content_items_with_search(self, contains_content_items, query_params,
+                                                                   search_results, mock_catalog_api_client):
+        """
+        Ensure contains_content_items endpoint returns expected result when
+        the discovery service's search endpoint is used to determine whether
+        or not the catalog contains the given content items.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer,
+        )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_search_results=mock.Mock(return_value=search_results)
+        )
+
+        response = self.client.get(ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))
+        response_json = self.load_json(response.content)
+
+        assert response_json['contains_content_items'] == contains_content_items
+
+    @ddt.data(
+        (False, {'course_run_ids': ['fake1', 'fake2']}),
+        (False, {'program_uuids': ['fake1', 'fake2']}),
+        (
+            True,
+            {
+                'course_run_ids': [
+                    fake_catalog_api.FAKE_COURSE_RUN['key'],
+                    fake_catalog_api.FAKE_COURSE_RUN2['key']
+                ]
+            },
+        ),
+        (
+            True,
+            {
+                'program_uuids': [
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                ]
+            },
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_enterprise_catalog_contains_content_items_without_search(self, contains_content_items, query_params,
+                                                                      mock_catalog_api_client):
+        """
+        Ensure contains_content_items endpoint returns expected result when
+        the catalog's content_filter specifies unique keys.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer,
+            content_filter={
+                'key': [
+                    fake_catalog_api.FAKE_COURSE_RUN['key'],
+                    fake_catalog_api.FAKE_COURSE_RUN2['key']
+                ],
+                'uuid': [
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                ]
+            }
+        )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_search_results=mock.Mock(return_value=None)
+        )
+
+        response = self.client.get(ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))
+        response_json = self.load_json(response.content)
+
+        assert response_json['contains_content_items'] == contains_content_items
+
+    def test_enterprise_catalog_contains_content_items_no_query_params(self):
+        """
+        Ensure contains_content_items endpoint returns error message
+        when no query parameters are provided.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.get(ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT)
+        response_json = self.load_json(response.content)
+
+        message = response_json[0]
+        assert 'program_uuids' in message
+        assert 'course_run_ids' in message
+        assert response.status_code == 400
 
     @ddt.data(
         (False, False, False, {}, {'detail': 'Not found.'}),
@@ -831,10 +961,10 @@ class TestEnterpriseAPIViews(APITest):
             )
         search_results = None
         if is_course_run_in_catalog:
-            search_results = fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
+            search_results = [fake_catalog_api.FAKE_COURSE_RUN]
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_paginated_search_results=mock.Mock(return_value=search_results),
+            get_search_results=mock.Mock(return_value=search_results),
             get_course_run=mock.Mock(return_value=mocked_course_run),
         )
         response = self.client.get(ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT)
@@ -895,10 +1025,10 @@ class TestEnterpriseAPIViews(APITest):
             )
         search_results = None
         if is_program_in_catalog:
-            search_results = fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
+            search_results = [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT]
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_paginated_search_results=mock.Mock(return_value=search_results),
+            get_search_results=mock.Mock(return_value=search_results),
             get_program_by_uuid=mock.Mock(return_value=mocked_program),
         )
         response = self.client.get(ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT)
@@ -1103,3 +1233,83 @@ class TestEnterpriseAPIViews(APITest):
         assert response_content['detail'] == 'User {username} is not associated with an EnterpriseCustomer.'.format(
             username=self.user.username
         )
+
+    @ddt.data(
+        (False, {'course_run_ids': ['fake1', 'fake2']}, None),
+        (False, {'program_uuids': ['fake1', 'fake2']}, None),
+        (
+            True,
+            {
+                'course_run_ids': [
+                    fake_catalog_api.FAKE_COURSE_RUN['key'],
+                    fake_catalog_api.FAKE_COURSE_RUN2['key']
+                ]
+            },
+            [fake_catalog_api.FAKE_COURSE_RUN, fake_catalog_api.FAKE_COURSE_RUN2]
+        ),
+        (
+            True,
+            {
+                'program_uuids': [
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
+                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                ]
+            },
+            [fake_catalog_api.FAKE_PROGRAM_RESPONSE1, fake_catalog_api.FAKE_PROGRAM_RESPONSE2]
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_enterprise_customer_contains_content_items(self, contains_content_items, query_params, search_results,
+                                                        mock_catalog_api_client):
+        """
+        Ensure contains_content_items endpoint returns expected result when query parameters are provided.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer
+        )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_search_results=mock.Mock(return_value=search_results)
+        )
+
+        response = self.client.get(ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))
+        response_json = self.load_json(response.content)
+
+        assert response_json['contains_content_items'] == contains_content_items
+
+    def test_enterprise_customer_contains_content_items_no_catalogs(self):
+        """
+        Ensure contains_content_items endpoint returns False when the EnterpriseCustomer
+        does not have any associated EnterpriseCustomerCatalogs.
+        """
+        factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        query_params = {'course_run_ids': [
+            fake_catalog_api.FAKE_COURSE_RUN['key'],
+            fake_catalog_api.FAKE_COURSE_RUN2['key']
+        ]}
+
+        response = self.client.get(ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))
+        response_json = self.load_json(response.content)
+
+        assert response_json['contains_content_items'] is False
+
+    def test_enterprise_customer_contains_content_items_no_query_params(self):
+        """
+        Ensure contains_content_items endpoint returns an error when no query parameters are provided.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.get(ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT)
+        response_json = self.load_json(response.content)
+
+        message = response_json[0]
+        assert 'program_uuids' in message
+        assert 'course_run_ids' in message
+        assert response.status_code == 400

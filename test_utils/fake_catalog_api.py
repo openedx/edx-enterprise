@@ -91,6 +91,8 @@ FAKE_COURSE_RUN = {
     'reporting_type': 'mooc',
     'eligible_for_financial_aid': True
 }
+FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
+FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
 FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT = copy.deepcopy(FAKE_COURSE_RUN)
 update_course_run_with_enterprise_context(FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT)
 
