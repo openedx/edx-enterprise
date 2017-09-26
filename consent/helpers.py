@@ -92,7 +92,8 @@ def get_program_data_sharing_consent(username, program_uuid, enterprise_customer
     :param enterprise_customer_uuid: The consent requester.
     :return: The data sharing consent object
     """
-    discovery_client = CourseCatalogApiServiceClient()
+    enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+    discovery_client = CourseCatalogApiServiceClient(enterprise_customer.site)
     course_ids = discovery_client.get_program_course_keys(program_uuid)
     child_consents = (
         get_data_sharing_consent(username, enterprise_customer_uuid, course_id=individual_course_id)

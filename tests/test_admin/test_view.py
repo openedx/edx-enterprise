@@ -872,6 +872,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             if course_mode is not None:
                 post_data[ManageLearnersForm.Fields.COURSE_MODE] = course_mode
             post_data[ManageLearnersForm.Fields.NOTIFY] = 'by_email' if notify else 'do_not_notify'
+            post_data['enterprise_customer'] = self.enterprise_customer
             response = self.client.post(self.view_url, data=post_data)
         return response
 

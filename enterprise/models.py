@@ -238,7 +238,7 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         if self.catalog is None:
             return False
-        client = CourseCatalogApiServiceClient()
+        client = CourseCatalogApiServiceClient(self.site)
         return client.is_course_in_catalog(self.catalog, course_id)
 
 
@@ -879,7 +879,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         query = self.content_filter.copy()
         query.update(query_parameters)
-        return CourseCatalogApiServiceClient().get_search_results(query, traverse_pagination=False)
+        catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
+        return catalog_client.get_search_results(query, traverse_pagination=False)
 
     def contains_content_items(self, content_id_field_name, content_id_values):
         """
@@ -922,7 +923,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         if not self.contains_content_items('key', [course_run_id]):
             return None
-        return CourseCatalogApiServiceClient().get_course_run(course_run_id)
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_run(course_run_id)
 
     def get_program(self, program_uuid):
         """
@@ -936,7 +937,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         if not self.contains_content_items('uuid', [program_uuid]):
             return None
-        return CourseCatalogApiServiceClient().get_program_by_uuid(program_uuid)
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
 
 
 @python_2_unicode_compatible
