@@ -16,6 +16,8 @@ from django.shortcuts import redirect
 from enterprise.utils import get_enterprise_customer_or_404, get_identity_provider
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse  # pylint: disable=import-error
 
+FRESH_LOGIN_PARAMETER = 'new_enterprise_login'
+
 
 def deprecated(extra):
     """
@@ -133,7 +135,10 @@ def enterprise_login_required(view):
         if not request.user.is_authenticated():
             parsed_current_url = urlparse(request.get_full_path())
             parsed_query_string = parse_qs(parsed_current_url.query)
-            parsed_query_string.update({'tpa_hint': enterprise_customer.identity_provider})
+            parsed_query_string.update({
+                'tpa_hint': enterprise_customer.identity_provider,
+                FRESH_LOGIN_PARAMETER: 'yes'
+            })
             next_url = '{current_path}?{query_string}'.format(
                 current_path=quote(parsed_current_url.path),
                 query_string=urlencode(parsed_query_string)
@@ -167,6 +172,7 @@ def force_fresh_session(view):
     enterprise_login_required decorator.
 
     Usage::
+        @enterprise_login_required
         @force_fresh_session()
         def my_view(request, enterprise_uuid):
             # Some functionality ...
@@ -175,57 +181,42 @@ def force_fresh_session(view):
 
         class MyView(View):
             ...
+            @method_decorator(enterprise_login_required)
             @method_decorator(force_fresh_session)
             def get(self, request, enterprise_uuid):
                 # Some functionality ...
-
     """
     @wraps(view)
     def wrapper(request, *args, **kwargs):
         """
         Wrap the function.
         """
-        if not request.session.get('is_session_fresh'):
-            if request.user.is_authenticated():
-                # If the user is logged in, the sso provider is configured
-                # to terminate existing sessions, and we have not yet
-                # restarted the session, redirect the user to the logout
-                # page to terminate the session and include a redirect URL
-                # which will send them back to the original view so they
-                # can start a new session.
-                enterprise_customer = get_enterprise_customer_or_404(kwargs.get('enterprise_uuid'))
-                provider_id = enterprise_customer.identity_provider or ''
+        if not request.GET.get(FRESH_LOGIN_PARAMETER):
+            # The enterprise_login_required decorator promises to set the fresh login URL
+            # parameter for this URL when it was the agent that initiated the login process;
+            # if that parameter isn't set, we can safely assume that the session is "stale";
+            # that isn't necessarily an issue, though. Check to see if the enterprise customer's
+            # linked identity provider requires a fresh session; if so, redirect the user to
+            # log out and then come back here - the enterprise_login_required decorator will
+            # then take effect prior to us arriving back here again.
+            enterprise_customer = get_enterprise_customer_or_404(kwargs.get('enterprise_uuid'))
+            provider_id = enterprise_customer.identity_provider or ''
+            sso_provider = get_identity_provider(provider_id)
+            if sso_provider and sso_provider.drop_existing_session:
+                # Parse the current request full path, quote just the path portion,
+                # then reconstruct the full path string.
+                # The path and query portions should be the only non-empty strings here.
+                scheme, netloc, path, params, query, fragment = urlparse(request.get_full_path())
+                redirect_url = urlunparse((scheme, netloc, quote(path), params, query, fragment))
 
-                try:
-                    sso_provider = get_identity_provider(provider_id)
-                    if sso_provider and sso_provider.drop_existing_session:
-                        # Parse the current request full path, quote just the path portion,
-                        # then reconstruct the full path string.
-                        # The path and query portions should be the only non-empty strings here.
-                        scheme, netloc, path, params, query, fragment = urlparse(request.get_full_path())
-                        redirect_url = urlunparse((scheme, netloc, quote(path), params, query, fragment))
-
-                        return redirect(
-                            '{logout_url}?{params}'.format(
-                                logout_url='/logout',
-                                params=urlencode(
-                                    {'redirect_url': redirect_url}
-                                )
-                            )
+                return redirect(
+                    '{logout_url}?{params}'.format(
+                        logout_url='/logout',
+                        params=urlencode(
+                            {'redirect_url': redirect_url}
                         )
-                except ValueError:
-                    pass
-            else:
-                # If the user has not yet been authenticated,
-                # set a flag on the session to indicate that
-                # this is a fresh session.
-                request.session['is_session_fresh'] = True
-
-        else:
-            # The user was forced to log out and start a new session,
-            # so clear the session flag.
-            request.session.pop('is_session_fresh')
-
+                    )
+                )
         return view(request, *args, **kwargs)
 
     return wrapper

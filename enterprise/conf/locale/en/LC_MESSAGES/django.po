@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-30 10:38-0500\n"
+"POT-Creation-Date: 2017-10-03 21:15-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -354,7 +354,7 @@ msgid ""
 "environment."
 msgstr ""
 
-#: enterprise/api_client/discovery.py:81 enterprise/api_client/discovery.py:432
+#: enterprise/api_client/discovery.py:81 enterprise/api_client/discovery.py:437
 msgid ""
 "To get a CatalogIntegration object, this package must be installed in an "
 "Open edX environment."
@@ -366,11 +366,11 @@ msgid ""
 "edX environment."
 msgstr ""
 
-#: enterprise/api_client/discovery.py:442
+#: enterprise/api_client/discovery.py:447
 msgid "The configured CatalogIntegration service user does not exist."
 msgstr ""
 
-#: enterprise/api_client/discovery.py:444
+#: enterprise/api_client/discovery.py:449
 msgid "There is no active CatalogIntegration."
 msgstr ""
 
@@ -551,7 +551,7 @@ msgstr ""
 msgid "Enterprise Customer Catalogs"
 msgstr ""
 
-#: enterprise/models.py:941
+#: enterprise/models.py:952
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -573,7 +573,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:959
+#: enterprise/models.py:970
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "
@@ -699,12 +699,12 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: enterprise/utils.py:216
+#: enterprise/utils.py:217
 #, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
-#: enterprise/utils.py:273
+#: enterprise/utils.py:274
 msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 

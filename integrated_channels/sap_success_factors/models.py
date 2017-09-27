@@ -6,6 +6,7 @@ Database models for Enterprise Integrated Channel SAP SuccessFactors.
 from __future__ import absolute_import, unicode_literals
 
 import json
+from logging import getLogger
 from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 
@@ -20,6 +21,8 @@ from integrated_channels.integrated_channel.learner_data import BaseLearnerExpor
 
 from integrated_channels.sap_success_factors.transmitters.courses import SuccessFactorsCourseTransmitter
 from integrated_channels.sap_success_factors.transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
+
+LOGGER = getLogger(__name__)
 
 
 @python_2_unicode_compatible
@@ -109,6 +112,8 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         Returns a LearnerDataTransmissionAudit initialized from the given enrollment and course completion data.
 
         If completed_date is None, then course completion has not been met.
+
+        If no remote ID can be found, return None.
         """
         # Have to create the audit model instance here to avoid a circular dependency.
         completed_timestamp = None
@@ -117,14 +122,22 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             completed_timestamp = parse_datetime_to_epoch(completed_date)
             course_completed = is_passing
 
-        return LearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=enterprise_enrollment.id,
-            sapsf_user_id=enterprise_enrollment.enterprise_customer_user.get_remote_id(),
-            course_id=enterprise_enrollment.course_id,
-            course_completed=course_completed,
-            completed_timestamp=completed_timestamp,
-            grade=grade,
-        )
+        sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id()
+
+        if sapsf_user_id is not None:
+            return LearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=enterprise_enrollment.id,
+                sapsf_user_id=sapsf_user_id,
+                course_id=enterprise_enrollment.course_id,
+                course_completed=course_completed,
+                completed_timestamp=completed_timestamp,
+                grade=grade,
+            )
+        else:
+            LOGGER.debug(
+                'No learner data was sent for user "%s" because an SAP SuccessFactors user ID could not be found.',
+                enterprise_enrollment.enterprise_customer_user.username
+            )
 
     def get_learner_data_exporter(self, user):
         """

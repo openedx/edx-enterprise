@@ -655,14 +655,23 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             args=[enterprise_customer.uuid, course_id],
         )
         response = self.client.get(enterprise_landing_page_url)
-        expected_redirect_url = (
+
+        expected_base_url = (
             '/login?next=%2Fenterprise%2F{enterprise_customer_uuid}%2Fcourse%2Fcourse-v1'
-            '%253AedX%252BDemoX%252BDemo_Course%2Fenroll%2F%3Ftpa_hint%3D{provider_id}'.format(
-                enterprise_customer_uuid=enterprise_customer.uuid,
-                provider_id=provider_id,
-            )
+            '%253AedX%252BDemoX%252BDemo_Course%2Fenroll%2F'
+        ).format(
+            enterprise_customer_uuid=enterprise_customer.uuid,
         )
-        self.assertRedirects(response, expected_redirect_url, fetch_redirect_response=False)
+        expected_fragments = (
+            'tpa_hint%3D{provider_id}'.format(
+                provider_id=provider_id,
+            ),
+            'new_enterprise_login%3Dyes'
+        )
+        assert response.status_code == 302
+        assert expected_base_url in response.url
+        for fragment in expected_fragments:
+            assert fragment in response.url
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')

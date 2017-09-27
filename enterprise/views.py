@@ -891,8 +891,8 @@ class CourseEnrollmentView(NonAtomicView):
         # Note: LMS start flow automatically detects the paid mode
         return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
 
-    @method_decorator(force_fresh_session)
     @method_decorator(enterprise_login_required)
+    @method_decorator(force_fresh_session)
     def get(self, request, enterprise_uuid, course_id):
         """
         Show course track selection page for the enterprise.
@@ -1205,8 +1205,8 @@ class ProgramEnrollmentView(NonAtomicView):
         })
         return render(request, 'enterprise/enterprise_program_enrollment_page.html', context=context_data)
 
-    @method_decorator(force_fresh_session)
     @method_decorator(enterprise_login_required)
+    @method_decorator(force_fresh_session)
     def get(self, request, enterprise_uuid, program_uuid):
         """
         Show Program Landing page for the Enterprise's Program.

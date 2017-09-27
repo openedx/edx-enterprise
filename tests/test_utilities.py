@@ -105,6 +105,11 @@ class TestEnterpriseUtils(unittest.TestCase):
             identity_provider = utils.get_identity_provider(provider_id=provider_id)
             assert identity_provider is not None
 
+        # Test that with an invalid provider ID, the function returns None
+        with mock.patch('enterprise.utils.Registry') as mock_registry:
+            mock_registry.get.side_effect = ValueError
+            assert utils.get_identity_provider('bad#$@#$providerid') is None
+
     @ddt.unpack
     @ddt.data(
         (
