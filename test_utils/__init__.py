@@ -23,6 +23,7 @@ from six.moves.urllib.parse import parse_qs, urljoin, urlsplit  # pylint: disabl
 from django.shortcuts import render
 
 from test_utils import factories
+from enterprise import utils
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
 TEST_USERNAME = 'api_worker'
@@ -65,42 +66,54 @@ def create_items(factory, items):
         factory.create(**item)
 
 
-def update_course_run_with_enterprise_context(course_run):
+def update_course_run_with_enterprise_context(course_run, add_utm_info=True):
     """
     Populate a fake course run response with any necessary Enterprise context for testing purposes.
 
     Arguments:
         course_run (dict): The course_run to populate with enterprise context.
+        add_utm_info(bool): control to utm information.
     """
-    course_run['enrollment_url'] = urljoin(
+    enterprise_utm_context = {
+        'utm_medium': 'enterprise',
+        'utm_source': 'test_enterprise'
+    }
+    url = urljoin(
         settings.LMS_ROOT_URL,
         reverse(
             'enterprise_course_enrollment_page',
             kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'course_id': course_run['key']}
         )
     )
+    course_run['enrollment_url'] = utils.update_query_parameters(url, enterprise_utm_context) if add_utm_info else url
 
 
-def update_program_with_enterprise_context(program):
+def update_program_with_enterprise_context(program, add_utm_info=True):
     """
     Populate a fake program response with any necessary Enterprise context for testing purposes.
 
     Arguments:
         program (dict): The program to populate with enterprise context.
+        add_utm_info (bool): control to utm information.
     """
-    program['enrollment_url'] = urljoin(
+    enterprise_utm_context = {
+        'utm_medium': 'enterprise',
+        'utm_source': 'test_enterprise'
+    }
+    url = urljoin(
         settings.LMS_ROOT_URL,
         reverse(
             'enterprise_program_enrollment_page',
             kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'program_uuid': program['uuid']}
         )
     )
+    program['enrollment_url'] = utils.update_query_parameters(url, enterprise_utm_context) if add_utm_info else url
     for course in program.get('courses', []):
         for course_run in course['course_runs']:
             update_course_run_with_enterprise_context(course_run)
 
 
-def update_search_with_enterprise_context(search_result):
+def update_search_with_enterprise_context(search_result, add_utm_info):
     """
     Populate fake discovery search result response with any necessary Enterprise context for testing purposes.
 
@@ -111,9 +124,9 @@ def update_search_with_enterprise_context(search_result):
     for item in search_result['results']:
         content_type = item['content_type']
         if content_type == 'program':
-            update_program_with_enterprise_context(item)
+            update_program_with_enterprise_context(item, add_utm_info)
         elif content_type == 'courserun':
-            update_course_run_with_enterprise_context(item)
+            update_course_run_with_enterprise_context(item, add_utm_info)
     return search_result
 
 
@@ -122,6 +135,29 @@ def fake_render(request, template, context):  # pylint: disable=unused-argument
     Switch the request to use a template that does not depend on edx-platform.
     """
     return render(request, 'enterprise/emails/user_notification.html', context=context)
+
+
+def assert_url(first, second):
+    """
+    Compare first and second url.
+
+    Arguments:
+        first (str) : first url.
+        second (str) : second url.
+
+    Raises:
+        Assertion error if both urls do not match.
+
+    """
+    # Convert query paramters to a dictionary, so that they can be compared correctly
+    scheme, netloc, path, query_string, fragment = urlsplit(first)
+    first = (scheme, netloc, path, parse_qs(query_string), fragment)
+
+    # Convert query paramters to a dictionary, so that they can be compared correctly
+    scheme, netloc, path, query_string, fragment = urlsplit(second)
+    second = (scheme, netloc, path, parse_qs(query_string), fragment)
+
+    assert first == second
 
 
 @mark.django_db
@@ -169,25 +205,3 @@ class APITest(APITestCase):
         if isinstance(content, bytes):
             content = content.decode('utf-8')
         return json.loads(content)
-
-    def assert_url(self, first, second):
-        """
-        Compare first and second url.
-
-        Arguments:
-            first (str) : first url.
-            second (str) : second url.
-
-        Raises:
-            Assertion error if both urls do not match.
-
-        """
-        # Convert query paramters to a dictionary, so that they can be compared correctly
-        scheme, netloc, path, query_string, fragment = urlsplit(first)
-        first = (scheme, netloc, path, parse_qs(query_string), fragment)
-
-        # Convert query paramters to a dictionary, so that they can be compared correctly
-        scheme, netloc, path, query_string, fragment = urlsplit(second)
-        second = (scheme, netloc, path, parse_qs(query_string), fragment)
-
-        assert first == second

@@ -26,7 +26,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
 )
-from test_utils import TEST_UUID, create_items
+from test_utils import TEST_UUID, assert_url, create_items
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -1280,11 +1280,11 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_uuid = '47432370-0a6e-4d95-90fe-77b4fe64de2c'
         expected_url = ('http://localhost:8000/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
-                        'course-v1:edX+DemoX+Demo_Course/enroll/')
-        enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid)
+                        'course-v1:edX+DemoX+Demo_Course/enroll/?utm_medium=enterprise&utm_source=test_enterprise')
+        enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid, name='test_enterprise')
 
         launch_url = get_launch_url(enterprise_customer, course_id)
-        assert launch_url == expected_url
+        assert_url(launch_url, expected_url)
 
     @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=False)
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')

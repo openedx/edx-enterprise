@@ -23,7 +23,7 @@ FAKE_COURSE_RUN = {
         'width': None
     },
     'short_description': 'This course demonstrates many features of the edX platform.',
-    'marketing_url': 'course/demo-course?utm_source=edx&utm_medium=affiliate_partner',
+    'marketing_url': 'course/demo-course?utm_=test_enterprise&utm_medium=enterprise',
     'seats': [
         {
             'type': 'audit',
