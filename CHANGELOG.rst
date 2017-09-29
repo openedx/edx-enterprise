@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[0.48.2] - 2017-09-29
+---------------------
+
+* Step 2 in making enrollment email template linked to enterprise. Remove site from model. No migration.
+
 [0.48.1] - 2017-09-25
 ---------------------
 
