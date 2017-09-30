@@ -725,7 +725,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.views.consent_required')
+    @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(
         ('audit', 'http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course/courseware', False),
@@ -740,14 +740,14 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             expected_redirect_url,
             enterprise_enrollment_exists,
             registry_mock,
-            consent_required_mock,
+            get_data_sharing_consent_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
             ecommerce_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         course_id = self.demo_course_id
-        consent_required_mock.return_value = False
+        get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=False))
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
@@ -787,18 +787,18 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.views.consent_required')
+    @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_consent_needed(
             self,
             registry_mock,
-            consent_required_mock,
+            get_data_sharing_consent_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         course_id = self.demo_course_id
-        consent_required_mock.return_value = True
+        get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=True))
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
@@ -814,11 +814,11 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
-        enterprise_id = enterprise_customer.uuid
+        enterprise_customer_uuid = enterprise_customer.uuid
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
-            args=[enterprise_id, course_id],
+            args=[enterprise_customer_uuid, course_id],
         )
         response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'})
 
@@ -826,7 +826,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
-            enterprise_id, course_id, urlencode({'course_mode': 'audit'})
+            enterprise_customer_uuid, course_id, urlencode({'course_mode': 'audit'})
         )
         expected_failure_url = reverse(
             'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
@@ -838,7 +838,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                     {
                         'next': consent_enrollment_url,
                         'failure_url': expected_failure_url,
-                        'enterprise_id': enterprise_id,
+                        'enterprise_customer_uuid': enterprise_customer_uuid,
                         'course_id': course_id,
                     }
                 )
@@ -914,18 +914,18 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.views.consent_required')
+    @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_premium_mode(
             self,
             registry_mock,
-            consent_required_mock,
+            get_data_sharing_consent_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         course_id = self.demo_course_id
-        consent_required_mock.return_value = False
+        get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=False))
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
         enterprise_customer = EnterpriseCustomerFactory(

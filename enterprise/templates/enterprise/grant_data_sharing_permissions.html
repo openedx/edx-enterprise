@@ -8,7 +8,7 @@
     var programId;
     var successUrl = {{ redirect_url|default:"null"|escapejs }};
     var failureUrl = {{ failure_url|default:"null"|escapejs }};
-    var enrollmentDeferred = {{ enrollment_deferred|yesno:"true,false" }};
+    var deferCreation = {{ defer_creation|yesno:"true,false" }};
     {% if course_specific and course_id %}
       courseId = "{{ course_id }}";
     {% endif %}
@@ -81,8 +81,8 @@
                         <input type="hidden" name="failure_url" value="{{ failure_url }}" />
                       {% endif %}
 
-                      {% if enrollment_deferred %}
-                        <input type="hidden" name="enrollment_deferred" value="true" />
+                      {% if defer_creation %}
+                        <input type="hidden" name="defer_creation" value="true" />
                       {% endif %}
                     </form>
                   </div>

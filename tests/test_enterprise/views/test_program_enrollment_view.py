@@ -18,6 +18,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.test import Client, TestCase
 
+from enterprise.utils import NotConnectedToOpenEdX
 from enterprise.views import ProgramEnrollmentView
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils import fake_render
@@ -135,6 +136,18 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 200
         for key, value in default_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
+
+    def test_get_no_patches(self):
+        """
+        An error is raised when not connected to Open edX for the Program Enrollment View.
+        """
+        with self.assertRaises(NotConnectedToOpenEdX):
+            self._login()
+            self.client.get(
+                reverse(
+                    'enterprise_program_enrollment_page',
+                    args=[EnterpriseCustomerFactory().uuid, self.dummy_program_uuid])
+            )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')

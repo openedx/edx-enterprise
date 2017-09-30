@@ -14,7 +14,6 @@ from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment
-from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -80,28 +79,18 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'You will not be able to log back into your account until you have activated it.'
             )
 
-    def test_get_no_patches(self):
-        """
-        Test that we get the right exception when nothing is patched.
-        """
-        client = Client()
-        with self.assertRaises(NotConnectedToOpenEdX):
-            client.get(self.url)
-
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
-        (False, False, True),
-        (False, True, False),
-        (True, True, False),
+        (False, True),
+        (False, False),
+        (True, False),
     )
     @ddt.unpack
     def test_get_course_specific_consent(
             self,
-            enrollment_deferred,
-            supply_customer_uuid,
+            defer_creation,
             existing_course_enrollment,
             course_api_client_mock,
             course_catalog_api_client_mock,
@@ -129,13 +118,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 course_id=course_id
             )
         params = {
+            'enterprise_customer_uuid': str(enterprise_customer.uuid),
             'course_id': 'course-v1:edX+DemoX+Demo_Course',
-            'next': 'https://google.com'
+            'next': 'https://google.com',
+            'failure_url': 'https://facebook.com',
         }
-        if enrollment_deferred:
-            params['enrollment_deferred'] = True
-        if supply_customer_uuid:
-            params['enterprise_id'] = str(enterprise_customer.uuid)
+        if defer_creation:
+            params['defer_creation'] = True
         response = self.client.get(self.url, data=params)
         assert response.status_code == 200
         expected_prompt = (
@@ -169,9 +158,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 ),
                 "course_id": "course-v1:edX+DemoX+Demo_Course",
                 "redirect_url": "https://google.com",
-                "enterprise_customer_name": ecu.enterprise_customer.name,
                 "course_specific": True,
-                "enrollment_deferred": enrollment_deferred,
+                "defer_creation": defer_creation,
                 "welcome_text": "Welcome to Test platform.",
                 'sharable_items_note_header': 'Please note',
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
@@ -180,7 +168,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint:disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_invalid_get_params(
             self,
@@ -214,13 +201,12 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         params = {
             'course_id': 'course-v1:edX+DemoX+Demo_Course',
             'next': 'https://google.com',
-            'enrollment_deferred': True,
+            'defer_creation': True,
         }
         response = self.client.get(self.url, data=params)
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_unauthenticated_user(
             self,
@@ -264,7 +250,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_bad_api_response(
             self,
@@ -299,7 +284,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_not_needed(
@@ -341,8 +325,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
         (True, True, '/successful_enrollment'),
@@ -353,13 +338,15 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @ddt.unpack
     def test_post_course_specific_consent(
             self,
-            enrollment_deferred,
+            defer_creation,
             consent_provided,
             expected_redirect_url,
             reverse_mock,
+            course_catalog_api_client_mock_1,
+            course_catalog_api_client_mock_2,
             course_api_client_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):  # pylint: disable=unused-argument,invalid-name
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_customer = EnterpriseCustomerFactory(
@@ -381,18 +368,18 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
             granted=consent_provided
         )
-        client = course_api_client_mock.return_value
-        client.get_course_details.return_value = {
-            'name': 'edX Demo Course',
-        }
+        course_catalog_api_client_mock_1.return_value.program_exists.return_value = True
+        course_catalog_api_client_mock_2.return_value.is_course_in_catalog = True
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
         reverse_mock.return_value = '/dashboard'
         post_data = {
+            'enterprise_customer_uuid': enterprise_customer.uuid,
             'course_id': course_id,
             'redirect_url': '/successful_enrollment',
             'failure_url': '/failure_url',
         }
-        if enrollment_deferred:
-            post_data['enrollment_deferred'] = True
+        if defer_creation:
+            post_data['defer_creation'] = True
         if consent_provided:
             post_data['data_sharing_consent'] = consent_provided
 
@@ -400,11 +387,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
         assert resp.status_code == 302
-        if not enrollment_deferred:
+        if not defer_creation:
             assert dsc.granted is consent_provided
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_no_user(
@@ -452,7 +438,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_bad_api_response(
@@ -527,15 +512,12 @@ class TestProgramDataSharingPermissions(TestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
-        program_data_extender = mock.patch('enterprise.views.ProgramDataExtender')
-        self.program_data_extender = program_data_extender.start()
-        self.addCleanup(program_data_extender.stop)
         get_dsc = mock.patch('enterprise.views.get_data_sharing_consent')
         self.get_data_sharing_consent = get_dsc.start()
         self.addCleanup(get_dsc.stop)
-        program_exists = mock.patch('enterprise.views.CourseCatalogApiServiceClient.program_exists')
-        self.program_exists = program_exists.start()
-        self.addCleanup(program_exists.stop)
+        course_catalog_api_client = mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+        self.course_catalog_api_client = course_catalog_api_client.start()
+        self.addCleanup(course_catalog_api_client.stop)
         super(TestProgramDataSharingPermissions, self).setUp()
 
     def _login(self):
@@ -551,7 +533,7 @@ class TestProgramDataSharingPermissions(TestCase):
         'program_uuid',
     )
     def test_get_program_consent_missing_parameter(self, missing_parameter):
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         valid_get_params = self.valid_get_params.copy()
         valid_get_params.pop(missing_parameter)
         self._login()
@@ -559,21 +541,21 @@ class TestProgramDataSharingPermissions(TestCase):
         assert response.status_code == 404
 
     def test_get_consent_program_does_not_exist(self):
-        self.program_exists.return_value = False
+        self.course_catalog_api_client.return_value.program_exists.return_value = False
         self._login()
         response = self.client.get(self.url, self.valid_get_params)
         assert response.status_code == 404
 
     def test_get_program_consent_no_ec(self):
         self.get_data_sharing_consent.return_value = None
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         response = self.client.get(self.url, self.valid_get_params)
         assert response.status_code == 404
 
     def test_get_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         response = self.client.get(self.url, self.valid_get_params)
         assert response.status_code == 404
@@ -585,7 +567,7 @@ class TestProgramDataSharingPermissions(TestCase):
         'program_uuid',
     )
     def test_post_program_consent_missing_parameter(self, missing_parameter):
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         valid_post_params = self.valid_post_params.copy()
         valid_post_params.pop(missing_parameter)
         self._login()
@@ -593,21 +575,21 @@ class TestProgramDataSharingPermissions(TestCase):
         assert response.status_code == 404
 
     def test_post_consent_program_does_not_exist(self):
-        self.program_exists.return_value = False
+        self.course_catalog_api_client.return_value.program_exists.return_value = False
         self._login()
         response = self.client.post(self.url, self.valid_post_params)
         assert response.status_code == 404
 
     def test_post_program_consent_no_ec(self):
         self.get_data_sharing_consent.return_value = None
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         response = self.client.post(self.url, self.valid_post_params)
         assert response.status_code == 404
 
     def test_post_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         response = self.client.get(self.url, self.valid_post_params)
         assert response.status_code == 404
@@ -615,7 +597,7 @@ class TestProgramDataSharingPermissions(TestCase):
     def test_post_program_consent(self):
         consent_record = self.get_data_sharing_consent.return_value
         consent_record.consent_required.return_value = True
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         response = self.client.post(self.url, self.valid_post_params, follow=False)
         consent_record.save.assert_called_once()
@@ -624,7 +606,7 @@ class TestProgramDataSharingPermissions(TestCase):
     def test_post_program_consent_not_provided(self):
         consent_record = self.get_data_sharing_consent.return_value
         consent_record.consent_required.return_value = True
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         params = self.valid_post_params.copy()
         params.pop('data_sharing_consent')
@@ -635,25 +617,25 @@ class TestProgramDataSharingPermissions(TestCase):
     def test_post_program_consent_deferred(self):
         consent_record = self.get_data_sharing_consent.return_value
         consent_record.consent_required.return_value = True
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         params = self.valid_post_params.copy()
-        params['enrollment_deferred'] = 'True'
+        params['defer_creation'] = 'True'
         response = self.client.post(self.url, params, follow=False)
         consent_record.save.assert_not_called()
         self.assertRedirects(response, 'https://google.com/', fetch_redirect_response=False)
 
     @ddt.data(False, True)
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    def test_get_program_consent(self, enrollment_deferred, mock_render):  # pylint: disable=unused-argument
+    def test_get_program_consent(self, defer_creation, mock_render):  # pylint: disable=unused-argument
         self.get_data_sharing_consent.return_value.consent_required.return_value = True
         enterprise_customer = self.get_data_sharing_consent.return_value.enterprise_customer
         enterprise_customer.name = 'Starfleet Academy'
-        self.program_exists.return_value = True
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         params = self.valid_get_params.copy()
-        if enrollment_deferred:
-            params.update({'enrollment_deferred': True})
+        if defer_creation:
+            params.update({'defer_creation': True})
         response = self.client.get(self.url, params)
         assert response.status_code == 200
 
@@ -687,9 +669,8 @@ class TestProgramDataSharingPermissions(TestCase):
                 "program_uuid": params.get('program_uuid'),
                 "redirect_url": "https://google.com/",
                 "failure_url": "https://facebook.com/",
-                "enterprise_customer_name": enterprise_customer.name,
                 "program_specific": True,
-                "enrollment_deferred": enrollment_deferred,
+                "defer_creation": defer_creation,
                 "welcome_text": "Welcome to Test platform.",
                 'sharable_items_note_header': 'Please note',
                 "enterprise_customer": enterprise_customer,

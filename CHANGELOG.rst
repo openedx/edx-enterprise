@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.51.1] - 2017-10-06
+---------------------
+
+* Refactor user-facing DSC view's logic.
+
 [0.51.0] - 2017-10-05
 ---------------------
 
