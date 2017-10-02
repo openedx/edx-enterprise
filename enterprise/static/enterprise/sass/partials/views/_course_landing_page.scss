@@ -1,0 +1,60 @@
+.course-confirmation-title {
+  font-size: 20px;
+  color: $blue;
+  font-weight: normal;
+  margin-bottom: 6px;
+}
+
+.course-image {
+  width: auto;
+  height: 50px;
+}
+
+.course-detail {
+  font-size: 14px;
+  margin-bottom: 10px;
+
+  .course-org {
+    font-size: 18px;
+  }
+}
+
+.course-info {
+  font-size: 1em;
+
+  .fa,
+  span {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 5px;
+  }
+
+  span {
+    font-size: 1em;
+  }
+}
+
+.caption {
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.media {
+  margin-bottom: 40px;
+
+  .media-content .course-info {
+    font-size: .8em;
+    margin: 8px 0;
+
+    .fa,
+    span {
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    .fa {
+      font-size: 16px;
+    }
+  }
+}

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-12 17:54-0500\n"
+"POT-Creation-Date: 2017-09-30 10:38-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,38 +17,38 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: enterprise/static/enterprise/admin/manage_learners.js:38
+#: enterprise/static/enterprise/js/manage_learners.js:38
 msgid "Enter a valid course ID"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:82
+#: enterprise/static/enterprise/js/manage_learners.js:82
 msgid "Are you sure you want to unlink %(email)s?"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:114
+#: enterprise/static/enterprise/js/manage_learners.js:114
 msgid "---------"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:115
+#: enterprise/static/enterprise/js/manage_learners.js:115
 msgid "Audit"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:116
+#: enterprise/static/enterprise/js/manage_learners.js:116
 msgid "Verified"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:117
+#: enterprise/static/enterprise/js/manage_learners.js:117
 msgid "Professional Education"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:118
+#: enterprise/static/enterprise/js/manage_learners.js:118
 msgid "Professional Education (no ID)"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:119
+#: enterprise/static/enterprise/js/manage_learners.js:119
 msgid "Credit"
 msgstr ""
 
-#: enterprise/static/enterprise/admin/manage_learners.js:120
+#: enterprise/static/enterprise/js/manage_learners.js:120
 msgid "Honor"
 msgstr ""

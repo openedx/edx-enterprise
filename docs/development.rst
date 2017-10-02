@@ -90,8 +90,7 @@ A whole bunch of static analyzers are used to ensure code quality. Most notable 
 
 .. code-block:: bash
 
-    $ make quality      # runs all python and docs quality check
-    $ tox -e quality    # same
+    $ tox -e quality    # runs all python and docs quality check
     $ make jshint       # runs jshint on files in enterprise folder
 
 Build (these) docs

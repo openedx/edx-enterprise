@@ -54,7 +54,6 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
         ('error', '<i class="fa fa-times-circle" aria-hidden="true"></i>'),
         ('plus-circle', '<i class="fa fa-plus-circle" aria-hidden="true"></i>'),
         ('minus-circle', '<i class="fa fa-minus-circle" aria-hidden="true"></i>'),
-        ('unknown-status-tag', ''),
     )
     @ddt.unpack
     def test_fa_icon(self, message_type, expected_favicon):
@@ -142,8 +141,10 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
                 'index': 0,
             },
             [
-                '<button class="fa fa-times-circle modal-close-button" id="modal-close-button-0" '
-                'aria-label="close_modal_button_text"></button>',
+                '<button type="button" class="close" data-dismiss="modal" '
+                'aria-hidden="true" aria-label="close_modal_button_text">',
+                '<i class="fa fa-times" aria-hidden="true"></i>',
+                '</button>',
                 '<img src="organization_logo" alt="organization_name" />',
                 '<span class="title">price_text</span>',
                 '<span class="title">level_text</span>',
@@ -252,6 +253,8 @@ class EnterpriseTemplateFiltersTest(unittest.TestCase):
         'href="#!"',
         'text-underline',
         'view-course-details-link-0',
+        'data-toggle="modal"',
+        'data-target="#course-details-modal-0"',
         'edX Demonstration Course',
         '</a>'
     )

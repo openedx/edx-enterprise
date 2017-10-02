@@ -8,8 +8,14 @@
 <input type="checkbox" id="data-consent-checkbox"/>
 <button type="button" id="consent-button" disabled>Button contents</button>
 <button type="button" id="failure-link">Failure link</button>
-<div id="consent-confirmation-modal" style="display: none;">
-    <button type="button" id="review-policy-link">Review policy</button>
+<div id="consent-confirmation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-header-text" aria-hidden="true" tabindex="-1">
+  <div class="modal-dialog modal-md">
+    <div id="consent-confirmation-modal-content" class="modal-content">
+      <div class="modal-body">
+        <button class="failure-link" id="review-policy-link">Review policy</button>
+      </div>
+    </div>
+  </div>
 </div>
 <button type="button" id="consent-policy-dropdown-bar">Show policy</button>
 <div class="consent-policy" style="display: none;"></div>

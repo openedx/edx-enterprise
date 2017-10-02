@@ -1,0 +1,33 @@
+.modal {
+  width: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: none;
+  background: none;
+}
+
+.modal-header {
+  background-color: $blue;
+  padding: 5px;
+}
+
+button.close {
+  font-weight: 500;
+  background: none;
+  border: none;
+  color: $white;
+
+  i {
+    font-size: 1.5rem;
+  }
+
+  &:hover {
+    color: $gray-400;
+  }
+}
+
+h2.modal-header-text {
+  margin: 0;
+  font-weight: bold;
+  font-size: 18px;
+}

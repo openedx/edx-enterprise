@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.49.0] - 2017-10-02
+---------------------
+
+* Rewrite all of our CSS in SASS/SCSS.
+* Use Bootstrap for our modals.
+* Fix existing course modal UI issues using Bootstrap & SASS/SCSS.
+
 [0.48.2] - 2017-09-29
 ---------------------
 

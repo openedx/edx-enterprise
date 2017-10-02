@@ -13,8 +13,6 @@ MESSAGE_ICONS = {
     'info': 'fa-info-circle',
     'warning': 'fa-exclamation-triangle',
     'error': 'fa-times-circle',
-    'plus-circle': 'fa-plus-circle',
-    'minus-circle': 'fa-minus-circle',
 }
 
 
@@ -27,7 +25,7 @@ def fa_icon(message_type):
         {% fa_icon "success" %}
     """
     return {
-        'icon': MESSAGE_ICONS.get(message_type)
+        'icon': MESSAGE_ICONS.get(message_type, 'fa-{}'.format(message_type))
     }
 
 
@@ -105,6 +103,8 @@ def link_to_modal(link_text, index, autoescape=True):  # pylint: disable=unused-
         ' href="#!"'
         ' class="text-underline view-course-details-link"'
         ' id="view-course-details-link-{index}"'
+        ' data-toggle="modal"'
+        ' data-target="#course-details-modal-{index}"'
         '>{link_text}</a>'
     ).format(
         index=index,

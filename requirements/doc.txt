@@ -7,9 +7,9 @@
 alabaster==0.7.10         # via sphinx
 amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
-babel==2.5.0              # via sphinx
+babel==2.5.1              # via sphinx
 billiard==3.3.0.23        # via celery
-bleach==2.0.0             # via readme-renderer
+bleach==2.1               # via readme-renderer
 celery==3.1.18
 chardet==3.0.4            # via doc8
 django-config-models==0.1.8
@@ -31,7 +31,7 @@ edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.2.0
 flaky==3.3.0
-html5lib==0.999999999     # via bleach
+html5lib==1.0b10          # via bleach
 imagesize==0.7.1          # via sphinx
 jinja2==2.9.6             # via sphinx
 jsonfield==2.0.2
@@ -49,13 +49,13 @@ readme-renderer==17.2
 requests==2.9.1
 restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.10.0               # via bleach, django-extensions, doc8, edx-opaque-keys, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
+six==1.11.0               # via bleach, django-extensions, doc8, edx-opaque-keys, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.6.3             # via edx-sphinx-theme
+sphinx==1.6.4             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.26.0         # via doc8, edx-opaque-keys
+stevedore==1.27.0         # via doc8, edx-opaque-keys
 testfixtures==5.2.0
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1

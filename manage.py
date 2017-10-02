@@ -11,7 +11,8 @@ import sys
 PWD = os.path.abspath(os.path.dirname(__file__))
 
 if __name__ == "__main__":
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "test_settings")
+    # TODO: Make sure to update the settings module used here when we move to be a service.
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "enterprise.settings.test")
     sys.path.append(PWD)
     try:
         from django.core.management import execute_from_command_line  # pylint: disable=wrong-import-position

@@ -9,10 +9,10 @@ amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
 argparse==1.4.0           # via caniusepython3
 astroid==1.5.2            # via edx-lint, pylint, pylint-celery, pylint-plugin-utils
-babel==2.5.0              # via sphinx
+babel==2.5.1              # via sphinx
 backports.functools-lru-cache==1.4  # via astroid, caniusepython3, pylint
 billiard==3.3.0.23        # via celery
-bleach==2.0.0             # via readme-renderer
+bleach==2.1               # via readme-renderer
 caniusepython3==5.0.0
 celery==3.1.18
 chardet==3.0.4            # via doc8
@@ -35,7 +35,6 @@ django==1.8.18
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
-dnspython==1.15.0         # via email-validator
 doc8==0.8.0
 docutils==0.14            # via doc8, readme-renderer, restructuredtext-lint, sphinx
 edx-django-oauth2-provider==1.1.4
@@ -45,17 +44,15 @@ edx-lint==0.5.4
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.2.0
-email-validator==1.0.2    # via faker
 enum34==1.1.6             # via astroid
 factory-boy==2.9.2
-faker==0.8.3              # via factory-boy
+faker==0.8.4              # via factory-boy
 first==2.0.1              # via pip-tools
 flaky==3.3.0
 freezegun==0.3.9
 funcsigs==1.0.2           # via mock
 futures==3.1.1            # via caniusepython3
-html5lib==0.999999999     # via bleach
-idna==2.6                 # via email-validator
+html5lib==1.0b10          # via bleach
 imagesize==0.7.1          # via sphinx
 inflect==0.2.5            # via jinja2-pluralize
 ipaddress==1.0.18         # via faker
@@ -72,7 +69,7 @@ packaging==16.8           # via caniusepython3
 path.py==10.4             # via edx-i18n-tools
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
-pip-tools==1.9.0
+pip-tools==1.10.1
 pkginfo==1.4.1            # via twine
 pluggy==0.5.2             # via tox
 pockets==0.5.1            # via sphinxcontrib-napoleon
@@ -98,21 +95,21 @@ pyyaml==3.12              # via edx-i18n-tools
 readme-renderer==17.2
 requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
-responses==0.7.0
+responses==0.8.0
 restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
-six==1.10.0               # via astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore
+six==1.11.0               # via astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle, sphinx
-sphinx==1.6.3             # via edx-sphinx-theme
+sphinx==1.6.4             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.26.0         # via doc8, edx-opaque-keys
+stevedore==1.27.0         # via doc8, edx-opaque-keys
 testfixtures==5.2.0
 tox-battery==0.2.0
-tox==2.8.2
-tqdm==4.15.0              # via twine
+tox==2.9.1
+tqdm==4.17.1              # via twine
 twine==1.9.1
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1

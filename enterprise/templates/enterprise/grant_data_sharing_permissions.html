@@ -1,10 +1,6 @@
 {% extends 'enterprise/base.html' %}
 
-{% load i18n staticfiles %}
-
-{% block extrastyles %}
-  <link rel="stylesheet" href="{% static 'enterprise/grant_data_sharing_permissions.css' %}"/>
-{% endblock %}
+{% load i18n staticfiles enterprise %}
 
 {% block extrahead %}
   <script type="text/javascript">
@@ -21,7 +17,7 @@
     {% endif %}
   </script>
   <script type="text/javascript" src="{% static  'js/vendor/jquery.cookie.js' %}"></script>
-  <script type="text/javascript" src="{% static  'enterprise/grant_data_sharing_permissions.js' %}"></script>
+  <script type="text/javascript" src="{% static  'enterprise/js/grant_data_sharing_permissions.js' %}"></script>
 {% endblock %}
 
 {% block contents %}
@@ -63,7 +59,9 @@
                         <label for="data-consent-checkbox">{{ agreement_text }}</label>
                       </p>
                       <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>{{ continue_text }}</button>
-                      <button type="button" class="failure-link background-input" id="failure-link">{{ abort_text }}</button>
+                      <button type="button" class="failure-link background-input" id="failure-link" data-toggle="modal" data-target="#consent-confirmation-modal">
+                        {{ abort_text }}
+                      </button>
 
                       <input type="hidden" name="enterprise_customer_uuid" value="{{ enterprise_customer.uuid }}" />
 
@@ -119,17 +117,25 @@
                     </p>
                   </div>
                 </div>
-                <div id="consent-confirmation-modal" class="modal">
-                  <div id="consent-confirmation-modal-content" class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text">
-                    <button class="fa fa-times-circle modal-close-button" id="modal-close-button" aria-label="{% trans "Close" %}"></button>
-                    <div class="consent-confirmation-modal-scrollable">
-                      <header class="modal-header">
-                        <h2 id="modal-header-text">{{ confirmation_modal_header }}</h2>
-                      </header>
-                      <p>{{ confirmation_alert_prompt|safe }}</p>
-                      <p>{{ confirmation_alert_prompt_warning }}</p>
-                      <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
-                      <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+                <div id="consent-confirmation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-header-text" aria-hidden="true" tabindex="-1">
+                  <div class="modal-dialog modal-md" role="document">
+                    <div id="consent-confirmation-modal-content" class="modal-content">
+                      <div class="modal-header">
+                        <button id="modal-close-button" type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label="{% trans "Close" %}">
+                          {% fa_icon 'times' %}
+                        </button>
+                      </div>
+                      <div class="modal-body">
+                        <header class="modal-header-wrapper">
+                          <h2 id="modal-header-text" class="modal-header-text">
+                            {{ confirmation_modal_header }}
+                          </h2>
+                        </header>
+                        <p>{{ confirmation_alert_prompt|safe }}</p>
+                        <p>{{ confirmation_alert_prompt_warning }}</p>
+                        <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
+                        <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+                      </div>
                     </div>
                   </div>
                 </div>

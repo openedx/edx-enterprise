@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-12 17:53-0500\n"
+"POT-Creation-Date: 2017-09-30 10:38-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,20 +38,20 @@ msgstr ""
 msgid "Course key for which data sharing consent is granted."
 msgstr ""
 
-#: enterprise/admin/__init__.py:398
+#: enterprise/admin/__init__.py:370
 msgid "Preview (course)"
 msgstr ""
 
-#: enterprise/admin/__init__.py:400
+#: enterprise/admin/__init__.py:372
 msgid ""
 "Preview the HTML template rendered in the context of a course enrollment."
 msgstr ""
 
-#: enterprise/admin/__init__.py:409
+#: enterprise/admin/__init__.py:381
 msgid "Preview (program)"
 msgstr ""
 
-#: enterprise/admin/__init__.py:411
+#: enterprise/admin/__init__.py:383
 msgid ""
 "Preview the HTML template rendered in the context of a program enrollment."
 msgstr ""
@@ -132,13 +132,13 @@ msgstr ""
 msgid "Do not notify"
 msgstr ""
 
-#: enterprise/admin/forms.py:396
+#: enterprise/admin/forms.py:397
 msgid ""
 "The specified Identity Provider does not exist. For more information, "
 "contact a system administrator."
 msgstr ""
 
-#: enterprise/admin/forms.py:407
+#: enterprise/admin/forms.py:408
 #, python-brace-format
 msgid ""
 "The site for the selected identity provider ({identity_provider_site}) does "
@@ -243,26 +243,26 @@ msgid ""
 "Customer {ec_name}"
 msgstr ""
 
-#: enterprise/admin/views.py:242
+#: enterprise/admin/views.py:243
 #, python-brace-format
 msgid "Error at line {line}: {message}\n"
 msgstr ""
 
-#: enterprise/admin/views.py:269
+#: enterprise/admin/views.py:270
 #, python-brace-format
 msgid "{count} new learner was added to {enterprise_customer_name}."
 msgid_plural "{count} new learners were added to {enterprise_customer_name}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:283
+#: enterprise/admin/views.py:284
 #, python-brace-format
 msgid ""
 "The following learners were already associated with this Enterprise "
 "Customer: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:293
+#: enterprise/admin/views.py:294
 #, python-brace-format
 msgid ""
 "The following learners are already associated with another Enterprise "
@@ -270,32 +270,32 @@ msgid ""
 "{list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:305
+#: enterprise/admin/views.py:306
 #, python-brace-format
 msgid ""
 "The following duplicate email addresses were not added: {list_of_emails}"
 msgstr ""
 
-#: enterprise/admin/views.py:506
+#: enterprise/admin/views.py:507
 msgid ""
 "Course details were not found for course key {} - Course Catalog API "
 "returned nothing. Proceeding with enrollment, but notifications won't be sent"
 msgstr ""
 
-#: enterprise/admin/views.py:594
+#: enterprise/admin/views.py:604
 #, python-brace-format
 msgid "{enrolled_count} learner was enrolled in {enrolled_in}."
 msgid_plural "{enrolled_count} learners were enrolled in {enrolled_in}."
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/admin/views.py:619
+#: enterprise/admin/views.py:629
 #, python-brace-format
 msgid ""
 "The following learners could not be enrolled in {enrolled_in}: {user_list}"
 msgstr ""
 
-#: enterprise/admin/views.py:642
+#: enterprise/admin/views.py:652
 #, python-brace-format
 msgid ""
 "The following learners do not have an account on {platform_name}. They have "
@@ -303,11 +303,11 @@ msgid ""
 "they will be enrolled automatically: {pending_email_list}"
 msgstr ""
 
-#: enterprise/admin/views.py:715
+#: enterprise/admin/views.py:725
 msgid "the program"
 msgstr ""
 
-#: enterprise/admin/views.py:827
+#: enterprise/admin/views.py:837
 #, python-brace-format
 msgid "Email {email} is not associated with Enterprise Customer {ec_name}"
 msgstr ""
@@ -328,23 +328,23 @@ msgstr ""
 msgid "List of items."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:325
+#: enterprise/api/v1/serializers.py:324
 msgid "Enterprise course catalog primary key."
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:326
+#: enterprise/api/v1/serializers.py:325
 msgid "Catalog name"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:327
+#: enterprise/api/v1/serializers.py:326
 msgid "Query to retrieve catalog contents"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:328
+#: enterprise/api/v1/serializers.py:327
 msgid "Number of courses contained in this catalog"
 msgstr ""
 
-#: enterprise/api/v1/serializers.py:331
+#: enterprise/api/v1/serializers.py:330
 msgid "Usernames of users with explicit access to view this catalog"
 msgstr ""
 
@@ -426,7 +426,7 @@ msgid ""
 "your achievement."
 msgstr ""
 
-#: enterprise/messages.py:29
+#: enterprise/messages.py:26
 #, python-brace-format
 msgid ""
 "{strong_start}We could not enroll you in {em_start}{item}{em_end}."
@@ -436,7 +436,7 @@ msgid ""
 "support{link_end}.{span_end}"
 msgstr ""
 
-#: enterprise/messages.py:63
+#: enterprise/messages.py:60
 #, python-brace-format
 msgid ""
 "{strong_start}We could not gather price information for {em_start}{item}"
@@ -444,7 +444,7 @@ msgid ""
 "please contact {link_start}{platform_name} support{link_end}.{span_end}"
 msgstr ""
 
-#: enterprise/messages.py:99
+#: enterprise/messages.py:96
 #, python-brace-format
 msgid ""
 "{strong_start}We could not load the program titled {em_start}{program_title}"
@@ -454,127 +454,104 @@ msgid ""
 "support{link_end}.{span_end}"
 msgstr ""
 
-#: enterprise/models.py:89
+#: enterprise/models.py:83
 msgid "Enterprise Customer"
 msgstr ""
 
-#: enterprise/models.py:90
+#: enterprise/models.py:84
 msgid "Enterprise Customers"
 msgstr ""
 
-#: enterprise/models.py:96
+#: enterprise/models.py:90
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:100
+#: enterprise/models.py:94
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:120
+#: enterprise/models.py:114
 msgid ""
 "Specifies whether data sharing consent is enabled or disabled for learners "
 "signing in through this enterprise customer. If disabled, consent will not "
 "be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:133
+#: enterprise/models.py:127
 msgid ""
 "Specifies whether data sharing consent is optional, is required at login, or "
 "is required at enrollment."
 msgstr ""
 
-#: enterprise/models.py:141
+#: enterprise/models.py:135
 msgid ""
 "Specifies whether the audit track enrollment option will be displayed in the "
 "course enrollment view."
 msgstr ""
 
-#: enterprise/models.py:148
+#: enterprise/models.py:142
 msgid ""
 "Specifies whether to pass-back audit track enrollment data through an "
 "integrated channel."
 msgstr ""
 
-#: enterprise/models.py:155
-msgid ""
-"Specifies whether every consent interaction should ask for account-wide "
-"consent, rather than only the specific scope at which the interaction is "
-"happening."
-msgstr ""
-
-#: enterprise/models.py:219 enterprise/models.py:241
-msgid ""
-"This package must be installed in an EdX environment to look up "
-"configuration."
-msgstr ""
-
-#: enterprise/models.py:360
+#: enterprise/models.py:337
 msgid "Enterprise Customer Learner"
 msgstr ""
 
-#: enterprise/models.py:361
+#: enterprise/models.py:338
 msgid "Enterprise Customer Learners"
 msgstr ""
 
-#: enterprise/models.py:599
+#: enterprise/models.py:590
 msgid "Logo images must be in .png format."
 msgstr ""
 
-#: enterprise/models.py:608
+#: enterprise/models.py:599
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:609
+#: enterprise/models.py:600
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:737
-msgid ""
-"Stores whether the learner linked to this model has consented to have their "
-"information shared with the linked EnterpriseCustomer."
-msgstr ""
-
-#: enterprise/models.py:780
+#: enterprise/models.py:696
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:781
+#: enterprise/models.py:697
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:788
+#: enterprise/models.py:704
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:830
+#: enterprise/models.py:746
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:835
-msgid "Whether the learner has granted consent for this particular course."
-msgstr ""
-
-#: enterprise/models.py:842
+#: enterprise/models.py:753
 msgid "The ID of the course in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:994
+#: enterprise/models.py:841
 msgid ""
 "Query parameters which will be used to filter the discovery service's search/"
 "all endpoint results, specified as a Json object. An empty Json object means "
 "that all available content items will be included in the catalog."
 msgstr ""
 
-#: enterprise/models.py:1002
+#: enterprise/models.py:849
 msgid "Enterprise Customer Catalog"
 msgstr ""
 
-#: enterprise/models.py:1003
+#: enterprise/models.py:850
 msgid "Enterprise Customer Catalogs"
 msgstr ""
 
-#: enterprise/models.py:1094
+#: enterprise/models.py:941
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -596,7 +573,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:1112
+#: enterprise/models.py:959
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "
@@ -604,48 +581,48 @@ msgid ""
 "name of the course or program that was enrolled in."
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:46
+#: enterprise/templates/enterprise/admin/manage_learners.html:47
 msgid "Home"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:64
+#: enterprise/templates/enterprise/admin/manage_learners.html:65
 msgid "Manage Learners"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:67
+#: enterprise/templates/enterprise/admin/manage_learners.html:68
 msgid "Search Term: "
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:86
+#: enterprise/templates/enterprise/admin/manage_learners.html:87
 msgid "Search email address or username"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:97
+#: enterprise/templates/enterprise/admin/manage_learners.html:98
 msgid "User Email"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:98
+#: enterprise/templates/enterprise/admin/manage_learners.html:99
 msgid "Username"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:99
+#: enterprise/templates/enterprise/admin/manage_learners.html:100
 msgid "Linked Date"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:100
-#: enterprise/templates/enterprise/admin/manage_learners.html:127
+#: enterprise/templates/enterprise/admin/manage_learners.html:101
+#: enterprise/templates/enterprise/admin/manage_learners.html:128
 msgid "Enroll"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:125
+#: enterprise/templates/enterprise/admin/manage_learners.html:126
 msgid "Learner Email"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:126
+#: enterprise/templates/enterprise/admin/manage_learners.html:127
 msgid "Date Added"
 msgstr ""
 
-#: enterprise/templates/enterprise/admin/manage_learners.html:148
+#: enterprise/templates/enterprise/admin/manage_learners.html:149
 msgid "Link learners"
 msgstr ""
 
@@ -718,16 +695,16 @@ msgid ""
 msgstr ""
 
 #: enterprise/templates/enterprise/grant_data_sharing_permissions.html:124
-#: enterprise/views.py:630 enterprise/views.py:999
+#: enterprise/views.py:632 enterprise/views.py:1007
 msgid "Close"
 msgstr ""
 
-#: enterprise/utils.py:211
+#: enterprise/utils.py:216
 #, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
-#: enterprise/utils.py:268
+#: enterprise/utils.py:273
 msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 
@@ -740,26 +717,31 @@ msgstr ""
 msgid "The logo image file size must be less than or equal to %s KB."
 msgstr ""
 
-#: enterprise/views.py:79
+#: enterprise/views.py:75
 msgid ""
 "The following method from the Open edX platform is necessary for this view "
 "but isn't available."
 msgstr ""
 
-#: enterprise/views.py:128
-msgid "Data sharing consent required"
-msgstr ""
-
-#: enterprise/views.py:129
-msgid "Consent to share your data"
+#: enterprise/views.py:98
+#, python-brace-format
+msgid "{platform_name} home page"
 msgstr ""
 
 #: enterprise/views.py:130
+msgid "Data sharing consent required"
+msgstr ""
+
+#: enterprise/views.py:131
+msgid "Consent to share your data"
+msgstr ""
+
+#: enterprise/views.py:132
 #, python-brace-format
 msgid "{enterprise_customer_name} would like to know about:"
 msgstr ""
 
-#: enterprise/views.py:132
+#: enterprise/views.py:134
 #, python-brace-format
 msgid ""
 "I agree to allow {platform_name} to share data about my enrollment, "
@@ -767,19 +749,19 @@ msgid ""
 "my enrollment is sponsored by {enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:135
+#: enterprise/views.py:137
 msgid "Yes, continue"
 msgstr ""
 
-#: enterprise/views.py:136
+#: enterprise/views.py:138
 msgid "No, take me back."
 msgstr ""
 
-#: enterprise/views.py:137
+#: enterprise/views.py:139
 msgid "Data Sharing Policy"
 msgstr ""
 
-#: enterprise/views.py:139
+#: enterprise/views.py:141
 #, python-brace-format
 msgid ""
 "Enrollment, completion, and performance data that may be shared with "
@@ -787,50 +769,50 @@ msgid ""
 "are limited to the following:"
 msgstr ""
 
-#: enterprise/views.py:143
+#: enterprise/views.py:145
 #, python-brace-format
 msgid "My email address for my {platform_name} account"
 msgstr ""
 
-#: enterprise/views.py:144
+#: enterprise/views.py:146
 #, python-brace-format
 msgid "My {platform_name} ID"
 msgstr ""
 
-#: enterprise/views.py:145
+#: enterprise/views.py:147
 #, python-brace-format
 msgid "My {platform_name} username"
 msgstr ""
 
-#: enterprise/views.py:146
+#: enterprise/views.py:148
 msgid "What courses and/or programs I've enrolled in or unenrolled from"
 msgstr ""
 
-#: enterprise/views.py:148
+#: enterprise/views.py:150
 msgid ""
 "Whether I completed specific parts of each course or program (for example, "
 "whether I watched a given video or completed a given homework assignment)"
 msgstr ""
 
-#: enterprise/views.py:151
+#: enterprise/views.py:153
 msgid ""
 "My overall percentage completion of each course or program on a periodic "
 "basis"
 msgstr ""
 
-#: enterprise/views.py:152
+#: enterprise/views.py:154
 msgid "My performance in each course or program"
 msgstr ""
 
-#: enterprise/views.py:153
+#: enterprise/views.py:155
 msgid "My final grade in each course or program"
 msgstr ""
 
-#: enterprise/views.py:154
+#: enterprise/views.py:156
 msgid "Whether I received a certificate in each course or program"
 msgstr ""
 
-#: enterprise/views.py:157
+#: enterprise/views.py:159
 #, python-brace-format
 msgid ""
 "My permission applies only to data from courses or programs that are "
@@ -842,44 +824,44 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:163
+#: enterprise/views.py:165
 msgid "Please note"
 msgstr ""
 
-#: enterprise/views.py:165
+#: enterprise/views.py:167
 #, python-brace-format
 msgid ""
 "If you decline to consent, that fact may be shared with "
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:167
+#: enterprise/views.py:169
 msgid "Are you aware..."
 msgstr ""
 
-#: enterprise/views.py:168
+#: enterprise/views.py:170
 msgid "I decline"
 msgstr ""
 
-#: enterprise/views.py:169
+#: enterprise/views.py:171
 msgid "View the data sharing policy"
 msgstr ""
 
-#: enterprise/views.py:170
+#: enterprise/views.py:172
 #, python-brace-format
 msgid "View the {start_link}data sharing policy{end_link}."
 msgstr ""
 
-#: enterprise/views.py:175
+#: enterprise/views.py:177
 msgid "Return to Top"
 msgstr ""
 
-#: enterprise/views.py:176 enterprise/views.py:635
+#: enterprise/views.py:178 enterprise/views.py:637
 #, python-brace-format
 msgid "Welcome to {platform_name}."
 msgstr ""
 
-#: enterprise/views.py:178 enterprise/views.py:637
+#: enterprise/views.py:180 enterprise/views.py:639
 #, python-brace-format
 msgid ""
 "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
@@ -887,21 +869,21 @@ msgid ""
 "opportunities from the world's best universities."
 msgstr ""
 
-#: enterprise/views.py:290
+#: enterprise/views.py:292
 #, python-brace-format
 msgid ""
 "To access this course, you must first consent to share your learning "
 "achievements with {bold_start}{enterprise_customer_name}{bold_end}."
 msgstr ""
 
-#: enterprise/views.py:298 enterprise/views.py:380
+#: enterprise/views.py:300 enterprise/views.py:382
 #, python-brace-format
 msgid ""
 "Per the {start_link}Data Sharing Policy{end_link}, {bold_start}"
 "{enterprise_customer_name}{bold_end} would like to know about:"
 msgstr ""
 
-#: enterprise/views.py:309
+#: enterprise/views.py:311
 #, python-brace-format
 msgid ""
 "In order to start this course and use your discount, {bold_start}you "
@@ -909,26 +891,26 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:324
+#: enterprise/views.py:326
 msgid "your enrollment in this course"
 msgstr ""
 
-#: enterprise/views.py:325 enterprise/views.py:408
+#: enterprise/views.py:327 enterprise/views.py:410
 msgid "your learning progress"
 msgstr ""
 
-#: enterprise/views.py:326 enterprise/views.py:409
+#: enterprise/views.py:328 enterprise/views.py:411
 msgid "course completion"
 msgstr ""
 
-#: enterprise/views.py:372
+#: enterprise/views.py:374
 #, python-brace-format
 msgid ""
 "To access this program, you must first consent to share your learning "
 "achievements with {bold_start}{enterprise_customer_name}{bold_end}."
 msgstr ""
 
-#: enterprise/views.py:392
+#: enterprise/views.py:394
 #, python-brace-format
 msgid ""
 "In order to start this program and use your discount, {bold_start}you "
@@ -936,185 +918,185 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:407
+#: enterprise/views.py:409
 msgid "your enrollment in this program"
 msgstr ""
 
-#: enterprise/views.py:610
+#: enterprise/views.py:612
 msgid "Instructor-Paced"
 msgstr ""
 
-#: enterprise/views.py:611
+#: enterprise/views.py:613
 msgid "Self-Paced"
 msgstr ""
 
-#: enterprise/views.py:614 enterprise/views.py:615
+#: enterprise/views.py:616 enterprise/views.py:617
 msgid "Confirm your course"
 msgstr ""
 
-#: enterprise/views.py:616
+#: enterprise/views.py:618
 msgid "Starts"
 msgstr ""
 
-#: enterprise/views.py:617
+#: enterprise/views.py:619
 msgid "View Course Details"
 msgstr ""
 
-#: enterprise/views.py:618
+#: enterprise/views.py:620
 msgid "Please select one:"
 msgstr ""
 
-#: enterprise/views.py:619 enterprise/views.py:991
+#: enterprise/views.py:621 enterprise/views.py:999
 msgid "Price"
 msgstr ""
 
-#: enterprise/views.py:620
+#: enterprise/views.py:622
 msgid "FREE"
 msgstr ""
 
-#: enterprise/views.py:622
+#: enterprise/views.py:624
 msgid "Earn a verified certificate!"
 msgstr ""
 
-#: enterprise/views.py:625
+#: enterprise/views.py:627
 msgid "Not eligible for a certificate; does not count toward a MicroMasters"
 msgstr ""
 
-#: enterprise/views.py:627
+#: enterprise/views.py:629
 msgid "Continue"
 msgstr ""
 
-#: enterprise/views.py:628 enterprise/views.py:996
+#: enterprise/views.py:630 enterprise/views.py:1004
 msgid "Level"
 msgstr ""
 
-#: enterprise/views.py:629 enterprise/views.py:994
+#: enterprise/views.py:631 enterprise/views.py:1002
 msgid "Effort"
 msgstr ""
 
-#: enterprise/views.py:631 enterprise/views.py:983
+#: enterprise/views.py:633 enterprise/views.py:991
 msgid "What you'll learn"
 msgstr ""
 
-#: enterprise/views.py:632 enterprise/views.py:997
+#: enterprise/views.py:634 enterprise/views.py:1005
 msgid "About This Course"
 msgstr ""
 
-#: enterprise/views.py:633 enterprise/views.py:998
+#: enterprise/views.py:635 enterprise/views.py:1006
 msgid "Course Staff"
 msgstr ""
 
-#: enterprise/views.py:641
+#: enterprise/views.py:643
 #, python-brace-format
 msgid ""
 "Discount provided by {strong_start}{enterprise_customer_name}{strong_end}"
 msgstr ""
 
-#: enterprise/views.py:961
+#: enterprise/views.py:969
 msgid "Purchase all unenrolled courses"
 msgstr ""
 
-#: enterprise/views.py:962
+#: enterprise/views.py:970
 msgid "Pursue the program"
 msgstr ""
 
-#: enterprise/views.py:966
+#: enterprise/views.py:974
 msgid "enrollment"
 msgstr ""
 
-#: enterprise/views.py:967
+#: enterprise/views.py:975
 msgid "program enrollment"
-msgstr ""
-
-#: enterprise/views.py:971
-#, python-brace-format
-msgid "What is an {platform_name} {program_type}?"
-msgstr ""
-
-#: enterprise/views.py:972
-#, python-brace-format
-msgid "What is {platform_name}?"
-msgstr ""
-
-#: enterprise/views.py:973
-#, python-brace-format
-msgid "Confirm your {item}"
-msgstr ""
-
-#: enterprise/views.py:974
-#, python-brace-format
-msgid "Presented by {organization}"
-msgstr ""
-
-#: enterprise/views.py:976
-msgid "Credit- and Certificate-eligible"
-msgstr ""
-
-#: enterprise/views.py:977
-msgid "Self-paced; courses can be taken in any order"
 msgstr ""
 
 #: enterprise/views.py:979
 #, python-brace-format
-msgid "{purchase_action} for"
+msgid "What is an {platform_name} {program_type}?"
 msgstr ""
 
 #: enterprise/views.py:980
 #, python-brace-format
-msgid "Discount provided by {strong_start}{provider}{strong_end}."
+msgid "What is {platform_name}?"
 msgstr ""
 
 #: enterprise/views.py:981
-msgid "enrolled"
+#, python-brace-format
+msgid "Confirm your {item}"
 msgstr ""
 
 #: enterprise/views.py:982
-msgid "already enrolled, must pay for certificate"
+#, python-brace-format
+msgid "Presented by {organization}"
+msgstr ""
+
+#: enterprise/views.py:984
+msgid "Credit- and Certificate-eligible"
 msgstr ""
 
 #: enterprise/views.py:985
-msgid "Real Career Impact"
+msgid "Self-paced; courses can be taken in any order"
 msgstr ""
 
 #: enterprise/views.py:987
-msgid "See More"
+#, python-brace-format
+msgid "{purchase_action} for"
 msgstr ""
 
 #: enterprise/views.py:988
-msgid "See Less"
+#, python-brace-format
+msgid "Discount provided by {strong_start}{provider}{strong_end}."
 msgstr ""
 
 #: enterprise/views.py:989
-msgid "Confirm Program"
+msgid "enrolled"
 msgstr ""
 
 #: enterprise/views.py:990
-msgid "Program Summary"
-msgstr ""
-
-#: enterprise/views.py:992
-msgid "Length"
+msgid "already enrolled, must pay for certificate"
 msgstr ""
 
 #: enterprise/views.py:993
-msgid "{}-{} weeks per course"
+msgid "Real Career Impact"
 msgstr ""
 
 #: enterprise/views.py:995
-msgid "{}-{} hours per week, per course"
+msgid "See More"
+msgstr ""
+
+#: enterprise/views.py:996
+msgid "See Less"
+msgstr ""
+
+#: enterprise/views.py:997
+msgid "Confirm Program"
+msgstr ""
+
+#: enterprise/views.py:998
+msgid "Program Summary"
 msgstr ""
 
 #: enterprise/views.py:1000
+msgid "Length"
+msgstr ""
+
+#: enterprise/views.py:1001
+msgid "{}-{} weeks per course"
+msgstr ""
+
+#: enterprise/views.py:1003
+msgid "{}-{} hours per week, per course"
+msgstr ""
+
+#: enterprise/views.py:1008
 msgid "Program not eligible for one-click purchase."
 msgstr ""
 
-#: enterprise/views.py:1047
+#: enterprise/views.py:1055
 msgid "{} week"
 msgid_plural "{} weeks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/views.py:1115
+#: enterprise/views.py:1122
 #, python-brace-format
 msgid "{count} Course"
 msgid_plural "{count} Courses"
