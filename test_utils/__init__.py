@@ -28,7 +28,7 @@ FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
 TEST_USERNAME = 'api_worker'
 TEST_EMAIL = 'test@email.com'
 TEST_PASSWORD = 'QWERTY'
-TEST_COURSE = 'course-v1:edX+DemoX+DemoCourse'
+TEST_COURSE = 'course-v1:edX+DemoX+Demo_Course'
 TEST_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
 TEST_USER_ID = 1
 
