@@ -84,12 +84,13 @@ def get_identity_provider(provider_id):
     """
     Get Identity Provider with given id.
 
-    Raises a ValueError if it third_party_auth app is not available.
-
     Return:
         Instance of ProviderConfig or None.
     """
-    return Registry and Registry.get(provider_id)
+    try:
+        return Registry and Registry.get(provider_id)
+    except ValueError:
+        return None
 
 
 def get_idp_choices():

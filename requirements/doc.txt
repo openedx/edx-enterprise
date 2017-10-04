@@ -9,7 +9,7 @@ amqp==1.4.9               # via kombu
 anyjson==0.3.3            # via kombu
 babel==2.5.1              # via sphinx
 billiard==3.3.0.23        # via celery
-bleach==2.1               # via readme-renderer
+bleach==2.1.1             # via readme-renderer
 celery==3.1.18
 chardet==3.0.4            # via doc8
 django-config-models==0.1.8

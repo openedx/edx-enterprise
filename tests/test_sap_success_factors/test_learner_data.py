@@ -21,6 +21,7 @@ from test_utils.factories import (
     DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
@@ -61,6 +62,14 @@ class TestBaseLearnerExporter(unittest.TestCase):
             secret='secret',
             active=True,
         )
+        self.idp = EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=self.enterprise_customer
+        )
+        tpa_client_mock = mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+        self.tpa_client = tpa_client_mock.start().return_value
+        # Default remote ID
+        self.tpa_client.get_remote_id.return_value = 'fake-remote-id'
+        self.addCleanup(tpa_client_mock.stop)
         self.exporter = config.get_learner_data_exporter('dummy-user')
         assert isinstance(self.exporter, BaseLearnerExporter)
         super(TestBaseLearnerExporter, self).setUp()
@@ -141,6 +150,35 @@ class TestBaseLearnerExporter(unittest.TestCase):
         assert not report.course_completed
         assert report.completed_timestamp is None
         assert report.grade == BaseLearnerExporter.GRADE_INCOMPLETE
+
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
+    def test_learner_data_instructor_paced_no_certificate_null_sso_id(
+            self, mock_certificate_api, mock_course_api, mock_enrollment_api
+    ):
+        EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        # No SSO user attached
+        self.tpa_client.get_remote_id.return_value = None
+
+        # Raise 404 - no certificate found
+        mock_certificate_api.return_value.get_course_certificate.side_effect = HttpNotFoundError
+
+        # Return instructor-paced course details
+        mock_course_api.return_value.get_course_details.return_value = dict(
+            pacing='instructor',
+        )
+
+        # Return enrollment mode data
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
+            mode="verified"
+        )
+
+        learner_data = list(self.exporter.collect_learner_data())
+        assert not learner_data
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')

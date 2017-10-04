@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.50.1] - 2017-10-03
+---------------------
+
+* Improved robustness for `force_fresh_session` decorator in conjunction with `enterprise_login_required`
+* Conciously avoid attempting to sync back details for SAPSF users who aren't linked via SSO
+
 [0.50.0] - 2017-10-03
 ---------------------
 

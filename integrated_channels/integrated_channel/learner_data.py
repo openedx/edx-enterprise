@@ -132,12 +132,20 @@ class BaseLearnerExporter(object):
             else:
                 completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
 
-            yield self.get_learner_data_record(
+            record = self.get_learner_data_record(
                 enterprise_enrollment=enterprise_enrollment,
                 completed_date=completed_date,
                 grade=grade,
                 is_passing=is_passing,
             )
+            if record:
+                # There are some cases where we won't receive a record from the above
+                # method; right now, that should only happen if we have an Enterprise-linked
+                # user for the integrated channel, and transmission of that user's
+                # data requires an upstream user identifier that we don't have (due to a
+                # failure of SSO or similar). In sucha a case, `get_learner_data_record`
+                # would return None, and we'd simply skip yielding it here.
+                yield record
 
     def _collect_certificate_data(self, enterprise_enrollment):
         """

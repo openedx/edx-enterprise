@@ -137,6 +137,8 @@ class TestEnterpriseDecorators(unittest.TestCase):
         # Assert that redirect status code 302 is returned when an anonymous
         # user tries to access enterprise course enrollment page.
         assert response.status_code == 302
+        assert 'new_enterprise_login%3Dyes' in response.url
+        assert 'tpa_hint' in response.url
 
     def test_enterprise_login_required(self):
         """
@@ -184,15 +186,14 @@ class TestEnterpriseDecorators(unittest.TestCase):
 
         # Assert that view function was called and the session flag was set.
         assert view_function.called
-        assert request.session.get('is_session_fresh')
 
-    @mock.patch('enterprise.decorators.get_identity_provider', side_effect=ValueError)
-    def test_force_fresh_session_no_sso_provider(self, mock_registry):  # pylint: disable=unused-argument
+    @mock.patch('enterprise.decorators.get_identity_provider')
+    def test_force_fresh_session_no_sso_provider(self, mock_get_idp):  # pylint: disable=unused-argument
         """
         Test that the force_fresh_session decorator calls the view function
         when no sso provider is configured.
         """
-
+        mock_get_idp.return_value = None
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
@@ -208,7 +209,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         # Assert that view function was called.
         assert view_function.called
 
-    def test_force_fresh_session_when_fresh(self):
+    def test_force_fresh_session_param_received(self):
         """
         Test that the force_fresh_session decorator calls the view function
         if the session is fresh.
@@ -219,8 +220,8 @@ class TestEnterpriseDecorators(unittest.TestCase):
             'enterprise_course_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
+        enterprise_launch_url += '?new_enterprise_login=yes'
         request = self._prepare_request(enterprise_launch_url, UserFactory(is_active=True))
-        request.session['is_session_fresh'] = True
 
         force_fresh_session(view_function)(
             request, enterprise_uuid=self.customer.uuid, course_id=course_id
@@ -228,12 +229,10 @@ class TestEnterpriseDecorators(unittest.TestCase):
 
         # Assert that view function was called.
         assert view_function.called
-        # Assert that session flag was removed.
-        assert request.session.get('is_session_fresh') is None
 
     @ddt.data(True, False)
     @mock.patch('enterprise.utils.Registry')
-    def test_force_fresh_session_when_not_fresh(self, drop_exisiting_session, mock_registry):
+    def test_force_fresh_session_param_not_received(self, drop_exisiting_session, mock_registry):
         """
         Test that the force_fresh_session decorator redirects authenticated
         users with the appropriate provider config depending on the IdPs configuration.
