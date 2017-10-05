@@ -351,16 +351,16 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             [],
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: '93492267-33eb-4062-bffe-f29917fc0661',
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
             },
             {
                 DSCView.REQUIRED_PARAM_USERNAME: TEST_USERNAME,
-                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: '93492267-33eb-4062-bffe-f29917fc0661',
+                DSCView.REQUIRED_PARAM_ENTERPRISE_CUSTOMER: TEST_UUID,
                 DSCView.REQUIRED_PARAM_PROGRAM_UUID: 'fake-uuid',
                 DSCView.CONSENT_EXISTS: False,
                 DSCView.CONSENT_GRANTED: False,
-                DSCView.CONSENT_REQUIRED: False,
+                DSCView.CONSENT_REQUIRED: True,
             },
             200,
             ['org1+course', 'org2+othercourse']
@@ -417,6 +417,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             item.update(enterprise_customer=enterprise_customer)
         if factory:
             create_items(factory, items)
+
         response = self.client.get(self.path, request_body)
         api_catalog_client.get_program_course_keys.assert_called_once_with(request_body['program_uuid'])
         self._assert_expectations(response, expected_response_body, expected_status_code)

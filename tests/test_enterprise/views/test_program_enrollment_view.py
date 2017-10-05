@@ -955,7 +955,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         """
         course_catalog_api_client_mock.side_effect = ImproperlyConfigured
         with self.assertRaises(Http404):
-            ProgramEnrollmentView.extend_course({})
+            ProgramEnrollmentView.extend_course({}, EnterpriseCustomerFactory())
 
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     def test_extend_course_no_course_details_returned_from_discovery(self, course_catalog_api_client_mock):
@@ -964,4 +964,6 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         """
         course_catalog_api_client_mock.return_value.get_course_and_course_run.return_value = None, None
         with self.assertRaises(Http404):
-            ProgramEnrollmentView.extend_course({'course_runs': [{'key': 'edX+DemoX+2017'}]})
+            ProgramEnrollmentView.extend_course(
+                {'course_runs': [{'key': 'edX+DemoX+2017'}]},
+                EnterpriseCustomerFactory())

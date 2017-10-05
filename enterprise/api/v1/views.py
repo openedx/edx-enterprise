@@ -144,7 +144,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
         )
 
         # We have handled potential error cases and are now ready to call out to the Catalog API.
-        catalog_api = CourseCatalogApiClient(request.user)
+        catalog_api = CourseCatalogApiClient(request.user, enterprise_customer.site)
         courses = catalog_api.get_paginated_catalog_courses(enterprise_customer.catalog, request.GET)
 
         # An empty response means that there was a problem fetching data from Catalog API, since
@@ -404,7 +404,7 @@ class EnterpriseCourseCatalogViewSet(EnterpriseWrapperApiViewSet):
         Only courses with active course runs are returned. A course run is considered active if it is currently
         open for enrollment, or will open in the future.
         """
-        catalog_api = CourseCatalogApiClient(request.user)
+        catalog_api = CourseCatalogApiClient(request.user, enterprise_customer.site)
         courses = catalog_api.get_paginated_catalog_courses(pk, request.GET)
 
         # If the API returned an empty response, that means pagination has ended.

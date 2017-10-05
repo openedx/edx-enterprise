@@ -79,7 +79,11 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             mock_file.name = "some_file.csv"
             mock_file.read.return_value = "fake file contents"
             file_data = {ManageLearnersForm.Fields.BULK_UPLOAD: mock_file}
-        return ManageLearnersForm(form_data, file_data)
+
+        customer = EnterpriseCustomerFactory(
+            catalog=99,
+        )
+        return ManageLearnersForm(form_data, file_data, enterprise_customer=customer)
 
     @ddt.data(
         "qwe@asd.com", "email1@example.org", "john.t.kirk@starfleet.gov"
@@ -436,7 +440,20 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 "name": "Other catalog!"
             }
         ]
-        form = EnterpriseCustomerAdminForm()
+
+        customer = EnterpriseCustomerFactory(
+            catalog=99,
+        )
+        form = EnterpriseCustomerAdminForm(
+            {
+                'catalog': '',
+                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
+                'site': customer.site.id,
+                'name': customer.name,
+                'active': customer.active
+            },
+            instance=customer,
+        )
         assert isinstance(form.fields['catalog'], forms.ChoiceField)
         assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
             (self.catalog_id, 'My Catalog'),
@@ -454,7 +471,20 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 "name": "Other catalog!"
             }
         ]
-        form = EnterpriseCustomerAdminForm()
+
+        customer = EnterpriseCustomerFactory(
+            catalog=99,
+        )
+        form = EnterpriseCustomerAdminForm(
+            {
+                'catalog': '',
+                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
+                'site': customer.site.id,
+                'name': customer.name,
+                'active': customer.active
+            },
+            instance=customer,
+        )
         assert isinstance(form.fields['catalog'], forms.ChoiceField)
         assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
             (self.catalog_id, 'My Catalog'),

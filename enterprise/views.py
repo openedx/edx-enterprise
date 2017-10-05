@@ -662,7 +662,9 @@ class CourseEnrollmentView(NonAtomicView):
         of the available course modes for that course run.
         """
         try:
-            course, course_run = CourseCatalogApiServiceClient().get_course_and_course_run(course_run_id)
+            enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+            course, course_run = \
+                CourseCatalogApiServiceClient(enterprise_customer.site).get_course_and_course_run(course_run_id)
         except ImproperlyConfigured:
             raise Http404
 
@@ -671,8 +673,6 @@ class CourseEnrollmentView(NonAtomicView):
                 course=course, course_run=course_run
             ))
             raise Http404
-
-        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
 
         modes = EnrollmentApiClient().get_course_modes(course_run_id)
         if not modes:
@@ -1009,7 +1009,7 @@ class ProgramEnrollmentView(NonAtomicView):
     }
 
     @staticmethod
-    def extend_course(course):
+    def extend_course(course, enterprise_customer):
         """
         Extend a course with more details needed for the program landing page.
 
@@ -1025,7 +1025,7 @@ class ProgramEnrollmentView(NonAtomicView):
         * `staff`
         """
         try:
-            catalog_api_client = CourseCatalogApiServiceClient()
+            catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
         except ImproperlyConfigured:
             raise Http404
 
@@ -1059,7 +1059,7 @@ class ProgramEnrollmentView(NonAtomicView):
         })
         return course
 
-    def get_program_details(self, request, program_uuid):
+    def get_program_details(self, request, program_uuid, enterprise_customer):
         """
         Retrieve fundamental details used by both POST and GET versions of this view.
 
@@ -1070,7 +1070,7 @@ class ProgramEnrollmentView(NonAtomicView):
         * Determine whether the learner is certificate eligible for the program.
         """
         try:
-            course_catalog_api_client = CourseCatalogApiServiceClient()
+            course_catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
         except ImproperlyConfigured:
             raise Http404
 
@@ -1090,7 +1090,7 @@ class ProgramEnrollmentView(NonAtomicView):
         enrollment_count = 0
         for extended_course in program_details['courses']:
             # We need to extend our course data further for modals and other displays.
-            extended_course.update(ProgramEnrollmentView.extend_course(extended_course))
+            extended_course.update(ProgramEnrollmentView.extend_course(extended_course, enterprise_customer))
 
             # We're enrolled in the program if we have certificate-eligible enrollment in even 1 of its courses.
             extended_course_run = extended_course['course_runs'][0]
@@ -1233,7 +1233,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 user_id=request.user.id
             )
 
-        program_details = self.get_program_details(request, program_uuid)
+        program_details = self.get_program_details(request, program_uuid, enterprise_customer)
         if program_details['certificate_eligible_for_program']:
             # The user is already enrolled in the program, so redirect to the program's dashboard.
             return redirect(LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid))
@@ -1255,7 +1255,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 user_id=request.user.id
             )
 
-        program_details = self.get_program_details(request, program_uuid)
+        program_details = self.get_program_details(request, program_uuid, enterprise_customer)
         if program_details['certificate_eligible_for_program']:
             # The user is already enrolled in the program, so redirect to the program's dashboard.
             return redirect(LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid))

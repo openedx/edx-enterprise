@@ -118,13 +118,16 @@ class ManageLearnersForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         """
-        Initializes form: puts current user into a field for later access.
+        Initializes form: puts current user and enterprise_customer into a
+        field for later access.
 
         Arguments:
             user (django.contrib.auth.models.User): current user
+            enterprise_customer (enterprise.models.EnterpriseCustomer): current customer
         """
         user = kwargs.pop('user', None)
         self._user = user
+        self._enterprise_customer = kwargs.pop('enterprise_customer', None)
         super(ManageLearnersForm, self).__init__(*args, **kwargs)
 
     def clean_email_or_username(self):
@@ -188,7 +191,7 @@ class ManageLearnersForm(forms.Form):
             return None
 
         try:
-            client = CourseCatalogApiClient(self._user)
+            client = CourseCatalogApiClient(self._user, self._enterprise_customer.site)
             program = client.get_program_by_uuid(program_id) or client.get_program_by_title(program_id)
         except MultipleProgramMatchError as exc:
             raise ValidationError(ValidationMessages.MULTIPLE_PROGRAM_MATCH.format(program_count=exc.programs_matched))
@@ -275,7 +278,7 @@ class ManageLearnersForm(forms.Form):
 
         course_runs = get_course_runs_from_program(program)
         try:
-            client = CourseCatalogApiClient(self._user)
+            client = CourseCatalogApiClient(self._user, self._enterprise_customer.site)
             available_modes = client.get_common_course_modes(course_runs)
             course_mode = self.cleaned_data.get(self.Fields.COURSE_MODE)
         except (HttpClientError, HttpServerError):
@@ -329,7 +332,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         Once retrieved, these name pairs can be used directly as a value
         for the `choices` argument to a ChoiceField.
         """
-        catalog_api = CourseCatalogApiClient(self.user)
+        catalog_api = CourseCatalogApiClient(self.user, self.instance.site)
         catalogs = catalog_api.get_all_catalogs()
         # order catalogs by name.
         catalogs = sorted(catalogs, key=lambda catalog: catalog.get('name', '').lower())

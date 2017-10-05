@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.51.0] - 2017-10-05
+---------------------
+
+* Make discovery-service lookups site-aware
+
 [0.50.1] - 2017-10-03
 ---------------------
 
