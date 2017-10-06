@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from consent.helpers import consent_required, get_data_sharing_consent
+from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from dateutil.parser import parse
 
@@ -16,7 +16,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
@@ -32,14 +32,13 @@ from enterprise.messages import (
     add_missing_price_information_message,
     add_not_one_click_purchasable_message,
 )
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     clean_html_for_template_rendering,
     filter_audit_course_modes,
     format_price,
     get_configuration_value,
-    get_enterprise_customer_for_user,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
@@ -182,13 +181,29 @@ class GrantDataSharingPermissions(View):
         "opportunities from the world's best universities."
     )
 
+    def course_or_program_exist(self, course_id, program_uuid):
+        """
+        Return whether the input course or program exist.
+        """
+        course_exists = course_id and CourseApiClient().get_course_details(course_id)
+        program_exists = program_uuid and CourseCatalogApiServiceClient().program_exists(program_uuid)
+        return course_exists or program_exists
+
     def get_default_context(self, enterprise_customer, request):
         """
         Get the set of variables that will populate the template by default.
         """
-        global_context_data = get_global_context(request)
-        platform_name = global_context_data['platform_name']
-        context_data = {
+        context_data = get_global_context(request)
+        platform_name = context_data['platform_name']
+        context_data.update({
+            'enterprise_customer': enterprise_customer,
+            'welcome_text': self.welcome_text.format(platform_name=platform_name),
+            'enterprise_welcome_text': self.enterprise_welcome_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                strong_start='<strong>',
+                strong_end='</strong>',
+            ),
             'page_title': self.page_title,
             'consent_message_header': self.consent_message_header,
             'requested_permissions_header': self.requested_permissions_header.format(
@@ -226,298 +241,131 @@ class GrantDataSharingPermissions(View):
             'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
             'policy_link_template': self.policy_link_template,
             'policy_return_link_text': self.policy_return_link_text,
-        }
-
-        context_data.update(global_context_data)
+        })
         return context_data
 
     @method_decorator(login_required)
-    def get_course_specific_consent(self, request, course_id):
-        """
-        Render a form with course-specific information about data sharing consent.
-
-        This particular variant of the method is called when a `course_id` parameter
-        is passed to the view. In this case, the form is rendered with information
-        about the specific course that's being set up.
-
-        A 404 will be raised if any of the following conditions are met:
-            * Enrollment is not to be deferred and there's an EnterpriseCourseEnrollment
-              associated with the current user, but the corresponding EnterpriseCustomer
-              does not require course-level consent for this course.
-            * Enrollment is to be deferred, but either no EnterpriseCustomer was
-              supplied (via the enrollment_deferred GET parameter) or the supplied
-              EnterpriseCustomer doesn't exist.
-        """
-        if not CourseApiClient().get_course_details(course_id):
-            raise Http404
-
-        next_url = request.GET.get('next')
-        failure_url = request.GET.get('failure_url')
-
-        enrollment_deferred = request.GET.get('enrollment_deferred')
-        customer = None
-        if enrollment_deferred is None:
-            # For non-deferred enrollments, check if we need to collect
-            # consent and retrieve the EnterpriseCustomer using the existing
-            # EnterpriseCourseEnrollment.
-            try:
-                enrollment = EnterpriseCourseEnrollment.objects.get(
-                    enterprise_customer_user__user_id=request.user.id,
-                    course_id=course_id
-                )
-                customer = enrollment.enterprise_customer_user.enterprise_customer
-                if not consent_required(enrollment.enterprise_customer_user.username, course_id, customer.uuid):
-                    raise Http404
-            except EnterpriseCourseEnrollment.DoesNotExist:
-                # Enrollment is not deferred, but we don't have
-                # an EnterpriseCourseEnrollment yet, so we carry
-                # and attempt to retrieve the EnterpriseCustomer
-                # using the enterprise_id request param below.
-                pass
-
-        # Deferred enrollments will pass the EnterpriseCustomer UUID
-        # as a request parameter. Use it to get the EnterpriseCustomer
-        # if we were not able to retrieve it above.
-        if not customer:
-            enterprise_uuid = request.GET.get('enterprise_id')
-            customer = get_object_or_404(EnterpriseCustomer, uuid=enterprise_uuid)
-
-        context_data = self.get_default_context(customer, request)
-        platform_name = context_data['platform_name']
-
-        # Translators: bold_start and bold_end are HTML tags for specifying
-        # enterprise name in bold text.
-        course_specific_context = {
-            'consent_request_prompt': _(
-                'To access this course, you must first consent to share your learning achievements '
-                'with {bold_start}{enterprise_customer_name}{bold_end}.'
-            ).format(
-                enterprise_customer_name=customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-            ),
-            'requested_permissions_header': _(
-                'Per the {start_link}Data Sharing Policy{end_link}, '
-                '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
-            ).format(
-                enterprise_customer_name=customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-                start_link='<a href="#consent-policy-dropdown-bar" '
-                           'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">',
-                end_link='</a>',
-            ),
-            'confirmation_alert_prompt': _(
-                'In order to start this course and use your discount, {bold_start}you must{bold_end} consent '
-                'to share your course data with {enterprise_customer_name}.'
-            ).format(
-                enterprise_customer_name=customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-            ),
-            'confirmation_alert_prompt_warning': '',
-            'course_id': course_id,
-            'redirect_url': next_url,
-            'enterprise_customer_name': customer.name,
-            'course_specific': True,
-            'enrollment_deferred': enrollment_deferred is not None,
-            'failure_url': failure_url,
-            'requested_permissions': [
-                _('your enrollment in this course'),
-                _('your learning progress'),
-                _('course completion'),
-            ],
-            'enterprise_customer': customer,
-            'welcome_text': self.welcome_text.format(platform_name=platform_name),
-            'enterprise_welcome_text': self.enterprise_welcome_text.format(
-                enterprise_customer_name=customer.name,
-                platform_name=platform_name,
-                strong_start='<strong>',
-                strong_end='</strong>',
-            ),
-            'policy_link_template': '',
-        }
-        context_data.update(course_specific_context)
-
-        return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
-
-    @method_decorator(login_required)
-    def get_program_specific_consent(self, request, program_uuid):
-        """
-        Render a form in order to retrieve program-related consent.
-        """
-        enterprise_uuid = request.GET.get('enterprise_customer_uuid')
-        success_url = request.GET.get('next')
-        failure_url = request.GET.get('failure_url')
-        enrollment_deferred = request.GET.get('enrollment_deferred')
-        username = request.user.username
-
-        if not (enterprise_uuid and failure_url and success_url):
-            raise Http404
-
-        if not CourseCatalogApiServiceClient.program_exists(program_uuid):
-            raise Http404
-
-        consent_record = get_data_sharing_consent(username, enterprise_uuid, program_uuid=program_uuid)
-        if consent_record is None or not consent_record.consent_required():
-            raise Http404
-
-        customer = consent_record.enterprise_customer
-
-        context_data = self.get_default_context(customer, request)
-        platform_name = context_data['platform_name']
-
-        # Translators: bold_start and bold_end are HTML tags for specifying
-        # enterprise name in bold text.
-        program_specific_context = {
-            'consent_request_prompt': _(
-                'To access this program, you must first consent to share your learning achievements '
-                'with {bold_start}{enterprise_customer_name}{bold_end}.'
-            ).format(
-                enterprise_customer_name=customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-            ),
-            'requested_permissions_header': _(
-                'Per the {start_link}Data Sharing Policy{end_link}, '
-                '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
-            ).format(
-                enterprise_customer_name=customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-                start_link='<a href="#consent-policy-dropdown-bar" '
-                           'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">',
-                end_link='</a>',
-
-            ),
-            'confirmation_alert_prompt': _(
-                'In order to start this program and use your discount, {bold_start}you must{bold_end} consent '
-                'to share your program data with {enterprise_customer_name}.'
-            ).format(
-                enterprise_customer_name=customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-            ),
-            'confirmation_alert_prompt_warning': '',
-            'program_uuid': program_uuid,
-            'redirect_url': success_url,
-            'enterprise_customer_name': customer.name,
-            'program_specific': True,
-            'enrollment_deferred': enrollment_deferred is not None,
-            'failure_url': failure_url,
-            'requested_permissions': [
-                _('your enrollment in this program'),
-                _('your learning progress'),
-                _('course completion'),
-            ],
-            'enterprise_customer': customer,
-            'welcome_text': self.welcome_text.format(platform_name=platform_name),
-            'enterprise_welcome_text': self.enterprise_welcome_text.format(
-                enterprise_customer_name=customer.name,
-                platform_name=platform_name,
-                strong_start='<strong>',
-                strong_end='</strong>',
-            ),
-            'policy_link_template': '',
-        }
-        context_data.update(program_specific_context)
-
-        return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
-
     def get(self, request):
         """
         Render a form to collect user input about data sharing consent.
         """
-        # Verify that all necessary resources are present
-        verify_edx_resources()
-        course = request.GET.get('course_id', '')
-        program = request.GET.get('program_uuid', '')
-        if course:
-            return self.get_course_specific_consent(request, course)
-        elif program:
-            return self.get_program_specific_consent(request, program)
-        raise Http404
+        enterprise_customer_uuid = request.GET.get('enterprise_customer_uuid')
+        success_url = request.GET.get('next')
+        failure_url = request.GET.get('failure_url')
+        if not (enterprise_customer_uuid and success_url and failure_url):
+            raise Http404
+
+        course_id = request.GET.get('course_id', '')
+        program_uuid = request.GET.get('program_uuid', '')
+        if not self.course_or_program_exist(course_id, program_uuid):
+            raise Http404
+
+        consent_record = get_data_sharing_consent(
+            request.user.username,
+            enterprise_customer_uuid,
+            program_uuid=program_uuid,
+            course_id=course_id
+        )
+        if consent_record is None or not consent_record.consent_required():
+            raise Http404
+
+        item = 'course' if course_id else 'program'
+        enterprise_customer = consent_record.enterprise_customer
+        context_data = self.get_default_context(enterprise_customer, request)
+        context_data.update(
+            {
+                'course_id': course_id,
+                'course_specific': True,
+            } if course_id else {
+                'program_uuid': program_uuid,
+                'program_specific': True,
+            }
+        )
+        # Translators: bold_start and bold_end are HTML tags for specifying enterprise name in bold text.
+        context_data.update({
+            'consent_request_prompt': _(
+                'To access this {item}, you must first consent to share your learning achievements '
+                'with {bold_start}{enterprise_customer_name}{bold_end}.'
+            ).format(
+                enterprise_customer_name=enterprise_customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                item=item,
+            ),
+            'requested_permissions_header': _(
+                'Per the {start_link}Data Sharing Policy{end_link}, '
+                '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
+            ).format(
+                enterprise_customer_name=enterprise_customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                start_link='<a href="#consent-policy-dropdown-bar" '
+                           'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">',
+                end_link='</a>',
+            ),
+            'confirmation_alert_prompt': _(
+                'In order to start this {item} and use your discount, {bold_start}you must{bold_end} consent '
+                'to share your {item} data with {enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=enterprise_customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                item=item,
+            ),
+            'confirmation_alert_prompt_warning': '',
+            'redirect_url': success_url,
+            'failure_url': failure_url,
+            'defer_creation': request.GET.get('defer_creation') is not None,
+            'requested_permissions': [
+                _('your enrollment in this {item}').format(item=item),
+                _('your learning progress'),
+                _('course completion'),
+            ],
+            'policy_link_template': '',
+        })
+        return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
     @method_decorator(login_required)
-    def post_course_specific_consent(self, request, course_id, consent_provided):
-        """
-        Interpret the course-specific form above and save it to an EnterpriseCourseEnrollment object.
-        """
-        if not CourseApiClient().get_course_details(course_id):
-            raise Http404
-
-        enrollment_deferred = request.POST.get('enrollment_deferred')
-        if enrollment_deferred is None:
-            enterprise_customer = get_enterprise_customer_for_user(request.user)
-            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-                enterprise_customer=enterprise_customer,
-                user_id=request.user.id
-            )
-            EnterpriseCourseEnrollment.objects.update_or_create(
-                enterprise_customer_user=enterprise_customer_user,
-                course_id=course_id,
-            )
-            DataSharingConsent.objects.update_or_create(
-                username=request.user.username,
-                course_id=course_id,
-                enterprise_customer=enterprise_customer,
-                defaults={
-                    'granted': consent_provided
-                },
-            )
-
-        if not consent_provided:
-            failure_url = request.POST.get('failure_url') or reverse('dashboard')
-            return redirect(failure_url)
-
-        return redirect(request.POST.get('redirect_url', reverse('dashboard')))
-
-    @method_decorator(login_required)
-    def post_program_specific_consent(self, request, program_uuid, consent_provided):
-        """
-        Interpret the program-specific form above and save it to an EnterpriseCourseEnrollment object.
-        """
-        if not CourseCatalogApiServiceClient.program_exists(program_uuid):
-            raise Http404
-
-        enterprise_uuid = request.POST.get('enterprise_customer_uuid')
-        failure_url = request.POST.get('failure_url')
-        success_url = request.POST.get('redirect_url')
-        enrollment_deferred = request.POST.get('enrollment_deferred')
-        username = request.user.username
-
-        if not (enterprise_uuid and failure_url and success_url):
-            raise Http404
-
-        consent_record = get_data_sharing_consent(username, enterprise_uuid, program_uuid=program_uuid)
-
-        if consent_record is None:
-            raise Http404
-
-        if enrollment_deferred is None and consent_record.consent_required():
-            consent_record.granted = consent_provided
-            consent_record.save()
-
-        return redirect(success_url if consent_provided else failure_url)
-
     def post(self, request):
         """
         Process the above form.
         """
-        # Verify that all necessary resources are present
-        verify_edx_resources()
-
-        # If the checkbox is unchecked, no value will be sent
-        consent_provided = bool(request.POST.get('data_sharing_consent', False))
-        specific_course = request.POST.get('course_id', '')
-        specific_program = request.POST.get('program_uuid', '')
-
-        if specific_course:
-            return self.post_course_specific_consent(request, specific_course, consent_provided)
-        elif specific_program:
-            return self.post_program_specific_consent(request, specific_program, consent_provided)
-        else:
+        enterprise_uuid = request.POST.get('enterprise_customer_uuid')
+        success_url = request.POST.get('redirect_url')
+        failure_url = request.POST.get('failure_url')
+        if not (enterprise_uuid and success_url and failure_url):
             raise Http404
+
+        course_id = request.POST.get('course_id', '')
+        program_uuid = request.POST.get('program_uuid', '')
+        if not self.course_or_program_exist(course_id, program_uuid):
+            raise Http404
+
+        consent_record = get_data_sharing_consent(
+            request.user.username,
+            enterprise_uuid,
+            program_uuid=program_uuid,
+            course_id=course_id
+        )
+        if consent_record is None:
+            raise Http404
+
+        defer_creation = request.POST.get('defer_creation')
+        consent_provided = bool(request.POST.get('data_sharing_consent', False))
+        if defer_creation is None and consent_record.consent_required():
+            if course_id:
+                enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+                    enterprise_customer=consent_record.enterprise_customer,
+                    user_id=request.user.id
+                )
+                EnterpriseCourseEnrollment.objects.update_or_create(
+                    enterprise_customer_user=enterprise_customer_user,
+                    course_id=course_id,
+                )
+            consent_record.granted = consent_provided
+            consent_record.save()
+
+        return redirect(success_url if consent_provided else failure_url)
 
 
 class HandleConsentEnrollment(View):
@@ -540,8 +388,6 @@ class HandleConsentEnrollment(View):
         will be either redirected to LMS dashboard for audit modes or
         redirected to ecommerce basket flow for payment of premium modes.
         """
-        # Verify that all necessary resources are present
-        verify_edx_resources()
         enrollment_course_mode = request.GET.get('course_mode')
 
         # Redirect the learner to LMS dashboard in case no course mode is
@@ -841,7 +687,11 @@ class CourseEnrollmentView(NonAtomicView):
                 data_sharing_consent
             )
 
-        user_consent_needed = consent_required(enterprise_customer_user.username, course_id, enterprise_customer.uuid)
+        user_consent_needed = get_data_sharing_consent(
+            enterprise_customer_user.username,
+            enterprise_customer.uuid,
+            course_id=course_id
+        ).consent_required()
         if not selected_course_mode.get('premium') and not user_consent_needed:
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
@@ -878,7 +728,7 @@ class CourseEnrollmentView(NonAtomicView):
                         {
                             'next': next_url,
                             'failure_url': failure_url,
-                            'enterprise_id': enterprise_customer.uuid,
+                            'enterprise_customer_uuid': enterprise_customer.uuid,
                             'course_id': course_id,
                         }
                     )
@@ -908,9 +758,6 @@ class CourseEnrollmentView(NonAtomicView):
                 uuid `enterprise_uuid` in the request kwargs.
             * No course is found in database against the provided `course_id`.
         """
-        # Verify that all necessary resources are present
-        verify_edx_resources()
-
         enterprise_customer, course, course_run, modes = self.get_base_details(enterprise_uuid, course_id)
 
         # Create a link between the user and the enterprise customer if it does not already exist.  Ensure that the link

@@ -52,10 +52,10 @@ shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via bleach, django-extensions, doc8, edx-opaque-keys, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.6.4             # via edx-sphinx-theme
+sphinx==1.6.4
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.27.0         # via doc8, edx-opaque-keys
+stevedore==1.27.1         # via doc8, edx-opaque-keys
 testfixtures==5.2.0
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1

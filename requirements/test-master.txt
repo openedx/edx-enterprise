@@ -43,7 +43,7 @@ pymongo==3.5.1            # via edx-opaque-keys
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytest-django==3.1.2
-pytest==3.2.2             # via pytest-catchlog, pytest-cov, pytest-django
+pytest==3.2.3             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.1    # via edx-drf-extensions, faker, freezegun
 pytz==2017.2              # via celery
 requests==2.9.1
@@ -51,6 +51,6 @@ responses==0.8.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via django-extensions, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
-stevedore==1.27.0         # via edx-opaque-keys
+stevedore==1.27.1         # via edx-opaque-keys
 testfixtures==5.2.0
 unicodecsv==0.14.1

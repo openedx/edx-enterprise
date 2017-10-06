@@ -52,7 +52,7 @@ function loadConsentPage() {
         }
     });
     var formDetails = {
-        enrollmentDeferred: enrollmentDeferred,
+        deferCreation: deferCreation,
         successUrl: successUrl,
         failureUrl: failureUrl,
         courseId: courseId,
