@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.52.0] - 2017-10-14
+---------------------
+
+* Implement a direct-audit-enrollment pathway for course enrollment.
+* Implement a RouterView that the enrollment URLs have to go through before redirection to a downstream view.
+
 [0.51.5] - 2017-10-11
 ---------------------
 

@@ -134,43 +134,6 @@ class TestHandleConsentEnrollmentView(TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.utils.Registry')
-    def test_handle_consent_enrollment_no_enterprise_user(
-            self,
-            registry_mock,
-            enrollment_api_client_mock,
-            *args
-    ):  # pylint: disable=unused-argument
-        """
-        Verify that user gets HTTP 404 response if the user is not linked to
-        the enterprise with the provided enterprise UUID or if enrollment API
-        client is unable to get course modes for the provided course id.
-        """
-        course_id = self.demo_course_id
-        enrollment_client = enrollment_api_client_mock.return_value
-        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
-        enterprise_customer = EnterpriseCustomerFactory(
-            name='Starfleet Academy',
-            enable_data_sharing_consent=True,
-            enforce_data_sharing_consent='at_enrollment',
-            enable_audit_enrollment=True,
-        )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
-        self._login()
-        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
-            consent_enrollment_url=reverse(
-                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-            ),
-            params=urlencode({'course_mode': 'professional'})
-        )
-        response = self.client.get(handle_consent_enrollment_url)
-        assert response.status_code == 404
-
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.get_enterprise_customer_user')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')

@@ -4,6 +4,8 @@
 #   behavioral changes, but explicitly supports DRF 3.2.3.
 # - In edx-platform, unicodecsv is at 0.9.4, which is syntactically
 #   invalid for testing in Python 3
+# - In edx-platform, event-tracking came after Ginkgo. We use it to help fire
+#   segment events in some enterprise flows.
 
 celery==3.1.18                          # Run task workers in other locations
 django==1.8.18                          # Application server
@@ -25,3 +27,5 @@ edx-opaque-keys==0.4.0                  # Helpers for parsing course run IDs
 testfixtures                            # Mock objects for unit tests and doc tests
 jsonfield==2.0.2                        # Provides a Django model field which serializes/deserializes JSON objects
 flaky==3.3.0                            # Rerun flaky tests automatically if they fail, up to a limit
+analytics-python==1.1.0                 # Used for Segment analytics
+event-tracking==0.2.4                   # Tracks context-aware semi-structured system events

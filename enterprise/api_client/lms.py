@@ -174,6 +174,20 @@ class EnrollmentApiClient(LmsApiClient):
         modes = details.get('course_modes', [])
         return self._sort_course_modes(modes)
 
+    def has_course_mode(self, course_run_id, mode):
+        """
+        Query the Enrollment API to see whether a course run has a given course mode available.
+
+        Arguments:
+            course_run_id (str): The string value of the course run's unique identifier
+
+        Returns:
+            bool: Whether the course run has the given mode avaialble for enrollment.
+
+        """
+        course_modes = self.get_course_modes(course_run_id)
+        return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
+
     def enroll_user_in_course(self, username, course_id, mode):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
@@ -228,6 +242,21 @@ class EnrollmentApiClient(LmsApiClient):
             return None
 
         return result
+
+    def is_enrolled(self, username, course_run_id):
+        """
+        Query the enrollment API and determine if a learner is enrolled in a course run.
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdX platform
+            course_run_id (str): The string value of the course's unique identifier
+
+        Returns:
+            bool: Indicating whether the user is enrolled in the course run. Returns False under any errors.
+
+        """
+        enrollment = self.get_course_enrollment(username, course_run_id)
+        return enrollment is not None and enrollment.get('is_active', False)
 
     def get_enrolled_courses(self, username):
         """

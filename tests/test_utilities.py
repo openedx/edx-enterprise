@@ -988,6 +988,25 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         assert utils.get_program_type_description(program_type) == expected_description
 
+    @mock.patch('enterprise.utils.analytics')
+    @mock.patch('enterprise.utils.tracker')
+    def test_track_event(self, tracker_mock, analytics_mock):
+        """
+        ```track_event`` fires a track event to segment.
+        """
+        tracker_mock.get_tracker.return_value.resolve_context.return_value = {}
+        utils.track_event('user_id', 'event_name', 'properties')
+        analytics_mock.track.assert_called_once()
+
+    @override_settings(LMS_SEGMENT_KEY='')
+    @mock.patch('enterprise.utils.analytics')
+    def test_track_event_missing_key(self, analytics_mock):
+        """
+        ```track_event`` doesn't fire a track event to segment if no segment write key exists.
+        """
+        utils.track_event('user_id', 'event_name', 'properties')
+        analytics_mock.track.assert_not_called()
+
 
 def get_transformed_course_metadata(course_id, status):
     """

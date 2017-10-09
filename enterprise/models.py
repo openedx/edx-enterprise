@@ -470,6 +470,28 @@ class EnterpriseCustomerUser(TimeStampedModel):
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 
+    def enroll(self, course_run_id, mode):
+        """
+        Enroll a user into a course track, and register an enterprise course enrollment.
+        """
+        enrollment_api_client = EnrollmentApiClient()
+        # Check to see if the user's already enrolled and we have an enterprise course enrollment to track it.
+        enrolled_in_course = enrollment_api_client.is_enrolled(self.username, course_run_id)
+        if not enrolled_in_course:
+            # Directly enroll into the audit track.
+            enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode)
+            utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
+                'category': 'enterprise',
+                'label': course_run_id,
+                'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+                'enterprise_customer_name': self.enterprise_customer.name,
+                'mode': mode,
+            })
+        EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_customer_user=self,
+            course_id=course_run_id
+        )
+
 
 @python_2_unicode_compatible
 class PendingEnterpriseCustomerUser(TimeStampedModel):
