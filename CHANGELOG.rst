@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.51.5] - 2017-10-11
+---------------------
+
+* Added enabled_course_modes JSONField to EnterpriseCustomerCatalog model
+
 [0.51.4] - 2017-10-11
 ---------------------
 

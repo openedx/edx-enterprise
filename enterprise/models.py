@@ -32,6 +32,7 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
+from enterprise.constants import json_serialized_course_modes
 from enterprise.utils import get_configuration_value
 from enterprise.validators import validate_image_extension, validate_image_size
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
@@ -850,6 +851,12 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             "included in the catalog."
         )
     )
+    enabled_course_modes = JSONField(
+        default=json_serialized_course_modes,
+        help_text=_('Ordered list of enrollment modes which can be displayed to learners for course runs in'
+                    ' this catalog.'),
+    )
+
     history = HistoricalRecords()
 
     class Meta(object):
