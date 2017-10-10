@@ -460,6 +460,29 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
             (1, 'Other catalog!'),
         ]
 
+    def test_new_enterprise_customer(self):
+        """
+        Test that a new blank form can be created and is not valid.
+        """
+        self.catalog_api.get_all_catalogs.return_value = [
+            {
+                "id": self.catalog_id,
+                "name": "My Catalog"
+            },
+            {
+                "id": 1,
+                "name": "Other catalog!"
+            }
+        ]
+
+        form = EnterpriseCustomerAdminForm()
+        assert isinstance(form.fields['catalog'], forms.ChoiceField)
+        assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
+            (self.catalog_id, 'My Catalog'),
+            (1, 'Other catalog!'),
+        ]
+        assert not form.is_valid()
+
     def test_with_mocked_get_edx_data(self):
         self.catalog_api.get_all_catalogs.return_value = [
             {
