@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.51.3] - 2017-10-10
+---------------------
+
+* Fix bug related to EnterpriseCustomer creation form introduced with 0.51.0.
+
 [0.51.2] - 2017-10-10
 ---------------------
 
