@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.51.2] - 2017-10-10
+---------------------
+
+* Modify EnterpriseCustomer.catalog_contains_course to check EnterpriseCustomerCatalogs.
+
 [0.51.1] - 2017-10-06
 ---------------------
 
