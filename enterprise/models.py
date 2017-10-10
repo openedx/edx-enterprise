@@ -225,21 +225,26 @@ class EnterpriseCustomer(TimeStampedModel):
             )
         )
 
-    def catalog_contains_course(self, course_id):
+    def catalog_contains_course(self, course_run_id):
         """
-        Determine if the course or course run in question is contained in this enterprise's catalog.
+        Determine if the specified course run is contained in at least one of the enterprise's catalogs.
 
-        Args:
-            request_user (User): A user with which to access the course catalog API
+        Arguments:
             course_run_id (str): The string ID of the course or course run in question
 
         Returns:
             bool: Whether the enterprise catalog includes the given course run.
         """
-        if self.catalog is None:
-            return False
-        client = CourseCatalogApiServiceClient(self.site)
-        return client.is_course_in_catalog(self.catalog, course_id)
+        if self.catalog:
+            client = CourseCatalogApiServiceClient(self.site)
+            if client.is_course_in_catalog(self.catalog, course_run_id):
+                return True
+
+        for catalog in self.enterprise_customer_catalogs.all():
+            if catalog.contains_content_items('key', [course_run_id]):
+                return True
+
+        return False
 
 
 class EnterpriseCustomerUserManager(models.Manager):
