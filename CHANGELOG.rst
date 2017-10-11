@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.51.4] - 2017-10-11
+---------------------
+
+* Added UTM parameters to marketing, track selection, and course/program enrollment URLs returned by Enterprise API.
+
 [0.51.3] - 2017-10-10
 ---------------------
 

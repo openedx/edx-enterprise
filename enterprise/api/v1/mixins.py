@@ -60,7 +60,8 @@ class EnterpriseCourseContextSerializerMixin(object):
         # Update marketing urls in course metadata to include enterprise related info (i.e. our global context).
         marketing_url = course.get('marketing_url')
         if marketing_url:
-            course.update({"marketing_url": utils.update_query_parameters(marketing_url, enterprise_context)})
+            query_parameters = dict(enterprise_context, **utils.get_enterprise_utm_context(enterprise_customer))
+            course.update({'marketing_url': utils.update_query_parameters(marketing_url, query_parameters)})
 
         # Finally, add context to the course as a whole.
         course.update(enterprise_context)
@@ -82,8 +83,9 @@ class EnterpriseCourseContextSerializerMixin(object):
         for course_run in course_runs:
             track_selection_url = utils.get_course_track_selection_url(
                 course_run=course_run,
-                query_parameters=enterprise_context,
+                query_parameters=dict(enterprise_context, **utils.get_enterprise_utm_context(enterprise_customer)),
             )
+
             enrollment_url = enterprise_customer.get_course_run_enrollment_url(course_run.get('key'))
 
             course_run.update({
@@ -94,7 +96,8 @@ class EnterpriseCourseContextSerializerMixin(object):
             # Update marketing urls in course metadata to include enterprise related info.
             marketing_url = course_run.get('marketing_url')
             if marketing_url:
-                course_run.update({"marketing_url": utils.update_query_parameters(marketing_url, enterprise_context)})
+                query_parameters = dict(enterprise_context, **utils.get_enterprise_utm_context(enterprise_customer))
+                course_run.update({'marketing_url': utils.update_query_parameters(marketing_url, query_parameters)})
 
             # Add updated course run to the list.
             updated_course_runs.append(course_run)

@@ -18,7 +18,7 @@ from django.contrib.auth.models import Permission
 from django.test import override_settings
 
 from enterprise.api.v1.serializers import EnterpriseCatalogCoursesReadOnlySerializer, ImmutableStateSerializer
-from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, factories
+from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, assert_url, factories
 
 
 @mark.django_db
@@ -79,8 +79,11 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         self.provider_id = faker.slug()  # pylint: disable=no-member
 
         self.user = factories.UserFactory()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b',
+                                                                       name="test_enterprise")
         self.ecu = factories.EnterpriseCustomerUserFactory(
             user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
         )
         factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=self.ecu.enterprise_customer,
@@ -195,7 +198,6 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             },
             1,
             'test-shib',
-            '47130371-0b6d-43f5-01de-71942664de2b',
             {
                 'key': 'course-v1:edx+D103+1T2017',
                 'uuid': '57432370-0a6e-4d95-90fe-77b4fe64de2b',
@@ -203,11 +205,11 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             },
             {
                 'marketing_url': 'http://testserver/course/course-v1:edX+DemoX+1T2017/?'
-                                 'utm_source=test_user&utm_medium=affiliate_partner&'
+                                 'utm_source=test_enterprise&utm_medium=enterprise&'
                                  'tpa_hint=test-shib&enterprise_id=47130371-0b6d-43f5-01de-71942664de2b&catalog_id=1',
                 'track_selection_url': 'http://testserver/course_modes/choose/course-v1:edX+DemoX+1T2017/?'
                                        'tpa_hint=test-shib&enterprise_id=47130371-0b6d-43f5-01de-71942664de2b&'
-                                       'catalog_id=1',
+                                       'catalog_id=1&utm_source=test_enterprise&utm_medium=enterprise',
             },
         ),
         (
@@ -219,7 +221,6 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             },
             1,
             'test-shib',
-            '47130371-0b6d-43f5-01de-71942664de2b',
             {
                 'key': 'course-v1:edx+D103+1T2017',
                 'uuid': '57432370-0a6e-4d95-90fe-77b4fe64de2b',
@@ -229,7 +230,7 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             {
                 'track_selection_url': 'http://testserver/course_modes/choose/course-v1:edX+DemoX+1T2017/?'
                                        'tpa_hint=test-shib&enterprise_id=47130371-0b6d-43f5-01de-71942664de2b&'
-                                       'catalog_id=1',
+                                       'catalog_id=1&utm_source=test_enterprise&utm_medium=enterprise',
             },
         ),
     )
@@ -240,7 +241,6 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             course_run,
             catalog_id,
             provider_id,
-            enterprise_customer_uuid,
             expected_fields,
             expected_urls,
     ):
@@ -250,22 +250,17 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
         Verify that update_course for EnterpriseCatalogCoursesReadOnlySerializer returns
         successfully without errors.
         """
-        # Populate database.
-        ec_identity_provider = factories.EnterpriseCustomerIdentityProviderFactory(
-            enterprise_customer__uuid=enterprise_customer_uuid,
-            provider_id=provider_id,
-        )
         course_run_url = 'course_modes/choose/course-v1:edX+DemoX+1T2017/'
         enterprise_context = {
             'tpa_hint': provider_id,
-            'enterprise_id': enterprise_customer_uuid,
+            'enterprise_id': self.enterprise_customer.uuid,
             'catalog_id': catalog_id
         }
 
         with mock.patch('enterprise.utils.reverse', return_value=course_run_url):
             updated_course_runs = self.serializer.update_course_runs(
                 course_runs=[course_run],
-                enterprise_customer=ec_identity_provider.enterprise_customer,
+                enterprise_customer=self.enterprise_customer,
                 enterprise_context=enterprise_context,
             )
 
@@ -281,7 +276,7 @@ class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):
             # Make sure all expected urls are present in data returned.
             for key, value in six.iteritems(expected_urls):
                 assert key in updated_course_run
-                self.assert_url(value, updated_course_run[key])
+                assert_url(value, updated_course_run[key])
 
     @mock.patch('enterprise.utils.reverse', return_value='')
     def test_update_course(self, _):

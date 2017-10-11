@@ -12,9 +12,8 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise import models
+from enterprise import models, utils
 from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
-from enterprise.utils import update_query_parameters
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -207,9 +206,14 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         count = paginated_content['count']
         search_results = paginated_content['results']
 
-        # Add the Enterprise enrollment URL to each content item returned from the discovery service.
         for item in search_results:
             content_type = item['content_type']
+            marketing_url = item.get('marketing_url')
+            if marketing_url:
+                item['marketing_url'] = utils.update_query_parameters(
+                    marketing_url, utils.get_enterprise_utm_context(enterprise_customer)
+                )
+            # Add the Enterprise enrollment URL to each content item returned from the discovery service.
             if content_type == 'courserun':
                 item['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(item['key'])
             elif content_type == 'program':
@@ -221,9 +225,9 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         page = int(request.GET.get('page', '1'))
         request_uri = request.build_absolute_uri()
         if paginated_content['previous']:
-            previous_url = update_query_parameters(request_uri, {'page': page - 1})
+            previous_url = utils.update_query_parameters(request_uri, {'page': page - 1})
         if paginated_content['next']:
-            next_url = update_query_parameters(request_uri, {'page': page + 1})
+            next_url = utils.update_query_parameters(request_uri, {'page': page + 1})
 
         representation['count'] = count
         representation['previous'] = previous_url

@@ -200,13 +200,14 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise landing page url.
         """
-        return urljoin(
+        url = urljoin(
             get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
             reverse(
                 'enterprise_course_enrollment_page',
                 kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
             )
         )
+        return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def get_program_enrollment_url(self, program_uuid):
         """
@@ -217,13 +218,14 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise program landing page url.
         """
-        return urljoin(
+        url = urljoin(
             get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
             reverse(
                 'enterprise_program_enrollment_page',
                 kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}
             )
         )
+        return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def catalog_contains_course(self, course_run_id):
         """

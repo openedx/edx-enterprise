@@ -19,6 +19,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
+from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
@@ -636,3 +637,13 @@ def get_program_type_description(program_type):
     :return: The description associated with the program type. If none exists, then the empty string.
     """
     return PROGRAM_TYPE_DESCRIPTION.get(program_type, '')
+
+
+def get_enterprise_utm_context(enterprise_customer):
+    """
+    Get the UTM context for the enterprise.
+    """
+    return {
+        'utm_medium': 'enterprise',
+        'utm_source': slugify(enterprise_customer.name)
+    }

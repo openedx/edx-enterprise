@@ -17,7 +17,13 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
+    parse_qs,
+    urlencode,
+    urljoin,
+    urlsplit,
+    urlunsplit,
+)
 from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
@@ -62,6 +68,24 @@ ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitleme
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 
 
+def side_effect(url, query_parameters):
+    """
+    returns a url with updated query parameters.
+    """
+    if 'utm_medium' in query_parameters:
+        return url
+
+    scheme, netloc, path, query_string, fragment = urlsplit(url)
+    url_params = parse_qs(query_string)
+
+    # Update url query parameters
+    url_params.update(query_parameters)
+
+    return urlunsplit(
+        (scheme, netloc, path, urlencode(url_params, doseq=True), fragment),
+    )
+
+
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseAPIViews(APITest):
@@ -70,6 +94,7 @@ class TestEnterpriseAPIViews(APITest):
     """
     # Get current datetime, so that all tests can use same datetime.
     now = timezone.now()
+    maxDiff = None
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
@@ -704,21 +729,25 @@ class TestEnterpriseAPIViews(APITest):
         (
             False,
             True,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True),
+            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True,
+                                                                     add_utm_info=False),
         ),
         (
             True,
             False,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True),
+            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True,
+                                                                     add_utm_info=False),
         ),
         (
             True,
             True,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True),
+            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True,
+                                                                     add_utm_info=False),
         ),
     )
     @ddt.unpack
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
     def test_enterprise_customer_catalogs_detail(
             self,
             is_staff,
@@ -736,7 +765,8 @@ class TestEnterpriseAPIViews(APITest):
         * requesting user is linked to the EnterpriseCustomer which owns the requested catalog.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(
-            uuid=FAKE_UUIDS[0]
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
         )
         factories.EnterpriseCustomerCatalogFactory(
             uuid=FAKE_UUIDS[1],
@@ -750,7 +780,6 @@ class TestEnterpriseAPIViews(APITest):
                 user_id=self.user.id,
                 enterprise_customer=enterprise_customer
             )
-
         mock_catalog_api_client.return_value = mock.Mock(
             get_search_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
@@ -759,15 +788,17 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT)
         response = self.load_json(response.content)
 
-        assert response == expected_result
+        self.assertDictEqual(response, expected_result)
 
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
     def test_enterprise_customer_catalogs_detail_pagination(self, mock_catalog_api_client):
         """
         Verify the EnterpriseCustomerCatalog detail view returns the correct paging URLs.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(
-            uuid=FAKE_UUIDS[0]
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
         )
         factories.EnterpriseCustomerCatalogFactory(
             uuid=FAKE_UUIDS[1],
@@ -789,7 +820,7 @@ class TestEnterpriseAPIViews(APITest):
         expected_result = fake_enterprise_api.build_fake_enterprise_catalog_detail(
             previous_url=urljoin('http://testserver', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=1',
             next_url=urljoin('http://testserver/', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=3',
-            include_enterprise_context=True
+            include_enterprise_context=True, add_utm_info=False
         )
 
         assert response == expected_result
@@ -946,7 +977,7 @@ class TestEnterpriseAPIViews(APITest):
         The ``programs`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses.
         """
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], name="test_enterprise")
         factories.EnterpriseCustomerCatalogFactory(
             uuid=FAKE_UUIDS[1],
             enterprise_customer=enterprise_customer,
@@ -1005,7 +1036,7 @@ class TestEnterpriseAPIViews(APITest):
         The ``programs`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses.
         """
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], name="test_enterprise")
         factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=enterprise_customer,
             provider_id='saml-testshib',
