@@ -13,16 +13,19 @@ from pytest import mark
 from slumber.exceptions import HttpClientError
 
 from django.conf import settings
+from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
-from test_utils import fake_render
+from test_utils import FAKE_UUIDS, fake_catalog_api, fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
@@ -59,6 +62,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 "sku": "sku-audit",
             },
         ]
+        self.faker = FakerFactory.create()
+        self.provider_id = self.faker.slug()  # pylint: disable=no-member
         super(TestCourseEnrollmentView, self).setUp()
 
     def _login(self):
@@ -159,10 +164,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -195,6 +198,280 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.utils.Registry')
+    @ddt.data(
+        (['verified', 'professional', 'no-id-professional', 'credit', 'audit', 'honor'], ['professional', 'audit']),
+        (['audit', 'professional'], ['audit', 'professional']),
+        (['professional'], ['professional']),
+        (['audit'], ['audit']),
+    )
+    @ddt.unpack
+    def test_get_course_enrollment_page_with_catalog(
+            self,
+            enabled_course_modes,
+            expected_course_modes,
+            registry_mock,
+            catalog_api_client_models_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            catalog_api_client_views_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        Verify the course modes displayed on enterprise course enrollment page.
+
+        If enterprise course enrollment url has the querystring `catalog` then
+        the modes displayed on enterprise course enrollment page will be
+        filtered and ordered according to the value for the field
+        "enabled_course_modes" of its related EnterpriseCustomerCatalog record.
+        """
+        setup_course_catalog_api_client_mock(catalog_api_client_views_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        catalog_uuid = FAKE_UUIDS[1]
+        catalog_title = 'All Content'
+        catalog_filter = {}
+        # Create enterprise customer catalog record and provide desired value
+        # for the field "enabled_course_modes".
+        enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(
+            uuid=catalog_uuid,
+            title=catalog_title,
+            enterprise_customer=enterprise_customer,
+            content_filter=catalog_filter,
+            enabled_course_modes=enabled_course_modes,
+        )
+        catalog_api_client_models_mock.return_value = mock.Mock(
+            get_search_results=mock.Mock(
+                return_value=[fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]
+            ),
+            get_course_and_course_run=mock.Mock(
+                return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
+            ),
+        )
+        all_course_modes = {
+            'audit': {
+                'mode': 'audit',
+                'title': 'Audit Track',
+                'original_price': 'FREE',
+                'min_price': 0,
+                'sku': 'sku-audit',
+                'final_price': 'FREE',
+                'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
+                'premium': False,
+            },
+            'professional': {
+                'mode': 'professional',
+                'title': 'Professional Track',
+                'original_price': '$100',
+                'min_price': 100,
+                'sku': 'sku-professional',
+                'final_price': '$100',
+                'description': 'Earn a verified certificate!',
+                'premium': True,
+            }
+        }
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+
+        course_enrollment_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+        querystring_dict = QueryDict('', mutable=True)
+        querystring_dict.update({
+            'catalog': enterprise_customer_catalog.uuid
+        })
+        enterprise_landing_page_url = '{course_enrollment_url}?{querystring}'.format(
+            course_enrollment_url=course_enrollment_url,
+            querystring=querystring_dict.urlencode()
+        )
+
+        # Set up expected context for enterprise course enrollment page
+        course_modes = [
+            all_course_modes[mode] for mode in expected_course_modes if mode in all_course_modes
+        ]
+        audit_modes = getattr(
+            settings,
+            'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES',
+            ['audit', 'honor']
+        )
+        premium_course_modes = [
+            course_mode for course_mode in course_modes if course_mode['mode'] not in audit_modes
+        ]
+        expected_context = {
+            'enterprise_customer': enterprise_customer,
+            'course_modes': course_modes,
+            'premium_modes': premium_course_modes,
+        }
+        self._login()
+        expected_log_messages = []
+        response = self.client.get(enterprise_landing_page_url)
+
+        self._assert_django_test_client_messages(response, expected_log_messages)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
+    def test_get_course_enrollment_page_with_invalid_catalog(
+            self,
+            registry_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            catalog_api_client_views_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        Verify course modes and messages displayed on course enrollment page.
+
+        If enterprise course enrollment url has the querystring `catalog` and
+        there is no related EnterpriseCustomerCatalog record in database then
+        user will see a generic info message and no course modes will be
+        displayed.
+        """
+        setup_course_catalog_api_client_mock(catalog_api_client_views_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+
+        course_enrollment_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+        querystring_dict = QueryDict('', mutable=True)
+        invalid_enterprise_catalog_uuid = self.faker.uuid4()  # pylint: disable=no-member
+        querystring_dict.update({
+            'catalog': invalid_enterprise_catalog_uuid
+        })
+        enterprise_landing_page_url = '{course_enrollment_url}?{querystring}'.format(
+            course_enrollment_url=course_enrollment_url,
+            querystring=querystring_dict.urlencode()
+        )
+        expected_context = {
+            'enterprise_customer': enterprise_customer,
+            'course_modes': [],
+            'premium_modes': [],
+        }
+        self._login()
+
+        expected_log_messages = [
+            (
+                messages.INFO,
+                '<strong>Something happened.</strong> '
+                '<span>This course is not available. Please start over and select a different course.</span>'
+            )
+        ]
+        response = self.client.get(enterprise_landing_page_url)
+        self._assert_django_test_client_messages(response, expected_log_messages)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.utils.Registry')
+    def test_course_enrollment_page_with_catalog_for_invalid_course_modes(
+            self,
+            registry_mock,
+            catalog_api_client_models_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            catalog_api_client_views_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        Verify course modes and messages displayed on course enrollment page.
+
+        If enterprise course enrollment url has the querystring `catalog` and
+        the course modes saved in the field "enabled_course_modes" for its
+        related EnterpriseCustomerCatalog record are not available for the
+        actual course then user will see a generic info message and no course
+        modes will be displayed.
+        """
+        setup_course_catalog_api_client_mock(catalog_api_client_views_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        catalog_uuid = FAKE_UUIDS[1]
+        catalog_title = 'All Content'
+        catalog_filter = {}
+        # Create enterprise customer catalog record and provide a course mode
+        # for the field "enabled_course_modes" which does not exist for the
+        # actual course.
+        enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(
+            uuid=catalog_uuid,
+            title=catalog_title,
+            enterprise_customer=enterprise_customer,
+            content_filter=catalog_filter,
+            enabled_course_modes=['invalid-course-mode'],
+        )
+        catalog_api_client_models_mock.return_value = mock.Mock(
+            get_search_results=mock.Mock(
+                return_value=[fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]
+            ),
+            get_course_and_course_run=mock.Mock(
+                return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
+            ),
+        )
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+
+        course_enrollment_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+        querystring_dict = QueryDict('', mutable=True)
+        querystring_dict.update({
+            'catalog': enterprise_customer_catalog.uuid
+        })
+        enterprise_landing_page_url = '{course_enrollment_url}?{querystring}'.format(
+            course_enrollment_url=course_enrollment_url,
+            querystring=querystring_dict.urlencode()
+        )
+        expected_context = {
+            'enterprise_customer': enterprise_customer,
+            'course_modes': [],
+            'premium_modes': [],
+        }
+        self._login()
+
+        expected_log_messages = [
+            (
+                messages.INFO,
+                '<strong>Something happened.</strong> '
+                '<span>This course is not available. Please start over and select a different course.</span>'
+            )
+        ]
+        response = self.client.get(enterprise_landing_page_url)
+        self._assert_django_test_client_messages(response, expected_log_messages)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(True, False)
     def test_get_course_enrollment_page_consent_declined(
@@ -217,10 +494,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_user = EnterpriseCustomerUserFactory(
             enterprise_customer=enterprise_customer,
             user_id=self.user.id
@@ -243,13 +518,13 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._login()
         response = self.client.get(enterprise_landing_page_url)
 
-        messages = self._get_messages_from_response_cookies(response)
+        response_messages = self._get_messages_from_response_cookies(response)
         if consent_granted:
-            assert not messages
+            assert not response_messages
         else:
-            assert messages
+            assert response_messages
             self._assert_request_message(
-                messages[0],
+                response_messages[0],
                 'warning',
                 (
                     '<strong>We could not enroll you in <em>{course_name}</em>.</strong> '
@@ -317,13 +592,13 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._login()
         response = self.client.get(enterprise_landing_page_url)
 
-        messages = self._get_messages_from_response_cookies(response)
+        response_messages = self._get_messages_from_response_cookies(response)
         if enrollable:
-            assert not messages
+            assert not response_messages
         else:
-            assert messages
+            assert response_messages
             self._assert_request_message(
-                messages[0],
+                response_messages[0],
                 'info',
                 (
                     '<strong>Something happened.</strong> '
@@ -397,10 +672,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -457,10 +730,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -515,10 +786,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -584,10 +853,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -624,10 +891,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -656,10 +921,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -679,7 +942,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             *args
     ):  # pylint: disable=unused-argument
         """
-        Verify that user will see HTTP 404 (Not Found) in case of invalid
+        Verify that user will see generic error message in case of invalid
         enterprise customer uuid.
         """
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
@@ -691,17 +954,24 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
         response = self.client.get(course_enrollment_page_url)
-        assert response.status_code == 404
+        assert response.status_code == 200
+
+        expected_log_messages = [
+            (
+                messages.INFO,
+                '<strong>Something happened.</strong> '
+                '<span>This course is not available. Please start over and select a different course.</span>'
+            )
+        ]
+        self._assert_django_test_client_messages(response, expected_log_messages)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
@@ -744,10 +1014,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, course_id],
@@ -762,7 +1030,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
         expected_fragments = (
             'tpa_hint%3D{provider_id}'.format(
-                provider_id=provider_id,
+                provider_id=self.provider_id,
             ),
             'new_enterprise_login%3Dyes'
         )
@@ -796,10 +1064,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -862,10 +1128,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 enterprise_customer_user__enterprise_customer=enterprise_customer,
                 enterprise_customer_user__user_id=self.user.id
             )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -907,10 +1171,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_uuid = enterprise_customer.uuid
         self._login()
         course_enrollment_page_url = reverse(
@@ -966,10 +1228,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
@@ -1031,10 +1291,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -1081,10 +1339,8 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        self._setup_registry_mock(registry_mock, provider_id)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = reverse(
             'enterprise_course_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],

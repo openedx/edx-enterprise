@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.7] - 2017-10-20
+---------------------
+
+* Update course enrollment view for enterprise enabled course modes.
+
 [0.52.6] - 2017-10-19
 ---------------------
 

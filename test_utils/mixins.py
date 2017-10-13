@@ -29,6 +29,15 @@ class MessagesMixin(object):
         self.assertEqual(request_message.tags, expected_message_tags)
         self.assertEqual(request_message.message, expected_message_text)
 
+    def _assert_django_test_client_messages(self, test_client_response, expected_log_messages):
+        """
+        Verify that expected messages are included in the context of response.
+        """
+        response_messages = [
+            (msg.level, msg.message) for msg in test_client_response.context['messages']  # pylint: disable=no-member
+        ]
+        assert response_messages == expected_log_messages
+
 
 class ConsentMixin(object):
     """
