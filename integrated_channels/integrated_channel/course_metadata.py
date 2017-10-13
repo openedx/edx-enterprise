@@ -13,28 +13,7 @@ from logging import getLogger
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
 
-EXCLUDED_COURSE_DETAIL_KEYS = [
-    'course_runs',
-]
-
-
 LOGGER = getLogger(__name__)
-
-
-def get_complete_course_run_details(course_details, course_run_details):
-    """
-    Update a course run-specific details dict with details from the base course.
-
-    Args:
-        course_details (dict): The details of the base course
-        course_run_details (dict): The details of the specific course run
-    """
-    course_details = course_details.copy()
-    course_run_details = course_run_details.copy()
-    for key, base_course_value in course_details.items():
-        if course_run_details.get(key) is None and key not in EXCLUDED_COURSE_DETAIL_KEYS:
-            course_run_details[key] = base_course_value
-    return course_run_details
 
 
 def get_course_runs(user, enterprise_customer):
@@ -49,15 +28,13 @@ def get_course_runs(user, enterprise_customer):
     """
     client = EnterpriseApiClient(user)
 
-    enterprise_courses = client.get_enterprise_courses(
+    enterprise_course_runs = client.get_enterprise_course_runs(
         enterprise_customer,
-        traverse_pagination=True
-    ).get('results', [])
+    )
     LOGGER.info('Retrieving course list for enterprise %s', enterprise_customer.name)
 
-    for course_detail in enterprise_courses:
-        for run in course_detail.get('course_runs', []):
-            yield get_complete_course_run_details(course_detail, run)
+    for course_run in enterprise_course_runs.values():
+        yield course_run
 
 
 class BaseCourseExporter(object):

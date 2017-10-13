@@ -955,6 +955,25 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT = {
     "content_type": "course"
 }
 
+FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
+    {
+        "title": "edX Demonstration Course 2",
+        "full_description": None,
+        "key": "edX+DemoX+2",
+        "short_description": None,
+        "aggregation_key": "course:edX+DemoX+2",
+        "content_type": "course"
+    },
+    {
+        "title": "edX Demonstration Course 3",
+        "full_description": None,
+        "key": "edX+DemoX+3",
+        "short_description": None,
+        "aggregation_key": "course:edX+DemoX+3",
+        "content_type": "course"
+    },
+]
+
 FAKE_SEARCH_ALL_PROGRAM_RESULT = {
     "title": "Program Title 1",
     "marketing_url": "professional-certificate/marketingslug1",

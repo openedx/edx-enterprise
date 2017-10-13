@@ -5,6 +5,7 @@ from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
 
+import ddt
 import mock
 import responses
 from pytest import mark
@@ -14,12 +15,14 @@ from django.core.cache import cache
 
 from enterprise.api_client import enterprise as enterprise_api
 from enterprise.utils import get_cache_key
-from test_utils.factories import EnterpriseCustomerFactory, UserFactory
+from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
+from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
+@ddt.ddt
 @mark.django_db
-class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
+class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDiscoveryApiTestMixin):
     """
     Test enterprise API client methods.
     """
@@ -33,6 +36,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
             name='Veridian Dynamics',
         )
         super(TestEnterpriseApiClient, self).setUp()
+        self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
         self.user = UserFactory(is_staff=True)
 
     def tearDown(self):
@@ -42,14 +46,14 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
         cache.clear()
         super(TestEnterpriseApiClient, self).tearDown()
 
-    def _assert_enterprise_courses_api_response(self, course_run_ids, api_response, expected_courses_count):
+    def _assert_enterprise_courses_api_response(self, course_run_ids, course_runs, expected_courses_count):
         """
         DRY method to verify the enterprise courses api response.
         """
-        assert len(course_run_ids) == api_response.get('count')
-        assert expected_courses_count == len(api_response.get('results'))
-        for course_data in api_response.get('results'):
-            assert course_data['course_runs'][0]['key'] in course_run_ids
+        assert len(course_run_ids) == len(course_runs)
+        assert expected_courses_count == len(course_runs)
+        for course_run in course_runs.values():
+            assert course_run['key'] in course_run_ids
 
     def _assert_num_requests(self, expected_count):
         """
@@ -59,6 +63,8 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.discovery.get_edx_api_data', mock.Mock())
+    @mock.patch('enterprise.api_client.discovery.JwtBuilder', mock.Mock())
     def test_no_response_doesnt_get_cached(self):
         """
         Response doesn't get cached when empty.
@@ -107,9 +113,11 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    def test_get_enterprise_courses(self):
+    @mock.patch('enterprise.api_client.discovery.get_edx_api_data', mock.Mock())
+    @mock.patch('enterprise.api_client.discovery.JwtBuilder', mock.Mock())
+    def test_get_enterprise_course_runs(self):
         """
-        Verify that the client method `get_all_catalogs` works as expected.
+        Verify that the client method `get_enterprise_course_runs` works as expected.
         """
         uuid = str(self.enterprise_customer.uuid)
         course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
@@ -128,23 +136,66 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
         cached_enterprise_api_response = cache.get(cache_key)
         self.assertIsNone(cached_enterprise_api_response)
 
-        # Verify that by default enterprise client only fetches first paginated
-        # response as the option `traverse_pagination` is False.
+        # Verify that by default enterprise client fetches all the course runs associated with the catalog.
         client = enterprise_api.EnterpriseApiClient(self.user)
-        api_response = client.get_enterprise_courses(self.enterprise_customer)
-        self._assert_enterprise_courses_api_response(course_run_ids, api_response, expected_courses_count=1)
-        # Verify the enterprise API was hit once
-        self._assert_num_requests(1)
+        api_response = client.get_enterprise_course_runs(self.enterprise_customer)
+        self._assert_enterprise_courses_api_response(course_run_ids, api_response, expected_courses_count=2)
+        # Verify the enterprise API was hit twice
+        self._assert_num_requests(2)
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    def test_get_enterprise_courses_with_traverse_pagination(self):
+    def test_get_enterprise_course_runs_with_enterprise_catalogs(self):
         """
-        Verify that the client method `get_all_catalogs` fetches all courses.
+        Verify that the client method `get_enterprise_course_runs` works as expected.
+        """
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
 
-        The client method `get_all_catalogs` fetches all enterprise courses
-        from paginated API when the option `traverse_pagination` is True.
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=course_run_ids
+        )
+
+        # pylint: disable=invalid-name
+        enterprise_catalog_course_run_ids = ['course-v1:edX+DemoX+Demo_Course_3', 'course-v1:edX+DemoX+Demo_Course_4']
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        self.mock_enterprise_customer_catalogs(
+            uuid, enterprise_catalog_uuid, enterprise_catalog_course_run_ids
+        )
+
+        api_resource_name = 'enterprise-customer'
+        cache_key = get_cache_key(
+            resource=api_resource_name,
+            querystring={},
+            resource_id=uuid,
+            traverse_pagination=False,
+        )
+        cached_enterprise_api_response = cache.get(cache_key)
+        self.assertIsNone(cached_enterprise_api_response)
+
+        # Verify that by default enterprise client fetches all the course runs associated with the catalog.
+        client = enterprise_api.EnterpriseApiClient(self.user)
+        course_runs = client.get_enterprise_course_runs(self.enterprise_customer)
+        assert len(course_runs) == 4
+
+    @responses.activate
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    def test_get_enterprise_course_runs_with_enterprise_catalog_set_to_none(self):
         """
+        Verify that the client method `get_enterprise_course_runs` returns courses from
+        associated EnterpriseCustomerCatalog objects only if EnterpriseCustomer.catalog is set to None.
+        """
+        # Remove EnterpriseCustomer.catalog
+        self.enterprise_customer.catalog = None
+        self.enterprise_customer.save()
+
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
         uuid = str(self.enterprise_customer.uuid)
         course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
         self.mock_ent_courses_api_with_pagination(
@@ -152,23 +203,24 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin):
             course_run_ids=course_run_ids
         )
 
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        # pylint: disable=invalid-name
+        enterprise_catalog_course_run_ids = ['course-v1:edX+DemoX+Demo_Course_3', 'course-v1:edX+DemoX+Demo_Course_4']
+        self.mock_enterprise_customer_catalogs(
+            uuid, enterprise_catalog_uuid, enterprise_catalog_course_run_ids
+        )
+
         api_resource_name = 'enterprise-customer'
-        traverse_pagination = True
         cache_key = get_cache_key(
             resource=api_resource_name,
             querystring={},
             resource_id=uuid,
-            traverse_pagination=traverse_pagination,
+            traverse_pagination=False,
         )
         cached_enterprise_api_response = cache.get(cache_key)
         self.assertIsNone(cached_enterprise_api_response)
 
-        # Verify that by default enterprise client only fetches first paginated
-        # response as the option `traverse_pagination` is False.
+        # Verify that by default enterprise client fetches all the course runs associated with the enterprise catalog.
         client = enterprise_api.EnterpriseApiClient(self.user)
-        api_response = client.get_enterprise_courses(self.enterprise_customer, traverse_pagination=traverse_pagination)
-        self._assert_enterprise_courses_api_response(
-            course_run_ids, api_response, expected_courses_count=len(course_run_ids)
-        )
-        # Verify the enterprise API was called multiple time for each paginated view
-        self._assert_num_requests(len(course_run_ids))
+        course_runs = client.get_enterprise_course_runs(self.enterprise_customer)
+        assert len(course_runs) == 2

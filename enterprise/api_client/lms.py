@@ -34,6 +34,7 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
+LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
 
 
 class LmsApiClient(object):
@@ -441,7 +442,10 @@ def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FOR
     if isinstance(datetime_string, datetime.datetime):
         date_time = datetime_string
     else:
-        date_time = datetime.datetime.strptime(datetime_string, datetime_format)
+        try:
+            date_time = datetime.datetime.strptime(datetime_string, datetime_format)
+        except ValueError:
+            date_time = datetime.datetime.strptime(datetime_string, LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE)
 
     # If the datetime format didn't include a timezone, then set to UTC.
     # Note that if we're using the default LMS_API_DATETIME_FORMAT, it ends in 'Z',

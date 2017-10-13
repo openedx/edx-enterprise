@@ -48,6 +48,7 @@ class TestSapSuccessFactorsUtils(unittest.TestCase):
         ('2011-01-01T00:00:00Z', '2011-01-01T00:00:00Z', False),
         ('2015-01-01T00:00:00Z', '2017-01-01T00:00:00Z', True),
         ('2018-01-01T00:00:00Z', '2020-01-01T00:00:00Z', False),
+        ('2018-01-01T00:00:00', '2020-01-01T00:00:00', False),
     )
     @ddt.unpack
     @mock.patch('integrated_channels.sap_success_factors.utils.timezone')
