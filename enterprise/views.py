@@ -24,15 +24,11 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import get_language_from_request, ungettext
 from django.views.generic import View
 
+from enterprise import messages
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.messages import (
-    add_consent_declined_message,
-    add_missing_price_information_message,
-    add_not_one_click_purchasable_message,
-)
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import (
     NotConnectedToOpenEdX,
@@ -43,6 +39,7 @@ from enterprise.utils import (
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
+    is_course_run_enrollable,
     track_event,
     ungettext_min_max,
 )
@@ -604,9 +601,14 @@ class CourseEnrollmentView(NonAtomicView):
         # has gone through the data sharing consent flow and declined
         # to give data sharing consent.
         if enterprise_course_enrollment and not data_sharing_consent.granted:
-            add_consent_declined_message(request, enterprise_customer, course_run.get('title', ''))
+            messages.add_consent_declined_message(request, enterprise_customer, course_run.get('title', ''))
+
+        if not is_course_run_enrollable(course_run):
+            messages.add_unenrollable_item_message(request, 'course')
+            course['enrollable'] = False
 
         context_data = {
+            'course_enrollable': course.get('enrollable', True),
             'course_title': course_run['title'],
             'course_short_description': course_run['short_description'] or '',
             'course_pacing': self.PACING_FORMAT.get(course_run['pacing_type'], ''),
@@ -983,22 +985,22 @@ class ProgramEnrollmentView(NonAtomicView):
             purchase_action = self.actions['purchase_program']
             item = self.items['program_enrollment']
 
-        # Add any warning messages.
+        # Add any DSC warning messages.
         program_data_sharing_consent = get_data_sharing_consent(
             request.user.username,
             enterprise_customer.uuid,
             program_uuid=program_details['uuid'],
         )
         if program_data_sharing_consent.exists and not program_data_sharing_consent.granted:
-            add_consent_declined_message(request, enterprise_customer, program_title)
+            messages.add_consent_declined_message(request, enterprise_customer, program_title)
 
         discount_data = program_details.get('discount_data', {})
-        if discount_data.get('total_incl_tax_excl_discounts') is None:
-            add_missing_price_information_message(request, program_title)
-
         one_click_purchase_eligibility = program_details.get('is_learner_eligible_for_one_click_purchase', False)
+        # The following messages shouldn't both appear at the same time, and we prefer the eligibility message.
         if not one_click_purchase_eligibility:
-            add_not_one_click_purchasable_message(request, enterprise_customer, program_title)
+            messages.add_unenrollable_item_message(request, 'program')
+        elif discount_data.get('total_incl_tax_excl_discounts') is None:
+            messages.add_missing_price_information_message(request, program_title)
 
         # Update our context with the above calculated details and more.
         context_data = self.context_data.copy()

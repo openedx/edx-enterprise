@@ -4,12 +4,14 @@ Utility functions for enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import hashlib
 import logging
 import re
 from uuid import UUID
 
 import analytics
+import pytz
 from eventtracking import tracker
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
@@ -21,6 +23,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
+from django.utils.dateparse import parse_datetime
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -663,3 +666,31 @@ def track_event(user_id, event_name, properties):
                 'clientId': tracking_context.get('client_id')
             }
         })
+
+
+def parse_datetime_handle_invalid(datetime_value):
+    """
+    Return the parsed version of a datetime string. If the string is invalid, return None.
+    """
+    try:
+        return parse_datetime(datetime_value)
+    except TypeError:
+        return None
+
+
+def is_course_run_enrollable(course_run):
+    """
+    Return whether the course run is enrollable.
+
+    We look for the following criteria:
+    - end is greater than now OR null
+    - enrollment_start is less than now OR null
+    - enrollment_end is greater than now OR null
+    """
+    now = datetime.datetime.now(pytz.UTC)
+    end = parse_datetime_handle_invalid(course_run.get('end'))
+    enrollment_start = parse_datetime_handle_invalid(course_run.get('enrollment_start'))
+    enrollment_end = parse_datetime_handle_invalid(course_run.get('enrollment_end'))
+    return (not end or end > now) and \
+           (not enrollment_start or enrollment_start < now) and \
+           (not enrollment_end or enrollment_end > now)

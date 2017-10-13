@@ -45,7 +45,7 @@ FAKE_COURSE_RUN = {
         }
     ],
     'start': '2013-02-05T05:00:00Z',
-    'end': '2017-12-31T18:00:00Z',
+    'end': '3000-12-31T18:00:00Z',
     'enrollment_start': None,
     'enrollment_end': None,
     'pacing_type': 'instructor_paced',

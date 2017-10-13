@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.2] - 2017-10-18
+---------------------
+
+* If a course is unenrollable, the program and course enrollment landing pages will display only a subset of information.
+
 [0.52.1] - 2017-10-15
 ---------------------
 

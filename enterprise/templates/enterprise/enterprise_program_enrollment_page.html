@@ -26,12 +26,13 @@
 
       <div class="col-7 border-left">
         <main>
-          {% if is_learner_eligible_for_one_click_purchase %}
           <div class="program-detail-container">
             {# Display success, error, warning or info messages #}
             {% alert_messages messages %}
 
-            <h2 class="program-confirmation-title">{{ page_title }}</h2>
+            {% if is_learner_eligible_for_one_click_purchase %}
+              <h2 class="program-confirmation-title">{{ page_title }}</h2>
+            {% endif %}
 
             <div class="program-detail">
               <h2 class="program-title">{{ program_title }}</h2>
@@ -46,23 +47,28 @@
                   <li><span class="bullet-item">{{ bullet_point }}</span></li>
                 {% endfor %}
               </ul>
-              <div class="program-price">
-                <strong>{{ purchase_text }}</strong>
-                {% if is_discounted %}
-                  <strong>
-                    <span class="original-price"><s>{{ program_price }}</s></span> <span class="final-price">{{ program_discounted_price }}</span>
-                  </strong><br>
-                  {% autoescape off %}{{ discount_provider }}{% endautoescape %}
-                {% else %}
-                  <strong>{{ program_price }}</strong>
-                {% endif %}
-              </div>
+
+              {% if is_learner_eligible_for_one_click_purchase %}
+                <div class="program-price">
+                  <strong>{{ purchase_text }}</strong>
+                  {% if is_discounted %}
+                    <strong>
+                      <span class="original-price"><s>{{ program_price }}</s></span> <span class="final-price">{{ program_discounted_price }}</span>
+                    </strong><br>
+                    {% autoescape off %}{{ discount_provider }}{% endautoescape %}
+                  {% else %}
+                    <strong>{{ program_price }}</strong>
+                  {% endif %}
+                </div>
+              {% endif %}
             </div>
 
-            <form method="POST">
-              <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
-              <button class="btn-confirm">{{ confirm_button_text }}</button>
-            </form>
+            {% if is_learner_eligible_for_one_click_purchase %}
+              <form method="POST">
+                <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+                <button class="btn-confirm">{{ confirm_button_text }}</button>
+              </form>
+            {% endif %}
           </div>
 
           <div class="program-metadata-container">
@@ -161,7 +167,7 @@
                 {% endif %}
 
                 {# Price #}
-                {% if program_price %}
+                {% if program_price and is_learner_eligible_for_one_click_purchase %}
                 <tr id="price-row">
                   <th scope="row" class="summary-item">{{ price_text }}:</th>
                   <td class="summary-content">
@@ -201,22 +207,15 @@
               </tbody>
             </table>
           </div>
-          {% else %}
-            <div class="program-detail-container">
-              <h4 class="ineligible-program-text">{{ program_not_eligible_for_one_click_purchase_text }}</h4>
-            </div>
-          {% endif %}
         </main>
       </div>
     </div>
   </div>
-  {% if is_learner_eligible_for_one_click_purchase %}
-    {% for course in courses %}
-      {% with index=forloop.counter0 %}
-        {% course_modal course %}
-      {% endwith %}
-    {% endfor %}
-  {% endif %}
+  {% for course in courses %}
+    {% with index=forloop.counter0 %}
+      {% course_modal course %}
+    {% endwith %}
+  {% endfor %}
   <div id="see-more-text" aria-hidden="true" hidden>{{ see_more_text }}</div>
   <div id="see-less-text" aria-hidden="true" hidden>{{ see_less_text }}</div>
 {% endblock %}
