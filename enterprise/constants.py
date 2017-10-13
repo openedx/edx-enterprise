@@ -5,6 +5,8 @@ Enterprise Django application constants.
 
 from __future__ import absolute_import, unicode_literals
 
+import json
+
 from django.utils.translation import ugettext_lazy as _
 
 # We listen to the User post_save signal in order to associate new users
@@ -27,7 +29,8 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
 )
 
 # Course mode sorting based on slug
-COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
+COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'credit', 'audit', 'honor']
+
 
 PROGRAM_TYPE_DESCRIPTION = {
     'MicroMasters Certificate': _(
@@ -49,3 +52,10 @@ PROGRAM_TYPE_DESCRIPTION = {
         'XSeries Certificate that illustrates your achievement.'
     ),
 }
+
+
+def json_serialized_course_modes():
+    """
+    :return: serialized course modes.
+    """
+    return json.dumps(COURSE_MODE_SORT_ORDER)
