@@ -9,6 +9,8 @@ import logging
 import re
 from uuid import UUID
 
+import analytics
+from eventtracking import tracker
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
 
@@ -647,3 +649,17 @@ def get_enterprise_utm_context(enterprise_customer):
         'utm_medium': 'enterprise',
         'utm_source': slugify(enterprise_customer.name)
     }
+
+
+def track_event(user_id, event_name, properties):
+    """
+    Emit a track event to segment (and forwarded to GA) for some parts of the Enterprise workflows.
+    """
+    if getattr(settings, 'LMS_SEGMENT_KEY'):
+        tracking_context = tracker.get_tracker().resolve_context()
+        analytics.track(user_id, event_name, properties, context={
+            'ip': tracking_context.get('ip'),
+            'Google Analytics': {
+                'clientId': tracking_context.get('client_id')
+            }
+        })

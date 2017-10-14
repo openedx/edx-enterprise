@@ -23,3 +23,5 @@ edx-opaque-keys==0.4.0                  # Helpers for parsing course run IDs
 testfixtures                            # Mock objects for unit tests and doc tests
 jsonfield==2.0.2                        # Provides a Django model field which serializes/deserializes JSON objects
 flaky==3.3.0                            # Rerun flaky tests automatically if they fail, up to a limit
+analytics-python==1.1.0                 # Used for Segment analytics
+event-tracking==0.2.4                   # Tracks context-aware semi-structured system events

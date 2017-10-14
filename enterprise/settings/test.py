@@ -157,3 +157,23 @@ COURSE_ID_PATTERN = COURSE_KEY_PATTERN.replace('course_key_string', 'course_id')
 USE_TZ = True
 
 LMS_SEGMENT_KEY = 'SOME_KEY'
+EVENT_TRACKING_ENABLED = True
+EVENT_TRACKING_BACKENDS = {
+    'segmentio': {
+        'ENGINE': 'eventtracking.backends.routing.RoutingBackend',
+        'OPTIONS': {
+            'backends': {
+                'segment': {'ENGINE': 'eventtracking.backends.segment.SegmentBackend'}
+            },
+            'processors': [
+                {
+                    'ENGINE': 'eventtracking.processors.whitelist.NameWhitelistProcessor',
+                    'OPTIONS': {
+                        'whitelist': []
+                    }
+                },
+            ]
+        }
+    }
+}
+EVENT_TRACKING_PROCESSORS = []

@@ -7,12 +7,9 @@ from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from django.conf.urls import include, url
 
-from enterprise.views import (
-    CourseEnrollmentView,
-    GrantDataSharingPermissions,
-    HandleConsentEnrollment,
-    ProgramEnrollmentView,
-)
+from enterprise.views import GrantDataSharingPermissions, RouterView
+
+ENTERPRISE_ROUTER = RouterView.as_view()
 
 urlpatterns = [
     url(
@@ -24,17 +21,17 @@ urlpatterns = [
         r'^enterprise/handle_consent_enrollment/(?P<enterprise_uuid>[^/]+)/course/{}/$'.format(
             settings.COURSE_ID_PATTERN
         ),
-        HandleConsentEnrollment.as_view(),
+        ENTERPRISE_ROUTER,
         name='enterprise_handle_consent_enrollment'
     ),
     url(
         r'^enterprise/(?P<enterprise_uuid>[^/]+)/course/{}/enroll/$'.format(settings.COURSE_ID_PATTERN),
-        CourseEnrollmentView.as_view(),
+        ENTERPRISE_ROUTER,
         name='enterprise_course_enrollment_page'
     ),
     url(
         r'^enterprise/(?P<enterprise_uuid>[^/]+)/program/(?P<program_uuid>[^/]+)/enroll/$',
-        ProgramEnrollmentView.as_view(),
+        ENTERPRISE_ROUTER,
         name='enterprise_program_enrollment_page'
     ),
     url(

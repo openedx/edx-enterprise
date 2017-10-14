@@ -4,6 +4,7 @@ User-facing views for the Enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+import re
 from logging import getLogger
 
 from consent.helpers import get_data_sharing_consent
@@ -42,6 +43,7 @@ from enterprise.utils import (
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
+    track_event,
     ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
@@ -57,7 +59,6 @@ LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_PROGRAMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard/programs/{uuid}')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
-LMS_COURSE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
 
 
 def verify_edx_resources():
@@ -404,8 +405,6 @@ class HandleConsentEnrollment(View):
         # provided `enterprise_uuid`.
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
         enterprise_customer_user = get_enterprise_customer_user(request.user.id, enterprise_customer.uuid)
-        if not enterprise_customer_user:
-            raise Http404
 
         selected_course_mode = None
         for course_mode in course_modes:
@@ -759,16 +758,7 @@ class CourseEnrollmentView(NonAtomicView):
             * No course is found in database against the provided `course_id`.
         """
         enterprise_customer, course, course_run, modes = self.get_base_details(enterprise_uuid, course_id)
-
-        # Create a link between the user and the enterprise customer if it does not already exist.  Ensure that the link
-        # is saved to the database prior to getting the final price of the displayed course modes, so that the
-        # ecommerce service knows this user belongs to an enterprise customer.
-        with transaction.atomic():
-            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-                enterprise_customer=enterprise_customer,
-                user_id=request.user.id
-            )
-
+        enterprise_customer_user = get_enterprise_customer_user(request.user.id, enterprise_uuid)
         data_sharing_consent = DataSharingConsent.objects.proxied_get(
             username=enterprise_customer_user.username,
             course_id=course_id,
@@ -789,7 +779,7 @@ class CourseEnrollmentView(NonAtomicView):
         if enrolled_course and enterprise_course_enrollment:
             # The user is already enrolled in the course through the Enterprise Customer, so redirect to the course
             # info page.
-            return redirect(LMS_COURSE_URL.format(course_id=course_id))
+            return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
         return self.get_enterprise_course_enrollment_page(
             request,
@@ -1072,14 +1062,7 @@ class ProgramEnrollmentView(NonAtomicView):
         """
         verify_edx_resources()
 
-        # Create a link between the user and the enterprise customer if it does not already exist.
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
-        with transaction.atomic():
-            EnterpriseCustomerUser.objects.get_or_create(
-                enterprise_customer=enterprise_customer,
-                user_id=request.user.id
-            )
-
         program_details = self.get_program_details(request, program_uuid, enterprise_customer)
         if program_details['certificate_eligible_for_program']:
             # The user is already enrolled in the program, so redirect to the program's dashboard.
@@ -1137,3 +1120,100 @@ class ProgramEnrollmentView(NonAtomicView):
             )
 
         return redirect(basket_page)
+
+
+class RouterView(NonAtomicView):
+    """
+    A router or gateway view for managing Enterprise workflows.
+    """
+
+    # pylint: disable=invalid-name
+    COURSE_ENROLLMENT_VIEW_URL = '/enterprise/{}/course/{}/enroll/'
+    PROGRAM_ENROLLMENT_VIEW_URL = '/enterprise/{}/program/{}/enroll/'
+    HANDLE_CONSENT_ENROLLMENT_VIEW_URL = '/enterprise/handle_consent_enrollment/{}/course/{}/'
+    VIEWS = {
+        COURSE_ENROLLMENT_VIEW_URL: CourseEnrollmentView,
+        PROGRAM_ENROLLMENT_VIEW_URL: ProgramEnrollmentView,
+        HANDLE_CONSENT_ENROLLMENT_VIEW_URL: HandleConsentEnrollment,
+    }
+
+    @staticmethod
+    def get_path_variables(**kwargs):
+        """
+        Get the base variables for any view to route to.
+
+        Currently gets:
+        - `enterprise_uuid` - the UUID of the enterprise customer.
+        - `course_run_id` - the ID of the course, if applicable.
+        - `program_uuid` - the UUID of the program, if applicable.
+        """
+        enterprise_customer_uuid = kwargs.get('enterprise_uuid', '')
+        course_run_id = kwargs.get('course_id', '')
+        program_uuid = kwargs.get('program_uuid', '')
+        return enterprise_customer_uuid, course_run_id or program_uuid
+
+    def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id):
+        """
+        Return whether a request is eligible for direct audit enrollment for a particular enterprise customer.
+
+        We check for the following criteria:
+        - The `audit` query parameter.
+        - The user's being routed to the course enrollment landing page.
+        - The customer's catalog contains the course in question.
+        - The audit track is an available mode for the course.
+        """
+        # Return it in one big statement to utilize short-circuiting behavior. Avoid the API call if possible.
+        return request.GET.get('audit') and \
+            request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_run_id) and \
+            enterprise_customer.catalog_contains_course(course_run_id) and \
+            EnrollmentApiClient().has_course_mode(course_run_id, 'audit')
+
+    def redirect(self, request, *args, **kwargs):
+        """
+        Redirects to the appropriate view depending on where the user came from.
+        """
+        enterprise_customer_uuid, resource_id = RouterView.get_path_variables(**kwargs)
+        # Replace enterprise UUID and resource ID with '{}', to easily match with a path in RouterView.VIEWS. Example:
+        # /enterprise/fake-uuid/course/course-v1:cool+course+2017/enroll/ -> /enterprise/{}/course/{}/enroll/
+        path = re.sub('{}|{}'.format(enterprise_customer_uuid, re.escape(resource_id)), '{}', request.path)
+        return self.VIEWS[path].as_view()(request, *args, **kwargs)
+
+    @method_decorator(enterprise_login_required)
+    @method_decorator(force_fresh_session)
+    def get(self, request, *args, **kwargs):
+        """
+        Run some custom GET logic for Enterprise workflows before routing the user through existing views.
+
+        In particular, before routing to existing views:
+        - Look to see whether a request is eligible for direct audit enrollment, and if so, directly enroll the user.
+        """
+        enterprise_customer_uuid, resource_id = RouterView.get_path_variables(**kwargs)
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
+
+        # Ensure that the link is saved to the database prior to making some call in a downstream view
+        # which may need to know that the user belongs to an enterprise customer.
+        with transaction.atomic():
+            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer=enterprise_customer,
+                user_id=request.user.id
+            )
+
+        # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
+        if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
+            enterprise_customer_user.enroll(resource_id, 'audit')
+            track_event(request.user.id, 'edx.bi.user.enterprise.onboarding', {
+                'pathway': 'direct-audit-enrollment',
+                'url_path': request.path,
+                'course_run_id': resource_id,
+            })
+            # The courseware view logic will check for DSC requirements, and route to the DSC page if necessary.
+            return redirect(LMS_COURSEWARE_URL.format(course_id=resource_id))
+
+        return self.redirect(request, *args, **kwargs)
+
+    @method_decorator(enterprise_login_required)
+    def post(self, request, *args, **kwargs):
+        """
+        Run some custom POST logic for Enterprise workflows before routing the user through existing views.
+        """
+        return self.redirect(request, *args, **kwargs)

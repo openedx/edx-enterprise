@@ -125,6 +125,27 @@ def test_get_course_enrollment():
 
 
 @responses.activate
+def test_is_enrolled():
+    user = "some_user"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    course_details = {"course_id": course_id}
+    mode = "audit"
+    is_active = True
+    expected_response = dict(user=user, course_details=course_details, mode=mode, is_active=is_active)
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        json=expected_response
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.is_enrolled(user, course_id)
+    assert actual_response is True
+
+
+@responses.activate
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 def test_get_enrollment_course_modes():
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -155,6 +176,58 @@ def test_get_enrollment_course_modes():
     client = lms_api.EnrollmentApiClient()
     actual_response = client.get_course_modes(course_id)
     assert actual_response == expected_return
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
+def test_has_course_modes():
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    response = {
+        "course_modes": [
+            {'slug': 'course'},
+            {'slug': 'a'},
+            {'slug': 'containing'},
+            {'slug': 'list'},
+            {'slug': 'modes'},
+        ]
+    }
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "course/{}".format(course_id),
+        ),
+        json=response
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.has_course_mode(course_id, 'list')
+    assert actual_response is True
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
+def test_doesnt_have_course_modes():
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    response = {
+        "course_modes": [
+            {'slug': 'course'},
+            {'slug': 'a'},
+            {'slug': 'containing'},
+            {'slug': 'list'},
+            {'slug': 'modes'},
+        ]
+    }
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "course/{}".format(course_id),
+        ),
+        json=response
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.has_course_mode(course_id, 'nope')
+    assert actual_response is False
 
 
 @responses.activate
@@ -189,6 +262,44 @@ def test_get_course_enrollment_not_found():
     client = lms_api.EnrollmentApiClient()
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response is None
+
+
+@responses.activate
+def test_is_enrolled_false():
+    user = "some_user"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        status=404,
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.is_enrolled(user, course_id)
+    assert actual_response is False
+
+
+@responses.activate
+def test_is_enrolled_but_not_active():
+    user = "some_user"
+    course_id = "course-v1:edX+DemoX+Demo_Course"
+    course_details = {"course_id": course_id}
+    mode = "audit"
+    is_active = False
+    expected_response = dict(user=user, course_details=course_details, mode=mode, is_active=is_active)
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        json=expected_response
+    )
+    client = lms_api.EnrollmentApiClient()
+    actual_response = client.is_enrolled(user, course_id)
+    assert actual_response is False
 
 
 @responses.activate
