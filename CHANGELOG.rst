@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.1] - 2017-10-15
+---------------------
+
+* Change a log level from `error` to `info` in our LMS API Client, as it wasn't really an error.
+
 [0.52.0] - 2017-10-14
 ---------------------
 
