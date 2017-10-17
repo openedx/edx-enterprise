@@ -238,7 +238,7 @@ class EnrollmentApiClient(LmsApiClient):
         # This enrollment data endpoint returns an empty string if the username and course_id is valid, but there's
         # no matching enrollment found
         if not result:
-            LOGGER.error('no course enrollment details found for username=%s, course=%s', username, course_id)
+            LOGGER.info('Failed to find course enrollment details for user [%s] and course [%s]', username, course_id)
             return None
 
         return result
