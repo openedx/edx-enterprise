@@ -5,6 +5,7 @@ Transmits information about an enterprise's course catalog to connected Integrat
 
 from __future__ import absolute_import, unicode_literals
 
+from cProfile import Profile
 from logging import getLogger
 
 from django.contrib.auth.models import User
@@ -42,6 +43,15 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         super(Command, self).add_arguments(parser)
 
     def handle(self, *args, **options):
+        """
+        Transmit the courseware data for the EnterpriseCustomer(s) to the active integration channels.
+        """
+        profiler = Profile()
+        profiler.runcall(self._handle, *args, **options)
+        profiler.dump_stats('transmit_courses_data.pstats')
+        profiler.print_stats()
+
+    def _handle(self, *args, **options):
         """
         Transmit the courseware data for the EnterpriseCustomer(s) to the active integration channels.
         """
