@@ -31,6 +31,8 @@ from pytest import mark, raises
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
+from django.core.urlresolvers import reverse
+from django.http import QueryDict
 from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 
@@ -46,7 +48,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     logo_path,
 )
-from test_utils import fake_catalog_api
+from test_utils import assert_url, fake_catalog_api
 from test_utils.factories import (
     DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
@@ -853,6 +855,16 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
     Tests for the EnterpriseCustomerCatalog model.
     """
 
+    def setUp(self):
+        """
+        Setup tests
+        """
+        self.faker = FakerFactory.create()
+        self.catalog_uuid = self.faker.uuid4()  # pylint: disable=no-member
+        self.enterprise_uuid = self.faker.uuid4()  # pylint: disable=no-member
+        self.enterprise_name = 'enterprisewithacatalog'
+        super(TestEnterpriseCustomerCatalog, self).setUp()
+
     @ddt.data(
         str, repr
     )
@@ -872,6 +884,61 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             name=name
         )
         self.assertEqual(method(enterprise_catalog), expected_str)
+
+    @mock.patch('enterprise.utils.configuration_helpers')
+    def test_catalog_querystring_in_course_enrollment_url(self, config_mock):
+        config_mock.get_value.return_value = 'value'
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
+        course_run_key = CourseKey.from_string(course_run_id)
+
+        course_enrollment_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[self.enterprise_uuid, course_run_id],
+        )
+        querystring_dict = QueryDict('', mutable=True)
+        querystring_dict.update({
+            'utm_medium': 'enterprise',
+            'utm_source': self.enterprise_name,
+            'catalog': self.catalog_uuid,
+        })
+        expected_course_enrollment_url = '{course_enrollment_url}?{querystring}'.format(
+            course_enrollment_url=course_enrollment_url,
+            querystring=querystring_dict.urlencode()
+        )
+
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=self.catalog_uuid,
+            enterprise_customer=EnterpriseCustomerFactory(uuid=self.enterprise_uuid, name=self.enterprise_name)
+        )
+        enrollment_url = enterprise_catalog.get_course_run_enrollment_url(course_run_key=course_run_key)
+        assert_url(enrollment_url, expected_course_enrollment_url)
+
+    @mock.patch('enterprise.utils.configuration_helpers')
+    def test_catalog_querystring_in_program_enrollment_url(self, config_mock):
+        config_mock.get_value.return_value = 'value'
+        program_uuid = fake_catalog_api.FAKE_PROGRAM_RESPONSE1.get('uuid')
+
+        program_enrollment_url = reverse(
+            'enterprise_program_enrollment_page',
+            args=[self.enterprise_uuid, program_uuid],
+        )
+        querystring_dict = QueryDict('', mutable=True)
+        querystring_dict.update({
+            'utm_medium': 'enterprise',
+            'utm_source': self.enterprise_name,
+            'catalog': self.catalog_uuid,
+        })
+        expected_program_enrollment_url = '{program_enrollment_url}?{querystring}'.format(
+            program_enrollment_url=program_enrollment_url,
+            querystring=querystring_dict.urlencode()
+        )
+
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=self.catalog_uuid,
+            enterprise_customer=EnterpriseCustomerFactory(uuid=self.enterprise_uuid, name=self.enterprise_name)
+        )
+        enrollment_url = enterprise_catalog.get_program_enrollment_url(program_uuid=program_uuid)
+        assert_url(enrollment_url, expected_program_enrollment_url)
 
 
 @mark.django_db

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.5] - 2017-10-19
+---------------------
+
+* Add EnterpriseCustomerCatalog UUID as query parameter "catalog" in enterprise course and program enrollment URL's.
+
 [0.52.4] - 2017-10-18
 ---------------------
 

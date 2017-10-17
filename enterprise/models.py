@@ -977,6 +977,32 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             return None
         return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
 
+    def get_course_run_enrollment_url(self, course_run_key):
+        """
+        Return enterprise course enrollment page url with the catalog information for the given course.
+
+        Arguments:
+            course_run_key (str): The course run id for the course to be displayed.
+
+        Returns:
+            (str): Enterprise landing page url.
+        """
+        url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key)
+        return utils.update_query_parameters(url, {'catalog': self.uuid})
+
+    def get_program_enrollment_url(self, program_uuid):
+        """
+        Return enterprise program enrollment page url with the catalog information for the given program.
+
+        Arguments:
+            program_uuid (str): The program UUID.
+
+        Returns:
+            (str): Enterprise program landing page url.
+        """
+        url = self.enterprise_customer.get_program_enrollment_url(program_uuid)
+        return utils.update_query_parameters(url, {'catalog': self.uuid})
+
 
 @python_2_unicode_compatible
 class EnrollmentNotificationEmailTemplate(TimeStampedModel):
