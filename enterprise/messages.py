@@ -80,39 +80,24 @@ def add_missing_price_information_message(request, item):
     )
 
 
-def add_not_one_click_purchasable_message(request, enterprise_customer, program_title):
+def add_unenrollable_item_message(request, item):
     """
-    Add a message to the Django message store indicating that the program is not one-click purchasable.
-
-    Only one-click purchasable programs should be available for enrollment through the Enterprise landing page flow.
+    Add a message to the Django message store indicating that the item (i.e. course run, program) is unenrollable.
 
     :param request: The current request.
-    :param enterprise_customer: The Enterprise Customer to which the program is associated.
-    :param program_title: The title of the program that is not one-click purchasable.
+    :param item: The item that is unenrollable (i.e. a course run).
     """
-    messages.warning(
+    messages.info(
         request,
         _(
-            '{strong_start}We could not load the program titled {em_start}{program_title}{em_end} through '
-            '{enterprise_customer_name}.{strong_end} '
-            '{span_start}If you have any questions, please contact your learning manager at '
-            '{enterprise_customer_name}, or contact {link_start}{platform_name} support{link_end}.{span_end}'
+            '{strong_start}Something happened.{strong_end} '
+            '{span_start}This {item} is not currently open to new learners. Please start over and select a different '
+            '{item}.{span_end}'
         ).format(
-            program_title=program_title,
-            enterprise_customer_name=enterprise_customer.name,
-            em_start='<em>',
-            em_end='</em>',
-            link_start='<a href="{support_link}" target="_blank">'.format(
-                support_link=get_configuration_value(
-                    'ENTERPRISE_SUPPORT_URL',
-                    getattr(settings, 'ENTERPRISE_SUPPORT_URL', '')  # Remove the `getattr` when setting is upstreamed.
-                ),
-            ),
-            platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
-            link_end='</a>',
-            span_start='<span>',
-            span_end='</span>',
+            item=item,
             strong_start='<strong>',
             strong_end='</strong>',
+            span_start='<span>',
+            span_end='</span>',
         )
     )

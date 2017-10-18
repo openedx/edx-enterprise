@@ -1007,6 +1007,76 @@ class TestEnterpriseUtils(unittest.TestCase):
         utils.track_event('user_id', 'event_name', 'properties')
         analytics_mock.track.assert_not_called()
 
+    @ddt.data(
+        ("2014-10-13T13:11:03Z", utils.parse_datetime("2014-10-13T13:11:03Z")),
+        (None, None)
+    )
+    @ddt.unpack
+    def test_parse_datetime_handle_invalid(self, datetime_value, expected_parsed_datetime):
+        """
+        ``parse_datetime_handle_invalid`` wraps ``parse_datetime`` such that it returns ``None`` for any bad types.
+        """
+        assert utils.parse_datetime_handle_invalid(datetime_value) == expected_parsed_datetime
+
+    @ddt.data(
+        (
+            {
+                "end": "3000-10-13T13:11:01Z",
+                "enrollment_start": "2014-10-13T13:11:03Z",
+                "enrollment_end": "2999-10-13T13:11:04Z",
+            },
+            True,
+        ),
+        (
+            {"end": None, "enrollment_start": "2014-10-13T13:11:03Z", "enrollment_end": "2999-10-13T13:11:04Z"},
+            True,
+        ),
+        (
+            {"end": "3000-10-13T13:11:01Z", "enrollment_start": None, "enrollment_end": "2999-10-13T13:11:04Z"},
+            True,
+        ),
+        (
+            {"end": "3000-10-13T13:11:01Z", "enrollment_start": "2014-10-13T13:11:03Z", "enrollment_end": None},
+            True,
+        ),
+        (
+            {
+                "end": "2014-10-13T13:11:01Z",  # end < now
+                "enrollment_start": "2014-10-13T13:11:03Z",
+                "enrollment_end": "2999-10-13T13:11:04Z",
+            },
+            False,
+        ),
+        (
+            {
+                "end": "3000-10-13T13:11:01Z",
+                "enrollment_start": "2999-10-13T13:11:03Z",  # enrollment_start > now
+                "enrollment_end": "3000-10-13T13:11:04Z",
+            },
+            False,
+        ),
+        (
+            {
+                "end": "3000-10-13T13:11:01Z",
+                "enrollment_start": "2014-10-13T13:11:03Z",
+                "enrollment_end": "2014-10-13T13:11:04Z",  # enrollment_end < now
+            },
+            False,
+        ),
+    )
+    @ddt.unpack
+    def test_is_course_run_enrollable(self, course_run, expected_enrollment_eligibility):
+        """
+        ``is_course_run_enrollable`` returns whether the course run is enrollable.
+
+        We check that the function returns:
+        - False on end < now.
+        - False on enrollment_end < now.
+        - False on enrollment_start > now.
+        - True if none of the above plus, optionally, if any of the values are NULL.
+        """
+        assert utils.is_course_run_enrollable(course_run) == expected_enrollment_eligibility
+
 
 def get_transformed_course_metadata(course_id, status):
     """

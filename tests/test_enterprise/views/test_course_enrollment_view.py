@@ -131,6 +131,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'discount_text': 'Discount provided by <strong>Starfleet Academy</strong>',
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
             'LMS_ROOT_URL': 'http://localhost:8000',
+            'course_enrollable': True,
         }
         default_context.update(expected_context)
         assert response.status_code == 200
@@ -138,7 +139,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint: disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -192,7 +192,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -266,7 +265,114 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
+    @ddt.data(True, False)
+    def test_get_course_enrollment_page_course_unenrollable(
+            self,
+            enrollable,
+            registry_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            course_catalog_client_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        The message indicating that the course is currently unopen to new learners is rendered.
+        """
+        setup_course_catalog_api_client_mock(course_catalog_client_mock, course_run_overrides={
+            'end': None if enrollable else '1000-10-13T13:11:01Z',
+        })
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()  # pylint: disable=no-member
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        enterprise_customer_user = EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_id=self.user.id
+        )
+        EnterpriseCourseEnrollmentFactory(
+            course_id=self.demo_course_id,
+            enterprise_customer_user=enterprise_customer_user
+        )
+        DataSharingConsentFactory(
+            username=self.user.username,
+            course_id=self.demo_course_id,
+            enterprise_customer=enterprise_customer,
+        )
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+
+        messages = self._get_messages_from_response_cookies(response)
+        if enrollable:
+            assert not messages
+        else:
+            assert messages
+            self._assert_request_message(
+                messages[0],
+                'info',
+                (
+                    '<strong>Something happened.</strong> '
+                    '<span>This course is not currently open to new learners. Please start over and select a different '
+                    'course.</span>'
+                )
+            )
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
+    def test_get_course_enrollment_page_course_unenrollable_context(
+            self,
+            registry_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            course_catalog_client_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        """
+        The course enrollment landing page returns context indicating that the course is unenrollable.
+        """
+        setup_course_catalog_api_client_mock(course_catalog_client_mock, course_run_overrides={
+            'end': '1000-10-13T13:11:01Z'
+        })
+        self._setup_ecommerce_client(ecommerce_api_client_mock)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        faker = FakerFactory.create()
+        provider_id = faker.slug()  # pylint: disable=no-member
+        self._setup_registry_mock(registry_mock, provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        expected_context = {'course_enrollable': False}
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -327,7 +433,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -389,7 +494,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -454,7 +558,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -501,7 +604,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint: disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_non_existing_course(
@@ -534,7 +636,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_error_in_getting_course(
@@ -567,7 +668,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -604,7 +704,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     def test_get_course_specific_enrollment_view_for_invalid_ec_uuid(
@@ -628,7 +727,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_inactive_user(
             self,
@@ -673,7 +771,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         for fragment in expected_fragments:
             assert fragment in response.url
 
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -953,7 +1050,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -1019,7 +1115,6 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')

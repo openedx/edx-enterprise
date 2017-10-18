@@ -71,7 +71,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         client.get_program_course_keys.return_value = self.demo_course_ids
         client.get_program_by_uuid.return_value = self.dummy_program
 
-    def _setup_program_data_extender(self, extender_mock):
+    def _setup_program_data_extender(self, extender_mock, course_overrides=None):
         """
         Sets up the `ProgramDataExtender` mock, a utility from the edx-platform.
         """
@@ -79,6 +79,9 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         dummy_program_extended = copy.deepcopy(self.dummy_program)
         dummy_course_extended_1 = copy.deepcopy(self.demo_course_1)
         dummy_course_extended_2 = copy.deepcopy(self.demo_course_2)
+        if course_overrides:
+            dummy_course_extended_1.update(course_overrides)
+            dummy_course_extended_2.update(course_overrides)
         dummy_course_extended_1['course_runs'][0].update({"is_enrolled": False, "upgrade_url": None})
         dummy_course_extended_2['course_runs'][0].update({"is_enrolled": False, "upgrade_url": None})
         dummy_program_extended.update({
@@ -651,19 +654,20 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
-    def test_get_program_enrollment_page_not_one_click_purchasable_message(
+    @ddt.data(True, False)
+    def test_get_program_enrollment_page_program_unenrollable(
             self,
+            enrollable,
             program_data_extender_mock,
             course_catalog_api_client_mock_1,
             course_catalog_api_client_mock_2,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         """
-        The message about the program not being one-click purchasable is rendered if it really isn't.
+        The message about the program being unenrollable is displayed.
         """
-        program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock)
-        program_data_extender_mock.return_value.extend.return_value['is_learner_eligible_for_one_click_purchase'] \
-            = False
+        program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock).return_value
+        program_data_extender_mock.extend.return_value['is_learner_eligible_for_one_click_purchase'] = enrollable
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
@@ -675,19 +679,19 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         self._login()
         response = self.client.get(program_enrollment_page_url)
         messages = self._get_messages_from_response_cookies(response)
-        assert messages
-        self._assert_request_message(
-            messages[0],
-            'warning',
-            (
-                '<strong>We could not load the program titled <em>Program Title 1</em> through Starfleet Academy.'
-                '</strong> <span>If you have any questions, please contact your learning manager at Starfleet Academy, '
-                'or contact <a href="{enterprise_support_link}" target="_blank">{platform_name} support</a>.</span>'
-            ).format(
-                enterprise_support_link=settings.ENTERPRISE_SUPPORT_URL,
-                platform_name=settings.PLATFORM_NAME,
+        if enrollable:
+            assert not messages
+        else:
+            assert messages
+            self._assert_request_message(
+                messages[0],
+                'info',
+                (
+                    '<strong>Something happened.</strong> '
+                    '<span>This program is not currently open to new learners. '
+                    'Please start over and select a different program.</span>'
+                )
             )
-        )
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
