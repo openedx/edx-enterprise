@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.4] - 2017-10-18
+---------------------
+
+* Upgrade django-simple-history to 1.9.0. Add needed migrations.
+
 [0.52.3] - 2017-10-18
 ---------------------
 
@@ -152,7 +157,7 @@ Unreleased
 [0.46.0] - 2017-09-15
 ---------------------
 
-* Allow multi-course enrollment for enterprise users in admin. 
+* Allow multi-course enrollment for enterprise users in admin.
 
 [0.45.0] - 2017-09-14
 ---------------------
