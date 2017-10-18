@@ -10,14 +10,14 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from django.utils import timezone
-from django.utils.dateparse import parse_datetime
+from consent.models import DataSharingConsent
 from slumber.exceptions import HttpNotFoundError
 
-from consent.models import DataSharingConsent
-from enterprise.api_client.lms import CourseApiClient, GradesApiClient, CertificatesApiClient
-from enterprise.models import EnterpriseCourseEnrollment
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
+from enterprise.api_client.lms import CertificatesApiClient, CourseApiClient, GradesApiClient
+from enterprise.models import EnterpriseCourseEnrollment
 
 LOGGER = getLogger(__name__)
 

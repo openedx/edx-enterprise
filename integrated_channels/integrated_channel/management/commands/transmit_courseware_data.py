@@ -7,14 +7,13 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from django.contrib.auth.models import User
-from django.core.management.base import BaseCommand, CommandError
-
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.utils import SapCourseExporter
 
-from . import INTEGRATED_CHANNEL_CHOICES, IntegratedChannelCommandMixin, celery_task
+from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand, CommandError
 
+from . import INTEGRATED_CHANNEL_CHOICES, IntegratedChannelCommandMixin, celery_task
 
 PLUGIN_MAPPING = {
     SAPSuccessFactorsEnterpriseCustomerConfiguration: SapCourseExporter,

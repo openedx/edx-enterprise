@@ -422,3 +422,19 @@ class EnterpriseCourseCatalogViewSet(EnterpriseWrapperApiViewSet):
         # Add enterprise related context for the courses.
         serializer.update_enterprise_courses(enterprise_customer, catalog_id=pk)
         return get_paginated_response(serializer.data, request)
+
+
+class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):
+    """
+    API views for the ``enterprise-customer-reporting`` API endpoint.
+    """
+
+    queryset = models.EnterpriseCustomerReportingConfiguration.objects.all()
+    serializer_class = serializers.EnterpriseCustomerReportingConfigurationSerializer
+
+    USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
+    FIELDS = (
+        'enterprise_customer',
+    )
+    filter_fields = FIELDS
+    ordering_fields = FIELDS

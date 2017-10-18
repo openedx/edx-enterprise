@@ -4,10 +4,12 @@ URLs for integrated_channel.
 """
 from __future__ import absolute_import, unicode_literals
 
-from django.conf.urls import url
+from integrated_channels.integrated_channel.views import (
+    PushCatalogDataToIntegratedChannel,
+    PushLearnerDataToIntegratedChannel,
+)
 
-from integrated_channels.integrated_channel.views import (PushCatalogDataToIntegratedChannel,
-                                                          PushLearnerDataToIntegratedChannel)
+from django.conf.urls import url
 
 urlpatterns = [
     url(

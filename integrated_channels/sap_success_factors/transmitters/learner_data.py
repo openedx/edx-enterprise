@@ -3,11 +3,13 @@
 Class for transmitting learner data to SuccessFactors.
 """
 from __future__ import absolute_import, unicode_literals
+
 import logging
-from django.apps import apps
+
 from integrated_channels.sap_success_factors.transmitters import SuccessFactorsTransmitterBase
 from requests import RequestException
 
+from django.apps import apps
 
 LOGGER = logging.getLogger(__name__)
 

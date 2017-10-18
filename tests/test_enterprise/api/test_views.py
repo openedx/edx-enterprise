@@ -64,6 +64,7 @@ ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-customer-contains-content-items',
     kwargs={'pk': FAKE_UUIDS[0]}
 )
+ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
 ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitlements', (1,))
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 
@@ -666,6 +667,41 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def test_enterprise_customer_reporting_list(self):
+        """
+        ``enterprise_customer_reporting``'s list endpoint should serialize the ``EnterpriseCustomerReportingConfig``.
+        """
+        factory = factories.EnterpriseCustomerReportingConfigFactory
+        model_item = {
+            'enterprise_customer__uuid': FAKE_UUIDS[0],
+            'email': 'test@test.com',
+        }
+        expected_item = {
+            'enterprise_customer': {
+                'uuid': FAKE_UUIDS[0],
+            },
+            'active': True,
+            'delivery_method': 'email',
+            'frequency': 'monthly',
+            'email': 'test@test.com',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+        }
+        self.create_items(factory, [model_item])
+        response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT)
+        response = self.load_json(response.content)
+        result_item = response['results'][0]
+        for key in expected_item:
+            if key == 'enterprise_customer':
+                assert expected_item[key]['uuid'] == result_item[key]['uuid']
+            else:
+                assert expected_item[key] == result_item[key]
+
+        assert result_item['initialization_vector'] is not None
+        assert result_item['password'] is not None
 
     @ddt.data(
         (False, False),

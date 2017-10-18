@@ -4,14 +4,14 @@ Class for transmitting course data to SuccessFactors.
 """
 from __future__ import absolute_import, unicode_literals
 
-import logging
 import json
-from django.apps import apps
-from django.core.exceptions import ObjectDoesNotExist
+import logging
 
 from integrated_channels.sap_success_factors.transmitters import SuccessFactorsTransmitterBase
 from requests import RequestException
 
+from django.apps import apps
+from django.core.exceptions import ObjectDoesNotExist
 
 LOGGER = logging.getLogger(__name__)
 

@@ -7,20 +7,19 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 from logging import getLogger
+
 from config_models.models import ConfigurationModel
+from integrated_channels.integrated_channel.learner_data import BaseLearnerExporter
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.sap_success_factors.transmitters.courses import SuccessFactorsCourseTransmitter
+from integrated_channels.sap_success_factors.transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
+from integrated_channels.sap_success_factors.utils import SapCourseExporter, parse_datetime_to_epoch
 from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from model_utils.models import TimeStampedModel
-
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from integrated_channels.sap_success_factors.utils import SapCourseExporter, parse_datetime_to_epoch
-from integrated_channels.integrated_channel.learner_data import BaseLearnerExporter
-
-from integrated_channels.sap_success_factors.transmitters.courses import SuccessFactorsCourseTransmitter
-from integrated_channels.sap_success_factors.transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
 
 LOGGER = getLogger(__name__)
 

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.3] - 2017-10-18
+---------------------
+
+* Introducing EnterpriseCustomerReportingConfig model for enterprise_reporting.
+
 [0.52.2] - 2017-10-18
 ---------------------
 

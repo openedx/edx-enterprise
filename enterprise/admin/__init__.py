@@ -30,9 +30,10 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     EnterpriseCustomerEntitlement,
     EnterpriseCourseEnrollment,
-    EnterpriseCustomerCatalog
+    EnterpriseCustomerCatalog,
+    EnterpriseCustomerReportingConfiguration
 )
-from enterprise.utils import get_all_field_names, get_catalog_admin_url
+from enterprise.utils import get_all_field_names, get_catalog_admin_url, decrypt_string
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -475,3 +476,44 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer__name',
         'enterprise_customer__uuid',
     )
+
+
+@admin.register(EnterpriseCustomerReportingConfiguration)
+class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerReportingConfiguration.
+    """
+
+    fields = (
+        "enterprise_customer",
+        "active",
+        "email",
+        "frequency",
+        "day_of_month",
+        "day_of_week",
+        "hour_of_day",
+        "decrypted_password",
+    )
+
+    list_display = (
+        "enterprise_customer",
+        "active",
+        "email",
+        "frequency",
+    )
+
+    readonly_fields = (
+        "decrypted_password",
+    )
+
+    list_filter = ("active",)
+    search_fields = ("enterprise_customer__name", "email")
+
+    class Meta(object):
+        model = EnterpriseCustomerReportingConfiguration
+
+    def decrypted_password(self, obj):
+        """
+        The decrypted password to be displayed to the admin.
+        """
+        return decrypt_string(obj.password, obj.initialization_vector)

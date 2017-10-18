@@ -116,7 +116,7 @@ validate: test ## run tests and quality checks
 	tox -e quality
 
 isort: ## call isort on packages/files that are checked in quality tests
-	isort --recursive tests test_utils enterprise consent manage.py setup.py
+	isort --recursive tests test_utils enterprise consent integrated_channels manage.py setup.py
 
 .PHONY: clean clean.static compile_translations coverage docs dummy_translations extract_translations \
 	fake_translations help pull_translations push_translations requirements test test-all upgrade validate isort \
