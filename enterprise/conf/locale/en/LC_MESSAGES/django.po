@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-18 04:59-0500\n"
+"POT-Creation-Date: 2017-10-19 08:33-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,20 +38,20 @@ msgstr ""
 msgid "Course key for which data sharing consent is granted."
 msgstr ""
 
-#: enterprise/admin/__init__.py:370
+#: enterprise/admin/__init__.py:371
 msgid "Preview (course)"
 msgstr ""
 
-#: enterprise/admin/__init__.py:372
+#: enterprise/admin/__init__.py:373
 msgid ""
 "Preview the HTML template rendered in the context of a course enrollment."
 msgstr ""
 
-#: enterprise/admin/__init__.py:381
+#: enterprise/admin/__init__.py:382
 msgid "Preview (program)"
 msgstr ""
 
-#: enterprise/admin/__init__.py:383
+#: enterprise/admin/__init__.py:384
 msgid ""
 "Preview the HTML template rendered in the context of a program enrollment."
 msgstr ""
@@ -452,110 +452,110 @@ msgid ""
 "{item}.{span_end}"
 msgstr ""
 
-#: enterprise/models.py:84
+#: enterprise/models.py:86 enterprise/models.py:1126
 msgid "Enterprise Customer"
 msgstr ""
 
-#: enterprise/models.py:85
+#: enterprise/models.py:87
 msgid "Enterprise Customers"
 msgstr ""
 
-#: enterprise/models.py:91
+#: enterprise/models.py:93
 msgid "Enterprise Customer name."
 msgstr ""
 
-#: enterprise/models.py:95
+#: enterprise/models.py:97
 msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 
-#: enterprise/models.py:115
+#: enterprise/models.py:117
 msgid ""
 "Specifies whether data sharing consent is enabled or disabled for learners "
 "signing in through this enterprise customer. If disabled, consent will not "
 "be requested, and eligible data will not be shared."
 msgstr ""
 
-#: enterprise/models.py:128
+#: enterprise/models.py:130
 msgid ""
 "Specifies whether data sharing consent is optional, is required at login, or "
 "is required at enrollment."
 msgstr ""
 
-#: enterprise/models.py:136
+#: enterprise/models.py:138
 msgid ""
 "Specifies whether the audit track enrollment option will be displayed in the "
 "course enrollment view."
 msgstr ""
 
-#: enterprise/models.py:143
+#: enterprise/models.py:145
 msgid ""
 "Specifies whether to pass-back audit track enrollment data through an "
 "integrated channel."
 msgstr ""
 
-#: enterprise/models.py:345
+#: enterprise/models.py:347
 msgid "Enterprise Customer Learner"
 msgstr ""
 
-#: enterprise/models.py:346
+#: enterprise/models.py:348
 msgid "Enterprise Customer Learners"
 msgstr ""
 
-#: enterprise/models.py:620
+#: enterprise/models.py:622
 msgid "Logo images must be in .png format."
 msgstr ""
 
-#: enterprise/models.py:629
+#: enterprise/models.py:631
 msgid "Branding Configuration"
 msgstr ""
 
-#: enterprise/models.py:630
+#: enterprise/models.py:632
 msgid "Branding Configurations"
 msgstr ""
 
-#: enterprise/models.py:726
+#: enterprise/models.py:728
 msgid "Enterprise Customer Entitlement"
 msgstr ""
 
-#: enterprise/models.py:727
+#: enterprise/models.py:729
 msgid "Enterprise Customer Entitlements"
 msgstr ""
 
-#: enterprise/models.py:734
+#: enterprise/models.py:736
 msgid ""
 "Enterprise customer's entitlement id for relationship with e-commerce coupon."
 msgstr ""
 
-#: enterprise/models.py:776
+#: enterprise/models.py:778
 msgid "The enterprise learner to which this enrollment is attached."
 msgstr ""
 
-#: enterprise/models.py:783
+#: enterprise/models.py:785
 msgid "The ID of the course in which the learner was enrolled."
 msgstr ""
 
-#: enterprise/models.py:871
+#: enterprise/models.py:873
 msgid ""
 "Query parameters which will be used to filter the discovery service's search/"
 "all endpoint results, specified as a Json object. An empty Json object means "
 "that all available content items will be included in the catalog."
 msgstr ""
 
-#: enterprise/models.py:878
+#: enterprise/models.py:880
 msgid ""
 "Ordered list of enrollment modes which can be displayed to learners for "
 "course runs in this catalog."
 msgstr ""
 
-#: enterprise/models.py:885
+#: enterprise/models.py:887
 msgid "Enterprise Customer Catalog"
 msgstr ""
 
-#: enterprise/models.py:886
+#: enterprise/models.py:888
 msgid "Enterprise Customer Catalogs"
 msgstr ""
 
-#: enterprise/models.py:989
+#: enterprise/models.py:1017
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -577,12 +577,93 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:1007
+#: enterprise/models.py:1035
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "
 "notification emails. The placeholder {course_name} will be replaced with the "
 "name of the course or program that was enrolled in."
+msgstr ""
+
+#: enterprise/models.py:1128
+msgid "Active"
+msgstr ""
+
+#: enterprise/models.py:1134
+msgid "Delivery Method"
+msgstr ""
+
+#: enterprise/models.py:1135
+msgid "The method in which the data should be sent."
+msgstr ""
+
+#: enterprise/models.py:1137
+msgid "Email"
+msgstr ""
+
+#: enterprise/models.py:1143
+msgid "Frequency"
+msgstr ""
+
+#: enterprise/models.py:1144
+msgid ""
+"The frequency interval (daily, weekly, or monthly) that the report should be "
+"sent."
+msgstr ""
+
+#: enterprise/models.py:1149
+msgid "Day of Month"
+msgstr ""
+
+#: enterprise/models.py:1150
+msgid ""
+"The day of the month to send the report. This field is required and only "
+"valid when the frequency is monthly."
+msgstr ""
+
+#: enterprise/models.py:1158
+msgid "Day of Week"
+msgstr ""
+
+#: enterprise/models.py:1159
+msgid ""
+"The day of the week to send the report. This field is required and only "
+"valid when the frequency is weekly."
+msgstr ""
+
+#: enterprise/models.py:1163
+msgid "Hour of Day"
+msgstr ""
+
+#: enterprise/models.py:1164
+msgid ""
+"The hour of the day to send the report, in Eastern Standard Time (EST). This "
+"is required for all frequency settings."
+msgstr ""
+
+#: enterprise/models.py:1173
+msgid "Password Encryption Initialization Vector"
+msgstr ""
+
+#: enterprise/models.py:1174
+msgid ""
+"This is the initialization vector used to encrypt the password using AESencr"
+msgstr ""
+
+#: enterprise/models.py:1181
+msgid "Password"
+msgstr ""
+
+#: enterprise/models.py:1222
+msgid "Day of week must be set if the frequency is weekly."
+msgstr ""
+
+#: enterprise/models.py:1226
+msgid "Day of month must be set if the frequency is monthly."
+msgstr ""
+
+#: enterprise/models.py:1229
+msgid "Frequency must be set to either daily, weekly, or monthly."
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:47
@@ -703,12 +784,12 @@ msgstr ""
 msgid "Close"
 msgstr ""
 
-#: enterprise/utils.py:223
+#: enterprise/utils.py:225
 #, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
-#: enterprise/utils.py:280
+#: enterprise/utils.py:282
 msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 
@@ -1111,7 +1192,7 @@ msgstr ""
 msgid "Invalid integrated channel: {channel}"
 msgstr ""
 
-#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:21
+#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:22
 msgid ""
 "\n"
 "    Transmit Enterprise learner course completion data for the given "
@@ -1119,27 +1200,11 @@ msgid ""
 "    "
 msgstr ""
 
-#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:34
+#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:35
 msgid "Username of a user authorized to fetch grades from the LMS API."
 msgstr ""
 
-#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:47
+#: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:48
 #, python-brace-format
 msgid "A user with the username {username} was not found."
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:29
-msgid "Third Party name."
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:30
-msgid "Data Type"
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:34
-msgid "Enterprise Integrated Channel"
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:35
-msgid "Enterprise Integrated Channels"
 msgstr ""
