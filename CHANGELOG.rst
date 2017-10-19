@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.52.6] - 2017-10-19
+---------------------
+
+* Update the EnterpriseCustomerCatalog migration.
+
+
 [0.52.5] - 2017-10-19
 ---------------------
 
