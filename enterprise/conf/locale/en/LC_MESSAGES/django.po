@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-20 05:19-0500\n"
+"POT-Creation-Date: 2017-10-24 05:04-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1214,20 +1214,4 @@ msgstr ""
 #: integrated_channels/integrated_channel/management/commands/transmit_learner_data.py:48
 #, python-brace-format
 msgid "A user with the username {username} was not found."
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:30
-msgid "Third Party name."
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:31
-msgid "Data Type"
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:35
-msgid "Enterprise Integrated Channel"
-msgstr ""
-
-#: integrated_channels/integrated_channel/models.py:36
-msgid "Enterprise Integrated Channels"
 msgstr ""
