@@ -73,7 +73,7 @@ def side_effect(url, query_parameters):
     """
     returns a url with updated query parameters.
     """
-    if 'utm_medium' in query_parameters:
+    if any(key in ['utm_medium', 'catalog'] for key in query_parameters):
         return url
 
     scheme, netloc, path, query_string, fragment = urlsplit(url)
