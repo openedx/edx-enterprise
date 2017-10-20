@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 import re
 from logging import getLogger
+from uuid import UUID
 
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
@@ -29,7 +30,7 @@ from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     clean_html_for_template_rendering,
@@ -495,7 +496,31 @@ class CourseEnrollmentView(NonAtomicView):
             result.append(mode)
         return result
 
-    def get_base_details(self, enterprise_uuid, course_run_id):
+    def get_available_course_modes(self, request, course_run_id, enterprise_catalog):
+        """
+        Return the available course modes for the course run.
+
+        The provided EnterpriseCustomerCatalog is used to filter and order the
+        course modes returned using the EnterpriseCustomerCatalog's
+        field "enabled_course_modes".
+        """
+        modes = EnrollmentApiClient().get_course_modes(course_run_id)
+        if not modes:
+            LOGGER.warning('Unable to get course modes for course run id {course_run_id}.'.format(
+                course_run_id=course_run_id
+            ))
+            messages.add_generic_info_message_for_error(request)
+
+        if enterprise_catalog:
+            # filter and order course modes according to the enterprise catalog
+            modes = [mode for mode in modes if mode['slug'] in enterprise_catalog.enabled_course_modes]
+            modes.sort(key=lambda course_mode: enterprise_catalog.enabled_course_modes.index(course_mode['slug']))
+            if not modes:
+                messages.add_generic_info_message_for_error(request)
+
+        return modes
+
+    def get_base_details(self, request, enterprise_uuid, course_run_id):
         """
         Retrieve fundamental details used by both POST and GET versions of this view.
 
@@ -503,28 +528,51 @@ class CourseEnrollmentView(NonAtomicView):
         into an actual EnterpriseCustomer, a set of details about the course, and a list
         of the available course modes for that course run.
         """
-        try:
-            enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
-            course, course_run = \
-                CourseCatalogApiServiceClient(enterprise_customer.site).get_course_and_course_run(course_run_id)
-        except ImproperlyConfigured:
-            raise Http404
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+
+        # If the catalog query parameter was provided, we need to scope
+        # this request to the specified EnterpriseCustomerCatalog.
+        enterprise_catalog_uuid = request.GET.get('catalog')
+        enterprise_catalog = None
+        if enterprise_catalog_uuid:
+            try:
+                enterprise_catalog_uuid = UUID(enterprise_catalog_uuid)
+                enterprise_catalog = enterprise_customer.enterprise_customer_catalogs.get(
+                    uuid=enterprise_catalog_uuid
+                )
+            except (ValueError, EnterpriseCustomerCatalog.DoesNotExist):
+                messages.add_generic_info_message_for_error(request)
+
+        if enterprise_catalog:
+            course, course_run = enterprise_catalog.get_course_and_course_run(course_run_id)
+        else:
+            try:
+                course, course_run = CourseCatalogApiServiceClient(
+                    enterprise_customer.site
+                ).get_course_and_course_run(course_run_id)
+            except ImproperlyConfigured:
+                raise Http404
 
         if not course or not course_run:
-            LOGGER.warning('Failed to fetch course "{course}" or course run "{course_run}" details'.format(
-                course=course, course_run=course_run
-            ))
-            raise Http404
-
-        modes = EnrollmentApiClient().get_course_modes(course_run_id)
-        if not modes:
-            LOGGER.warning('Unable to get course modes for course run id {course_run_id}.'.format(
-                course_run_id=course_run_id
-            ))
+            # The specified course either does not exist in the specified
+            # EnterpriseCustomerCatalog, or does not exist at all in the
+            # discovery service.
+            LOGGER.warning(
+                'Failed to fetch course "{course}" or course run "{course_run}" details for '
+                'enterprise "{enterprise_uuid}"'.format(
+                    course=course, course_run=course_run, enterprise_uuid=enterprise_customer.uuid
+                )
+            )
             raise Http404
 
         course_modes = []
+        if enterprise_catalog_uuid and not enterprise_catalog:
+            # A catalog query parameter was given, but the specified
+            # EnterpriseCustomerCatalog does not exist, so just return and
+            # display the generic error message.
+            return enterprise_customer, course, course_run, course_modes
 
+        modes = self.get_available_course_modes(request, course_run_id, enterprise_catalog)
         audit_modes = getattr(
             settings,
             'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES',
@@ -647,7 +695,9 @@ class CourseEnrollmentView(NonAtomicView):
         """
         Process a submitted track selection form for the enterprise.
         """
-        enterprise_customer, course, course_run, course_modes = self.get_base_details(enterprise_uuid, course_id)
+        enterprise_customer, course, course_run, course_modes = self.get_base_details(
+            request, enterprise_uuid, course_id
+        )
 
         # Create a link between the user and the enterprise customer if it does not already exist.
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
@@ -758,8 +808,11 @@ class CourseEnrollmentView(NonAtomicView):
             * No enterprise customer found against the enterprise customer
                 uuid `enterprise_uuid` in the request kwargs.
             * No course is found in database against the provided `course_id`.
+
         """
-        enterprise_customer, course, course_run, modes = self.get_base_details(enterprise_uuid, course_id)
+        enterprise_customer, course, course_run, modes = self.get_base_details(
+            request, enterprise_uuid, course_id
+        )
         enterprise_customer_user = get_enterprise_customer_user(request.user.id, enterprise_uuid)
         data_sharing_consent = DataSharingConsent.objects.proxied_get(
             username=enterprise_customer_user.username,
