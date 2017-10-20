@@ -5,6 +5,7 @@ Client for communicating with the Enterprise API.
 
 from __future__ import absolute_import, unicode_literals
 
+from collections import OrderedDict
 from logging import getLogger
 
 from django.conf import settings
@@ -25,23 +26,65 @@ class EnterpriseApiClient(JwtLmsApiClient):
     APPEND_SLASH = True
 
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'  # pylint: disable=invalid-name
+    ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT = 'enterprise_catalogs'  # pylint: disable=invalid-name
 
     DEFAULT_VALUE_SAFEGUARD = object()
 
-    def get_enterprise_courses(self, enterprise_customer, **kwargs):
+    def get_enterprise_course_runs(self, enterprise_customer):
         """
-        Query the Enterprise API for the course details of the given course_id.
+        Return all course runs in the given EnterpriseCustomer's catalogs.
+
         Arguments:
-            enterprise_customer (Enterprise Customer): Enterprise customer for fetching courses
+            enterprise_customer (Enterprise Customer): Enterprise customer for fetching courses.
+
         Returns:
-            dict: A dictionary containing details about the course, in an enrollment context (allowed modes, etc.)
+            dict: A dictionary containing "course run key", "course run" key value pairs.
         """
-        return self._load_data(
-            self.ENTERPRISE_CUSTOMER_ENDPOINT,
-            detail_resource='courses',
-            resource_id=str(enterprise_customer.uuid),
-            **kwargs
-        )
+        course_runs = OrderedDict()
+
+        if enterprise_customer.catalog:
+            response = self._load_data(
+                self.ENTERPRISE_CUSTOMER_ENDPOINT,
+                detail_resource='courses',
+                resource_id=str(enterprise_customer.uuid),
+                traverse_pagination=True,
+            )
+            course_runs.update(self.get_course_runs_from_courses(response['results']))
+
+        for enterprise_customer_catalog in enterprise_customer.enterprise_customer_catalogs.all():
+            response = self._load_data(
+                self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
+                resource_id=str(enterprise_customer_catalog.uuid),
+                traverse_pagination=True,
+            )
+
+            course_runs.update(self.get_course_runs_from_search_results(response['results']))
+
+        return course_runs
+
+    @staticmethod
+    def get_course_runs_from_courses(courses):
+        """
+        Create and return a dict with "course run key", "course run" key value pairs.
+        """
+        course_runs = []
+
+        # Extract course runs from the courses.
+        for course in courses:
+            course_runs.extend(course['course_runs'])
+
+        return {course_run['key']: course_run for course_run in course_runs}
+
+    @staticmethod
+    def get_course_runs_from_search_results(search_results):
+        """
+        Create and return a dict with "course run key", "course run" key value pairs.
+        """
+        course_runs = [
+            course_run for course_run in search_results if course_run.get('content_type', '') == 'courserun'
+        ]
+
+        return {course_run['key']: course_run for course_run in course_runs}
 
     @JwtLmsApiClient.refresh_token
     def _load_data(

@@ -95,6 +95,7 @@ class EnterpriseMockMixin(object):
             'reporting_type': 'mooc',
             'mobile_available': False,
             'pacing_type': 'instructor_paced',
+            'content_type': 'courserun',
         }
         return course_detail
 
@@ -176,6 +177,33 @@ class EnterpriseMockMixin(object):
                 status=200,
                 content_type='application/json',
             )
+
+    def mock_enterprise_customer_catalogs(self, enterprise_uuid, enterprise_catalog_uuid, course_run_ids):
+        """
+        DRY function to register enterprise customer catalog API.
+        """
+        course_runs = []
+        for course_run_id in course_run_ids:
+            course_run_key = CourseKey.from_string(course_run_id)
+            course_runs.append(self.build_fake_enterprise_course_detail(enterprise_uuid, course_run_key))
+
+        api_response = {
+            'uuid': enterprise_catalog_uuid,
+            'title': 'All Course Runs',
+            'enterprise_customer': enterprise_uuid,
+            'count': 1,
+            'previous': None,
+            'next': None,
+            'results': course_runs
+        }
+
+        responses.add(
+            responses.GET,
+            url=self.build_enterprise_api_url('enterprise-catalogs-detail', enterprise_catalog_uuid),
+            json=api_response,
+            status=200,
+            content_type='application/json',
+        )
 
     def mock_ent_courses_api_with_error(self, enterprise_uuid):
         """

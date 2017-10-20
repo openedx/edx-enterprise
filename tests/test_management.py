@@ -29,16 +29,18 @@ from enterprise.api_client import lms as lms_api
 from test_utils.factories import (
     DataSharingConsentFactory,
     EnterpriseCourseEnrollmentFactory,
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
+from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
 @mark.django_db
-class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseMockMixin):
+class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseMockMixin, CourseDiscoveryApiTestMixin):
     """
     Test the transmit_courseware_data management command.
     """
@@ -56,6 +58,7 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
             secret='secret',
             active=True,
         )
+        self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
 
         super(TestTransmitCoursewareDataManagementCommand, self).setUp()
 
@@ -187,8 +190,15 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
         course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
         self.mock_ent_courses_api_with_pagination(
             enterprise_uuid=uuid,
-            course_run_ids=course_run_ids
+            course_run_ids=course_run_ids[:1]
         )
+
+        EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        self.mock_enterprise_customer_catalogs(
+            uuid, enterprise_catalog_uuid, course_run_ids[1:]
+        )
+
         expected_dump = (
             '{"ocnCourses": [{"content": [{"contentID": "'+course_run_ids[0]+'", '
             '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.8] - 2017-10-20
+---------------------
+
+* Update EnterpriseApiClient.get_enterprise_courses to account for EnterpriseCustomerCatalogs.
+
 [0.52.7] - 2017-10-20
 ---------------------
 
