@@ -215,9 +215,9 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
                 )
             # Add the Enterprise enrollment URL to each content item returned from the discovery service.
             if content_type == 'courserun':
-                item['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(item['key'])
+                item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'])
             elif content_type == 'program':
-                item['enrollment_url'] = enterprise_customer.get_program_enrollment_url(item['uuid'])
+                item['enrollment_url'] = instance.get_program_enrollment_url(item['uuid'])
 
         # Build pagination URLs
         previous_url = None

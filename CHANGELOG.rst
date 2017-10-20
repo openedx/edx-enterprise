@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.9] - 2017-10-20
+---------------------
+
+* Update the call level to enrollment uls from EnterpriseCustomer to EnterpriseCustomerCatalog.
+
 [0.52.8] - 2017-10-20
 ---------------------
 
