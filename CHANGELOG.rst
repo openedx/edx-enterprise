@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.52.10] - 2017-10-23
+----------------------
+
+* Fix migration issue for `enabled-course-modes` field of EnterpriseCustomerCatalog
+
 [0.52.9] - 2017-10-20
 ---------------------
 
