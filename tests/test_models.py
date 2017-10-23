@@ -15,10 +15,7 @@ from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from faker import Factory as FakerFactory
-from integrated_channels.integrated_channel.models import (
-    EnterpriseCustomerPluginConfiguration,
-    EnterpriseIntegratedChannel,
-)
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.sap_success_factors.models import (
     CatalogTransmissionAudit,
     LearnerDataTransmissionAudit,
@@ -1187,26 +1184,6 @@ class TestDataSharingConsent(unittest.TestCase):
         )
         expected_to_str = "<DataSharingConsent for user lowly_bob of Enterprise rich_enterprise>"
         assert expected_to_str == method(dsc)
-
-
-@mark.django_db
-@ddt.ddt
-class TestEnterpriseIntegratedChannel(unittest.TestCase):
-    """
-    Tests of the EnterpriseIntegratedChannel model.
-    """
-    @ddt.data(
-        str, repr
-    )
-    def test_string_conversion(self, method):
-        """
-        Test ``EnterpriseIntegratedChannel`` conversion to string
-        """
-        channel = EnterpriseIntegratedChannel(
-            id=1, name='CorporateLMS', data_type='course'
-        )
-        expected_to_str = "<EnterpriseIntegratedChannel CorporateLMS for course data with id 1>"
-        assert expected_to_str == method(channel)
 
 
 @ddt.ddt
