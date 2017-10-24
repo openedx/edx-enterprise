@@ -140,6 +140,40 @@ class TestEnterpriseDecorators(unittest.TestCase):
         assert 'new_enterprise_login%3Dyes' in response.url
         assert 'tpa_hint' in response.url
 
+    def test_enterprise_login_required_redirects_for_anonymous_users_with_querystring(self):
+        """
+        Test that the decorator `enterprise_login_required` returns Http
+        Redirect for anonymous users while keeping the format of query
+        parameters unchanged.
+        """
+        view_function = mock_view_function()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        course_enrollment_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[self.customer.uuid, course_id],
+        )
+        querystring = 'catalog=dummy-catalog-uuid'
+        course_enrollment_url = '{course_enrollment_url}?{querystring}'.format(
+            course_enrollment_url=course_enrollment_url, querystring=querystring
+        )
+        request = self._prepare_request(course_enrollment_url, AnonymousUser())
+
+        response = enterprise_login_required(view_function)(
+            request, enterprise_uuid=self.customer.uuid, course_id=course_id
+        )
+
+        # Assert that redirect status code 302 is returned when an anonymous
+        # user tries to access enterprise course enrollment page.
+        assert response.status_code == 302
+
+        # Now verify that the query parameters in the querystring of next url
+        # are unchanged
+        next_url = parse_qs(urlparse(response.url).query)['next'][0]
+        next_url_querystring = unquote(urlparse(next_url).query)
+        assert 'new_enterprise_login=yes' in next_url_querystring
+        assert 'tpa_hint' in next_url_querystring
+        assert querystring in next_url_querystring
+
     def test_enterprise_login_required(self):
         """
         Test that the enterprise login decorator calls the view function.
