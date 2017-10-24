@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.1] - 2017-10-24
+----------------------
+
+* Fix alteration in querystring parameters for decorator "enterprise_login_required".
+
 [0.53.0] - 2017-10-24
 ----------------------
 

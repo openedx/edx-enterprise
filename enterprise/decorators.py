@@ -141,7 +141,7 @@ def enterprise_login_required(view):
             })
             next_url = '{current_path}?{query_string}'.format(
                 current_path=quote(parsed_current_url.path),
-                query_string=urlencode(parsed_query_string)
+                query_string=urlencode(parsed_query_string, doseq=True)
             )
             return redirect(
                 '{login_url}?{params}'.format(
