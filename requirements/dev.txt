@@ -19,7 +19,6 @@ configparser==3.5.0       # via pylint
 diff-cover==0.9.12
 distlib==0.2.5            # via caniusepython3
 django-config-models==0.1.8
-django-extensions==1.5.9
 django-filter==1.0.4
 django-model-utils==2.3.1
 django-object-actions==0.10.0
@@ -76,7 +75,7 @@ requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
-six==1.11.0               # via analytics-python, astroid, diff-cover, django-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, packaging, pip-tools, pydocstyle, pylint, python-dateutil, singledispatch, stevedore, tox
+six==1.11.0               # via analytics-python, astroid, diff-cover, edx-i18n-tools, edx-lint, edx-opaque-keys, packaging, pip-tools, pydocstyle, pylint, python-dateutil, singledispatch, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.27.1         # via edx-opaque-keys
