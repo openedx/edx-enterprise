@@ -10,6 +10,7 @@ import mock
 from pytest import mark
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
@@ -80,6 +81,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
@@ -93,11 +95,18 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             defer_creation,
             existing_course_enrollment,
             course_api_client_mock,
-            course_catalog_api_client_mock,
+            course_catalog_api_client_model_mock,
+            course_catalog_api_client_view_mock,
             *args
-    ):  # pylint: disable=unused-argument
+    ):  # pylint: disable=unused-argument,invalid-name
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        course_catalog_api_client_mock.return_value.course_in_catalog.return_value = True
+        course_catalog_api_client_model_mock.return_value.course_in_catalog.return_value = True
+        course_run_details = {
+            "start": "2013-02-05T05:00:00Z",
+            "title": "Demo Course"
+        }
+        course_catalog_api_client_view_mock.return_value.get_course_run.return_value = course_run_details
+
         client = course_api_client_mock.return_value
         client.get_course_details.return_value = {
             'name': 'edX Demo Course',
@@ -166,6 +175,49 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'LMS_ROOT_URL': 'http://localhost:8000',
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.CourseApiClient')
+    def test_get_course_specific_consent_improperly_configured_course_catalog(
+            self,
+            course_api_client_mock,
+            course_catalog_api_client_model_mock,
+            course_catalog_api_client_view_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+
+        course_catalog_api_client_model_mock.return_value.course_in_catalog.return_value = True
+        course_catalog_api_client_view_mock.side_effect = ImproperlyConfigured("There is no active CatalogIntegration.")
+        client = course_api_client_mock.return_value
+        client.get_course_details.return_value = {
+            'name': 'edX Demo Course',
+        }
+        self._login()
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id
+        )
+        params = {
+            'course_id': course_id,
+            'enterprise_customer_uuid': str(enterprise_customer.uuid),
+            'next': 'https://google.com',
+            'failure_url': 'https://facebook.com',
+            'defer_creation': True,
+        }
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')

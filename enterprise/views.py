@@ -5,6 +5,7 @@ User-facing views for the Enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import re
+from calendar import month_name
 from logging import getLogger
 from uuid import UUID
 
@@ -269,12 +270,31 @@ class GrantDataSharingPermissions(View):
             raise Http404
 
         item = 'course' if course_id else 'program'
+
+        enterprise_customer = consent_record.enterprise_customer
+        if course_id:
+            try:
+                catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+            except ImproperlyConfigured:
+                raise Http404
+
+            course_run_details = catalog_api_client.get_course_run(course_id)
+            course_start = parse(course_run_details['start'])
+
         enterprise_customer = consent_record.enterprise_customer
         context_data = self.get_default_context(enterprise_customer, request)
         context_data.update(
             {
                 'course_id': course_id,
                 'course_specific': True,
+                'course_title': course_run_details['title'],
+                'course_start_date': _(
+                    '{month} {day}, {year}'
+                ).format(
+                    month=month_name[course_start.month],
+                    day=course_start.day,
+                    year=course_start.year,
+                ),
             } if course_id else {
                 'program_uuid': program_uuid,
                 'program_specific': True,
