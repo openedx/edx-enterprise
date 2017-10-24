@@ -13,7 +13,6 @@ cookies==2.2.1            # via responses
 coverage==4.4.1           # via pytest-cov
 ddt==1.1.1
 django-config-models==0.1.5
-django-extensions==1.5.9
 django-filter==0.11.0
 django-model-utils==2.3.1
 django-object-actions==0.10.0
@@ -52,7 +51,7 @@ pytz==2017.2              # via celery, event-tracking
 requests==2.9.1
 responses==0.8.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.11.0               # via analytics-python, django-extensions, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
+six==1.11.0               # via analytics-python, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 stevedore==1.27.1         # via edx-opaque-keys
 testfixtures==5.2.0

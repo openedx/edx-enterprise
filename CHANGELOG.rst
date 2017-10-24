@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.2] - 2017-10-24
+---------------------
+
+* Remove unused dependency on django-extensions
+
 [0.53.1] - 2017-10-24
 ----------------------
 
