@@ -45,11 +45,6 @@ urlpatterns = [
 urlpatterns += [
     url(
         r'',
-        include('integrated_channels.integrated_channel.urls'),
-        name='integrated_channel'
-    ),
-    url(
-        r'',
         include('consent.urls'),
         name='consent'
     ),
