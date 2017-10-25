@@ -14,7 +14,7 @@ babel==2.5.1              # via sphinx
 backports.functools-lru-cache==1.4  # via astroid, caniusepython3, pylint
 billiard==3.3.0.23        # via celery
 bleach==2.1.1             # via readme-renderer
-caniusepython3==5.0.0
+caniusepython3==6.0.0
 celery==3.1.18
 chardet==3.0.4            # via doc8
 click-log==0.1.8          # via edx-lint
@@ -105,7 +105,7 @@ singledispatch==3.4.0.3   # via astroid, pylint
 six==1.11.0               # via analytics-python, astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle, sphinx
-sphinx==1.6.4
+sphinx==1.6.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.27.1         # via doc8, edx-opaque-keys

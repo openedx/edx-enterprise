@@ -14,6 +14,16 @@ Change Log
 Unreleased
 ----------
 
+[0.53.1] - 2017-10-24
+----------------------
+
+* Fix alteration in querystring parameters for decorator "enterprise_login_required".
+
+[0.53.0] - 2017-10-24
+----------------------
+
+* Get rid of the `EnterpriseIntegratedChannel` model and any other related but unused code.
+
 [0.52.10] - 2017-10-23
 ----------------------
 
