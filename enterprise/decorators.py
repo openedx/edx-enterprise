@@ -14,8 +14,7 @@ from django.http import Http404
 from django.shortcuts import redirect
 
 from enterprise.utils import get_enterprise_customer_or_404, get_identity_provider
-from six import iteritems
-from six.moves.urllib.parse import parse_qsl, urlencode, urlparse, urlunparse  # pylint: disable=import-error
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse  # pylint: disable=import-error
 
 FRESH_LOGIN_PARAMETER = 'new_enterprise_login'
 
@@ -135,15 +134,11 @@ def enterprise_login_required(view):
         # Enterprise-linked IdP and the pipeline will get them back here.
         if not request.user.is_authenticated():
             parsed_current_url = urlparse(request.get_full_path())
-            parsed_query_string = parse_qsl(parsed_current_url.query)
-
-            additional_query_parameters = {
+            parsed_query_string = parse_qs(parsed_current_url.query)
+            parsed_query_string.update({
                 'tpa_hint': enterprise_customer.identity_provider,
                 FRESH_LOGIN_PARAMETER: 'yes'
-            }
-            for query_parameter_key, query_parameter_value in iteritems(additional_query_parameters):
-                parsed_query_string.append((query_parameter_key, query_parameter_value))
-
+            })
             next_url = '{current_path}?{query_string}'.format(
                 current_path=quote(parsed_current_url.path),
                 query_string=urlencode(parsed_query_string, doseq=True)
