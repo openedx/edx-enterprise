@@ -427,6 +427,74 @@ def test_get_remote_id():
     assert actual_response == "LukeIamYrFather"
 
 
+@responses.activate
+def test_get_username_from_remote_id_not_found():
+    remote_id = "Darth"
+    provider_id = "DeathStar"
+    responses.add(
+        responses.GET,
+        _url("third_party_auth", "providers/{provider}/users?remote_id={user}".format(
+            provider=provider_id, user=remote_id
+        )),
+        match_querystring=True,
+        status=404
+    )
+    client = lms_api.ThirdPartyAuthApiClient()
+    actual_response = client.get_username_from_remote_id(provider_id, remote_id)
+    assert actual_response is None
+
+
+@responses.activate
+def test_get_username_from_remote_id_no_results():
+    remote_id = "Darth"
+    provider_id = "DeathStar"
+    expected_response = {
+        "page": 1,
+        "page_size": 200,
+        "count": 2,
+        "results": [
+            {"username": "Obi-Wan", "remote_id": "Kenobi"},
+            {"username": "Hans", "remote_id": "Solo"},
+        ]
+    }
+    responses.add(
+        responses.GET,
+        _url("third_party_auth", "providers/{provider}/users?remote_id={user}".format(
+            provider=provider_id, user=remote_id
+        )),
+        match_querystring=True,
+        json=expected_response,
+    )
+    client = lms_api.ThirdPartyAuthApiClient()
+    actual_response = client.get_username_from_remote_id(provider_id, remote_id)
+    assert actual_response is None
+
+
+@responses.activate
+def test_get_username_from_remote_id():
+    remote_id = "LukeIamYrFather"
+    provider_id = "DeathStar"
+    expected_response = {
+        "page": 1,
+        "page_size": 200,
+        "count": 1,
+        "results": [
+            {"username": "Darth", "remote_id": "LukeIamYrFather"}
+        ]
+    }
+    responses.add(
+        responses.GET,
+        _url("third_party_auth", "providers/{provider}/users?remote_id={user}".format(
+            provider=provider_id, user=remote_id
+        )),
+        match_querystring=True,
+        json=expected_response,
+    )
+    client = lms_api.ThirdPartyAuthApiClient()
+    actual_response = client.get_username_from_remote_id(provider_id, remote_id)
+    assert actual_response == "Darth"
+
+
 def test_jwt_lms_api_client_locally_raises():
     with raises(NotConnectedToOpenEdX):
         client = lms_api.JwtLmsApiClient('user-goes-here')

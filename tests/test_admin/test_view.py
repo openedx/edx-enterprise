@@ -482,7 +482,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         })
         return response
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_user(self, forms_client, views_client, course_catalog_client):
@@ -581,7 +581,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             num_messages = len(mail.outbox)
             assert num_messages == enrollment_count
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_multi_enroll_user(self, forms_client, views_client, course_catalog_client):
@@ -590,7 +590,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         self._post_multi_enroll(forms_client, views_client, course_catalog_client, True)
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_multi_enroll_pending_user(self, forms_client, views_client, course_catalog_client):
@@ -599,7 +599,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         self._post_multi_enroll(forms_client, views_client, course_catalog_client, False)
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_no_course_detail(self, forms_client, views_client, course_catalog_client):
@@ -632,7 +632,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_with_missing_course_start_date(self, forms_client, views_client, course_catalog_client):
@@ -676,7 +676,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert num_messages == 1
 
     @mock.patch("enterprise.utils.reverse")
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enrollment_error(self, forms_client, views_client, course_catalog_client, reverse_mock):
@@ -702,7 +702,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch('enterprise.admin.views.logging.error')
     @mock.patch("enterprise.utils.reverse")
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enrollment_error_bad_error_string(
@@ -737,7 +737,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         ]))
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_enroll_user_into_program(
@@ -767,7 +767,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 1
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_enroll_pending_user_into_program(self, catalog_client, views_catalog_client):
         views_catalog_instance = views_catalog_client.return_value
@@ -785,7 +785,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert PendingEnrollment.objects.count() == len(expected_courses)
         assert PendingEnterpriseCustomerUser.objects.count() == 1
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_enroll_user_into_program_error(
@@ -1016,7 +1016,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
         ]))
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_link_and_enroll(self, forms_client, views_client, course_catalog_client):
@@ -1063,7 +1063,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 2
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_link_and_enroll_no_course_details(self, forms_client, views_client, course_catalog_client):
@@ -1107,7 +1107,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
@@ -1159,7 +1159,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
-    @mock.patch("enterprise.admin.views.CourseCatalogApiClient")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_link_and_enroll_into_program(self, catalog_client, views_client, views_catalog_client):

@@ -6,7 +6,9 @@ from __future__ import absolute_import, unicode_literals
 
 import copy
 
+from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
+from rest_framework.settings import api_settings
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -14,6 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
 from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
+from enterprise.api_client.lms import ThirdPartyAuthApiClient
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -410,3 +413,216 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         )
 
     enterprise_customer = EnterpriseCustomerSerializer()
+
+
+# pylint: disable=abstract-method
+class EnterpriseCustomerCourseEnrollmentsListSerializer(serializers.ListSerializer):
+    """
+    Serializes a list of enrollment requests.
+
+    Meant to be used in conjunction with EnterpriseCustomerCourseEnrollmentsSerializer.
+    """
+
+    def to_internal_value(self, data):
+        """
+        This implements the same relevant logic as ListSerializer except that if one or more items fail validation,
+        processing for other items that did not fail will continue.
+        """
+
+        if not isinstance(data, list):
+            message = self.error_messages['not_a_list'].format(
+                input_type=type(data).__name__
+            )
+            raise serializers.ValidationError({
+                api_settings.NON_FIELD_ERRORS_KEY: [message]
+            })
+
+        ret = []
+
+        for item in data:
+            try:
+                validated = self.child.run_validation(item)
+            except serializers.ValidationError as exc:
+                ret.append(exc.detail)
+            else:
+                ret.append(validated)
+
+        return ret
+
+    def create(self, validated_data):
+        """
+        This selectively calls the child create method based on whether or not validation failed for each payload.
+        """
+        ret = []
+        for attrs in validated_data:
+            if 'non_field_errors' not in attrs and not any(isinstance(attrs[field], list) for field in attrs):
+                ret.append(self.child.create(attrs))
+            else:
+                ret.append(attrs)
+
+        return ret
+
+    def to_representation(self, data):
+        """
+        This selectively calls to_representation on each result that was processed by create.
+        """
+        return [
+            self.child.to_representation(item) if 'detail' in item else item for item in data
+        ]
+
+
+# pylint: disable=abstract-method
+class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
+    """Serializes enrollment information for a collection of students/emails.
+
+    This is mainly useful for implementing validation when performing enrollment operations.
+    """
+
+    class Meta:  # pylint: disable=old-style-class
+        list_serializer_class = EnterpriseCustomerCourseEnrollmentsListSerializer
+
+    lms_user_id = serializers.CharField(required=False, write_only=True)
+    tpa_user_id = serializers.CharField(required=False, write_only=True)
+    user_email = serializers.EmailField(required=False, write_only=True)
+    course_run_id = serializers.CharField(required=True, write_only=True)
+    course_mode = serializers.ChoiceField(
+        choices=(
+            ('audit', 'audit'),
+            ('verified', 'verified'),
+            ('professional', 'professional')
+        ),
+        required=True,
+        write_only=True,
+    )
+    email_students = serializers.BooleanField(default=False, required=False, write_only=True)
+    detail = serializers.CharField(read_only=True)
+
+    def create(self, validated_data):
+        """
+        Perform the enrollment for existing enterprise customer users, or create the pending objects for new users.
+        """
+        enterprise_customer = self.context.get('enterprise_customer')
+        lms_user = validated_data.get('lms_user_id')
+        tpa_user = validated_data.get('tpa_user_id')
+        user_email = validated_data.get('user_email')
+        course_run_id = validated_data.get('course_run_id')
+        course_mode = validated_data.get('course_mode')
+        email_students = validated_data.get('email_students')
+
+        enterprise_customer_user = lms_user or tpa_user or user_email
+
+        if isinstance(enterprise_customer_user, models.EnterpriseCustomerUser):
+            validated_data['enterprise_customer_user'] = enterprise_customer_user
+            try:
+                enterprise_customer_user.enroll(course_run_id, course_mode)
+            except (utils.CourseEnrollmentDowngradeError, HttpClientError) as exc:
+                validated_data['detail'] = str(exc)
+                return validated_data
+        else:
+            enterprise_customer_user = enterprise_customer.enroll_user_pending_registration(
+                user_email,
+                course_mode,
+                course_run_id
+            )
+
+        if email_students:
+            enterprise_customer.notify_enrolled_learners(
+                self.context.get('request_user'),
+                course_run_id,
+                [enterprise_customer_user]
+            )
+
+        validated_data['detail'] = 'success'
+
+        return validated_data
+
+    def validate_lms_user_id(self, value):
+        """
+        Validates the lms_user_id, if is given, to see if there is an existing EnterpriseCustomerUser for it.
+        """
+        enterprise_customer = self.context.get('enterprise_customer')
+
+        try:
+            # Ensure the given user is associated with the enterprise.
+            return models.EnterpriseCustomerUser.objects.get(
+                user_id=value,
+                enterprise_customer=enterprise_customer
+            )
+        except models.EnterpriseCustomerUser.DoesNotExist:
+            pass
+
+        return None
+
+    def validate_tpa_user_id(self, value):
+        """
+        Validates the tpa_user_id, if is given, to see if there is an existing EnterpriseCustomerUser for it.
+
+        It first uses the third party auth api to find the associated username to do the lookup.
+        """
+        enterprise_customer = self.context.get('enterprise_customer')
+
+        try:
+            tpa_client = ThirdPartyAuthApiClient()
+            username = tpa_client.get_username_from_remote_id(
+                enterprise_customer.identity_provider, value
+            )
+            user = User.objects.get(username=username)
+            return models.EnterpriseCustomerUser.objects.get(
+                user_id=user.id,
+                enterprise_customer=enterprise_customer
+            )
+        except (models.EnterpriseCustomerUser.DoesNotExist, User.DoesNotExist):
+            pass
+
+        return None
+
+    def validate_user_email(self, value):
+        """
+        Validates the user_email, if given, to see if an existing EnterpriseCustomerUser exists for it.
+
+        If it does not, it does not fail validation, unlike for the other field validation methods above.
+        """
+        enterprise_customer = self.context.get('enterprise_customer')
+
+        try:
+            user = User.objects.get(email=value)
+            return models.EnterpriseCustomerUser.objects.get(
+                user_id=user.id,
+                enterprise_customer=enterprise_customer
+            )
+        except (models.EnterpriseCustomerUser.DoesNotExist, User.DoesNotExist):
+            pass
+
+        return value
+
+    def validate_course_run_id(self, value):
+        """
+        Validates that the course run id is part of the Enterprise Customer's catalog.
+        """
+        enterprise_customer = self.context.get('enterprise_customer')
+
+        if not enterprise_customer.catalog_contains_course(value):
+            raise serializers.ValidationError(
+                'The course run id {course_run_id} is not in the catalog '
+                'for Enterprise Customer {enterprise_customer}'.format(
+                    course_run_id=value,
+                    enterprise_customer=enterprise_customer.name,
+                )
+            )
+
+        return value
+
+    def validate(self, data):  # pylint: disable=arguments-differ
+        """
+        Validate that at least one of the user identifier fields has been passed in.
+        """
+        lms_user_id = data.get('lms_user_id')
+        tpa_user_id = data.get('tpa_user_id')
+        user_email = data.get('user_email')
+        if not lms_user_id and not tpa_user_id and not user_email:
+            raise serializers.ValidationError(
+                'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
+                'lms_user_id, tpa_user_id, user_email'
+            )
+
+        return data

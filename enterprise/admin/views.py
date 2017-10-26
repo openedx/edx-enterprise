@@ -34,14 +34,12 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
-from enterprise.api_client.discovery import CourseCatalogApiClient
-from enterprise.api_client.lms import EnrollmentApiClient, parse_lms_api_datetime
+from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerUser,
-    PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
 from enterprise.utils import get_configuration_value_for_site, send_email_notification_message
@@ -372,34 +370,6 @@ class EnterpriseCustomerManageLearnersView(View):
         return users, missing_emails
 
     @classmethod
-    def enroll_user_pending_registration(cls, enterprise_customer, email, course_mode, *course_ids):
-        """
-        Create pending enrollments for the user in any number of courses, which will take effect on registration.
-
-        Args:
-            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
-            email: The email address for the pending link to be created
-            course_mode: The mode with which the eventual enrollment should be created
-            *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
-
-        Returns:
-            The PendingEnterpriseCustomerUser attached to the email address
-        """
-        pending_ecu, __ = PendingEnterpriseCustomerUser.objects.get_or_create(
-            enterprise_customer=enterprise_customer,
-            user_email=email
-        )
-        for course_id in course_ids:
-            PendingEnrollment.objects.update_or_create(
-                user=pending_ecu,
-                course_id=course_id,
-                defaults={
-                    'course_mode': course_mode
-                }
-            )
-        return pending_ecu
-
-    @classmethod
     def enroll_users_in_program(cls, enterprise_customer, program_details, course_mode, emails):
         """
         Enroll existing users in all courses in a program, and create pending enrollments for nonexisting users.
@@ -431,7 +401,11 @@ class EnterpriseCustomerManageLearnersView(View):
                 failures.append(user)
 
         for email in unregistered_emails:
-            pending_user = cls.enroll_user_pending_registration(enterprise_customer, email, course_mode, *course_ids)
+            pending_user = enterprise_customer.enroll_user_pending_registration(
+                email,
+                course_mode,
+                *course_ids
+            )
             pending.append(pending_user)
 
         return successes, pending, failures
@@ -467,7 +441,11 @@ class EnterpriseCustomerManageLearnersView(View):
                 failures.append(user)
 
         for email in unregistered_emails:
-            pending_user = cls.enroll_user_pending_registration(enterprise_customer, email, course_mode, course_id)
+            pending_user = enterprise_customer.enroll_user_pending_registration(
+                email,
+                course_mode,
+                course_id
+            )
             pending.append(pending_user)
 
         return successes, pending, failures
@@ -486,61 +464,6 @@ class EnterpriseCustomerManageLearnersView(View):
         for msg_type, text in deduplicated_messages:
             message_function = getattr(messages, msg_type)
             message_function(http_request, text)
-
-    @classmethod
-    def notify_enrolled_learners(cls, enterprise_customer, request, course_id, users):
-        """
-        Notify learners about a course in which they've been enrolled.
-
-        Args:
-            enterprise_customer: The EnterpriseCustomer being linked to
-            request: The HTTP request that's being processed
-            course_id: The specific course the learners were enrolled in
-            users: An iterable of the users or pending users who were enrolled
-        """
-        course_details = CourseCatalogApiClient(request.user, enterprise_customer.site).get_course_run(course_id)
-        if not course_details:
-            logging.warning(
-                _(
-                    "Course details were not found for course key {} - Course Catalog API returned nothing. "
-                    "Proceeding with enrollment, but notifications won't be sent"
-                ).format(course_id)
-            )
-            return
-        course_path = urlquote('/courses/{course_id}/course'.format(course_id=course_id))
-        lms_root_url = get_configuration_value_for_site(enterprise_customer.site, 'LMS_ROOT_URL')
-        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
-            site=lms_root_url,
-            login_or_register='{login_or_register}',  # We don't know the value at this time
-            course_path=course_path
-        )
-        course_name = course_details.get('title')
-
-        try:
-            course_start = parse_lms_api_datetime(course_details.get('start'))
-        except (TypeError, ValueError):
-            course_start = None
-            logging.exception(
-                'None or empty value passed as course start date.\nCourse Details:\n{course_details}'.format(
-                    course_details=course_details,
-                )
-            )
-
-        with mail.get_connection() as email_conn:
-            for user in users:
-                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
-                destination_url = destination_url.format(login_or_register=login_or_register)
-                send_email_notification_message(
-                    user=user,
-                    enrolled_in={
-                        'name': course_name,
-                        'url': destination_url,
-                        'type': 'course',
-                        'start': course_start,
-                    },
-                    enterprise_customer=enterprise_customer,
-                    email_connection=email_conn
-                )
 
     @classmethod
     def notify_program_learners(cls, enterprise_customer, program_details, users):
@@ -693,9 +616,8 @@ class EnterpriseCustomerManageLearnersView(View):
             )
             all_successes = succeeded + pending
             if notify:
-                cls.notify_enrolled_learners(
-                    enterprise_customer=enterprise_customer,
-                    request=request,
+                enterprise_customer.notify_enrolled_learners(
+                    catalog_api_user=request.user,
                     course_id=course_id,
                     users=all_successes,
                 )

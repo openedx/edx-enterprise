@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` api module.
 """
 from __future__ import absolute_import, unicode_literals
 
+import json
 from operator import itemgetter
 
 import ddt
@@ -16,7 +17,13 @@ from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerIdentityProvider,
+    PendingEnrollment,
+    PendingEnterpriseCustomerUser,
+)
 from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
     parse_qs,
     urlencode,
@@ -64,6 +71,7 @@ ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-customer-contains-content-items',
     kwargs={'pk': FAKE_UUIDS[0]}
 )
+ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT = reverse('enterprise-customer-course-enrollments', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
 ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitlements', (1,))
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
@@ -1450,3 +1458,489 @@ class TestEnterpriseAPIViews(APITest):
         assert 'program_uuids' in message
         assert 'course_run_ids' in message
         assert response.status_code == 400
+
+    def test_enterprise_customer_course_enrollments_no_permissions(self):
+        """
+        Test the Enterprise Customer course enrollments detail route with insufficient permissions.
+        """
+        factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        expected_result = {'detail': 'You do not have permission to perform this action.'}
+
+        # Make the call!
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
+            data=json.dumps([{}]),
+            content_type='application/json',
+        )
+        response = self.load_json(response.content)
+
+        self.assertDictEqual(response, expected_result)
+
+    def test_enterprise_customer_course_enrollments_non_list_request(self):
+        """
+        Test the Enterprise Customer course enrollments detail route with an invalid expected json format.
+        """
+        factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        expected_result = {'non_field_errors': ['Expected a list of items but got type "dict".']}
+
+        # Make the call!
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
+            data=json.dumps({}),
+            content_type='application/json',
+        )
+        response = self.load_json(response.content)
+
+        self.assertDictEqual(response, expected_result)
+
+    def create_course_enrollments_context(
+            self,
+            user_exists,
+            lms_user_id,
+            tpa_user_id,
+            user_email,
+            mock_tpa_client,
+            mock_enrollment_client,
+            course_enrollment,
+            mock_catalog_contains_course,
+            course_in_catalog,
+    ):
+        """
+        Set up for tests that call the enterprise customer course enrollments detail route.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        user = None
+        # Create a preexisting EnterpriseCustomerUser
+        if user_exists:
+            if lms_user_id:
+                user = factories.UserFactory(id=lms_user_id)
+            elif tpa_user_id:
+                user = factories.UserFactory(username=tpa_user_id)
+            elif user_email:
+                user = factories.UserFactory(email=user_email)
+
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=enterprise_customer,
+            )
+
+        # Set up ThirdPartyAuth API response
+        if tpa_user_id:
+            mock_tpa_client.return_value = mock.Mock()
+            mock_tpa_client.return_value.get_username_from_remote_id = mock.Mock()
+            mock_tpa_client.return_value.get_username_from_remote_id.return_value = tpa_user_id
+
+        # Set up EnrollmentAPI responses
+        mock_enrollment_client.return_value = mock.Mock(
+            get_course_enrollment=mock.Mock(return_value=course_enrollment),
+            enroll_user_in_course=mock.Mock()
+        )
+
+        # Set up catalog_contains_course response.
+        mock_catalog_contains_course.return_value = course_in_catalog
+
+        return enterprise_customer, user
+
+    @ddt.data(
+        (
+            False,
+            False,
+            None,
+            [{}],
+            [{'course_mode': ['This field is required.'], 'course_run_id': ['This field is required.']}],
+        ),
+        (
+            False,
+            True,
+            None,
+            [{'course_mode': 'audit', 'course_run_id': 'course-v1:edX+DemoX+Demo_Course'}],
+            [{
+                'non_field_errors': [
+                    'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
+                    'lms_user_id, tpa_user_id, user_email'
+                ]
+            }],
+        ),
+        (
+            False,
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+            }],
+            [{
+                'non_field_errors': [
+                    'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
+                    'lms_user_id, tpa_user_id, user_email'
+                ]
+            }],
+        ),
+        (
+            False,
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'tpa_user_id': 'abc',
+            }],
+            [{
+                'non_field_errors': [
+                    'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
+                    'lms_user_id, tpa_user_id, user_email'
+                ]
+            }],
+        ),
+        (
+            True,
+            False,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+            }],
+            [{
+                'course_run_id': [
+                    'The course run id course-v1:edX+DemoX+Demo_Course is not in the catalog '
+                    'for Enterprise Customer test_enterprise'
+                ]
+            }],
+        ),
+        (
+            False,
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+                'tpa_user_id': 'abc',
+            }],
+            [{
+                'non_field_errors': [
+                    'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
+                    'lms_user_id, tpa_user_id, user_email'
+                ]
+            }],
+        ),
+        (
+            True,
+            True,
+            {'is_active': True, 'mode': 'verified'},
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+            }],
+            [{
+                'detail': (
+                    'The user is already enrolled in the course course-v1:edX+DemoX+Demo_Course '
+                    'in verified mode and cannot be enrolled in audit mode'
+                )
+            }],
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
+    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
+    def test_enterprise_customer_course_enrollments_detail_errors(
+            self,
+            user_exists,
+            course_in_catalog,
+            course_enrollment,
+            post_data,
+            expected_result,
+            mock_enrollment_client,
+            mock_tpa_client,
+            mock_catalog_contains_course,
+    ):
+        """
+        Test the Enterprise Customer course enrollments detail route error cases.
+        """
+        payload = post_data[0]
+        self.create_course_enrollments_context(
+            user_exists,
+            payload.get('lms_user_id'),
+            payload.get('tpa_user_id'),
+            payload.get('user_email'),
+            mock_tpa_client,
+            mock_enrollment_client,
+            course_enrollment,
+            mock_catalog_contains_course,
+            course_in_catalog
+        )
+
+        # Make the call!
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
+            data=json.dumps(post_data),
+            content_type='application/json',
+        )
+        response = self.load_json(response.content)
+
+        self.assertListEqual(response, expected_result)
+
+    @ddt.data(
+        (
+            False,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+                'tpa_user_id': 'abc',
+                'user_email': 'abc@test.com',
+            }],
+        ),
+        (
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+            }],
+        ),
+        (
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'tpa_user_id': 'abc',
+            }],
+        ),
+        (
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'user_email': 'abc@test.com',
+            }],
+        ),
+        (
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+                'email_students': True
+            }],
+        ),
+        (
+            True,
+            {'is_active': True, 'mode': 'audit'},
+            [{
+                'course_mode': 'verified',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+            }],
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
+    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
+    @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
+    def test_enterprise_customer_course_enrollments_detail_success(
+            self,
+            user_exists,
+            course_enrollment,
+            post_data,
+            mock_notify_learners,
+            mock_enrollment_client,
+            mock_tpa_client,
+            mock_catalog_contains_course,
+    ):
+        """
+        Test the Enterprise Customer course enrollments detail route in successful cases.
+        """
+        payload = post_data[0]
+        enterprise_customer, user = self.create_course_enrollments_context(
+            user_exists,
+            payload.get('lms_user_id'),
+            payload.get('tpa_user_id'),
+            payload.get('user_email'),
+            mock_tpa_client,
+            mock_enrollment_client,
+            course_enrollment,
+            mock_catalog_contains_course,
+            True
+        )
+
+        # Make the call!
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
+            data=json.dumps(post_data),
+            content_type='application/json',
+        )
+        response = self.load_json(response.content)
+
+        expected_response = [{'detail': 'success'}]
+        self.assertListEqual(response, expected_response)
+
+        if user_exists:
+            # If the user already existed, check that the enrollment was performed.
+            assert EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user__user_id=user.id,
+                course_id=payload.get('course_run_id'),
+            ).exists()
+
+            mock_enrollment_client.return_value.get_course_enrollment.assert_called_once_with(
+                user.username, payload.get('course_run_id')
+            )
+            mock_enrollment_client.return_value.enroll_user_in_course.assert_called_once_with(
+                user.username,
+                payload.get('course_run_id'),
+                payload.get('course_mode')
+            )
+        elif 'user_email' in post_data:
+            # If a new user given via for user_email, check that the appropriate objects were created.
+            pending_ecu = PendingEnterpriseCustomerUser.objects.get(
+                enterprise_customer=enterprise_customer,
+                user_email=payload.get('user_email')
+            )
+
+            assert pending_ecu is not None
+            assert PendingEnrollment.objects.filter(
+                user=pending_ecu,
+                course_id=payload.get('course_run_id'),
+                course_mode=payload.get('course_mode')
+            )
+            mock_enrollment_client.return_value.get_course_enrollment.assert_not_called()
+            mock_enrollment_client.return_value.enroll_user_in_course.assert_not_called()
+
+        if 'email_students' in payload:
+            mock_notify_learners.assert_called_once()
+        else:
+            mock_notify_learners.assert_not_called()
+
+    @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
+    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
+    def test_enterprise_customer_course_enrollments_detail_multiple(
+            self,
+            mock_enrollment_client,
+            mock_tpa_client,
+            mock_catalog_contains_course,
+    ):
+        """
+        Test the Enterprise Customer course enrollments detail route with multiple enrollments sent.
+        """
+        tpa_user_id = 'abc'
+        new_user_email = 'abc@test.com'
+        lms_user_id = 1
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+        payload = [
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'tpa_user_id': tpa_user_id,
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'user_email': new_user_email,
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'lms_user_id': lms_user_id,
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+            }
+        ]
+
+        expected_response = [
+            {'detail': 'success'},
+            {'detail': 'success'},
+            {
+                'detail': (
+                    'The user is already enrolled in the course course-v1:edX+DemoX+Demo_Course '
+                    'in verified mode and cannot be enrolled in audit mode'
+                )
+            },
+            {
+                'non_field_errors': [
+                    'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
+                    'lms_user_id, tpa_user_id, user_email'
+                ]
+            }
+        ]
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        # Create a preexisting EnterpriseCustomerUsers
+        tpa_user = factories.UserFactory(username=tpa_user_id)
+        lms_user = factories.UserFactory(id=lms_user_id)
+
+        factories.EnterpriseCustomerUserFactory(
+            user_id=tpa_user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        factories.EnterpriseCustomerUserFactory(
+            user_id=lms_user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        # Set up ThirdPartyAuth API response
+        mock_tpa_client.return_value = mock.Mock()
+        mock_tpa_client.return_value.get_username_from_remote_id = mock.Mock()
+        mock_tpa_client.return_value.get_username_from_remote_id.return_value = tpa_user_id
+
+        # Set up EnrollmentAPI responses
+        mock_enrollment_client.return_value = mock.Mock(
+            get_course_enrollment=mock.Mock(
+                side_effect=[None, {'is_active': True, 'mode': 'verified'}]
+            ),
+            enroll_user_in_course=mock.Mock()
+        )
+
+        # Set up catalog_contains_course response.
+        mock_catalog_contains_course.return_value = True
+
+        # Make the call!
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
+            data=json.dumps(payload),
+            content_type='application/json',
+        )
+        response = self.load_json(response.content)
+
+        self.assertListEqual(response, expected_response)

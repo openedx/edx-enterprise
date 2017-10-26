@@ -46,6 +46,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     logo_path,
 )
+from enterprise.utils import CourseEnrollmentDowngradeError
 from test_utils import assert_url, fake_catalog_api
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -588,7 +589,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ``enroll_learner`` enrolls the learner and redirects to the LMS courseware.
         """
         enterprise_customer_user = EnterpriseCustomerUserFactory()
-        enrollment_api_client_mock.return_value.is_enrolled.return_value = False
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
         analytics_mock.track.assert_called_once()
@@ -599,8 +600,43 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
         """
         enterprise_customer_user = EnterpriseCustomerUserFactory()
-        enrollment_api_client_mock.return_value.is_enrolled.return_value = True
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'audit'
+        }
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
+        enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
+
+    @mock.patch('enterprise.utils.tracker')
+    @mock.patch('enterprise.utils.analytics')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    # pylint: disable=unused-argument
+    def test_enroll_learner_upgrade_mode(self, enrollment_api_client_mock, analytics_mock, *args):
+        """
+        ``enroll_learner`` enrolls the learner to a paid mode from previously being enrolled in audit.
+        """
+        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'audit'
+        }
+        enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'verified')
+        enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
+        analytics_mock.track.assert_called_once()
+
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    def test_enroll_learner_downgrade_mode(self, enrollment_api_client_mock):
+        """
+        ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
+        """
+        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'verified'
+        }
+        with self.assertRaises(CourseEnrollmentDowngradeError):
+            enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
+
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
 
 
