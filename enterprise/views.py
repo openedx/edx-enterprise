@@ -789,7 +789,22 @@ class CourseEnrollmentView(NonAtomicView):
                 ),
                 query_string=urlencode({'course_mode': selected_course_mode_name})
             )
+
             failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
+            if request.META['QUERY_STRING']:
+                # Preserve all querystring parameters in the request to build
+                # failure url, so that learner views the same enterprise course
+                # enrollment page (after redirect) as for the first time.
+                # Since this is a POST view so use `request.META` to get
+                # querystring instead of `request.GET`.
+                # https://docs.djangoproject.com/en/1.11/ref/request-response/#django.http.HttpRequest.META
+                failure_url = '{course_enrollment_url}?{query_string}'.format(
+                    course_enrollment_url=reverse(
+                        'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                    ),
+                    query_string=request.META['QUERY_STRING']
+                )
+
             return redirect(
                 '{grant_data_sharing_url}?{params}'.format(
                     grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
