@@ -12,18 +12,23 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_401_UNAUTHORIZED
+from rest_framework.views import APIView
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.http import Http404
 from django.utils.decorators import method_decorator
 
 from enterprise import models
+from enterprise.admin.views import EnterpriseCustomerManageLearnersView
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.pagination import get_paginated_response
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
 from enterprise.api_client.discovery import CourseCatalogApiClient
+from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
 
 LOGGER = getLogger(__name__)
@@ -438,3 +443,136 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadOnlyModelVie
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+
+class EnterpriseCustomerEnrollUserInCourseRunView(APIView):
+    """
+
+    """
+
+    queryset = models.EnterpriseCustomer.active_customers.all()
+    serializer_class = serializers.EnterpriseCustomerEnrollUserInCourseRunSerializer
+    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
+    filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
+    permission_classes = (permissions.IsAuthenticated,)
+    throttle_classes = (ServiceUserThrottle,)
+
+    def get(self, request):
+        return Response(status=HTTP_200_OK)
+
+    def post(self, request, format=None):
+        """
+
+        """
+        serializer = serializers.EnterpriseCustomerEnrollUserInCourseRunSerializer(data=request.data)
+        if serializer.is_valid():
+            # Verify that the user is staff or associated with the specified enteprise
+            enterprise_id = serializer.data.get('enterprise_id')
+            try:
+                enterprise_customer = models.EnterpriseCustomer.objects.get(uuid=enterprise_id)
+            except models.EnterpriseCustomer.DoesNotExist:
+                return Response(
+                    data={
+                        'detail': 'The  given enterprise {enterprise} does not exist.'.format(
+                            enterprise=enterprise_id
+                        )
+                    },
+                    status=HTTP_400_BAD_REQUEST
+                )
+
+            if not request.user.is_staff:
+                try:
+                    models.EnterpriseCustomerUser.objects.get(
+                        user_id=request.user.id,
+                        enterprise_customer=enterprise_customer
+                    )
+                except models.EnterpriseCustomerUser.DoesNotExist:
+                    return Response(
+                        data={
+                            'detail': 'The request user {user} does not have access '
+                            'to the given enterprise {enterprise}.'.format(
+                                user=request.user.username,
+                                enterprise=enterprise_customer.name
+                            )
+                        },
+                        status=HTTP_401_UNAUTHORIZED
+                    )
+
+            lms_user_id = serializer.data.get('lms_user_id')
+            tpa_user_id = serializer.data.get('tpa_user_id')
+            user_email = serializer.data.get('user_email')
+            course_run_id = serializer.data.get('course_run_id')
+            course_mode = serializer.data.get('course_mode')
+            email_students = serializer.data.get('email_students')
+
+            enterprise_customer_user = None
+            pending_enterprise_user = None
+            errors = []
+            if lms_user_id:
+                try:
+                    # Ensure the given user is associated with the enterprise.
+                    enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(
+                        user_id=lms_user_id,
+                        enterprise_customer=enterprise_customer
+                    )
+                except models.EnterpriseCustomerUser.DoesNotExist:
+                    errors.append('Unable to find user {user} associated with enterprise {enterprise}'.format(
+                        user=lms_user_id,
+                        enterprise=enterprise_customer.name
+                    ))
+
+            if tpa_user_id and not enterprise_customer_user:
+                try:
+                    tpa_client = ThirdPartyAuthApiClient()
+                    username = tpa_client.get_username_from_remote_id(
+                        enterprise_customer.identity_provider, tpa_user_id
+                    )
+                    user = User.objects.get(username=username)
+                    enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(
+                        user_id=user.id,
+                        enterprise_customer=enterprise_customer
+                    )
+                except models.EnterpriseCustomerUser.DoesNotExist:
+                    errors.append('Unable to find user {user} associated with enterprise {enterprise}'.format(
+                        user=lms_user_id,
+                        enterprise=enterprise_customer.name
+                    ))
+
+            if user_email and not enterprise_customer_user:
+                try:
+                    user = User.objects.get(email=user_email)
+                    enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(
+                        user_id=user.id,
+                        enterprise_customer=enterprise_customer
+                    )
+                except User.DoesNotExist, models.EnterpriseCustomerUser.DoesNotExist:
+                    pending_enterprise_user = EnterpriseCustomerManageLearnersView.enroll_user_pending_registration(
+                        enterprise_customer,
+                        user_email,
+                        course_mode,
+                        course_run_id
+                    )
+
+            if enterprise_customer_user:
+                enterprise_customer_user.enroll(course_run_id, course_mode)
+            elif pending_enterprise_user:
+                enterprise_customer_user = pending_enterprise_user
+            else:
+                return Response(
+                    {
+                        'detail': errors
+                    },
+                    status=HTTP_400_BAD_REQUEST
+                )
+
+            if email_students:
+                EnterpriseCustomerManageLearnersView.notify_enrolled_learners(
+                    enterprise_customer,
+                    request,
+                    course_run_id,
+                    [enterprise_customer_user]
+                )
+
+            return Response({'detail': 'success'}, status=HTTP_200_OK)
+        else:
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
