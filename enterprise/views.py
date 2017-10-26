@@ -791,7 +791,16 @@ class CourseEnrollmentView(NonAtomicView):
                 ),
                 query_string=urlencode({'course_mode': selected_course_mode_name})
             )
-            failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
+            if request.META['QUERY_STRING']:
+                failure_url = '{course_enrollment_url}?{query_string}'.format(
+                    course_enrollment_url=reverse(
+                        'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                    ),
+                    query_string=request.META['QUERY_STRING']
+                )
+            else:
+                failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
+
             return redirect(
                 '{grant_data_sharing_url}?{params}'.format(
                     grant_data_sharing_url=reverse('grant_data_sharing_permissions'),

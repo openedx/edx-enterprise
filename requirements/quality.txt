@@ -26,7 +26,6 @@ ddt==1.1.1
 diff-cover==0.9.12
 distlib==0.2.5            # via caniusepython3
 django-config-models==0.1.8
-django-extensions==1.5.9
 django-filter==1.0.4
 django-model-utils==2.3.1
 django-object-actions==0.10.0
@@ -102,7 +101,7 @@ responses==0.8.1
 restructuredtext-lint==1.1.1  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
-six==1.11.0               # via analytics-python, astroid, bleach, diff-cover, django-extensions, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore, tox
+six==1.11.0               # via analytics-python, astroid, bleach, diff-cover, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle, sphinx
 sphinx==1.6.5
