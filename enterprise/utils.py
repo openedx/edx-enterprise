@@ -675,7 +675,7 @@ def parse_datetime_handle_invalid(datetime_value):
     Return the parsed version of a datetime string. If the string is invalid, return None.
     """
     try:
-        return parse_datetime(datetime_value)
+        return parse_datetime(datetime_value).replace(tzinfo=pytz.UTC)
     except TypeError:
         return None
 
