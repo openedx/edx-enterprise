@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.3] - 2017-10-26
+---------------------
+
+* Fixing logo size on themed enterprise pages
+
 [0.53.2] - 2017-10-24
 ---------------------
 
