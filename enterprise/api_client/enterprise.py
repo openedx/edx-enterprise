@@ -56,6 +56,8 @@ class EnterpriseApiClient(JwtLmsApiClient):
                 self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
                 resource_id=str(enterprise_customer_catalog.uuid),
                 traverse_pagination=True,
+                # we need to fetch data in large chunks so that we do not hit api limit.
+                querystring={'page_size': 1000},
             )
 
             course_runs.update(self.get_course_runs_from_search_results(response['results']))
