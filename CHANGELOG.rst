@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.5] - 2017-10-26
+---------------------
+
+* Fetch catalog courses in large chunks to avoid API limit.
+
 [0.53.4] - 2017-10-26
 ---------------------
 
