@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.4] - 2017-10-26
+---------------------
+
+* Preserve catalog querystring on declining DSC.
+
 [0.53.3] - 2017-10-26
 ---------------------
 

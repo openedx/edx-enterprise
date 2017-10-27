@@ -1205,6 +1205,94 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             fetch_redirect_response=False
         )
 
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.get_data_sharing_consent')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.utils.Registry')
+    def test_post_course_specific_enrollment_view_consent_needed_with_catalog_querystring(
+            self,
+            registry_mock,
+            catalog_api_client_models_mock,
+            get_data_sharing_consent_mock,
+            enrollment_api_client_mock,
+            course_catalog_client_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        course_id = self.demo_course_id
+        get_data_sharing_consent_mock.return_value = mock.MagicMock(consent_required=mock.MagicMock(return_value=True))
+        setup_course_catalog_api_client_mock(course_catalog_client_mock)
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
+        enrollment_client.get_course_enrollment.return_value = None
+
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            enable_audit_enrollment=True,
+        )
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+        enterprise_customer_uuid = enterprise_customer.uuid
+        self._login()
+        catalog_uuid = FAKE_UUIDS[1]
+        catalog_title = 'All Content'
+        catalog_filter = {}
+        # Create enterprise customer catalog record and provide desired value
+        # for the field "enabled_course_modes".
+        enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(
+            uuid=catalog_uuid,
+            title=catalog_title,
+            enterprise_customer=enterprise_customer,
+            content_filter=catalog_filter,
+            enabled_course_modes=['audit', 'professional'],
+        )
+        catalog_api_client_models_mock.return_value = mock.Mock(
+            get_search_results=mock.Mock(
+                return_value=[fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]
+            ),
+            get_course_and_course_run=mock.Mock(
+                return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
+            ),
+        )
+        catalog_querystring = 'catalog={catalog_uuid}'.format(
+            catalog_uuid=enterprise_customer_catalog.uuid
+        )
+        course_enrollment_page_url = '{course_enrollment_url}?{query_string}'.format(
+            course_enrollment_url=reverse(
+                'enterprise_course_enrollment_page', args=[enterprise_customer_uuid, course_id]
+            ),
+            query_string=catalog_querystring
+        )
+        response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'}, )
+        assert response.status_code == 302
+
+        expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
+        consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
+            enterprise_customer_uuid, course_id, urlencode({'course_mode': 'audit'})
+        )
+        expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
+            course_enrollment_url=reverse(
+                'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+            ),
+            query_string=catalog_querystring
+        )
+        self.assertRedirects(
+            response,
+            expected_url_format.format(
+                urlencode(
+                    {
+                        'next': consent_enrollment_url,
+                        'failure_url': expected_failure_url,
+                        'enterprise_customer_uuid': enterprise_customer_uuid,
+                        'course_id': course_id,
+                    }
+                )
+            ),
+            fetch_redirect_response=False
+        )
+
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
