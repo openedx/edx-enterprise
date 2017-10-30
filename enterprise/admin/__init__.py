@@ -89,6 +89,18 @@ class EnterpriseCustomerEntitlementInline(admin.StackedInline):
     ecommerce_coupon_url.short_description = 'Coupon URL'
 
 
+class EnterpriseCustomerCatalogInline(admin.TabularInline):
+    """
+    Django admin model for EnterpriseCustomerCatalog.
+    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
+    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
+    """
+
+    model = EnterpriseCustomerCatalog
+    extra = 0
+    can_delete = False
+
+
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
@@ -111,7 +123,8 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     inlines = [
         EnterpriseCustomerBrandingConfigurationInline,
         EnterpriseCustomerIdentityProviderInline,
-        EnterpriseCustomerEntitlementInline
+        EnterpriseCustomerEntitlementInline,
+        EnterpriseCustomerCatalogInline,
     ]
 
     EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider", "catalog"]
