@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.6] - 2017-10-30
+---------------------
+
+* Fix error for empty course start date on DSC page.
+
 [0.53.5] - 2017-10-26
 ---------------------
 
