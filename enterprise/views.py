@@ -5,7 +5,6 @@ User-facing views for the Enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import re
-from calendar import month_name
 from logging import getLogger
 from uuid import UUID
 
@@ -281,16 +280,15 @@ class GrantDataSharingPermissions(View):
                 raise Http404
 
             course_run_details = catalog_api_client.get_course_run(course_id)
-            course_start = parse(course_run_details['start'])
+            course_start_date = ''
+            if course_run_details['start']:
+                course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
+
             context_data.update({
                 'course_id': course_id,
                 'course_specific': True,
                 'course_title': course_run_details['title'],
-                'course_start_date': '{month} {day}, {year}'.format(
-                    month=month_name[course_start.month],
-                    day=course_start.day,
-                    year=course_start.year,
-                ),
+                'course_start_date': course_start_date,
             })
         else:
             context_data.update({
@@ -789,15 +787,21 @@ class CourseEnrollmentView(NonAtomicView):
                 ),
                 query_string=urlencode({'course_mode': selected_course_mode_name})
             )
+
+            failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
             if request.META['QUERY_STRING']:
+                # Preserve all querystring parameters in the request to build
+                # failure url, so that learner views the same enterprise course
+                # enrollment page (after redirect) as for the first time.
+                # Since this is a POST view so use `request.META` to get
+                # querystring instead of `request.GET`.
+                # https://docs.djangoproject.com/en/1.11/ref/request-response/#django.http.HttpRequest.META
                 failure_url = '{course_enrollment_url}?{query_string}'.format(
                     course_enrollment_url=reverse(
                         'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
                     ),
                     query_string=request.META['QUERY_STRING']
                 )
-            else:
-                failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
 
             return redirect(
                 '{grant_data_sharing_url}?{params}'.format(
