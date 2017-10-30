@@ -559,6 +559,9 @@ class CourseEnrollmentView(NonAtomicView):
             except (ValueError, EnterpriseCustomerCatalog.DoesNotExist):
                 messages.add_generic_info_message_for_error(request)
 
+        course = None
+        course_run = None
+        course_modes = []
         if enterprise_catalog:
             course, course_run = enterprise_catalog.get_course_and_course_run(course_run_id)
         else:
@@ -567,7 +570,8 @@ class CourseEnrollmentView(NonAtomicView):
                     enterprise_customer.site
                 ).get_course_and_course_run(course_run_id)
             except ImproperlyConfigured:
-                raise Http404
+                messages.add_generic_info_message_for_error(request)
+                return enterprise_customer, course, course_run, course_modes
 
         if not course or not course_run:
             # The specified course either does not exist in the specified
@@ -579,9 +583,9 @@ class CourseEnrollmentView(NonAtomicView):
                     course=course, course_run=course_run, enterprise_uuid=enterprise_customer.uuid
                 )
             )
-            raise Http404
+            messages.add_generic_info_message_for_error(request)
+            return enterprise_customer, course, course_run, course_modes
 
-        course_modes = []
         if enterprise_catalog_uuid and not enterprise_catalog:
             # A catalog query parameter was given, but the specified
             # EnterpriseCustomerCatalog does not exist, so just return and
@@ -631,53 +635,8 @@ class CourseEnrollmentView(NonAtomicView):
         Render enterprise specific course track selection page.
         """
         platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
-        course_start_date = ''
-        if course_run['start']:
-            course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
-
-        # Format the course effort string using the min/max effort fields for the course run.
-        course_effort = ungettext_min_max(
-            '{} hour per week',
-            '{} hours per week',
-            '{}-{} hours per week',
-            course_run['min_effort'] or None,
-            course_run['max_effort'] or None,
-        ) or ''
-
-        # Parse course run image.
-        course_run_image = course_run['image'] or {}
-
-        # Retrieve the enterprise-discounted price from ecommerce.
-        course_modes = self.set_final_prices(course_modes, request)
-        premium_modes = [mode for mode in course_modes if mode['premium']]
-
-        # Parse organization name and logo.
-        organization_name = ''
-        organization_logo = ''
-        if course['owners']:
-            # The owners key contains the organizations associated with the course.
-            # We pick the first one in the list here to meet UX requirements.
-            organization = course['owners'][0]
-            organization_name = organization['name']
-            organization_logo = organization['logo_image_url']
-
-        # Add a message to the message display queue if the learner
-        # has gone through the data sharing consent flow and declined
-        # to give data sharing consent.
-        if enterprise_course_enrollment and not data_sharing_consent.granted:
-            messages.add_consent_declined_message(request, enterprise_customer, course_run.get('title', ''))
-
-        if not is_course_run_enrollable(course_run):
-            messages.add_unenrollable_item_message(request, 'course')
-            course['enrollable'] = False
-
+        html_template_for_rendering = 'enterprise/enterprise_course_enrollment_error_page.html'
         context_data = {
-            'course_enrollable': course.get('enrollable', True),
-            'course_title': course_run['title'],
-            'course_short_description': course_run['short_description'] or '',
-            'course_pacing': self.PACING_FORMAT.get(course_run['pacing_type'], ''),
-            'course_start_date': course_start_date,
-            'course_image_uri': course_run_image.get('src', ''),
             'enterprise_customer': enterprise_customer,
             'welcome_text': self.WELCOME_TEXT_FORMAT.format(platform_name=platform_name),
             'enterprise_welcome_text': self.ENT_WELCOME_TEXT_FORMAT.format(
@@ -685,26 +644,90 @@ class CourseEnrollmentView(NonAtomicView):
                 platform_name=platform_name,
                 strong_start='<strong>',
                 strong_end='</strong>',
-            ),
-            'course_modes': filter_audit_course_modes(enterprise_customer, course_modes),
-            'course_effort': course_effort,
-            'course_full_description': clean_html_for_template_rendering(course_run['full_description'] or ''),
-            'organization_logo': organization_logo,
-            'organization_name': organization_name,
-            'course_level_type': course_run.get('level_type', ''),
-            'premium_modes': premium_modes,
-            'expected_learning_items': course['expected_learning_items'],
-            'staff': course_run['staff'],
-            'discount_text': self.ENT_DISCOUNT_TEXT_FORMAT.format(
-                enterprise_customer_name=enterprise_customer.name,
-                strong_start='<strong>',
-                strong_end='</strong>',
             )
         }
+
+        if course and course_run:
+            course_enrollable = True
+            course_start_date = ''
+            organization_name = ''
+            organization_logo = ''
+            expected_learning_items = course['expected_learning_items']
+            # Parse organization name and logo.
+            if course['owners']:
+                # The owners key contains the organizations associated with the course.
+                # We pick the first one in the list here to meet UX requirements.
+                organization = course['owners'][0]
+                organization_name = organization['name']
+                organization_logo = organization['logo_image_url']
+
+            course_title = course_run['title']
+            course_short_description = course_run['short_description'] or ''
+            course_full_description = clean_html_for_template_rendering(course_run['full_description'] or '')
+            course_pacing = self.PACING_FORMAT.get(course_run['pacing_type'], '')
+            if course_run['start']:
+                course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
+
+            course_level_type = course_run.get('level_type', '')
+            staff = course_run['staff']
+            # Format the course effort string using the min/max effort fields for the course run.
+            course_effort = ungettext_min_max(
+                '{} hour per week',
+                '{} hours per week',
+                '{}-{} hours per week',
+                course_run['min_effort'] or None,
+                course_run['max_effort'] or None,
+            ) or ''
+
+            # Parse course run image.
+            course_run_image = course_run['image'] or {}
+            course_image_uri = course_run_image.get('src', '')
+
+            # Retrieve the enterprise-discounted price from ecommerce.
+            course_modes = self.set_final_prices(course_modes, request)
+            premium_modes = [mode for mode in course_modes if mode['premium']]
+
+            # Filter audit course modes.
+            course_modes = filter_audit_course_modes(enterprise_customer, course_modes)
+
+            # Add a message to the message display queue if the learner
+            # has gone through the data sharing consent flow and declined
+            # to give data sharing consent.
+            if enterprise_course_enrollment and not data_sharing_consent.granted:
+                messages.add_consent_declined_message(request, enterprise_customer, course_run.get('title', ''))
+
+            if not is_course_run_enrollable(course_run):
+                messages.add_unenrollable_item_message(request, 'course')
+                course_enrollable = False
+
+            context_data.update({
+                'course_enrollable': course_enrollable,
+                'course_title': course_title,
+                'course_short_description': course_short_description,
+                'course_pacing': course_pacing,
+                'course_start_date': course_start_date,
+                'course_image_uri': course_image_uri,
+                'course_modes': course_modes,
+                'course_effort': course_effort,
+                'course_full_description': course_full_description,
+                'organization_logo': organization_logo,
+                'organization_name': organization_name,
+                'course_level_type': course_level_type,
+                'premium_modes': premium_modes,
+                'expected_learning_items': expected_learning_items,
+                'staff': staff,
+                'discount_text': self.ENT_DISCOUNT_TEXT_FORMAT.format(
+                    enterprise_customer_name=enterprise_customer.name,
+                    strong_start='<strong>',
+                    strong_end='</strong>',
+                )
+            })
+            html_template_for_rendering = 'enterprise/enterprise_course_enrollment_page.html'
+
         context_data.update(self.STATIC_TEXT_FORMAT)
         global_context_data = get_global_context(request)
         context_data.update(global_context_data)
-        return render(request, 'enterprise/enterprise_course_enrollment_page.html', context=context_data)
+        return render(request, html_template_for_rendering, context=context_data)
 
     @method_decorator(enterprise_login_required)
     def post(self, request, enterprise_uuid, course_id):
