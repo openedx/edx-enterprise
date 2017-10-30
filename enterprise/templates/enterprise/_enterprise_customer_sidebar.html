@@ -1,0 +1,9 @@
+{% if enterprise_customer.branding_configuration %}
+    <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
+{% endif %}
+<p class="partnered-text">
+    {{ welcome_text }}
+</p>
+<p class="partnered-text">
+    {% autoescape off %}{{ enterprise_welcome_text }}{% endautoescape %}
+</p>
