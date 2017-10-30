@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.7] - 2017-10-30
+---------------------
+
+* Added inline admin form to EnterpriseCustomer admin for EnterpriseCustomerCatalog.
+
 [0.53.6] - 2017-10-30
 ---------------------
 
