@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 
 import ddt
 import mock
+from dateutil.parser import parse
 from pytest import mark
 
 from django.conf import settings
@@ -85,15 +86,19 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
-        (False, True),
-        (False, False),
-        (True, False),
+        (False, True, None),
+        (False, False, None),
+        (True, False, None),
+        (False, True, '2013-02-05T05:00:00Z'),
+        (False, False, '2013-02-05T05:00:00Z'),
+        (True, False, '2013-02-05T05:00:00Z'),
     )
     @ddt.unpack
     def test_get_course_specific_consent(
             self,
             defer_creation,
             existing_course_enrollment,
+            course_start_date,
             course_api_client_mock,
             course_catalog_api_client_model_mock,
             course_catalog_api_client_view_mock,
@@ -102,8 +107,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         course_catalog_api_client_model_mock.return_value.course_in_catalog.return_value = True
         course_run_details = {
-            "start": "2013-02-05T05:00:00Z",
-            "title": "Demo Course"
+            'start': course_start_date,
+            'title': 'Demo Course'
         }
         course_catalog_api_client_view_mock.return_value.get_course_run.return_value = course_run_details
 
@@ -144,35 +149,39 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             'In order to start this course and use your discount, <b>you must</b> consent to share your '
             'course data with Starfleet Academy.'
         )
+        expected_course_start_date = ''
+        if course_start_date:
+            expected_course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
 
         for key, value in {
-                "platform_name": "Test platform",
-                "platform_description": "Test description",
-                "tagline": "High-quality online learning opportunities from the world's best universities",
-                "header_logo_alt_text": "Test platform home page",
-                "consent_request_prompt": expected_prompt,
-                "requested_permissions_header": (
-                    'Per the <a href="#consent-policy-dropdown-bar" '
-                    'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">'
-                    'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
-                ),
-                'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': '',
-                'sharable_items_footer': (
-                    'My permission applies only to data from courses or programs that are sponsored by '
-                    'Starfleet Academy, and not to data from any Test platform courses or programs that '
-                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
-                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
-                    'from any courses that are sponsored by Starfleet Academy.'
-                ),
-                "course_id": "course-v1:edX+DemoX+Demo_Course",
-                "redirect_url": "https://google.com",
-                "course_specific": True,
-                "defer_creation": defer_creation,
-                "welcome_text": "Welcome to Test platform.",
-                'sharable_items_note_header': 'Please note',
-                'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
-                'LMS_ROOT_URL': 'http://localhost:8000',
+            'platform_name': 'Test platform',
+            'platform_description': 'Test description',
+            'tagline': "High-quality online learning opportunities from the world's best universities",
+            'header_logo_alt_text': 'Test platform home page',
+            'consent_request_prompt': expected_prompt,
+            'requested_permissions_header': (
+                'Per the <a href="#consent-policy-dropdown-bar" '
+                'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">'
+                'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
+            ),
+            'confirmation_alert_prompt': expected_alert,
+            'confirmation_alert_prompt_warning': '',
+            'sharable_items_footer': (
+                'My permission applies only to data from courses or programs that are sponsored by '
+                'Starfleet Academy, and not to data from any Test platform courses or programs that '
+                'I take on my own. I understand that once I grant my permission to allow data to be shared '
+                'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
+                'from any courses that are sponsored by Starfleet Academy.'
+            ),
+            'course_id': 'course-v1:edX+DemoX+Demo_Course',
+            'redirect_url': 'https://google.com',
+            'course_specific': True,
+            'defer_creation': defer_creation,
+            'welcome_text': 'Welcome to Test platform.',
+            'sharable_items_note_header': 'Please note',
+            'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+            'LMS_ROOT_URL': 'http://localhost:8000',
+            'course_start_date': expected_course_start_date,
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
