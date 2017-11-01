@@ -872,19 +872,23 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_non_existing_course(
             self,
             registry_mock,
+            enrollment_api_client_mock,
             catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
-        Verify that user will see HTTP 404 (Not Found) in case of invalid
+        Verify that user will see generic info message in case of invalid
         or non existing course.
         """
         course_client = catalog_api_client_mock.return_value
         course_client.get_course_and_course_run.return_value = (None, None)
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = {}
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -898,23 +902,35 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
         response = self.client.get(course_enrollment_page_url)
-        assert response.status_code == 404
+        assert response.status_code == 200
+        expected_log_messages = [
+            (
+                messages.INFO,
+                '<strong>Something happened.</strong> '
+                '<span>This course is not available. Please start over and select a different course.</span>'
+            )
+        ]
+        self._assert_django_test_client_messages(response, expected_log_messages)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_error_in_getting_course(
             self,
             registry_mock,
+            enrollment_api_client_mock,
             catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
-        Verify that user will see HTTP 404 (Not Found) in case of error while
+        Verify that user will see generic info message in case of error while
         getting the course details from CourseApiClient.
         """
         course_client = catalog_api_client_mock.return_value
         course_client.get_course_and_course_run.side_effect = ImproperlyConfigured
+        enrollment_client = enrollment_api_client_mock.return_value
+        enrollment_client.get_course_modes.return_value = {}
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -928,7 +944,15 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
         response = self.client.get(course_enrollment_page_url)
-        assert response.status_code == 404
+        assert response.status_code == 200
+        expected_log_messages = [
+            (
+                messages.INFO,
+                '<strong>Something happened.</strong> '
+                '<span>This course is not available. Please start over and select a different course.</span>'
+            )
+        ]
+        self._assert_django_test_client_messages(response, expected_log_messages)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
