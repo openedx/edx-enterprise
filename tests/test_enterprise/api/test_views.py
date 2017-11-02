@@ -765,20 +765,29 @@ class TestEnterpriseAPIViews(APITest):
         (
             False,
             True,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True,
-                                                                     add_utm_info=False),
+            fake_enterprise_api.build_fake_enterprise_catalog_detail(
+                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+                include_enterprise_context=True,
+                add_utm_info=False
+            ),
         ),
         (
             True,
             False,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True,
-                                                                     add_utm_info=False),
+            fake_enterprise_api.build_fake_enterprise_catalog_detail(
+                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+                include_enterprise_context=True,
+                add_utm_info=False
+            ),
         ),
         (
             True,
             True,
-            fake_enterprise_api.build_fake_enterprise_catalog_detail(include_enterprise_context=True,
-                                                                     add_utm_info=False),
+            fake_enterprise_api.build_fake_enterprise_catalog_detail(
+                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+                include_enterprise_context=True,
+                add_utm_info=False
+            ),
         ),
     )
     @ddt.unpack
@@ -854,10 +863,45 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         expected_result = fake_enterprise_api.build_fake_enterprise_catalog_detail(
+            paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
             previous_url=urljoin('http://testserver', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=1',
             next_url=urljoin('http://testserver/', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=3',
             include_enterprise_context=True, add_utm_info=False
         )
+
+        assert response == expected_result
+
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
+    def test_enterprise_customer_catalogs_detail_pagination_filtering(self, mock_catalog_api_client):
+        """
+        Verify the EnterpriseCustomerCatalog detail view returns the correct paging URLs.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_search_results=mock.Mock(
+                return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION_1
+            ),
+        )
+        response = self.client.get(ENTERPRISE_CATALOGS_DETAIL_ENDPOINT + '?page=2')
+        response = self.load_json(response.content)
+
+        expected_result = fake_enterprise_api.build_fake_enterprise_catalog_detail(
+            paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_3,
+            previous_url=urljoin('http://testserver', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=1',
+            next_url=urljoin('http://testserver/', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=3', add_utm_info=False)
 
         assert response == expected_result
 
@@ -878,11 +922,11 @@ class TestEnterpriseAPIViews(APITest):
             True,
             {
                 'program_uuids': [
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid'],
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
             },
-            [fake_catalog_api.FAKE_PROGRAM_RESPONSE1, fake_catalog_api.FAKE_PROGRAM_RESPONSE2]
+            [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1, fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2]
         ),
     )
     @ddt.unpack
@@ -925,8 +969,8 @@ class TestEnterpriseAPIViews(APITest):
             True,
             {
                 'program_uuids': [
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid'],
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
             },
         ),
@@ -949,8 +993,8 @@ class TestEnterpriseAPIViews(APITest):
                     fake_catalog_api.FAKE_COURSE_RUN2['key']
                 ],
                 'uuid': [
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid'],
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
             }
         )
@@ -1092,7 +1136,7 @@ class TestEnterpriseAPIViews(APITest):
             )
         search_results = None
         if is_program_in_catalog:
-            search_results = [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT]
+            search_results = [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1]
 
         mock_catalog_api_client.return_value = mock.Mock(
             get_search_results=mock.Mock(return_value=search_results),
@@ -1318,11 +1362,11 @@ class TestEnterpriseAPIViews(APITest):
             True,
             {
                 'program_uuids': [
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'],
-                    fake_catalog_api.FAKE_PROGRAM_RESPONSE2['uuid']
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid'],
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
             },
-            [fake_catalog_api.FAKE_PROGRAM_RESPONSE1, fake_catalog_api.FAKE_PROGRAM_RESPONSE2]
+            [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1, fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2]
         ),
     )
     @ddt.unpack

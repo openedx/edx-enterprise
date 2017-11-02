@@ -89,7 +89,9 @@ FAKE_COURSE_RUN = {
     'mobile_available': False,
     'hidden': False,
     'reporting_type': 'mooc',
-    'eligible_for_financial_aid': True
+    'eligible_for_financial_aid': True,
+    'content_type': 'courserun',
+    'has_enrollable_seats': True
 }
 FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
 FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
@@ -926,6 +928,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "weeks_to_complete": None,
     "published": True,
     "content_type": "courserun",
+    "has_enrollable_seats": True,
     "authoring_organization_uuids": [
         "12de950c-6fae-49f7-aaa9-778c2fbdae56"
     ],
@@ -974,7 +977,7 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
     },
 ]
 
-FAKE_SEARCH_ALL_PROGRAM_RESULT = {
+FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "title": "Program Title 1",
     "marketing_url": "professional-certificate/marketingslug1",
     "content_type": "program",
@@ -1011,7 +1014,49 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT = {
     "subtitle": "Program Subtitle 1",
     "status": "active",
     "weeks_to_complete_max": None,
-    "aggregation_key": "program:" + FAKE_UUIDS[3]
+    "aggregation_key": "program:" + FAKE_UUIDS[3],
+    "is_program_eligible_for_one_click_purchase": True
+}
+
+FAKE_SEARCH_ALL_PROGRAM_RESULT_2 = {
+    "title": "Program Title 2",
+    "marketing_url": "professional-certificate/marketingslug2",
+    "content_type": "program",
+    "card_image_url": "http://wowslider.com/sliders/demo-10/data/images/dock.jpg",
+    "min_hours_effort_per_week": 5,
+    "authoring_organization_uuids": [
+        "12de950c-6fae-49f7-aaa9-778c2fbdae56"
+    ],
+    "hidden": False,
+    "authoring_organizations": [
+        {
+            "marketing_url": None,
+            "homepage_url": None,
+            "tags": [],
+            "certificate_logo_image_url": None,
+            "name": "",
+            "key": "edX",
+            "description": None,
+            "uuid": "12de950c-6fae-49f7-aaa9-778c2fbdae56",
+            "logo_image_url": None
+        }
+    ],
+    "staff_uuids": [],
+    "published": True,
+    "uuid": FAKE_UUIDS[2],
+    "max_hours_effort_per_week": 10,
+    "subject_uuids": [],
+    "weeks_to_complete_min": None,
+    "type": "Professional Certificate",
+    "language": [
+        "English"
+    ],
+    "partner": "edx",
+    "subtitle": "Program Subtitle 1",
+    "status": "active",
+    "weeks_to_complete_max": None,
+    "aggregation_key": "program:" + FAKE_UUIDS[3],
+    "is_program_eligible_for_one_click_purchase": True
 }
 
 FAKE_SEARCH_ALL_RESULTS = {
@@ -1021,18 +1066,60 @@ FAKE_SEARCH_ALL_RESULTS = {
     "results": [
         FAKE_SEARCH_ALL_COURSE_RESULT,
         FAKE_SEARCH_ALL_SHORT_COURSE_RESULT,
-        FAKE_SEARCH_ALL_PROGRAM_RESULT,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+    ]
+}
+
+FAKE_SEARCH_ALL_RESULTS_2 = {
+    "count": 2,
+    "next": None,
+    "previous": None,
+    "results": [
+        FAKE_SEARCH_ALL_COURSE_RESULT,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+    ]
+}
+
+FAKE_SEARCH_ALL_COURSE_RESULT_1 = copy.deepcopy(FAKE_SEARCH_ALL_COURSE_RESULT)
+FAKE_SEARCH_ALL_COURSE_RESULT_1['marketing_url'] = None
+FAKE_SEARCH_ALL_COURSE_RESULT_1['key'] = "course-v1:test+test+DemoX+Demo_Course"
+FAKE_SEARCH_ALL_RESULTS_3 = {
+    "count": 2,
+    "next": None,
+    "previous": None,
+    "results": [
+        FAKE_SEARCH_ALL_COURSE_RESULT_1,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
     ]
 }
 
 FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION = {
-    "count": 3,
+    "count": 2,
     "next": "https://fake.server/api/v1/?page=1",
-    "previous": "https://fake.server/api/v1/?page=3",
+    "previous": "https://fake.server/api/v1/?page=2",
     "results": [
         FAKE_SEARCH_ALL_COURSE_RESULT,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+    ]
+}
+
+FAKE_SEARCH_ALL_COURSE_RESULT_2 = copy.deepcopy(FAKE_SEARCH_ALL_COURSE_RESULT)
+FAKE_SEARCH_ALL_COURSE_RESULT_2['has_enrollable_seats'] = False
+FAKE_SEARCH_ALL_COURSE_RESULT_2["key"] = "course-v1:test+DemoX+Demo_Course"
+FAKE_SEARCH_ALL_PROGRAM_RESULT_3 = copy.deepcopy(FAKE_SEARCH_ALL_PROGRAM_RESULT_2)
+FAKE_SEARCH_ALL_PROGRAM_RESULT_3['is_program_eligible_for_one_click_purchase'] = False
+FAKE_SEARCH_ALL_PROGRAM_RESULT_3['uuid'] = FAKE_UUIDS[1]
+
+FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION_1 = {
+    "count": 4,
+    "next": "https://fake.server/api/v1/?page=1",
+    "previous": "https://fake.server/api/v1/?page=4",
+    "results": [
+        FAKE_SEARCH_ALL_COURSE_RESULT_1,
+        FAKE_SEARCH_ALL_COURSE_RESULT_2,
         FAKE_SEARCH_ALL_SHORT_COURSE_RESULT,
-        FAKE_SEARCH_ALL_PROGRAM_RESULT,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_3,
     ]
 }
 

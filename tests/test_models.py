@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` models module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import copy
 import datetime
 import unittest
 from operator import itemgetter
@@ -244,6 +245,12 @@ class TestEnterpriseCustomer(unittest.TestCase):
 
         # Test when EnterpriseCustomerCatalogs do not contain the course run.
         mock_catalog_api.get_search_results.return_value = None
+        assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
+
+        # Test when EnterpriseCustomerCatalogs do not contain the course run when not any enrollable seats.
+        fake_course_run = copy.deepcopy(fake_catalog_api.FAKE_COURSE_RUN)
+        fake_course_run['has_enrollable_seats'] = False
+        mock_catalog_api.get_search_results.return_value = [fake_course_run]
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
 

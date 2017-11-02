@@ -915,10 +915,25 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Returns:
             dict: The paginated discovery service search results.
         """
+        results = []
         query = self.content_filter.copy()
         query.update(query_parameters)
         catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
-        return catalog_client.get_search_results(query, traverse_pagination=False)
+        search_results = catalog_client.get_search_results(query, traverse_pagination=False)
+        for content in search_results['results']:
+            if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
+                results.append(content)
+            elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
+                results.append(content)
+
+        response = {
+            'count': len(results),
+            'next': search_results['next'],
+            'previous': search_results['previous'],
+            'results': results,
+            }
+
+        return response
 
     def contains_content_items(self, content_id_field_name, content_id_values):
         """
@@ -942,7 +957,11 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             updated_content_filter[content_id_field_name] = content_id_values
             results = CourseCatalogApiServiceClient().get_search_results(updated_content_filter)
             if results:
-                content_ids_in_catalog = {content[content_id_field_name] for content in results}
+                for content in results:
+                    if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
+                        content_ids_in_catalog.add(content[content_id_field_name])
+                    elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
+                        content_ids_in_catalog.add(content[content_id_field_name])
 
         # Diff the content IDs found in the catalog with the set of
         # IDs which we are checking for existence.
