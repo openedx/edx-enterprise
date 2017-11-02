@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.8] - 2017-11-02
+---------------------
+
+* Show generic info message on enterprise course enrollment page.
+
 [0.53.7] - 2017-10-30
 ---------------------
 

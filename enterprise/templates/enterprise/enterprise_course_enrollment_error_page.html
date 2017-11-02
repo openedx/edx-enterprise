@@ -1,0 +1,18 @@
+{% extends 'enterprise/base.html' %}
+
+{% load staticfiles enterprise %}
+
+{% block contents %}
+  <div class="enterprise-container">
+    <div class="row">
+      <div class="col-3">
+        {% include "enterprise/_enterprise_customer_sidebar.html" %}
+      </div>
+
+      <div class="col-7 border-left">
+        {# Display success, error, warning or info messages #}
+        {% alert_messages messages %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
