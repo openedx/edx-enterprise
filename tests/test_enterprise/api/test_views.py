@@ -899,7 +899,7 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         expected_result = fake_enterprise_api.build_fake_enterprise_catalog_detail(
-            paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+            paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_3,
             previous_url=urljoin('http://testserver', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=1',
             next_url=urljoin('http://testserver/', ENTERPRISE_CATALOGS_DETAIL_ENDPOINT) + '?page=3', add_utm_info=False)
 

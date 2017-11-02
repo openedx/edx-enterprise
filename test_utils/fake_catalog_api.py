@@ -1080,6 +1080,19 @@ FAKE_SEARCH_ALL_RESULTS_2 = {
     ]
 }
 
+FAKE_SEARCH_ALL_COURSE_RESULT_1 = copy.deepcopy(FAKE_SEARCH_ALL_COURSE_RESULT)
+FAKE_SEARCH_ALL_COURSE_RESULT_1['marketing_url'] = None
+FAKE_SEARCH_ALL_COURSE_RESULT_1['key'] = "course-v1:test+test+DemoX+Demo_Course"
+FAKE_SEARCH_ALL_RESULTS_3 = {
+    "count": 2,
+    "next": None,
+    "previous": None,
+    "results": [
+        FAKE_SEARCH_ALL_COURSE_RESULT_1,
+        FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+    ]
+}
+
 FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION = {
     "count": 2,
     "next": "https://fake.server/api/v1/?page=1",
@@ -1102,8 +1115,9 @@ FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION_1 = {
     "next": "https://fake.server/api/v1/?page=1",
     "previous": "https://fake.server/api/v1/?page=4",
     "results": [
-        FAKE_SEARCH_ALL_COURSE_RESULT,
+        FAKE_SEARCH_ALL_COURSE_RESULT_1,
         FAKE_SEARCH_ALL_COURSE_RESULT_2,
+        FAKE_SEARCH_ALL_SHORT_COURSE_RESULT,
         FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
         FAKE_SEARCH_ALL_PROGRAM_RESULT_3,
     ]
