@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.53.8] - 2017-11-01
+---------------------
+
+* Apply appropriate content filtering to the EnterpriseCustomerCatalog detail endpoints.
+
+
 [0.53.7] - 2017-10-30
 ---------------------
 
