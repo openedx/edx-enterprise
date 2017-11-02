@@ -15,7 +15,7 @@ Unreleased
 ----------
 
 [0.53.10] - 2017-11-02
----------------------
+----------------------
 
 * Move data sharing policy to its own partial to improve theming of the data sharing consent page
 
