@@ -4,6 +4,8 @@ URL definitions for enterprise api version 1 endpoint.
 """
 from __future__ import absolute_import, unicode_literals
 
+from django.conf.urls import include, url
+
 from rest_framework.routers import DefaultRouter
 
 from enterprise.api.v1 import views
@@ -29,3 +31,12 @@ router.register(
     views.EnterpriseCustomerReportingConfigurationViewSet,
     'enterprise-customer-reporting',
 )
+
+urlpatterns = [
+    url(
+        r'^enroll_user_in_course',
+        views.EnterpriseCustomerEnrollUserInCourseRunView.as_view(),
+        name='enroll-user-in-course'
+    ),
+    url(r'^', include(router.urls)),
+]

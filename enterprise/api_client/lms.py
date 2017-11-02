@@ -328,6 +328,29 @@ class ThirdPartyAuthApiClient(LmsApiClient):
                 return row.get('remote_id')
         return None
 
+    def get_username_from_remote_id(self, identity_provider, remote_id):
+        """
+        Retrieve the remote identifier for the given username.
+
+        Args:
+        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
+        * ``remote_id`` (str): The remote id identifying the user for which to retrieve the usernamename.
+
+        Returns:
+            string or None: the username of the given user.  None if not found.
+        """
+        try:
+            returned = self.client.providers(identity_provider).users.get(remote_id=remote_id)
+            results = returned.get('results', [])
+        except HttpNotFoundError:
+            LOGGER.error('username not found for third party provider=%s, remote_id=%s', identity_provider, remote_id)
+            results = []
+
+        for row in results:
+            if row.get('remote_id') == remote_id:
+                return row.get('username')
+        return None
+
 
 class GradesApiClient(JwtLmsApiClient):
     """

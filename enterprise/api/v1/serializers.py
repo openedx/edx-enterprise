@@ -410,3 +410,34 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         )
 
     enterprise_customer = EnterpriseCustomerSerializer()
+
+
+class EnterpriseCustomerEnrollUserInCourseRunSerializer(serializers.Serializer):
+    """Serializes enrollment information for a collection of students/emails.
+
+    This is mainly useful for implementing validation when performing bulk enrollment operations.
+    """
+    lms_user_id = serializers.CharField(required=False)
+    tpa_user_id = serializers.CharField(required=False)
+    user_email = serializers.EmailField(required=False)
+    enterprise_id = serializers.UUIDField(required=True)
+    course_run_id = serializers.CharField(required=True)
+    course_mode = serializers.ChoiceField(
+        choices=(
+            ('audit', 'audit'),
+            ('verified', 'verified'),
+            ('professional', 'professional')
+        ),
+        required=True
+    )
+    email_students = serializers.BooleanField(default=False, required=False)
+
+    def validate(self, data):
+        """
+        Validate that at least one of the user identifier fields has been passed in.
+        """
+        if not data.get('lms_user_id') and not data.get('tpa_user_id') and not data.get('user_email'):
+            raise serializers.ValidationError('At least one of the following fields must be specified: '
+                                              'lms_user_id, tpa_user_id, user_email')
+
+        return data
