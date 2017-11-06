@@ -18,7 +18,6 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 from pytest import mark, raises
 from requests.compat import urljoin
 from testfixtures import LogCapture
-from waffle.testutils import override_switch
 
 from django.conf import settings
 from django.core.management import call_command
@@ -90,7 +89,6 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
         mock_data_task.delay.assert_called_once_with('C-3PO', 'SAP', 1)
 
     @responses.activate
-    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
     @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
@@ -170,7 +168,6 @@ class TestTransmitCoursewareDataManagementCommand(unittest.TestCase, EnterpriseM
                 assert message in log_capture.records[index].getMessage()
 
     @responses.activate
-    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
     @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')

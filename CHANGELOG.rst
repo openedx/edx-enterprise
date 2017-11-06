@@ -14,11 +14,20 @@ Change Log
 Unreleased
 ----------
 
-[0.53.8] - 2017-11-01
+[0.53.10] - 2017-11-02
+----------------------
+
+* Move data sharing policy to its own partial to improve theming of the data sharing consent page
+
+[0.53.9] - 2017-11-02
 ---------------------
 
 * Apply appropriate content filtering to the EnterpriseCustomerCatalog detail endpoints.
 
+[0.53.8] - 2017-11-02
+---------------------
+
+* Show generic info message on enterprise course enrollment page.
 
 [0.53.7] - 2017-10-30
 ---------------------
