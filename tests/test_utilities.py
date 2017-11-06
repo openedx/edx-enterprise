@@ -14,7 +14,6 @@ from integrated_channels.integrated_channel.course_metadata import BaseCourseExp
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.utils import SapCourseExporter, get_launch_url
 from pytest import mark, raises
-from waffle.testutils import override_switch
 
 from django.core import mail
 from django.test import override_settings
@@ -1145,7 +1144,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         )
 
     @mock.patch('integrated_channels.integrated_channel.course_metadata.get_course_runs')
-    @mock.patch('integrated_channels.sap_success_factors.utils.get_course_track_selection_url')
+    @mock.patch('integrated_channels.sap_success_factors.utils.get_launch_url')
     @ddt.data(
         (
             # course runs
@@ -1372,7 +1371,6 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         filtered_course_modes = utils.filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
 
-    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=True)
     def test_get_launch_url_flag_on(self):
         """
         Test `get_launch_url` helper method.
@@ -1385,23 +1383,3 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
 
         launch_url = get_launch_url(enterprise_customer, course_id)
         assert_url(launch_url, expected_url)
-
-    @override_switch('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE', active=False)
-    @mock.patch('integrated_channels.sap_success_factors.utils.reverse')
-    def test_get_launch_url_flag_off(
-            self,
-            reverse_mock):
-        """
-        Test `get_launch_url` helper method.
-        """
-        reverse_mock.return_value = '/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_uuid = '37432370-0a6e-4d95-90fe-77b4fe64de2d'
-        expected_url = 'https://example.com/course_modes/choose/course-v1:edX+DemoX+Demo_Course/'
-        enterprise_customer = EnterpriseCustomerFactory(
-            site=SiteFactory(domain='example.com'),
-            uuid=enterprise_uuid
-        )
-
-        launch_url = get_launch_url(enterprise_customer, course_id)
-        assert launch_url == expected_url
