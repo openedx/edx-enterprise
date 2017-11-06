@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.11] - 2017-11-06
+----------------------
+
+* Removing SAP_USE_ENTERPRISE_ENROLLMENT_PAGE switch via django waffle and use landing page URL instead of track slection page.
+
 [0.53.10] - 2017-11-02
 ----------------------
 
@@ -60,12 +65,12 @@ Unreleased
 * Remove unused dependency on django-extensions
 
 [0.53.1] - 2017-10-24
-----------------------
+---------------------
 
 * Fix alteration in querystring parameters for decorator "enterprise_login_required".
 
 [0.53.0] - 2017-10-24
-----------------------
+---------------------
 
 * Get rid of the `EnterpriseIntegratedChannel` model and any other related but unused code.
 

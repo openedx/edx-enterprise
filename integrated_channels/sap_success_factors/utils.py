@@ -10,7 +10,6 @@ import os
 from logging import getLogger
 
 from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
-from waffle import switch_is_active
 
 from django.apps import apps
 from django.utils import timezone
@@ -288,10 +287,7 @@ def get_launch_url(enterprise_customer, course_id, enrollment_url=None):
         course_id (str): The string identifier of the course in question
         enrollment_url (str): Enterprise landing page url for the given course from enterprise courses API
     """
-    if switch_is_active('SAP_USE_ENTERPRISE_ENROLLMENT_PAGE'):
-        return enrollment_url or enterprise_customer.get_course_run_enrollment_url(course_id)
-
-    return get_course_track_selection_url(enterprise_customer, course_id)
+    return enrollment_url or enterprise_customer.get_course_run_enrollment_url(course_id)
 
 
 def get_course_track_selection_url(enterprise_customer, course_id):
@@ -372,7 +368,7 @@ def get_course_metadata_for_inactivation(course_id, enterprise_customer, provide
         'content': [
             {
                 'providerID': provider_id,
-                'launchURL': get_course_track_selection_url(enterprise_customer, course_id),
+                'launchURL': get_launch_url(enterprise_customer, course_id),
                 'contentTitle': 'Course Description',
                 'launchType': 3,
                 'contentID': course_id,
