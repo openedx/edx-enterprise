@@ -133,7 +133,7 @@ class EnrollmentApiClient(LmsApiClient):
             return self.client.course(course_id).get()
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
-                'Failed to retrieve course enrollment details for course %s due to: %s',
+                'Failed to retrieve course enrollment details for course [%s] due to: [%s]',
                 course_id, str(exc)
             )
             return {}
@@ -231,7 +231,7 @@ class EnrollmentApiClient(LmsApiClient):
         except HttpNotFoundError:
             # This enrollment data endpoint returns a 404 if either the username or course_id specified isn't valid
             LOGGER.error(
-                'course enrollment details not found for invalid username or course; username=%s, course=%s',
+                'Course enrollment details not found for invalid username or course; username=[%s], course=[%s]',
                 username,
                 course_id
             )
@@ -294,7 +294,7 @@ class CourseApiClient(LmsApiClient):
         try:
             return self.client.courses(course_id).get()
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception('Details not found for course %s due to: %s', course_id, str(exc))
+            LOGGER.exception('Details not found for course [%s] due to: [%s]', course_id, str(exc))
             return None
 
 

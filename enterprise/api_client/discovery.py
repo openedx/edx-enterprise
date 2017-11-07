@@ -426,7 +426,7 @@ class CourseCatalogApiClient(object):
             ) or default_val
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
-                'Failed to load data from resource %s with kwargs %s due to: %s',
+                'Failed to load data from resource [%s] with kwargs [%s] due to: [%s]',
                 resource, kwargs, str(exc)
             )
             return default_val

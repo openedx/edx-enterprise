@@ -1099,7 +1099,6 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         if not self.contains_content_items('key', [course_run_id]):
             return None, None
-
         return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_and_course_run(course_run_id)
 
     def get_program(self, program_uuid):

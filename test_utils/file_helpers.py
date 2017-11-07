@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Utility functions for dealing with files in tests.
 """

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Test mixins for enterprise tests.
 """

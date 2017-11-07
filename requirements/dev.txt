@@ -17,7 +17,7 @@ celery==3.1.18
 cffi==1.11.2              # via cryptography
 click-log==0.1.8          # via edx-lint
 click==6.7                # via click-log, edx-lint, pip-tools
-configparser==3.5.0       # via pydocstyle, pylint
+configparser==3.5.0       # via pylint
 cryptography==1.9
 diff-cover==1.0.0
 distlib==0.2.6            # via caniusepython3

@@ -8,11 +8,12 @@ import datetime
 import time
 
 import requests
+from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 from django.apps import apps
 
 
-class SAPSuccessFactorsAPIClient(object):
+class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable=abstract-method
     """
     Client for connecting to SAP SuccessFactors.
 
@@ -40,12 +41,10 @@ class SAPSuccessFactorsAPIClient(object):
             HTTPError: If we received a failure response code from SAP SuccessFactors.
             RequestException: If an unexpected response format was received that we could not parse.
         """
-
         SAPSuccessFactorsGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
-            app_label='sap_success_factors',
-            model_name='SAPSuccessFactorsGlobalConfiguration'
+            'sap_success_factors',
+            'SAPSuccessFactorsGlobalConfiguration'
         )
-
         global_sap_config = SAPSuccessFactorsGlobalConfiguration.current()
         url = url_base + global_sap_config.oauth_api_path
 
@@ -78,21 +77,9 @@ class SAPSuccessFactorsAPIClient(object):
         Args:
             enterprise_configuration (SAPSuccessFactorsEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with SAP SuccessFactors
-
-        Raises:
-            ValueError: If a URL or access token are not provided.
         """
-
-        if not enterprise_configuration:
-            raise ValueError('An SAPSuccessFactorsEnterpriseCustomerConfiguration must be supplied!')
-
-        SAPSuccessFactorsGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
-            app_label='sap_success_factors',
-            model_name='SAPSuccessFactorsGlobalConfiguration'
-        )
-
-        self.global_sap_config = SAPSuccessFactorsGlobalConfiguration.current()
-        self.enterprise_configuration = enterprise_configuration
+        super(SAPSuccessFactorsAPIClient, self).__init__(enterprise_configuration)
+        self.global_sap_config = apps.get_model('sap_success_factors', 'SAPSuccessFactorsGlobalConfiguration').current()
         self._create_session()
 
     def _create_session(self):
@@ -116,13 +103,13 @@ class SAPSuccessFactorsAPIClient(object):
         self.session = session
         self.expires_at = expires_at
 
-    def send_completion_status(self, sap_user_id, payload):
+    def create_course_completion(self, user_id, payload):
         """
         Send a completion status payload to the SuccessFactors OCN Completion Status endpoint
 
         Args:
-            sap_user_id (str): The sap user id that the completion status is being sent for.
-            payload (str): JSON encoded object (serialized from LearnerDataTransmissionAudit)
+            user_id (str): The sap user id that the completion status is being sent for.
+            payload (str): JSON encoded object (serialized from SapSuccessFactorsLearnerDataTransmissionAudit)
                 containing completion status fields per SuccessFactors documentation.
 
         Returns:
@@ -131,9 +118,9 @@ class SAPSuccessFactorsAPIClient(object):
             HTTPError: if we received a failure response code from SAP SuccessFactors
         """
         url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.completion_status_api_path
-        return self._call_post_with_user_override(sap_user_id, url, payload)
+        return self._call_post_with_user_override(user_id, url, payload)
 
-    def send_course_import(self, payload):
+    def create_course_content(self, payload):
         """
         Send courses payload to the SuccessFactors OCN Course Import endpoint
 
@@ -157,12 +144,10 @@ class SAPSuccessFactorsAPIClient(object):
             url (str): The url to post to.
             payload (str): The json encoded payload to post.
         """
-
         SAPSuccessFactorsEnterpriseCustomerConfiguration = apps.get_model(  # pylint: disable=invalid-name
-            app_label='sap_success_factors',
-            model_name='SAPSuccessFactorsEnterpriseCustomerConfiguration'
+            'sap_success_factors',
+            'SAPSuccessFactorsEnterpriseCustomerConfiguration'
         )
-
         oauth_access_token, _ = SAPSuccessFactorsAPIClient.get_oauth_access_token(
             self.enterprise_configuration.sapsf_base_url,
             self.enterprise_configuration.key,

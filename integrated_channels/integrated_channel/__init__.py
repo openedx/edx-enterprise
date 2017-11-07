@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Integrated Channel module.
+Base Integrated Channel application for specific integrated channels to use as a starting point.
 """
 
 from __future__ import absolute_import, unicode_literals

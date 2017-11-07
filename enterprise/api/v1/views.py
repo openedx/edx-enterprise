@@ -242,7 +242,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
         Only those entitlements are returned that satisfy enterprise customer's data sharing setting.
 
         Arguments:
-            request (HttpRequest): Reference to in progress request instance.
+            request (HttpRequest): Reference to in-progress request instance.
             pk (Int): Primary key value of the selected enterprise learner.
 
         Returns:

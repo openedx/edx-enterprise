@@ -9,17 +9,15 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
-from integrated_channels.integrated_channel.learner_data import BaseLearnerExporter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from integrated_channels.sap_success_factors.transmitters.courses import SuccessFactorsCourseTransmitter
-from integrated_channels.sap_success_factors.transmitters.learner_data import SuccessFactorsLearnerDataTransmitter
-from integrated_channels.sap_success_factors.utils import SapCourseExporter, parse_datetime_to_epoch
+from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
+from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerExporter
+from integrated_channels.sap_success_factors.transmitters.course_metadata import SapSuccessFactorsCourseTransmitter
+from integrated_channels.sap_success_factors.transmitters.learner_data import SapSuccessFactorsLearnerTransmitter
 from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
-
-from model_utils.models import TimeStampedModel
 
 LOGGER = getLogger(__name__)
 
@@ -27,7 +25,7 @@ LOGGER = getLogger(__name__)
 @python_2_unicode_compatible
 class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
     """
-    The Global configuration for integrating with SuccessFactors.
+    The global configuration for integrating with SuccessFactors.
     """
 
     completion_status_api_path = models.CharField(max_length=255)
@@ -40,11 +38,9 @@ class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
 
     def __str__(self):
         """
-        Return human-readable string representation.
+        Return a human-readable string representation of the object.
         """
-        return "<SAPSuccessFactorsGlobalConfiguration with id {id}>".format(
-            id=self.id
-        )
+        return "<SAPSuccessFactorsGlobalConfiguration with id {id}>".format(id=self.id)
 
     def __repr__(self):
         """
@@ -56,7 +52,7 @@ class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
 @python_2_unicode_compatible
 class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
-    The Enterprise specific configuration we need for integrating with SuccessFactors.
+    The Enterprise-specific configuration we need for integrating with SuccessFactors.
     """
 
     USER_TYPE_USER = 'user'
@@ -106,76 +102,55 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         """
         return 'SAP'
 
-    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
-        """
-        Returns a LearnerDataTransmissionAudit initialized from the given enrollment and course completion data.
-
-        If completed_date is None, then course completion has not been met.
-
-        If no remote ID can be found, return None.
-        """
-        # Have to create the audit model instance here to avoid a circular dependency.
-        completed_timestamp = None
-        course_completed = False
-        if completed_date is not None:
-            completed_timestamp = parse_datetime_to_epoch(completed_date)
-            course_completed = is_passing
-
-        sapsf_user_id = enterprise_enrollment.enterprise_customer_user.get_remote_id()
-
-        if sapsf_user_id is not None:
-            return LearnerDataTransmissionAudit(
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                sapsf_user_id=sapsf_user_id,
-                course_id=enterprise_enrollment.course_id,
-                course_completed=course_completed,
-                completed_timestamp=completed_timestamp,
-                grade=grade,
-            )
-        else:
-            LOGGER.debug(
-                'No learner data was sent for user "%s" because an SAP SuccessFactors user ID could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
-            )
-
-    def get_learner_data_exporter(self, user):
-        """
-        Returns a SAP learner data exporter instance.
-        """
-        return BaseLearnerExporter(user, self)
+    @property
+    def provider_id(self):
+        '''
+        Fetch ``provider_id`` from global configuration settings
+        '''
+        return SAPSuccessFactorsGlobalConfiguration.current().provider_id
 
     def get_learner_data_transmitter(self):
         """
-        Returns a SuccessFactorsLearnerDataTransmitter instance.
+        Return a ``SapSuccessFactorsLearnerTransmitter`` instance.
         """
-        return SuccessFactorsLearnerDataTransmitter(self)
+        return SapSuccessFactorsLearnerTransmitter(self)
 
-    def get_course_data_exporter(self, user):
+    def get_learner_data_exporter(self, user):
         """
-        Returns a SapCourseExporter instance.
+        Return a ``SapSuccessFactorsLearnerDataExporter`` instance.
         """
-        return SapCourseExporter(user, self)
+        return SapSuccessFactorsLearnerExporter(user, self)
 
     def get_course_data_transmitter(self):
         """
-        Returns a SuccessFactorsCourseTransmitter instance.
+        Return a ``SapSuccessFactorsCourseTransmitter`` instance.
         """
-        return SuccessFactorsCourseTransmitter(self)
+        return SapSuccessFactorsCourseTransmitter(self)
+
+    def get_course_data_exporter(self, user):
+        """
+        Return a ``SapSuccessFactorsCourseExporter`` instance.
+        """
+        return SapSuccessFactorsCourseExporter(user, self)
 
 
 @python_2_unicode_compatible
-class LearnerDataTransmissionAudit(models.Model):
+class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     """
     The payload we sent to SuccessFactors at a given point in time for an enterprise course enrollment.
     """
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False)
     sapsf_user_id = models.CharField(max_length=255, blank=False, null=False)
+    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     course_completed = models.BooleanField(default=True)
-    completed_timestamp = models.BigIntegerField()  # we send a UNIX timestamp to SuccessFactors
     instructor_name = models.CharField(max_length=255, blank=True)
     grade = models.CharField(max_length=100, blank=False, null=False)
+
+    # We send a UNIX timestamp to SAPSF.
+    completed_timestamp = models.BigIntegerField()
+
+    # Request-related information.
     status = models.CharField(max_length=100, blank=False, null=False)
     error_message = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -185,13 +160,16 @@ class LearnerDataTransmissionAudit(models.Model):
 
     def __str__(self):
         """
-        Return human-readable string representation.
+        Return a human-readable string representation of the object.
         """
-        return '<LearnerDataTransmissionAudit {} for enterprise enrollment {}, SAP user {}, and course {}>'.format(
-            self.id,
-            self.enterprise_course_enrollment_id,
-            self.sapsf_user_id,
-            self.course_id
+        return (
+            '<SapSuccessFactorsLearnerDataTransmissionAudit {transmission_id} for enterprise enrollment '
+            '{enterprise_course_enrollment_id}, SAPSF user {sapsf_user_id}, and course {course_id}>'.format(
+                transmission_id=self.id,
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment_id,
+                sapsf_user_id=self.sapsf_user_id,
+                course_id=self.course_id
+            )
         )
 
     def __repr__(self):
@@ -202,10 +180,21 @@ class LearnerDataTransmissionAudit(models.Model):
 
     @property
     def provider_id(self):
-        '''
+        """
         Fetch ``provider_id`` from global configuration settings
-        '''
+        """
         return SAPSuccessFactorsGlobalConfiguration.current().provider_id
+
+    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+        """
+        Return a JSON-serialized representation.
+
+        Sort the keys so the result is consistent and testable.
+
+        # TODO: When we refactor to use a serialization flow consistent with how course metadata
+        # is serialized, remove the serialization here and make the learner data exporter handle the work.
+        """
+        return json.dumps(self._payload_data(), sort_keys=True)
 
     def _payload_data(self):
         """
@@ -215,60 +204,7 @@ class LearnerDataTransmissionAudit(models.Model):
             userID=self.sapsf_user_id,
             courseID=self.course_id,
             providerID=self.provider_id,
-            # SAP SuccessFactors requires strings, not boolean values.
             courseCompleted="true" if self.course_completed else "false",
             completedTimestamp=self.completed_timestamp,
             grade=self.grade,
-            # TODO: determine these values from the enrollment seat?
-            # We might at a later date choose to send these values,
-            # but at this point we will omit them from the payload to avoid errors.
-            #
-            # price=empty_value,
-            # currency=empty_value,
-            # creditHours=empty_value,
-            # totalHours=empty_value,
-            # contactHours=empty_value,
-            # cpeHours=empty_value,
-            # instructorName=empty_value,
-            # comments=empty_value,
         )
-
-    def serialize(self):
-        """
-        Return a JSON-serialized representation.
-
-        Sort the keys so the result is consistent and testable.
-        """
-        return json.dumps(self._payload_data(), sort_keys=True)
-
-
-@python_2_unicode_compatible
-class CatalogTransmissionAudit(TimeStampedModel):
-    """
-    The summary of instances when the course catalog was sent to SuccessFactors for an enterprise.
-    """
-
-    enterprise_customer_uuid = models.UUIDField(blank=False, null=False)
-    total_courses = models.PositiveIntegerField(blank=False, null=False)
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    audit_summary = models.TextField(default='{}')
-
-    class Meta:
-        app_label = 'sap_success_factors'
-
-    def __str__(self):
-        """
-        Return human-readable string representation.
-        """
-        return "<CatalogTransmissionAudit {} for Enterprise {}> for {} courses>".format(
-            self.id,
-            self.enterprise_customer_uuid,
-            self.total_courses
-        )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
