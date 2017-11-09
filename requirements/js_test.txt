@@ -6,16 +6,17 @@
 #
 argparse==1.4.0           # via jasmine
 cheroot==5.8.3            # via cherrypy
-cherrypy==11.0.0          # via jasmine
+cherrypy==11.1.0          # via jasmine
 glob2==0.6                # via jasmine-core
+jaraco.classes==1.4.1     # via cherrypy
 jasmine-core==2.8.0       # via jasmine
 jasmine==2.8.0
-jinja2==2.9.6             # via jasmine
+jinja2==2.10              # via jasmine
 markupsafe==1.0           # via jinja2
 ordereddict==1.1          # via jasmine-core
 portend==2.2              # via cherrypy
-pytz==2017.2              # via tempora
+pytz==2017.3              # via tempora
 pyyaml==3.10              # via jasmine
-selenium==3.6.0           # via jasmine
-six==1.11.0               # via cheroot, cherrypy, jasmine, tempora
+selenium==3.7.0           # via jasmine
+six==1.11.0               # via cheroot, cherrypy, jaraco.classes, jasmine, tempora
 tempora==1.9              # via portend

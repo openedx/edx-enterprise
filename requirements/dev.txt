@@ -17,7 +17,7 @@ click-log==0.1.8          # via edx-lint
 click==6.7                # via click-log, edx-lint, pip-tools
 configparser==3.5.0       # via pylint
 diff-cover==0.9.12
-distlib==0.2.5            # via caniusepython3
+distlib==0.2.6            # via caniusepython3
 django-config-models==0.1.8
 django-filter==1.0.4
 django-model-utils==2.3.1
@@ -30,7 +30,7 @@ djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
-edx-i18n-tools==0.3.10
+edx-i18n-tools==0.4.1
 edx-lint==0.5.4
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
@@ -42,14 +42,14 @@ futures==3.1.1            # via caniusepython3
 inflect==0.2.5            # via jinja2-pluralize
 isort==4.2.15
 jinja2-pluralize==0.3.0   # via diff-cover
-jinja2==2.9.6             # via diff-cover, jinja2-pluralize
+jinja2==2.10              # via diff-cover, jinja2-pluralize
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
 lazy-object-proxy==1.3.1  # via astroid
 markupsafe==1.0           # via jinja2
 mccabe==0.6.1             # via pylint
 packaging==16.8           # via caniusepython3
-path.py==10.4             # via edx-i18n-tools
+path.py==10.5             # via edx-i18n-tools
 pbr==3.1.1                # via stevedore
 pillow==3.4
 pip-tools==1.10.1
@@ -69,7 +69,7 @@ pylint==1.7.1             # via edx-lint, pylint-celery, pylint-django, pylint-p
 pymongo==3.5.1            # via edx-opaque-keys, event-tracking
 pyparsing==2.2.0          # via packaging
 python-dateutil==2.6.1    # via analytics-python, edx-drf-extensions
-pytz==2017.2              # via celery, event-tracking
+pytz==2017.3              # via celery, event-tracking
 pyyaml==3.12              # via edx-i18n-tools
 requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
@@ -79,7 +79,7 @@ six==1.11.0               # via analytics-python, astroid, diff-cover, edx-i18n-
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.27.1         # via edx-opaque-keys
-testfixtures==5.2.0
+testfixtures==5.3.0
 tox-battery==0.5
 tox==2.9.1
 tqdm==4.19.4              # via twine

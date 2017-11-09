@@ -10,7 +10,7 @@ anyjson==0.3.3            # via kombu
 billiard==3.3.0.23        # via celery
 celery==3.1.18
 cookies==2.2.1            # via responses
-coverage==4.4.1           # via pytest-cov
+coverage==4.4.2           # via pytest-cov
 ddt==1.1.1
 django-config-models==0.1.8
 django-filter==1.0.4
@@ -18,7 +18,7 @@ django-model-utils==2.3.1
 django-object-actions==0.10.0
 django-simple-history==1.9.0
 django-waffle==0.12.0
-django==1.11.6
+django==1.11.7
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
@@ -47,13 +47,13 @@ pytest-cov==2.5.1
 pytest-django==3.1.2
 pytest==3.2.3             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.1    # via analytics-python, edx-drf-extensions, faker, freezegun
-pytz==2017.2              # via celery, django, event-tracking
+pytz==2017.3              # via celery, django, event-tracking
 requests==2.9.1
 responses==0.8.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via analytics-python, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 stevedore==1.27.1         # via edx-opaque-keys
-testfixtures==5.2.0
-text-unidecode==1.0       # via faker
+testfixtures==5.3.0
+text-unidecode==1.1       # via faker
 unicodecsv==0.14.1

@@ -4,10 +4,10 @@
 #
 #    pip-compile --output-file requirements/travis.txt requirements/travis.in
 #
-certifi==2017.7.27.1      # via requests
+certifi==2017.11.5        # via requests
 chardet==3.0.4            # via requests
 codecov==2.0.9
-coverage==4.4.1           # via codecov
+coverage==4.4.2           # via codecov
 idna==2.6                 # via requests
 pluggy==0.5.2             # via tox
 py==1.4.34                # via tox
