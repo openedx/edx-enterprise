@@ -44,7 +44,7 @@ class LmsApiClient(object):
     Authenticates using settings.EDX_API_KEY.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/api/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
     APPEND_SLASH = False
 
     def __init__(self):
@@ -63,7 +63,7 @@ class JwtLmsApiClient(object):
     LMS client authenticates using a JSON Web Token (JWT) for the given user.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/api/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
     APPEND_SLASH = False
 
     def __init__(self, user, expires_in=settings.OAUTH_ID_TOKEN_EXPIRATION):
@@ -278,7 +278,7 @@ class CourseApiClient(LmsApiClient):
     Object builds an API client to make calls to the Course API.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/api/courses/v1/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
     APPEND_SLASH = True
 
     def get_course_details(self, course_id):
@@ -303,7 +303,7 @@ class ThirdPartyAuthApiClient(LmsApiClient):
     Object builds an API client to make calls to the Third Party Auth API.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/api/third_party_auth/v0/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/third_party_auth/v0/'
 
     def get_remote_id(self, identity_provider, username):
         """
@@ -336,7 +336,7 @@ class GradesApiClient(JwtLmsApiClient):
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/api/grades/v0/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/grades/v0/'
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token
@@ -378,7 +378,7 @@ class CertificatesApiClient(JwtLmsApiClient):
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/api/certificates/v0/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/certificates/v0/'
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token

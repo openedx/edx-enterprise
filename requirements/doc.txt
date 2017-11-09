@@ -64,7 +64,7 @@ sphinx==1.6.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.27.1         # via doc8, edx-opaque-keys
-testfixtures==5.3.0
+testfixtures==5.3.1
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1
 webencodings==0.5.1       # via html5lib

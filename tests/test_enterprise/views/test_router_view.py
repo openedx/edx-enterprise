@@ -172,7 +172,7 @@ class TestRouterView(TestCase):
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
         self.assertRedirects(
             response,
-            'http://localhost:8000/courses/{}/courseware'.format(self.course_run_id),
+            'http://lms.example.com/courses/{}/courseware'.format(self.course_run_id),
             fetch_redirect_response=False,
         )
 

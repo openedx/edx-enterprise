@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.16] - 2017-11-22
+----------------------
+
+* Use LMS_INTERNAL_ROOT_URL instead of LMS_ROOT_URL for API base.
+
 [0.53.15] - 2017-11-16
 ----------------------
 

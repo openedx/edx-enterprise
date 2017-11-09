@@ -37,7 +37,7 @@ class EnterpriseMockMixin(object):
         Example URL: 'enterprise/api/v1/enterprise-customer/{enterprise_uuid}/courses'
         """
         return '{lms_root_url}{enterprise_api_uri}{params}'.format(
-            lms_root_url=settings.LMS_ROOT_URL,
+            lms_root_url=settings.LMS_INTERNAL_ROOT_URL,
             enterprise_api_uri=reverse(resource, args=args),
             params=('?' + urlencode(kwargs)) if kwargs else '',
         )

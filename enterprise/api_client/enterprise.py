@@ -22,7 +22,7 @@ class EnterpriseApiClient(JwtLmsApiClient):
     Object builds an API client to make calls to the Enterprise API.
     """
 
-    API_BASE_URL = settings.LMS_ROOT_URL + '/enterprise/api/v1/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/enterprise/api/v1/'
     APPEND_SLASH = True
 
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'  # pylint: disable=invalid-name

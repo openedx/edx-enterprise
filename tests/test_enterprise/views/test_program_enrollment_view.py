@@ -172,7 +172,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
         expected_context = {
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
-            'LMS_ROOT_URL': 'http://localhost:8000',
+            'LMS_ROOT_URL': 'http://lms.example.com',
             'enterprise_customer': enterprise_customer,
             'platform_name': 'Test platform',
             'program_type_logo': 'http://localhost:18381/media/media/program_types/logo_images/'
@@ -831,7 +831,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(program_enrollment_page_url)
         self.assertRedirects(
             response,
-            'http://localhost:8000/dashboard/programs/{program_uuid}'.format(program_uuid=self.dummy_program_uuid),
+            'http://lms.example.com/dashboard/programs/{program_uuid}'.format(program_uuid=self.dummy_program_uuid),
             fetch_redirect_response=False,
         )
 
@@ -888,7 +888,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://localhost:8000/dashboard/programs/52ad909b-c57d-4ff1-bab3-999813a2479b',
+            'http://lms.example.com/dashboard/programs/52ad909b-c57d-4ff1-bab3-999813a2479b',
             fetch_redirect_response=False
         )
 

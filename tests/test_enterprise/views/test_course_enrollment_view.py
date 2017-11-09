@@ -135,7 +135,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             'close_modal_button_text': 'Close',
             'discount_text': 'Discount provided by <strong>Starfleet Academy</strong>',
             'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
-            'LMS_ROOT_URL': 'http://localhost:8000',
+            'LMS_ROOT_URL': 'http://lms.example.com',
             'course_enrollable': True,
         }
         default_context.update(expected_context)
@@ -1105,7 +1105,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(enterprise_landing_page_url)
         self.assertRedirects(
             response,
-            'http://localhost:8000/courses/{course_id}/courseware'.format(course_id=course_id),
+            'http://lms.example.com/courses/{course_id}/courseware'.format(course_id=course_id),
             fetch_redirect_response=False,
         )
 
@@ -1115,10 +1115,10 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(
-        ('audit', 'http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course/courseware', False),
-        ('audit', 'http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course/courseware', True),
-        ('professional', 'http://localhost:8000/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', False),
-        ('professional', 'http://localhost:8000/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', True),
+        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', False),
+        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', True),
+        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', False),
+        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', True),
     )
     @ddt.unpack
     def test_post_course_specific_enrollment_view(
@@ -1415,7 +1415,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://localhost:8000/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/',
+            'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/',
             fetch_redirect_response=False
         )
 

@@ -490,7 +490,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         catalog_instance.get_course_run.return_value = {
             "title": "Cool Science",
             "start": "2017-01-01T12:00:00Z",
-            "marketing_url": "http://localhost:8000/courses/course-v1:HarvardX+CoolScience+2016"
+            "marketing_url": "http://lms.example.com/courses/course-v1:HarvardX+CoolScience+2016"
         }
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
@@ -526,13 +526,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             "course-v1:HarvardX+CoolScience+2016": {
                 "title": "Cool Science",
                 "start": "2017-01-01T12:00:00Z",
-                "marketing_url": "http://localhost:8000/courses/course-v1:HarvardX+CoolScience+2016",
+                "marketing_url": "http://lms.example.com/courses/course-v1:HarvardX+CoolScience+2016",
                 "mode": "verified"
             },
             "course-v1:edX+DemoX+Demo_Course": {
                 "title": "edX Demo Course",
                 "start": "2013-02-05T05:00:00Z",
-                "marketing_url": "http://localhost:8000/courses/course-v1:edX+DemoX+Demo_Course",
+                "marketing_url": "http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course",
                 "mode": "audit"
             }
         }
@@ -647,7 +647,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         catalog_instance.get_course_run.return_value = {
             "title": "Cool Science",
             "start": None,
-            "marketing_url": "http://localhost:8000/courses/course-v1:HarvardX+CoolScience+2016"
+            "marketing_url": "http://lms.example.com/courses/course-v1:HarvardX+CoolScience+2016"
         }
         views_instance = views_client.return_value
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course

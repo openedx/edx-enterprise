@@ -566,7 +566,7 @@ FAKE_CATALOG_COURSES_RESPONSE = {
             "video": None,
             "sponsors": [],
             "modified": "2017-01-16T14:07:47.327605Z",
-            "marketing_url": "http://localhost:8000/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner"
+            "marketing_url": "http://lms.example.com/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner"
         },
         {
             "key": "foobar+fb1",
@@ -601,7 +601,7 @@ FAKE_CATALOG_COURSES_RESPONSE = {
             "video": None,
             "sponsors": [],
             "modified": "2017-03-07T18:37:45.238722Z",
-            "marketing_url": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner"
+            "marketing_url": "http://lms.example.com/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner"
         },
         {
             "key": "test+course3",
@@ -631,7 +631,7 @@ FAKE_CATALOG_COURSES_RESPONSE = {
             "video": None,
             "sponsors": [],
             "modified": "2017-03-07T18:37:45.238722Z",
-            "marketing_url": "http://localhost:8000/course/testcourse3?utm_source=admin&utm_medium=affiliate_partner"
+            "marketing_url": "http://lms.example.com/course/testcourse3?utm_source=admin&utm_medium=affiliate_partner"
         },
     ]
 }
@@ -715,14 +715,14 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
         "video": None,
         "sponsors": [],
         "modified": "2017-01-16T14:07:47.327605Z",
-        "marketing_url": "http://localhost:8000/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner",
+        "marketing_url": "http://lms.example.com/course/edxdemox?utm_source=admin&utm_medium=affiliate_partner",
         "programs": [
             {
                 "uuid": "643b89e6-04bc-4367-b292-9d3991d86b8e",
                 "title": "My Cool Program",
                 "type": "SuperAwesome",
                 "marketing_slug": "coolstuff",
-                "marketing_url": "http://localhost:8000/coolstuff"
+                "marketing_url": "http://lms.example.com/coolstuff"
             }
         ]
     },
@@ -799,7 +799,7 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
         "video": None,
         "sponsors": [],
         "modified": "2017-03-07T18:37:45.238722Z",
-        "marketing_url": "http://localhost:8000/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner",
+        "marketing_url": "http://lms.example.com/course/foobarfb1?utm_source=admin&utm_medium=affiliate_partner",
         "programs": []
     },
     'test+course3': {
@@ -862,7 +862,7 @@ FAKE_CATALOG_COURSE_DETAILS_RESPONSES = {
         "video": None,
         "sponsors": [],
         "modified": "2017-03-07T18:37:45.238722Z",
-        "marketing_url": "http://localhost:8000/course/test+course3?utm_source=admin&utm_medium=affiliate_partner",
+        "marketing_url": "http://lms.example.com/course/test+course3?utm_source=admin&utm_medium=affiliate_partner",
         "programs": []
     }
 }
