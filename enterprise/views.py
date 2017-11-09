@@ -931,7 +931,6 @@ class ProgramEnrollmentView(NonAtomicView):
             _('Self-paced; courses can be taken in any order'),
         ],
         'purchase_text': _('{purchase_action} for'),
-        'discount_provider': _('Discount provided by {strong_start}{provider}{strong_end}.'),
         'enrolled_in_course_and_paid_text': _('enrolled'),
         'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
         'expected_learning_items_text': _("What you'll learn"),
@@ -1119,11 +1118,6 @@ class ProgramEnrollmentView(NonAtomicView):
             ),
             'platform_description_header': self.context_data['platform_description_header'].format(
                 platform_name=platform_name
-            ),
-            'discount_provider': self.context_data['discount_provider'].format(
-                strong_start='<strong>',
-                strong_end='</strong>',
-                provider=enterprise_customer.name,
             ),
             'enterprise_customer': enterprise_customer,
             'organization_name': organization.get('name'),

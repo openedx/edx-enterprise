@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.12] - 2017-11-09
+----------------------
+
+* Remove "Discount provided by..." text on the program landing page.
+
 [0.53.11] - 2017-11-06
 ----------------------
 

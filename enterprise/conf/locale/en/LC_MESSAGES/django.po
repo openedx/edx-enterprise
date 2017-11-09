@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-10-24 05:04-0500\n"
+"POT-Creation-Date: 2017-11-09 11:59-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -38,20 +38,20 @@ msgstr ""
 msgid "Course key for which data sharing consent is granted."
 msgstr ""
 
-#: enterprise/admin/__init__.py:371
+#: enterprise/admin/__init__.py:384
 msgid "Preview (course)"
 msgstr ""
 
-#: enterprise/admin/__init__.py:373
+#: enterprise/admin/__init__.py:386
 msgid ""
 "Preview the HTML template rendered in the context of a course enrollment."
 msgstr ""
 
-#: enterprise/admin/__init__.py:382
+#: enterprise/admin/__init__.py:395
 msgid "Preview (program)"
 msgstr ""
 
-#: enterprise/admin/__init__.py:384
+#: enterprise/admin/__init__.py:397
 msgid ""
 "Preview the HTML template rendered in the context of a program enrollment."
 msgstr ""
@@ -459,7 +459,7 @@ msgid ""
 "available. Please start over and select a different course.{span_end}"
 msgstr ""
 
-#: enterprise/models.py:86 enterprise/models.py:1145
+#: enterprise/models.py:86 enterprise/models.py:1164
 msgid "Enterprise Customer"
 msgstr ""
 
@@ -562,7 +562,7 @@ msgstr ""
 msgid "Enterprise Customer Catalogs"
 msgstr ""
 
-#: enterprise/models.py:1036
+#: enterprise/models.py:1055
 msgid ""
 "Fill in a standard Django template that, when rendered, produces the email "
 "you want sent to newly-enrolled Enterprise Customer learners. The following "
@@ -584,7 +584,7 @@ msgid ""
 "course, a program, or something else.</li></ul></ul>"
 msgstr ""
 
-#: enterprise/models.py:1054
+#: enterprise/models.py:1073
 #, python-brace-format
 msgid ""
 "Enter a string that can be used to generate a dynamic subject line for "
@@ -592,85 +592,90 @@ msgid ""
 "name of the course or program that was enrolled in."
 msgstr ""
 
-#: enterprise/models.py:1147
+#: enterprise/models.py:1166
 msgid "Active"
 msgstr ""
 
-#: enterprise/models.py:1153
+#: enterprise/models.py:1172
 msgid "Delivery Method"
 msgstr ""
 
-#: enterprise/models.py:1154
+#: enterprise/models.py:1173
 msgid "The method in which the data should be sent."
 msgstr ""
 
-#: enterprise/models.py:1156
+#: enterprise/models.py:1175
 msgid "Email"
 msgstr ""
 
-#: enterprise/models.py:1162
+#: enterprise/models.py:1181
 msgid "Frequency"
 msgstr ""
 
-#: enterprise/models.py:1163
+#: enterprise/models.py:1182
 msgid ""
 "The frequency interval (daily, weekly, or monthly) that the report should be "
 "sent."
 msgstr ""
 
-#: enterprise/models.py:1168
+#: enterprise/models.py:1187
 msgid "Day of Month"
 msgstr ""
 
-#: enterprise/models.py:1169
+#: enterprise/models.py:1188
 msgid ""
 "The day of the month to send the report. This field is required and only "
 "valid when the frequency is monthly."
 msgstr ""
 
-#: enterprise/models.py:1177
+#: enterprise/models.py:1196
 msgid "Day of Week"
 msgstr ""
 
-#: enterprise/models.py:1178
+#: enterprise/models.py:1197
 msgid ""
 "The day of the week to send the report. This field is required and only "
 "valid when the frequency is weekly."
 msgstr ""
 
-#: enterprise/models.py:1182
+#: enterprise/models.py:1201
 msgid "Hour of Day"
 msgstr ""
 
-#: enterprise/models.py:1183
+#: enterprise/models.py:1202
 msgid ""
 "The hour of the day to send the report, in Eastern Standard Time (EST). This "
 "is required for all frequency settings."
 msgstr ""
 
-#: enterprise/models.py:1192
+#: enterprise/models.py:1211
 msgid "Password Encryption Initialization Vector"
 msgstr ""
 
-#: enterprise/models.py:1193
+#: enterprise/models.py:1212
 msgid ""
 "This is the initialization vector used to encrypt the password using AESencr"
 msgstr ""
 
-#: enterprise/models.py:1200
+#: enterprise/models.py:1219
 msgid "Password"
 msgstr ""
 
-#: enterprise/models.py:1241
+#: enterprise/models.py:1260
 msgid "Day of week must be set if the frequency is weekly."
 msgstr ""
 
-#: enterprise/models.py:1245
+#: enterprise/models.py:1264
 msgid "Day of month must be set if the frequency is monthly."
 msgstr ""
 
-#: enterprise/models.py:1248
+#: enterprise/models.py:1267
 msgid "Frequency must be set to either daily, weekly, or monthly."
+msgstr ""
+
+#: enterprise/templates/enterprise/_data_sharing_policy.html:78
+#: enterprise/views.py:491 enterprise/views.py:952
+msgid "Close"
 msgstr ""
 
 #: enterprise/templates/enterprise/admin/manage_learners.html:47
@@ -784,11 +789,6 @@ msgid ""
 "Thanks,\n"
 "\n"
 "The %(enrolled_in_name)s team"
-msgstr ""
-
-#: enterprise/templates/enterprise/grant_data_sharing_permissions.html:124
-#: enterprise/views.py:475 enterprise/views.py:899
-msgid "Close"
 msgstr ""
 
 #: enterprise/utils.py:225
@@ -948,12 +948,12 @@ msgstr ""
 msgid "Return to Top"
 msgstr ""
 
-#: enterprise/views.py:176 enterprise/views.py:480
+#: enterprise/views.py:176 enterprise/views.py:496
 #, python-brace-format
 msgid "Welcome to {platform_name}."
 msgstr ""
 
-#: enterprise/views.py:178 enterprise/views.py:482
+#: enterprise/views.py:178 enterprise/views.py:498
 #, python-brace-format
 msgid ""
 "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
@@ -961,21 +961,21 @@ msgid ""
 "opportunities from the world's best universities."
 msgstr ""
 
-#: enterprise/views.py:286
+#: enterprise/views.py:302
 #, python-brace-format
 msgid ""
 "To access this {item}, you must first consent to share your learning "
 "achievements with {bold_start}{enterprise_customer_name}{bold_end}."
 msgstr ""
 
-#: enterprise/views.py:295
+#: enterprise/views.py:311
 #, python-brace-format
 msgid ""
 "Per the {start_link}Data Sharing Policy{end_link}, {bold_start}"
 "{enterprise_customer_name}{bold_end} would like to know about:"
 msgstr ""
 
-#: enterprise/views.py:306
+#: enterprise/views.py:322
 #, python-brace-format
 msgid ""
 "In order to start this {item} and use your discount, {bold_start}you "
@@ -983,194 +983,189 @@ msgid ""
 "{enterprise_customer_name}."
 msgstr ""
 
-#: enterprise/views.py:319
+#: enterprise/views.py:335
 #, python-brace-format
 msgid "your enrollment in this {item}"
 msgstr ""
 
-#: enterprise/views.py:320
+#: enterprise/views.py:336
 msgid "your learning progress"
 msgstr ""
 
-#: enterprise/views.py:321
+#: enterprise/views.py:337
 msgid "course completion"
 msgstr ""
 
-#: enterprise/views.py:455
+#: enterprise/views.py:471
 msgid "Instructor-Paced"
 msgstr ""
 
-#: enterprise/views.py:456
+#: enterprise/views.py:472
 msgid "Self-Paced"
 msgstr ""
 
-#: enterprise/views.py:459 enterprise/views.py:460
+#: enterprise/views.py:475 enterprise/views.py:476
 msgid "Confirm your course"
 msgstr ""
 
-#: enterprise/views.py:461
+#: enterprise/views.py:477
 msgid "Starts"
 msgstr ""
 
-#: enterprise/views.py:462
+#: enterprise/views.py:478
 msgid "View Course Details"
 msgstr ""
 
-#: enterprise/views.py:463
+#: enterprise/views.py:479
 msgid "Please select one:"
 msgstr ""
 
-#: enterprise/views.py:464 enterprise/views.py:891
+#: enterprise/views.py:480 enterprise/views.py:944
 msgid "Price"
 msgstr ""
 
-#: enterprise/views.py:465
+#: enterprise/views.py:481
 msgid "FREE"
 msgstr ""
 
-#: enterprise/views.py:467
+#: enterprise/views.py:483
 msgid "Earn a verified certificate!"
 msgstr ""
 
-#: enterprise/views.py:470
+#: enterprise/views.py:486
 msgid "Not eligible for a certificate; does not count toward a MicroMasters"
 msgstr ""
 
-#: enterprise/views.py:472
+#: enterprise/views.py:488
 msgid "Continue"
 msgstr ""
 
-#: enterprise/views.py:473 enterprise/views.py:896
+#: enterprise/views.py:489 enterprise/views.py:949
 msgid "Level"
 msgstr ""
 
-#: enterprise/views.py:474 enterprise/views.py:894
+#: enterprise/views.py:490 enterprise/views.py:947
 msgid "Effort"
 msgstr ""
 
-#: enterprise/views.py:476 enterprise/views.py:883
+#: enterprise/views.py:492 enterprise/views.py:936
 msgid "What you'll learn"
 msgstr ""
 
-#: enterprise/views.py:477 enterprise/views.py:897
+#: enterprise/views.py:493 enterprise/views.py:950
 msgid "About This Course"
 msgstr ""
 
-#: enterprise/views.py:478 enterprise/views.py:898
+#: enterprise/views.py:494 enterprise/views.py:951
 msgid "Course Staff"
 msgstr ""
 
-#: enterprise/views.py:486
+#: enterprise/views.py:502
 #, python-brace-format
 msgid ""
 "Discount provided by {strong_start}{enterprise_customer_name}{strong_end}"
 msgstr ""
 
-#: enterprise/views.py:861
+#: enterprise/views.py:915
 msgid "Purchase all unenrolled courses"
 msgstr ""
 
-#: enterprise/views.py:862
+#: enterprise/views.py:916
 msgid "Pursue the program"
 msgstr ""
 
-#: enterprise/views.py:866
+#: enterprise/views.py:920
 msgid "enrollment"
 msgstr ""
 
-#: enterprise/views.py:867
+#: enterprise/views.py:921
 msgid "program enrollment"
 msgstr ""
 
-#: enterprise/views.py:871
+#: enterprise/views.py:925
 #, python-brace-format
 msgid "What is an {platform_name} {program_type}?"
 msgstr ""
 
-#: enterprise/views.py:872
+#: enterprise/views.py:926
 #, python-brace-format
 msgid "What is {platform_name}?"
 msgstr ""
 
-#: enterprise/views.py:873
+#: enterprise/views.py:927
 #, python-brace-format
 msgid "Confirm your {item}"
 msgstr ""
 
-#: enterprise/views.py:874
+#: enterprise/views.py:928
 #, python-brace-format
 msgid "Presented by {organization}"
 msgstr ""
 
-#: enterprise/views.py:876
+#: enterprise/views.py:930
 msgid "Credit- and Certificate-eligible"
 msgstr ""
 
-#: enterprise/views.py:877
+#: enterprise/views.py:931
 msgid "Self-paced; courses can be taken in any order"
 msgstr ""
 
-#: enterprise/views.py:879
+#: enterprise/views.py:933
 #, python-brace-format
 msgid "{purchase_action} for"
 msgstr ""
 
-#: enterprise/views.py:880
-#, python-brace-format
-msgid "Discount provided by {strong_start}{provider}{strong_end}."
-msgstr ""
-
-#: enterprise/views.py:881
+#: enterprise/views.py:934
 msgid "enrolled"
 msgstr ""
 
-#: enterprise/views.py:882
+#: enterprise/views.py:935
 msgid "already enrolled, must pay for certificate"
 msgstr ""
 
-#: enterprise/views.py:885
+#: enterprise/views.py:938
 msgid "Real Career Impact"
 msgstr ""
 
-#: enterprise/views.py:887
+#: enterprise/views.py:940
 msgid "See More"
 msgstr ""
 
-#: enterprise/views.py:888
+#: enterprise/views.py:941
 msgid "See Less"
 msgstr ""
 
-#: enterprise/views.py:889
+#: enterprise/views.py:942
 msgid "Confirm Program"
 msgstr ""
 
-#: enterprise/views.py:890
+#: enterprise/views.py:943
 msgid "Program Summary"
 msgstr ""
 
-#: enterprise/views.py:892
+#: enterprise/views.py:945
 msgid "Length"
 msgstr ""
 
-#: enterprise/views.py:893
+#: enterprise/views.py:946
 msgid "{}-{} weeks per course"
 msgstr ""
 
-#: enterprise/views.py:895
+#: enterprise/views.py:948
 msgid "{}-{} hours per week, per course"
 msgstr ""
 
-#: enterprise/views.py:900
+#: enterprise/views.py:953
 msgid "Program not eligible for one-click purchase."
 msgstr ""
 
-#: enterprise/views.py:947
+#: enterprise/views.py:1000
 msgid "{} week"
 msgid_plural "{} weeks"
 msgstr[0] ""
 msgstr[1] ""
 
-#: enterprise/views.py:1014
+#: enterprise/views.py:1067
 #, python-brace-format
 msgid "{count} Course"
 msgid_plural "{count} Courses"

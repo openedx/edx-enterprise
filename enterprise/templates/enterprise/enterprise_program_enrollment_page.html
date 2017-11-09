@@ -54,8 +54,7 @@
                   {% if is_discounted %}
                     <strong>
                       <span class="original-price"><s>{{ program_price }}</s></span> <span class="final-price">{{ program_discounted_price }}</span>
-                    </strong><br>
-                    {% autoescape off %}{{ discount_provider }}{% endautoescape %}
+                    </strong>
                   {% else %}
                     <strong>{{ program_price }}</strong>
                   {% endif %}
@@ -175,8 +174,7 @@
                     {% if is_discounted %}
                       <strong>
                         <span class="original-price"><s>{{ program_price }}</s></span> <span class="final-price">{{ program_discounted_price }}</span>
-                      </strong><br>
-                      {% autoescape off %}{{ discount_provider }}{% endautoescape %}
+                      </strong>
                     {% else %}
                       <strong>{{ program_price }}</strong>
                     {% endif %}

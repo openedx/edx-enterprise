@@ -317,7 +317,6 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                 },
             ],
             'purchase_text': 'Pursue the program for',
-            'discount_provider': 'Discount provided by <strong>Starfleet Academy</strong>.',
             'course_count_text': '2 Courses',
             'item_bullet_points': [
                 'Credit- and Certificate-eligible',
