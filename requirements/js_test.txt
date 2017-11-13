@@ -8,7 +8,7 @@ argparse==1.4.0           # via jasmine
 cheroot==5.8.3            # via cherrypy
 cherrypy==11.1.0          # via jasmine
 glob2==0.6                # via jasmine-core
-jaraco.classes==1.4.1     # via cherrypy
+jaraco.classes==1.4.2     # via cherrypy
 jasmine-core==2.8.0       # via jasmine
 jasmine==2.8.0
 jinja2==2.10              # via jasmine

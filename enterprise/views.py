@@ -156,9 +156,8 @@ class GrantDataSharingPermissions(View):
     sharable_items_footer = _(
         'My permission applies only to data from courses or programs that are sponsored by {enterprise_customer_name}'
         ', and not to data from any {platform_name} courses or programs that I take on my own. I understand that '
-        'once I grant my permission to allow data to be shared with {enterprise_customer_name}, '
-        'I may not withdraw my permission but I may elect to unenroll from any courses that are '
-        'sponsored by {enterprise_customer_name}.'
+        'I may withdraw my permission only by fully unenrolling from any courses or programs that are sponsored by '
+        '{enterprise_customer_name}.'
     )
     sharable_items_note_header = _('Please note')
     sharable_items_notes = [

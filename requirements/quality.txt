@@ -98,7 +98,7 @@ readme-renderer==17.2
 requests-toolbelt==0.8.0  # via twine
 requests==2.9.1
 responses==0.8.1
-restructuredtext-lint==1.1.1  # via doc8
+restructuredtext-lint==1.1.2  # via doc8
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
 six==1.11.0               # via analytics-python, astroid, bleach, diff-cover, doc8, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-sphinx-theme, faker, freezegun, html5lib, mock, packaging, pip-tools, pockets, pydocstyle, pylint, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore, tox

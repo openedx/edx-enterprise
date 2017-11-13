@@ -169,9 +169,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any Test platform courses or programs that '
-                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
-                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
-                    'from any courses that are sponsored by Starfleet Academy.'
+                    'I take on my own. I understand that I may withdraw my permission only by fully unenrolling '
+                    'from any courses or programs that are sponsored by Starfleet Academy.'
                 ),
                 'course_id': 'course-v1:edX+DemoX+Demo_Course',
                 'redirect_url': 'https://google.com',
@@ -723,9 +722,8 @@ class TestProgramDataSharingPermissions(TestCase):
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any Test platform courses or programs that '
-                    'I take on my own. I understand that once I grant my permission to allow data to be shared '
-                    'with Starfleet Academy, I may not withdraw my permission but I may elect to unenroll '
-                    'from any courses that are sponsored by Starfleet Academy.'
+                    'I take on my own. I understand that I may withdraw my permission only by fully unenrolling '
+                    'from any courses or programs that are sponsored by Starfleet Academy.'
                 ),
                 "program_uuid": params.get('program_uuid'),
                 "redirect_url": "https://google.com/",
