@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.15] - 2017-11-16
+----------------------
+
+* Use the cryptography package instead of the unmaintained pycrypto.
+
 [0.53.14] - 2017-11-14
 ----------------------
 

@@ -1077,12 +1077,12 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         assert utils.is_course_run_enrollable(course_run) == expected_enrollment_eligibility
 
-    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    @override_settings(ENTERPRISE_REPORTING_SECRET=b'abcdefgh12345678')
     def test_encrypt_and_decrypt_string(self):
         """
         Test the encrypt_string and decrypt_string functions.
         """
-        test_string = 'test_string'
+        test_string = b'test_string'
         iv = utils.generate_aes_initialization_vector()   # pylint: disable=invalid-name
         encrypted_string = utils.encrypt_string(test_string, iv)
         assert test_string == utils.decrypt_string(encrypted_string, iv)
