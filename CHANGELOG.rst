@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.18] - 2017-11-28
+----------------------
+
+* Add Identity Provider's ID to enterprise customer API response.
+
 [0.53.17] - 2017-11-27
 ----------------------
 

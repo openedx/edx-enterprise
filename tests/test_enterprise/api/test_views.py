@@ -597,7 +597,7 @@ class TestEnterpriseAPIViews(APITest):
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
-                'enable_audit_enrollment': False,
+                'enable_audit_enrollment': False, 'identity_provider': None,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -624,7 +624,7 @@ class TestEnterpriseAPIViews(APITest):
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
-                    'enable_audit_enrollment': False,
+                    'enable_audit_enrollment': False, 'identity_provider': None,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },
@@ -657,6 +657,32 @@ class TestEnterpriseAPIViews(APITest):
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             }],
         ),
+        (
+            factories.EnterpriseCustomerIdentityProviderFactory,
+            ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
+            itemgetter('uuid'),
+            [{
+                'provider_id': FAKE_UUIDS[0],
+                'enterprise_customer__uuid': FAKE_UUIDS[1],
+                'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
+                'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                'enterprise_customer__site__domain': 'example.com',
+                'enterprise_customer__site__name': 'example.com',
+
+            }],
+            [{
+                'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer',
+                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment',
+                'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
+                'site': {
+                    'domain': 'example.com', 'name': 'example.com'
+                },
+            }],
+        ),
+
     )
     @ddt.unpack
     def test_api_views(self, factory, url, sorting_key, model_items, expected_json):
