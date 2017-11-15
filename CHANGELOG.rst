@@ -14,6 +14,16 @@ Change Log
 Unreleased
 ----------
 
+[0.53.14] - 2017-11-14
+----------------------
+
+* Link learner to enterprise customer directly using "tpa_hint" URL parameter.
+
+[0.53.13] - 2017-11-14
+----------------------
+
+* Update DSC policy to match legal requirements.
+
 [0.53.12] - 2017-11-09
 ----------------------
 
