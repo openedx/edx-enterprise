@@ -45,6 +45,7 @@ INSTALLED_APPS = (
     "django.contrib.admin",  # only used in DEBUG mode
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rules.apps.AutodiscoverRulesConfig",
     "waffle",
 
     "enterprise",
@@ -62,7 +63,10 @@ MIDDLEWARE_CLASSES = [
 
 MIDDLEWARE = MIDDLEWARE_CLASSES  # Django 1.10 compatibility - the setting was renamed
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+AUTHENTICATION_BACKENDS = [
+    "rules.permissions.ObjectPermissionBackend",
+    "django.contrib.auth.backends.ModelBackend"
+]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.file"
 
