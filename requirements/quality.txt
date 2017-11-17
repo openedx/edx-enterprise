@@ -22,7 +22,7 @@ cffi==1.11.2              # via cryptography
 chardet==3.0.4            # via doc8
 click-log==0.1.8          # via edx-lint
 click==6.7                # via click-log, edx-lint, pip-tools
-configparser==3.5.0       # via pylint
+configparser==3.5.0       # via pydocstyle, pylint
 cookies==2.2.1            # via responses
 coverage==4.4.2           # via pytest-cov
 cryptography==1.9

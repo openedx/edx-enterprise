@@ -8,6 +8,7 @@ from logging import getLogger
 
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.utils import track_enrollment
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -55,8 +56,9 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         # actually exist in the system; in such a case, the enrollment for each such
         # course is finalized when the user registers with the OpenEdX platform.
         enrollment.complete_enrollment()
-        EnterpriseCourseEnrollment.objects.get_or_create(
+        EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=enterprise_customer_user,
-            course_id=enrollment.course_id
+            course_id=enrollment.course_id,
         )
+        track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
     pending_ecu.delete()

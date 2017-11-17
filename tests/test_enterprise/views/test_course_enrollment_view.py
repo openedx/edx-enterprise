@@ -1109,6 +1109,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             fetch_redirect_response=False,
         )
 
+    @mock.patch('enterprise.views.track_enrollment')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -1131,6 +1132,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enrollment_api_client_mock,
             catalog_api_client_mock,
             ecommerce_api_client_mock,
+            track_enrollment_mock,
             *args
     ):  # pylint: disable=unused-argument
         course_id = self.demo_course_id
@@ -1160,6 +1162,16 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             args=[enterprise_customer.uuid, course_id],
         )
         response = self.client.post(course_enrollment_page_url, {'course_mode': enrollment_mode})
+
+        if enterprise_enrollment_exists or enrollment_mode == 'professional':
+            track_enrollment_mock.assert_not_called()
+        else:
+            track_enrollment_mock.assert_called_once_with(
+                'course-landing-page-enrollment',
+                self.user.id,
+                course_id,
+                course_enrollment_page_url,
+            )
 
         assert response.status_code == 302
         self.assertRedirects(

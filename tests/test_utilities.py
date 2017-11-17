@@ -998,6 +998,22 @@ class TestEnterpriseUtils(unittest.TestCase):
         utils.track_event('user_id', 'event_name', 'properties')
         analytics_mock.track.assert_not_called()
 
+    @mock.patch('enterprise.utils.track_event')
+    def test_track_enrollment(self, track_event_mock):
+        """
+        ``track_enrollment`` invokes ``track_event`` with custom properties.
+        """
+        pathway = 'some-pathway'
+        user_id = 123123
+        course_run_id = 'course-v1:Some+edX+Course'
+        url_path = '/some/url/path'
+        utils.track_enrollment(pathway, user_id, course_run_id, url_path)
+        track_event_mock.assert_called_once_with(user_id, 'edx.bi.user.enterprise.onboarding', {
+            'pathway': pathway,
+            'url_path': url_path,
+            'course_run_id': course_run_id,
+        })
+
     @ddt.data(
         ("2014-10-13T13:11:03Z", utils.parse_datetime("2014-10-13T13:11:03Z")),
         (None, None)

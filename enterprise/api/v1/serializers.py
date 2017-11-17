@@ -17,6 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 from enterprise import models, utils
 from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
+from enterprise.utils import track_enrollment
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -165,10 +166,12 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         """
         course_id = self.validated_data['course_id']
 
-        models.EnterpriseCourseEnrollment.objects.get_or_create(
+        __, created = models.EnterpriseCourseEnrollment.objects.get_or_create(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=course_id,
         )
+        if created:
+            track_enrollment('rest-api-enrollment', self.enterprise_customer_user.user_id, course_id)
 
 
 class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):

@@ -18,6 +18,7 @@ Contents:
    development
    testing
    internationalization
+   segment_events
    modules
    changelog
 

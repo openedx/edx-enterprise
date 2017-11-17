@@ -21,6 +21,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
@@ -199,6 +200,7 @@ class TestEnterpriseAPIViews(APITest):
         assert sorted(response) == sorted(expected_json)
 
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
+    @mock.patch("enterprise.api.v1.serializers.track_enrollment")
     @ddt.data(
         (
             # A valid request.
@@ -219,6 +221,29 @@ class TestEnterpriseAPIViews(APITest):
                 'username': TEST_USERNAME,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
+            False,
+            201
+        ),
+        (
+            # A valid request to an existing enrollment.
+            True,
+            [
+                factories.EnterpriseCustomerUserFactory,
+                [{
+                    'id': 1, 'user_id': 0,
+                    'enterprise_customer__uuid': FAKE_UUIDS[0],
+                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
+                    'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
+                    'enterprise_customer__site__domain': 'example.com',
+                    'enterprise_customer__site__name': 'example.com',
+                }]
+            ],
+            {
+                'username': TEST_USERNAME,
+                'course_id': 'course-v1:edX+DemoX+DemoCourse',
+            },
+            True,
             201
         ),
         (
@@ -240,6 +265,7 @@ class TestEnterpriseAPIViews(APITest):
                 'username': 'does_not_exist',
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
+            False,
             400
         ),
         (
@@ -262,6 +288,7 @@ class TestEnterpriseAPIViews(APITest):
                 'consent_granted': True,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
+            False,
             403
         ),
         (
@@ -280,11 +307,20 @@ class TestEnterpriseAPIViews(APITest):
                 'username': TEST_USERNAME,
                 'course_id': 'course-v1:edX+DemoX+DemoCourse',
             },
+            False,
             400
         )
     )
     @ddt.unpack
-    def test_post_enterprise_course_enrollment(self, has_permissions, factory, request_data, status_code):
+    def test_post_enterprise_course_enrollment(
+            self,
+            has_permissions,
+            factory,
+            request_data,
+            enrollment_exists,
+            status_code,
+            mock_track_enrollment,
+    ):
         """
         Make sure service users can post new EnterpriseCourseEnrollments.
         """
@@ -297,6 +333,13 @@ class TestEnterpriseAPIViews(APITest):
             permission = Permission.objects.get(name='Can add enterprise course enrollment')
             self.user.user_permissions.add(permission)
 
+        if enrollment_exists:
+            enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=self.user.pk)
+            EnterpriseCourseEnrollment.objects.create(
+                enterprise_customer_user=enterprise_customer_user,
+                course_id=request_data['course_id'],
+            )
+
         response = self.client.post(
             settings.TEST_SERVER + ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT,
             data=request_data
@@ -306,6 +349,16 @@ class TestEnterpriseAPIViews(APITest):
 
         if status_code == 201:
             self.assertDictEqual(request_data, response)
+            if enrollment_exists:
+                mock_track_enrollment.assert_not_called()
+            else:
+                mock_track_enrollment.assert_called_once_with(
+                    'rest-api-enrollment',
+                    self.user.id,
+                    request_data['course_id'],
+                )
+        else:
+            mock_track_enrollment.assert_not_called()
 
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
