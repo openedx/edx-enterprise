@@ -179,7 +179,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'welcome_text': 'Welcome to Test platform.',
                 'sharable_items_note_header': 'Please note',
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
-                'LMS_ROOT_URL': 'http://localhost:8000',
+                'LMS_ROOT_URL': 'http://lms.example.com',
                 'course_start_date': expected_course_start_date,
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member

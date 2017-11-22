@@ -274,7 +274,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
             {
                 'name': 'Demo Course',
-                'url': 'http://localhost:8000/courses',
+                'url': 'http://lms.example.com/courses',
                 'type': 'course',
                 'start': '2017-01-01'
             },
@@ -288,14 +288,14 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'body': (
                     'Hi!\n\nYou have been enrolled in Demo Course, a course offered by EdX. '
                     'This course begins Jan. 1, 2017. For more information, see the following'
-                    ' link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Demo Course team\n'
+                    ' link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Demo Course team\n'
                 ),
                 'alternatives': [
                     (
                         (
-                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://localhost'
-                            ':8000/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
-                            '2017. For more information, see <a href="http://localhost:8000/courses">Demo Course'
+                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://lms.example.'
+                            'com/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
+                            '2017. For more information, see <a href="http://lms.example.com/courses">Demo Course'
                             '</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Demo Course team\n</p>\n</body>\n</html>\n'
                         ),
                         'text/html'
@@ -308,7 +308,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
             {
                 'name': 'Enterprise Learning',
-                'url': 'http://localhost:8000/courses',
+                'url': 'http://lms.example.com/courses',
                 'type': 'course',
                 'start': '2017-06-23'
             },
@@ -322,15 +322,15 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'body': (
                     u'Dear John,\n\nYou have been enrolled in Enterprise Learning, a course offered by Widgets, Inc. '
                     'This course begins June 23, 2017. For more information, see the following link:'
-                    '\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
+                    '\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
                 ),
                 'alternatives': [
                     (
                         (
                             '<html>\n<body>\n<p>Dear John,</p>\n<p>\nYou have been enrolled in <a href="http://'
-                            'localhost:8000/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
-                            'This course begins June 23, 2017. For more information, see <a href="http://localhost'
-                            ':8000/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\n'
+                            'lms.example.com/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
+                            'This course begins June 23, 2017. For more information, see <a href="http://lms.example.'
+                            'com/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\n'
                             'The Enterprise Learning team\n</p>\n</body>\n</html>\n'
                         ),
                         'text/html'
@@ -343,7 +343,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
             {
                 "name": "Master of Awesomeness",
-                "url": "http://localhost:8000/courses",
+                "url": "http://lms.example.com/courses",
                 "type": "program",
                 "branding": "MicroMaster",
                 "start": "2017-04-15",
@@ -358,15 +358,15 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'body': (
                     'Dear johnny_boy,\n\nYou have been enrolled in Master of Awesomeness, a MicroMaster program '
                     'offered by MIT. This program begins April 15, 2017. For more information, see the '
-                    'following link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
+                    'following link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
                 ),
                 'alternatives': [
                     (
                         (
                             '<html>\n<body>\n<p>Dear johnny_boy,</p>\n<p>\nYou have been enrolled in '
-                            '<a href="http://localhost:8000/courses">Master of Awesomeness</a>, a MicroMaster '
+                            '<a href="http://lms.example.com/courses">Master of Awesomeness</a>, a MicroMaster '
                             'program offered by MIT. This program begins April 15, 2017. For more information, '
-                            'see <a href="http://localhost:8000/courses">Master of Awesomeness</a>.\n</p>\n<p>\n'
+                            'see <a href="http://lms.example.com/courses">Master of Awesomeness</a>.\n</p>\n<p>\n'
                             'Thanks,\n</p>\n<p>\nThe Master of Awesomeness team\n</p>\n</body>\n</html>\n'
                         ),
                         'text/html'
@@ -379,7 +379,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             None,
             {
                 'name': 'coursename',
-                'url': 'localhost:8000/courses',
+                'url': 'lms.example.com/courses',
                 'type': 'program',
                 'branding': 'MicroMaster',
                 'start': '2017-01-01',
@@ -429,7 +429,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
             {
                 'name': 'Demo Course',
-                'url': 'http://localhost:8000/courses',
+                'url': 'http://lms.example.com/courses',
                 'type': 'course',
                 'start': '2017-01-01'
             },
@@ -458,7 +458,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
             {
                 'name': 'Enterprise Learning',
-                'url': 'http://localhost:8000/courses',
+                'url': 'http://lms.example.com/courses',
                 'type': 'course',
                 'start': '2017-06-23'
             },
@@ -487,7 +487,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
             {
                 "name": "Master of Awesomeness",
-                "url": "http://localhost:8000/courses",
+                "url": "http://lms.example.com/courses",
                 "type": "program",
                 "branding": "MicroMaster",
                 "start": "2017-04-15",
@@ -517,7 +517,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             None,
             {
                 'name': 'coursename',
-                'url': 'localhost:8000/courses',
+                'url': 'lms.example.com/courses',
                 'type': 'program',
                 'branding': 'MicroMaster',
                 'start': '2017-01-01',
@@ -574,7 +574,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': PendingEnterpriseCustomerUserFactory, 'user_email': 'john@smith.com'},
             {
                 'name': 'Demo Course',
-                'url': 'http://localhost:8000/courses',
+                'url': 'http://lms.example.com/courses',
                 'type': 'course',
                 'start': '2017-01-01'
             },
@@ -589,14 +589,14 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'body': (
                     'Hi!\n\nYou have been enrolled in Demo Course, a course offered by EdX. '
                     'This course begins Jan. 1, 2017. For more information, see the following'
-                    ' link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Demo Course team\n'
+                    ' link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Demo Course team\n'
                 ),
                 'alternatives': [
                     (
                         (
-                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://localhost:'
-                            '8000/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
-                            '2017. For more information, see <a href="http://localhost:8000/courses">Demo Course'
+                            '<html>\n<body>\n<p>Hi!</p>\n<p>\nYou have been enrolled in <a href="http://lms.example.'
+                            'com/courses">Demo Course</a>, a course offered by EdX. This course begins Jan. 1, '
+                            '2017. For more information, see <a href="http://lms.example.com/courses">Demo Course'
                             '</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Demo Course team\n</p>\n</body>\n</html>\n'
                         ),
                         'text/html'
@@ -609,7 +609,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': UserFactory, 'first_name': 'John', 'username': '', 'email': 'john@smith.com'},
             {
                 'name': 'Enterprise Learning',
-                'url': 'http://localhost:8000/courses',
+                'url': 'http://lms.example.com/courses',
                 'type': 'course',
                 'start': '2017-06-23'
             },
@@ -624,15 +624,15 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'body': (
                     u'Dear John,\n\nYou have been enrolled in Enterprise Learning, a course offered by Widgets, Inc. '
                     'This course begins June 23, 2017. For more information, see the following link:'
-                    '\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
+                    '\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Enterprise Learning team\n'
                 ),
                 'alternatives': [
                     (
                         (
                             '<html>\n<body>\n<p>Dear John,</p>\n<p>\nYou have been enrolled in <a href="http://'
-                            'localhost:8000/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
-                            'This course begins June 23, 2017. For more information, see <a href="http://localhost'
-                            ':8000/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Enterprise'
+                            'lms.example.com/courses">Enterprise Learning</a>, a course offered by Widgets, Inc. '
+                            'This course begins June 23, 2017. For more information, see <a href="http://lms.example.'
+                            'com/courses">Enterprise Learning</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Enterprise'
                             ' Learning team\n</p>\n</body>\n</html>\n'
                         ),
                         'text/html'
@@ -645,7 +645,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {'class': UserFactory, 'username': 'johnny_boy', 'email': 'john@smith.com', 'first_name': ''},
             {
                 "name": "Master of Awesomeness",
-                "url": "http://localhost:8000/courses",
+                "url": "http://lms.example.com/courses",
                 "type": "program",
                 "start": "2017-04-15",
             },
@@ -660,15 +660,15 @@ class TestEnterpriseUtils(unittest.TestCase):
                 'body': (
                     'Dear johnny_boy,\n\nYou have been enrolled in Master of Awesomeness, a  program '
                     'offered by MIT. This program begins April 15, 2017. For more information, see the '
-                    'following link:\n\nhttp://localhost:8000/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
+                    'following link:\n\nhttp://lms.example.com/courses\n\nThanks,\n\nThe Master of Awesomeness team\n'
                 ),
                 'alternatives': [
                     (
                         (
                             '<html>\n<body>\n<p>Dear johnny_boy,</p>\n<p>\nYou have been '
-                            'enrolled in <a href="http://localhost:8000/'
+                            'enrolled in <a href="http://lms.example.com/'
                             'courses">Master of Awesomeness</a>, a  program offered by MIT. This program '
-                            'begins April 15, 2017. For more information, see <a href="http://localhost:8000/courses">'
+                            'begins April 15, 2017. For more information, see <a href="http://lms.example.com/courses">'
                             'Master of Awesomeness</a>.\n</p>\n<p>\nThanks,\n</p>\n<p>\nThe Master of Awesomeness'
                             ' team\n</p>\n</body>\n</html>\n'
                         ),
@@ -682,7 +682,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             None,
             {
                 'name': 'coursename',
-                'url': 'localhost:8000/courses',
+                'url': 'lms.example.com/courses',
                 'type': 'program',
                 'branding': 'MicroMaster',
                 'start': '2017-01-01',
@@ -772,9 +772,9 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         (
-            'localhost:8000/courses/course-v1:edx+test-course+T22017/',
+            'lms.example.com/courses/course-v1:edx+test-course+T22017/',
             {},
-            ['localhost:8000/courses/course-v1:edx+test-course+T22017/'],
+            ['lms.example.com/courses/course-v1:edx+test-course+T22017/'],
         ),
         (
             'http://localhost/courses/course-v1:edx+test-course+T22017/',
@@ -1377,7 +1377,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         """
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_uuid = '47432370-0a6e-4d95-90fe-77b4fe64de2c'
-        expected_url = ('http://localhost:8000/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
+        expected_url = ('http://lms.example.com/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
                         'course-v1:edX+DemoX+Demo_Course/enroll/?utm_medium=enterprise&utm_source=test_enterprise')
         enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid, name='test_enterprise')
 
