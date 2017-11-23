@@ -30,7 +30,7 @@ from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     clean_html_for_template_rendering,
@@ -39,6 +39,7 @@ from enterprise.utils import (
     get_configuration_value,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
+    get_or_create_enterprise_learner,
     get_program_type_description,
     is_course_run_enrollable,
     track_event,
@@ -368,9 +369,9 @@ class GrantDataSharingPermissions(View):
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required():
             if course_id:
-                enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+                enterprise_customer_user, __ = get_or_create_enterprise_learner(
                     enterprise_customer=consent_record.enterprise_customer,
-                    user_id=request.user.id
+                    user=request.user
                 )
                 EnterpriseCourseEnrollment.objects.update_or_create(
                     enterprise_customer_user=enterprise_customer_user,
@@ -738,9 +739,9 @@ class CourseEnrollmentView(NonAtomicView):
         )
 
         # Create a link between the user and the enterprise customer if it does not already exist.
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer_user, __ = get_or_create_enterprise_learner(
             enterprise_customer=enterprise_customer,
-            user_id=request.user.id
+            user=request.user
         )
 
         data_sharing_consent = DataSharingConsent.objects.proxied_get(
@@ -1182,9 +1183,9 @@ class ProgramEnrollmentView(NonAtomicView):
         # Create a link between the user and the enterprise customer if it does not already exist.
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
         with transaction.atomic():
-            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer_user, __ = get_or_create_enterprise_learner(
                 enterprise_customer=enterprise_customer,
-                user_id=request.user.id
+                user=request.user
             )
 
         program_details = self.get_program_details(request, program_uuid, enterprise_customer)
@@ -1295,9 +1296,9 @@ class RouterView(NonAtomicView):
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
         with transaction.atomic():
-            enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer_user, __ = get_or_create_enterprise_learner(
                 enterprise_customer=enterprise_customer,
-                user_id=request.user.id
+                user=request.user
             )
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.

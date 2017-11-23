@@ -16,7 +16,12 @@ from django.test import RequestFactory
 
 from enterprise.models import EnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_enterprise_customer_for_running_pipeline, handle_enterprise_logistration
-from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
+from test_utils.factories import (
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
+    EnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 
 @ddt.ddt
@@ -103,3 +108,23 @@ class TestTpaPipeline(unittest.TestCase):
             provider = mock.MagicMock(provider_id=None)
             fake_registry.get_from_pipeline.return_value = provider
             assert get_enterprise_customer_for_running_pipeline(self.request, 'pipeline') is None
+
+    def test_register_enterprise_signal_not_fired(self):
+        """
+        Test that REGISTER_ENTERPRISE_USER signal will not be fired when EnterpriseCustomerUser is not created.
+        """
+        backend = self.get_mocked_sso_backend()
+        self.user = UserFactory(is_active=True)
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec, \
+                mock.patch('enterprise.models.EnterpriseCustomerUser.objects.update_or_create') as fake_get_ecu, \
+                mock.patch('enterprise.utils.REGISTER_ENTERPRISE_USER.send') as fake_register_user_signal:
+            enterprise_customer = EnterpriseCustomerFactory(
+                enable_data_sharing_consent=False
+            )
+            enterprise_customer_user = EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer),
+            fake_get_ec.return_value = enterprise_customer
+            fake_get_ecu.return_value = enterprise_customer_user, False
+            assert handle_enterprise_logistration(backend, self.user) is None
+            # Check that your signal was not called.
+            self.assertFalse(fake_register_user_signal.called)
+            self.assertEqual(fake_register_user_signal.call_count, 0)
