@@ -21,7 +21,7 @@ cffi==1.11.2              # via cryptography
 chardet==3.0.4            # via doc8
 click-log==0.1.8          # via edx-lint
 click==6.7                # via click-log, edx-lint, pip-tools
-configparser==3.5.0       # via pydocstyle, pylint
+configparser==3.5.0       # via pylint
 cookies==2.2.1            # via responses
 coverage==4.4.2           # via pytest-cov
 cryptography==1.9
@@ -74,9 +74,9 @@ packaging==16.8           # via caniusepython3
 path.py==10.5             # via edx-i18n-tools
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
-pip-tools==1.10.1
+pip-tools==1.10.2
 pkginfo==1.4.1            # via twine
-pluggy==0.5.2             # via tox
+pluggy==0.6.0             # via tox
 pockets==0.5.1            # via sphinxcontrib-napoleon
 polib==1.0.8              # via edx-i18n-tools
 py==1.5.2                 # via pytest, pytest-catchlog, tox

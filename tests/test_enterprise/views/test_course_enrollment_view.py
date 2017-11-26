@@ -263,7 +263,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 'min_price': 0,
                 'sku': 'sku-audit',
                 'final_price': 'FREE',
-                'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
+                'description': 'Not eligible for a certificate.',
                 'premium': False,
             },
             'professional': {
@@ -812,7 +812,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 'min_price': 0,
                 'sku': 'sku-audit',
                 'final_price': 'FREE',
-                'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
+                'description': 'Not eligible for a certificate.',
                 'premium': False,
             }
         ]
@@ -1366,7 +1366,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
                 'min_price': 0,
                 'sku': 'sku-audit',
                 'final_price': 'FREE',
-                'description': 'Not eligible for a certificate; does not count toward a MicroMasters',
+                'description': 'Not eligible for a certificate.',
                 'premium': False,
             }
         ]
