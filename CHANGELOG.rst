@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.19] - 2017-11-28
+----------------------
+
+* Do not change EnterpriseCustomerReportingConfiguration.password on update.
+
 [0.53.18] - 2017-11-28
 ----------------------
 
