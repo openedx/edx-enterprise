@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-11-14 05:16-0600\n"
+"POT-Creation-Date: 2017-11-27 09:42-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -791,12 +791,12 @@ msgid ""
 "The %(enrolled_in_name)s team"
 msgstr ""
 
-#: enterprise/utils.py:225
+#: enterprise/utils.py:228
 #, python-brace-format
 msgid "You've been enrolled in {course_name}!"
 msgstr ""
 
-#: enterprise/utils.py:282
+#: enterprise/utils.py:285
 msgid "`user` must have one of either `email` or `user_email`."
 msgstr ""
 
@@ -1031,7 +1031,7 @@ msgid "Earn a verified certificate!"
 msgstr ""
 
 #: enterprise/views.py:485
-msgid "Not eligible for a certificate; does not count toward a MicroMasters"
+msgid "Not eligible for a certificate."
 msgstr ""
 
 #: enterprise/views.py:487

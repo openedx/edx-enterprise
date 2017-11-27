@@ -482,7 +482,7 @@ class CourseEnrollmentView(NonAtomicView):
             'Earn a verified certificate!'
         ),
         'audit_text': _(
-            'Not eligible for a certificate; does not count toward a MicroMasters'
+            'Not eligible for a certificate.'
         ),
         'continue_link_text': _('Continue'),
         'level_text': _('Level'),

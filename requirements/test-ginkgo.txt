@@ -43,7 +43,7 @@ mock==2.0.0
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
 py==1.5.2                 # via pytest, pytest-catchlog
-pyasn1==0.3.7             # via cryptography
+pyasn1==0.4.2             # via cryptography
 pycparser==2.18           # via cffi
 pyjwt==1.5.3              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.5.1            # via edx-opaque-keys, event-tracking

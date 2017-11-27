@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.53.17] - 2017-11-27
+----------------------
+
+* Remove inaccurate landing page audit track language.
+
 [0.53.16] - 2017-11-22
 ----------------------
 
