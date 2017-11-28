@@ -1517,3 +1517,7 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         config.save()
         assert EnterpriseCustomerReportingConfiguration.objects.count() == 1
         assert EnterpriseCustomerReportingConfiguration.objects.first().password
+
+        # Test that an update does not change the password.
+        config.save()
+        assert config.password == bytes(EnterpriseCustomerReportingConfiguration.objects.first().password)

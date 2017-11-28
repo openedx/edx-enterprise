@@ -1240,12 +1240,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         """
         Override of model save method to dynamically generate the password field and perform additional validation.
         """
-        self.initialization_vector = utils.generate_aes_initialization_vector()
-        self.password = utils.encrypt_string(
-            get_random_string(length=32),
-            self.initialization_vector
-        )
-        self.full_clean()
+        if not self.pk:
+            self.initialization_vector = utils.generate_aes_initialization_vector()
+            self.password = utils.encrypt_string(
+                get_random_string(length=32),
+                self.initialization_vector
+            )
+            self.full_clean()
         super(EnterpriseCustomerReportingConfiguration, self).save(*args, **kwargs)
 
     def clean(self):
