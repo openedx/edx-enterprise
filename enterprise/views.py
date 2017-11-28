@@ -32,6 +32,7 @@ from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
 from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
     NotConnectedToOpenEdX,
     clean_html_for_template_rendering,
     filter_audit_course_modes,
@@ -1302,12 +1303,15 @@ class RouterView(NonAtomicView):
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
         if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
-            enterprise_customer_user.enroll(resource_id, 'audit')
-            track_event(request.user.id, 'edx.bi.user.enterprise.onboarding', {
-                'pathway': 'direct-audit-enrollment',
-                'url_path': request.path,
-                'course_run_id': resource_id,
-            })
+            try:
+                enterprise_customer_user.enroll(resource_id, 'audit')
+                track_event(request.user.id, 'edx.bi.user.enterprise.onboarding', {
+                    'pathway': 'direct-audit-enrollment',
+                    'url_path': request.path,
+                    'course_run_id': resource_id,
+                })
+            except CourseEnrollmentDowngradeError:
+                pass
             # The courseware view logic will check for DSC requirements, and route to the DSC page if necessary.
             return redirect(LMS_COURSEWARE_URL.format(course_id=resource_id))
 

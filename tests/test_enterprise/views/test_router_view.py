@@ -166,10 +166,29 @@ class TestRouterView(TestCase):
         """
         ``get`` redirects to the LMS courseware when the request is fully eligible for direct audit enrollment.
         """
-        enrollment_api_client_mock.return_value.is_enrolled.return_value = False
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=True)
         response = router_view_mock.get(self.request, **self.kwargs)
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
+        self.assertRedirects(
+            response,
+            'http://lms.example.com/courses/{}/courseware'.format(self.course_run_id),
+            fetch_redirect_response=False,
+        )
+
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
+    def test_get_direct_audit_enrollment_user_already_enrolled(self, router_view_mock, enrollment_api_client_mock):
+        """
+        ``get`` redirects to the LMS courseware when the request is fully eligible for direct audit enrollment.
+        """
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'verified,'
+        }
+        router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=True)
+        response = router_view_mock.get(self.request, **self.kwargs)
+        enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
         self.assertRedirects(
             response,
             'http://lms.example.com/courses/{}/courseware'.format(self.course_run_id),

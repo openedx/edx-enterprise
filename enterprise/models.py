@@ -17,6 +17,7 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
@@ -26,16 +27,23 @@ from django.template import Context, Template
 from django.utils.crypto import get_random_string
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import lazy
+from django.utils.http import urlquote
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext
 
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
-from enterprise.api_client.discovery import CourseCatalogApiServiceClient
-from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, enroll_user_in_course_locally
+from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
+from enterprise.api_client.lms import (
+    EnrollmentApiClient,
+    ThirdPartyAuthApiClient,
+    enroll_user_in_course_locally,
+    parse_lms_api_datetime,
+)
 from enterprise.constants import json_serialized_course_modes
-from enterprise.utils import get_configuration_value
+from enterprise.utils import CourseEnrollmentDowngradeError, get_configuration_value
 from enterprise.validators import validate_image_extension, validate_image_size
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
@@ -250,6 +258,83 @@ class EnterpriseCustomer(TimeStampedModel):
                 return True
 
         return False
+
+    def enroll_user_pending_registration(self, email, course_mode, *course_ids):
+        """
+        Create pending enrollments for the user in any number of courses, which will take effect on registration.
+
+        Args:
+            email: The email address for the pending link to be created
+            course_mode: The mode with which the eventual enrollment should be created
+            *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
+
+        Returns:
+            The PendingEnterpriseCustomerUser attached to the email address
+        """
+        pending_ecu, __ = PendingEnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=self,
+            user_email=email
+        )
+        for course_id in course_ids:
+            PendingEnrollment.objects.update_or_create(
+                user=pending_ecu,
+                course_id=course_id,
+                defaults={
+                    'course_mode': course_mode
+                }
+            )
+        return pending_ecu
+
+    def notify_enrolled_learners(self, catalog_api_user, course_id, users):
+        """
+        Notify learners about a course in which they've been enrolled.
+
+        Args:
+            catalog_api_user: The user for calling the Catalog API
+            course_id: The specific course the learners were enrolled in
+            users: An iterable of the users or pending users who were enrolled
+        """
+        course_details = CourseCatalogApiClient(catalog_api_user, self.site).get_course_run(course_id)
+        if not course_details:
+            LOGGER.warning(
+                ugettext("Course details were not found for course key {} - Course Catalog API returned nothing. "
+                         "Proceeding with enrollment, but notifications won't be sent").format(course_id)
+            )
+            return
+        course_path = urlquote('/courses/{course_id}/course'.format(course_id=course_id))
+        lms_root_url = utils.get_configuration_value_for_site(self.site, 'LMS_ROOT_URL')
+        destination_url = '{site}/{login_or_register}?next={course_path}'.format(
+            site=lms_root_url,
+            login_or_register='{login_or_register}',  # We don't know the value at this time
+            course_path=course_path
+        )
+        course_name = course_details.get('title')
+
+        try:
+            course_start = parse_lms_api_datetime(course_details.get('start'))
+        except (TypeError, ValueError):
+            course_start = None
+            LOGGER.exception(
+                'None or empty value passed as course start date.\nCourse Details:\n{course_details}'.format(
+                    course_details=course_details,
+                )
+            )
+
+        with mail.get_connection() as email_conn:
+            for user in users:
+                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
+                destination_url = destination_url.format(login_or_register=login_or_register)
+                utils.send_email_notification_message(
+                    user=user,
+                    enrolled_in={
+                        'name': course_name,
+                        'url': destination_url,
+                        'type': 'course',
+                        'start': course_start,
+                    },
+                    enterprise_customer=self,
+                    email_connection=email_conn
+                )
 
 
 class EnterpriseCustomerUserManager(models.Manager):
@@ -478,9 +563,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         enrollment_api_client = EnrollmentApiClient()
         # Check to see if the user's already enrolled and we have an enterprise course enrollment to track it.
-        enrolled_in_course = enrollment_api_client.is_enrolled(self.username, course_run_id)
-        if not enrolled_in_course:
-            # Directly enroll into the audit track.
+        course_enrollment = enrollment_api_client.get_course_enrollment(self.username, course_run_id) or {}
+        enrolled_in_course = course_enrollment and course_enrollment.get('is_active', False)
+
+        audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
+        paid_modes = ['verified', 'professional']
+        is_upgrading = mode in paid_modes and course_enrollment.get('mode') in audit_modes
+        if not enrolled_in_course or is_upgrading:
+            # Directly enroll into the specified track.
             enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode)
             utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
                 'category': 'enterprise',
@@ -488,11 +578,22 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
                 'enterprise_customer_name': self.enterprise_customer.name,
                 'mode': mode,
+                'is_upgrading': is_upgrading,
             })
-        EnterpriseCourseEnrollment.objects.get_or_create(
-            enterprise_customer_user=self,
-            course_id=course_run_id
-        )
+            EnterpriseCourseEnrollment.objects.get_or_create(
+                enterprise_customer_user=self,
+                course_id=course_run_id
+            )
+        elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
+            # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
+            raise CourseEnrollmentDowngradeError(
+                'The user is already enrolled in the course {course_run_id} in {current_mode} mode '
+                'and cannot be enrolled in {given_mode} mode'.format(
+                    course_run_id=course_run_id,
+                    current_mode=course_enrollment.get('mode'),
+                    given_mode=mode,
+                )
+            )
 
 
 @python_2_unicode_compatible

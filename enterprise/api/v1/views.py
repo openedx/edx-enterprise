@@ -12,6 +12,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 
 from django.conf import settings
 from django.http import Http404
@@ -82,7 +83,7 @@ class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelView
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
 
 
-class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
+class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
     """
@@ -166,6 +167,26 @@ class EnterpriseCustomerViewSet(EnterpriseReadOnlyModelViewSet):
         # Add enterprise related context for the courses.
         serializer.update_enterprise_courses(enterprise_customer, catalog_id=enterprise_customer.catalog)
         return get_paginated_response(serializer.data, request)
+
+    @detail_route(methods=['post'])
+    def course_enrollments(self, request, pk):  # pylint: disable=invalid-name,unused-argument
+        """
+        Creates a course enrollment for an EnterpriseCustomerUser.
+        """
+        enterprise_customer = self.get_object()
+        serializer = serializers.EnterpriseCustomerCourseEnrollmentsSerializer(
+            data=request.data,
+            many=True,
+            context={
+                'enterprise_customer': enterprise_customer,
+                'request_user': request.user,
+            }
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=HTTP_200_OK)
+
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
 class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):

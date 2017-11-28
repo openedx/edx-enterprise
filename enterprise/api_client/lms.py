@@ -316,16 +316,42 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         Returns:
             string or None: the remote name of the given user.  None if not found.
         """
+        return self._get_results(identity_provider, 'username', username, 'remote_id')
+
+    def get_username_from_remote_id(self, identity_provider, remote_id):
+        """
+        Retrieve the remote identifier for the given username.
+
+        Args:
+        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
+        * ``remote_id`` (str): The remote id identifying the user for which to retrieve the usernamename.
+
+        Returns:
+            string or None: the username of the given user.  None if not found.
+        """
+        return self._get_results(identity_provider, 'remote_id', remote_id, 'username')
+
+    def _get_results(self, identity_provider, param_name, param_value, result_field_name):
+        """
+        Calls the third party auth api endpoint to get the mapping between usernames and remote ids.
+        """
         try:
-            returned = self.client.providers(identity_provider).users.get(username=username)
+            kwargs = {param_name: param_value}
+            returned = self.client.providers(identity_provider).users.get(**kwargs)
             results = returned.get('results', [])
         except HttpNotFoundError:
-            LOGGER.error('remote_id not found for third party provider=%s, username=%s', identity_provider, username)
+            LOGGER.error(
+                'username not found for third party provider={provider}, {querystring_param}={id}'.format(
+                    provider=identity_provider,
+                    querystring_param=param_name,
+                    id=param_value
+                )
+            )
             results = []
 
         for row in results:
-            if row.get('username') == username:
-                return row.get('remote_id')
+            if row.get(param_name) == param_value:
+                return row.get(result_field_name)
         return None
 
 

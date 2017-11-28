@@ -91,6 +91,12 @@ class MultipleProgramMatchError(CourseCatalogApiError):
         self.programs_matched = programs_matched
 
 
+class CourseEnrollmentDowngradeError(Exception):
+    """
+    Exception to raise when an enrollment attempts to enroll the user in an unpaid mode when they are in a paid mode.
+    """
+
+
 def get_identity_provider(provider_id):
     """
     Get Identity Provider with given id.

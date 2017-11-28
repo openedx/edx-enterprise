@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.54.0] - 2017-11-28
+---------------------
+
+* Introduce the bulk enrollment/upgrade api endpoint for Enterprise Customers.
+
 [0.53.19] - 2017-11-28
 ----------------------
 
