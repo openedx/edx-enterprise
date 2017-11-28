@@ -102,7 +102,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         model = models.EnterpriseCustomer
         fields = (
             'uuid', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent', 'enforce_data_sharing_consent',
-            'branding_configuration', 'enterprise_customer_entitlements',
+            'branding_configuration', 'enterprise_customer_entitlements', 'identity_provider',
             'enable_audit_enrollment'
         )
 
