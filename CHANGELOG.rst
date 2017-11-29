@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.54.1] - 2017-11-29
+---------------------
+
+* Increase font size on data sharing consent page.
+
 [0.54.0] - 2017-11-28
 ---------------------
 

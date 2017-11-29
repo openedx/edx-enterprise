@@ -7,6 +7,7 @@
 amqp==1.4.9               # via kombu
 analytics-python==1.1.0
 anyjson==0.3.3            # via kombu
+attrs==17.3.0             # via pytest
 billiard==3.3.0.23        # via celery
 celery==3.1.18
 cffi==1.11.2              # via cryptography
@@ -34,7 +35,7 @@ factory-boy==2.9.2
 faker==0.8.7              # via factory-boy
 flaky==3.3.0
 freezegun==0.3.9
-funcsigs==1.0.2           # via mock
+funcsigs==1.0.2           # via mock, pytest
 idna==2.6                 # via cryptography
 ipaddress==1.0.18         # via faker
 jsonfield==2.0.2
@@ -42,6 +43,7 @@ kombu==3.0.37             # via celery
 mock==2.0.0
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
+pluggy==0.6.0             # via pytest
 py==1.5.2                 # via pytest, pytest-catchlog
 pyasn1==0.4.2             # via cryptography
 pycparser==2.18           # via cffi
@@ -50,13 +52,13 @@ pymongo==3.5.1            # via edx-opaque-keys, event-tracking
 pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytest-django==3.1.2
-pytest==3.2.5             # via pytest-catchlog, pytest-cov, pytest-django
+pytest==3.3.0             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.6.1    # via analytics-python, edx-drf-extensions, faker, freezegun
 pytz==2017.3              # via celery, event-tracking
 requests==2.9.1
 responses==0.8.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.11.0               # via analytics-python, cryptography, edx-opaque-keys, faker, freezegun, mock, python-dateutil, responses, stevedore
+six==1.11.0               # via analytics-python, cryptography, edx-opaque-keys, faker, freezegun, mock, pytest, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 stevedore==1.27.1         # via edx-opaque-keys
 testfixtures==5.3.1
