@@ -7,8 +7,7 @@ from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
 
-import integrated_channels.integrated_channel
-import integrated_channels.sap_success_factors
+import integrated_channels
 import mock
 from pytest import mark
 
@@ -68,6 +67,7 @@ class TestIntegratedChannelConfig(unittest.TestCase):
     """
     Test integrated_channels.integrated_channel app config.
     """
+
     def setUp(self):
         """
         Set up test environment
@@ -86,6 +86,7 @@ class TestSAPSuccessFactorsConfig(unittest.TestCase):
     """
     Test integrated_channels.sap_success_factors app config.
     """
+
     def setUp(self):
         """
         Set up test environment
@@ -97,3 +98,22 @@ class TestSAPSuccessFactorsConfig(unittest.TestCase):
 
     def test_name(self):
         assert self.app_config.name == 'sap_success_factors'
+
+
+@mark.django_db
+class TestDegreedConfig(unittest.TestCase):
+    """
+    Test integrated_channels.degreed app config.
+    """
+
+    def setUp(self):
+        """
+        Set up test environment
+        """
+        super(TestDegreedConfig, self).setUp()
+        self.app_config = integrated_channels.degreed.apps.DegreedConfig(
+            'degreed', integrated_channels.degreed
+        )
+
+    def test_name(self):
+        assert self.app_config.name == 'degreed'

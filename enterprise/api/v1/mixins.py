@@ -15,7 +15,7 @@ class EnterpriseCourseContextSerializerMixin(object):
 
     def update_enterprise_courses(self, enterprise_customer, course_container_key='results', **kwargs):
         """
-        This method adds enterprise specific metadata for each course.
+        This method adds enterprise-specific metadata for each course.
 
         We are adding following field in all the courses.
             tpa_hint: a string for identifying Identity Provider.

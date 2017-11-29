@@ -4,11 +4,12 @@ Transmits consenting enterprise learner data to the integrated channels.
 """
 from __future__ import absolute_import, unicode_literals
 
+from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
+from integrated_channels.integrated_channel.tasks import transmit_learner_data
+
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
-
-from . import INTEGRATED_CHANNEL_CHOICES, IntegratedChannelCommandMixin, celery_task
 
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):
@@ -49,14 +50,4 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
 
         # Transmit the learner data to each integrated channel
         for integrated_channel in self.get_integrated_channels(options):
-            self.transmit_learner_data.delay(api_username, integrated_channel.channel_code(), integrated_channel.pk)
-
-    @staticmethod
-    @celery_task
-    def transmit_learner_data(username, channel_code, channel_pk):
-        """
-        Allows each enterprise customer's integrated channel to collect and transmit data within its own celery task.
-        """
-        api_user = User.objects.get(username=username)
-        integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
-        integrated_channel.transmit_learner_data(api_user)
+            transmit_learner_data.delay(api_username, integrated_channel.channel_code(), integrated_channel.pk)

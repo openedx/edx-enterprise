@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.0] - 2017-11-29
+---------------------
+
+* Add Degreed as new integrated channel.
+
 [0.54.1] - 2017-11-29
 ---------------------
 

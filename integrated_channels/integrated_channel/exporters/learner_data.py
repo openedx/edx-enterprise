@@ -6,13 +6,17 @@ Module contains resources for integrated pipelines to retrieve all the
 grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
+
 from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
 from consent.models import DataSharingConsent
+from integrated_channels.integrated_channel.exporters import Exporter
+from integrated_channels.utils import parse_datetime_to_epoch_millis
 from slumber.exceptions import HttpNotFoundError
 
+from django.apps import apps
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
@@ -22,7 +26,7 @@ from enterprise.models import EnterpriseCourseEnrollment
 LOGGER = getLogger(__name__)
 
 
-class BaseLearnerExporter(object):
+class LearnerExporter(Exporter):
     """
     Base class for exporting learner completion data to integrated channels.
     """
@@ -30,6 +34,24 @@ class BaseLearnerExporter(object):
     GRADE_PASSING = 'Pass'
     GRADE_FAILING = 'Fail'
     GRADE_INCOMPLETE = 'In Progress'
+
+    def __init__(self, user, enterprise_configuration):
+        """
+        Store the data needed to export the learner data to the integrated channel.
+
+        Arguments:
+
+        * ``user``: User instance with access to the Grades API for the Enterprise Customer's courses.
+        * ``enterprise_configuration``: EnterpriseCustomerPluginConfiguration instance for the current channel.
+        """
+        # The Grades API and Certificates API clients require an OAuth2 access token,
+        # so cache the client to allow the token to be reused. Cache other clients for
+        # general reuse.
+        self.grades_api = None
+        self.certificates_api = None
+        self.course_api = None
+        self.course_enrollment_api = None
+        super(LearnerExporter, self).__init__(user, enterprise_configuration)
 
     @property
     def grade_passing(self):
@@ -52,30 +74,7 @@ class BaseLearnerExporter(object):
         """
         return self.GRADE_INCOMPLETE
 
-    def __init__(self, user, plugin_configuration):
-        """
-        Store the data needed to export the learner data to the integrated channel.
-
-        Arguments:
-
-        * ``user``: User instance with access to the Grades API for the Enterprise Customer's courses.
-        * ``plugin_configuration``: EnterpriseCustomerPluginConfiguration instance for the current channel.
-        """
-
-        self.user = user
-        self.plugin_configuration = plugin_configuration
-        self.enterprise_customer = plugin_configuration.enterprise_customer
-        self.get_learner_data_record = plugin_configuration.get_learner_data_record
-
-        # The Grades API and Certificates API clients require an OAuth2 access token,
-        #  so cache the client to allow the token to be reused. Cache other clients for
-        #  general reuse.
-        self.grades_api = None
-        self.certificates_api = None
-        self.course_api = None
-        self.course_enrollment_api = None
-
-    def collect_learner_data(self):
+    def export(self):
         """
         Collect learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
 
@@ -87,7 +86,6 @@ class BaseLearnerExporter(object):
           for self-paced courses, when the course end date is passed, or when the learner achieves a passing grade.
         * ``grade``: string grade recorded for the learner in the course.
         """
-
         # Fetch the consenting enrollment data, including the enterprise_customer_user.
         # Order by the course_id, to avoid fetching course API data more than we have to.
         enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
@@ -98,12 +96,12 @@ class BaseLearnerExporter(object):
 
         # Fetch course details from the Course API, and cache between calls.
         course_details = None
-
         for enterprise_enrollment in enrollment_queryset:
 
             course_id = enterprise_enrollment.course_id
 
             # Fetch course details from Courses API
+            # pylint: disable=unsubscriptable-object
             if course_details is None or course_details['course_id'] != course_id:
                 if self.course_api is None:
                     self.course_api = CourseApiClient()
@@ -111,7 +109,7 @@ class BaseLearnerExporter(object):
 
             if course_details is None:
                 # Course not found, so we have nothing to report.
-                LOGGER.error("No course details found for enrollment %d: %s",
+                LOGGER.error("No course run details found for enrollment [%d]: [%s]",
                              enterprise_enrollment.pk, course_id)
                 continue
 
@@ -143,9 +141,29 @@ class BaseLearnerExporter(object):
                 # method; right now, that should only happen if we have an Enterprise-linked
                 # user for the integrated channel, and transmission of that user's
                 # data requires an upstream user identifier that we don't have (due to a
-                # failure of SSO or similar). In sucha a case, `get_learner_data_record`
+                # failure of SSO or similar). In such a case, `get_learner_data_record`
                 # would return None, and we'd simply skip yielding it here.
                 yield record
+
+    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
+        """
+        Generate a learner data transmission audit with fields properly filled in.
+        """
+        # pylint: disable=invalid-name
+        LearnerDataTransmissionAudit = apps.get_model('integrated_channel', 'LearnerDataTransmissionAudit')
+        completed_timestamp = None
+        course_completed = False
+        if completed_date is not None:
+            completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
+            course_completed = is_passing
+
+        return LearnerDataTransmissionAudit(
+            enterprise_course_enrollment_id=enterprise_enrollment.id,
+            course_id=enterprise_enrollment.course_id,
+            course_completed=course_completed,
+            completed_timestamp=completed_timestamp,
+            grade=grade,
+        )
 
     def _collect_certificate_data(self, enterprise_enrollment):
         """
@@ -218,7 +236,7 @@ class BaseLearnerExporter(object):
 
         except HttpNotFoundError:
             # Grade not found, so we have nothing to report.
-            LOGGER.error("No grades data found for %d: %s, %s", enterprise_enrollment.pk, course_id, username)
+            LOGGER.error("No grades data found for [%d]: [%s], [%s]", enterprise_enrollment.pk, course_id, username)
             return None, None, None
 
         # Prepare to process the course end date and pass/fail grade

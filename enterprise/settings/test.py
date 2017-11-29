@@ -9,6 +9,8 @@ from __future__ import absolute_import, unicode_literals
 
 from os.path import abspath, dirname, join
 
+from celery import Celery
+
 
 def here(*args):
     """
@@ -48,6 +50,7 @@ INSTALLED_APPS = (
     "enterprise",
     "consent",
     "integrated_channels.integrated_channel",
+    "integrated_channels.degreed",
     "integrated_channels.sap_success_factors",
 )
 
@@ -157,6 +160,8 @@ COURSE_ID_PATTERN = COURSE_KEY_PATTERN.replace('course_key_string', 'course_id')
 
 USE_TZ = True
 
+################################### TRACKING ###################################
+
 LMS_SEGMENT_KEY = 'SOME_KEY'
 EVENT_TRACKING_ENABLED = True
 EVENT_TRACKING_BACKENDS = {
@@ -178,3 +183,13 @@ EVENT_TRACKING_BACKENDS = {
     }
 }
 EVENT_TRACKING_PROCESSORS = []
+
+
+#################################### CELERY ####################################
+
+app = Celery('enterprise')  # pylint: disable=invalid-name
+app.config_from_object('django.conf:settings')
+
+CELERY_ALWAYS_EAGER = True
+
+CLEAR_REQUEST_CACHE_ON_TASK_COMPLETION = False

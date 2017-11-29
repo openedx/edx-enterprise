@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """
 Fake implementation of the Enrollment API.
 """
+
 from __future__ import absolute_import, unicode_literals
 
 import datetime

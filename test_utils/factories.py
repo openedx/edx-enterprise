@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """
 Factoryboy factories.
 """
+
 from __future__ import absolute_import, unicode_literals
 
 from uuid import UUID
@@ -8,6 +10,17 @@ from uuid import UUID
 import factory
 from consent.models import DataSharingConsent
 from faker import Factory as FakerFactory
+from integrated_channels.degreed.models import (
+    DegreedEnterpriseCustomerConfiguration,
+    DegreedGlobalConfiguration,
+    DegreedLearnerDataTransmissionAudit,
+)
+from integrated_channels.integrated_channel.models import CatalogTransmissionAudit, LearnerDataTransmissionAudit
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+    SapSuccessFactorsLearnerDataTransmissionAudit,
+)
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
@@ -28,6 +41,8 @@ from enterprise.models import (
 FAKER = FakerFactory.create()
 
 
+# pylint: disable=no-member
+# pylint: disable=invalid-name
 class SiteFactory(factory.django.DjangoModelFactory):
     """
     Factory class for Site model.
@@ -41,8 +56,8 @@ class SiteFactory(factory.django.DjangoModelFactory):
         model = Site
         django_get_or_create = ("domain",)
 
-    domain = factory.LazyAttribute(lambda x: FAKER.domain_name())  # pylint: disable=no-member
-    name = factory.LazyAttribute(lambda x: FAKER.company())  # pylint: disable=no-member
+    domain = factory.LazyAttribute(lambda x: FAKER.domain_name())
+    name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
 class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
@@ -60,11 +75,11 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCustomer
 
-    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))  # pylint: disable=no-member
-    name = factory.LazyAttribute(lambda x: FAKER.company())  # pylint: disable=no-member
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    name = factory.LazyAttribute(lambda x: FAKER.company())
     active = True
     site = factory.SubFactory(SiteFactory)
-    catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))  # pylint: disable=no-member
+    catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
     enable_data_sharing_consent = True
     enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
 
@@ -85,7 +100,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
         model = EnterpriseCustomerUser
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())  # pylint: disable=no-member
+    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
 
 
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
@@ -104,7 +119,7 @@ class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
         model = PendingEnterpriseCustomerUser
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    user_email = factory.LazyAttribute(lambda x: FAKER.email())  # pylint: disable=no-member
+    user_email = factory.LazyAttribute(lambda x: FAKER.email())
 
 
 class UserFactory(factory.DjangoModelFactory):
@@ -122,15 +137,14 @@ class UserFactory(factory.DjangoModelFactory):
 
         model = User
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
-    email = factory.LazyAttribute(lambda x: FAKER.email())  # pylint: disable=no-member
-    username = factory.LazyAttribute(lambda x: FAKER.user_name())  # pylint: disable=no-member
-    first_name = factory.LazyAttribute(lambda x: FAKER.first_name())  # pylint: disable=no-member
-    last_name = factory.LazyAttribute(lambda x: FAKER.last_name())  # pylint: disable=no-member
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    email = factory.LazyAttribute(lambda x: FAKER.email())
+    username = factory.LazyAttribute(lambda x: FAKER.user_name())
+    first_name = factory.LazyAttribute(lambda x: FAKER.first_name())
+    last_name = factory.LazyAttribute(lambda x: FAKER.last_name())
     is_staff = False
     is_active = False
-    date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(  # pylint: disable=no-member
-        tzinfo=timezone.utc))
+    date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
 
 
 class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactory):
@@ -147,7 +161,7 @@ class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactor
         django_get_or_create = ("provider_id",)
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    provider_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
+    provider_id = factory.LazyAttribute(lambda x: FAKER.slug())
 
 
 class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
@@ -164,7 +178,7 @@ class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
 
         model = PendingEnrollment
 
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     course_mode = 'audit'
     user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)
 
@@ -184,8 +198,8 @@ class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCustomerEntitlement
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
-    entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=no-member
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
 
@@ -203,8 +217,8 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCourseEnrollment
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
 
 
@@ -222,7 +236,7 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCustomerCatalog
 
-    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))  # pylint: disable=no-member
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     content_filter = {}
 
@@ -242,14 +256,14 @@ class DataSharingConsentFactory(factory.django.DjangoModelFactory):
         model = DataSharingConsent
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    username = factory.LazyAttribute(lambda x: FAKER.user_name())  # pylint: disable=no-member
-    course_id = factory.LazyAttribute(lambda x: FAKER.slug())  # pylint: disable=no-member
+    username = factory.LazyAttribute(lambda x: FAKER.user_name())
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     granted = True
 
 
 class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory):
     """
-    EnterpriseCustomerReportingConfiguration factory.
+    ``EnterpriseCustomerReportingConfiguration`` factory.
 
     Creates an instance of EnterpriseCustomerReportingConfiguration with minimal boilerplate
     uses this class' attributes as default parameters for EnterpriseCustomerReportingConfiguration constructor.
@@ -257,14 +271,189 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
 
     class Meta(object):
         """
-        Meta for EnterpriseCustomerReportingConfiguration.
+        Meta for ``EnterpriseCustomerReportingConfigFactory``.
         """
 
         model = EnterpriseCustomerReportingConfiguration
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))  # pylint: disable=invalid-name,no-member
-    active = True  # pylint: disable=no-member
-    email = factory.LazyAttribute(lambda x: FAKER.email())  # pylint: disable=no-member
-    day_of_month = 1  # pylint: disable=no-member
-    hour_of_day = 1  # pylint: disable=no-member
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    active = True
+    email = factory.LazyAttribute(lambda x: FAKER.email())
+    day_of_month = 1
+    hour_of_day = 1
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+
+class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``LearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of ``LearnerDataTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``LearnerDataTransmissionAuditFactory``.
+        """
+
+        model = LearnerDataTransmissionAudit
+
+    enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    course_completed = True
+    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
+    grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
+    status = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class CatalogTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``CatalogTransmissionAudit`` factory.
+
+    Creates an instance of ``CatalogTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``CatalogTransmissionAuditFactory``.
+        """
+
+        model = CatalogTransmissionAudit
+
+    enterprise_customer_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    total_courses = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    status = factory.LazyAttribute(lambda x: FAKER.word())
+    channel = 'SAP'
+
+
+class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``SAPSuccessFactorsGlobalConfiguration`` factory.
+
+    Creates an instance of ``SAPSuccessFactorsGlobalConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``SAPSuccessFactorsGlobalConfigurationFactory``.
+        """
+
+        model = SAPSuccessFactorsGlobalConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    provider_id = 'SAP'
+
+
+class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``SAPSuccessFactorsEnterpriseCustomerConfigurationFactory``.
+        """
+
+        model = SAPSuccessFactorsEnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    sapsf_base_url = factory.LazyAttribute(lambda x: FAKER.url())
+    sapsf_company_id = factory.LazyAttribute(lambda x: FAKER.company())
+    sapsf_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    user_type = SAPSuccessFactorsEnterpriseCustomerConfiguration.USER_TYPE_USER
+
+
+class SapSuccessFactorsLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``SapSuccessFactorsLearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of ``SapSuccessFactorsLearnerDataTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``SapSuccessFactorsLearnerDataTransmissionAuditFactory``.
+        """
+
+        model = SapSuccessFactorsLearnerDataTransmissionAudit
+
+    sapsf_user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    course_completed = True
+    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
+    grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
+    status = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``DegreedGlobalConfiguration`` factory.
+
+    Creates an instance of ``DegreedGlobalConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``DegreedGlobalConfigurationFactory``.
+        """
+
+        model = DegreedGlobalConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    degreed_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
+    completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    degreed_user_id = factory.LazyAttribute(lambda x: FAKER.user_name())
+    degreed_user_password = factory.LazyAttribute(lambda x: FAKER.word())
+    provider_id = 'DEGREED'
+
+
+class DegreedEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``DegreedEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``DegreedEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``DegreedEnterpriseCustomerConfigurationFactory``.
+        """
+
+        model = DegreedEnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    degreed_company_id = factory.LazyAttribute(lambda x: FAKER.company())
+
+
+class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``DegreedLearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of ``DegreedLearnerDataTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``DegreedLearnerDataTransmissionAuditFactory``.
+        """
+
+        model = DegreedLearnerDataTransmissionAudit
+
+    degreed_user_email = factory.LazyAttribute(lambda x: FAKER.email())
+    enterprise_course_enrollment_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    course_completed = True
+    completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    status = factory.LazyAttribute(lambda x: FAKER.word())

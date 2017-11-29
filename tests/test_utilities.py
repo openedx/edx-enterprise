@@ -10,9 +10,8 @@ import unittest
 import ddt
 import mock
 from faker import Factory as FakerFactory
-from integrated_channels.integrated_channel.course_metadata import BaseCourseExporter
+from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
-from integrated_channels.sap_success_factors.utils import SapCourseExporter, get_launch_url
 from pytest import mark, raises
 
 from django.core import mail
@@ -123,6 +122,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_enrollment_template",
                 "enterprisecustomerreportingconfiguration",
                 "enterprise_customer_consent",
+                "degreedenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
                 "modified",
@@ -882,15 +882,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         with raises(KeyError):
             utils.get_course_track_selection_url({}, {})
 
-    @mock.patch('integrated_channels.integrated_channel.course_metadata.get_course_runs')
-    def test_base_course_exporter_serialized_data_raises(self, mock_get_course_runs):
-        mock_get_course_runs.return_value = []
-        mock_user = mock.MagicMock()
-        mock_plugin_configuration = mock.MagicMock()
-        exporter = BaseCourseExporter(mock_user, mock_plugin_configuration)
-        with raises(NotImplementedError):
-            exporter.get_serialized_data()
-
     @ddt.data(
         ('{} hour', '{} hours', '{}-{} hours', 2, 4, '2-4 hours'),
         ('{} hour', '{} hours', '{}-{} hours', 2, 2, '2 hours'),
@@ -1127,6 +1118,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
     """
     Tests for sap success factors utility functions.
     """
+
     def setUp(self):
         """
         Set up test environment.
@@ -1136,15 +1128,18 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         self.user = UserFactory()
         self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
-        self.plugin_configuration = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+        self.enterprise_configuration = SAPSuccessFactorsEnterpriseCustomerConfiguration(
             enterprise_customer=self.customer,
             sapsf_base_url='enterprise.successfactors.com',
             key='key',
             secret='secret',
         )
 
-    @mock.patch('integrated_channels.integrated_channel.course_metadata.get_course_runs')
-    @mock.patch('integrated_channels.sap_success_factors.utils.get_launch_url')
+    @mock.patch('enterprise.api_client.enterprise.EnterpriseApiClient.get_enterprise_course_runs')
+    @mock.patch(
+        'integrated_channels.sap_success_factors.exporters.course_metadata.SapSuccessFactorsCourseExporter'
+        '.get_launch_url'
+    )
     @ddt.data(
         (
             # course runs
@@ -1160,7 +1155,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE)
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE)
             ],
         ),
         (
@@ -1181,8 +1176,8 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_INACTIVE),
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_INACTIVE),
             ],
         ),
         (
@@ -1203,8 +1198,8 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_INACTIVE),
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_INACTIVE),
             ],
         ),
         (
@@ -1223,7 +1218,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
             ],
         ),
         (
@@ -1243,11 +1238,11 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
                 {
                     'courseID': 'course2',
                     'providerID': 'EDX',
-                    'status': SapCourseExporter.STATUS_INACTIVE,
+                    'status': SapSuccessFactorsCourseExporter.STATUS_INACTIVE,
                     'title': [{'locale': 'English', 'value': 'course2'}],
                     'content': [
                         {
@@ -1279,8 +1274,8 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
             ],
         ),
         (
@@ -1300,8 +1295,8 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             },
             # expected courses
             [
-                get_transformed_course_metadata('course1', SapCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
+                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
             ],
         ),
     )
@@ -1312,50 +1307,30 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             previous_audit_summary,
             expected_audit_summary,
             expected_courses,
-            get_course_url_mock,
-            get_course_runs_mock
+            get_launch_url,
+            get_enterprise_course_runs,
     ):
-        get_course_url_mock.return_value = ''
-        get_course_runs_mock.return_value = course_runs
-        course_exporter = SapCourseExporter(self.user, self.plugin_configuration)
-
+        get_launch_url.return_value = ''
+        get_enterprise_course_runs.return_value.values.return_value = course_runs
+        course_exporter = SapSuccessFactorsCourseExporter(self.user, self.enterprise_configuration)
         audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
         assert audit_summary == expected_audit_summary
         assert course_exporter.removed_courses_resolved
         assert course_exporter.courses == expected_courses
-
         second_audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
         assert second_audit_summary == {}
 
     @ddt.data(
         (
-            {
-                'mode': 'enroll',
-                'number': 0,
-            },
-            {
-                'mode': 'audit',
-                'number': 1,
-            },
-            {
-                'mode': 'another_audit',
-                'number': 2,
-            },
-            {
-                'mode': 'enroll',
-                'number': 3,
-            },
-            {
-                'mode': 'audit',
-                'number': 4,
-            },
+            {'mode': 'enroll', 'number': 0},
+            {'mode': 'audit', 'number': 1},
+            {'mode': 'another_audit', 'number': 2},
+            {'mode': 'enroll', 'number': 3},
+            {'mode': 'audit', 'number': 4},
         )
     )
     @override_settings(ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES=['audit', 'another_audit'])
-    def test_filter_audit_course_modes(
-            self,
-            course_modes,
-    ):
+    def test_filter_audit_course_modes(self, course_modes):
         # when the audit enrollment flag is disabled
         self.customer.enable_audit_enrollment = False
         # course modes are filtered out if their mode is in the ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES setting
@@ -1371,15 +1346,16 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         filtered_course_modes = utils.filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
 
-    def test_get_launch_url_flag_on(self):
+    @mock.patch('enterprise.api_client.enterprise.EnterpriseApiClient.get_enterprise_course_runs')
+    def test_get_launch_url_flag_on(self, get_enterprise_course_runs_mock):  # pylint: disable=unused-argument
         """
         Test `get_launch_url` helper method.
         """
+        exporter = SapSuccessFactorsCourseExporter(self.user, self.enterprise_configuration)
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_uuid = '47432370-0a6e-4d95-90fe-77b4fe64de2c'
         expected_url = ('http://lms.example.com/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
                         'course-v1:edX+DemoX+Demo_Course/enroll/?utm_medium=enterprise&utm_source=test_enterprise')
         enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid, name='test_enterprise')
-
-        launch_url = get_launch_url(enterprise_customer, course_id)
+        launch_url = exporter.get_launch_url(enterprise_customer, course_id)
         assert_url(launch_url, expected_url)

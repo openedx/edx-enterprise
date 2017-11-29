@@ -6,7 +6,6 @@ Tests for the `edx-enterprise` models module.
 from __future__ import absolute_import, unicode_literals, with_statement
 
 import copy
-import datetime
 import unittest
 from operator import itemgetter
 
@@ -17,12 +16,6 @@ from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from faker import Factory as FakerFactory
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from integrated_channels.sap_success_factors.models import (
-    CatalogTransmissionAudit,
-    LearnerDataTransmissionAudit,
-    SAPSuccessFactorsEnterpriseCustomerConfiguration,
-    SAPSuccessFactorsGlobalConfiguration,
-)
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 
@@ -47,19 +40,7 @@ from enterprise.models import (
     logo_path,
 )
 from enterprise.utils import CourseEnrollmentDowngradeError
-from test_utils import assert_url, fake_catalog_api
-from test_utils.factories import (
-    DataSharingConsentFactory,
-    EnterpriseCourseEnrollmentFactory,
-    EnterpriseCustomerCatalogFactory,
-    EnterpriseCustomerEntitlementFactory,
-    EnterpriseCustomerFactory,
-    EnterpriseCustomerIdentityProviderFactory,
-    EnterpriseCustomerUserFactory,
-    PendingEnrollmentFactory,
-    PendingEnterpriseCustomerUserFactory,
-    UserFactory,
-)
+from test_utils import assert_url, factories, fake_catalog_api
 
 
 @mark.django_db
@@ -71,14 +52,12 @@ class TestPendingEnrollment(unittest.TestCase):
     def setUp(self):
         email = 'bob@jones.com'
         course_id = 'course-v1:edX+DemoX+DemoCourse'
-        pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
-        self.enrollment = PendingEnrollmentFactory(user=pending_link, course_id=course_id)
-        self.user = UserFactory(email=email)
+        pending_link = factories.PendingEnterpriseCustomerUserFactory(user_email=email)
+        self.enrollment = factories.PendingEnrollmentFactory(user=pending_link, course_id=course_id)
+        self.user = factories.UserFactory(email=email)
         super(TestPendingEnrollment, self).setUp()
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test conversion to string.
@@ -103,18 +82,16 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
     """
     def setUp(self):
         self.username = 'DarthVader'
-        self.user = UserFactory(username=self.username)
+        self.user = factories.UserFactory(username=self.username)
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
-        self.enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=self.user.id)
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=self.user.id)
         self.enrollment = EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
         super(TestEnterpriseCourseEnrollment, self).setUp()
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test conversion to string.
@@ -140,9 +117,9 @@ class TestEnterpriseCustomerManager(unittest.TestCase):
         """
         Test that get_queryset on custom model manager returns only active customers.
         """
-        customer1 = EnterpriseCustomerFactory(active=True)
-        customer2 = EnterpriseCustomerFactory(active=True)
-        inactive_customer = EnterpriseCustomerFactory(active=False)
+        customer1 = factories.EnterpriseCustomerFactory(active=True)
+        customer2 = factories.EnterpriseCustomerFactory(active=True)
+        inactive_customer = factories.EnterpriseCustomerFactory(active=False)
 
         active_customers = EnterpriseCustomer.active_customers.all()
         self.assertTrue(all(customer.active for customer in active_customers))
@@ -158,19 +135,15 @@ class TestEnterpriseCustomer(unittest.TestCase):
     Tests of the EnterpriseCustomer model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomer`` conversion to string.
         """
-        faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()  # pylint: disable=no-member
-        customer = EnterpriseCustomerFactory(uuid=customer_uuid, name="QWERTY")
+        customer = factories.EnterpriseCustomerFactory()
         expected_to_str = "<{class_name} {customer_uuid}: {name}>".format(
             class_name=EnterpriseCustomer.__name__,
-            customer_uuid=customer_uuid,
+            customer_uuid=customer.uuid,
             name=customer.name
         )
         self.assertEqual(method(customer), expected_to_str)
@@ -179,22 +152,18 @@ class TestEnterpriseCustomer(unittest.TestCase):
         """
         Test identity_provider property returns correct value without errors.
         """
-        faker = FakerFactory.create()
-        provider_id = faker.slug()  # pylint: disable=no-member
-        customer = EnterpriseCustomerFactory()
-        EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=customer)
-
-        assert customer.identity_provider == provider_id
+        customer = factories.EnterpriseCustomerFactory()
+        ent_idp = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
+        assert customer.identity_provider == ent_idp.provider_id
 
     def test_no_identity_provider(self):
         """
         Test identity_provider property returns correct value without errors.
 
         Test that identity_provider property does not raise ObjectDoesNotExist and returns None
-        if enterprise customer doesn not have an associated identity provider.
+        if enterprise customer does not have an associated identity provider.
         """
-        customer = EnterpriseCustomerFactory()
-        assert customer.identity_provider is None
+        assert factories.EnterpriseCustomerFactory().identity_provider is None
 
     @ddt.data(
         ('course_exists', True),
@@ -216,13 +185,13 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api = mock_catalog_api_class.return_value
         mock_catalog_api.is_course_in_catalog.side_effect = is_course_in_catalog
 
-        customer = EnterpriseCustomerFactory()
+        customer = factories.EnterpriseCustomerFactory()
         assert customer.catalog_contains_course(course_id) == expected_result
 
         mock_catalog_api_class.assert_called_once()
         mock_catalog_api.is_course_in_catalog.assert_called_once_with(customer.catalog, course_id)
 
-        catalogless_customer = EnterpriseCustomerFactory(catalog=None)
+        catalogless_customer = factories.EnterpriseCustomerFactory(catalog=None)
         assert catalogless_customer.catalog_contains_course(course_id) is False
 
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
@@ -235,13 +204,13 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api.get_search_results.return_value = [fake_catalog_api.FAKE_COURSE_RUN]
 
         # Test with no discovery service catalog.
-        enterprise_customer = EnterpriseCustomerFactory(catalog=None)
-        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        enterprise_customer = factories.EnterpriseCustomerFactory(catalog=None)
+        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
 
         # Test with existing discovery service catalog.
-        enterprise_customer = EnterpriseCustomerFactory()
-        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
 
         # Test when EnterpriseCustomerCatalogs do not contain the course run.
@@ -262,12 +231,10 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     Tests EnterpriseCustomerUserManager.
     """
 
-    @ddt.data(
-        "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
-    )
+    @ddt.data("albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu")
     def test_link_user_existing_user(self, user_email):
-        enterprise_customer = EnterpriseCustomerFactory()
-        user = UserFactory(email=user_email)
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        user = factories.UserFactory(email=user_email)
         assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no link records should exist"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).count() == 0, \
             "Precondition check: no pending link records should exist"
@@ -279,11 +246,9 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         assert actual_records.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "No pending links should have been created"
 
-    @ddt.data(
-        "yoda@jeditemple.net", "luke_skywalker@resistance.org", "darth_vader@empire.com"
-    )
+    @ddt.data("yoda@jeditemple.net", "luke_skywalker@resistance.org", "darth_vader@empire.com")
     def test_link_user_no_user(self, user_email):
-        enterprise_customer = EnterpriseCustomerFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory()
 
         assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no link records should exist"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).count() == 0, \
@@ -298,13 +263,13 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_linked_user(self, email):
-        user = UserFactory(email=email)
-        existing_link = EnterpriseCustomerUserFactory(user_id=user.id)
+        user = factories.UserFactory(email=email)
+        existing_link = factories.EnterpriseCustomerUserFactory(user_id=user.id)
         assert EnterpriseCustomerUser.objects.get_link_by_email(email) == existing_link
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_pending_link(self, email):
-        existing_pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+        existing_pending_link = factories.PendingEnterpriseCustomerUserFactory(user_email=email)
         assert EnterpriseCustomerUser.objects.get_link_by_email(email) == existing_pending_link
 
     @ddt.data("email1@example.com", "email2@example.com")
@@ -316,11 +281,14 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_existing_user(self, email):
         other_email = "other_email@example.com"
-        user1, user2 = UserFactory(email=email, id=1), UserFactory(email=other_email, id=2)
-        enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
-        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
-        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)
-        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_id=user1.id)
+        user1, user2 = factories.UserFactory(email=email, id=1), factories.UserFactory(email=other_email, id=2)
+        enterprise_customer1, enterprise_customer2 = (
+            factories.EnterpriseCustomerFactory(),
+            factories.EnterpriseCustomerFactory()
+        )
+        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
+        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)
+        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_id=user1.id)
         assert EnterpriseCustomerUser.objects.count() == 3
 
         query_method = EnterpriseCustomerUser.objects.filter
@@ -336,9 +304,9 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_pending_link(self, email):
         other_email = "other_email@example.com"
-        enterprise_customer = EnterpriseCustomerFactory()
-        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=email)
-        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=other_email)
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=email)
+        factories.PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=other_email)
         assert PendingEnterpriseCustomerUser.objects.count() == 2
 
         query_method = PendingEnterpriseCustomerUser.objects.filter
@@ -351,8 +319,8 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_existing_user_no_link(self, email):
-        user = UserFactory(email=email)
-        enterprise_customer = EnterpriseCustomerFactory()
+        user = factories.UserFactory(email=email)
+        enterprise_customer = factories.EnterpriseCustomerFactory()
         query_method = EnterpriseCustomerUser.objects.filter
 
         assert query_method(user_id=user.id).count() == 0, "Precondition check: link record exists"
@@ -362,7 +330,7 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_no_user_no_pending_link(self, email):
-        enterprise_customer = EnterpriseCustomerFactory()
+        enterprise_customer = factories.EnterpriseCustomerFactory()
         query_method = PendingEnterpriseCustomerUser.objects.filter
 
         assert query_method(user_email=email).count() == 0, "Precondition check: link record exists"
@@ -378,15 +346,13 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     Tests of the EnterpriseCustomerUser model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomerUser`` conversion to string.
         """
         customer_user_id, user_id = 15, 12
-        customer_user = EnterpriseCustomerUserFactory(id=customer_user_id, user_id=user_id)
+        customer_user = factories.EnterpriseCustomerUserFactory(id=customer_user_id, user_id=user_id)
         expected_to_str = "<EnterpriseCustomerUser {ID}>: {enterprise_name} - {user_id}".format(
             ID=customer_user_id,
             enterprise_name=customer_user.enterprise_customer.name,
@@ -394,41 +360,35 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         )
         self.assertEqual(method(customer_user), expected_to_str)
 
-    @ddt.data(
-        "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
-    )
+    @ddt.data("albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu")
     def test_user_property_user_exists(self, email):
-        user_instance = UserFactory(email=email)
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_instance.id)
+        user_instance = factories.UserFactory(email=email)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_instance.id)
         assert enterprise_customer_user.user == user_instance
 
     @ddt.data(1, 42, 1138)
     def test_user_property_user_missing(self, user_id):
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_id)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_id)
         assert enterprise_customer_user.user is None
 
-    @ddt.data(
-        "albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu"
-    )
+    @ddt.data("albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu")
     def test_user_email_property_user_exists(self, email):
-        user = UserFactory(email=email)
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user.id)
+        user = factories.UserFactory(email=email)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
         assert enterprise_customer_user.user_email == email
 
     def test_user_email_property_user_missing(self):
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=42)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=42)
         assert enterprise_customer_user.user_email is None
 
-    @ddt.data(
-        "alberteinstein", "richardfeynman", "leosusskind"
-    )
+    @ddt.data("alberteinstein", "richardfeynman", "leosusskind")
     def test_username_property_user_exists(self, username):
-        user_instance = UserFactory(username=username)
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user_instance.id)
+        user_instance = factories.UserFactory(username=username)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_instance.id)
         assert enterprise_customer_user.username == username
 
     def test_username_property_user_missing(self):
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=42)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=42)
         assert enterprise_customer_user.username is None
 
     @ddt.data(
@@ -438,11 +398,13 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     @ddt.unpack
     @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
     def test_get_remote_id(self, provider_id, expected_value, called, mock_third_party_api):
-        user = UserFactory(username="hi")
-        enterprise_customer_user = EnterpriseCustomerUserFactory(user_id=user.id)
+        user = factories.UserFactory(username="hi")
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
         if provider_id:
-            EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id,
-                                                      enterprise_customer=enterprise_customer_user.enterprise_customer)
+            factories.EnterpriseCustomerIdentityProviderFactory(
+                provider_id=provider_id,
+                enterprise_customer=enterprise_customer_user.enterprise_customer
+            )
         mock_third_party_api.return_value.get_remote_id.return_value = 'saml-user-id'
         actual_value = enterprise_customer_user.get_remote_id()
         assert actual_value == expected_value
@@ -558,22 +520,22 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             expected_entitlements (list): A list of integers pointing to voucher ids expected to be
                 returned by the model.
         """
-        enterprise_customer = EnterpriseCustomerFactory(
+        enterprise_customer = factories.EnterpriseCustomerFactory(
             enable_data_sharing_consent=enable_data_sharing_consent,
             enforce_data_sharing_consent=enforce_data_sharing_consent,
         )
-        user = UserFactory(id=1)
-        enterprise_customer_user = EnterpriseCustomerUserFactory(
+        user = factories.UserFactory(id=1)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=user.id,
             enterprise_customer=enterprise_customer,
         )
-        DataSharingConsentFactory(
+        factories.DataSharingConsentFactory(
             username=enterprise_customer_user.username,
             enterprise_customer=enterprise_customer,
             granted=learner_consent_state,
         )
         for entitlement in entitlements:
-            EnterpriseCustomerEntitlementFactory(
+            factories.EnterpriseCustomerEntitlementFactory(
                 enterprise_customer=enterprise_customer,
                 entitlement_id=entitlement,
             )
@@ -588,7 +550,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         ``enroll_learner`` enrolls the learner and redirects to the LMS courseware.
         """
-        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
@@ -599,7 +561,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
         """
-        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
             'is_active': True,
             'mode': 'audit'
@@ -615,7 +577,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         ``enroll_learner`` enrolls the learner to a paid mode from previously being enrolled in audit.
         """
-        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
             'is_active': True,
             'mode': 'audit'
@@ -629,7 +591,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
         """
-        enterprise_customer_user = EnterpriseCustomerUserFactory()
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
             'is_active': True,
             'mode': 'verified'
@@ -647,15 +609,13 @@ class TestPendingEnterpriseCustomerUser(unittest.TestCase):
     Tests of the PendingEnterpriseCustomerUser model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomerUser`` conversion to string.
         """
         customer_user_id, user_email = 15, "some_email@example.com"
-        customer_user = PendingEnterpriseCustomerUserFactory(id=customer_user_id, user_email=user_email)
+        customer_user = factories.PendingEnterpriseCustomerUserFactory(id=customer_user_id, user_email=user_email)
         expected_to_str = "<PendingEnterpriseCustomerUser {ID}>: {enterprise_name} - {user_email}".format(
             ID=customer_user_id,
             enterprise_name=customer_user.enterprise_customer.name,
@@ -681,16 +641,14 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         file_mock.size = size
         return file_mock
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomerUser`` conversion to string.
         """
         file_mock = self._make_file_mock()
         customer_branding_config = EnterpriseCustomerBrandingConfiguration(
-            id=1, logo=file_mock, enterprise_customer=EnterpriseCustomerFactory()
+            id=1, logo=file_mock, enterprise_customer=factories.EnterpriseCustomerFactory()
         )
         expected_str = "<EnterpriseCustomerBrandingConfiguration {ID}>: {enterprise_name}".format(
             ID=customer_branding_config.id,
@@ -712,7 +670,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         file_mock = self._make_file_mock()
         branding_config = EnterpriseCustomerBrandingConfiguration(
             id=1,
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo=file_mock
         )
 
@@ -731,7 +689,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         """
         storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
         branding_config_1 = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo="test1.png"
         )
 
@@ -741,7 +699,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             self.assertEqual(EnterpriseCustomerBrandingConfiguration.objects.count(), 1)
 
         branding_config_2 = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo="test2.png"
         )
 
@@ -755,7 +713,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         Test enterprise customer branding configuration saves changes to existing instance.
         """
         configuration = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo="test1.png"
         )
         configuration.save()
@@ -782,7 +740,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         file_mock.name = "test1.png"
         file_mock.size = image_size * 1024  # image size in bytes
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo=file_mock
         )
 
@@ -810,7 +768,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         file_mock.name = "test1" + image_extension
         file_mock.size = 2 * 1024
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             logo=file_mock
         )
 
@@ -828,16 +786,14 @@ class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
     Tests of the EnterpriseCustomerIdentityProvider model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomerIdentityProvider`` conversion to string.
         """
         provider_id, enterprise_customer_name = "saml-test", "TestShib"
-        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
-        ec_idp = EnterpriseCustomerIdentityProviderFactory(
+        enterprise_customer = factories.EnterpriseCustomerFactory(name=enterprise_customer_name)
+        ec_idp = factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=enterprise_customer,
             provider_id=provider_id,
         )
@@ -856,7 +812,7 @@ class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
         faker = FakerFactory.create()
         provider_name = faker.name()
         mock_method.return_value.configure_mock(name=provider_name)
-        ec_idp = EnterpriseCustomerIdentityProviderFactory()
+        ec_idp = factories.EnterpriseCustomerIdentityProviderFactory()
 
         assert ec_idp.provider_name == provider_name
 
@@ -867,15 +823,13 @@ class TestEnterpriseCustomerEntitlements(unittest.TestCase):
     """
     Tests of the TestEnterpriseCustomerEntitlements model.
     """
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``TestEnterpriseCustomerEntitlements`` conversion to string.
         """
         entitlement_id, enterprise_customer_name = 1234, "TestShib"
-        enterprise_customer = EnterpriseCustomerFactory(name=enterprise_customer_name)
+        enterprise_customer = factories.EnterpriseCustomerFactory(name=enterprise_customer_name)
         ec_entitlements = EnterpriseCustomerEntitlement(
             enterprise_customer=enterprise_customer,
             entitlement_id=entitlement_id,
@@ -905,9 +859,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         self.enterprise_name = 'enterprisewithacatalog'
         super(TestEnterpriseCustomerCatalog, self).setUp()
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomerCatalog`` conversion to string.
@@ -917,7 +869,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         name = 'EnterpriseWithACatalog'
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=uuid,
-            enterprise_customer=EnterpriseCustomerFactory(name=name)
+            enterprise_customer=factories.EnterpriseCustomerFactory(name=name)
         )
         expected_str = "<EnterpriseCustomerCatalog with uuid '{uuid}' for EnterpriseCustomer {name}>".format(
             uuid=uuid,
@@ -948,7 +900,10 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=self.catalog_uuid,
-            enterprise_customer=EnterpriseCustomerFactory(uuid=self.enterprise_uuid, name=self.enterprise_name)
+            enterprise_customer=factories.EnterpriseCustomerFactory(
+                uuid=self.enterprise_uuid,
+                name=self.enterprise_name
+            )
         )
         enrollment_url = enterprise_catalog.get_course_run_enrollment_url(course_run_key=course_run_key)
         assert_url(enrollment_url, expected_course_enrollment_url)
@@ -975,10 +930,22 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=self.catalog_uuid,
-            enterprise_customer=EnterpriseCustomerFactory(uuid=self.enterprise_uuid, name=self.enterprise_name)
+            enterprise_customer=factories.EnterpriseCustomerFactory(
+                uuid=self.enterprise_uuid,
+                name=self.enterprise_name
+            )
         )
         enrollment_url = enterprise_catalog.get_program_enrollment_url(program_uuid=program_uuid)
         assert_url(enrollment_url, expected_program_enrollment_url)
+
+    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_content_items')
+    def test_get_course_and_course_run_no_content_items(self, contains_content_items_mock):
+        """
+        The ``get_course_and_course_run`` method returns a tuple (None, None) when no content items exist.
+        """
+        contains_content_items_mock.return_value = False
+        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
 
 
 @mark.django_db
@@ -990,7 +957,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
 
     def setUp(self):
         self.template = EnrollmentNotificationEmailTemplate.objects.create(
-            enterprise_customer=EnterpriseCustomerFactory(),
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
             plaintext_template=(
                 'This is a template - testing {{ course_name }}, {{ other_value }}'
             ),
@@ -1010,9 +977,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
         assert plain == 'This is a template - testing real course, filled in'
         assert html == '<b>This is an HTML template! real course!!!</b>'
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test conversion to string.
@@ -1031,8 +996,8 @@ class TestDataSharingConsentManager(unittest.TestCase):
 
     def setUp(self):
         super(TestDataSharingConsentManager, self).setUp()
-        DataSharingConsentFactory(
-            enterprise_customer=EnterpriseCustomerFactory(
+        factories.DataSharingConsentFactory(
+            enterprise_customer=factories.EnterpriseCustomerFactory(
                 name='rich_enterprise'
             ),
             username='lowly_bob',
@@ -1070,16 +1035,14 @@ class TestProxyDataSharingConsent(TransactionTestCase):
     def setUp(self):
         super(TestProxyDataSharingConsent, self).setUp()
         self.proxy_dsc = ProxyDataSharingConsent(
-            enterprise_customer=EnterpriseCustomerFactory(
+            enterprise_customer=factories.EnterpriseCustomerFactory(
                 name='rich_enterprise'
             ),
             username='lowly_bob',
             course_id='hard_course_2017'
         )
 
-    @ddt.data(
-        'commit', 'save'
-    )
+    @ddt.data('commit', 'save')
     def test_commit_and_synonyms(self, func):
         """
         Test that ``ProxyDataSharingConsent``'s ``commit`` method (and any synonyms) properly creates/saves/returns
@@ -1110,9 +1073,7 @@ class TestProxyDataSharingConsent(TransactionTestCase):
         the_only_enterprise_customer = EnterpriseCustomer.objects.all().first()  # pylint: disable=no-member
         assert the_only_enterprise_customer == proxy_dsc.enterprise_customer
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``ProxyDataSharingConsent`` conversion to string
@@ -1183,16 +1144,14 @@ class TestProxyDataSharingConsent(TransactionTestCase):
         for attr, val in expected_attrs.items():
             assert getattr(proxy_dsc, attr) == val
 
-    @ddt.data(
-        True, False
-    )
+    @ddt.data(True, False)
     def test_consent_exists_proxy_enrollment(self, user_exists):
         """
         If we did proxy enrollment, we return ``True`` for the consent existence question.
         """
         if user_exists:
-            UserFactory(id=1)
-        ece = EnterpriseCourseEnrollmentFactory(enterprise_customer_user__user_id=1)
+            factories.UserFactory(id=1)
+        ece = factories.EnterpriseCourseEnrollmentFactory(enterprise_customer_user__user_id=1)
         consent_exists = get_data_sharing_consent(
             ece.enterprise_customer_user.username,
             ece.enterprise_customer_user.enterprise_customer.uuid,
@@ -1211,15 +1170,13 @@ class TestDataSharingConsent(unittest.TestCase):
     Tests of the ``DataSharingConsent`` model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``DataSharingConsent`` conversion to string
         """
-        dsc = DataSharingConsentFactory(
-            enterprise_customer=EnterpriseCustomerFactory(
+        dsc = factories.DataSharingConsentFactory(
+            enterprise_customer=factories.EnterpriseCustomerFactory(
                 name='rich_enterprise'
             ),
             username='lowly_bob',
@@ -1233,36 +1190,95 @@ class TestDataSharingConsent(unittest.TestCase):
 @mark.django_db
 class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
     """
-    Tests of the EnterpriseCustomerPluginConfiguration abstract model.
+    Tests of the ``EnterpriseCustomerPluginConfiguration`` base model.
     """
 
     def setUp(self):
-        self.abstract_base = EnterpriseCustomerPluginConfiguration()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.config = EnterpriseCustomerPluginConfiguration(enterprise_customer=self.enterprise_customer)
         super(TestEnterpriseCustomerPluginConfiguration, self).setUp()
 
     def test_channel_code_raises(self):
         with raises(NotImplementedError):
-            self.abstract_base.channel_code()
+            self.config.channel_code()
 
-    def test_get_learner_data_record_raises(self):
-        with raises(NotImplementedError):
-            self.abstract_base.get_learner_data_record(mock.Mock())
+    @mock.patch('integrated_channels.integrated_channel.models.LearnerExporter')
+    def test_get_learner_data_exporter(self, mock_learner_exporter):
+        """
+        The configuration returns the appropriate learner exporter.
+        """
+        mock_learner_exporter.return_value = 'mock_learner_exporter'
+        assert self.config.get_learner_data_exporter(None) == 'mock_learner_exporter'
 
-    def test_get_learner_data_exporter_raises(self):
-        with raises(NotImplementedError):
-            self.abstract_base.get_learner_data_exporter(mock.Mock())
+    @mock.patch('integrated_channels.integrated_channel.models.LearnerTransmitter')
+    def test_get_learner_data_transmitter_raises(self, mock_learner_transmitter):
+        """
+        The configuration returns the appropriate learner transmitter.
+        """
+        mock_learner_transmitter.return_value = 'mock_learner_transmitter'
+        assert self.config.get_learner_data_transmitter() == 'mock_learner_transmitter'
 
-    def test_get_learner_data_transmitter_raises(self):
-        with raises(NotImplementedError):
-            self.abstract_base.get_learner_data_transmitter()
+    @mock.patch('integrated_channels.integrated_channel.models.CourseExporter')
+    def test_get_course_data_exporter_raises(self, mock_course_exporter):
+        """
+        The configuration returns the appropriate course exporter.
+        """
+        mock_course_exporter.return_value = 'mock_course_exporter'
+        assert self.config.get_course_data_exporter(None) == 'mock_course_exporter'
 
-    def test_get_course_data_exporter_raises(self):
-        with raises(NotImplementedError):
-            self.abstract_base.get_course_data_exporter(None)
+    @mock.patch('integrated_channels.integrated_channel.models.CourseTransmitter')
+    def test_get_course_data_transmitter_raises(self, mock_course_transmitter):
+        """
+        The configuration returns the appropriate course transmitter.
+        """
+        mock_course_transmitter.return_value = 'mock_course_transmitter'
+        assert self.config.get_course_data_transmitter() == 'mock_course_transmitter'
 
-    def test_get_course_data_transmitter_raises(self):
-        with raises(NotImplementedError):
-            self.abstract_base.get_course_data_transmitter()
+
+@mark.django_db
+@ddt.ddt
+class TestLearnerDataTransmissionAudit(unittest.TestCase):
+    """
+    Tests of the LearnerDataTransmissionAudit model.
+    """
+
+    @ddt.data(str, repr)
+    def test_string_conversion(self, method):
+        """
+        Test ``LearnerDataTransmissionAudit`` conversion to string
+        """
+        learner_data_audit = factories.LearnerDataTransmissionAuditFactory(
+            id=1,
+            enterprise_course_enrollment_id=1,
+            course_id='course-id',
+        )
+        expected_to_str = '<LearnerDataTransmissionAudit 1 for enterprise enrollment 1, and course course-id>'
+        assert expected_to_str == method(learner_data_audit)
+
+    def test_provider_id(self):
+        """
+        The ``provier_id`` property is always ``None`` for the generic learner data transmission audit.
+        """
+        assert factories.LearnerDataTransmissionAuditFactory().provider_id is None
+
+    def test_serialize(self):
+        """
+        The ``serialize`` method returns a generic JSON dump.
+        """
+        learner_data_audit = factories.LearnerDataTransmissionAuditFactory(
+            course_id='course-id',
+            completed_timestamp=999,
+            grade='A+',
+        )
+        payload = (
+            '{'
+            '"completedTimestamp": 999, '
+            '"courseCompleted": "true", '
+            '"courseID": "course-id", '
+            '"grade": "A+"'
+            '}'
+        )
+        assert learner_data_audit.serialize() == payload
 
 
 @mark.django_db
@@ -1271,69 +1287,39 @@ class TestCatalogTransmissionAudit(unittest.TestCase):
     """
     Tests of the CatalogTransmissionAudit model.
     """
-    @ddt.data(
-        str, repr
-    )
+
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``CatalogTransmissionAudit`` conversion to string
         """
-        faker = FakerFactory.create()
-        customer_uuid = faker.uuid4()  # pylint: disable=no-member
-        course_audit = CatalogTransmissionAudit(
-            id=1, enterprise_customer_uuid=customer_uuid, total_courses=50, status='success', error_message=None
-        )
-        expected_to_str = "<CatalogTransmissionAudit 1 for Enterprise {}> for 50 courses>".format(
-            customer_uuid
+        course_audit = factories.CatalogTransmissionAuditFactory(id=1, total_courses=50)
+        expected_to_str = "<CatalogTransmissionAudit 1 for Enterprise {} and channel SAP> for 50 courses>".format(
+            course_audit.enterprise_customer_uuid
         )
         assert expected_to_str == method(course_audit)
 
 
 @mark.django_db
 @ddt.ddt
-class TestLearnerDataTransmissionAudit(unittest.TestCase):
+class TestSapSuccessFactorsLearnerDataTransmissionAudit(unittest.TestCase):
     """
-    Tests of the ``LearnerDataTransmissionAudit`` model.
+    Tests of the ``SapSuccessFactorsLearnerDataTransmissionAudit`` model.
     """
-    payload_format = (
-        '{{'
-        '"comments": "", '
-        '"completedTimestamp": {timestamp}, '
-        '"contactHours": "", '
-        '"courseCompleted": "{completed}", '
-        '"courseID": "{course_id}", '
-        '"cpeHours": "", '
-        '"creditHours": "", '
-        '"currency": "", '
-        '"grade": "{grade}", '
-        '"instructorName": "", '
-        '"price": "", '
-        '"providerID": "{provider_id}", '
-        '"totalHours": "", '
-        '"userID": "{user_id}"'
-        '}}'
-    )
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
-        Test ``LearnerDataTransmissionAudit`` conversion to string
+        Test ``SapSuccessFactorsLearnerDataTransmissionAudit`` conversion to string
         """
-        learner_audit = LearnerDataTransmissionAudit(
+        learner_audit = factories.SapSuccessFactorsLearnerDataTransmissionAuditFactory(
             id=1,
             enterprise_course_enrollment_id=5,
             sapsf_user_id='sap_user',
             course_id='course-v1:edX+DemoX+DemoCourse',
-            course_completed=True,
-            completed_timestamp=1486755998000,
-            instructor_name='Professor Professorson',
-            grade='Pass',
-            error_message=None
         )
         expected_to_str = (
-            "<LearnerDataTransmissionAudit 1 for enterprise enrollment 5, SAP user sap_user,"
+            "<SapSuccessFactorsLearnerDataTransmissionAudit 1 for enterprise enrollment 5, SAPSF user sap_user,"
             " and course course-v1:edX+DemoX+DemoCourse>"
         )
         assert expected_to_str == method(learner_audit)
@@ -1347,91 +1333,21 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
     """
 
     def setUp(self):
-        self.enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
-        self.config = SAPSuccessFactorsEnterpriseCustomerConfiguration(
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        self.config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
-            sapsf_base_url='enterprise.successfactors.com',
-            key='key',
-            secret='secret',
-            active=False,
         )
         super(TestSAPSuccessFactorsEnterpriseCustomerConfiguration, self).setUp()
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` conversion to string
         """
-        expected_to_str = "<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise {}>".format(
-            self.enterprise_customer.name
-        )
-        assert expected_to_str == method(self.config)
+        assert method(self.config) == "<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise GriffCo>"
 
     def test_channel_code(self):
         assert self.config.channel_code() == 'SAP'
-
-    @mock.patch(
-        'integrated_channels.sap_success_factors.transmitters.learner_data.SuccessFactorsLearnerDataTransmitter')
-    @mock.patch('integrated_channels.sap_success_factors.transmitters.SAPSuccessFactorsAPIClient')
-    @mock.patch('enterprise.models.EnrollmentApiClient')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.CertificatesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.learner_data.CourseApiClient')
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    def test_transmit_learner_data(
-            self, mock_course_api, mock_certificate_api, mock_enrollment_api, mock_sap_api, mock_sap_transmitter
-    ):
-        user = UserFactory()
-        course_id = 'course-v1:edX+DemoX+DemoCourse'
-        enterprise_customer_user = EnterpriseCustomerUserFactory(
-            user_id=user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-        enrollment = EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=enterprise_customer_user,
-            course_id=course_id,
-        )
-
-        # Mock instructor-paced course details
-        mock_course_api.return_value.get_course_details.return_value = dict(
-            pacing='instructor'
-        )
-
-        # Return a mock certificate
-        certificate = dict(
-            user=user,
-            course_id=course_id,
-            grade="A-",
-            is_passing=True,
-            created_date='2017-01-02T03:04:05:00Z'
-        )
-        mock_certificate_api.return_value.get_course_certificate.return_value = certificate
-
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
-        )
-
-        transmission_audit = LearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=enrollment.id,
-            sapsf_user_id=None,
-            course_id=enrollment.course_id,
-            course_completed=True,
-            completed_timestamp=1483326245000,
-            grade='A-',
-        )
-        mock_sap_api.get_oauth_access_token.return_value = "token", datetime.datetime.utcnow()
-        mock_transmitter_instance = mock_sap_transmitter.return_value
-        mock_sap_transmitter.transmit.return_value = transmission_audit
-
-        # Ensure an inactive config doesn't transmit anything.
-        self.config.transmit_learner_data('dummy-user')
-        assert not mock_transmitter_instance.transmit.called
-
-        # Test that an active config transmits the expected data record
-        self.config.active = True
-        self.config.transmit_learner_data('dummy-user')
-        assert mock_transmitter_instance.transmit.called_with(transmission_audit)
 
 
 @mark.django_db
@@ -1441,20 +1357,80 @@ class TestSAPSuccessFactorsGlobalConfiguration(unittest.TestCase):
     Tests of the SAPSuccessFactorsGlobalConfiguration model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``SAPSuccessFactorsGlobalConfiguration`` conversion to string
         """
-        config = SAPSuccessFactorsGlobalConfiguration(
-            id=2,
-            completion_status_api_path='completion_status',
-            course_api_path='courses',
-            oauth_api_path='oauth'
+        config = factories.SAPSuccessFactorsGlobalConfigurationFactory(id=1)
+        expected_to_str = "<SAPSuccessFactorsGlobalConfiguration with id 1>"
+        assert expected_to_str == method(config)
+
+
+@mark.django_db
+@ddt.ddt
+class TestDegreedLearnerDataTransmissionAudit(unittest.TestCase):
+    """
+    Tests of the ``DegreedLearnerDataTransmissionAudit`` model.
+    """
+
+    @ddt.data(str, repr)
+    def test_string_conversion(self, method):
+        """
+        Test ``DegreedLearnerDataTransmissionAudit`` conversion to string
+        """
+        learner_audit = factories.DegreedLearnerDataTransmissionAuditFactory(
+            id=1,
+            enterprise_course_enrollment_id=5,
+            degreed_user_email='degreed_user_email',
+            course_id='course-v1:edX+DemoX+DemoCourse',
         )
-        expected_to_str = "<SAPSuccessFactorsGlobalConfiguration with id 2>"
+        expected_to_str = (
+            "<DegreedLearnerDataTransmissionAudit 1 for enterprise enrollment 5, email degreed_user_email, "
+            "and course course-v1:edX+DemoX+DemoCourse>"
+        )
+        assert expected_to_str == method(learner_audit)
+
+
+@mark.django_db
+@ddt.ddt
+class TestDegreedEnterpriseCustomerConfiguration(unittest.TestCase):
+    """
+    Tests of the DegreedEnterpriseCustomerConfiguration model.
+    """
+
+    def setUp(self):
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        self.config = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        super(TestDegreedEnterpriseCustomerConfiguration, self).setUp()
+
+    @ddt.data(str, repr)
+    def test_string_conversion(self, method):
+        """
+        Test ``DegreedEnterpriseCustomerConfiguration`` conversion to string
+        """
+        assert method(self.config) == "<DegreedEnterpriseCustomerConfiguration for Enterprise GriffCo>"
+
+    def test_channel_code(self):
+        assert self.config.channel_code() == 'DEGREED'
+
+
+@mark.django_db
+@ddt.ddt
+class TestDegreedGlobalConfiguration(unittest.TestCase):
+    """
+    Tests of the ``DegreedGlobalConfiguration`` model.
+    """
+
+    @ddt.data(str, repr)
+    def test_string_conversion(self, method):
+        """
+        Test ``DegreedGlobalConfiguration`` conversion to string
+        """
+        config = factories.DegreedGlobalConfigurationFactory(id=1)
+        expected_to_str = "<DegreedGlobalConfiguration with id 1>"
         assert expected_to_str == method(config)
 
 
@@ -1465,14 +1441,12 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
     Tests of the EnterpriseCustomerReportingConfiguration model.
     """
 
-    @ddt.data(
-        str, repr
-    )
+    @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
         Test ``EnterpriseCustomerReportingConfiguration`` conversion to string
         """
-        enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
         config = EnterpriseCustomerReportingConfiguration(
             enterprise_customer=enterprise_customer,
             active=True,
@@ -1511,7 +1485,7 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         """
         Test ``EnterpriseCustomerReportingConfiguration`` custom clean function
         """
-        enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
         config = EnterpriseCustomerReportingConfiguration(
             enterprise_customer=enterprise_customer,
             active=True,
@@ -1538,7 +1512,7 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         """
         Test ``EnterpriseCustomerReportingConfiguration`` custom save function
         """
-        enterprise_customer = EnterpriseCustomerFactory(name="GriffCo")
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
         config = EnterpriseCustomerReportingConfiguration(
             enterprise_customer=enterprise_customer,
             active=True,

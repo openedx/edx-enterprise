@@ -632,7 +632,7 @@ class CourseEnrollmentView(NonAtomicView):
             data_sharing_consent
     ):
         """
-        Render enterprise specific course track selection page.
+        Render enterprise-specific course track selection page.
         """
         platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
         html_template_for_rendering = 'enterprise/enterprise_course_enrollment_error_page.html'

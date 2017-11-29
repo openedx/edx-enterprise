@@ -49,6 +49,7 @@ setup(
         "consent",
         "integrated_channels",
         "integrated_channels.integrated_channel",
+        "integrated_channels.degreed",
         "integrated_channels.sap_success_factors",
     ],
     include_package_data=True,
