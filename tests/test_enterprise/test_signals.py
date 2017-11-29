@@ -154,3 +154,22 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Link have been created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Pending link should be kept"
+
+    @mock.patch('enterprise.utils.REGISTER_ENTERPRISE_USER.send')
+    def test_handle_user_post_save_send_regisnter_signal(self, register_user_mock):
+        email = "test_example@example.com"
+        user = UserFactory(id=1, email=email)
+        pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+
+        parameters = {"instance": user, "created": True}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=pending_link.enterprise_customer, user_id=user.id
+        ).count() == 1
+        # Check that your signal was called.
+        self.assertTrue(register_user_mock.called)
+
+        # Check that your signal was called only once.
+        self.assertEqual(register_user_mock.call_count, 1)

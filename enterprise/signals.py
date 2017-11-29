@@ -8,6 +8,7 @@ from logging import getLogger
 
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.utils import get_or_create_enterprise_learner
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -46,9 +47,9 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         except EnterpriseCustomerUser.DoesNotExist:
             pass  # everything ok - current user is not linked to other ECs
 
-    enterprise_customer_user = EnterpriseCustomerUser.objects.create(
+    enterprise_customer_user, __ = get_or_create_enterprise_learner(
         enterprise_customer=pending_ecu.enterprise_customer,
-        user_id=user_instance.id
+        user=user_instance
     )
     for enrollment in pending_ecu.pendingenrollment_set.all():
         # EnterpriseCustomers may enroll users in courses before the users themselves

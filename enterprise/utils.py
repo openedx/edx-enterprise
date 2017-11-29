@@ -26,6 +26,7 @@ from django.conf import settings
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
+from django.dispatch import Signal
 from django.http import Http404
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
@@ -49,6 +50,9 @@ except ImportError:
     Registry = None
 
 LOGGER = logging.getLogger(__name__)
+
+# Used to announce a enterprise learner registration
+REGISTER_ENTERPRISE_USER = Signal(providing_args=["user"])
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -740,3 +744,19 @@ def decrypt_string(string, iv):   # pylint: disable=invalid-name
     cipher = Cipher(AES(key), CFB(iv), backend=default_backend())
     decryptor = cipher.decryptor()
     return decryptor.update(string) + decryptor.finalize()
+
+
+def get_or_create_enterprise_learner(enterprise_customer, user):
+    """
+    Retrieve or create the enterprise customer learner for the given parameters.
+    """
+    EnterpriseCustomerUser = apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+    enterprise_customer_user, created = EnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer=enterprise_customer,
+        user_id=user.id
+    )
+    if created:
+        # Announce registration
+        REGISTER_ENTERPRISE_USER.send(sender=None, user=user)
+
+    return enterprise_customer_user, created

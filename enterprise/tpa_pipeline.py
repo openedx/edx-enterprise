@@ -4,6 +4,7 @@ Module provides elements to be used in third-party auth pipeline.
 from __future__ import absolute_import, unicode_literals
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.utils import REGISTER_ENTERPRISE_USER
 
 try:
     from social_core.pipeline.partial import partial
@@ -62,7 +63,10 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         return
 
     # proceed with the creation of a link between the user and the enterprise customer, then exit.
-    EnterpriseCustomerUser.objects.update_or_create(
+    __, created = EnterpriseCustomerUser.objects.update_or_create(
         enterprise_customer=enterprise_customer,
         user_id=user.id
     )
+    if created:
+        # Announce the registration
+        REGISTER_ENTERPRISE_USER.send(sender=None, user=user)
