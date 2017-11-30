@@ -65,6 +65,8 @@ class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
             # JSON Dump to be POST'd
             json.dumps({
                 'courses': [{
+                    'Url': 'http://lms.example.com/enterprise/' + str(self.enterprise_customer.uuid) +
+                           '/course/course-v1:edX+DemoX+Demo_Course_1/enroll/',
                     'authors': [],
                     'categoryTags': [],
                     'contentId': 'course-v1:edX+DemoX+Demo_Course_1',
@@ -78,8 +80,6 @@ class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
                     'language': 'en',
                     'publishDate': '2013-02-05',
                     'title': 'edX Demonstration Course',
-                    'url': 'http://lms.example.com/enterprise/' + str(self.enterprise_customer.uuid) +
-                           '/course/course-v1:edX+DemoX+Demo_Course_1/enroll/',
                     'videoUrl': '',
                 }],
                 'orgCode': self.config.degreed_company_id,

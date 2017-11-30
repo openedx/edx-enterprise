@@ -68,7 +68,7 @@ class DegreedCourseExporter(CourseExporter):  # pylint: disable=abstract-method
             'contentId': self.transform_course_id,
             'authors': self.transform_authors,
             'categoryTags': self.transform_category_tags,
-            'url': self.transform_url,
+            'Url': self.transform_url,
             'imageUrl': self.transform_image_url,
             'videoUrl': self.transform_video_url,
             'title': self.transform_title,

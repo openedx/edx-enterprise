@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.2] - 2017-11-30
+---------------------
+
+* Patch for Degreed -- use `Url` rather than `url` for course metadata.
+
 [0.55.1] - 2017-11-30
 ---------------------
 
