@@ -42,7 +42,7 @@ from enterprise.utils import (
     get_enterprise_customer_user,
     get_program_type_description,
     is_course_run_enrollable,
-    track_event,
+    track_enrollment,
     ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
@@ -373,10 +373,13 @@ class GrantDataSharingPermissions(View):
                     enterprise_customer=consent_record.enterprise_customer,
                     user_id=request.user.id
                 )
-                EnterpriseCourseEnrollment.objects.update_or_create(
+                __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
                 )
+                if created:
+                    track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
+
             consent_record.granted = consent_provided
             consent_record.save()
 
@@ -431,10 +434,13 @@ class HandleConsentEnrollment(View):
 
         # Create the Enterprise backend database records for this course
         # enrollment
-        EnterpriseCourseEnrollment.objects.update_or_create(
+        __, created = EnterpriseCourseEnrollment.objects.get_or_create(
             enterprise_customer_user=enterprise_customer_user,
             course_id=course_id,
         )
+        if created:
+            track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
+
         DataSharingConsent.objects.update_or_create(
             username=enterprise_customer_user.username,
             course_id=course_id,
@@ -788,10 +794,11 @@ class CourseEnrollmentView(NonAtomicView):
             # client and redirect the learner to LMS courseware page.
             if not enterprise_course_enrollment:
                 # Create the Enterprise backend database records for this course enrollment.
-                EnterpriseCourseEnrollment.objects.create(
+                enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
                 )
+                track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
 
             client = EnrollmentApiClient()
             client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
@@ -1305,11 +1312,7 @@ class RouterView(NonAtomicView):
         if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
             try:
                 enterprise_customer_user.enroll(resource_id, 'audit')
-                track_event(request.user.id, 'edx.bi.user.enterprise.onboarding', {
-                    'pathway': 'direct-audit-enrollment',
-                    'url_path': request.path,
-                    'course_run_id': resource_id,
-                })
+                track_enrollment('direct-audit-enrollment', request.user.id, resource_id, request.get_full_path())
             except CourseEnrollmentDowngradeError:
                 pass
             # The courseware view logic will check for DSC requirements, and route to the DSC page if necessary.

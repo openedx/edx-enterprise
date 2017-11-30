@@ -92,8 +92,9 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
         ).count() == 1
 
+    @mock.patch('enterprise.signals.track_enrollment')
     @mock.patch('enterprise.api_client.lms.CourseEnrollment')
-    def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment):
+    def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment, mock_track_enrollment):
         mock_course_enrollment.enroll.return_value = None
         email = "fake_email@edx.org"
         user = UserFactory(id=1, email=email)
@@ -118,6 +119,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         mock_course_enrollment.enroll.assert_called_once_with(
             user, CourseKey.from_string(course_id), mode='audit', check_access=True
         )
+        mock_track_enrollment.assert_called_once_with('pending-admin-enrollment', user.id, course_id)
 
     def test_handle_user_post_save_modified_user_already_linked(self):
         email = "jackie.chan@hollywood.com"

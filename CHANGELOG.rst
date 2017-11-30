@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.1] - 2017-11-30
+---------------------
+
+* Track enterprise course enrollment events.
+
 [0.55.0] - 2017-11-29
 ---------------------
 

@@ -179,12 +179,14 @@ class TestHandleConsentEnrollmentView(TestCase):
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
+    @mock.patch('enterprise.views.track_enrollment')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_audit_course_mode(
             self,
             registry_mock,
             enrollment_api_client_mock,
+            track_enrollment_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -225,13 +227,22 @@ class TestHandleConsentEnrollmentView(TestCase):
             course_id=course_id
         ).exists())
 
+        track_enrollment_mock.assert_called_once_with(
+            'course-landing-page-enrollment',
+            enterprise_customer_user.user_id,
+            course_id,
+            handle_consent_enrollment_url,
+        )
+
     @mock.patch('enterprise.views.ProgramDataExtender')
+    @mock.patch('enterprise.views.track_enrollment')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_professional_course_mode(
             self,
             registry_mock,
             enrollment_api_client_mock,
+            track_enrollment_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -271,3 +282,10 @@ class TestHandleConsentEnrollmentView(TestCase):
             enterprise_customer_user__user_id=enterprise_customer_user.user_id,
             course_id=course_id
         ).exists())
+
+        track_enrollment_mock.assert_called_once_with(
+            'course-landing-page-enrollment',
+            enterprise_customer_user.user_id,
+            course_id,
+            handle_consent_enrollment_url,
+        )

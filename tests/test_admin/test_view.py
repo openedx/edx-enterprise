@@ -482,10 +482,19 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         })
         return response
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enroll_user(self, forms_client, views_client, course_catalog_client):
+    @ddt.data(True, False)
+    def test_post_enroll_user(
+            self,
+            enrollment_exists,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
             "title": "Cool Science",
@@ -499,13 +508,25 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
+        if enrollment_exists:
+            enterprise_customer_user = EnterpriseCustomerUser.objects.create(
+                enterprise_customer=self.enterprise_customer,
+                user_id=user.id,
+            )
+            EnterpriseCourseEnrollment.objects.create(
+                enterprise_customer_user=enterprise_customer_user,
+                course_id=course_id,
+            )
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_with(
+        views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
         )
+        if enrollment_exists:
+            track_enrollment.assert_not_called()
+        else:
+            track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
@@ -518,7 +539,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 1
 
-    def _post_multi_enroll(self, forms_client, views_client, course_catalog_client, create_user):
+    def _post_multi_enroll(self, forms_client, views_client, course_catalog_client, track_enrollment, create_user):
         """
         Enroll an enterprise learner or pending learner in multiple courses.
         """
@@ -556,11 +577,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 response = self._enroll_user_request(user, mode, course_id=course_id)
                 if enrollment_count == 1:
                     views_instance.enroll_user_in_course.assert_called_once()
+                    track_enrollment.assert_called_once()
                 views_instance.enroll_user_in_course.assert_called_with(
                     user.username,
                     course_id,
                     mode,
                 )
+                track_enrollment.assert_called_with('admin-enrollment', user.id, course_id)
                 self._assert_django_messages(response, set([
                     (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
                 ]))
@@ -581,28 +604,31 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             num_messages = len(mail.outbox)
             assert num_messages == enrollment_count
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_multi_enroll_user(self, forms_client, views_client, course_catalog_client):
+    def test_post_multi_enroll_user(self, forms_client, views_client, course_catalog_client, track_enrollment):
         """
         Test that an existing learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(forms_client, views_client, course_catalog_client, True)
+        self._post_multi_enroll(forms_client, views_client, course_catalog_client, track_enrollment, True)
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_multi_enroll_pending_user(self, forms_client, views_client, course_catalog_client):
+    def test_post_multi_enroll_pending_user(self, forms_client, views_client, course_catalog_client, track_enrollment):
         """
         Test that a pending learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(forms_client, views_client, course_catalog_client, False)
+        self._post_multi_enroll(forms_client, views_client, course_catalog_client, track_enrollment, False)
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enroll_no_course_detail(self, forms_client, views_client, course_catalog_client):
+    def test_post_enroll_no_course_detail(self, forms_client, views_client, course_catalog_client, track_enrollment):
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -614,12 +640,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_with(
+        views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
         )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
@@ -632,10 +658,17 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enroll_with_missing_course_start_date(self, forms_client, views_client, course_catalog_client):
+    def test_post_enroll_with_missing_course_start_date(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         """
         Test that learner is added successfully if course does not have a start date.
 
@@ -657,12 +690,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_with(
+        views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
         )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         self._assert_django_messages(response, set([
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
         ]))
@@ -737,6 +770,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         ]))
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
@@ -744,7 +778,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             self,
             catalog_client,
             views_client,
-            views_catalog_client
+            views_catalog_client,
+            track_enrollment,
     ):
         views_catalog_instance = views_catalog_client.return_value
         views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
@@ -759,6 +794,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         mode = "professional"
         response = self._enroll_user_request(user, mode, program_id=program["uuid"], notify=True)
         assert views_instance.enroll_user_in_course.call_count == len(expected_courses)
+        assert track_enrollment.call_count == len(expected_courses)
         self._assert_django_messages(response, set(
             [
                 (messages.SUCCESS, "1 learner was enrolled in {}.".format('Program2'))
@@ -1016,10 +1052,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
         ]))
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_link_and_enroll(self, forms_client, views_client, course_catalog_client):
+    def test_post_link_and_enroll(self, forms_client, views_client, course_catalog_client, track_enrollment):
         """
         Test bulk upload with linking and enrolling
         """
@@ -1043,12 +1080,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
-        views_instance.enroll_user_in_course.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_with(
+        views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             course_mode
         )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         pending_user_message = (
             "The following learners do not have an account on Test platform. "
             "They have not been enrolled in {}. When these learners create an "
@@ -1063,10 +1100,17 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 2
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_link_and_enroll_no_course_details(self, forms_client, views_client, course_catalog_client):
+    def test_post_link_and_enroll_no_course_details(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         """
         Test bulk upload with linking and enrolling
         """
@@ -1087,12 +1131,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
-        views_instance.enroll_user_in_course.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_with(
+        views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             course_mode
         )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         pending_user_message = (
             "The following learners do not have an account on Test platform. "
             "They have not been enrolled in {}. When these learners create an "
@@ -1107,6 +1151,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
@@ -1117,6 +1162,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             forms_client,
             views_client,
             views_catalog_client,
+            track_enrollment,
     ):
         """
         Test bulk upload with linking and enrolling
@@ -1140,12 +1186,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course=course_id, course_mode=course_mode, notify=False)
 
-        views_instance.enroll_user_in_course.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_with(
+        views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             course_mode
         )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
         pending_user_message = (
             "The following learners do not have an account on Test platform. They have not been enrolled in {}. "
             "When these learners create an account, they will be enrolled automatically: {}"
@@ -1159,10 +1205,17 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
+    @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
-    def test_post_link_and_enroll_into_program(self, catalog_client, views_client, views_catalog_client):
+    def test_post_link_and_enroll_into_program(
+            self,
+            catalog_client,
+            views_client,
+            views_catalog_client,
+            track_enrollment,
+    ):
         """
         Test bulk upload with linking and enrolling
         """
@@ -1190,6 +1243,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 course_id,
                 course_mode
             )
+        assert track_enrollment.call_count == len(expected_courses)
+        for course_id in expected_courses:
+            track_enrollment.assert_any_call('admin-enrollment', user.id, course_id)
         pending_user_message = (
             "The following learners do not have an account on Test platform. They have not been enrolled in Program2. "
             "When these learners create an account, they will be enrolled automatically: {}"

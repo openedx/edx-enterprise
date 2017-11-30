@@ -42,7 +42,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import get_configuration_value_for_site, send_email_notification_message
+from enterprise.utils import get_configuration_value_for_site, send_email_notification_message, track_enrollment
 
 
 class TemplatePreviewView(View):
@@ -346,10 +346,12 @@ class EnterpriseCustomerManageLearnersView(View):
                     dict(user=user.username, message=error_message)
                 )
             else:
-                EnterpriseCourseEnrollment.objects.get_or_create(
+                __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id
                 )
+                if created:
+                    track_enrollment('admin-enrollment', user.id, course_id)
         return succeeded
 
     @classmethod

@@ -118,7 +118,6 @@ class Command(BaseCommand):
                     enterprise_customer_user=enterprise_learner,
                     course_id=course_id,
                 )
-
                 if created:
                     ent_course_enrollments_count += 1
 
