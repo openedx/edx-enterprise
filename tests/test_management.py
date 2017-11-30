@@ -171,13 +171,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
 
         degreed_expected_dump = (
-            '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_id_for_success + '", '
+            '{"courses": [{"Url": "' + settings.LMS_ROOT_URL + '/enterprise/'
+            + enterprise_uuid_for_success + '/course/' + course_run_id_for_success + '/enroll/", '
+            '"authors": [], "categoryTags": [], "contentId": "' + course_run_id_for_success + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", '
             '"publishDate": "2013-02-05", "title": "edX Demonstration Course", '
-            '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/course/'
-            '' + course_run_id_for_success + '/enroll/", "videoUrl": ""}], '
-            '"orgCode": "Degreed Company", "providerCode": "DEGREED"}'
+            '"videoUrl": ""}], "orgCode": "Degreed Company", "providerCode": "DEGREED"}'
         )
         sapsf_expected_dump = (
             '{"ocnCourses": [{"content": [{"contentID": "' + course_run_id_for_success + '", '
@@ -263,16 +263,18 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
 
         degreed_expected_dump = (
-            '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_ids[0] + '", '
+            '{"courses": [{"Url": "' + settings.LMS_ROOT_URL + '/enterprise/'
+            '' + uuid + '/course/' + course_run_ids[0] + '/enroll/", "authors": [], '
+            '"categoryTags": [], "contentId": "' + course_run_ids[0] + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
-            '' + uuid + '/course/' + course_run_ids[0] + '/enroll/", '
-            '"videoUrl": ""}, {"authors": [], "categoryTags": [], "contentId": "'+course_run_ids[1]+'", '
+            '"title": "edX Demonstration Course", '
+            '"videoUrl": ""}, {"Url": "' + settings.LMS_ROOT_URL + '/enterprise/'
+            '' + uuid + '/course/' + course_run_ids[1] + '/enroll/", "authors": [], "categoryTags": [], '
+            '"contentId": "' + course_run_ids[1] + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
-            '' + uuid + '/course/' + course_run_ids[1] + '/enroll/", '
+            '"title": "edX Demonstration Course", '
             '"videoUrl": ""}], "orgCode": "Degreed Company", "providerCode": "DEGREED"}'
         )
         sapsf_expected_dump = (
