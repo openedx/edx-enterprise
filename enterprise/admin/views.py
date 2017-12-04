@@ -24,7 +24,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
 
-from enterprise.admin.forms import ManageLearnersForm
+from enterprise.admin.forms import ManageAdminsForm, ManageAdminUserPermissionsForm, ManageLearnersForm
 from enterprise.admin.utils import (
     ValidationMessages,
     email_or_username__to__email,
@@ -773,3 +773,270 @@ class EnterpriseCustomerManageLearnersView(View):
             json.dumps({}),
             content_type="application/json"
         )
+
+
+class EnterpriseCustomerManageAdminsView(View):
+    """
+    Manage Admins view.
+
+    Lists admin users linked to chosen Enterprise Customer and allows adding and deleting them.
+    """
+    template = "enterprise/admin/manage_admins.html"
+
+    class ContextParameters(object):
+        """
+        Namespace-style class for custom context parameters.
+        """
+        ENTERPRISE_CUSTOMER = "enterprise_customer"
+        ADMINS = "admins"
+        MANAGE_ADMINS_FORM = "manage_admins_form"
+        ENROLLMENT_URL = 'ENROLLMENT_API_ROOT_URL'
+
+    @staticmethod
+    def _build_admin_context(request, customer):
+        """
+        Build common admin context.
+        """
+        opts = customer._meta
+        codename = get_permission_codename("change", opts)
+        has_change_permission = request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return {
+            "has_change_permission": has_change_permission,
+            "opts": opts
+        }
+
+    def _build_context(self, request, customer_uuid):
+        """
+        Build common context parts used by different handlers in this view.
+        """
+        # TODO: pylint acts stupid - find a way around it without suppressing
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+
+        linked_admins = self.get_enterprise_customer_user_queryset(customer_uuid)
+
+        context = {
+            self.ContextParameters.ENTERPRISE_CUSTOMER: enterprise_customer,
+            self.ContextParameters.ADMINS: linked_admins,
+            self.ContextParameters.ENROLLMENT_URL: settings.LMS_ENROLLMENT_API_PATH,
+        }
+        context.update(admin.site.each_context(request))
+        context.update(self._build_admin_context(request, enterprise_customer))
+        return context
+
+    def get_enterprise_customer_user_queryset(self, customer_uuid):
+        """
+        Get the list of EnterpriseCustomerUsers we want to render.
+
+        Args:
+            customer_uuid (str): A unique identifier to filter down to only users linked to a
+            particular EnterpriseCustomer.
+        """
+        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
+        # TODO: Filter on presence of view permissions
+
+        return learners
+
+    @classmethod
+    def _handle_singular(cls, enterprise_customer, manage_learners_form):
+        """
+        Link single user by email or username.
+
+        Arguments:
+            enterprise_customer (EnterpriseCustomer): learners will be linked to this Enterprise Customer instance
+            manage_learners_form (ManageAdminsForm): bound ManageLearners form instance
+        """
+        form_field_value = manage_learners_form.cleaned_data[ManageAdminsForm.Fields.EMAIL_OR_USERNAME]
+        email = email_or_username__to__email(form_field_value)
+        try:
+            validate_email_to_link(email, form_field_value, ValidationMessages.INVALID_EMAIL_OR_USERNAME, True)
+        except ValidationError as exc:
+            manage_learners_form.add_error(ManageAdminsForm.Fields.EMAIL_OR_USERNAME, exc)
+        else:
+            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+            return [email]
+
+    def get(self, request, customer_uuid):
+        """
+        Handle GET request - render admin users list and "Link admin" form.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        context = self._build_context(request, customer_uuid)
+        manage_admins_form = ManageAdminsForm(
+            user=request.user,
+            enterprise_customer=context[self.ContextParameters.ENTERPRISE_CUSTOMER]
+        )
+        context.update({self.ContextParameters.MANAGE_ADMINS_FORM: manage_admins_form})
+
+        return render(request, self.template, context)
+
+    def post(self, request, customer_uuid):
+        """
+        Handle POST request - handle form submissions.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        manage_admins_form = ManageAdminsForm(
+            request.POST,
+            user=request.user,
+            enterprise_customer=enterprise_customer
+        )
+
+        # initial form validation - check that form data is well-formed
+        if manage_admins_form.is_valid():
+            # The form is valid. Call the appropriate helper depending on the mode:
+            linked_learners = self._handle_singular(enterprise_customer, manage_admins_form)
+            # TODO: Grant basic permissions to the newly linked user.
+
+            # Redirect to GET if everything went smooth.
+            return HttpResponseRedirect("")
+
+        # if something went wrong - display bound form on the page
+        context = self._build_context(request, customer_uuid)
+        context.update({self.ContextParameters.MANAGE_ADMINS_FORM: manage_admins_form})
+        return render(request, self.template, context)
+
+
+class EnterpriseCustomerUserAdminPermissionsView(View):
+    """
+    Manage Admin User Permissions view.
+
+    Allows management of permissions to access Enterprise resources..
+    """
+    template = "enterprise/admin/manage_admin_user_permissions.html"
+
+    class ContextParameters(object):
+        """
+        Namespace-style class for custom context parameters.
+        """
+        ENTERPRISE_CUSTOMER = "enterprise_customer"
+        ADMINS = "admins"
+        MANAGE_ADMINS_FORM = "manage_admins_form"
+        ENROLLMENT_URL = 'ENROLLMENT_API_ROOT_URL'
+
+    @staticmethod
+    def _build_admin_context(request, customer):
+        """
+        Build common admin context.
+        """
+        opts = customer._meta
+        codename = get_permission_codename("change", opts)
+        has_change_permission = request.user.has_perm("%s.%s" % (opts.app_label, codename))
+        return {
+            "has_change_permission": has_change_permission,
+            "opts": opts
+        }
+
+    def _build_context(self, request, customer_uuid):
+        """
+        Build common context parts used by different handlers in this view.
+        """
+        # TODO: pylint acts stupid - find a way around it without suppressing
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+
+        linked_admins = self.get_enterprise_customer_user_queryset(customer_uuid)
+
+        context = {
+            self.ContextParameters.ENTERPRISE_CUSTOMER: enterprise_customer,
+            self.ContextParameters.ADMINS: linked_admins,
+            self.ContextParameters.ENROLLMENT_URL: settings.LMS_ENROLLMENT_API_PATH,
+        }
+        context.update(admin.site.each_context(request))
+        context.update(self._build_admin_context(request, enterprise_customer))
+        return context
+
+    def get_enterprise_customer_user_queryset(self, customer_uuid):
+        """
+        Get the list of EnterpriseCustomerUsers we want to render.
+
+        Args:
+            search_keyword (str): The keyword to search for in users' email addresses and usernames.
+            customer_uuid (str): A unique identifier to filter down to only users linked to a
+            particular EnterpriseCustomer.
+        """
+        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
+        # TODO: Filter on presence of view permissions
+
+        return learners
+
+    @classmethod
+    def _handle_singular(cls, enterprise_customer, manage_learners_form):
+        """
+        Link single user by email or username.
+
+        Arguments:
+            enterprise_customer (EnterpriseCustomer): learners will be linked to this Enterprise Customer instance
+            manage_learners_form (ManageAdminUserPermissionsForm): bound ManageLearners form instance
+        """
+        form_field_value = manage_learners_form.cleaned_data[ManageAdminUserPermissionsForm.Fields.EMAIL_OR_USERNAME]
+        email = email_or_username__to__email(form_field_value)
+        try:
+            validate_email_to_link(email, form_field_value, ValidationMessages.INVALID_EMAIL_OR_USERNAME, True)
+        except ValidationError as exc:
+            manage_learners_form.add_error(ManageAdminUserPermissionsForm.Fields.EMAIL_OR_USERNAME, exc)
+        else:
+            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+            return [email]
+
+    def get(self, request, customer_uuid):
+        """
+        Handle GET request - render admin users list and "Link admin" form.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        context = self._build_context(request, customer_uuid)
+        manage_admins_form = ManageAdminUserPermissionsForm(
+            user=request.user,
+            enterprise_customer=context[self.ContextParameters.ENTERPRISE_CUSTOMER]
+        )
+        context.update({self.ContextParameters.MANAGE_ADMINS_FORM: manage_admins_form})
+
+        return render(request, self.template, context)
+
+    def post(self, request, customer_uuid):
+        """
+        Handle POST request - handle form submissions.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        manage_admins_form = ManageAdminUserPermissionsForm(
+            request.POST,
+            request.FILES,
+            user=request.user,
+            enterprise_customer=enterprise_customer
+        )
+
+        # initial form validation - check that form data is well-formed
+        if manage_admins_form.is_valid():
+            # The form is valid. Call the appropriate helper depending on the mode:
+            linked_learners = self._handle_singular(enterprise_customer, manage_admins_form)
+
+            # Redirect to GET if everything went smooth.
+            return HttpResponseRedirect("")
+
+        # if something went wrong - display bound form on the page
+        context = self._build_context(request, customer_uuid)
+        context.update({self.ContextParameters.MANAGE_ADMINS_FORM: manage_admins_form})
+        return render(request, self.template, context)

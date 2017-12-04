@@ -31,6 +31,8 @@ class UrlNames(object):
     """
     URL_PREFIX = "enterprise_"
     MANAGE_LEARNERS = URL_PREFIX + "manage_learners"
+    MANAGE_ADMINS = URL_PREFIX + "manage_admins"
+    MANAGE_ADMIN_USER_PERMISSIONS = URL_PREFIX + "manage_admin_user_permissions"
     PREVIEW_EMAIL_TEMPLATE = URL_PREFIX + "preview_email_template"
 
 
