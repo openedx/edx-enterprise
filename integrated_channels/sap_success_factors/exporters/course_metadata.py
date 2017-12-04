@@ -9,6 +9,7 @@ import json
 import os
 from logging import getLogger
 
+from enterprise.api_client.lms import parse_lms_api_datetime
 from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
 from integrated_channels.sap_success_factors.constants import SUCCESSFACTORS_OCN_LANGUAGE_CODES
 from integrated_channels.utils import (
@@ -111,11 +112,15 @@ class SapSuccessFactorsCourseExporter(CourseExporter):  # pylint: disable=abstra
 
     def transform_title(self, course_run):
         """
-        Return the transformed version of the course title, as well as the locale.
+        Return the transformed version of the course title, as well as the locale. For all instructor-paced courses
+        also include the start date to distinguish multiple runs of the same course (ENT-782)
         """
+        title = course_run.get('title') or ''
+        if course_run.get('pacing_type') == 'instructor_paced' and course_run.get('start'):
+            title += ' (Starts: {:%B %Y})'.format(parse_lms_api_datetime(course_run.get('start')))
         return [{
             'locale': self.transform_language_code(course_run.get('content_language')),
-            'value': course_run.get('title') or ''
+            'value':  title
         }]
 
     def transform_description(self, course_run):
