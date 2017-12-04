@@ -11,6 +11,7 @@ from uuid import UUID
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from dateutil.parser import parse
+from ipware.ip import get_ip
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -28,7 +29,7 @@ from django.views.generic import View
 from enterprise import messages
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
 from enterprise.utils import (
@@ -871,6 +872,11 @@ class CourseEnrollmentView(NonAtomicView):
             * No course is found in database against the provided `course_id`.
 
         """
+        # Check to see if access to the course run is restricted for this user.
+        embargo_url = EmbargoApiClient.redirect_if_blocked([course_id], request.user, get_ip(request), request.path)
+        if embargo_url:
+            return redirect(embargo_url)
+
         enterprise_customer, course, course_run, modes = self.get_base_details(
             request, enterprise_uuid, course_id
         )
@@ -1177,6 +1183,15 @@ class ProgramEnrollmentView(NonAtomicView):
         if program_details['certificate_eligible_for_program']:
             # The user is already enrolled in the program, so redirect to the program's dashboard.
             return redirect(LMS_PROGRAMS_DASHBOARD_URL.format(uuid=program_uuid))
+
+        # Check to see if access to any of the course runs in the program are restricted for this user.
+        course_run_ids = []
+        for course in program_details['courses']:
+            for course_run in course['course_runs']:
+                course_run_ids.append(course_run['key'])
+        embargo_url = EmbargoApiClient.redirect_if_blocked(course_run_ids, request.user, get_ip(request), request.path)
+        if embargo_url:
+            return redirect(embargo_url)
 
         return self.get_enterprise_program_enrollment_page(request, enterprise_customer, program_details)
 

@@ -32,12 +32,12 @@ from test_utils.factories import (
     UserFactory,
 )
 from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN, setup_course_catalog_api_client_mock
-from test_utils.mixins import MessagesMixin
+from test_utils.mixins import EmbargoAPIMixin, MessagesMixin
 
 
 @mark.django_db
 @ddt.ddt
-class TestCourseEnrollmentView(MessagesMixin, TestCase):
+class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
     """
     Test CourseEnrollmentView.
     """
@@ -144,6 +144,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint: disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -154,11 +155,13 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -195,6 +198,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -216,6 +220,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             catalog_api_client_views_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -229,6 +234,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         setup_course_catalog_api_client_mock(catalog_api_client_views_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -318,6 +324,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -328,6 +335,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             catalog_api_client_views_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -341,6 +349,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         setup_course_catalog_api_client_mock(catalog_api_client_views_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -382,6 +391,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -394,6 +404,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             catalog_api_client_views_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -408,6 +419,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         setup_course_catalog_api_client_mock(catalog_api_client_views_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -469,6 +481,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -481,6 +494,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -489,6 +503,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -540,6 +555,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -552,6 +568,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -562,6 +579,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         })
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -608,6 +626,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -618,6 +637,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -628,6 +648,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         })
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -648,6 +669,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -658,6 +680,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         setup_course_catalog_api_client_mock(
@@ -667,6 +690,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
         self._setup_ecommerce_client(ecommerce_api_client_mock, 30.1)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -706,6 +730,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -716,6 +741,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         setup_course_catalog_api_client_mock(
@@ -725,6 +751,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
         self._setup_ecommerce_client(ecommerce_api_client_mock, 30.1)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -765,6 +792,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -775,11 +803,13 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
@@ -827,6 +857,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -837,6 +868,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -854,6 +886,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
+        self._setup_embargo_api(embargo_api_mock)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = reverse(
             'enterprise_course_enrollment_page',
@@ -871,6 +904,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint: disable=no-member
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -879,6 +913,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             registry_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -889,6 +924,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         course_client.get_course_and_course_run.return_value = (None, None)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = {}
+        self._setup_embargo_api(embargo_api_mock)
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -913,6 +949,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._assert_django_test_client_messages(response, expected_log_messages)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -921,6 +958,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             registry_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -931,6 +969,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         course_client.get_course_and_course_run.side_effect = ImproperlyConfigured
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = {}
+        self._setup_embargo_api(embargo_api_mock)
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -955,6 +994,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._assert_django_test_client_messages(response, expected_log_messages)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -963,6 +1003,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             registry_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -972,6 +1013,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         setup_course_catalog_api_client_mock(catalog_api_client_mock)
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = {}
+        self._setup_embargo_api(embargo_api_mock)
 
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1063,6 +1105,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         for fragment in expected_fragments:
             assert fragment in response.url
 
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
@@ -1071,6 +1114,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             registry_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
@@ -1082,6 +1126,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
         enrollment_client.get_course_enrollment.return_value = {"course_details": {"course_id": course_id}}
+        self._setup_embargo_api(embargo_api_mock)
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -1432,6 +1477,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -1442,6 +1488,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         # Set up Ecommerce API client that returns an error
@@ -1450,6 +1497,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         attrs = {method_name + '.side_effect': HttpClientError()}
         broken_price_details_mock.configure_mock(**attrs)
         ecommerce_api_client_mock.return_value = broken_price_details_mock
+        self._setup_embargo_api(embargo_api_mock)
 
         # Set up course catalog API client
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
@@ -1495,6 +1543,7 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
@@ -1503,8 +1552,10 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             course_catalog_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
+        self._setup_embargo_api(embargo_api_mock)
 
         # Set up course catalog API client
         setup_course_catalog_api_client_mock(course_catalog_client_mock)
@@ -1557,3 +1608,34 @@ class TestCourseEnrollmentView(MessagesMixin, TestCase):
         self._login()
         response = self.client.get(enterprise_landing_page_url)
         self._check_expected_enrollment_page(response, expected_context)
+
+    @mock.patch('enterprise.api_client.lms.embargo_api')
+    @mock.patch('enterprise.utils.Registry')
+    def test_embargo_restriction(
+            self,
+            registry_mock,
+            embargo_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        self._setup_embargo_api(embargo_api_mock, redirect_url=self.EMBARGO_REDIRECT_URL)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+
+        enterprise_landing_page_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[enterprise_customer.uuid, self.demo_course_id],
+        )
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        assert response.status_code == 302
+        self.assertRedirects(
+            response,
+            self.EMBARGO_REDIRECT_URL,
+            fetch_redirect_response=False
+        )

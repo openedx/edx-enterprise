@@ -27,6 +27,11 @@ except ImportError:
     CourseEnrollment = None
 
 try:
+    from openedx.core.djangoapps.embargo import api as embargo_api
+except ImportError:
+    embargo_api = None
+
+try:
     from openedx.core.lib.token_utils import JwtBuilder
 except ImportError:
     JwtBuilder = None
@@ -110,6 +115,27 @@ class JwtLmsApiClient(object):
                 self.connect()
             return func(self, *args, **kwargs)
         return inner
+
+
+class EmbargoApiClient(object):
+    """
+    Client interface for using the edx-platform embargo API.
+    """
+
+    @staticmethod
+    def redirect_if_blocked(course_run_ids, user=None, ip_address=None, url=None):
+        """
+        Return redirect to embargo error page if the given user is blocked.
+        """
+        for course_run_id in course_run_ids:
+            redirect_url = embargo_api.redirect_if_blocked(
+                CourseKey.from_string(course_run_id),
+                user=user,
+                ip_address=ip_address,
+                url=url
+            )
+            if redirect_url:
+                return redirect_url
 
 
 class EnrollmentApiClient(LmsApiClient):
