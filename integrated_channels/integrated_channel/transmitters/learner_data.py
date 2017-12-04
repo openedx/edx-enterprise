@@ -80,8 +80,22 @@ class LearnerTransmitter(Transmitter):
             except RequestException as request_exception:
                 code = 500
                 body = str(request_exception)
-                LOGGER.error('Failed to send completion status call for enterprise enrollment {} with payload {}'
-                             '\nError message: {}'.format(enterprise_enrollment_id, learner_data, body))
+                try:
+                    sys_msg = request_exception.response.content
+                except AttributeError:
+                    sys_msg = 'Not available'
+                LOGGER.error(
+                    (
+                        'Failed to send completion status call for enterprise enrollment %s'
+                        'with payload %s'
+                        '\nError message: %s'
+                        '\nSystem message: %s'
+                    ),
+                    enterprise_enrollment_id,
+                    learner_data,
+                    body,
+                    sys_msg
+                )
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''

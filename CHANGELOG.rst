@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.2] - 2017-12-04
+---------------------
+
+* Include additional context for learner data transmission job exceptions.
+
 [0.55.1] - 2017-11-30
 ---------------------
 
