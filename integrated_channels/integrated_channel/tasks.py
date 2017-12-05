@@ -38,7 +38,11 @@ def transmit_course_metadata(username, channel_code, channel_pk):
             'channel with code [%s] and id [%s].', username, channel_code, channel_pk
         )
     duration = time.time() - start
-    LOGGER.info("Course metadata transmission task took [%s] seconds", duration)
+    LOGGER.info(
+        'Course metadata transmission task for integrated channel configuration [%s] took [%s] seconds',
+        integrated_channel,
+        duration
+    )
 
 
 @shared_task
@@ -62,4 +66,8 @@ def transmit_learner_data(username, channel_code, channel_pk):
     integrated_channel.transmit_learner_data(api_user)
 
     duration = time.time() - start
-    LOGGER.info("Learner data transmission task took [%s] seconds", duration)
+    LOGGER.info(
+        'Learner data transmission task for integrated channel configuration [%s] took [%s] seconds',
+        integrated_channel,
+        duration
+    )
