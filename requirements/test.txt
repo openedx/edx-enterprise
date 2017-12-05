@@ -57,6 +57,7 @@ python-dateutil==2.6.1    # via analytics-python, edx-drf-extensions, faker, fre
 pytz==2017.3              # via celery, event-tracking
 requests==2.9.1
 responses==0.8.1
+rules==1.2.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via analytics-python, cryptography, edx-opaque-keys, faker, freezegun, mock, pytest, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client

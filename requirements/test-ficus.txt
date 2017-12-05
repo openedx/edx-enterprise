@@ -37,7 +37,7 @@ flaky==3.3.0
 freezegun==0.3.9
 funcsigs==1.0.2           # via mock, pytest
 idna==2.6                 # via cryptography
-ipaddress==1.0.18         # via faker
+ipaddress==1.0.18         # via cryptography, faker
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
 mock==2.0.0
@@ -57,6 +57,7 @@ python-dateutil==2.6.1    # via analytics-python, edx-drf-extensions, faker, fre
 pytz==2017.3              # via celery, event-tracking
 requests==2.9.1
 responses==0.8.1
+rules==1.2.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via analytics-python, cryptography, edx-opaque-keys, faker, freezegun, mock, pytest, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client

@@ -667,6 +667,13 @@ class PendingEnrollment(TimeStampedModel):
         course_mode = self.course_mode
         enroll_user_in_course_locally(user, course_id, course_mode)
 
+    @property
+    def enterprise_customer(self):
+        """
+        Return the Enterprise Customer associated with this enrollment.
+        """
+        return self.user.enterprise_customer
+
     def __str__(self):
         """
         Create string representation of the enrollment.
@@ -920,6 +927,13 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         )
         audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
         return course_enrollment and course_enrollment.get('mode') in audit_modes
+
+    @property
+    def enterprise_customer(self):
+        """
+        Return the Enterprise Customer associated with this enrollment.
+        """
+        return self.enterprise_customer_user.enterprise_customer
 
     def __str__(self):
         """

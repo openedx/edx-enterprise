@@ -294,6 +294,156 @@ class ManageLearnersForm(forms.Form):
             ))
 
 
+class ManageAdminsForm(forms.Form):
+    """
+    Form to manage admin user additions.
+    """
+    email_or_username = forms.CharField(
+        label=_(
+            "To add a single user, enter an email address or username. "
+            "Adding a user here will link them to the Enterprise Customer and grant them basic admin permissions."
+        ),
+        required=True)
+
+    class Fields(object):
+        """
+        Namespace class for field names.
+        """
+        GENERAL_ERRORS = forms.forms.NON_FIELD_ERRORS
+
+        EMAIL_OR_USERNAME = "email_or_username"
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes form: puts current user and enterprise_customer into a
+        field for later access.
+
+        Arguments:
+            user (django.contrib.auth.models.User): current user
+            enterprise_customer (enterprise.models.EnterpriseCustomer): current customer
+        """
+        user = kwargs.pop('user', None)
+        self._user = user
+        self._enterprise_customer = kwargs.pop('enterprise_customer', None)
+        super(ManageAdminsForm, self).__init__(*args, **kwargs)
+
+    def clean_email_or_username(self):
+        """
+        Clean email form field
+
+        Returns:
+            str: the cleaned value, converted to an email address (or an empty string)
+        """
+        email_or_username = self.cleaned_data[self.Fields.EMAIL_OR_USERNAME].strip()
+
+        if not email_or_username:
+            # The field is blank; we just return the existing blank value.
+            return email_or_username
+
+        email = email_or_username__to__email(email_or_username)
+
+        validate_email_to_link(
+            email,
+            email_or_username,
+            ValidationMessages.INVALID_EMAIL_OR_USERNAME,
+            ignore_existing=True
+        )
+
+        return email
+
+    def clean(self):
+        """
+        Clean fields that depend on each other.
+
+        In this case, the form can be used to link single user or bulk link multiple users. These are mutually
+        exclusive modes, so this method checks that only one field is passed.
+        """
+        cleaned_data = super(ManageAdminsForm, self).clean()
+
+        # Here we take values from `data` (and not `cleaned_data`) as we need raw values - field clean methods
+        # might "invalidate" the value and set it to None, while all we care here is if it was provided at all or not
+        email_or_username = self.data.get(self.Fields.EMAIL_OR_USERNAME, None)
+
+        if not email_or_username:
+            raise ValidationError(ValidationMessages.NO_FIELDS_SPECIFIED)
+
+        return cleaned_data
+
+
+class ManageAdminUserPermissionsForm(forms.Form):
+    """
+    Form to manage admin user additions.
+    """
+    email_or_username = forms.CharField(
+        label=_(
+            "To add a single user, enter an email address or username."),
+        required=False)
+
+    class Fields(object):
+        """
+        Namespace class for field names.
+        """
+        GENERAL_ERRORS = forms.forms.NON_FIELD_ERRORS
+
+        EMAIL_OR_USERNAME = "email_or_username"
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes form: puts current user and enterprise_customer into a
+        field for later access.
+
+        Arguments:
+            user (django.contrib.auth.models.User): current user
+            enterprise_customer (enterprise.models.EnterpriseCustomer): current customer
+        """
+        user = kwargs.pop('user', None)
+        self._user = user
+        self._enterprise_customer = kwargs.pop('enterprise_customer', None)
+        super(ManageAdminUserPermissionsForm, self).__init__(*args, **kwargs)
+
+    def clean_email_or_username(self):
+        """
+        Clean email form field
+
+        Returns:
+            str: the cleaned value, converted to an email address (or an empty string)
+        """
+        email_or_username = self.cleaned_data[self.Fields.EMAIL_OR_USERNAME].strip()
+
+        if not email_or_username:
+            # The field is blank; we just return the existing blank value.
+            return email_or_username
+
+        email = email_or_username__to__email(email_or_username)
+
+        validate_email_to_link(
+            email,
+            email_or_username,
+            ValidationMessages.INVALID_EMAIL_OR_USERNAME,
+            ignore_existing=True
+        )
+
+        return email
+
+    def clean(self):
+        """
+        Clean fields that depend on each other.
+
+        In this case, the form can be used to link single user or bulk link multiple users. These are mutually
+        exclusive modes, so this method checks that only one field is passed.
+        """
+        cleaned_data = super(ManageAdminUserPermissionsForm, self).clean()
+
+        # Here we take values from `data` (and not `cleaned_data`) as we need raw values - field clean methods
+        # might "invalidate" the value and set it to None, while all we care here is if it was provided at all or not
+        email_or_username = self.data.get(self.Fields.EMAIL_OR_USERNAME, None)
+
+        if not email_or_username:
+            raise ValidationError(ValidationMessages.NO_FIELDS_SPECIFIED)
+
+        return cleaned_data
+
+
 class EnterpriseCustomerAdminForm(forms.ModelForm):
     """
     Alternate form for the EnterpriseCustomer admin page.

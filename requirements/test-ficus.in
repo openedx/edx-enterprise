@@ -28,3 +28,4 @@ jsonfield==2.0.2                        # Provides a Django model field which se
 flaky==3.3.0                            # Rerun flaky tests automatically if they fail, up to a limit
 analytics-python==1.1.0                 # Used for Segment analytics
 event-tracking==0.2.4                   # Tracks context-aware semi-structured system events
+rules==1.2.1                            # Used for Authorization of the Enterprise API

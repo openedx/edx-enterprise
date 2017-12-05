@@ -18,7 +18,12 @@ from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import or
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
 from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm
 from enterprise.admin.utils import UrlNames
-from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
+from enterprise.admin.views import (
+    EnterpriseCustomerManageAdminsView,
+    EnterpriseCustomerManageLearnersView,
+    EnterpriseCustomerUserAdminPermissionsView,
+    TemplatePreviewView
+)
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -134,7 +139,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         get_clear_catalog_id_action()
     ]
 
-    change_actions = ("manage_learners",)
+    change_actions = ("manage_admins", "manage_learners",)
 
     form = EnterpriseCustomerAdminForm
 
@@ -216,6 +221,17 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     # we need to set it true so that anchor tag is not escaped.
     enterprise_catalog.allow_tags = True
 
+    def manage_admins(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Object tool handler method - redirects to "Manage Admins" view
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        manage_admins_url = reverse("admin:" + UrlNames.MANAGE_ADMINS, args=(obj.uuid,))
+        return HttpResponseRedirect(manage_admins_url)
+
+    manage_admins.label = "Manage Admins"
+    manage_admins.short_description = "Allows managing of admin users for this Enterprise Customer"
+
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """
         Object tool handler method - redirects to "Manage Learners" view
@@ -233,10 +249,15 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         """
         customer_urls = [
             url(
+                r"^([^/]+)/manage_admins$",
+                self.admin_site.admin_view(EnterpriseCustomerManageAdminsView.as_view()),
+                name=UrlNames.MANAGE_ADMINS
+            ),
+            url(
                 r"^([^/]+)/manage_learners$",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
                 name=UrlNames.MANAGE_LEARNERS
-            )
+            ),
         ]
         return customer_urls + super(EnterpriseCustomerAdmin, self).get_urls()
 
@@ -267,6 +288,8 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'created',
         'enrolled_courses',
     )
+
+    change_actions = ("manage_permissions",)
 
     def username(self, enterprise_customer_user):
         """
@@ -320,6 +343,31 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
             )
             for course in course_details
         )
+
+    def manage_permissions(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Object tool handler method - redirects to "Manage Learners" view
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        manage_perms_url = reverse("admin:" + UrlNames.MANAGE_ADMIN_USER_PERMISSIONS, args=(obj.id,))
+        return HttpResponseRedirect(manage_perms_url)
+
+    manage_permissions.label = "Manage Enterprise Customer Admin User Permissions"
+    manage_permissions.short_description = ("Allows managing enterprise api permissions for this "
+                                            "Enterprise Customer User")
+
+    def get_urls(self):
+        """
+        Returns the additional urls used by the custom object tools.
+        """
+        customer_urls = [
+            url(
+                r"^([^/]+)/manage_admin_user_permissions$",
+                self.admin_site.admin_view(EnterpriseCustomerUserAdminPermissionsView.as_view()),
+                name=UrlNames.MANAGE_ADMIN_USER_PERMISSIONS
+            ),
+        ]
+        return customer_urls + super(EnterpriseCustomerUserAdmin, self).get_urls()
 
 
 @admin.register(PendingEnterpriseCustomerUser)
