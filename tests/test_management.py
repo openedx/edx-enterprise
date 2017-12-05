@@ -174,7 +174,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_id_for_success + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", '
-            '"publishDate": "2013-02-05", "title": "edX Demonstration Course", '
+            '"publishDate": "2013-02-05", "title": "edX Demonstration Course (Starts: February 2013)", '
             '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/course/'
             '' + course_run_id_for_success + '/enroll/", "videoUrl": ""}], '
             '"orgCode": "Degreed Company", "providerCode": "DEGREED"}'
@@ -189,7 +189,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '"price": [], "providerID": "SAP", "revisionNumber": 1, "schedule": '
             '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
             '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
-            '"value": "edX Demonstration Course"}]}]}'
+            '"value": "edX Demonstration Course (Starts: February 2013)"}]}]}'
         )
         # Verify that first integrated channel logs failure but the second
         # integrated channel still successfully transmits courseware data.
@@ -274,12 +274,12 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_ids[0] + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
+            '"title": "edX Demonstration Course (Starts: February 2013)", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
             '' + uuid + '/course/' + course_run_ids[0] + '/enroll/", '
             '"videoUrl": ""}, {"authors": [], "categoryTags": [], "contentId": "'+course_run_ids[1]+'", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
+            '"title": "edX Demonstration Course (Starts: February 2013)", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
             '' + uuid + '/course/' + course_run_ids[1] + '/enroll/", '
             '"videoUrl": ""}], "orgCode": "Degreed Company", "providerCode": "DEGREED"}'
         )
@@ -292,7 +292,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '"price": [], "providerID": "SAP", "revisionNumber": 1, "schedule": '
             '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
             '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
-            '"value": "edX Demonstration Course"}]}, {"content": [{"contentID": '
+            '"value": "edX Demonstration Course (Starts: February 2013)"}]}, {"content": [{"contentID": '
             '"' + course_run_ids[1] + '", "contentTitle": "edX Demonstration Course", "launchType": 3, '
             '"launchURL": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/'
             '' + course_run_ids[1] + '/enroll/", "mobileEnabled": false, "providerID": "SAP"}], '
@@ -300,7 +300,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '"value": "edX Demonstration Course"}], "price": [], "providerID": "SAP", '
             '"revisionNumber": 1, "schedule": [{"active": true, "endDate": 2147483647000, '
             '"startDate": 1360040400000}], "status": "ACTIVE", "thumbnailURI": "", '
-            '"title": [{"locale": "English", "value": "edX Demonstration Course"}]}]}'
+            '"title": [{"locale": "English", "value": "edX Demonstration Course (Starts: February 2013)"}]}]}'
         )
         expected_messages = [
             # SAPSF

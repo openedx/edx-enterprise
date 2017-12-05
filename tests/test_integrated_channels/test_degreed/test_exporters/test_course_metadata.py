@@ -77,7 +77,7 @@ class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
                     'institution': '',
                     'language': 'en',
                     'publishDate': '2013-02-05',
-                    'title': 'edX Demonstration Course',
+                    'title': 'edX Demonstration Course (Starts: February 2013)',
                     'url': 'http://lms.example.com/enterprise/' + str(self.enterprise_customer.uuid) +
                            '/course/course-v1:edX+DemoX+Demo_Course_1/enroll/',
                     'videoUrl': '',
@@ -120,3 +120,29 @@ class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
         course_run = {'full_description': 'a' * (DegreedCourseExporter.LONG_STRING_LIMIT + 1)}
         exporter = DegreedCourseExporter('fake-user', self.config)
         assert exporter.transform_description(course_run) == ''
+
+    @responses.activate
+    def test_transform_title_includes_start(self):
+        """
+        Transforming a title gives back the title and start date if the course is instructor-paced.
+        """
+        course_run = {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'instructor_paced',
+            'title': 'edX Demonstration Course'
+        }
+        exporter = DegreedCourseExporter('fake-user', self.config)
+        assert exporter.transform_title(course_run) == 'edX Demonstration Course (Starts: February 2013)'
+
+    @responses.activate
+    def test_transform_title_excludes_start(self):
+        """
+        Transforming a title gives only returns the title (not start date) if the course isn't instructor-paced.
+        """
+        course_run = {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'self_paced',
+            'title': 'edX Demonstration Course'
+        }
+        exporter = DegreedCourseExporter('fake-user', self.config)
+        assert exporter.transform_title(course_run) == 'edX Demonstration Course'
