@@ -181,7 +181,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
         sapsf_expected_dump = (
             '{"ocnCourses": [{"content": [{"contentID": "' + course_run_id_for_success + '", '
-            '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '
+            '"contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, "launchURL": '
             '"' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/'
             'course/' + course_run_id_for_success + '/enroll/", "mobileEnabled": '
             'false, "providerID": "SAP"}], "courseID": "' + course_run_id_for_success + '"'
@@ -285,7 +285,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
         sapsf_expected_dump = (
             '{"ocnCourses": [{"content": [{"contentID": "' + course_run_ids[0] + '", '
-            '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '
+            '"contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, "launchURL": '
             '"' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[0] + '/enroll/'
             '", "mobileEnabled": false, "providerID": "SAP"}], "courseID": "' + course_run_ids[0] + '"'
             ', "description": [{"locale": "English", "value": "edX Demonstration Course"}], '
@@ -293,7 +293,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
             '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
             '"value": "edX Demonstration Course (Starts: February 2013)"}]}, {"content": [{"contentID": '
-            '"' + course_run_ids[1] + '", "contentTitle": "edX Demonstration Course", "launchType": 3, '
+            '"' + course_run_ids[1] + '", "contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, '
             '"launchURL": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/'
             '' + course_run_ids[1] + '/enroll/", "mobileEnabled": false, "providerID": "SAP"}], '
             '"courseID": "' + course_run_ids[1] + '", "description": [{"locale": "English", '
