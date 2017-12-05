@@ -158,7 +158,7 @@ class SapSuccessFactorsCourseExporter(CourseExporter):  # pylint: disable=abstra
                 course_run['key'],
                 course_run.get('enrollment_url') or ''
             ),
-            'contentTitle': course_run.get('title') or '',
+            'contentTitle': self.transform_title(course_run),
             'contentID': course_run['key'],
             'launchType': 3,
             'mobileEnabled': course_run.get('mobile_available', 'false')
