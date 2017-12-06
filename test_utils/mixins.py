@@ -62,3 +62,17 @@ class ConsentMixin(object):
         """Assert consent is not required."""
         with self.assertRaises(Exception):
             self._assert_consent_required(response)
+
+
+class EmbargoAPIMixin(object):
+    """
+    Mixin for testing with a mocked embargo API.
+    """
+
+    EMBARGO_REDIRECT_URL = 'http://localhost:18000/embargo/blocked-message/enrollment/embargo/'
+
+    def _setup_embargo_api(self, api_mock, redirect_url=None):
+        """
+        Set up the embargo API module mock.
+        """
+        api_mock.redirect_if_blocked.return_value = redirect_url

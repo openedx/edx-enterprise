@@ -31,6 +31,7 @@ diff-cover==1.0.0
 distlib==0.2.6            # via caniusepython3
 django-config-models==0.1.8
 django-filter==1.0.4
+django-ipware==1.1.0
 django-model-utils==2.3.1
 django-object-actions==0.10.0
 django-simple-history==1.9.0
@@ -43,7 +44,7 @@ doc8==0.8.0
 docutils==0.14            # via doc8, readme-renderer, restructuredtext-lint, sphinx
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
-edx-i18n-tools==0.4.1
+edx-i18n-tools==0.4.2
 edx-lint==0.5.4
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
@@ -75,7 +76,7 @@ packaging==16.8           # via caniusepython3
 path.py==10.5             # via edx-i18n-tools
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
-pip-tools==1.10.2
+pip-tools==1.11.0
 pkginfo==1.4.1            # via twine
 pluggy==0.6.0             # via pytest, tox
 pockets==0.5.1            # via sphinxcontrib-napoleon
@@ -112,7 +113,7 @@ snowballstemmer==1.2.1    # via pydocstyle, sphinx
 sphinx==1.6.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.27.1         # via doc8, edx-opaque-keys
+stevedore==1.28.0         # via doc8, edx-opaque-keys
 testfixtures==5.3.1
 text-unidecode==1.1       # via faker
 tox-battery==0.5

@@ -23,6 +23,7 @@ diff-cover==1.0.0
 distlib==0.2.6            # via caniusepython3
 django-config-models==0.1.8
 django-filter==1.0.4
+django-ipware==1.1.0
 django-model-utils==2.3.1
 django-object-actions==0.10.0
 django-simple-history==1.9.0
@@ -33,7 +34,7 @@ djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
-edx-i18n-tools==0.4.1
+edx-i18n-tools==0.4.2
 edx-lint==0.5.4
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
@@ -57,7 +58,7 @@ packaging==16.8           # via caniusepython3
 path.py==10.5             # via edx-i18n-tools
 pbr==3.1.1                # via stevedore
 pillow==3.4
-pip-tools==1.10.2
+pip-tools==1.11.0
 pkginfo==1.4.1            # via twine
 pluggy==0.6.0             # via tox
 polib==1.1.0              # via edx-i18n-tools
@@ -83,7 +84,7 @@ singledispatch==3.4.0.3   # via astroid, pylint
 six==1.11.0               # via analytics-python, astroid, cryptography, diff-cover, edx-i18n-tools, edx-lint, edx-opaque-keys, packaging, pip-tools, pydocstyle, pylint, python-dateutil, singledispatch, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
-stevedore==1.27.1         # via edx-opaque-keys
+stevedore==1.28.0         # via edx-opaque-keys
 testfixtures==5.3.1
 tox-battery==0.5
 tox==2.9.1

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.4] - 2017-12-06
+---------------------
+
+* Redirect to embargo restriction message page if user is blocked from accessing course.
+
 [0.55.3] - 2017-12-05
 ---------------------
 

@@ -30,12 +30,12 @@ from test_utils.factories import (
     UserFactory,
 )
 from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE3, setup_course_catalog_api_client_mock
-from test_utils.mixins import MessagesMixin
+from test_utils.mixins import EmbargoAPIMixin, MessagesMixin
 
 
 @mark.django_db
 @ddt.ddt
-class TestProgramEnrollmentView(MessagesMixin, TestCase):
+class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
     """
     ProgramEnrollmentView test cases.
     """
@@ -153,6 +153,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -161,11 +162,13 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             program_data_extender_mock,
             course_catalog_api_client_mock_1,
             course_catalog_api_client_mock_2,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         """
         The Enterprise Program landing page is rendered appropriately given some context.
         """
+        self._setup_embargo_api(embargo_api_mock)
         self._setup_program_data_extender(program_data_extender_mock)
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
@@ -397,6 +400,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -405,11 +409,13 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             program_data_extender_mock,
             course_catalog_api_client_mock_1,
             course_catalog_api_client_mock_2,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         """
         The Enterprise Program landing page is rendered appropriately given that the user is enrolled in the program.
         """
+        self._setup_embargo_api(embargo_api_mock)
         program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock)
         program_data_extender_mock.return_value.extend.return_value['courses'][0]['course_runs'][0].update({
             "is_enrolled": True,
@@ -552,6 +558,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         self._check_expected_enrollment_page(response, expected_context)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -562,11 +569,13 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             program_data_extender_mock,
             course_catalog_api_client_mock_1,
             course_catalog_api_client_mock_2,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         """
         The DSC-declined message is rendered if DSC is not given.
         """
+        self._setup_embargo_api(embargo_api_mock)
         self._setup_program_data_extender(program_data_extender_mock)
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
@@ -609,6 +618,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -617,11 +627,13 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             program_data_extender_mock,
             course_catalog_api_client_mock_1,
             course_catalog_api_client_mock_2,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         """
         The message about no price information found is rendered if the program extender fails to get price info.
         """
+        self._setup_embargo_api(embargo_api_mock)
         program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock)
         program_data_extender_mock.return_value.extend.return_value['discount_data'] = {}
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
@@ -650,6 +662,7 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -660,11 +673,13 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             program_data_extender_mock,
             course_catalog_api_client_mock_1,
             course_catalog_api_client_mock_2,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         """
         The message about the program being unenrollable is displayed.
         """
+        self._setup_embargo_api(embargo_api_mock)
         program_data_extender_mock = self._setup_program_data_extender(program_data_extender_mock).return_value
         program_data_extender_mock.extend.return_value['is_learner_eligible_for_one_click_purchase'] = enrollable
         setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
@@ -692,16 +707,19 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
                 )
             )
 
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     def test_get_program_enrollment_page_for_non_existing_program(
             self,
             course_catalog_api_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
         The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program.
         """
+        self._setup_embargo_api(embargo_api_mock)
         course_catalog_api_client_mock.return_value.get_program_by_uuid.return_value = None
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
@@ -713,16 +731,19 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
         response = self.client.get(program_enrollment_page_url)
         assert response.status_code == 404
 
+    @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     def test_get_program_enrollment_page_for_non_existing_program_type(
             self,
             course_catalog_api_client_mock,
+            embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
         """
         The user will see the HTTP 404 (Not Found) page in case of an invalid or non existing program type.
         """
+        self._setup_embargo_api(embargo_api_mock)
         course_catalog_api_client_mock.return_value.get_program_type_by_slug.return_value = None
         enterprise_customer = EnterpriseCustomerFactory()
         program_enrollment_page_url = reverse(
@@ -983,3 +1004,39 @@ class TestProgramEnrollmentView(MessagesMixin, TestCase):
             ProgramEnrollmentView.extend_course(
                 {'course_runs': [{'key': 'edX+DemoX+2017'}]},
                 EnterpriseCustomerFactory())
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.ProgramDataExtender')
+    def test_embargo_restriction(
+            self,
+            program_data_extender_mock,
+            course_catalog_api_client_mock_1,
+            course_catalog_api_client_mock_2,
+            embargo_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        """
+        The Enterprise Program landing page is rendered appropriately given some context.
+        """
+        self._setup_embargo_api(embargo_api_mock, redirect_url=self.EMBARGO_REDIRECT_URL)
+        self._setup_program_data_extender(program_data_extender_mock)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_1)
+        setup_course_catalog_api_client_mock(course_catalog_api_client_mock_2)
+        enterprise_customer = EnterpriseCustomerFactory(name='Starfleet Academy')
+
+        program_enrollment_page_url = reverse(
+            'enterprise_program_enrollment_page',
+            args=[enterprise_customer.uuid, self.dummy_program_uuid],
+        )
+
+        self._login()
+        response = self.client.get(program_enrollment_page_url)
+        assert response.status_code == 302
+        self.assertRedirects(
+            response,
+            self.EMBARGO_REDIRECT_URL,
+            fetch_redirect_response=False
+        )

@@ -18,6 +18,7 @@ chardet==3.0.4            # via doc8
 cryptography==1.9
 django-config-models==0.1.8
 django-filter==1.0.4
+django-ipware==1.1.0
 django-model-utils==2.3.1
 django-object-actions==0.10.0
 django-simple-history==1.9.0
@@ -63,7 +64,7 @@ snowballstemmer==1.2.1    # via sphinx
 sphinx==1.6.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
-stevedore==1.27.1         # via doc8, edx-opaque-keys
+stevedore==1.28.0         # via doc8, edx-opaque-keys
 testfixtures==5.3.1
 typing==3.6.2             # via sphinx
 unicodecsv==0.14.1
