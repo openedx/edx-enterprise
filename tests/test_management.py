@@ -149,14 +149,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             catalog=1,
             name='Dummy Enterprise',
         )
-        factories.DegreedEnterpriseCustomerConfigurationFactory(
+        dummy_degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=dummy_enterprise_customer,
             key='key',
             secret='secret',
             degreed_company_id='Degreed Company',
             active=True,
         )
-        factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+        dummy_sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=dummy_enterprise_customer,
             sapsf_base_url='http://enterprise.successfactors.com/',
             key='key',
@@ -199,7 +199,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Transmission of course metadata failed for user [C-3PO] and for integrated channel with '
             'code [SAP] and id [1].',
-            'Course metadata transmission task took [0.0] seconds',
+            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+                self.sapsf
+            ),
             'Processing course runs for integrated channel using configuration: '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Retrieving course run list for enterprise [{}]'.format(dummy_enterprise_customer.name),
@@ -207,14 +209,18 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Sending course run with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             sapsf_expected_dump,
-            'Course metadata transmission task took [0.0] seconds',
+            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+                dummy_sapsf
+            ),
 
             # Degreed
             'Processing course runs for integrated channel using configuration: '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Transmission of course metadata failed for user [C-3PO] and for integrated channel with '
             'code [DEGREED] and id [1].',
-            'Course metadata transmission task took [0.0] seconds',
+            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+                self.degreed
+            ),
             'Processing course runs for integrated channel using configuration: '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Retrieving course run list for enterprise [{}]'.format(dummy_enterprise_customer.name),
@@ -222,7 +228,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Sending course run with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             degreed_expected_dump,
-            'Course metadata transmission task took [0.0] seconds',
+            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+                dummy_degreed
+            )
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
@@ -306,7 +314,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Sending course run with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             sapsf_expected_dump,
-            'Course metadata transmission task took [0.0] seconds',
+            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+                self.sapsf
+            ),
 
             # Degreed
             'Processing course runs for integrated channel using configuration: '
@@ -319,7 +329,9 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Sending course run with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             degreed_expected_dump,
-            'Course metadata transmission task took [0.0] seconds',
+            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+                self.degreed
+            )
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
@@ -657,7 +669,8 @@ def get_expected_output(**expected_completion):
             **expected_completion
         ),
         "{} enterprise enrollment 3".format(action),
-        'Learner data transmission task took [0.0] seconds',
+        "Learner data transmission task for integrated channel configuration "
+        "[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>] took [0.0] seconds",
 
         # Degreed
         "Processing learners for integrated channel using configuration: "
@@ -674,7 +687,8 @@ def get_expected_output(**expected_completion):
             timestamp=degreed_timestamp
         ),
         "{} enterprise enrollment 3".format(action),
-        'Learner data transmission task took [0.0] seconds',
+        "Learner data transmission task for integrated channel configuration "
+        "[<DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>] took [0.0] seconds"
     ]
     return expected_output
 

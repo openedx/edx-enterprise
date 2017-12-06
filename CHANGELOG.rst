@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.3] - 2017-12-05
+---------------------
+
+* Add integrated channel configuration info to course metadata push task logging.
+
 [0.55.2] - 2017-12-04
 ---------------------
 
