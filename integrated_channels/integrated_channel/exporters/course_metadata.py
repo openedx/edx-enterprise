@@ -112,7 +112,9 @@ class CourseExporter(Exporter):
         also include the start date to distinguish multiple runs of the same course (ENT-782)
         """
         title = course_run.get('title') or ''
-        course_run_start = parse_lms_api_datetime(course_run.get('start'))
+        course_run_start = course_run.get('start')
         if course_run_start and course_run.get('pacing_type') == 'instructor_paced':
-            title += ' (Starts: {:%B %Y})'.format(course_run_start)
+            title += ' (Starts: {:%B %Y})'.format(
+                parse_lms_api_datetime(course_run_start)
+            )
         return title
