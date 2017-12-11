@@ -77,7 +77,7 @@ class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
                     'institution': '',
                     'language': 'en',
                     'publishDate': '2013-02-05',
-                    'title': 'edX Demonstration Course',
+                    'title': 'edX Demonstration Course (Starts: February 2013)',
                     'url': 'http://lms.example.com/enterprise/' + str(self.enterprise_customer.uuid) +
                            '/course/course-v1:edX+DemoX+Demo_Course_1/enroll/',
                     'videoUrl': '',

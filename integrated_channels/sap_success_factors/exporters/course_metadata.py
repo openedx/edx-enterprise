@@ -111,11 +111,11 @@ class SapSuccessFactorsCourseExporter(CourseExporter):  # pylint: disable=abstra
 
     def transform_title(self, course_run):
         """
-        Return the transformed version of the course title, as well as the locale.
+        Return the transformed version of the course title, as well as the locale
         """
         return [{
             'locale': self.transform_language_code(course_run.get('content_language')),
-            'value': course_run.get('title') or ''
+            'value':  self.format_title(course_run)
         }]
 
     def transform_description(self, course_run):
@@ -153,7 +153,7 @@ class SapSuccessFactorsCourseExporter(CourseExporter):  # pylint: disable=abstra
                 course_run['key'],
                 course_run.get('enrollment_url') or ''
             ),
-            'contentTitle': course_run.get('title') or '',
+            'contentTitle': self.format_title(course_run),
             'contentID': course_run['key'],
             'launchType': 3,
             'mobileEnabled': course_run.get('mobile_available', 'false')

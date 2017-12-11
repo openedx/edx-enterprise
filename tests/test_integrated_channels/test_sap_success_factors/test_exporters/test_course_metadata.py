@@ -67,3 +67,37 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
         assert str(exc_info.value) == (
             'Language codes may only have up to two components. Could not parse: this-is-incomprehensible'
         )
+
+    @responses.activate
+    def test_transform_title_includes_start(self):
+        """
+        Transforming a title gives back the title and start date if the course is instructor-paced.
+        """
+        course_run = {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'instructor_paced',
+            'title': 'edX Demonstration Course'
+        }
+        exporter = SapSuccessFactorsCourseExporter('fake-user', self.config)
+        assert exporter.transform_title(course_run) == \
+            [{
+                'locale': 'English',
+                'value': 'edX Demonstration Course (Starts: February 2013)'
+            }]
+
+    @responses.activate
+    def test_transform_title_excludes_start(self):
+        """
+        Transforming a title gives only returns the title (not start date) if the course isn't instructor-paced.
+        """
+        course_run = {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'self_paced',
+            'title': 'edX Demonstration Course'
+        }
+        exporter = SapSuccessFactorsCourseExporter('fake-user', self.config)
+        assert exporter.transform_title(course_run) == \
+            [{
+                'locale': 'English',
+                'value': 'edX Demonstration Course'
+            }]

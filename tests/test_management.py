@@ -174,14 +174,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_id_for_success + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", '
-            '"publishDate": "2013-02-05", "title": "edX Demonstration Course", '
+            '"publishDate": "2013-02-05", "title": "edX Demonstration Course (Starts: February 2013)", '
             '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/course/'
             '' + course_run_id_for_success + '/enroll/", "videoUrl": ""}], '
             '"orgCode": "Degreed Company", "providerCode": "DEGREED"}'
         )
         sapsf_expected_dump = (
             '{"ocnCourses": [{"content": [{"contentID": "' + course_run_id_for_success + '", '
-            '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '
+            '"contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, "launchURL": '
             '"' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/'
             'course/' + course_run_id_for_success + '/enroll/", "mobileEnabled": '
             'false, "providerID": "SAP"}], "courseID": "' + course_run_id_for_success + '"'
@@ -189,7 +189,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '"price": [], "providerID": "SAP", "revisionNumber": 1, "schedule": '
             '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
             '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
-            '"value": "edX Demonstration Course"}]}]}'
+            '"value": "edX Demonstration Course (Starts: February 2013)"}]}]}'
         )
         # Verify that first integrated channel logs failure but the second
         # integrated channel still successfully transmits courseware data.
@@ -274,33 +274,33 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_ids[0] + '", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
-            '' + uuid + '/course/' + course_run_ids[0] + '/enroll/", '
+            '"title": "edX Demonstration Course (Starts: February 2013)", '
+            '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[0] + '/enroll/", '
             '"videoUrl": ""}, {"authors": [], "categoryTags": [], "contentId": "'+course_run_ids[1]+'", '
             '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
             '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course", "url": "' + settings.LMS_ROOT_URL + '/enterprise/'
-            '' + uuid + '/course/' + course_run_ids[1] + '/enroll/", '
+            '"title": "edX Demonstration Course (Starts: February 2013)", '
+            '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[1] + '/enroll/", '
             '"videoUrl": ""}], "orgCode": "Degreed Company", "providerCode": "DEGREED"}'
         )
         sapsf_expected_dump = (
             '{"ocnCourses": [{"content": [{"contentID": "' + course_run_ids[0] + '", '
-            '"contentTitle": "edX Demonstration Course", "launchType": 3, "launchURL": '
+            '"contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, "launchURL": '
             '"' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[0] + '/enroll/'
             '", "mobileEnabled": false, "providerID": "SAP"}], "courseID": "' + course_run_ids[0] + '"'
             ', "description": [{"locale": "English", "value": "edX Demonstration Course"}], '
             '"price": [], "providerID": "SAP", "revisionNumber": 1, "schedule": '
             '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
             '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
-            '"value": "edX Demonstration Course"}]}, {"content": [{"contentID": '
-            '"' + course_run_ids[1] + '", "contentTitle": "edX Demonstration Course", "launchType": 3, '
-            '"launchURL": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/'
+            '"value": "edX Demonstration Course (Starts: February 2013)"}]}, {"content": [{"contentID": '
+            '"' + course_run_ids[1] + '", "contentTitle": "edX Demonstration Course (Starts: February 2013)", '
+            '"launchType": 3, "launchURL": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/'
             '' + course_run_ids[1] + '/enroll/", "mobileEnabled": false, "providerID": "SAP"}], '
             '"courseID": "' + course_run_ids[1] + '", "description": [{"locale": "English", '
             '"value": "edX Demonstration Course"}], "price": [], "providerID": "SAP", '
             '"revisionNumber": 1, "schedule": [{"active": true, "endDate": 2147483647000, '
             '"startDate": 1360040400000}], "status": "ACTIVE", "thumbnailURI": "", '
-            '"title": [{"locale": "English", "value": "edX Demonstration Course"}]}]}'
+            '"title": [{"locale": "English", "value": "edX Demonstration Course (Starts: February 2013)"}]}]}'
         )
         expected_messages = [
             # SAPSF

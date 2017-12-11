@@ -42,7 +42,7 @@ enum34==1.1.6             # via astroid, cryptography
 event-tracking==0.2.4
 first==2.0.1              # via pip-tools
 flaky==3.3.0
-futures==3.1.1            # via caniusepython3
+futures==3.1.1
 idna==2.6                 # via cryptography
 inflect==0.2.5            # via jinja2-pluralize
 ipaddress==1.0.18         # via cryptography
@@ -72,7 +72,7 @@ pylint-celery==0.3        # via edx-lint
 pylint-django==0.7.2      # via edx-lint
 pylint-plugin-utils==0.2.6  # via pylint-celery, pylint-django
 pylint==1.7.1             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
-pymongo==3.5.1            # via edx-opaque-keys, event-tracking
+pymongo==3.6.0            # via edx-opaque-keys, event-tracking
 pyparsing==2.2.0          # via packaging
 python-dateutil==2.6.1    # via analytics-python, edx-drf-extensions
 pytz==2017.3              # via celery, event-tracking
@@ -88,7 +88,7 @@ stevedore==1.28.0         # via edx-opaque-keys
 testfixtures==5.3.1
 tox-battery==0.5
 tox==2.9.1
-tqdm==4.19.4              # via twine
+tqdm==4.19.5              # via twine
 twine==1.9.1
 unicodecsv==0.14.1
 virtualenv==15.1.0        # via tox

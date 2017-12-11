@@ -185,9 +185,9 @@ class DegreedCourseExporter(CourseExporter):  # pylint: disable=abstract-method
 
     def transform_title(self, course_run):
         """
-        Return the transformed version of the course title, as well as the locale.
+        Return the transformed version of the course title.
         """
-        return course_run.get('title') or ''
+        return self.format_title(course_run)
 
     def transform_description(self, course_run):
         """

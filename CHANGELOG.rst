@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.55.5] - 2017-12-11
+---------------------
+
+* Added course start date to title string for instructor-led courses
+
+
 [0.55.4] - 2017-12-06
 ---------------------
 
