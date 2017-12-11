@@ -101,5 +101,3 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
                 'locale': 'English',
                 'value': 'edX Demonstration Course'
             }]
-
-

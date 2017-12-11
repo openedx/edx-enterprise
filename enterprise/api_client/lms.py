@@ -491,6 +491,9 @@ def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FOR
         datetime_format: A datetime format string to be used for parsing
 
     """
+    if datetime_string is None:
+        return None
+
     if isinstance(datetime_string, datetime.datetime):
         date_time = datetime_string
     else:

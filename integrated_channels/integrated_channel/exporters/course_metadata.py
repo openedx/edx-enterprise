@@ -15,6 +15,7 @@ from logging import getLogger
 from integrated_channels.integrated_channel.exporters import Exporter
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
+from enterprise.api_client.lms import parse_lms_api_datetime
 
 LOGGER = getLogger(__name__)
 
@@ -104,3 +105,14 @@ class CourseExporter(Exporter):
         courses = self.courses if not self.removed_courses_resolved else {}
         self.removed_courses_resolved = True
         return courses
+
+    def format_title(self, course_run):
+        """
+        Return the transformed version of the course title, as well as the locale. For all instructor-paced courses
+        also include the start date to distinguish multiple runs of the same course (ENT-782)
+        """
+        title = course_run.get('title') or ''
+        course_run_start = parse_lms_api_datetime(course_run.get('start'))
+        if course_run_start and course_run.get('pacing_type') == 'instructor_paced':
+            title += ' (Starts: {:%B %Y})'.format(course_run_start)
+        return title
