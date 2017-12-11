@@ -80,10 +80,10 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
         }
         exporter = SapSuccessFactorsCourseExporter('fake-user', self.config)
         assert exporter.transform_title(course_run) == \
-               [{
-                   'locale': 'English',
-                   'value': 'edX Demonstration Course (Starts: February 2013)'
-               }]
+            [{
+                'locale': 'English',
+                'value': 'edX Demonstration Course (Starts: February 2013)'
+            }]
 
     @responses.activate
     def test_transform_title_excludes_start(self):
