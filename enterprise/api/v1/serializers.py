@@ -521,6 +521,8 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             except (utils.CourseEnrollmentDowngradeError, HttpClientError) as exc:
                 validated_data['detail'] = str(exc)
                 return validated_data
+
+            track_enrollment('enterprise-customer-enrollment-api', enterprise_customer_user.user_id, course_run_id)
         else:
             enterprise_customer_user = enterprise_customer.enroll_user_pending_registration(
                 user_email,
