@@ -6,119 +6,134 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from edx_rest_api_client.exceptions import HttpClientError
-from requests.exceptions import RequestException
-from slumber.exceptions import SlumberBaseException
+from django.core.management import BaseCommand
+from django.db import connection
 
-from django.core.management import BaseCommand, CommandError
-
-from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 
 LOGGER = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
     """
-    Creates EnterpriseCourseEnrollment records (if they do not already exist)
-    using the provided EnterpriseCustomer UUID for users enrolled in the
-    provided list of courses.
+    Creates EnterpriseCourseEnrollment records (if they do not already exist) for CourseEnrollment records
+    that are associated with an enterprise user and a course run that exists in the enterprise's catalog.
     """
-    help = 'Create EnterpriseCourseEnrollment records for all users enrolled in the provided list of course runs.'
+    help = 'Create EnterpriseCourseEnrollment records for CourseEnrollment records associated with an enterprise.'
 
     def add_arguments(self, parser):
         parser.add_argument(
             '-e',
-            '--enterprise_uuid',
+            '--enterprise_customer_uuid',
             action='store',
-            dest='enterprise_uuid',
+            dest='enterprise_customer_uuid',
             default=None,
-            help='EnterpriseCustomer UUID.'
-        )
-        parser.add_argument(
-            '-c',
-            '--courses',
-            action='store',
-            dest='courses_ids',
-            default='',
-            help='Comma-delimited string of course run IDs.'
+            help='Run this command for only the given EnterpriseCustomer UUID.'
         )
 
     def handle(self, *args, **options):
-        enterprise_uuid = options.get('enterprise_uuid')
-        course_ids = [course_id.strip() for course_id in options.get('courses_ids', '').split(',')]
+        enterprise_customer_uuid_filter = options.get('enterprise_customer_uuid')
+        records_created = 0
 
-        if not enterprise_uuid or not course_ids:
-            raise CommandError('Please provide the enterprise UUID and comma-delimited list of course run IDs.')
+        missing_enrollment_data = self._fetch_course_enrollment_data(
+            enterprise_customer_uuid_filter
+        )
+        for item in missing_enrollment_data:
+            enterprise_customer_uuid = item['enterprise_customer_uuid']
+            user_id = item['user_id']
+            course_run_id = item['course_run_id']
 
-        try:
-            enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_uuid)  # pylint: disable=no-member
-        except EnterpriseCustomer.DoesNotExist:
-            raise CommandError('No enterprise customer found for UUID: {uuid}'.format(uuid=enterprise_uuid))
-
-        enterprise_learners = enterprise_customer.enterprise_customer_users.all()
-        for course_id in course_ids:
-            if not self.get_course_details(course_id):
-                LOGGER.warning('Course {course} not found, skipping.'.format(course=course_id))
-                continue
-
-            enrolled_users_count, ent_course_enrollments_count = self.create_enterprise_course_enrollments(
-                course_id,
-                enterprise_learners
-            )
-
-            LOGGER.info(
-                'Created {created} missing EnterpriseCourseEnrollments '
-                'for {enrolled} enterprise learners enrolled in {course}.'.format(
-                    created=ent_course_enrollments_count,
-                    enrolled=enrolled_users_count,
-                    course=course_id
+            # pylint: disable=no-member
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
+            if enterprise_customer.catalog_contains_course(course_run_id):
+                enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+                    enterprise_customer=enterprise_customer_uuid,
+                    user_id=user_id
                 )
-            )
 
-    def get_course_details(self, course_id):
-        """
-        Returns course details for the given course or None if the course details
-        could not be retrieved from the LMS courses API.
-
-        Arguments:
-            course_id (string): The course ID.
-
-        Returns:
-            dict: The course details or None if the course could not be retrieved.
-        """
-        try:
-            return CourseApiClient().get_course_details(course_id)
-        except (RequestException, SlumberBaseException, HttpClientError):
-            LOGGER.error('Failed to retrieve course details from LMS API for {course}'.format(course=course_id))
-
-        return None
-
-    def create_enterprise_course_enrollments(self, course_id, enterprise_learners):
-        """
-        Create EnterpriseCourseEnrollments (if they do not exist) for each provided enterprise
-        learner in the provided course if the user is already enrolled in the given course.
-
-        Arguments:
-            course_id (string): The course ID.
-            enterprise_learners (list): List of EnterpriseCustomerUsers.
-
-        Returns:
-            tuple: Number of enrolled users in the course, Number of EnterpriseCourseEnrollments created.
-        """
-        enrolled_users_count = 0
-        ent_course_enrollments_count = 0
-        for enterprise_learner in enterprise_learners:
-            course_enrollment = EnrollmentApiClient().get_course_enrollment(enterprise_learner.user.username, course_id)
-
-            # If user is enrolled in the course, create EnterpriseCourseEnrollment.
-            if course_enrollment:
-                enrolled_users_count += 1
+                # pylint: disable=no-member
                 __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-                    enterprise_customer_user=enterprise_learner,
-                    course_id=course_id,
+                    enterprise_customer_user=enterprise_customer_user,
+                    course_id=course_run_id
                 )
                 if created:
-                    ent_course_enrollments_count += 1
+                    records_created += 1
+                    LOGGER.info(
+                        'EnterpriseCourseEnrollment created: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
+                        enterprise_customer_uuid,
+                        user_id,
+                        course_run_id
+                    )
+                else:
+                    LOGGER.warning(
+                        'EnterpriseCourseEnrollment exists: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
+                        enterprise_customer_uuid,
+                        user_id,
+                        course_run_id
+                    )
 
-        return enrolled_users_count, ent_course_enrollments_count
+        LOGGER.info('Created %s missing EnterpriseCourseEnrollments.', records_created)
+
+    def _fetch_course_enrollment_data(self, enterprise_customer_uuid):
+        """
+        Return enterprise customer UUID/user_id/course_run_id triples which represent CourseEnrollment records
+        which do not have a matching EnterpriseCourseEnrollment record.
+
+        The query used below looks for CourseEnrollment records that are associated with enterprise
+        learners where the enrollment data is after the creation of the link between the learner
+        and the enterprise. It also excludes learners with edx.org email addresses in order to
+        filter out test users.
+        """
+        query = '''
+            SELECT
+                u.id AS user_id,
+                ec.uuid AS enterprise_customer_uuid,
+                sce.course_id AS course_run_id
+            FROM
+                enterprise_enterprisecustomeruser ecu
+            JOIN
+                enterprise_enterprisecustomer ec
+            ON
+                ecu.enterprise_customer_id = ec.uuid
+                {enterprise_customer_filter}
+            JOIN
+                auth_user u
+            ON
+                ecu.user_id = u.id AND
+                u.email NOT LIKE '%@edx.org'
+            JOIN
+                student_courseenrollment sce
+            ON
+                ecu.user_id = sce.user_id AND
+                ecu.created <= sce.created
+            LEFT JOIN
+                enterprise_enterprisecourseenrollment ece
+            ON
+                ecu.id = ece.enterprise_customer_user_id
+            WHERE
+                ece.id IS NULL
+            ORDER BY
+                ec.name,
+                sce.created DESC;
+        '''
+
+        with connection.cursor() as cursor:
+            if enterprise_customer_uuid:
+                cursor.execute(
+                    query.format(enterprise_customer_filter='AND ec.uuid = %s'),
+                    [enterprise_customer_uuid]
+                )
+            else:
+                cursor.execute(
+                    query.format(enterprise_customer_filter='')
+                )
+
+            return self._dictfetchall(cursor)
+
+    def _dictfetchall(self, cursor):
+        """ Return all rows from a cursor as a dict. """
+        columns = [col[0] for col in cursor.description]
+        return [
+            dict(zip(columns, row))
+            for row in cursor.fetchall()
+        ]
