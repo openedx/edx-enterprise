@@ -19,8 +19,7 @@ import mock
 import six
 from pytest import mark
 from rest_framework.test import APITestCase, APIClient
-from six.moves.urllib.parse import parse_qs, urljoin, urlsplit  # pylint: disable=import-error,ungrouped-imports
-
+from six.moves.urllib.parse import parse_qs, urlparse, urljoin, urlsplit  # pylint: disable=import-error,ungrouped-imports
 from django.shortcuts import render
 
 from test_utils import factories
@@ -160,6 +159,17 @@ def assert_url(first, second):
 
     assert first == second
 
+def assert_url_contains_query_parameters(url, query_params):
+    """
+    Asserts that a url string contains the given query parameters
+    :param url: Full url string to check
+    :param query_params: Dict of query string key/value pairs
+    :raises: Assertion error if the params do not exist in the given url
+    """
+    query_string = urlparse(url).query
+    query_string_dict = parse_qs(query_string)
+    for key, value in six.iteritems(query_params):
+        assert key in query_string_dict and value in query_string_dict.get(key)
 
 @mark.django_db
 class APITest(APITestCase):
