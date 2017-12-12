@@ -304,10 +304,16 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
 
     subject_line = get_notification_subject_line(enrolled_in['name'], enterprise_template_config)
 
+    from_email_address = get_configuration_value_for_site(
+        enterprise_customer.site,
+        'DEFAULT_FROM_EMAIL',
+        default=settings.DEFAULT_FROM_EMAIL
+    )
+
     return mail.send_mail(
         subject_line,
         plain_msg,
-        settings.DEFAULT_FROM_EMAIL,
+        from_email_address,
         [user_email],
         html_message=html_msg,
         connection=email_connection
