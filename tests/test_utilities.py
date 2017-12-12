@@ -400,7 +400,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         Test that we can successfully render and send an email message.
         """
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
-        enterprise_customer = mock.MagicMock(spec=[])
+        enterprise_customer = mock.MagicMock(spec=[], site=None)
         enterprise_customer.name = enterprise_customer_name
         if user is None:
             with raises(TypeError):
@@ -544,7 +544,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                     return_value=(('plaintext_value', '<b>HTML value</b>', ))
                 ),
                 subject_line='New course! {course_name}!'
-            )
+            ),
+            site=None
         )
         enterprise_customer.name = enterprise_customer_name
         if user is None:
@@ -717,7 +718,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                     return_value=(('plaintext_value', '<b>HTML value</b>', ))
                 ),
                 subject_line=subject_line
-            )
+            ),
+            site=None
         )
         enterprise_customer.name = enterprise_customer_name
         if user is None:
@@ -741,6 +743,65 @@ class TestEnterpriseUtils(unittest.TestCase):
             for field, val in expected_fields.items():
                 assert getattr(mail.outbox[0], field) == val
             assert mail.outbox[0].connection is conn
+
+    @ddt.data(
+        (
+            'override@example.com',
+            'override@example.com'
+        ),
+        (
+            None,
+            'course_staff@example.com'
+        )
+    )
+    @ddt.unpack
+    def test_send_email_notification_message_with_site_from_email_override(
+            self,
+            site_config_from_email_address,
+            expected_from_email_address
+    ):
+        """
+        Test that we can successfully override a from email address per site.
+        """
+        user = UserFactory(username='sal', email='sal@smith.com', first_name='sal')
+        enrolled_in = {
+            'name': 'Demo Course',
+            'url': 'http://lms.example.com/courses',
+            'type': 'course',
+            'start': '2017-01-01'
+        }
+        enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')
+
+        site = SiteFactory()
+        if site_config_from_email_address:
+            site.configuration = mock.MagicMock(
+                get_value=mock.MagicMock(
+                    return_value=site_config_from_email_address
+                )
+            )
+
+        enterprise_customer = mock.MagicMock(
+            name='Example Corporation',
+            enterprise_enrollment_template=mock.MagicMock(
+                render_all_templates=mock.MagicMock(
+                    return_value=(('plaintext_value', '<b>HTML value</b>', ))
+                ),
+                subject_line='New course! {course_name}!'
+            ),
+            site=site
+        )
+
+        conn = mail.get_connection()
+        utils.send_email_notification_message(
+            user,
+            enrolled_in,
+            enterprise_customer,
+            email_connection=conn,
+        )
+
+        assert len(mail.outbox) == 1
+        assert getattr(mail.outbox[0], 'from_email') == expected_from_email_address
+        assert mail.outbox[0].connection is conn
 
     def test_get_enterprise_customer_for_user(self):
         """
