@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.56.2] - 2017-12-13
+---------------------
+
+* Add course_enrollments API endpoint to swagger specification.
+
 [0.56.1] - 2017-12-13
 ---------------------
 

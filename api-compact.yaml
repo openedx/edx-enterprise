@@ -391,3 +391,54 @@ endpoints:
           x-amazon-apigateway-integration:
             <<: *apigateway_integration_with_enterprise_customer_catalog_uuid_and_program_uuid_parameters
             uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/"
+
+    # /v1/enterprise-customer/{uuid}/course_enrollments/
+    enterpriseCustomerCourseEnrollments:
+        post:
+          description: "Enrolls users in course runs."
+          operationId: "post_enterprise_customer_course_enrollments"
+          consumes:
+            - "application/json"
+          produces:
+            - "application/json"
+          parameters:
+            - *auth_header
+            - *uuid_parameter
+            - name: "body"
+              in: "body"
+              description: "List of enrollments to create."
+              required: true
+              schema:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    lms_user_id:
+                      description: "The edX user ID."
+                      type: "integer"
+                    tpa_user_id:
+                      description: "The SSO identity provider user ID."
+                      type: "string"
+                    user_email:
+                      description: "A valid email address for the user."
+                      type: "string"
+                    course_run_id:
+                      description: "The course run ID."
+                      type: "string"
+                      required: true
+                    course_mode:
+                      description: "The enrollment mode."
+                      type: "string"
+                      required: true
+                    email_students: 
+                      description: "Email user to notify of enrollment. Defaults to false."
+                      type: "boolean"
+          responses: *responses
+          x-amazon-apigateway-integration:
+            responses: *apigateway_responses
+            httpMethod: "POST"
+            type: "http"
+            requestParameters:
+              integration.request.header.Authorization: "method.request.header.Authorization"
+              integration.request.path.uuid: "method.request.path.uuid"
+            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-customer/{uuid}/course_enrollments/"
