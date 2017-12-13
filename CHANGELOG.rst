@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.56.0] - 2017-12-13
+---------------------
+
+* Update create_enterprise_course_enrollment command.
+
 [0.55.7] - 2017-12-13
 ---------------------
 
