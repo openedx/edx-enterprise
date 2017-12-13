@@ -301,7 +301,13 @@ class EnterpriseCustomer(TimeStampedModel):
                          "Proceeding with enrollment, but notifications won't be sent").format(course_id)
             )
             return
-        course_path = urlquote('/courses/{course_id}/course'.format(course_id=course_id))
+
+        course_path = urlquote(
+            '/courses/{course_id}/course/?tpa_hint={tpa_hint}'.format(
+                course_id=course_id,
+                tpa_hint=self.identity_provider,
+            )
+        )
         lms_root_url = utils.get_configuration_value_for_site(self.site, 'LMS_ROOT_URL')
         destination_url = '{site}/{login_or_register}?next={course_path}'.format(
             site=lms_root_url,

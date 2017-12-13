@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.55.7] - 2017-12-13
+---------------------
+
+* Ensure that proxy enrollment email links trigger SSO.
+
 [0.55.6] - 2017-12-12
 ---------------------
 

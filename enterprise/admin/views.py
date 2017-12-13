@@ -482,7 +482,12 @@ class EnterpriseCustomerManageLearnersView(View):
         program_uuid = program_details.get('uuid')
 
         lms_root_url = get_configuration_value_for_site(enterprise_customer.site, 'LMS_ROOT_URL')
-        program_path = urlquote('/dashboard/programs/{program_uuid}/'.format(program_uuid=program_uuid))
+        program_path = urlquote(
+            '/dashboard/programs/{program_uuid}/?tpa_hint={tpa_hint}'.format(
+                program_uuid=program_uuid,
+                tpa_hint=enterprise_customer.identity_provider,
+            )
+        )
         destination_url = '{site}/{login_or_register}?next={program_path}'.format(
             site=lms_root_url,
             login_or_register='{login_or_register}',
