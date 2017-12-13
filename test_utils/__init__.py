@@ -167,7 +167,7 @@ def assert_url(first, second):
 
 def assert_url_contains_query_parameters(url, query_params):
     """
-    Asserts that a url string contains the given query parameters
+    Assert that a url string contains the given query parameters.
 
     Args:
         url: Full url string to check
