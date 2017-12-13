@@ -1,25 +1,25 @@
 # This file is a "de-compacted" version of api-compact.yaml. The consuming tools are unable to process YAML anchors.
 # This file was generated using http://www.yamllint.com/.
 
----
-apigateway_responses:
-  200:
+--- 
+apigateway_responses: 
+  200: 
     statusCode: "200"
-  401:
+  401: 
     statusCode: "401"
   403: 
     statusCode: "403"
-  404:
+  404: 
     statusCode: "404"
-  429:
+  429: 
     statusCode: "429"
-  500:
+  500: 
     statusCode: "500"
-  default:
+  default: 
     statusCode: "400"
-apigateway_responses_with_mapping_template:
-  200:
-    responseTemplates:
+apigateway_responses_with_mapping_template: 
+  200: 
+    responseTemplates: 
       application/json: |
           #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
           #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2")
@@ -30,21 +30,21 @@ apigateway_responses_with_mapping_template:
             "results": $inputRoot.results
           }
     statusCode: "200"
-  401:
+  401: 
     statusCode: "401"
-  403:
+  403: 
     statusCode: "403"
-  404:
+  404: 
     statusCode: "404"
-  429:
+  429: 
     statusCode: "429"
-  500:
+  500: 
     statusCode: "500"
-  default:
+  default: 
     statusCode: "400"
-apigateway_responses_with_mapping_template_for_id:
-  200:
-    responseTemplates:
+apigateway_responses_with_mapping_template_for_id: 
+  200: 
+    responseTemplates: 
       application/json: |
           #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($id = $input.params('id'))
           #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
@@ -55,21 +55,21 @@ apigateway_responses_with_mapping_template_for_id:
             "results": $inputRoot.results
           }
     statusCode: "200"
-  401:
+  401: 
     statusCode: "401"
-  403:
+  403: 
     statusCode: "403"
-  404:
+  404: 
     statusCode: "404"
-  429:
+  429: 
     statusCode: "429"
-  500:
+  500: 
     statusCode: "500"
-  default:
+  default: 
     statusCode: "400"
-apigateway_responses_with_mapping_template_for_uuid:
-  200:
-    responseTemplates:
+apigateway_responses_with_mapping_template_for_uuid: 
+  200: 
+    responseTemplates: 
       application/json: |
           #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($uuid = $input.params('uuid'))
           #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceUuidMatch = "{uuid}")
@@ -80,148 +80,148 @@ apigateway_responses_with_mapping_template_for_uuid:
             "results": $inputRoot.results
           }
     statusCode: "200"
-  401:
+  401: 
     statusCode: "401"
-  403:
+  403: 
     statusCode: "403"
-  404:
+  404: 
     statusCode: "404"
-  429:
+  429: 
     statusCode: "429"
-  500:
+  500: 
     statusCode: "500"
-  default:
+  default: 
     statusCode: "400"
-auth_header:
+auth_header: 
   in: header
   name: Authorization
   required: true
   type: string
-course_run_id_parameter:
+course_run_id_parameter: 
   in: path
   name: course_run_id
   required: true
   type: string
-endpoints:
-  v1:
-    enterpriseCatalogById:
-      get:
+endpoints: 
+  v1: 
+    enterpriseCatalogById: 
+      get: 
         operationId: get_enterprise_catalog_by_id
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: path
             name: id
             required: true
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.id: method.request.path.id
-          responses:
-            200:
+          responses: 
+            200: 
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/"
-    enterpriseCatalogCourses:
-      get:
+    enterpriseCatalogCourses: 
+      get: 
         operationId: get_enterprise_catalog_courses
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: path
             name: id
             required: true
             type: number
-          -
+          - 
             in: query
             name: limit
             required: false
             type: number
-          -
+          - 
             in: query
             name: offset
             required: false
             type: number
-          -
+          - 
             in: query
             name: page
             required: false
             type: number
-          -
+          - 
             in: query
             name: page_size
             required: false
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.id: method.request.path.id
             integration.request.querystring.limit: method.request.querystring.limit
             integration.request.querystring.offset: method.request.querystring.offset
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
-          responses:
-            200:
-              responseTemplates:
+          responses: 
+            200: 
+              responseTemplates: 
                 application/json: |
                     #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($id = $input.params('id'))
                     #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
@@ -232,78 +232,78 @@ endpoints:
                       "results": $inputRoot.results
                     }
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"
-    enterpriseCatalogs:
-      get:
+    enterpriseCatalogs: 
+      get: 
         operationId: get_enterprise_catalogs
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: query
             name: limit
             required: false
             type: number
-          -
+          - 
             in: query
             name: offset
             required: false
             type: number
-          -
+          - 
             in: query
             name: page
             required: false
             type: number
-          -
+          - 
             in: query
             name: page_size
             required: false
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.querystring.limit: method.request.querystring.limit
             integration.request.querystring.offset: method.request.querystring.offset
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
-          responses:
-            200:
-              responseTemplates:
+          responses: 
+            200: 
+              responseTemplates: 
                 application/json: |
                     #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($id = $input.params('id'))
                     #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
@@ -314,72 +314,72 @@ endpoints:
                       "results": $inputRoot.results
                     }
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/"
-    enterpriseCustomerCatalogByUuid:
-      get:
+    enterpriseCustomerCatalogByUuid: 
+      get: 
         operationId: get_enterprise_customer_catalog_by_uuid
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: path
             name: uuid
             required: true
             type: string
-          -
+          - 
             in: query
             name: page
             required: false
             type: number
-          -
+          - 
             in: query
             name: page_size
             required: false
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.uuid: method.request.path.uuid
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
-          responses:
-            200:
-              responseTemplates:
+          responses: 
+            200: 
+              responseTemplates: 
                 application/json: |
                     #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($uuid = $input.params('uuid'))
                     #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceUuidMatch = "{uuid}")
@@ -390,210 +390,210 @@ endpoints:
                       "results": $inputRoot.results
                     }
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/"
-    enterpriseCustomerCatalogCourseRunByUuid:
-      get:
+    enterpriseCustomerCatalogCourseRunByUuid: 
+      get: 
         operationId: get_enterprise_customer_catalog_course_run_by_id
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: path
             name: uuid
             required: true
             type: string
-          -
+          - 
             in: path
             name: course_run_id
             required: true
             type: string
-          -
+          - 
             in: query
             name: page
             required: false
             type: number
-          -
+          - 
             in: query
             name: page_size
             required: false
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.course_run_id: method.request.path.course_run_id
             integration.request.path.uuid: method.request.path.uuid
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
-          responses:
-            200:
+          responses: 
+            200: 
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/"
-    enterpriseCustomerCatalogProgramByUuid:
-      get:
+    enterpriseCustomerCatalogProgramByUuid: 
+      get: 
         operationId: get_enterprise_customer_catalog_program_by_uuid
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: path
             name: uuid
             required: true
             type: string
-          -
+          - 
             in: path
             name: program_uuid
             required: true
             type: string
-          -
+          - 
             in: query
             name: page
             required: false
             type: number
-          -
+          - 
             in: query
             name: page_size
             required: false
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.path.program_uuid: method.request.path.program_uuid
             integration.request.path.uuid: method.request.path.uuid
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
-          responses:
-            200:
+          responses: 
+            200: 
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/"
-    enterpriseCustomerCatalogs:
-      get:
+    enterpriseCustomerCatalogs: 
+      get: 
         operationId: get_enterprise_customer_catalogs
-        parameters:
-          -
+        parameters: 
+          - 
             in: header
             name: Authorization
             required: true
             type: string
-          -
+          - 
             in: query
             name: page
             required: false
             type: number
-          -
+          - 
             in: query
             name: page_size
             required: false
             type: number
-        produces:
+        produces: 
           - application/json
           - application/csv
-        responses:
-          200:
+        responses: 
+          200: 
             description: OK
-          400:
+          400: 
             description: "Bad Request"
-          401:
+          401: 
             description: Unauthorized
-          403:
+          403: 
             description: Forbidden
-          404:
+          404: 
             description: "Not Found"
-          429:
+          429: 
             description: "Too Many Requests"
-          500:
+          500: 
             description: "Internal Server Error"
-        x-amazon-apigateway-integration:
+        x-amazon-apigateway-integration: 
           httpMethod: GET
-          requestParameters:
+          requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
-          responses:
-            200:
-              responseTemplates:
+          responses: 
+            200: 
+              responseTemplates: 
                 application/json: |
                     #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
                     #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2")
@@ -604,83 +604,169 @@ endpoints:
                       "results": $inputRoot.results
                     }
               statusCode: "200"
-            401:
+            401: 
               statusCode: "401"
-            403:
+            403: 
               statusCode: "403"
-            404:
+            404: 
               statusCode: "404"
-            429:
+            429: 
               statusCode: "429"
-            500:
+            500: 
               statusCode: "500"
-            default:
+            default: 
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/"
-id_parameter:
+    enterpriseCustomerCourseEnrollments: 
+      post: 
+        consumes: 
+          - application/json
+        description: "Enrolls users in course runs."
+        operationId: post_enterprise_customer_course_enrollments
+        parameters: 
+          - 
+            in: header
+            name: Authorization
+            required: true
+            type: string
+          - 
+            in: path
+            name: uuid
+            required: true
+            type: string
+          - 
+            description: "List of enrollments to create."
+            in: body
+            name: body
+            required: true
+            schema: 
+              items: 
+                properties: 
+                  course_mode: 
+                    description: "The enrollment mode."
+                    required: true
+                    type: string
+                  course_run_id: 
+                    description: "The course run ID."
+                    required: true
+                    type: string
+                  email_students: 
+                    description: "Email user to notify of enrollment. Defaults to false."
+                    type: boolean
+                  lms_user_id: 
+                    description: "The edX user ID."
+                    type: integer
+                  tpa_user_id: 
+                    description: "The SSO identity provider user ID."
+                    type: string
+                  user_email: 
+                    description: "A valid email address for the user."
+                    type: string
+                type: object
+              type: array
+        produces: 
+          - application/json
+        responses: 
+          200: 
+            description: OK
+          400: 
+            description: "Bad Request"
+          401: 
+            description: Unauthorized
+          403: 
+            description: Forbidden
+          404: 
+            description: "Not Found"
+          429: 
+            description: "Too Many Requests"
+          500: 
+            description: "Internal Server Error"
+        x-amazon-apigateway-integration: 
+          httpMethod: POST
+          requestParameters: 
+            integration.request.header.Authorization: method.request.header.Authorization
+            integration.request.path.uuid: method.request.path.uuid
+          responses: 
+            200: 
+              statusCode: "200"
+            401: 
+              statusCode: "401"
+            403: 
+              statusCode: "403"
+            404: 
+              statusCode: "404"
+            429: 
+              statusCode: "429"
+            500: 
+              statusCode: "500"
+            default: 
+              statusCode: "400"
+          type: http
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise-customer/{uuid}/course_enrollments/"
+id_parameter: 
   in: path
   name: id
   required: true
   type: number
-limit_qs_parameter:
+limit_qs_parameter: 
   in: query
   name: limit
   required: false
   type: number
-offset_qs_parameter:
+offset_qs_parameter: 
   in: query
   name: offset
   required: false
   type: number
-page_qs_parameter:
+page_qs_parameter: 
   in: query
   name: page
   required: false
   type: number
-page_size_qs_parameter:
+page_size_qs_parameter: 
   in: query
   name: page_size
   required: false
   type: number
-produces:
+produces: 
   - application/json
   - application/csv
-program_uuid_parameter:
+program_uuid_parameter: 
   in: path
   name: program_uuid
   required: true
   type: string
-responses:
-  200:
+responses: 
+  200: 
     description: OK
-  400:
+  400: 
     description: "Bad Request"
-  401:
+  401: 
     description: Unauthorized
-  403:
+  403: 
     description: Forbidden
-  404:
+  404: 
     description: "Not Found"
-  429:
+  429: 
     description: "Too Many Requests"
-  500:
+  500: 
     description: "Internal Server Error"
-uuid_parameter:
+uuid_parameter: 
   in: path
   name: uuid
   required: true
   type: string
-x-amazon-apigateway-integration-enterprise-customer-catalog-detail:
+x-amazon-apigateway-integration-enterprise-customer-catalog-detail: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.path.uuid: method.request.path.uuid
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
-  responses:
-    200:
-      responseTemplates:
+  responses: 
+    200: 
+      responseTemplates: 
         application/json: |
             #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($uuid = $input.params('uuid'))
             #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceUuidMatch = "{uuid}")
@@ -691,28 +777,28 @@ x-amazon-apigateway-integration-enterprise-customer-catalog-detail:
               "results": $inputRoot.results
             }
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
-x-amazon-apigateway-integration-enterprise-customer-catalog-list:
+x-amazon-apigateway-integration-enterprise-customer-catalog-list: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
-  responses:
-    200:
-      responseTemplates:
+  responses: 
+    200: 
+      responseTemplates: 
         application/json: |
             #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host)
             #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2")
@@ -723,30 +809,30 @@ x-amazon-apigateway-integration-enterprise-customer-catalog-list:
               "results": $inputRoot.results
             }
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
-x-amazon-apigateway-integration-id-response:
+x-amazon-apigateway-integration-id-response: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.querystring.limit: method.request.querystring.limit
     integration.request.querystring.offset: method.request.querystring.offset
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
-  responses:
-    200:
-      responseTemplates:
+  responses: 
+    200: 
+      responseTemplates: 
         application/json: |
             #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($id = $input.params('id'))
             #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
@@ -757,100 +843,100 @@ x-amazon-apigateway-integration-id-response:
               "results": $inputRoot.results
             }
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
-x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course-run-id-parameters:
+x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course-run-id-parameters: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.path.course_run_id: method.request.path.course_run_id
     integration.request.path.uuid: method.request.path.uuid
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
-  responses:
-    200:
+  responses: 
+    200: 
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
-x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-program-uuid-parameters:
+x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-program-uuid-parameters: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.path.program_uuid: method.request.path.program_uuid
     integration.request.path.uuid: method.request.path.uuid
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
-  responses:
-    200:
+  responses: 
+    200: 
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
-x-amazon-apigateway-integration-with-id:
+x-amazon-apigateway-integration-with-id: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.path.id: method.request.path.id
-  responses:
-    200:
+  responses: 
+    200: 
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
-x-amazon-apigateway-integration-with-id-and-querystring-parameters:
+x-amazon-apigateway-integration-with-id-and-querystring-parameters: 
   httpMethod: GET
-  requestParameters:
+  requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
     integration.request.path.id: method.request.path.id
     integration.request.querystring.limit: method.request.querystring.limit
     integration.request.querystring.offset: method.request.querystring.offset
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
-  responses:
-    200:
-      responseTemplates:
+  responses: 
+    200: 
+      responseTemplates: 
         application/json: |
             #set($inputRoot = $input.path('$')) #set($host = $stageVariables.gateway_host) #set($id = $input.params('id'))
             #set($URLMatchRegex = "(^https?://)[^/]*[^?]*(.*$)") #set($updatedURL = "$1$host$context.resourcePath$2") #set($resourceIdMatch = "{id}")
@@ -861,16 +947,17 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters:
               "results": $inputRoot.results
             }
       statusCode: "200"
-    401:
+    401: 
       statusCode: "401"
-    403:
+    403: 
       statusCode: "403"
-    404:
+    404: 
       statusCode: "404"
-    429:
+    429: 
       statusCode: "429"
-    500:
+    500: 
       statusCode: "500"
-    default:
+    default: 
       statusCode: "400"
   type: http
+
