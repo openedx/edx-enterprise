@@ -40,7 +40,7 @@ from enterprise.models import (
     logo_path,
 )
 from enterprise.utils import CourseEnrollmentDowngradeError
-from test_utils import assert_url, factories, fake_catalog_api
+from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 
 @mark.django_db
@@ -909,6 +909,27 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         assert_url(enrollment_url, expected_course_enrollment_url)
 
     @mock.patch('enterprise.utils.configuration_helpers')
+    def test_audit_querystring_in_course_enrollment_url(self, config_mock):
+        """
+        The ``get_course_run_enrollment_url`` method returns ``audit=true`` in the query string when
+        publish_audit_enrollment_urls is enabled for the EnterpriseCustomerCatalog
+        """
+        config_mock.get_value.return_value = 'value'
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
+        course_run_key = CourseKey.from_string(course_run_id)
+
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=self.catalog_uuid,
+            enterprise_customer=factories.EnterpriseCustomerFactory(
+                uuid=self.enterprise_uuid,
+                name=self.enterprise_name
+            ),
+            publish_audit_enrollment_urls=True
+        )
+        enrollment_url = enterprise_catalog.get_course_run_enrollment_url(course_run_key=course_run_key)
+        assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
+
+    @mock.patch('enterprise.utils.configuration_helpers')
     def test_catalog_querystring_in_program_enrollment_url(self, config_mock):
         config_mock.get_value.return_value = 'value'
         program_uuid = fake_catalog_api.FAKE_PROGRAM_RESPONSE1.get('uuid')
@@ -937,6 +958,26 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         )
         enrollment_url = enterprise_catalog.get_program_enrollment_url(program_uuid=program_uuid)
         assert_url(enrollment_url, expected_program_enrollment_url)
+
+    @mock.patch('enterprise.utils.configuration_helpers')
+    def test_audit_querystring_in_program_enrollment_url(self, config_mock):
+        """
+        The ``get_program_enrollment_url`` method returns ``audit=true`` in the query string when
+        publish_audit_enrollment_urls is enabled for the EnterpriseCustomerCatalog
+        """
+        config_mock.get_value.return_value = 'value'
+        program_uuid = fake_catalog_api.FAKE_PROGRAM_RESPONSE1.get('uuid')
+
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=self.catalog_uuid,
+            enterprise_customer=factories.EnterpriseCustomerFactory(
+                uuid=self.enterprise_uuid,
+                name=self.enterprise_name
+            ),
+            publish_audit_enrollment_urls=True
+        )
+        enrollment_url = enterprise_catalog.get_program_enrollment_url(program_uuid=program_uuid)
+        assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 
     @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_content_items')
     def test_get_course_and_course_run_no_content_items(self, contains_content_items_mock):

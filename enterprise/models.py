@@ -987,6 +987,12 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         help_text=_('Ordered list of enrollment modes which can be displayed to learners for course runs in'
                     ' this catalog.'),
     )
+    publish_audit_enrollment_urls = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether courses should be published with direct-to-audit enrollment URLs."
+        )
+    )
 
     history = HistoricalRecords()
 
@@ -1132,6 +1138,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             (str): Enterprise landing page url.
         """
         url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key)
+        if self.publish_audit_enrollment_urls:
+            url = utils.update_query_parameters(url, {'audit': 'true'})
+
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
     def get_program_enrollment_url(self, program_uuid):
@@ -1145,6 +1154,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             (str): Enterprise program landing page url.
         """
         url = self.enterprise_customer.get_program_enrollment_url(program_uuid)
+        if self.publish_audit_enrollment_urls:
+            url = utils.update_query_parameters(url, {'audit': 'true'})
+
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
 

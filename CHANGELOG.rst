@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.56.1] - 2017-12-13
+---------------------
+
+* Add publish_audit_enrollment_url flag to EnterpriseCustomerCatalog.
+
 [0.56.0] - 2017-12-13
 ---------------------
 
