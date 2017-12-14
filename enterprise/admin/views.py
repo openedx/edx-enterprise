@@ -481,7 +481,11 @@ class EnterpriseCustomerManageLearnersView(View):
         program_branding = program_details.get('type')
         program_uuid = program_details.get('uuid')
 
-        lms_root_url = get_configuration_value_for_site(enterprise_customer.site, 'LMS_ROOT_URL')
+        lms_root_url = get_configuration_value_for_site(
+            enterprise_customer.site,
+            'LMS_ROOT_URL',
+            settings.LMS_ROOT_URL
+        )
         program_path = urlquote(
             '/dashboard/programs/{program_uuid}/?tpa_hint={tpa_hint}'.format(
                 program_uuid=program_uuid,

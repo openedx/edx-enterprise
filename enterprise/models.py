@@ -308,7 +308,11 @@ class EnterpriseCustomer(TimeStampedModel):
                 tpa_hint=self.identity_provider,
             )
         )
-        lms_root_url = utils.get_configuration_value_for_site(self.site, 'LMS_ROOT_URL')
+        lms_root_url = utils.get_configuration_value_for_site(
+            self.site,
+            'LMS_ROOT_URL',
+            settings.LMS_ROOT_URL
+        )
         destination_url = '{site}/{login_or_register}?next={course_path}'.format(
             site=lms_root_url,
             login_or_register='{login_or_register}',  # We don't know the value at this time

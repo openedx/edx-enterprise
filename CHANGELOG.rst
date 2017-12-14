@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.56.3] - 2017-12-14
+---------------------
+
+* Make sure root url has a fallback for proxy enrollment email links.
+
 [0.56.2] - 2017-12-13
 ---------------------
 
