@@ -25,8 +25,12 @@ from enterprise.admin.utils import (
 )
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerIdentityProvider
-from enterprise.utils import MultipleProgramMatchError
+from enterprise.models import (
+    EnterpriseCustomer,
+    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerReportingConfiguration,
+)
+from enterprise.utils import decrypt_string, MultipleProgramMatchError
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -428,3 +432,71 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
                     identity_provider_site=identity_provider.site,
                 ),
             )
+
+
+class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
+    """
+    Alternate form for the EnterpriseCustomerReportingConfiguration admin page.
+
+    This form fetches catalog names and IDs from the course catalog API.
+    """
+
+    password = forms.CharField(
+        required=False,
+        max_length=256,
+        help_text=_('The Password to decrypt the zip file containing the report.')
+    )
+
+    sftp_password = forms.CharField(
+        required=False,
+        max_length=256,
+        help_text=_('If the delivery method is sftp, the password to use to securely access the host.')
+    )
+
+    class Meta:
+        model = EnterpriseCustomerReportingConfiguration
+        fields = (
+            "enterprise_customer",
+            "active",
+            "delivery_method",
+            "frequency",
+            "day_of_month",
+            "day_of_week",
+            "hour_of_day",
+            "email",
+            "password",
+            "sftp_hostname",
+            "sftp_port",
+            "sftp_username",
+            "sftp_password",
+            "sftp_file_path",
+        )
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize the form, and display the decrypted passwords in the password fields if they are set.
+        """
+        instance = None
+        if 'instance' in kwargs and kwargs['instance']:
+            instance = kwargs['instance']
+        initial_password = None
+        initial_sftp_password = None
+        if instance:
+            if instance.password:
+                initial_password = decrypt_string(instance.password, instance.initialization_vector)
+            if instance.sftp_password:
+                initial_sftp_password = decrypt_string(instance.sftp_password, instance.initialization_vector)
+
+        kwargs['initial'] = {
+            'password': initial_password,
+            'sftp_password': initial_sftp_password,
+        }
+        super(EnterpriseCustomerReportingConfigAdminForm, self).__init__(*args, **kwargs)
+
+    def save(self, commit=True):
+        """
+        Overridden to pass the password and sftp_password fields to the model instance.
+        """
+        self.instance.decrypted_password = self.cleaned_data['password']
+        self.instance.decrypted_sftp_password = self.cleaned_data['sftp_password']
+        return super(EnterpriseCustomerReportingConfigAdminForm, self).save(commit)
