@@ -1264,12 +1264,11 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     )
 
     DELIVERY_METHOD_EMAIL = 'email'
-    # We are adding this field preemptively as we plan to support FTP, but don't have the details yet.
-    DELIVERY_METHOD_FTP = 'ftp'
+    DELIVERY_METHOD_SFTP = 'sftp'
 
     DELIVERY_METHOD_CHOICES = (
         (DELIVERY_METHOD_EMAIL, DELIVERY_METHOD_EMAIL),
-        (DELIVERY_METHOD_FTP, DELIVERY_METHOD_FTP),
+        (DELIVERY_METHOD_SFTP, DELIVERY_METHOD_SFTP),
     )
 
     DAYS_OF_WEEK = (
@@ -1337,8 +1336,42 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         max_length=256,
         blank=False,
         null=False,
-        editable=False,
-        verbose_name=_("Password"),
+        verbose_name=_("Password for the protected zip file."),
+    )
+    sftp_hostname = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        verbose_name=_("SFTP Host name"),
+        help_text=_("If the delivery method is sftp, the host to deliver the report to.")
+    )
+    sftp_port = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_("SFTP Port"),
+        help_text=_("If the delivery method is sftp, the port on the host to connect to."),
+        default=22,
+    )
+    sftp_username = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        verbose_name=_("SFTP username"),
+        help_text=_("If the delivery method is sftp, the username to use to securely access the host.")
+    )
+    sftp_password = models.BinaryField(
+        max_length=256,
+        blank=True,
+        null=True,
+        verbose_name=_("SFTP password"),
+        help_text=_("If the delivery method is sftp, the password to use to securely access the host.")
+    )
+    sftp_file_path = models.CharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        verbose_name=_("SFTP file path"),
+        help_text=_("If the delivery method is sftp, the path on the host to deliver the report to.")
     )
 
     class Meta:
@@ -1360,15 +1393,28 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         """
-        Override of model save method to dynamically generate the password field and perform additional validation.
+        Override of model save method to handle encryption logic for password fields.
         """
+        # These will only get passed in from the Django Admin Form for this model.
+        decrypted_password = getattr(self, 'decrypted_password', None)
+        decrypted_sftp_password = getattr(self, 'decrypted_sftp_password', None)
         if not self.pk:
             self.initialization_vector = utils.generate_aes_initialization_vector()
+            decrypted_password = decrypted_password or get_random_string(length=32)
+
+        if decrypted_password:
             self.password = utils.encrypt_string(
-                get_random_string(length=32),
+                decrypted_password,
                 self.initialization_vector
             )
-            self.full_clean()
+
+        if decrypted_sftp_password:
+            self.sftp_password = utils.encrypt_string(
+                decrypted_sftp_password,
+                self.initialization_vector
+            )
+
+        self.full_clean()
         super(EnterpriseCustomerReportingConfiguration, self).save(*args, **kwargs)
 
     def clean(self):
@@ -1388,3 +1434,20 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             self.day_of_week = None
         else:
             raise ValidationError(_('Frequency must be set to either daily, weekly, or monthly.'))
+
+        if self.delivery_method == self.DELIVERY_METHOD_SFTP:
+            validation_errors = {}
+            if not self.sftp_hostname:
+                validation_errors['sftp_hostname'] = _('SFTP Hostname must be set if the delivery method is sftp')
+
+            if not self.sftp_port:
+                validation_errors['sftp_port'] = _('SFTP Port must be set if the delivery method is sftp')
+
+            if not self.sftp_username:
+                validation_errors['sftp_username'] = _('SFTP username must be set if the delivery method is sftp')
+
+            if not self.sftp_file_path:
+                validation_errors['sftp_file_path'] = _('SFTP File Path must be set if the delivery method is sftp')
+
+            if validation_errors:
+                raise ValidationError(validation_errors)

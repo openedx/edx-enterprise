@@ -16,7 +16,11 @@ from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
 
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
-from enterprise.admin.forms import EnterpriseCustomerAdminForm, EnterpriseCustomerIdentityProviderAdminForm
+from enterprise.admin.forms import (
+    EnterpriseCustomerAdminForm,
+    EnterpriseCustomerIdentityProviderAdminForm,
+    EnterpriseCustomerReportingConfigAdminForm,
+)
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
@@ -497,36 +501,17 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCustomerReportingConfiguration.
     """
 
-    fields = (
-        "enterprise_customer",
-        "active",
-        "email",
-        "frequency",
-        "day_of_month",
-        "day_of_week",
-        "hour_of_day",
-        "decrypted_password",
-    )
-
     list_display = (
         "enterprise_customer",
         "active",
-        "email",
+        "delivery_method",
         "frequency",
-    )
-
-    readonly_fields = (
-        "decrypted_password",
     )
 
     list_filter = ("active",)
     search_fields = ("enterprise_customer__name", "email")
 
+    form = EnterpriseCustomerReportingConfigAdminForm
+
     class Meta(object):
         model = EnterpriseCustomerReportingConfiguration
-
-    def decrypted_password(self, obj):
-        """
-        The decrypted password to be displayed to the admin.
-        """
-        return decrypt_string(obj.password, obj.initialization_vector)
