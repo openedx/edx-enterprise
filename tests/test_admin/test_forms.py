@@ -17,15 +17,18 @@ from django import forms
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.test import override_settings
 
 from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
+    EnterpriseCustomerReportingConfigAdminForm,
     ManageLearnersForm,
 )
 from enterprise.admin.utils import ValidationMessages
 from enterprise.api_client.discovery import CourseCatalogApiClient
-from enterprise.utils import MultipleProgramMatchError
+from enterprise.models import EnterpriseCustomerReportingConfiguration
+from enterprise.utils import MultipleProgramMatchError, encrypt_string, generate_aes_initialization_vector
 from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCustomerFactory,
@@ -728,3 +731,106 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
 
         # Validate and clean form data
         assert form.is_valid()
+
+
+@mark.django_db
+class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
+    """
+    Tests for EnterpriseCustomerReportingConfigAdminForm.
+    """
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super(TestEnterpriseCustomerReportingConfigAdminForm, self).setUp()
+        self.initialization_vector = generate_aes_initialization_vector()
+        self.decrypted_password = 'hello_world'
+        self.password = encrypt_string(self.decrypted_password, self.initialization_vector)
+        self.decrypted_sftp_password = 'oh_hi_there'
+        self.sftp_password = encrypt_string(self.decrypted_sftp_password, self.initialization_vector)
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def test_with_initial_password_values(self):
+        """
+        Test that form initialization with an instance that has password values set get the decrypted values shown.
+        """
+        instance = EnterpriseCustomerReportingConfiguration(
+            password=self.password,
+            sftp_password=self.sftp_password,
+            initialization_vector=self.initialization_vector
+        )
+
+        form = EnterpriseCustomerReportingConfigAdminForm(instance=instance)
+
+        assert form.initial['decrypted_password'] == self.decrypted_password
+        assert form.initial['decrypted_sftp_password'] == self.decrypted_sftp_password
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def test_with_no_instance(self):
+        """
+        Test that form initialization with an instance that has password values set get the decrypted values shown.
+        """
+        form = EnterpriseCustomerReportingConfigAdminForm()
+
+        assert not form.initial['decrypted_password']
+        assert not form.initial['decrypted_sftp_password']
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    def test_unable_to_decrypt_initial_password_values(self):
+        """
+        Test that form initialization with an instance that has password values set get the decrypted values shown.
+        """
+        enterprise_customer = EnterpriseCustomerFactory()
+        instance = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            password=self.password,
+            sftp_password=self.sftp_password,
+            initialization_vector=generate_aes_initialization_vector()
+        )
+
+        form = EnterpriseCustomerReportingConfigAdminForm(instance=instance)
+
+        assert not form.initial['decrypted_password']
+        assert not form.initial['decrypted_sftp_password']
+
+    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
+    @mock.patch('enterprise.models.utils.generate_aes_initialization_vector')
+    def test_save_password_values(self, mock_utils):
+        """
+        Test that saving a form with password values properly passes them to the instance when saved.
+        """
+        mock_utils.return_value = self.initialization_vector
+        enterprise_customer = EnterpriseCustomerFactory()
+        enterprise_customer.save()
+        instance = EnterpriseCustomerReportingConfiguration()
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            {
+                'enterprise_customer': enterprise_customer.uuid,
+                'delivery_method': 'sftp',
+                'frequency': 'daily',
+                'hour_of_day': 1,
+                'email': 'test@example.com',
+                'decrypted_password': self.decrypted_password,
+                'sftp_hostname': 'blah.example.com',
+                'sftp_port': 22,
+                'sftp_username': 'test',
+                'decrypted_sftp_password': self.decrypted_sftp_password,
+                'sftp_file_path': '/somewhere',
+            },
+            instance=instance
+        )
+
+        assert not hasattr(instance, 'decrypted_password')
+        assert not hasattr(instance, 'decrypted_sftp_password')
+        assert not form.initial['decrypted_password']
+        assert not form.initial['decrypted_sftp_password']
+
+        assert form.is_valid()
+        form.save()
+
+        assert getattr(instance, 'decrypted_password') == self.decrypted_password
+        assert getattr(instance, 'decrypted_sftp_password') == self.decrypted_sftp_password
+        assert instance.password == self.password
+        assert instance.sftp_password == self.sftp_password

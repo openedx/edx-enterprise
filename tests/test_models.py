@@ -1507,24 +1507,25 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_DAILY, 1, 1, None, None, None),
         (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_WEEKLY, 1, 1, None, 1, None),
         (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_WEEKLY, None, None, None, None,
-         'Day of week must be set if the frequency is weekly.'),
+         ['Day of week must be set if the frequency is weekly.']),
         (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY, 1, 1, 1, None, None),
         (EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY, None, None, None, None,
-         'Day of month must be set if the frequency is monthly.'),
-        ('invalid_frequency', None, None, None, None, 'Frequency must be set to either daily, weekly, or monthly.'),
+         ['Day of month must be set if the frequency is monthly.']),
+        ('invalid_frequency', None, None, None, None,
+         ['Frequency must be set to either daily, weekly, or monthly.']),
     )
     @ddt.unpack
-    def test_clean(
+    def test_clean_frequency_fields(
             self,
             frequency,
             day_of_month,
             day_of_week,
             expected_day_of_month,
             expected_day_of_week,
-            expected_error_message,
+            expected_error,
     ):
         """
-        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function
+        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating frequency related fields.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
         config = EnterpriseCustomerReportingConfiguration(
@@ -1538,15 +1539,40 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
             hour_of_day=1,
         )
 
-        if expected_error_message:
-            with self.assertRaises(ValidationError) as validation_error:
+        if expected_error:
+            try:
                 config.clean()
-                self.assertEqual(validation_error.exception.messages[0], expected_error_message)
+            except ValidationError as validation_error:
+                assert validation_error.messages == expected_error
         else:
             config.clean()
 
         assert config.day_of_month == expected_day_of_month
         assert config.day_of_week == expected_day_of_week
+
+    def test_clean_missing_sftp_fields(self):
+        """
+        Test ``EnterpriseCustomerReportingConfiguration`` custom clean function validating sftp related fields.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
+        config = EnterpriseCustomerReportingConfiguration(
+            enterprise_customer=enterprise_customer,
+            active=True,
+            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_SFTP,
+            email='test@edx.org',
+            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_DAILY,
+            hour_of_day=1,
+        )
+
+        expected_errors = [
+            'SFTP Hostname must be set if the delivery method is sftp',
+            'SFTP File Path must be set if the delivery method is sftp',
+            'SFTP username must be set if the delivery method is sftp',
+        ]
+        try:
+            config.clean()
+        except ValidationError as validation_error:
+            assert sorted(validation_error.messages) == sorted(expected_errors)
 
     @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
     def test_save(self):
