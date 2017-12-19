@@ -6,9 +6,9 @@
   <script type="text/javascript">
     var courseId;
     var programId;
-    var successUrl = {{ redirect_url|default:"null"|escapejs }};
-    var failureUrl = {{ failure_url|default:"null"|escapejs }};
-    var deferCreation = {{ defer_creation|yesno:"true,false" }};
+    var successUrl = '{{ redirect_url|default:"null"|escapejs }}';
+    var failureUrl = '{{ failure_url|default:"null"|escapejs }}';
+    var deferCreation = '{{ defer_creation|yesno:"true,false" }}';
     {% if course_specific and course_id %}
       courseId = "{{ course_id }}";
     {% endif %}
