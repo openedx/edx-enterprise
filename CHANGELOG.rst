@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.56.4] - 2017-12-19
+---------------------
+
+* Fix syntax error in template-embedded Javascript.
+
 [0.56.3] - 2017-12-14
 ---------------------
 
