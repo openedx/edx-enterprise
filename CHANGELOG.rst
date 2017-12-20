@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.56.5] - 2017-12-20
+---------------------
+
+* Fix templates to use new bootstrap bundle library.
+
 [0.56.4] - 2017-12-19
 ---------------------
 
