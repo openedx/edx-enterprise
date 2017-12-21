@@ -22,11 +22,12 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     UserFactory,
 )
+from test_utils.mixins import EnterpriseViewMixin
 
 
 @mark.django_db
 @ddt.ddt
-class TestHandleConsentEnrollmentView(TestCase):
+class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
     """
     Test HandleConsentEnrollment.
     """
@@ -63,7 +64,7 @@ class TestHandleConsentEnrollmentView(TestCase):
         """
         Sets up the SSO Registry object
         """
-        registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
+        registry_mock.get.return_value.configure_mock(provider_id=provider_id)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.utils.Registry')
@@ -88,9 +89,11 @@ class TestHandleConsentEnrollmentView(TestCase):
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
-        handle_consent_enrollment_url = reverse(
-            'enterprise_handle_consent_enrollment',
-            args=[enterprise_customer.uuid, course_id],
+        handle_consent_enrollment_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_handle_consent_enrollment',
+                args=[enterprise_customer.uuid, course_id],
+            )
         )
         response = self.client.get(handle_consent_enrollment_url)
         redirect_url = LMS_DASHBOARD_URL
@@ -124,11 +127,13 @@ class TestHandleConsentEnrollmentView(TestCase):
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         self._login()
-        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
-            consent_enrollment_url=reverse(
-                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-            ),
-            params=urlencode({'course_mode': 'professional'})
+        handle_consent_enrollment_url = self._append_fresh_login_param(
+            '{consent_enrollment_url}?{params}'.format(
+                consent_enrollment_url=reverse(
+                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+                ),
+                params=urlencode({'course_mode': 'professional'})
+            )
         )
         response = self.client.get(handle_consent_enrollment_url)
         assert response.status_code == 404
@@ -168,11 +173,13 @@ class TestHandleConsentEnrollmentView(TestCase):
         mocked_enterprise_customer_user = get_ec_user_mock.return_value
         mocked_enterprise_customer_user.return_value = enterprise_customer_user
         self._login()
-        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
-            consent_enrollment_url=reverse(
-                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-            ),
-            params=urlencode({'course_mode': 'some-invalid-course-mode'})
+        handle_consent_enrollment_url = self._append_fresh_login_param(
+            '{consent_enrollment_url}?{params}'.format(
+                consent_enrollment_url=reverse(
+                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+                ),
+                params=urlencode({'course_mode': 'some-invalid-course-mode'})
+            )
         )
         response = self.client.get(handle_consent_enrollment_url)
         redirect_url = LMS_DASHBOARD_URL
@@ -211,11 +218,13 @@ class TestHandleConsentEnrollmentView(TestCase):
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
         self._login()
-        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
-            consent_enrollment_url=reverse(
-                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-            ),
-            params=urlencode({'course_mode': 'audit'})
+        handle_consent_enrollment_url = self._append_fresh_login_param(
+            '{consent_enrollment_url}?{params}'.format(
+                consent_enrollment_url=reverse(
+                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+                ),
+                params=urlencode({'course_mode': 'audit'})
+            )
         )
         response = self.client.get(handle_consent_enrollment_url)
         redirect_url = LMS_COURSEWARE_URL.format(course_id=course_id)
@@ -267,11 +276,13 @@ class TestHandleConsentEnrollmentView(TestCase):
         enrollment_client = enrollment_api_client_mock.return_value
         enrollment_client.get_course_modes.return_value = self.dummy_demo_course_modes
         self._login()
-        handle_consent_enrollment_url = '{consent_enrollment_url}?{params}'.format(
-            consent_enrollment_url=reverse(
-                'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-            ),
-            params=urlencode({'course_mode': 'professional'})
+        handle_consent_enrollment_url = self._append_fresh_login_param(
+            '{consent_enrollment_url}?{params}'.format(
+                consent_enrollment_url=reverse(
+                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
+                ),
+                params=urlencode({'course_mode': 'professional'})
+            )
         )
         response = self.client.get(handle_consent_enrollment_url)
         redirect_url = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
