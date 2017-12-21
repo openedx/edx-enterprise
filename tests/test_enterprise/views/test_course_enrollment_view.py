@@ -5,6 +5,8 @@ Tests for the ``CourseEnrollmentView`` view of the Enterprise app.
 
 from __future__ import absolute_import, unicode_literals
 
+from collections import OrderedDict
+
 import ddt
 import mock
 from dateutil.parser import parse
@@ -19,6 +21,7 @@ from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from django.test import Client, TestCase
 
+from enterprise.decorators import FRESH_LOGIN_PARAMETER
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils import FAKE_UUIDS, fake_catalog_api, fake_render
@@ -32,12 +35,12 @@ from test_utils.factories import (
     UserFactory,
 )
 from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN, setup_course_catalog_api_client_mock
-from test_utils.mixins import EmbargoAPIMixin, MessagesMixin
+from test_utils.mixins import EmbargoAPIMixin, EnterpriseViewMixin, MessagesMixin
 
 
 @mark.django_db
 @ddt.ddt
-class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
+class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMixin, TestCase):
     """
     Test CourseEnrollmentView.
     """
@@ -98,7 +101,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         """
         Sets up the SSO Registry object
         """
-        registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
+        registry_mock.get.return_value.configure_mock(provider_id=provider_id)
 
     def _check_expected_enrollment_page(self, response, expected_context):
         """
@@ -169,9 +172,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         # Set up expected context
@@ -294,9 +299,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         querystring_dict.update({
             'catalog': enterprise_customer_catalog.uuid
         })
-        enterprise_landing_page_url = '{course_enrollment_url}?{querystring}'.format(
-            course_enrollment_url=course_enrollment_url,
-            querystring=querystring_dict.urlencode()
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            '{course_enrollment_url}?{querystring}'.format(
+                course_enrollment_url=course_enrollment_url,
+                querystring=querystring_dict.urlencode()
+            )
         )
 
         # Set up expected context for enterprise course enrollment page
@@ -368,9 +375,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         querystring_dict.update({
             'catalog': invalid_enterprise_catalog_uuid
         })
-        enterprise_landing_page_url = '{course_enrollment_url}?{querystring}'.format(
-            course_enrollment_url=course_enrollment_url,
-            querystring=querystring_dict.urlencode()
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            '{course_enrollment_url}?{querystring}'.format(
+                course_enrollment_url=course_enrollment_url,
+                querystring=querystring_dict.urlencode()
+            )
         )
         expected_context = {
             'enterprise_customer': enterprise_customer,
@@ -458,9 +467,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         querystring_dict.update({
             'catalog': enterprise_customer_catalog.uuid
         })
-        enterprise_landing_page_url = '{course_enrollment_url}?{querystring}'.format(
-            course_enrollment_url=course_enrollment_url,
-            querystring=querystring_dict.urlencode()
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            '{course_enrollment_url}?{querystring}'.format(
+                course_enrollment_url=course_enrollment_url,
+                querystring=querystring_dict.urlencode()
+            )
         )
         expected_context = {
             'enterprise_customer': enterprise_customer,
@@ -525,9 +536,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
             granted=consent_granted
         )
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         self._login()
@@ -602,9 +615,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_id=self.demo_course_id,
             enterprise_customer=enterprise_customer,
         )
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         self._login()
@@ -658,9 +673,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         expected_context = {'course_enrollable': False}
@@ -698,9 +715,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         # Set up expected context
@@ -759,9 +778,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         # Set up expected context
@@ -818,9 +839,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         # Set up expected context
@@ -888,9 +911,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         self._setup_registry_mock(registry_mock, self.provider_id)
         self._setup_embargo_api(embargo_api_mock)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, course_id],
+            )
         )
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 200
@@ -933,9 +958,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 200
@@ -978,9 +1005,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 200
@@ -1023,9 +1052,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
         response = self.client.get(course_enrollment_page_url)
         assert response.status_code == 200
@@ -1082,9 +1113,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, course_id],
+            )
         )
         response = self.client.get(enterprise_landing_page_url)
 
@@ -1143,9 +1176,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             enterprise_customer_user=ecu,
             course_id=course_id
         )
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, course_id],
+            )
         )
         response = self.client.get(enterprise_landing_page_url)
         self.assertRedirects(
@@ -1202,9 +1237,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, course_id],
+            )
         )
         response = self.client.post(course_enrollment_page_url, {'course_mode': enrollment_mode})
 
@@ -1256,9 +1293,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_uuid = enterprise_customer.uuid
         self._login()
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer_uuid, course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer_uuid, course_id],
+            )
         )
         response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'})
 
@@ -1268,8 +1307,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
             enterprise_customer_uuid, course_id, urlencode({'course_mode': 'audit'})
         )
-        expected_failure_url = reverse(
-            'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+        expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
+            course_enrollment_url=reverse(
+                'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+            ),
+            query_string=urlencode({FRESH_LOGIN_PARAMETER: 'yes'}),
         )
         self.assertRedirects(
             response,
@@ -1337,14 +1379,13 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
                 return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
             ),
         )
-        catalog_querystring = 'catalog={catalog_uuid}'.format(
-            catalog_uuid=enterprise_customer_catalog.uuid
-        )
-        course_enrollment_page_url = '{course_enrollment_url}?{query_string}'.format(
-            course_enrollment_url=reverse(
-                'enterprise_course_enrollment_page', args=[enterprise_customer_uuid, course_id]
-            ),
-            query_string=catalog_querystring
+        course_enrollment_page_url = self._append_fresh_login_param(
+            '{course_enrollment_url}?{query_string}'.format(
+                course_enrollment_url=reverse(
+                    'enterprise_course_enrollment_page', args=[enterprise_customer_uuid, course_id]
+                ),
+                query_string=urlencode({'catalog_uuid': enterprise_customer_catalog.uuid})
+            )
         )
         response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'}, )
         assert response.status_code == 302
@@ -1357,7 +1398,10 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             course_enrollment_url=reverse(
                 'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
             ),
-            query_string=catalog_querystring
+            query_string=urlencode(OrderedDict([
+                ('catalog_uuid', enterprise_customer_catalog.uuid),
+                (FRESH_LOGIN_PARAMETER, 'yes'),
+            ]))
         )
         self.assertRedirects(
             response,
@@ -1399,9 +1443,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         # Set up expected context
@@ -1463,9 +1509,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
-        course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, course_id],
+        course_enrollment_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, course_id],
+            )
         )
         response = self.client.post(course_enrollment_page_url, {'course_mode': 'professional'})
 
@@ -1513,9 +1561,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         # Set up expected context
@@ -1626,9 +1676,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
 
-        enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
-            args=[enterprise_customer.uuid, self.demo_course_id],
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
         )
 
         self._login()

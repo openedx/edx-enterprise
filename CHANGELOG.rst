@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.57.0] - 2017-12-21
+---------------------
+
+* Remove references to SSO IdP config drop_existing_session flag.
+
 [0.56.5] - 2017-12-20
 ---------------------
 
