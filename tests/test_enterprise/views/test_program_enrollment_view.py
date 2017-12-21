@@ -111,7 +111,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         """
         Sets up the SSO Registry object.
         """
-        registry_mock.get.return_value.configure_mock(provider_id=provider_id, drop_existing_session=False)
+        registry_mock.get.return_value.configure_mock(provider_id=provider_id)
 
     def _setup_get_data_sharing_consent(self, client_mock, required):
         """
