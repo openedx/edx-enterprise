@@ -264,16 +264,14 @@ class TestEnterpriseDecorators(unittest.TestCase):
         # Assert that view function was called.
         assert view_function.called
 
-    @ddt.data(True, False)
     @mock.patch('enterprise.utils.Registry')
-    def test_force_fresh_session_param_not_received(self, drop_exisiting_session, mock_registry):
+    def test_force_fresh_session_param_not_received(self, mock_registry):
         """
         Test that the force_fresh_session decorator redirects authenticated
         users with the appropriate provider config depending on the IdPs configuration.
         """
         mock_registry.get.return_value.configure_mock(
             provider_id=self.provider_id,
-            drop_existing_session=drop_exisiting_session
         )
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -291,13 +289,8 @@ class TestEnterpriseDecorators(unittest.TestCase):
             request, enterprise_uuid=self.customer.uuid, course_id=course_id
         )
 
-        if drop_exisiting_session:
-            # Assert that redirect status code 302 is returned when a logged in user comes in
-            # with an sso provider configured to drop existing sessions
-            assert response.status_code == 302
-            # Assert the redirect URL query string is intact.
-            redirect_url_query = parse_qs(urlparse(response.url).query)
-            assert urlparse(unquote(redirect_url_query['redirect_url'][0])).query == query
-        else:
-            # Assert that view function was called.
-            assert view_function.called
+        # Assert that redirect status code 302 is returned
+        assert response.status_code == 302
+        # Assert the redirect URL query string is intact.
+        redirect_url_query = parse_qs(urlparse(response.url).query)
+        assert urlparse(unquote(redirect_url_query['redirect_url'][0])).query == query

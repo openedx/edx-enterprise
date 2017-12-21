@@ -6,6 +6,9 @@ from __future__ import absolute_import, unicode_literals
 
 from django.contrib import messages
 
+from enterprise.decorators import FRESH_LOGIN_PARAMETER
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+
 
 class MessagesMixin(object):
     """
@@ -76,3 +79,18 @@ class EmbargoAPIMixin(object):
         Set up the embargo API module mock.
         """
         api_mock.redirect_if_blocked.return_value = redirect_url
+
+
+class EnterpriseViewMixin(object):
+    """
+    Mixin for testing enterprise views.
+    """
+
+    def _append_fresh_login_param(self, url):
+        """
+        Append the FRESH_LOGIN_PARAMETER query parameter to the URL.
+        """
+        fresh_login_param = urlencode({FRESH_LOGIN_PARAMETER: 'yes'})
+        if '?' in url:
+            return url + '&' + fresh_login_param
+        return url + '?' + fresh_login_param
