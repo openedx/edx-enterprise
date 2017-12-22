@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.58.0] - 2017-12-22
+---------------------
+
+* Add save_enterprise_customer_users command.
+
 [0.57.0] - 2017-12-21
 ---------------------
 
