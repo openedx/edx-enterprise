@@ -482,10 +482,28 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
         initial_password = None
         initial_sftp_password = None
         if instance:
+            # We need to pass the decrypted password values, if they can't be decrypted to a utf8 string,
+            # then we will display nothing in that field.
             if instance.password:
-                initial_password = decrypt_string(instance.password, instance.initialization_vector)
+                try:
+                    initial_password = decrypt_string(
+                        instance.password,
+                        instance.initialization_vector
+                    ).decode('utf8')
+                except UnicodeDecodeError:
+                    logger.warn('Unable to successfully decrypt password for {}'.format(
+                        instance.enterprise_customer.name
+                    ))
             if instance.sftp_password:
-                initial_sftp_password = decrypt_string(instance.sftp_password, instance.initialization_vector)
+                try:
+                    initial_sftp_password = decrypt_string(
+                        instance.sftp_password,
+                        instance.initialization_vector
+                    ).decode('utf8')
+                except UnicodeDecodeError:
+                    logger.warn('Unable to successfully decrypt sftp_password for {}'.format(
+                        instance.enterprise_customer.name
+                    ))
 
         kwargs['initial'] = {
             'password': initial_password,
