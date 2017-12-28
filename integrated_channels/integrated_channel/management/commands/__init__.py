@@ -53,7 +53,7 @@ class IntegratedChannelCommandMixin(object):
 
     def get_integrated_channels(self, options, **filter_kwargs):
         """
-        Generates a list of active integrated channels, filtered from the given options.
+        Generates a list of active integrated channels for active customers, filtered from the given options.
 
         Raises errors when invalid options are encountered.
 
@@ -68,7 +68,7 @@ class IntegratedChannelCommandMixin(object):
 
         channel_classes = self.get_channel_classes(options.get('channel'))
         for channel_class in channel_classes:
-            integrated_channels = channel_class.objects.filter(active=True)
+            integrated_channels = channel_class.objects.filter(active=True, enterprise_customer__active=True)
 
             if filter_kwargs:
                 integrated_channels = integrated_channels.filter(**filter_kwargs)
