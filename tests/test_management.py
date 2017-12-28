@@ -381,6 +381,28 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             # Because there are no EnterpriseCustomers with a catalog, the process will end early.
             assert not log_capture.records
 
+    @responses.activate
+    def test_transmit_course_metadata_task_inactive_customer(self):
+        """
+        Test the data transmission task with a channel for an inactive customer
+        """
+        integrated_channel_enterprise = self.enterprise_customer
+        integrated_channel_enterprise.active = False
+        integrated_channel_enterprise.save()
+
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=course_run_ids[:1]
+        )
+
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('transmit_course_metadata', '--catalog_user', self.user.username)
+
+            # Because there are no active customers, the process will end early.
+            assert not log_capture.records
+
 
 COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
 
