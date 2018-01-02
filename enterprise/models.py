@@ -170,7 +170,8 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         Return human-readable string representation.
         """
-        return "<EnterpriseCustomer {code}: {name}>".format(code=self.uuid, name=self.name)
+        # pylint: disable=no-member
+        return "<EnterpriseCustomer {code:x}: {name}>".format(code=self.uuid.time_low, name=self.name)
 
     def __repr__(self):
         """
