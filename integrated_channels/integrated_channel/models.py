@@ -15,6 +15,7 @@ from integrated_channels.integrated_channel.transmitters.learner_data import Lea
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
@@ -37,12 +38,14 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     enterprise_customer = models.OneToOneField(
         EnterpriseCustomer,
         blank=False,
-        null=False
+        null=False,
+        help_text=_("Enterprise Customer associated with the configuration."),
     )
 
     active = models.BooleanField(
         blank=False,
-        null=False
+        null=False,
+        help_text=_("Is this configuration active?"),
     )
 
     class Meta:

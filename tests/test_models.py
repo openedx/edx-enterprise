@@ -141,10 +141,8 @@ class TestEnterpriseCustomer(unittest.TestCase):
         Test ``EnterpriseCustomer`` conversion to string.
         """
         customer = factories.EnterpriseCustomerFactory()
-        expected_to_str = "<{class_name} {customer_uuid}: {name}>".format(
-            class_name=EnterpriseCustomer.__name__,
-            customer_uuid=customer.uuid,
-            name=customer.name
+        expected_to_str = "<EnterpriseCustomer {code:x}: {name}>".format(
+            code=customer.uuid.time_low, name=customer.name
         )
         self.assertEqual(method(customer), expected_to_str)
 
