@@ -441,13 +441,13 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
     This form allows editing of the password and sftp_password fields in plain text but handles encrypting on save.
     """
 
-    password = forms.CharField(
+    decrypted_password = forms.CharField(
         required=False,
         max_length=256,
         help_text=_('The Password to decrypt the zip file containing the report.')
     )
 
-    sftp_password = forms.CharField(
+    decrypted_sftp_password = forms.CharField(
         required=False,
         max_length=256,
         help_text=_('If the delivery method is sftp, the password to use to securely access the host.')
@@ -464,11 +464,11 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             "day_of_week",
             "hour_of_day",
             "email",
-            "password",
+            "decrypted_password",
             "sftp_hostname",
             "sftp_port",
             "sftp_username",
-            "sftp_password",
+            "decrypted_sftp_password",
             "sftp_file_path",
         )
 
@@ -506,8 +506,8 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
                     ))
 
         kwargs['initial'] = {
-            'password': initial_password,
-            'sftp_password': initial_sftp_password,
+            'decrypted_password': initial_password,
+            'decrypted_sftp_password': initial_sftp_password,
         }
         super(EnterpriseCustomerReportingConfigAdminForm, self).__init__(*args, **kwargs)
 
@@ -515,6 +515,6 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
         """
         Overridden to pass the password and sftp_password fields to the model instance.
         """
-        self.instance.decrypted_password = self.cleaned_data['password']
-        self.instance.decrypted_sftp_password = self.cleaned_data['sftp_password']
+        self.instance.decrypted_password = self.cleaned_data['decrypted_password']
+        self.instance.decrypted_sftp_password = self.cleaned_data['decrypted_sftp_password']
         return super(EnterpriseCustomerReportingConfigAdminForm, self).save(commit)

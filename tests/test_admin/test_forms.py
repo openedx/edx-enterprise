@@ -764,8 +764,8 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
 
         form = EnterpriseCustomerReportingConfigAdminForm(instance=instance)
 
-        assert form.initial['password'] == self.decrypted_password
-        assert form.initial['sftp_password'] == self.decrypted_sftp_password
+        assert form.initial['decrypted_password'] == self.decrypted_password
+        assert form.initial['decrypted_sftp_password'] == self.decrypted_sftp_password
 
     @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
     def test_with_no_instance(self):
@@ -774,8 +774,8 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
         """
         form = EnterpriseCustomerReportingConfigAdminForm()
 
-        assert not form.initial['password']
-        assert not form.initial['sftp_password']
+        assert not form.initial['decrypted_password']
+        assert not form.initial['decrypted_sftp_password']
 
     @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
     def test_unable_to_decrypt_initial_password_values(self):
@@ -792,8 +792,8 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
 
         form = EnterpriseCustomerReportingConfigAdminForm(instance=instance)
 
-        assert not form.initial['password']
-        assert not form.initial['sftp_password']
+        assert not form.initial['decrypted_password']
+        assert not form.initial['decrypted_sftp_password']
 
     @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
     @mock.patch('enterprise.models.utils.generate_aes_initialization_vector')
@@ -812,11 +812,11 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
                 'frequency': 'daily',
                 'hour_of_day': 1,
                 'email': 'test@example.com',
-                'password': self.decrypted_password,
+                'decrypted_password': self.decrypted_password,
                 'sftp_hostname': 'blah.example.com',
                 'sftp_port': 22,
                 'sftp_username': 'test',
-                'sftp_password': self.decrypted_sftp_password,
+                'decrypted_sftp_password': self.decrypted_sftp_password,
                 'sftp_file_path': '/somewhere',
             },
             instance=instance
@@ -824,8 +824,8 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
 
         assert not hasattr(instance, 'decrypted_password')
         assert not hasattr(instance, 'decrypted_sftp_password')
-        assert not form.initial['password']
-        assert not form.initial['sftp_password']
+        assert not form.initial['decrypted_password']
+        assert not form.initial['decrypted_sftp_password']
 
         assert form.is_valid()
         form.save()
