@@ -1414,7 +1414,9 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 self.initialization_vector
             )
 
-        self.full_clean()
+        if decrypted_password or decrypted_sftp_password:
+            self.full_clean()
+
         super(EnterpriseCustomerReportingConfiguration, self).save(*args, **kwargs)
 
     def clean(self):
@@ -1439,9 +1441,6 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             validation_errors = {}
             if not self.sftp_hostname:
                 validation_errors['sftp_hostname'] = _('SFTP Hostname must be set if the delivery method is sftp')
-
-            if not self.sftp_port:
-                validation_errors['sftp_port'] = _('SFTP Port must be set if the delivery method is sftp')
 
             if not self.sftp_username:
                 validation_errors['sftp_username'] = _('SFTP username must be set if the delivery method is sftp')

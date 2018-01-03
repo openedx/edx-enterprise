@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.59.0] - 2017-12-28
+---------------------
+
+* Add check for active companies when getting list of channels
+
 [0.58.0] - 2017-12-22
 ---------------------
 
