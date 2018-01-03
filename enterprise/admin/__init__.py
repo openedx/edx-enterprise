@@ -111,19 +111,20 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
     list_display = (
-        "name",
-        "uuid",
-        "site",
-        "active",
-        "logo",
-        "identity_provider",
-        "enterprise_catalog",
-        "ecommerce_coupon_url"
+        'name',
+        'uuid',
+        'site',
+        'active',
+        'has_logo',
+        'enable_dsc',
+        'has_identity_provider',
+        'has_enterprise_catalog',
+        'has_ecommerce_coupons'
     )
 
-    list_filter = ("active",)
-    ordering = ("name",)
-    search_fields = ("name", "uuid",)
+    list_filter = ('active',)
+    ordering = ('name',)
+    search_fields = ('name', 'uuid',)
     inlines = [
         EnterpriseCustomerBrandingConfigurationInline,
         EnterpriseCustomerIdentityProviderInline,
@@ -131,41 +132,36 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         EnterpriseCustomerCatalogInline,
     ]
 
-    EXPORT_AS_CSV_FIELDS = ["name", "active", "site", "uuid", "identity_provider", "catalog"]
+    EXPORT_AS_CSV_FIELDS = ['name', 'active', 'site', 'uuid', 'identity_provider', 'catalog']
 
     actions = [
-        export_as_csv_action("CSV Export", fields=EXPORT_AS_CSV_FIELDS),
+        export_as_csv_action('CSV Export', fields=EXPORT_AS_CSV_FIELDS),
         get_clear_catalog_id_action()
     ]
 
-    change_actions = ("manage_learners",)
+    change_actions = ('manage_learners',)
 
     form = EnterpriseCustomerAdminForm
 
     class Meta(object):
         model = EnterpriseCustomer
 
-    def ecommerce_coupon_url(self, instance):
+    def has_ecommerce_coupons(self, instance):
         """
-        Instance is EnterpriseCustomer. Return e-commerce coupon urls.
+        Return True if provded enterprise customer has ecommerce coupons.
+
+        Arguments:
+            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
         """
-        coupon_urls = ''
         entitlements = instance.enterprise_customer_entitlements.all()
-
-        # Return None if EnterpriseCustomer does not have an associated entitlements.
+        # Return False if EnterpriseCustomer does not have an associated entitlements.
         if not entitlements:
-            return None
+            return False
 
-        for entitlement in entitlements:
-            coupon_urls += format_html(
-                '<div><a href="{base_url}/coupons/{id}" target="_blank">View coupon "{id}"</a></div>',
-                base_url=settings.ECOMMERCE_PUBLIC_URL_ROOT, id=entitlement.entitlement_id
-            )
+        return True
 
-        return coupon_urls
-
-    ecommerce_coupon_url.allow_tags = True
-    ecommerce_coupon_url.short_description = 'Ecommerce coupons'
+    has_ecommerce_coupons.boolean = True
+    has_ecommerce_coupons.short_description = 'Ecommerce coupons'
 
     def get_form(self, request, obj=None, **kwargs):
         """
@@ -176,49 +172,66 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         form.user = request.user
         return form
 
-    @staticmethod
-    def logo(instance):
+    def enable_dsc(self, instance):
         """
-        Instance is EnterpriseCustomer.
-        """
-        if instance.branding_configuration:
-            return instance.branding_configuration.logo
-        return None
-
-    @staticmethod
-    def identity_provider(instance):
-        """
-        Instance is EnterpriseCustomer.
-
-        Return identity provider name to display in enterprise customer list admin view, and if identity provider name
-        is not available then return identity provider id.
-        """
-        ec_idp = instance.enterprise_customer_identity_provider
-        return ec_idp.provider_name or ec_idp.provider_id if ec_idp else False
-
-    def enterprise_catalog(self, instance):
-        """
-        Enterprise catalog id with a link to catalog details page.
+        Return True if data sharing consent is enabled for EnterpriseCustomer.
 
         Arguments:
             instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
-
-        Returns:
-            catalog id with catalog details link to display in enterprise customer list view.
         """
-        # Return None if EnterpriseCustomer does not have an associated catalog.
+        return instance.enable_data_sharing_consent
+
+    enable_dsc.boolean = True
+    enable_dsc.short_description = u'Enable DSC'
+
+    def has_logo(self, instance):
+        """
+        Return True if EnterpriseCustomer has a logo.
+
+        Arguments:
+            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
+        """
+        has_logo = False
+        if hasattr(instance, 'branding_configuration') and instance.branding_configuration.logo:
+            has_logo = True
+
+        return has_logo
+
+    has_logo.boolean = True
+    has_logo.short_description = u'Logo'
+
+    def has_identity_provider(self, instance):
+        """
+        Return True if EnterpriseCustomer has related identity provider.
+
+        Arguments:
+            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
+        """
+        identity_provider = instance.enterprise_customer_identity_provider
+
+        has_identity_provider = False
+        if identity_provider and (identity_provider.provider_id or identity_provider.provider_name):
+            has_identity_provider = True
+
+        return has_identity_provider
+
+    has_identity_provider.boolean = True
+    has_identity_provider.short_description = u'Identity provider'
+
+    def has_enterprise_catalog(self, instance):
+        """
+        Return True if EnterpriseCustomer has catalog id with a link to catalog details page.
+
+        Arguments:
+            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
+        """
         if not instance.catalog:
-            return None
+            return False
 
-        catalog_url = get_catalog_admin_url(instance.catalog)
-        return "{catalog_id}: <a href='{catalog_url}' target='_blank'>View catalog details.</a>".format(
-            catalog_id=instance.catalog,
-            catalog_url=catalog_url,
-        )
+        return True
 
-    # Allow html tags in enterprise_catalog column,
-    # we need to set it true so that anchor tag is not escaped.
-    enterprise_catalog.allow_tags = True
+    has_enterprise_catalog.boolean = True
+    has_enterprise_catalog.short_description = u'Enterprise catalog'
 
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """
