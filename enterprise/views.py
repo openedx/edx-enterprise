@@ -704,7 +704,7 @@ class CourseEnrollmentView(NonAtomicView):
             # Retrieve localized pricing information from catalog service
             currency_data = []
             if waffle.switch_is_active('local_currency'):
-                if 'edx-price-l10n' not in request.Cookies and get_currency_data:
+                if 'edx-price-l10n' not in request.COOKIES and get_currency_data:
                     try:
                         currency_data = json.dumps(get_currency_data())
                     except TypeError:
