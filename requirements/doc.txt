@@ -8,7 +8,7 @@ alabaster==0.7.10         # via sphinx
 amqp==1.4.9               # via kombu
 analytics-python==1.1.0
 anyjson==0.3.3            # via kombu
-asn1crypto==0.23.0        # via cryptography
+asn1crypto==0.24.0        # via cryptography
 babel==2.5.1              # via sphinx
 billiard==3.3.0.23        # via celery
 bleach==2.1.2             # via readme-renderer
@@ -40,7 +40,7 @@ flaky==3.3.0
 html5lib==1.0.1           # via bleach
 idna==2.6                 # via cryptography
 imagesize==0.7.1          # via sphinx
-ipaddress==1.0.18         # via cryptography
+ipaddress==1.0.19         # via cryptography
 jinja2==2.10              # via sphinx
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
@@ -61,7 +61,7 @@ shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via analytics-python, bleach, cryptography, doc8, edx-opaque-keys, edx-sphinx-theme, html5lib, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.6.5
+sphinx==1.6.5             # via edx-sphinx-theme
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.0.1  # via sphinx
 stevedore==1.28.0         # via doc8, edx-opaque-keys

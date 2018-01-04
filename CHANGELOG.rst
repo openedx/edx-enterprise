@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.60.0] - 2018-01-03
+---------------------
+
+* Add sftp configuration options for EnterpriseCustomerReportingConfiguration.
+
 [0.59.0] - 2017-12-28
 ---------------------
 

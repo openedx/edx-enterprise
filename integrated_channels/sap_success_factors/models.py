@@ -18,6 +18,7 @@ from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _
 
 LOGGER = getLogger(__name__)
 
@@ -63,17 +64,27 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         (USER_TYPE_ADMIN, 'Admin'),
     )
 
-    key = models.CharField(max_length=255, blank=True, verbose_name="Client ID")
-    sapsf_base_url = models.CharField(max_length=255, verbose_name="SAP Base URL")
-    sapsf_company_id = models.CharField(max_length=255, blank=True, verbose_name="SAP Company ID")
-    sapsf_user_id = models.CharField(max_length=255, blank=True, verbose_name="SAP User ID")
-    secret = models.CharField(max_length=255, blank=True, verbose_name="Client Secret")
+    key = models.CharField(
+        max_length=255, verbose_name="Client ID", help_text=_("OAuth client identifier.")
+    )
+    sapsf_base_url = models.CharField(
+        max_length=255, verbose_name="SAP Base URL", help_text=_("Base URL of success factors API.")
+    )
+    sapsf_company_id = models.CharField(
+        max_length=255, verbose_name="SAP Company ID", help_text=_("Success factors company identifier.")
+    )
+    sapsf_user_id = models.CharField(
+        max_length=255, verbose_name="SAP User ID", help_text=_("Success factors user identifier.")
+    )
+    secret = models.CharField(
+        max_length=255, verbose_name="Client Secret", help_text=_("OAuth client secret.")
+    )
     user_type = models.CharField(
         max_length=20,
         choices=USER_TYPE_CHOICES,
-        blank=False,
         default=USER_TYPE_USER,
-        verbose_name="SAP User Type"
+        verbose_name="SAP User Type",
+        help_text=_("Type of SAP User (admin or user).")
     )
 
     history = HistoricalRecords()
