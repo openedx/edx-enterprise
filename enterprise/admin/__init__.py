@@ -153,12 +153,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Arguments:
             instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
         """
-        entitlements = instance.enterprise_customer_entitlements.all()
-        # Return False if EnterpriseCustomer does not have an associated entitlements.
-        if not entitlements:
-            return False
-
-        return True
+        return instance.enterprise_customer_entitlements.exists()
 
     has_ecommerce_coupons.boolean = True
     has_ecommerce_coupons.short_description = 'Ecommerce coupons'
@@ -207,13 +202,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Arguments:
             instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
         """
-        identity_provider = instance.enterprise_customer_identity_provider
-
-        has_identity_provider = False
-        if identity_provider and (identity_provider.provider_id or identity_provider.provider_name):
-            has_identity_provider = True
-
-        return has_identity_provider
+        return hasattr(instance, 'enterprise_customer_identity_provider')
 
     has_identity_provider.boolean = True
     has_identity_provider.short_description = u'Identity provider'
@@ -225,10 +214,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Arguments:
             instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
         """
-        if not instance.catalog:
-            return False
-
-        return True
+        return instance.catalog is not None
 
     has_enterprise_catalog.boolean = True
     has_enterprise_catalog.short_description = u'Enterprise catalog'
