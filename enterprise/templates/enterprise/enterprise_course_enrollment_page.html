@@ -2,20 +2,11 @@
 
 {% load staticfiles enterprise %}
 
-<%namespace name='static' file='/static_content.html'/>
-
-<%static:webpack entry="Currency">
-  new Currency({
-    selector: 'span.price'
-  });
-</%static:webpack>
-
 {% block extrahead %}
   <script type="text/javascript" src="{% static 'enterprise/js/course_modal.js' %}"></script>
 {% endblock %}
 
 {% block contents %}
-  <div id="currency_data" value="{{ currency_data }}"></div>
   <div class="enterprise-container">
     <div class="row">
       <div class="col-3">

@@ -5,8 +5,6 @@ User-facing views for the Enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import re
-import waffle
-import json
 from logging import getLogger
 from uuid import UUID
 
@@ -49,11 +47,6 @@ from enterprise.utils import (
     ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
-
-try:
-    from openedx.core.djangoapps.catalog.utils import get_currency_data
-except ImportError:
-    get_currency_data = None
 
 try:
     from openedx.core.djangoapps.programs.utils import ProgramDataExtender
@@ -615,7 +608,7 @@ class CourseEnrollmentView(NonAtomicView):
 
         for mode in modes:
             if mode['min_price']:
-                price_text = '${} USD'.format(mode['min_price'])
+                price_text = '${}'.format(mode['min_price'])
             else:
                 price_text = self.STATIC_TEXT_FORMAT['free_price_text']
             if mode['slug'] in audit_modes:
@@ -701,15 +694,6 @@ class CourseEnrollmentView(NonAtomicView):
             course_modes = self.set_final_prices(course_modes, request)
             premium_modes = [mode for mode in course_modes if mode['premium']]
 
-            # Retrieve localized pricing information from catalog service
-            currency_data = []
-            if waffle.switch_is_active('local_currency'):
-                if 'edx-price-l10n' not in request.COOKIES and get_currency_data:
-                    try:
-                        currency_data = json.dumps(get_currency_data())
-                    except TypeError:
-                        pass
-
             # Filter audit course modes.
             course_modes = filter_audit_course_modes(enterprise_customer, course_modes)
 
@@ -733,7 +717,6 @@ class CourseEnrollmentView(NonAtomicView):
                 'course_modes': course_modes,
                 'course_effort': course_effort,
                 'course_full_description': course_full_description,
-                'currency_data': currency_data,
                 'organization_logo': organization_logo,
                 'organization_name': organization_name,
                 'course_level_type': course_level_type,
