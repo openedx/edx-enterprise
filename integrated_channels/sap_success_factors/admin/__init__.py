@@ -36,8 +36,15 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     Django admin model for SAPSuccessFactorsEnterpriseCustomerConfiguration.
     """
     fields = (
-        'enterprise_customer', 'active', 'sapsf_base_url', 'sapsf_company_id',
-        'key', 'secret', 'sapsf_user_id', 'user_type', 'has_access_token',
+        'enterprise_customer',
+        'active',
+        'sapsf_base_url',
+        'sapsf_company_id',
+        'key',
+        'secret',
+        'sapsf_user_id',
+        'user_type',
+        'has_access_token',
     )
 
     list_display = (
@@ -93,4 +100,4 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         return bool(access_token and expires_at)
 
     has_access_token.boolean = True
-    has_access_token.short_description = 'Has Access Token ?'
+    has_access_token.short_description = 'Has Access Token?'

@@ -65,19 +65,27 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
     )
 
     key = models.CharField(
-        max_length=255, verbose_name="Client ID", help_text=_("OAuth client identifier.")
+        max_length=255,
+        verbose_name="Client ID",
+        help_text=_("OAuth client identifier.")
     )
     sapsf_base_url = models.CharField(
-        max_length=255, verbose_name="SAP Base URL", help_text=_("Base URL of success factors API.")
+        max_length=255,
+        verbose_name="SAP Base URL",
+        help_text=_("Base URL of success factors API.")
     )
     sapsf_company_id = models.CharField(
         max_length=255, verbose_name="SAP Company ID", help_text=_("Success factors company identifier.")
     )
     sapsf_user_id = models.CharField(
-        max_length=255, verbose_name="SAP User ID", help_text=_("Success factors user identifier.")
+        max_length=255,
+        verbose_name="SAP User ID",
+        help_text=_("Success factors user identifier.")
     )
     secret = models.CharField(
-        max_length=255, verbose_name="Client Secret", help_text=_("OAuth client secret.")
+        max_length=255,
+        verbose_name="Client Secret",
+        help_text=_("OAuth client secret.")
     )
     user_type = models.CharField(
         max_length=20,

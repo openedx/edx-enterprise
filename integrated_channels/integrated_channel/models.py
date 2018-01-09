@@ -45,7 +45,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
     active = models.BooleanField(
         blank=False,
         null=False,
-        help_text=_("Is this configuration active ?"),
+        help_text=_("Is this configuration active?"),
     )
 
     class Meta:
