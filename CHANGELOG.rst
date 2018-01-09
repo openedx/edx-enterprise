@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.61.0] - 2018-01-09
+---------------------
+
+* SuccessFactors Admin Update: Enterprise Customer Configuration.
+
+----------
+
 [0.60.0] - 2018-01-03
 ---------------------
 

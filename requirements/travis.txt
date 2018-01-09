@@ -6,7 +6,7 @@
 #
 certifi==2017.11.5        # via requests
 chardet==3.0.4            # via requests
-codecov==2.0.10
+codecov==2.0.11
 coverage==4.4.2           # via codecov
 idna==2.6                 # via requests
 pluggy==0.6.0             # via tox
