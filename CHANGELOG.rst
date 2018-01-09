@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.61.1] - 2018-01-09
+---------------------
+
+* Update django admin list view for enterprise customer model.
+
 [0.61.0] - 2018-01-09
 ---------------------
 
