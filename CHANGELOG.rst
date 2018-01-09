@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.61.2] - 2018-01-09
+---------------------
+
+* Add missing migrations for sap_success_factors and degreed.
+
 [0.61.1] - 2018-01-09
 ---------------------
 
