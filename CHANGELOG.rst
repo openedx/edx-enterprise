@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.61.3] - 2018-01-09
+---------------------
+
+* Add management command to change username values for enterprise users.
+
 [0.61.2] - 2018-01-09
 ---------------------
 
