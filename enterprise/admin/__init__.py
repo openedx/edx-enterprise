@@ -62,6 +62,7 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
 
     model = EnterpriseCustomerIdentityProvider
     form = EnterpriseCustomerIdentityProviderAdminForm
+    can_delete = False
 
 
 class EnterpriseCustomerEntitlementInline(admin.StackedInline):
@@ -90,7 +91,7 @@ class EnterpriseCustomerEntitlementInline(admin.StackedInline):
 
     readonly_fields = ('ecommerce_coupon_url',)
     ecommerce_coupon_url.allow_tags = True
-    ecommerce_coupon_url.short_description = 'Coupon URL'
+    ecommerce_coupon_url.short_description = 'Seat Entitlement URL'
 
 
 class EnterpriseCustomerCatalogInline(admin.TabularInline):
@@ -111,8 +112,8 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
     list_display = (
-        'name',
         'uuid',
+        'name',
         'site',
         'active',
         'has_logo',
