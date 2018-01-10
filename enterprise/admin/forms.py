@@ -379,7 +379,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
     """
     class Meta:
         model = EnterpriseCustomerIdentityProvider
-        fields = ('enterprise_customer', 'provider_id',)
+        fields = "__all__"
 
     def __init__(self, *args, **kwargs):
         """
@@ -422,7 +422,6 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
             # a validation error.
             return
         try:
-            import pdb; pdb.set_trace()
             identity_provider = utils.get_identity_provider(provider_id)
         except ObjectDoesNotExist:
             # This should not happen, as identity providers displayed in drop down are fetched dynamically.
