@@ -390,7 +390,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         super(EnterpriseCustomerIdentityProviderAdminForm, self).__init__(*args, **kwargs)
         idp_choices = utils.get_idp_choices()
         instance = kwargs.get('instance')
-        label_text = None
+        label_text = _('Identity Provider')
         if instance:
             provider_id = instance.provider_id
             identity_provider = utils.get_identity_provider(provider_id)
