@@ -845,7 +845,8 @@ class EnterpriseCustomerEntitlement(TimeStampedModel):
         blank=False,
         null=False,
         unique=True,
-        help_text=_("Enterprise customer's entitlement id for relationship with e-commerce coupon.")
+        help_text=_("Enterprise customer's entitlement id for relationship with e-commerce coupon."),
+        verbose_name=_('Seat Entitlement')
     )
     history = HistoricalRecords()
 
