@@ -11,8 +11,10 @@ from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.urlresolvers import reverse
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.translation import ugettext as _
+from django.utils.safestring import mark_safe
 
 from enterprise import utils
 from enterprise.admin.utils import (
@@ -387,8 +389,22 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         """
         super(EnterpriseCustomerIdentityProviderAdminForm, self).__init__(*args, **kwargs)
         idp_choices = utils.get_idp_choices()
+        instance = kwargs.get('instance')
+        label_text = None
+        if instance:
+            provider_id = instance.provider_id
+            identity_provider = utils.get_identity_provider(provider_id)
+            update_url = reverse('admin:{}_{}_add'.format(
+                identity_provider._meta.app_label,
+                identity_provider._meta.model_name)
+            )
+            update_url += '?source={}'.format(identity_provider.pk)
+            label_text = mark_safe('Identity Provider (<a href="{}" target="_blank">View details</a>)'.format(
+                update_url)
+            )
+
         if idp_choices is not None:
-            self.fields['provider_id'] = forms.TypedChoiceField(choices=idp_choices)
+            self.fields['provider_id'] = forms.TypedChoiceField(choices=idp_choices, label=label_text)
 
     def clean(self):
         """
