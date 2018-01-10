@@ -14,6 +14,18 @@ Change Log
 Unreleased
 ----------
 
+[0.61.6] - 2018-01-18
+---------------------
+
+* Group Name, Active, Site, and Logo together.
+* Rename "Provider id" form label to "Identity Provider"
+* Rename "Entitlement id" form label to "Seat Entitlement"
+* Rename "Coupon URL" form label to "Seat Entitlement URL"
+* Add a "View details" hyperlink next to identity provider drop-down.
+* Add a "Create a new catalog" link under the Catalog drop-down.
+* Add a "View details" hyperlink next to catalog field, if catalog is selected.
+* Add a "Create a new identity provider" link under the Identity Provider drop-down.
+
 [0.61.5] - 2018-01-18
 ---------------------
 

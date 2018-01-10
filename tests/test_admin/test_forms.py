@@ -32,6 +32,7 @@ from enterprise.utils import MultipleProgramMatchError, encrypt_string, generate
 from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCustomerFactory,
+    EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
     SiteFactory,
@@ -696,6 +697,36 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         # Validate and clean form data
         assert not form.is_valid()
         assert error_message in form.errors["__all__"]
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    @mock.patch("enterprise.admin.forms.saml_provider_configuration")
+    @mock.patch('enterprise.admin.forms.reverse')
+    @mock.patch("enterprise.admin.forms.utils.get_idp_choices")
+    def test_create_new_identity_provider_link(self, mock_idp_choices, mock_url, mock_saml_config, mock_method):
+        """
+        Test create new identity provider link in help text.
+        """
+        provider_id = FAKER.slug()  # pylint: disable=no-member
+        name = FAKER.name()
+
+        # pylint: disable=invalid-name
+        enterprise_customer_identity_provider = EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=EnterpriseCustomerFactory(site=SiteFactory(domain="site.localhost.com"))
+        )
+        mock_method.return_value = mock.Mock(pk=1, name=name, provider_id=provider_id)
+        mock_saml_config._meta.app_label = 'test_app'
+        mock_saml_config._meta.model_name = 'test_model'
+        mock_url.return_value = '/test_saml_app/test_saml_model/add/'
+        mock_idp_choices.return_value = self.idp_choices
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            {
+                'provider_id': provider_id,
+                'enterprise_customer': self.enterprise_customer
+            },
+            instance=enterprise_customer_identity_provider
+        )
+        assert 'Create a new identity provider' in form.fields['provider_id'].help_text
+        assert form.fields['provider_id'].choices == list(self.idp_choices)
 
     @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
     def test_clean_runs_without_errors(self, mock_method):
