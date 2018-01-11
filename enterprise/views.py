@@ -5,10 +5,10 @@ User-facing views for the Enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import re
-import waffle
 from logging import getLogger
 from uuid import UUID
 
+import waffle
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from dateutil.parser import parse
@@ -107,15 +107,16 @@ def get_global_context(request):
 
 def get_price_text(price, request):
     """
-    Returns the localized converted price as string (ex. '$150 USD')
+    Return the localized converted price as string (ex. '$150 USD').
 
     If the local_currency switch is enabled and the users location has been determined this will convert the
     given price based on conversion rate from the Catalog service and return a localized string
     """
     if waffle.switch_is_active('local_currency') and get_localized_price_text:
-       return get_localized_price_text(price, request)
-    else:
-        return format_price(price)
+        return get_localized_price_text(price, request)
+
+    return format_price(price)
+
 
 class NonAtomicView(View):
     """
