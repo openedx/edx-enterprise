@@ -154,17 +154,19 @@ def get_catalog_admin_url(catalog_id):
     return get_catalog_admin_url_template().format(catalog_id=catalog_id)
 
 
-def get_catalog_admin_url_template():
+def get_catalog_admin_url_template(mode='change'):
     """
     Get template of catalog admin url.
 
     URL template will contain a placeholder '{catalog_id}' for catalog id.
+    Arguments:
+        mode e.g. change/add.
 
     Returns:
         A string containing template for catalog url.
 
     Example:
-        >>> get_catalog_admin_url_template()
+        >>> get_catalog_admin_url_template('change')
         "http://localhost:18381/admin/catalogs/catalog/{catalog_id}/change/"
 
     """
@@ -177,7 +179,10 @@ def get_catalog_admin_url_template():
         return ""
 
     # Return matched FQDN from catalog api url appended with catalog admin path
-    return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/{catalog_id}/change/"
+    if mode=='change':
+        return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/{catalog_id}/change/"
+    elif mode=='add':
+        return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/add/"
 
 
 def build_notification_message(template_context, template_configuration=None):

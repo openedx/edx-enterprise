@@ -33,6 +33,10 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
 )
 from enterprise.utils import MultipleProgramMatchError, decrypt_string
+try:
+    from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
+except ImportError:
+    saml_provider_configuration = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -326,9 +330,12 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             choices=self.get_catalog_options(),
             required=False,
             help_text="<a id='catalog-details-link' href='#' target='_blank'"
-                      "data-url-template='{catalog_admin_url}'> View catalog details.</a>".format(
-                          catalog_admin_url=utils.get_catalog_admin_url_template(),
-                      )
+                      " data-url-template='{catalog_admin_change_url}'> View catalog details.</a>"
+                      "<p style='font-size:larger;padding-left:15px'><a href='{catalog_admin_add_url}' "
+                      "target='_blank'>Create a new catalog</a></p>".format(
+                catalog_admin_change_url=utils.get_catalog_admin_url_template(mode='change'),
+                catalog_admin_add_url=utils.get_catalog_admin_url_template(mode='add')
+            )
         )
 
     def get_catalog_options(self):
@@ -390,21 +397,28 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         super(EnterpriseCustomerIdentityProviderAdminForm, self).__init__(*args, **kwargs)
         idp_choices = utils.get_idp_choices()
         instance = kwargs.get('instance')
-        label_text = _('Identity Provider')
-        if instance:
-            provider_id = instance.provider_id
-            identity_provider = utils.get_identity_provider(provider_id)
-            update_url = reverse('admin:{}_{}_add'.format(
-                identity_provider._meta.app_label,
-                identity_provider._meta.model_name)
+        help_text = ''
+        if saml_provider_configuration:
+            url = reverse('admin:{}_{}_add'.format(
+                saml_provider_configuration._meta.app_label,
+                saml_provider_configuration._meta.model_name)
             )
-            update_url += '?source={}'.format(identity_provider.pk)
-            label_text = mark_safe('Identity Provider (<a href="{}" target="_blank">View details</a>)'.format(
-                update_url)
-            )
+            if instance:
+                provider_id = instance.provider_id
+                identity_provider = utils.get_identity_provider(provider_id)
+                update_url = url + '?source={}'.format(identity_provider.pk)
+                help_text = '<p><a href="{update_url}" target="_blank">View "{identity_provider}" details</a><p>'.\
+                    format(update_url=update_url, identity_provider=identity_provider.name)
+
+            help_text += '<p style="font-size:larger;padding-left:15px;"><a target="_blank" href={add_url}>' \
+                         'Create a new identity provider</a></p>'.format(add_url= url)
 
         if idp_choices is not None:
-            self.fields['provider_id'] = forms.TypedChoiceField(choices=idp_choices, label=label_text)
+            self.fields['provider_id'] = forms.TypedChoiceField(
+                choices=idp_choices,
+                label=_('Identity Provider'),
+                help_text=mark_safe(help_text),
+            )
 
     def clean(self):
         """
