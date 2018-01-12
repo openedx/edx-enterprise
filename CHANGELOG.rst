@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.61.3] - 2018-01-11
+---------------------
+
+* Fix enterprise logo stretching issue in enterprise sidebar on course/program enrollment pages.
+
 [0.61.2] - 2018-01-09
 ---------------------
 
@@ -28,8 +33,6 @@ Unreleased
 ---------------------
 
 * SuccessFactors Admin Update: Enterprise Customer Configuration.
-
-----------
 
 [0.60.0] - 2018-01-03
 ---------------------
