@@ -179,9 +179,9 @@ def get_catalog_admin_url_template(mode='change'):
         return ""
 
     # Return matched FQDN from catalog api url appended with catalog admin path
-    if mode=='change':
+    if mode == 'change':
         return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/{catalog_id}/change/"
-    elif mode=='add':
+    elif mode == 'add':
         return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/add/"
 
 
