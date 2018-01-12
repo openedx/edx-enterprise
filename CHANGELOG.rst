@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.61.4] - 2018-01-12
+---------------------
+
+* Add localized currency to enterprise landing page.
+
 [0.61.3] - 2018-01-11
 ---------------------
 

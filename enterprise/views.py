@@ -8,6 +8,7 @@ import re
 from logging import getLogger
 from uuid import UUID
 
+import waffle
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from dateutil.parser import parse
@@ -47,6 +48,11 @@ from enterprise.utils import (
     ungettext_min_max,
 )
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
+
+try:
+    from openedx.core.djangoapps.catalog.utils import get_localized_price_text
+except ImportError:
+    get_localized_price_text = None
 
 try:
     from openedx.core.djangoapps.programs.utils import ProgramDataExtender
@@ -97,6 +103,19 @@ def get_global_context(request):
         'platform_name': platform_name,
         'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
     }
+
+
+def get_price_text(price, request):
+    """
+    Return the localized converted price as string (ex. '$150 USD').
+
+    If the local_currency switch is enabled and the users location has been determined this will convert the
+    given price based on conversion rate from the Catalog service and return a localized string
+    """
+    if waffle.switch_is_active('local_currency') and get_localized_price_text:
+        return get_localized_price_text(price, request)
+
+    return format_price(price)
 
 
 class NonAtomicView(View):
@@ -608,7 +627,7 @@ class CourseEnrollmentView(NonAtomicView):
 
         for mode in modes:
             if mode['min_price']:
-                price_text = '${}'.format(mode['min_price'])
+                price_text = get_price_text(mode['min_price'], request)
             else:
                 price_text = self.STATIC_TEXT_FORMAT['free_price_text']
             if mode['slug'] in audit_modes:
@@ -1143,8 +1162,8 @@ class ProgramEnrollmentView(NonAtomicView):
             'program_title': program_title,
             'program_subtitle': program_details['subtitle'],
             'program_overview': program_details['overview'],
-            'program_price': format_price(discount_data.get('total_incl_tax_excl_discounts', 0)),
-            'program_discounted_price': format_price(discount_data.get('total_incl_tax', 0)),
+            'program_price': get_price_text(discount_data.get('total_incl_tax_excl_discounts', 0), request),
+            'program_discounted_price': get_price_text(discount_data.get('total_incl_tax', 0), request),
             'is_discounted': discount_data.get('is_discounted', False),
             'courses': program_courses,
             'item_bullet_points': self.context_data['item_bullet_points'],
