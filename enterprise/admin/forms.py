@@ -329,10 +329,10 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         self.fields['catalog'] = forms.ChoiceField(
             choices=self.get_catalog_options(),
             required=False,
-            help_text="<a id='catalog-details-link' href='#' target='_blank'"
-                      " data-url-template='{catalog_admin_change_url}'> View catalog details.</a>"
-                      "<p style='font-size:larger;padding-left:15px'><a href='{catalog_admin_add_url}' "
-                      "target='_blank'>Create a new catalog</a></p>".format(
+            help_text='<a id="catalog-details-link" href="#" target="_blank" data-url-template='
+                      '"{catalog_admin_change_url}"> View catalog details.</a> <p style="font-size:'
+                      'larger;padding-left:15px"><a href="{catalog_admin_add_url}" target="_blank">'
+                      'Create a new catalog</a></p>'.format(
                 catalog_admin_change_url=utils.get_catalog_admin_url_template(mode='change'),
                 catalog_admin_add_url=utils.get_catalog_admin_url_template(mode='add')
             )
@@ -411,7 +411,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
                     format(update_url=update_url, identity_provider=identity_provider.name)
 
             help_text += '<p style="font-size:larger;padding-left:15px;"><a target="_blank" href={add_url}>' \
-                         'Create a new identity provider</a></p>'.format(add_url= url)
+                         'Create a new identity provider</a></p>'.format(add_url=url)
 
         if idp_choices is not None:
             self.fields['provider_id'] = forms.TypedChoiceField(

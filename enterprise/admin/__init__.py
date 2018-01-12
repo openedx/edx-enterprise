@@ -112,7 +112,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     Django admin model for EnterpriseCustomer.
     """
     list_display = (
-        'uuid',
         'name',
         'site',
         'active',
@@ -120,7 +119,8 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         'enable_dsc',
         'has_identity_provider',
         'has_enterprise_catalog',
-        'has_ecommerce_coupons'
+        'has_ecommerce_coupons',
+        'uuid',
     )
 
     list_filter = ('active',)
