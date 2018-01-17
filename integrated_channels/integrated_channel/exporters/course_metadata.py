@@ -113,8 +113,9 @@ class CourseExporter(Exporter):
         """
         title = course_run.get('title') or ''
         course_run_start = course_run.get('start')
-        if course_run_start and course_run.get('pacing_type') == 'instructor_paced':
+        if course_run_start:
             title += ' (Starts: {:%B %Y})'.format(
                 parse_lms_api_datetime(course_run_start)
             )
+
         return title
