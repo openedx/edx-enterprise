@@ -147,6 +147,7 @@ def test_is_enrolled():
 
 @responses.activate
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
+@mock.patch('enterprise.api_client.lms.EXCLUDED_COURSE_MODES', ['course'])
 def test_get_enrollment_course_modes():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     response = {
@@ -162,7 +163,6 @@ def test_get_enrollment_course_modes():
         {'slug': 'a'},
         {'slug': 'list'},
         {'slug': 'containing'},
-        {'slug': 'course'},
         {'slug': 'modes'},
     ]
     responses.add(
@@ -206,6 +206,7 @@ def test_has_course_modes():
 
 @responses.activate
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
+@mock.patch('enterprise.api_client.lms.EXCLUDED_COURSE_MODES', ['course'])
 def test_doesnt_have_course_modes():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     response = {
@@ -226,7 +227,7 @@ def test_doesnt_have_course_modes():
         json=response
     )
     client = lms_api.EnrollmentApiClient()
-    actual_response = client.has_course_mode(course_id, 'nope')
+    actual_response = client.has_course_mode(course_id, 'course')
     assert actual_response is False
 
 

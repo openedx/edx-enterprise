@@ -18,7 +18,7 @@ from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 from django.conf import settings
 from django.utils import timezone
 
-from enterprise.constants import COURSE_MODE_SORT_ORDER
+from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
 from enterprise.utils import NotConnectedToOpenEdX
 
 try:
@@ -199,7 +199,7 @@ class EnrollmentApiClient(LmsApiClient):
         """
         details = self.get_course_details(course_id)
         modes = details.get('course_modes', [])
-        return self._sort_course_modes(modes)
+        return self._sort_course_modes([mode for mode in modes if mode['slug'] not in EXCLUDED_COURSE_MODES])
 
     def has_course_mode(self, course_run_id, mode):
         """
