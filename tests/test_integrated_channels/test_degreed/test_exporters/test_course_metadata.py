@@ -8,16 +8,19 @@ from __future__ import absolute_import, unicode_literals, with_statement
 import json
 import unittest
 
+import ddt
 import mock
 import responses
 from integrated_channels.degreed.exporters.course_metadata import DegreedCourseExporter
 from pytest import mark
 
+from enterprise.api_client.lms import parse_lms_api_datetime
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
 @mark.django_db
+@ddt.ddt
 class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
     """
     Tests for the ``DegreedCourseExporter`` class.
@@ -120,3 +123,28 @@ class TestDegreedCourseExporter(unittest.TestCase, EnterpriseMockMixin):
         course_run = {'full_description': 'a' * (DegreedCourseExporter.LONG_STRING_LIMIT + 1)}
         exporter = DegreedCourseExporter('fake-user', self.config)
         assert exporter.transform_description(course_run) == ''
+
+    @ddt.data(
+        {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'instructor_paced',
+            'title': 'edX Demonstration Course'
+        },
+        {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'self_paced',
+            'title': 'edX Demonstration Course'
+        }
+    )
+    @responses.activate
+    def test_transform_title_includes_start(self, course_run):
+        """
+        Transforming a title gives back the title with start date for course
+        run of type `instructor-paced` or `self-paced`.
+        """
+        exporter = DegreedCourseExporter('fake-user', self.config)
+        expected_title = '{course_run_title} (Starts: {start_date})'.format(
+            course_run_title=course_run['title'],
+            start_date=parse_lms_api_datetime(course_run['start']).strftime('%B %Y')
+        )
+        assert exporter.transform_title(course_run) == expected_title

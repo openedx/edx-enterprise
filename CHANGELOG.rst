@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.61.5] - 2018-01-18
+---------------------
+
+* Include start date in all course runs title when pushing to Integrated Channels.
+
 [0.61.4] - 2018-01-12
 ---------------------
 

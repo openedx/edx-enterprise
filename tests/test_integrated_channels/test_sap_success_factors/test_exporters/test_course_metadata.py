@@ -13,6 +13,7 @@ import responses
 from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
 from pytest import mark, raises
 
+from enterprise.api_client.lms import parse_lms_api_datetime
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
@@ -68,36 +69,31 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
             'Language codes may only have up to two components. Could not parse: this-is-incomprehensible'
         )
 
-    @responses.activate
-    def test_transform_title_includes_start(self):
-        """
-        Transforming a title gives back the title and start date if the course is instructor-paced.
-        """
-        course_run = {
+    @ddt.data(
+        {
             'start': '2013-02-05T05:00:00Z',
             'pacing_type': 'instructor_paced',
             'title': 'edX Demonstration Course'
-        }
-        exporter = SapSuccessFactorsCourseExporter('fake-user', self.config)
-        assert exporter.transform_title(course_run) == \
-            [{
-                'locale': 'English',
-                'value': 'edX Demonstration Course (Starts: February 2013)'
-            }]
-
-    @responses.activate
-    def test_transform_title_excludes_start(self):
-        """
-        Transforming a title gives only returns the title (not start date) if the course isn't instructor-paced.
-        """
-        course_run = {
+        },
+        {
             'start': '2013-02-05T05:00:00Z',
             'pacing_type': 'self_paced',
             'title': 'edX Demonstration Course'
         }
+    )
+    @responses.activate
+    def test_transform_title_includes_start(self, course_run):
+        """
+        Transforming a title gives back the title with start date for course
+        run of type `instructor-paced` or `self-paced`.
+        """
         exporter = SapSuccessFactorsCourseExporter('fake-user', self.config)
+        expected_title = '{course_run_title} (Starts: {start_date})'.format(
+            course_run_title=course_run['title'],
+            start_date=parse_lms_api_datetime(course_run['start']).strftime('%B %Y')
+        )
         assert exporter.transform_title(course_run) == \
             [{
                 'locale': 'English',
-                'value': 'edX Demonstration Course'
+                'value': expected_title
             }]
