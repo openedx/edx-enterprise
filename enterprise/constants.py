@@ -29,7 +29,10 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
 )
 
 # Course mode sorting based on slug
-COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'credit', 'audit', 'honor']
+COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
+
+# Course modes that should not be displayed to users.
+EXCLUDED_COURSE_MODES = ['credit']
 
 
 PROGRAM_TYPE_DESCRIPTION = {

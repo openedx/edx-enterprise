@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.62.0] - 2018-01-18
+---------------------
+
+* Exclude credit course mode option from course enrollment page.
+
 [0.61.6] - 2018-01-18
 ---------------------
 
