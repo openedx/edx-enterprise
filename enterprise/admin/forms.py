@@ -13,6 +13,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django.utils.safestring import mark_safe
 
@@ -33,6 +34,11 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
 )
 from enterprise.utils import MultipleProgramMatchError, decrypt_string
+try:
+    from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
+except ImportError:
+    saml_provider_configuration = None
+
 try:
     from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
 except ImportError:
@@ -312,7 +318,16 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
     """
     class Meta:
         model = EnterpriseCustomer
-        fields = "__all__"
+        fields = (
+            "name",
+            "active",
+            "site",
+            "catalog",
+            "enable_data_sharing_consent",
+            "enforce_data_sharing_consent",
+            "enable_audit_enrollment",
+            "enable_audit_data_reporting",
+        )
 
     class Media:
         js = ('enterprise/admin/enterprise_customer.js', )
@@ -329,13 +344,13 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         self.fields['catalog'] = forms.ChoiceField(
             choices=self.get_catalog_options(),
             required=False,
-            help_text='<a id="catalog-details-link" href="#" target="_blank" data-url-template='
-                      '"{catalog_admin_change_url}"> View catalog details.</a> <p style="font-size:'
-                      'larger;padding-left:15px"><a href="{catalog_admin_add_url}" target="_blank">'
-                      'Create a new catalog</a></p>'.format(
+            # pylint: disable=bad-continuation
+            help_text='<a id="catalog-details-link" href="#" target="_blank" '
+                      'data-url-template="{catalog_admin_change_url}"> View catalog details.</a>'
+                      ' <p style="margin-top:-4px;"><a href="{catalog_admin_add_url}"'
+                      ' target="_blank">Create a new catalog</a></p>'.format(
                 catalog_admin_change_url=utils.get_catalog_admin_url_template(mode='change'),
-                catalog_admin_add_url=utils.get_catalog_admin_url_template(mode='add')
-            )
+                catalog_admin_add_url=utils.get_catalog_admin_url_template(mode='add'))
         )
 
     def get_catalog_options(self):
@@ -396,21 +411,19 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
         """
         super(EnterpriseCustomerIdentityProviderAdminForm, self).__init__(*args, **kwargs)
         idp_choices = utils.get_idp_choices()
-        instance = kwargs.get('instance')
         help_text = ''
         if saml_provider_configuration:
+            provider_id = self.instance.provider_id
             url = reverse('admin:{}_{}_add'.format(
                 saml_provider_configuration._meta.app_label,
-                saml_provider_configuration._meta.model_name)
-            )
-            if instance:
-                provider_id = instance.provider_id
+                saml_provider_configuration._meta.model_name))
+            if provider_id:
                 identity_provider = utils.get_identity_provider(provider_id)
                 update_url = url + '?source={}'.format(identity_provider.pk)
                 help_text = '<p><a href="{update_url}" target="_blank">View "{identity_provider}" details</a><p>'.\
                     format(update_url=update_url, identity_provider=identity_provider.name)
 
-            help_text += '<p style="font-size:larger;padding-left:15px;"><a target="_blank" href={add_url}>' \
+            help_text += '<p style="margin-top:-5px;"><a target="_blank" href={add_url}>' \
                          'Create a new identity provider</a></p>'.format(add_url=url)
 
         if idp_choices is not None:
