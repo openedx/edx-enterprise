@@ -33,11 +33,11 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
     EnterpriseCustomerEntitlement,
+    EnterpriseCustomerReportingConfiguration,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
-    EnterpriseCustomerReportingConfiguration
 )
-from enterprise.utils import get_all_field_names, get_catalog_admin_url, decrypt_string
+from enterprise.utils import get_all_field_names, get_catalog_admin_url
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -514,3 +514,14 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
 
     class Meta(object):
         model = EnterpriseCustomerReportingConfiguration
+
+    def get_fields(self, request, obj=None):
+        """
+        Return the fields that should be displayed on the admin form.
+        """
+        fields = list(super(EnterpriseCustomerReportingConfigurationAdmin, self).get_fields(request, obj))
+        if obj:
+            # Exclude password fields when we are editing an existing model.
+            return [f for f in fields if f not in {'decrypted_password', 'decrypted_sftp_password'}]
+
+        return fields

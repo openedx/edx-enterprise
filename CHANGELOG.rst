@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.63.0] - 2018-01-25
+---------------------
+
+* Improved handling of password fields on database models.
+
 [0.62.0] - 2018-01-18
 ---------------------
 

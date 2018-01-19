@@ -10,6 +10,7 @@ from logging import getLogger
 from uuid import uuid4
 
 import six
+from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
 from simple_history.models import HistoricalRecords
 
@@ -18,14 +19,13 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template import Context, Template
-from django.utils.crypto import get_random_string
-from django.utils.encoding import python_2_unicode_compatible
+from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import lazy
 from django.utils.http import urlquote
 from django.utils.safestring import mark_safe
@@ -1340,6 +1340,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         null=False,
         verbose_name=_("Password for the protected zip file."),
     )
+    decrypted_password = EncryptedCharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        help_text=_("This password will be used to secure the zip file. "
+                    "It will be encrypted when stored in the database."),
+    )
     sftp_hostname = models.CharField(
         max_length=256,
         blank=True,
@@ -1368,6 +1375,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("SFTP password"),
         help_text=_("If the delivery method is sftp, the password to use to securely access the host.")
     )
+    decrypted_sftp_password = EncryptedCharField(
+        max_length=256,
+        blank=True,
+        null=True,
+        help_text=_("If the delivery method is sftp, the password to use to securely access the host. "
+                    "The password will be encrypted when stored in the database."),
+    )
     sftp_file_path = models.CharField(
         max_length=256,
         blank=True,
@@ -1378,6 +1392,32 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     class Meta:
         app_label = 'enterprise'
+
+    @property
+    def encrypted_password(self):
+        """
+        Return encrypted password as a string.
+        """
+        if self.decrypted_password:
+            return force_text(
+                self._meta.get_field('decrypted_password').fernet.encrypt(
+                    force_bytes(self.decrypted_password)
+                )
+            )
+        return self.decrypted_password
+
+    @property
+    def encrypted_sftp_password(self):
+        """
+        Return encrypted SFTP password as a string.
+        """
+        if self.decrypted_sftp_password:
+            return force_text(
+                self._meta.get_field('decrypted_sftp_password').fernet.encrypt(
+                    force_bytes(self.decrypted_sftp_password)
+                )
+            )
+        return self.decrypted_sftp_password
 
     def __str__(self):
         """
@@ -1393,62 +1433,37 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         """
         return self.__str__()
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        """
-        Override of model save method to handle encryption logic for password fields.
-        """
-        # These will only get passed in from the Django Admin Form for this model.
-        decrypted_password = getattr(self, 'decrypted_password', None)
-        decrypted_sftp_password = getattr(self, 'decrypted_sftp_password', None)
-        if not self.pk:
-            self.initialization_vector = utils.generate_aes_initialization_vector()
-            decrypted_password = decrypted_password or get_random_string(length=32)
-
-        if decrypted_password:
-            self.password = utils.encrypt_string(
-                decrypted_password,
-                self.initialization_vector
-            )
-
-        if decrypted_sftp_password:
-            self.sftp_password = utils.encrypt_string(
-                decrypted_sftp_password,
-                self.initialization_vector
-            )
-
-        if decrypted_password or decrypted_sftp_password:
-            self.full_clean()
-
-        super(EnterpriseCustomerReportingConfiguration, self).save(*args, **kwargs)
-
     def clean(self):
         """
         Override of clean method to perform additional validation on frequency and day_of_month/day_of week.
         """
+        validation_errors = {}
         if self.frequency == self.FREQUENCY_TYPE_DAILY:
             self.day_of_month = None
             self.day_of_week = None
         elif self.frequency == self.FREQUENCY_TYPE_WEEKLY:
             if self.day_of_week is None or self.day_of_week == '':
-                raise ValidationError({'day_of_week': _('Day of week must be set if the frequency is weekly.')})
+                validation_errors['day_of_week'] = _('Day of week must be set if the frequency is weekly.')
             self.day_of_month = None
         elif self.frequency == self.FREQUENCY_TYPE_MONTHLY:
             if not self.day_of_month:
-                raise ValidationError({'day_of_month': _('Day of month must be set if the frequency is monthly.')})
+                validation_errors['day_of_month'] = _('Day of month must be set if the frequency is monthly.')
             self.day_of_week = None
         else:
-            raise ValidationError(_('Frequency must be set to either daily, weekly, or monthly.'))
+            validation_errors[NON_FIELD_ERRORS] = _('Frequency must be set to either daily, weekly, or monthly.')
 
-        if self.delivery_method == self.DELIVERY_METHOD_SFTP:
-            validation_errors = {}
+        if self.delivery_method == self.DELIVERY_METHOD_EMAIL:
+            if not self.decrypted_password:
+                validation_errors['decrypted_password'] = _(
+                    'Decrypted password must be set if the delivery method is email.'
+                )
+        elif self.delivery_method == self.DELIVERY_METHOD_SFTP:
             if not self.sftp_hostname:
-                validation_errors['sftp_hostname'] = _('SFTP Hostname must be set if the delivery method is sftp')
-
+                validation_errors['sftp_hostname'] = _('SFTP Hostname must be set if the delivery method is sftp.')
             if not self.sftp_username:
-                validation_errors['sftp_username'] = _('SFTP username must be set if the delivery method is sftp')
-
+                validation_errors['sftp_username'] = _('SFTP username must be set if the delivery method is sftp.')
             if not self.sftp_file_path:
-                validation_errors['sftp_file_path'] = _('SFTP File Path must be set if the delivery method is sftp')
+                validation_errors['sftp_file_path'] = _('SFTP File Path must be set if the delivery method is sftp.')
 
-            if validation_errors:
-                raise ValidationError(validation_errors)
+        if validation_errors:
+            raise ValidationError(validation_errors)

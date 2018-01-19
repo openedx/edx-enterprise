@@ -24,7 +24,6 @@ from django.core.files import File
 from django.core.files.storage import Storage
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
-from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 
 from enterprise.models import (
@@ -1531,6 +1530,7 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
             active=True,
             delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
             email='test@edx.org',
+            decrypted_password='test_password',
             frequency=frequency,
             day_of_month=day_of_month,
             day_of_week=day_of_week,
@@ -1563,36 +1563,11 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
         )
 
         expected_errors = [
-            'SFTP Hostname must be set if the delivery method is sftp',
-            'SFTP File Path must be set if the delivery method is sftp',
-            'SFTP username must be set if the delivery method is sftp',
+            'SFTP Hostname must be set if the delivery method is sftp.',
+            'SFTP File Path must be set if the delivery method is sftp.',
+            'SFTP username must be set if the delivery method is sftp.',
         ]
         try:
             config.clean()
         except ValidationError as validation_error:
             assert sorted(validation_error.messages) == sorted(expected_errors)
-
-    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
-    def test_save(self):
-        """
-        Test ``EnterpriseCustomerReportingConfiguration`` custom save function
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory(name="GriffCo")
-        config = EnterpriseCustomerReportingConfiguration(
-            enterprise_customer=enterprise_customer,
-            active=True,
-            delivery_method=EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL,
-            email='test@edx.org',
-            frequency=EnterpriseCustomerReportingConfiguration.FREQUENCY_TYPE_MONTHLY,
-            day_of_month=1,
-            hour_of_day=1,
-        )
-
-        assert not config.password
-        config.save()
-        assert EnterpriseCustomerReportingConfiguration.objects.count() == 1
-        assert EnterpriseCustomerReportingConfiguration.objects.first().password
-
-        # Test that an update does not change the password.
-        config.save()
-        assert config.password == bytes(EnterpriseCustomerReportingConfiguration.objects.first().password)
