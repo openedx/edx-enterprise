@@ -35,6 +35,7 @@ TEST_USERNAME = 'api_worker'
 TEST_EMAIL = 'test@email.com'
 TEST_PASSWORD = 'QWERTY'
 TEST_COURSE = 'course-v1:edX+DemoX+Demo_Course'
+TEST_COURSE_KEY = 'edX+DemoX'
 TEST_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
 TEST_USER_ID = 1
 
@@ -71,40 +72,77 @@ def create_items(factory, items):
         factory.create(**item)
 
 
-def update_course_run_with_enterprise_context(course_run, add_utm_info=True):
+def update_url_with_enterprise_context(url, add_utm_info=True, enterprise_catalog_uuid=None):
+    """
+    Append enterprise-related query parameters to the given URL.
+    """
+    query_params = {}
+
+    if enterprise_catalog_uuid:
+        query_params['catalog'] = enterprise_catalog_uuid
+
+    if add_utm_info:
+        query_params['utm_medium'] = 'enterprise'
+        query_params['utm_source'] = 'test_enterprise'
+
+    url = utils.update_query_parameters(url, query_params)
+    return url
+
+
+def update_course_run_with_enterprise_context(course_run, add_utm_info=True, enterprise_catalog_uuid=None):
     """
     Populate a fake course run response with any necessary Enterprise context for testing purposes.
-
-    Arguments:
-        course_run (dict): The course_run to populate with enterprise context.
-        add_utm_info(bool): control to utm information.
     """
-    enterprise_utm_context = {
-        'utm_medium': 'enterprise',
-        'utm_source': 'test_enterprise'
-    }
+    url = urljoin(
+        settings.LMS_ROOT_URL,
+        reverse(
+            'enterprise_course_run_enrollment_page',
+            kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'course_id': course_run['key']}
+        )
+    )
+
+    course_run['enrollment_url'] = update_url_with_enterprise_context(
+        url,
+        add_utm_info=add_utm_info,
+        enterprise_catalog_uuid=enterprise_catalog_uuid
+    )
+
+    return course_run
+
+
+def update_course_with_enterprise_context(course, add_utm_info=True, enterprise_catalog_uuid=None):
+    """
+    Populate a fake course response with any necessary Enterprise context for testing purposes.
+    """
     url = urljoin(
         settings.LMS_ROOT_URL,
         reverse(
             'enterprise_course_enrollment_page',
-            kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'course_id': course_run['key']}
+            kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'course_key': course['key']}
         )
     )
-    course_run['enrollment_url'] = utils.update_query_parameters(url, enterprise_utm_context) if add_utm_info else url
+
+    course['enrollment_url'] = update_url_with_enterprise_context(
+        url,
+        add_utm_info=add_utm_info,
+        enterprise_catalog_uuid=enterprise_catalog_uuid
+    )
+
+    course_runs = course.get('course_runs', [])
+    for course_run in course_runs:
+        update_course_run_with_enterprise_context(
+            course_run,
+            add_utm_info=add_utm_info,
+            enterprise_catalog_uuid=enterprise_catalog_uuid
+        )
+
+    return course
 
 
-def update_program_with_enterprise_context(program, add_utm_info=True):
+def update_program_with_enterprise_context(program, add_utm_info=True, enterprise_catalog_uuid=None):
     """
     Populate a fake program response with any necessary Enterprise context for testing purposes.
-
-    Arguments:
-        program (dict): The program to populate with enterprise context.
-        add_utm_info (bool): control to utm information.
     """
-    enterprise_utm_context = {
-        'utm_medium': 'enterprise',
-        'utm_source': 'test_enterprise'
-    }
     url = urljoin(
         settings.LMS_ROOT_URL,
         reverse(
@@ -112,10 +150,21 @@ def update_program_with_enterprise_context(program, add_utm_info=True):
             kwargs={'enterprise_uuid': FAKE_UUIDS[0], 'program_uuid': program['uuid']}
         )
     )
-    program['enrollment_url'] = utils.update_query_parameters(url, enterprise_utm_context) if add_utm_info else url
+
+    program['enrollment_url'] = update_url_with_enterprise_context(
+        url,
+        add_utm_info=add_utm_info,
+        enterprise_catalog_uuid=enterprise_catalog_uuid
+    )
+
     for course in program.get('courses', []):
-        for course_run in course['course_runs']:
-            update_course_run_with_enterprise_context(course_run)
+        update_course_with_enterprise_context(
+            course,
+            add_utm_info=add_utm_info,
+            enterprise_catalog_uuid=enterprise_catalog_uuid
+        )
+
+    return program
 
 
 def update_search_with_enterprise_context(search_result, add_utm_info):
@@ -130,6 +179,8 @@ def update_search_with_enterprise_context(search_result, add_utm_info):
         content_type = item['content_type']
         if content_type == 'program':
             update_program_with_enterprise_context(item, add_utm_info)
+        elif content_type == 'course':
+            update_course_with_enterprise_context(item, add_utm_info)
         elif content_type == 'courserun':
             update_course_run_with_enterprise_context(item, add_utm_info)
     return search_result

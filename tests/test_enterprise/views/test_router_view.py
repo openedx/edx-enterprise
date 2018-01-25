@@ -9,11 +9,13 @@ import ddt
 import mock
 from pytest import mark
 
+from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.http import Http404
 from django.test import TestCase
 
 from enterprise import views
-from test_utils import factories
+from test_utils import factories, fake_catalog_api
 
 
 @mark.django_db
@@ -40,7 +42,7 @@ class TestRouterView(TestCase):
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
         self.request = mock.MagicMock(path=reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.enterprise_customer.uuid, self.course_run_id]
         ))
         self.request.user.id = 1
@@ -63,23 +65,27 @@ class TestRouterView(TestCase):
     @ddt.data(
         (
             {'enterprise_uuid': 'fake-uuid', 'course_id': 'fake-course-id'},
-            ('fake-uuid', 'fake-course-id'),
+            ('fake-uuid', 'fake-course-id', '', ''),
         ),
         (
             {'enterprise_uuid': 'fake-uuid', 'program_uuid': 'fake-program-uuid'},
-            ('fake-uuid', 'fake-program-uuid'),
+            ('fake-uuid', '', '', 'fake-program-uuid'),
         ),
         (
             {'enterprise_uuid': 'fake-uuid', 'course_id': 'fake-course-id', 'program_uuid': 'fake-program-uuid'},
-            ('fake-uuid', 'fake-course-id'),
+            ('fake-uuid', 'fake-course-id', '', 'fake-program-uuid'),
         ),
         (
             {'enterprise_uuid': 'fake-uuid', 'course_id': '', 'program_uuid': 'fake-program-uuid'},
-            ('fake-uuid', 'fake-program-uuid'),
+            ('fake-uuid', '', '', 'fake-program-uuid'),
         ),
         (
             {'enterprise_uuid': '', 'course_id': '', 'program_uuid': 'fake-program-uuid'},
-            ('', 'fake-program-uuid'),
+            ('', '', '', 'fake-program-uuid'),
+        ),
+        (
+            {'enterprise_uuid': 'fake-uuid', 'course_key': 'fake-course-key'},
+            ('fake-uuid', '', 'fake-course-key', ''),
         ),
     )
     @ddt.unpack
@@ -159,6 +165,51 @@ class TestRouterView(TestCase):
         router_view_mock.redirect = mock.MagicMock(return_value=None)
         router_view_mock.get(self.request, **self.kwargs)
         router_view_mock.redirect.assert_called_once()
+
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
+    def test_get_redirects_with_course_key(self, router_view_mock, catalog_api_mock):
+        """
+        ``get`` performs a redirect with a course key in the request path.
+        """
+        fake_catalog_api.setup_course_catalog_api_client_mock(catalog_api_mock)
+        router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=False)
+        router_view_mock.redirect = mock.MagicMock(return_value=None)
+        kwargs = {
+            'enterprise_uuid': str(self.enterprise_customer.uuid),
+            'course_key': 'fake_course_key'
+        }
+        router_view_mock.get(self.request, **kwargs)
+        router_view_mock.redirect.assert_called_once()
+
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    def test_get_raises_404_with_bad_catalog_client(self, catalog_api_mock):
+        """
+        ``get`` raises a 404 when the catalog client is not properly configured.
+        """
+        catalog_api_mock.return_value.get_course_details.side_effect = ImproperlyConfigured()
+        kwargs = {
+            'enterprise_uuid': str(self.enterprise_customer.uuid),
+            'course_key': 'fake_course_key'
+        }
+        with self.assertRaises(Http404):
+            views.RouterView().get(self.request, **kwargs)
+
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    def test_get_raises_404_with_bad_course_key(self, catalog_api_mock):
+        """
+        ``get`` raises a 404 when a course run cannot be found given the provided course key.
+        """
+        fake_catalog_api.setup_course_catalog_api_client_mock(
+            catalog_api_mock,
+            course_overrides={'course_runs': []}
+        )
+        kwargs = {
+            'enterprise_uuid': str(self.enterprise_customer.uuid),
+            'course_key': 'fake_course_key'
+        }
+        with self.assertRaises(Http404):
+            views.RouterView().get(self.request, **kwargs)
 
     @mock.patch('enterprise.views.track_enrollment')
     @mock.patch('enterprise.models.EnrollmentApiClient')

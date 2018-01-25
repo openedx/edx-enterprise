@@ -10,7 +10,7 @@ import copy
 import mock
 
 from six.moves import reduce as six_reduce
-from test_utils import FAKE_UUIDS, update_course_run_with_enterprise_context, update_program_with_enterprise_context
+from test_utils import FAKE_UUIDS
 
 FAKE_COURSE_RUN = {
     'key': 'course-v1:edX+DemoX+Demo_Course',
@@ -95,8 +95,6 @@ FAKE_COURSE_RUN = {
 }
 FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
 FAKE_COURSE_RUN2['key'] = 'course-v1:edX+DemoX+Demo_Course2'
-FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT = copy.deepcopy(FAKE_COURSE_RUN)
-update_course_run_with_enterprise_context(FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT)
 
 FAKE_COURSE = {
     'key': 'edX+DemoX',
@@ -130,6 +128,7 @@ FAKE_COURSE = {
     'sponsors': [],
     'modified': '2017-08-18T00:23:21.111991Z',
     'marketing_url': None,
+    'content_type': 'course',
     'programs': []
 }
 
@@ -156,7 +155,7 @@ FAKE_PROGRAM_RESPONSE1 = {
             "course_runs": [{"key": "course-v1:Organization+VD1+Run1"}],
         },
         {
-            "key": "Organization+ENT-1+T1",
+            "key": "Organization+ENT-1",
             "uuid": "7f27580c-f475-413b-851a-529ac90f0bb8",
             "title": "Enterprise Tests",
             "course_runs": [{"key": "course-v1:Organization+ENT-1+Run1"}],
@@ -245,7 +244,7 @@ FAKE_PROGRAM_RESPONSE2 = {
             ],
         },
         {
-            "key": "course-v1:Organization+ENT-1+T1",
+            "key": "Organization+ENT-1",
             "uuid": "7f27580c-f475-413b-851a-529ac90f0bb8",
             "title": "Enterprise Tests",
             "course_runs": [
@@ -527,10 +526,6 @@ FAKE_COURSE_RUNS_RESPONSE = [
     }
 ]
 
-FAKE_PROGRAM_RESPONSE1_WITH_ENTERPRISE_CONTEXT = FAKE_PROGRAM_RESPONSE1
-FAKE_PROGRAM_RESPONSE2_WITH_ENTERPRISE_CONTEXT = FAKE_PROGRAM_RESPONSE2
-update_program_with_enterprise_context(FAKE_PROGRAM_RESPONSE1_WITH_ENTERPRISE_CONTEXT)
-update_program_with_enterprise_context(FAKE_PROGRAM_RESPONSE2_WITH_ENTERPRISE_CONTEXT)
 FAKE_PROGRAM_RESPONSES = {
     FAKE_PROGRAM_RESPONSE1["uuid"]: FAKE_PROGRAM_RESPONSE1,
     FAKE_PROGRAM_RESPONSE2["uuid"]: FAKE_PROGRAM_RESPONSE2,
@@ -1084,11 +1079,12 @@ FAKE_SEARCH_ALL_COURSE_RESULT_1 = copy.deepcopy(FAKE_SEARCH_ALL_COURSE_RESULT)
 FAKE_SEARCH_ALL_COURSE_RESULT_1['marketing_url'] = None
 FAKE_SEARCH_ALL_COURSE_RESULT_1['key'] = "course-v1:test+test+DemoX+Demo_Course"
 FAKE_SEARCH_ALL_RESULTS_3 = {
-    "count": 2,
+    "count": 3,
     "next": None,
     "previous": None,
     "results": [
         FAKE_SEARCH_ALL_COURSE_RESULT_1,
+        FAKE_SEARCH_ALL_SHORT_COURSE_RESULT,
         FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
     ]
 }
@@ -1231,11 +1227,28 @@ def setup_course_catalog_api_client_mock(
         fake_program_type.update(program_type_overrides)
 
     # Mock course catalog api functions.
+    client.get_course_details.return_value = fake_course
     client.get_course_run.return_value = fake_course_run
     client.get_course_and_course_run.return_value = (fake_course, fake_course_run)
     client.get_program_course_keys.return_value = [course['key'] for course in fake_program['courses']]
     client.get_program_by_uuid.return_value = fake_program
     client.get_program_type_by_slug.return_value = fake_program_type
+
+
+def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:01Z",
+                           enrollment_start="2014-10-13T13:11:03Z",
+                           enrollment_end="2999-10-13T13:11:04Z",
+                           upgrade_deadline="3000-10-13T13:11:04Z"):
+    """
+    Return enrollable and upgradeable course run dict.
+    """
+    return {
+        "start": start,
+        "end": end,
+        "enrollment_start": enrollment_start,
+        "enrollment_end": enrollment_end,
+        "seats": [{"type": "verified", "upgrade_deadline": upgrade_deadline}]
+    }
 
 
 class CourseDiscoveryApiTestMixin(object):

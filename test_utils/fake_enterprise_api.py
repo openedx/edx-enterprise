@@ -75,7 +75,7 @@ class EnterpriseMockMixin(object):
             'enrollment_url': urljoin(
                 settings.LMS_ROOT_URL,
                 reverse(
-                    'enterprise_course_enrollment_page',
+                    'enterprise_course_run_enrollment_page',
                     args=[enterprise_uuid, course_run_key.to_deprecated_string()],
                 )
             ),
