@@ -14,7 +14,7 @@ backports.functools-lru-cache==1.4  # via astroid, caniusepython3, pylint
 billiard==3.3.0.23        # via celery
 caniusepython3==6.0.0
 celery==3.1.18
-cffi==1.11.2              # via cryptography
+cffi==1.11.4              # via cryptography
 click-log==0.1.8          # via edx-lint
 click==6.7                # via click-log, edx-lint, pip-tools
 configparser==3.5.0       # via pydocstyle, pylint
@@ -22,6 +22,7 @@ cryptography==1.9
 diff-cover==1.0.2
 distlib==0.2.6            # via caniusepython3
 django-config-models==0.1.8
+django-fernet-fields==0.5
 django-filter==1.0.4
 django-ipware==1.1.0
 django-model-utils==2.3.1
@@ -34,8 +35,8 @@ djangorestframework-oauth==1.1.0
 djangorestframework==3.6.3
 edx-django-oauth2-provider==1.1.4
 edx-drf-extensions==1.2.3
-edx-i18n-tools==0.4.2
-edx-lint==0.5.4
+edx-i18n-tools==0.4.3
+edx-lint==0.5.5
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 enum34==1.1.6             # via astroid, cryptography

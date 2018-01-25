@@ -32,7 +32,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
 )
-from enterprise.utils import MultipleProgramMatchError, decrypt_string
+from enterprise.utils import MultipleProgramMatchError
 
 try:
     from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
@@ -476,21 +476,9 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
     """
     Alternate form for the EnterpriseCustomerReportingConfiguration admin page.
 
-    This form allows editing of the password and sftp_password fields in plain text but handles encrypting on save.
+    This form uses the PasswordInput widget to obscure passwords as they are
+    being entered by the user.
     """
-
-    decrypted_password = forms.CharField(
-        required=False,
-        max_length=256,
-        help_text=_('The Password to decrypt the zip file containing the report.')
-    )
-
-    decrypted_sftp_password = forms.CharField(
-        required=False,
-        max_length=256,
-        help_text=_('If the delivery method is sftp, the password to use to securely access the host.')
-    )
-
     class Meta:
         model = EnterpriseCustomerReportingConfiguration
         fields = (
@@ -509,50 +497,7 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             "decrypted_sftp_password",
             "sftp_file_path",
         )
-
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the form, and display the decrypted passwords in the password fields if they are set.
-        """
-        instance = None
-        if 'instance' in kwargs and kwargs['instance']:
-            instance = kwargs['instance']
-        initial_password = None
-        initial_sftp_password = None
-        if instance:
-            # We need to pass the decrypted password values, if they can't be decrypted to a utf8 string,
-            # then we will display nothing in that field.
-            if instance.password:
-                try:
-                    initial_password = decrypt_string(
-                        instance.password,
-                        instance.initialization_vector
-                    ).decode('utf8')
-                except UnicodeDecodeError:
-                    logger.warning('Unable to successfully decrypt password for {}'.format(
-                        instance.enterprise_customer.name
-                    ))
-            if instance.sftp_password:
-                try:
-                    initial_sftp_password = decrypt_string(
-                        instance.sftp_password,
-                        instance.initialization_vector
-                    ).decode('utf8')
-                except UnicodeDecodeError:
-                    logger.warning('Unable to successfully decrypt sftp_password for {}'.format(
-                        instance.enterprise_customer.name
-                    ))
-
-        kwargs['initial'] = {
-            'decrypted_password': initial_password,
-            'decrypted_sftp_password': initial_sftp_password,
+        widgets = {
+            'decrypted_password': forms.widgets.PasswordInput(),
+            'decrypted_sftp_password': forms.widgets.PasswordInput(),
         }
-        super(EnterpriseCustomerReportingConfigAdminForm, self).__init__(*args, **kwargs)
-
-    def save(self, commit=True):
-        """
-        Overridden to pass the password and sftp_password fields to the model instance.
-        """
-        self.instance.decrypted_password = self.cleaned_data['decrypted_password']
-        self.instance.decrypted_sftp_password = self.cleaned_data['decrypted_sftp_password']
-        return super(EnterpriseCustomerReportingConfigAdminForm, self).save(commit)

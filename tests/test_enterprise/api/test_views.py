@@ -764,6 +764,8 @@ class TestEnterpriseAPIViews(APITest):
         model_item = {
             'enterprise_customer__uuid': FAKE_UUIDS[0],
             'email': 'test@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
         }
         expected_item = {
             'enterprise_customer': {
@@ -788,7 +790,8 @@ class TestEnterpriseAPIViews(APITest):
                 assert expected_item[key] == result_item[key]
 
         assert result_item['initialization_vector'] is not None
-        assert result_item['password'] is not None
+        assert result_item['encrypted_password'] is not None
+        assert result_item['encrypted_sftp_password'] is not None
 
     @ddt.data(
         (False, False),
