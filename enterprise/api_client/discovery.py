@@ -20,7 +20,7 @@ from enterprise.utils import (
     MultipleProgramMatchError,
     NotConnectedToOpenEdX,
     get_configuration_value_for_site,
-    get_course_id_from_course_run_id,
+    parse_course_key,
 )
 
 try:
@@ -207,7 +207,7 @@ class CourseCatalogApiClient(object):
             tuple: The course metadata and the course run metadata.
         """
         # Parse the course ID from the course run ID.
-        course_id = get_course_id_from_course_run_id(course_run_id)
+        course_id = parse_course_key(course_run_id)
         # Retrieve the course metadata from the catalog service.
         course = self.get_course_details(course_id)
 

@@ -109,7 +109,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         """
         view_function = mock_view_function()
         enterprise_launch_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, 'course-v1:edX+DemoX+Demo_Course'],
         )
         request = self._prepare_request(enterprise_launch_url, UserFactory(is_active=True))
@@ -125,7 +125,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         request = self._prepare_request(enterprise_launch_url, AnonymousUser())
@@ -149,7 +149,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         course_enrollment_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         querystring = 'catalog=dummy-catalog-uuid'
@@ -188,7 +188,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         request = self._prepare_request(enterprise_launch_url, UserFactory(is_active=True))
@@ -209,7 +209,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         request = self._prepare_request(enterprise_launch_url, AnonymousUser())
@@ -231,7 +231,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         request = self._prepare_request(enterprise_launch_url, UserFactory(is_active=True))
@@ -251,7 +251,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         enterprise_launch_url += '?new_enterprise_login=yes'
@@ -276,7 +276,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         url_path = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.customer.uuid, course_id],
         )
         query = 'foo=bar'

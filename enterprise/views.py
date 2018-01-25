@@ -40,6 +40,7 @@ from enterprise.utils import (
     filter_audit_course_modes,
     format_price,
     get_configuration_value,
+    get_current_course_run,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
@@ -616,9 +617,14 @@ class CourseEnrollmentView(NonAtomicView):
             # EnterpriseCustomerCatalog, or does not exist at all in the
             # discovery service.
             LOGGER.warning(
-                'Failed to fetch course "{course}" or course run "{course_run}" details for '
-                'enterprise "{enterprise_uuid}"'.format(
-                    course=course, course_run=course_run, enterprise_uuid=enterprise_customer.uuid
+                'Failed to fetch course [{course}] or course run [{course_run}] details for '
+                'course run [{course_run_id}] enterprise [{enterprise_uuid}] '
+                'catalog [{enterprise_catalog_uuid}]'.format(
+                    course=course,
+                    course_run=course_run,
+                    course_run_id=course_run_id,
+                    enterprise_uuid=enterprise_customer.uuid,
+                    enterprise_catalog_uuid=enterprise_catalog_uuid,
                 )
             )
             messages.add_generic_info_message_for_error(request)
@@ -850,7 +856,7 @@ class CourseEnrollmentView(NonAtomicView):
                 query_string=urlencode({'course_mode': selected_course_mode_name})
             )
 
-            failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
+            failure_url = reverse('enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id])
             if request.META['QUERY_STRING']:
                 # Preserve all querystring parameters in the request to build
                 # failure url, so that learner views the same enterprise course
@@ -860,7 +866,7 @@ class CourseEnrollmentView(NonAtomicView):
                 # https://docs.djangoproject.com/en/1.11/ref/request-response/#django.http.HttpRequest.META
                 failure_url = '{course_enrollment_url}?{query_string}'.format(
                     course_enrollment_url=reverse(
-                        'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                        'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
                     ),
                     query_string=request.META['QUERY_STRING']
                 )
@@ -1305,8 +1311,10 @@ class RouterView(NonAtomicView):
         """
         enterprise_customer_uuid = kwargs.get('enterprise_uuid', '')
         course_run_id = kwargs.get('course_id', '')
+        course_key = kwargs.get('course_key', '')
         program_uuid = kwargs.get('program_uuid', '')
-        return enterprise_customer_uuid, course_run_id or program_uuid
+
+        return enterprise_customer_uuid, course_run_id, course_key, program_uuid
 
     def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id):
         """
@@ -1328,10 +1336,15 @@ class RouterView(NonAtomicView):
         """
         Redirects to the appropriate view depending on where the user came from.
         """
-        enterprise_customer_uuid, resource_id = RouterView.get_path_variables(**kwargs)
+        enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
+        resource_id = course_key or course_run_id or program_uuid
         # Replace enterprise UUID and resource ID with '{}', to easily match with a path in RouterView.VIEWS. Example:
         # /enterprise/fake-uuid/course/course-v1:cool+course+2017/enroll/ -> /enterprise/{}/course/{}/enroll/
         path = re.sub('{}|{}'.format(enterprise_customer_uuid, re.escape(resource_id)), '{}', request.path)
+
+        # Remove course_key from kwargs if it exists because delegate views are not expecting it.
+        kwargs.pop('course_key', None)
+
         return self.VIEWS[path].as_view()(request, *args, **kwargs)
 
     @method_decorator(enterprise_login_required)
@@ -1341,10 +1354,26 @@ class RouterView(NonAtomicView):
         Run some custom GET logic for Enterprise workflows before routing the user through existing views.
 
         In particular, before routing to existing views:
+        - If the requested resource is a course, find the current course run for that course,
+          and make that course run the requested resource instead.
         - Look to see whether a request is eligible for direct audit enrollment, and if so, directly enroll the user.
         """
-        enterprise_customer_uuid, resource_id = RouterView.get_path_variables(**kwargs)
+        enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
+
+        if course_key:
+            # User is requesting a course, we need to translate that into the current course run.
+            try:
+                course = CourseCatalogApiServiceClient(enterprise_customer.site).get_course_details(course_key)
+            except ImproperlyConfigured:
+                raise Http404
+
+            course_run = get_current_course_run(course)
+            if course_run:
+                course_run_id = course_run['key']
+                kwargs['course_id'] = course_run_id
+            else:
+                raise Http404
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
@@ -1355,6 +1384,7 @@ class RouterView(NonAtomicView):
             )
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
+        resource_id = course_run_id or program_uuid
         if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
             try:
                 enterprise_customer_user.enroll(resource_id, 'audit')
