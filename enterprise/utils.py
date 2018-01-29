@@ -7,19 +7,14 @@ from __future__ import absolute_import, division, unicode_literals
 import datetime
 import hashlib
 import logging
-import os
 import re
 from uuid import UUID
 
 import analytics
 import pytz
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.ciphers import Cipher
-from cryptography.hazmat.primitives.ciphers.algorithms import AES
-from cryptography.hazmat.primitives.ciphers.modes import CFB
 from eventtracking import tracker
 from opaque_keys.edx.keys import CourseKey
-from six import iteritems, text_type  # pylint: disable=ungrouped-imports
+from six import iteritems  # pylint: disable=ungrouped-imports
 
 from django.apps import apps
 from django.conf import settings
@@ -712,38 +707,3 @@ def is_course_run_enrollable(course_run):
     return (not end or end > now) and \
            (not enrollment_start or enrollment_start < now) and \
            (not enrollment_end or enrollment_end > now)
-
-
-def generate_aes_initialization_vector():
-    """
-    Genrates an Initialization Vector (iv) to be used for AES encryption.
-    """
-    return os.urandom(int(AES.block_size / 8))
-
-
-def encrypt_string(string, iv):  # pylint: disable=invalid-name
-    """
-    Encrypts the given string using the configured secret.
-    """
-    key = settings.ENTERPRISE_REPORTING_SECRET
-    if isinstance(key, text_type):
-        key = key.encode('utf-8')
-    if isinstance(string, text_type):
-        string = string.encode('utf-8')
-    cipher = Cipher(AES(key), CFB(iv), backend=default_backend())
-    encryptor = cipher.encryptor()
-    return encryptor.update(string) + encryptor.finalize()
-
-
-def decrypt_string(string, iv):   # pylint: disable=invalid-name
-    """
-    Decrypts the given string using the configured secret.
-    """
-    key = settings.ENTERPRISE_REPORTING_SECRET
-    if isinstance(key, text_type):
-        key = key.encode('utf-8')
-    if isinstance(string, text_type):
-        string = string.encode('utf-8')
-    cipher = Cipher(AES(key), CFB(iv), backend=default_backend())
-    decryptor = cipher.decryptor()
-    return decryptor.update(string) + decryptor.finalize()
