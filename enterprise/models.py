@@ -1326,20 +1326,6 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                     "This is required for all frequency settings."),
         validators=[MinValueValidator(0), MaxValueValidator(23)]
     )
-    initialization_vector = models.BinaryField(
-        max_length=32,
-        blank=False,
-        null=False,
-        editable=False,
-        verbose_name=_("Password Encryption Initialization Vector"),
-        help_text=_("This is the initialization vector used to encrypt the password using AESencr")
-    )
-    password = models.BinaryField(
-        max_length=256,
-        blank=False,
-        null=False,
-        verbose_name=_("Password for the protected zip file."),
-    )
     decrypted_password = EncryptedCharField(
         max_length=256,
         blank=True,
@@ -1367,13 +1353,6 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         null=True,
         verbose_name=_("SFTP username"),
         help_text=_("If the delivery method is sftp, the username to use to securely access the host.")
-    )
-    sftp_password = models.BinaryField(
-        max_length=256,
-        blank=True,
-        null=True,
-        verbose_name=_("SFTP password"),
-        help_text=_("If the delivery method is sftp, the password to use to securely access the host.")
     )
     decrypted_sftp_password = EncryptedCharField(
         max_length=256,

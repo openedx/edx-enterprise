@@ -755,7 +755,6 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
         assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
 
-    @override_settings(ENTERPRISE_REPORTING_SECRET='abcdefgh12345678')
     def test_enterprise_customer_reporting_list(self):
         """
         ``enterprise_customer_reporting``'s list endpoint should serialize the ``EnterpriseCustomerReportingConfig``.
@@ -789,7 +788,6 @@ class TestEnterpriseAPIViews(APITest):
             else:
                 assert expected_item[key] == result_item[key]
 
-        assert result_item['initialization_vector'] is not None
         assert result_item['encrypted_password'] is not None
         assert result_item['encrypted_sftp_password'] is not None
 

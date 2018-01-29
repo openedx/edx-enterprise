@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.64.0] - 2018-01-29
+---------------------
+
+* Removed code references to old password fields.
+
 [0.63.0] - 2018-01-25
 ---------------------
 
