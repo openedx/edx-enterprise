@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.0] - 2018-01-30
+---------------------
+
+* Add migration for removing old password fields from the database.
+
 [0.64.0] - 2018-01-29
 ---------------------
 
