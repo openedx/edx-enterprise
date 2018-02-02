@@ -105,8 +105,9 @@ class SapSuccessFactorsCourseExporter(CourseExporter):  # pylint: disable=abstra
         """
         return (
             self.STATUS_ACTIVE
-            if course_run['availability'] in [self.AVAILABILITY_CURRENT, self.AVAILABILITY_UPCOMING]
-            else self.STATUS_INACTIVE
+            if course_run['availability'] in [
+                self.AVAILABILITY_CURRENT, self.AVAILABILITY_STARTING_SOON, self.AVAILABILITY_UPCOMING
+            ] else self.STATUS_INACTIVE
         )
 
     def transform_title(self, course_run):

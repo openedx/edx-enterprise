@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.4] - 2018-02-09
+---------------------
+
+* Indicate when a course is no longer open for enrollment by updating course title for transmit courses metadata.
+
 [0.65.3] - 2018-02-06
 ---------------------
 

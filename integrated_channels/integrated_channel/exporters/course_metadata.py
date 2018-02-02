@@ -14,6 +14,8 @@ from logging import getLogger
 
 from integrated_channels.integrated_channel.exporters import Exporter
 
+from django.utils.translation import ugettext_lazy as _
+
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.lms import parse_lms_api_datetime
 
@@ -26,6 +28,7 @@ class CourseExporter(Exporter):
     """
 
     AVAILABILITY_CURRENT = 'Current'
+    AVAILABILITY_STARTING_SOON = 'Starting Soon'
     AVAILABILITY_UPCOMING = 'Upcoming'
     AVAILABILITY_ARCHIVED = 'Archived'
 
@@ -113,9 +116,25 @@ class CourseExporter(Exporter):
         """
         title = course_run.get('title') or ''
         course_run_start = course_run.get('start')
+
         if course_run_start:
-            title += ' (Starts: {:%B %Y})'.format(
-                parse_lms_api_datetime(course_run_start)
-            )
+            if self.course_available_for_enrollment(course_run):
+                title += ' ({starts}: {:%B %Y})'.format(
+                    parse_lms_api_datetime(course_run_start),
+                    starts=_('Starts')
+                )
+            else:
+                title += ' ({:%B %Y} - {enrollment_closed})'.format(
+                    parse_lms_api_datetime(course_run_start),
+                    enrollment_closed=_('Enrollment Closed')
+                )
 
         return title
+
+    def course_available_for_enrollment(self, course_run):
+        """
+        Check if a course run is available for enrollment.
+        """
+        return course_run['availability'] in [
+            self.AVAILABILITY_CURRENT, self.AVAILABILITY_STARTING_SOON, self.AVAILABILITY_UPCOMING
+        ]
