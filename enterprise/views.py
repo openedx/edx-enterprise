@@ -161,22 +161,34 @@ class GrantDataSharingPermissions(View):
         '(or its designee) for these courses and programs are limited to the following:'
     )
     sharable_items = [
-        _('My email address for my {platform_name} account'),
-        _('My {platform_name} ID'),
+        _('My email address for my {platform_name} account, and the date when I created my {platform_name} account'),
+        _('My {platform_name} ID, and if I log in via single sign-on, my {enterprise_customer_name} SSO user-ID'),
         _('My {platform_name} username'),
-        _('What courses and/or programs I\'ve enrolled in or unenrolled from'),
+        _('My country or region of residence'),
+        _(
+            'What courses and/or programs I\'ve enrolled in or unenrolled from, what track I '
+            'enrolled in (audit or verified) and the date when I enrolled in each course or program'
+        ),
+        _(
+            'Information about each course or program I\'ve enrolled in, '
+            'including its duration and level of effort required'
+        ),
         _(
             'Whether I completed specific parts of each course or program (for example, whether '
             'I watched a given video or completed a given homework assignment)'
         ),
-        _('My overall percentage completion of each course or program on a periodic basis'),
+        _(
+            'My overall percentage completion of each course or program on a periodic basis, '
+            'including the total time spent in each course or program and the date when I last '
+            'logged in to each course or program'
+        ),
         _('My performance in each course or program'),
-        _('My final grade in each course or program'),
+        _('My final grade in each course or program, and the date when I completed each course or program'),
         _('Whether I received a certificate in each course or program'),
     ]
     sharable_items_footer = _(
-        'My permission applies only to data from courses or programs that are sponsored by {enterprise_customer_name}'
-        ', and not to data from any {platform_name} courses or programs that I take on my own. I understand that '
+        'My permission applies only to data from courses or programs that are sponsored by {enterprise_customer_name}, '
+        'and not to data from any {platform_name} courses or programs that I take on my own. I understand that '
         'I may withdraw my permission only by fully unenrolling from any courses or programs that are sponsored by '
         '{enterprise_customer_name}.'
     )
