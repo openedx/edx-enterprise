@@ -11,8 +11,10 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route
 from rest_framework.exceptions import NotFound
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
+from rest_framework_xml.renderers import XMLRenderer
 
 from django.conf import settings
 from django.http import Http404
@@ -21,6 +23,7 @@ from django.utils.decorators import method_decorator
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.pagination import get_paginated_response
+from enterprise.api.renderers import IgnoreClientContentNegotiation
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
@@ -290,6 +293,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API Views for performing search through course discovery at the ``enterprise_catalogs`` API endpoint.
     """
+    content_negotiation_class = IgnoreClientContentNegotiation
     queryset = models.EnterpriseCustomerCatalog.objects.all()
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
@@ -298,6 +302,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+    renderer_classes = (JSONRenderer, XMLRenderer,)
 
     def get_serializer_class(self):
         action = getattr(self, 'action', None)

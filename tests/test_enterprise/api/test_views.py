@@ -1998,3 +1998,14 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         self.assertListEqual(response, expected_response)
+
+    def test_enterprise_customer_catalogs_response_formats(self):
+        """
+        ``enterprise_catalogs``'s xml and json responses verification.
+        """
+        response_xml_1 = self.client.get('{}?format=xml'.format(ENTERPRISE_CATALOGS_LIST_ENDPOINT))
+        response_xml_2 = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
+        response_json = self.client.get('{}?format=json'.format(ENTERPRISE_CATALOGS_LIST_ENDPOINT))
+        self.assertTrue(response_xml_1['content-type'] == 'application/xml; charset=utf-8')
+        self.assertTrue(response_xml_2['content-type'] == 'application/xml; charset=utf-8')
+        self.assertTrue(response_json['content-type'] == 'application/json')

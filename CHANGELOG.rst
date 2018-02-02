@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.1] - 2018-02-02
+---------------------
+
+* Provide an option for enterprise to pull enterprise catalog API in XML format not just JSON.
+
 [0.65.0] - 2018-01-30
 ---------------------
 
