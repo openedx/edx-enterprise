@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.3] - 2018-02-06
+---------------------
+
+* Decreased SuccessFactors course metadata chunk size from 1000 to 500, per SAP's recommendation.
+
 [0.65.2] - 2018-02-05
 ---------------------
 
