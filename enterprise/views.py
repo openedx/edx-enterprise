@@ -347,7 +347,7 @@ class GrantDataSharingPermissions(View):
                 bold_start='<b>',
                 bold_end='</b>',
                 start_link='<a href="#consent-policy-dropdown-bar" '
-                           'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">',
+                           'class="policy-dropdown-link background-input" id="policy-dropdown-link">',
                 end_link='</a>',
             ),
             'confirmation_alert_prompt': _(

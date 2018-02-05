@@ -161,7 +161,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'consent_request_prompt': expected_prompt,
                 'requested_permissions_header': (
                     'Per the <a href="#consent-policy-dropdown-bar" '
-                    'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">'
+                    'class="policy-dropdown-link background-input" id="policy-dropdown-link">'
                     'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
                 ),
                 'confirmation_alert_prompt': expected_alert,
@@ -714,7 +714,7 @@ class TestProgramDataSharingPermissions(TestCase):
                 "consent_request_prompt": expected_prompt,
                 "requested_permissions_header": (
                     'Per the <a href="#consent-policy-dropdown-bar" '
-                    'class="policy-dropdown-link background-input failure-link" id="policy-dropdown-link">'
+                    'class="policy-dropdown-link background-input" id="policy-dropdown-link">'
                     'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
                 ),
                 'confirmation_alert_prompt': expected_alert,
