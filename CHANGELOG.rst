@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.2] - 2018-02-05
+---------------------
+
+* Updated the "Data Sharing Policy" language.
+
 [0.65.1] - 2018-02-02
 ---------------------
 
