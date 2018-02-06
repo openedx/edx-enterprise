@@ -2003,9 +2003,11 @@ class TestEnterpriseAPIViews(APITest):
         """
         ``enterprise_catalogs``'s xml and json responses verification.
         """
-        response_xml_1 = self.client.get('{}?format=xml'.format(ENTERPRISE_CATALOGS_LIST_ENDPOINT))
-        response_xml_2 = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
-        response_json = self.client.get('{}?format=json'.format(ENTERPRISE_CATALOGS_LIST_ENDPOINT))
-        self.assertTrue(response_xml_1['content-type'] == 'application/xml; charset=utf-8')
-        self.assertTrue(response_xml_2['content-type'] == 'application/xml; charset=utf-8')
+        response_default = self.client.get('/enterprise/api/v1/enterprise_catalogs/')
+        self.assertTrue(response_default['content-type'] == 'application/json')
+
+        response_json = self.client.get('/enterprise/api/v1/enterprise_catalogs.json')
         self.assertTrue(response_json['content-type'] == 'application/json')
+
+        response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
+        self.assertTrue(response_xml['content-type'] == 'application/xml; charset=utf-8')
