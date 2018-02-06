@@ -27,7 +27,7 @@ class SapSuccessFactorsCourseExporter(CourseExporter):  # pylint: disable=abstra
     Class to provide data transforms for SAP SuccessFactors course metadata export task.
     """
 
-    CHUNK_PAGE_LENGTH = 1000
+    CHUNK_PAGE_LENGTH = 500
     STATUS_ACTIVE = 'ACTIVE'
     STATUS_INACTIVE = 'INACTIVE'
 
