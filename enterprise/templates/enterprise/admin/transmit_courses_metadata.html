@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static admin_urls %}
+
+{% block extrastyle %}
+  {# TODO: When we move to be a service, use the webpack loader's `render_bundle`. #}
+  <link rel="stylesheet" type="text/css" href="{% static 'enterprise/bundles/main-admin.style.css' %}"/>
+  <link rel="stylesheet" type="text/css" href="{% static 'admin/css/changelists.css' %}"/>
+{% endblock %}
+
+{% block extrahead %}
+<script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
+<script type="text/javascript" src="{% static 'common/js/vendor/jquery.js' %}"></script>
+<script type="text/javascript" src="{% static 'js/vendor/jquery.cookie.js' %}"></script>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans "Home" %}</a>
+  &rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+  &rsaquo; {% if has_change_permission %}
+    <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+  {% else %}
+    {{ opts.verbose_name_plural|capfirst }}
+  {% endif %}
+  &rsaquo; {% if has_change_permission %}
+    <a href="{% url opts|admin_urlname:'change' enterprise_customer.uuid %}">
+      {{ enterprise_customer|truncatewords:"18" }}
+    </a>
+  {% else %}
+    {{ enterprise_customer|capfirst }}
+  {% endif %}
+  &rsaquo;
+  {% trans "Transmit Courses Metadata" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <div class="forms-panel">
+    <h1>{% trans "Transmit Courses Metadata" %}</h1>
+    <form action="" method="post" id="learner-management-form">
+      {% csrf_token %}
+      {{ transmit_courses_metadata_form.as_p }}
+      <input type="submit" value="Submit"/>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block footer %}
+  {{ block.super }}
+{% endblock %}
