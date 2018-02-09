@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.65.7] - 2018-02-14
+---------------------
+
+* Support multiple emails in EnterpriseCustomerReportingConfiguration.
+* Only require email(s) in EnterpriseCustomerReportingConfiguration if the selected delivery method is email.
+
 [0.65.6] - 2018-02-13
 ---------------------
 

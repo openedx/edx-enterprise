@@ -12,6 +12,7 @@ from uuid import uuid4
 import six
 from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
+from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
 
 from django.apps import apps
@@ -1295,7 +1296,11 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("Delivery Method"),
         help_text=_("The method in which the data should be sent.")
     )
-    email = models.EmailField(blank=False, null=False, verbose_name=_("Email"))
+    email = MultiEmailField(
+        blank=True,
+        verbose_name=_("Email"),
+        help_text=_("The email(s), one per line, where the report should be sent.")
+    )
     frequency = models.CharField(
         max_length=20,
         choices=FREQUENCY_CHOICES,
@@ -1432,6 +1437,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             validation_errors[NON_FIELD_ERRORS] = _('Frequency must be set to either daily, weekly, or monthly.')
 
         if self.delivery_method == self.DELIVERY_METHOD_EMAIL:
+            if not self.email:
+                validation_errors['email'] = _(
+                    'Email(s) must be set if the delivery method is email.'
+                )
             if not self.decrypted_password:
                 validation_errors['decrypted_password'] = _(
                     'Decrypted password must be set if the delivery method is email.'
