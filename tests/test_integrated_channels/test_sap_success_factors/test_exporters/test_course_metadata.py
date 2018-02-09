@@ -10,6 +10,7 @@ import unittest
 import ddt
 import mock
 import responses
+from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
 from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
 from pytest import mark, raises
 
@@ -73,11 +74,13 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
         {
             'start': '2013-02-05T05:00:00Z',
             'pacing_type': 'instructor_paced',
+            'availability': CourseExporter.AVAILABILITY_CURRENT,
             'title': 'edX Demonstration Course'
         },
         {
             'start': '2013-02-05T05:00:00Z',
             'pacing_type': 'self_paced',
+            'availability': CourseExporter.AVAILABILITY_CURRENT,
             'title': 'edX Demonstration Course'
         }
     )
@@ -91,6 +94,39 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
         expected_title = '{course_run_title} (Starts: {start_date})'.format(
             course_run_title=course_run['title'],
             start_date=parse_lms_api_datetime(course_run['start']).strftime('%B %Y')
+        )
+        assert exporter.transform_title(course_run) == \
+            [{
+                'locale': 'English',
+                'value': expected_title
+            }]
+
+    @ddt.data(
+        {
+            'start': '2013-02-05T05:00:00Z',
+            'pacing_type': 'instructor_paced',
+            'availability': CourseExporter.AVAILABILITY_ARCHIVED,
+            'title': 'edX Demonstration Course'
+        },
+        {
+            'start': '2013-02-05T05:00:00Z',
+            'availability': CourseExporter.AVAILABILITY_ARCHIVED,
+            'pacing_type': 'self_paced',
+            'title': 'edX Demonstration Course'
+        }
+    )
+    @responses.activate
+    def test_transform_title_includes_enrollment_closed(self, course_run):
+        """
+        Transforming a title gives back the title with start date and
+        `enrollment closed` message for course run with availability set to
+        `Archived`.
+        """
+        exporter = SapSuccessFactorsCourseExporter('fake-user', self.config)
+        expected_title = '{course_run_title} ({start_date} - {enrollment_closed})'.format(
+            course_run_title=course_run['title'],
+            start_date=parse_lms_api_datetime(course_run['start']).strftime('%B %Y'),
+            enrollment_closed='Enrollment Closed'
         )
         assert exporter.transform_title(course_run) == \
             [{

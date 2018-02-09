@@ -1,0 +1,56 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-02-02 05:34-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Enter a valid course ID"
+msgstr "Éntér ä välïd çöürsé ÌD Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σ#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Are you sure you want to unlink %(email)s?"
+msgstr ""
+"Àré ýöü süré ýöü wänt tö ünlïnk %(email)s? Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυ#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "---------"
+msgstr "--------- Ⱡ'σяєм ιρѕυм ∂σł#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Audit"
+msgstr "Àüdït Ⱡ'σяєм ιρѕ#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Verified"
+msgstr "Vérïfïéd Ⱡ'σяєм ιρѕυм ∂#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Professional Education"
+msgstr "Pröféssïönäl Édüçätïön Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Professional Education (no ID)"
+msgstr "Pröféssïönäl Édüçätïön (nö ÌD) Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Credit"
+msgstr "Çrédït Ⱡ'σяєм ιρѕυ#"
+
+#: enterprise/static/enterprise/js/manage_learners.js
+msgid "Honor"
+msgstr "Hönör Ⱡ'σяєм ιρѕ#"
