@@ -762,7 +762,7 @@ class TestEnterpriseAPIViews(APITest):
         factory = factories.EnterpriseCustomerReportingConfigFactory
         model_item = {
             'enterprise_customer__uuid': FAKE_UUIDS[0],
-            'email': 'test@test.com',
+            'email': 'test@test.com\nfoo@test.com',
             'decrypted_password': 'test_password',
             'decrypted_sftp_password': 'test_password',
         }
@@ -773,7 +773,7 @@ class TestEnterpriseAPIViews(APITest):
             'active': True,
             'delivery_method': 'email',
             'frequency': 'monthly',
-            'email': 'test@test.com',
+            'email': ['test@test.com', 'foo@test.com'],
             'day_of_month': 1,
             'day_of_week': None,
             'hour_of_day': 1,
