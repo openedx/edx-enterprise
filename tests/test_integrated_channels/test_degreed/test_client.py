@@ -9,22 +9,23 @@ import datetime
 import json
 import unittest
 
+import pytest
 import requests
 import responses
 from freezegun import freeze_time
-from pytest import mark
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
 
 from integrated_channels.degreed.client import DegreedAPIClient
+from integrated_channels.exceptions import ClientError
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 
 
-@mark.django_db
+@pytest.mark.django_db
 @freeze_time(NOW)
 class TestDegreedApiClient(unittest.TestCase):
     """
@@ -130,9 +131,9 @@ class TestDegreedApiClient(unittest.TestCase):
         assert responses.calls[1].request.url == self.completion_status_url
 
     @responses.activate
-    def test_create_course_content(self):
+    def test_create_content_metadata(self):
         """
-        ``create_course_content`` should use the appropriate URLs for transmission.
+        ``create_content_metadata`` should use the appropriate URLs for transmission.
         """
         responses.add(
             responses.POST,
@@ -169,16 +170,60 @@ class TestDegreedApiClient(unittest.TestCase):
             }],
         }
         degreed_api_client = DegreedAPIClient(self.enterprise_config)
-        output = degreed_api_client.create_course_content(payload)
-        assert output == (200, '"{}"')
+        degreed_api_client.create_content_metadata(payload)
         assert len(responses.calls) == 2
         assert responses.calls[0].request.url == self.oauth_url
         assert responses.calls[1].request.url == self.course_url
 
     @responses.activate
-    def test_delete_course_content(self):
+    def test_update_content_metadata(self):
         """
-        ``delete_course_content`` should use the appropriate URLs for transmission.
+        ``update_content_metadata`` should use the appropriate URLs for transmission.
+        """
+        responses.add(
+            responses.POST,
+            self.oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            self.course_url,
+            json='{}',
+            status=200
+        )
+
+        payload = {
+            'orgCode': 'org-code',
+            'providerCode': 'provider-code',
+            'courses': [{
+                'contentId': 'content-id',
+                'authors': [],
+                'categoryTags': [],
+                'url': 'url',
+                'imageUrl': 'image-url',
+                'videoUrl': 'video-url',
+                'title': 'title',
+                'description': 'description',
+                'difficulty': 'difficulty',
+                'duration': 20,
+                'publishDate': '2017-01-01',
+                'format': 'format',
+                'institution': 'institution',
+                'costType': 'paid',
+                'language': 'en'
+            }],
+        }
+        degreed_api_client = DegreedAPIClient(self.enterprise_config)
+        degreed_api_client.update_content_metadata(payload)
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == self.oauth_url
+        assert responses.calls[1].request.url == self.course_url
+
+    @responses.activate
+    def test_delete_content_metadata(self):
+        """
+        ``delete_content_metadata`` should use the appropriate URLs for transmission.
         """
         responses.add(
             responses.POST,
@@ -201,11 +246,67 @@ class TestDegreedApiClient(unittest.TestCase):
             }],
         }
         degreed_api_client = DegreedAPIClient(self.enterprise_config)
-        output = degreed_api_client.delete_course_content(payload)
-        assert output == (200, '"{}"')
+        degreed_api_client.delete_content_metadata(payload)
         assert len(responses.calls) == 2
         assert responses.calls[0].request.url == self.oauth_url
         assert responses.calls[1].request.url == self.course_url
+
+    @responses.activate
+    def test_degreed_api_connection_error(self):
+        """
+        ``create_content_metadata`` should raise ClientError when API request fails with a connection error.
+        """
+        responses.add(
+            responses.POST,
+            self.oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            self.course_url,
+            body=requests.exceptions.RequestException()
+        )
+
+        payload = {
+            'orgCode': 'org-code',
+            'providerCode': 'provider-code',
+            'courses': [{
+                'contentId': 'content-id',
+            }],
+        }
+        with pytest.raises(ClientError):
+            degreed_api_client = DegreedAPIClient(self.enterprise_config)
+            degreed_api_client.create_content_metadata(payload)
+
+    @responses.activate
+    def test_degreed_api_application_error(self):
+        """
+        ``create_content_metadata`` should raise ClientError when API request fails with an application error.
+        """
+        responses.add(
+            responses.POST,
+            self.oauth_url,
+            json=self.expected_token_response_body,
+            status=200
+        )
+        responses.add(
+            responses.POST,
+            self.course_url,
+            json={'message': 'error'},
+            status=400
+        )
+
+        payload = {
+            'orgCode': 'org-code',
+            'providerCode': 'provider-code',
+            'courses': [{
+                'contentId': 'content-id',
+            }],
+        }
+        with pytest.raises(ClientError):
+            degreed_api_client = DegreedAPIClient(self.enterprise_config)
+            degreed_api_client.create_content_metadata(payload)
 
     @responses.activate
     def test_expired_token(self):
@@ -236,9 +337,8 @@ class TestDegreedApiClient(unittest.TestCase):
             }],
         }
         degreed_api_client = DegreedAPIClient(self.enterprise_config)
-        output1 = degreed_api_client.delete_course_content(payload)
-        output2 = degreed_api_client.delete_course_content(payload)
-        assert output1 == output2 == (200, '"{}"')
+        degreed_api_client.delete_content_metadata(payload)
+        degreed_api_client.delete_content_metadata(payload)
         assert len(responses.calls) == 4
         assert responses.calls[0].request.url == self.oauth_url
         assert responses.calls[1].request.url == self.course_url
@@ -271,9 +371,8 @@ class TestDegreedApiClient(unittest.TestCase):
             }],
         }
         degreed_api_client = DegreedAPIClient(self.enterprise_config)
-        output1 = degreed_api_client.delete_course_content(payload)
-        output2 = degreed_api_client.delete_course_content(payload)
-        assert output1 == output2 == (200, '"{}"')
+        degreed_api_client.delete_content_metadata(payload)
+        degreed_api_client.delete_content_metadata(payload)
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == self.oauth_url
         assert responses.calls[1].request.url == self.course_url
@@ -298,5 +397,5 @@ class TestDegreedApiClient(unittest.TestCase):
         )
 
         degreed_api_client = DegreedAPIClient(self.enterprise_config)
-        with self.assertRaises(requests.RequestException):
-            degreed_api_client.delete_course_content({})
+        with pytest.raises(ClientError):
+            degreed_api_client.delete_content_metadata({})

@@ -10,11 +10,13 @@ import json
 import time
 import unittest
 
+import ddt
 import requests
 import responses
 from flaky import flaky
 from pytest import mark, raises
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
@@ -22,6 +24,7 @@ from integrated_channels.sap_success_factors.models import (
 )
 
 
+@ddt.ddt
 @mark.django_db
 class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
     """
@@ -41,6 +44,21 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         self.user_type = "user"
         self.expires_in = 1800
         self.access_token = "access_token"
+        self.content_payload = {
+            "ocnCourses": [
+                {
+                    "courseID": "TED1",
+                    "providerID": "TED",
+                    "status": "ACTIVE",
+                    "title": [
+                        {
+                            "locale": "English",
+                            "value": "Can a computer write poetry?"
+                        }
+                    ]
+                }
+            ]
+        }
 
         SAPSuccessFactorsGlobalConfiguration.objects.create(
             completion_status_api_path=self.completion_status_api_path,
@@ -145,7 +163,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         assert responses.calls[2].request.url == expected_url
 
     @responses.activate
-    def test_send_course_import(self):
+    @ddt.data('create_content_metadata', 'update_content_metadata', 'delete_content_metadata')
+    def test_content_import(self, client_method):
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -153,22 +172,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        payload = {
-            "ocnCourses": [
-                {
-                    "courseID": "TED1",
-                    "providerID": "TED",
-                    "status": "ACTIVE",
-                    "title": [
-                        {
-                            "locale": "English",
-                            "value": "Can a computer write poetry?"
-                        }
-                    ]
-                }
-            ]
-        }
-        expected_course_response_body = payload
+        expected_course_response_body = self.content_payload
         expected_course_response_body["@odata.context"] = "$metadata#OcnCourses/$entity"
 
         responses.add(
@@ -178,14 +182,62 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        expected_response = 200, json.dumps(expected_course_response_body)
-
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-        actual_response = sap_client.create_course_content(payload)
-        assert actual_response == expected_response
+        getattr(sap_client, client_method)(self.content_payload)
         assert len(responses.calls) == 2
         assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
         assert responses.calls[1].request.url == self.url_base + self.course_api_path
+
+    @responses.activate
+    def test_sap_api_connection_error(self):
+        """
+        ``create_content_metadata`` should raise ClientError when API request fails with a connection error.
+        """
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        expected_course_response_body = self.content_payload
+        expected_course_response_body["@odata.context"] = "$metadata#OcnCourses/$entity"
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            body=requests.exceptions.RequestException()
+        )
+
+        with raises(ClientError):
+            sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+            sap_client.create_content_metadata(self.content_payload)
+
+    @responses.activate
+    def test_sap_api_application_error(self):
+        """
+        ``create_content_metadata`` should raise ClientError when API request fails with an application error.
+        """
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        expected_course_response_body = self.content_payload
+        expected_course_response_body["@odata.context"] = "$metadata#OcnCourses/$entity"
+
+        responses.add(
+            responses.POST,
+            self.url_base + self.course_api_path,
+            json={'message': 'error'},
+            status=400
+        )
+
+        with raises(ClientError):
+            sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+            sap_client.create_content_metadata(self.content_payload)
 
     @responses.activate
     def test_expired_access_token(self):
@@ -204,22 +256,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        payload = {
-            "ocnCourses": [
-                {
-                    "courseID": "TED1",
-                    "providerID": "TED",
-                    "status": "ACTIVE",
-                    "title": [
-                        {
-                            "locale": "English",
-                            "value": "Can a computer write poetry?"
-                        }
-                    ]
-                }
-            ]
-        }
-        expected_course_response_body = payload
+        expected_course_response_body = self.content_payload
         expected_course_response_body["@odata.context"] = "$metadata#OcnCourses/$entity"
 
         responses.add(
@@ -229,11 +266,8 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        expected_response = 200, json.dumps(expected_course_response_body)
-
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-        actual_response = sap_client.create_course_content(payload)
-        assert actual_response == expected_response
+        sap_client.create_content_metadata(self.content_payload)
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
         assert responses.calls[1].request.url == self.url_base + self.oauth_api_path

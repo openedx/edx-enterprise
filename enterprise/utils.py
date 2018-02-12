@@ -757,3 +757,12 @@ def parse_course_key(course_identifier):
         return course_identifier
 
     return quote_plus(' '.join([course_run_key.org, course_run_key.course]))
+
+
+def get_content_metadata_item_id(content_metadata_item):
+    """
+    Return the unique identifier given a content metadata item dictionary.
+    """
+    if content_metadata_item['content_type'] == 'program':
+        return content_metadata_item['uuid']
+    return content_metadata_item['key']
