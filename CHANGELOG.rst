@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.0] - 2018-03-26
+---------------------
+
+* Refactored integrated channel code to allow for greater flexibility when transmitting content metadata.
+
 [0.66.2] - 2018-03-26
 ---------------------
 

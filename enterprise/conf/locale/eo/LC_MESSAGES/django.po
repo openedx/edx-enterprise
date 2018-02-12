@@ -1494,11 +1494,6 @@ msgid "Confirm your course"
 msgstr "Çönfïrm ýöür çöürsé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт,#"
 
 #: enterprise/views.py
-#: integrated_channels/integrated_channel/exporters/course_metadata.py
-msgid "Starts"
-msgstr "Stärts Ⱡ'σяєм ιρѕυ#"
-
-#: enterprise/views.py
 msgid "View Course Details"
 msgstr "Vïéw Çöürsé Détäïls Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт,#"
 
@@ -1668,10 +1663,6 @@ msgid "{count} Course"
 msgid_plural "{count} Courses"
 msgstr[0] "{count} Çöürsé Ⱡ'σяєм ιρѕυм ∂σłσ#"
 msgstr[1] "{count} Çöürsés Ⱡ'σяєм ιρѕυм ∂σłσя #"
-
-#: integrated_channels/integrated_channel/exporters/course_metadata.py
-msgid "Enrollment Closed"
-msgstr "Énröllmént Çlöséd Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмє#"
 
 #: integrated_channels/integrated_channel/management/commands/__init__.py
 msgid ""

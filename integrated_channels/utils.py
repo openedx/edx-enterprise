@@ -6,6 +6,9 @@ Utilities common to different integrated channels.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
+from itertools import islice
+
+from six.moves import range
 
 from django.utils import timezone
 
@@ -41,3 +44,12 @@ def current_time_is_in_interval(start, end):
     interval_start = parse_lms_api_datetime(start or UNIX_MIN_DATE_STRING)
     interval_end = parse_lms_api_datetime(end or UNIX_MAX_DATE_STRING)
     return interval_start <= timezone.now() <= interval_end
+
+
+def chunks(dictionary, chunk_size):
+    """
+    Yield successive n-sized chunks from dictionary.
+    """
+    iterable = iter(dictionary)
+    for __ in range(0, len(dictionary), chunk_size):
+        yield {key: dictionary[key] for key in islice(iterable, chunk_size)}

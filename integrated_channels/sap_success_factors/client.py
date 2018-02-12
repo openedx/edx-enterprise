@@ -11,6 +11,7 @@ import requests
 
 from django.apps import apps
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 
@@ -121,20 +122,70 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.completion_status_api_path
         return self._call_post_with_user_override(user_id, url, payload)
 
-    def create_course_content(self, payload):
+    def create_content_metadata(self, serialized_data):
         """
-        Send courses payload to the SuccessFactors OCN Course Import endpoint
+        Create content metadata records using the SuccessFactors OCN Course Import API endpoint.
 
-        Args:
-            payload: JSON encoded object containing course import data per SuccessFactors documentation.
+        Arguments:
+            serialized_data: Serialized JSON string representing a list of content metadata items.
 
-        Returns:
-            The body of the response from SAP SuccessFactors, if successful
         Raises:
-            HTTPError: if we received a failure response code from SAP SuccessFactors
+            ClientError: If SuccessFactors API call fails.
+        """
+        self._sync_content_metadata(serialized_data)
+
+    def update_content_metadata(self, serialized_data):
+        """
+        Update content metadata records using the SuccessFactors OCN Course Import API endpoint.
+
+        Arguments:
+            serialized_data: Serialized JSON string representing a list of content metadata items.
+
+        Raises:
+            ClientError: If SuccessFactors API call fails.
+        """
+        self._sync_content_metadata(serialized_data)
+
+    def delete_content_metadata(self, serialized_data):
+        """
+        Delete content metadata records using the SuccessFactors OCN Course Import API endpoint.
+
+        Arguments:
+            serialized_data: Serialized JSON string representing a list of content metadata items.
+
+        Raises:
+            ClientError: If SuccessFactors API call fails.
+        """
+        self._sync_content_metadata(serialized_data)
+
+    def _sync_content_metadata(self, serialized_data):
+        """
+        Create/update/delete content metadata records using the SuccessFactors OCN Course Import API endpoint.
+
+        Arguments:
+            serialized_data: Serialized JSON string representing a list of content metadata items.
+
+        Raises:
+            ClientError: If SuccessFactors API call fails.
         """
         url = self.enterprise_configuration.sapsf_base_url + self.global_sap_config.course_api_path
-        return self._call_post_with_session(url, payload)
+        try:
+            status_code, response_body = self._call_post_with_session(url, serialized_data)
+        except requests.exceptions.RequestException as exc:
+            raise ClientError(
+                'SAPSuccessFactorsAPIClient request failed: {error} {message}'.format(
+                    error=exc.__class__.__name__,
+                    message=str(exc)
+                )
+            )
+
+        if status_code >= 400:
+            raise ClientError(
+                'SAPSuccessFactorsAPIClient request failed with status {status_code}: {message}'.format(
+                    status_code=status_code,
+                    message=response_body
+                )
+            )
 
     def _call_post_with_user_override(self, sap_user_id, url, payload):
         """

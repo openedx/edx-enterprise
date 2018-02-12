@@ -9,16 +9,6 @@ from __future__ import absolute_import, unicode_literals
 class IntegratedChannelApiClient(object):
     """
     This is the interface to be implemented by API clients for integrated channels.
-
-    The interface contains the following method(s):
-
-    create_course_completion(user_id, payload)
-        Makes a POST request to the integrated channel's completion API for the given user with information
-        available in the payload.
-
-    create_course_content(payload):
-        Make a POST request to the integrated channel's course content API with course metadata available
-        in the payload.
     """
 
     def __init__(self, enterprise_configuration):
@@ -55,18 +45,20 @@ class IntegratedChannelApiClient(object):
         """
         raise NotImplementedError('Implement in concrete subclass.')
 
-    def create_course_content(self, payload):
+    def create_content_metadata(self, serialized_data):
         """
-        Make a POST request to the integrated channel's course content API to update course metadata.
+        Create content metadata using the integrated channel's API.
+        """
+        raise NotImplementedError()
 
-        :param payload: The JSON encoded payload containing the course metadata.
+    def update_content_metadata(self, serialized_data):
         """
-        raise NotImplementedError('Implement in concrete subclass.')
+        Update content metadata using the integrated channel's API.
+        """
+        raise NotImplementedError()
 
-    def delete_course_content(self, payload):
+    def delete_content_metadata(self, serialized_data):
         """
-        Make a DELETE request to the integrated channel's course content API to update course metadata.
-
-        :param payload: The JSON encoded payload containing the course metadata.
+        Delete content metadata using the integrated channel's API.
         """
-        raise NotImplementedError('Implement in concrete subclass.')
+        raise NotImplementedError()
