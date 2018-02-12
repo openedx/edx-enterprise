@@ -8,9 +8,11 @@ from __future__ import absolute_import, unicode_literals
 import json
 import logging
 
-from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
+from jsonfield.fields import JSONField
+
+from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.integrated_channel.transmitters.course_metadata import CourseTransmitter
+from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 
 from django.db import models
@@ -48,6 +50,11 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         help_text=_("Is this configuration active?"),
     )
 
+    transmission_chunk_size = models.IntegerField(
+        default=500,
+        help_text=_("The maximum number of data items to transmit to the integrated channel with each request.")
+    )
+
     class Meta:
         abstract = True
 
@@ -70,17 +77,18 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         return LearnerTransmitter(self)
 
-    def get_course_data_exporter(self, user):
+    def get_content_metadata_exporter(self, user):
         """
-        Returns a class that can retrieve, transform, and serialize the courseware data to the integrated channel.
+        Returns a class that can retrieve and transform content metadata to the schema
+        expected by the integrated channel.
         """
-        return CourseExporter(user, self)
+        return ContentMetadataExporter(user, self)
 
-    def get_course_data_transmitter(self):
+    def get_content_metadata_transmitter(self):
         """
-        Returns a class that can transmit the courseware data to the integrated channel.
+        Returns a class that can transmit the content metadata to the integrated channel.
         """
-        return CourseTransmitter(self)
+        return ContentMetadataTransmitter(self)
 
     def transmit_learner_data(self, user):
         """
@@ -90,13 +98,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter = self.get_learner_data_transmitter()
         transmitter.transmit(exporter)
 
-    def transmit_course_data(self, user):
+    def transmit_content_metadata(self, user):
         """
-        Compose the details from the concrete subclass to transmit the relevant data.
+        Transmit content metadata to integrated channel.
         """
-        exporter = self.get_course_data_exporter(user)
-        transmitter = self.get_course_data_transmitter()
-        transmitter.transmit(exporter)
+        exporter = self.get_content_metadata_exporter(user)
+        transmitter = self.get_content_metadata_transmitter()
+        transmitter.transmit(exporter.export())
 
 
 @python_2_unicode_compatible
@@ -167,35 +175,19 @@ class LearnerDataTransmissionAudit(models.Model):
         )
 
 
-@python_2_unicode_compatible
-class CatalogTransmissionAudit(TimeStampedModel):
+class ContentMetadataItemTransmission(TimeStampedModel):
     """
-    The summary of instances when the course catalog was sent to the integrated channel for an enterprise.
+    A content metadata item that has been transmitted to an integrated channel.
+
+    This model can be queried to find the content metadata items that have been
+    transmitted to an integrated channel. It is used to synchronize the content
+    metadata items available in an enterprise's catalog with the integrated channel.
     """
 
-    enterprise_customer_uuid = models.UUIDField(blank=False, null=False)
-    total_courses = models.PositiveIntegerField(blank=False, null=False)
-    status = models.CharField(max_length=100, blank=False, null=False)
-    error_message = models.TextField(blank=True)
-    audit_summary = models.TextField(default='{}')
-    channel = models.CharField(max_length=30, blank=False, null=False)
+    enterprise_customer = models.ForeignKey(EnterpriseCustomer)
+    integrated_channel_code = models.CharField(max_length=30)
+    aggregation_key = models.CharField(max_length=255)
+    channel_metadata = JSONField()
 
     class Meta:
-        app_label = 'integrated_channel'
-
-    def __str__(self):
-        """
-        Return human-readable string representation.
-        """
-        return "<CatalogTransmissionAudit {} for Enterprise {} and channel {}> for {} courses>".format(
-            self.id,
-            self.enterprise_customer_uuid,
-            self.channel,
-            self.total_courses
-        )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
+        unique_together = ('enterprise_customer', 'integrated_channel_code', 'aggregation_key')

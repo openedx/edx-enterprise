@@ -30,18 +30,19 @@ class EnterpriseApiClient(JwtLmsApiClient):
 
     DEFAULT_VALUE_SAFEGUARD = object()
 
-    def get_enterprise_course_runs(self, enterprise_customer):
+    def get_content_metadata(self, enterprise_customer):
         """
-        Return all course runs in the given EnterpriseCustomer's catalogs.
+        Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
 
         Arguments:
-            enterprise_customer (Enterprise Customer): Enterprise customer for fetching courses.
+            enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer to return content metadata for.
 
         Returns:
-            dict: A dictionary containing "course run key", "course run" key value pairs.
+            list: List of dicts containing content metadata.
         """
-        course_runs = OrderedDict()
+        content_metadata = OrderedDict()
 
+        # TODO: This if block can be removed when we get rid of discovery service-based catalogs.
         if enterprise_customer.catalog:
             response = self._load_data(
                 self.ENTERPRISE_CUSTOMER_ENDPOINT,
@@ -49,44 +50,26 @@ class EnterpriseApiClient(JwtLmsApiClient):
                 resource_id=str(enterprise_customer.uuid),
                 traverse_pagination=True,
             )
-            course_runs.update(self.get_course_runs_from_courses(response['results']))
+            for course in response['results']:
+                for course_run in course['course_runs']:
+                    aggregation_key = 'courserun:{}'.format(course_run['key'])
+                    # Make this look like a search endpoint result.
+                    course_run['aggregation_key'] = aggregation_key
+                    course_run['content_type'] = 'courserun'
+                    content_metadata[aggregation_key] = course_run
 
         for enterprise_customer_catalog in enterprise_customer.enterprise_customer_catalogs.all():
             response = self._load_data(
                 self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
                 resource_id=str(enterprise_customer_catalog.uuid),
                 traverse_pagination=True,
-                # we need to fetch data in large chunks so that we do not hit api limit.
                 querystring={'page_size': 1000},
             )
 
-            course_runs.update(self.get_course_runs_from_search_results(response['results']))
+            for item in response['results']:
+                content_metadata[item['aggregation_key']] = item
 
-        return course_runs
-
-    @staticmethod
-    def get_course_runs_from_courses(courses):
-        """
-        Create and return a dict with "course run key", "course run" key value pairs.
-        """
-        course_runs = []
-
-        # Extract course runs from the courses.
-        for course in courses:
-            course_runs.extend(course['course_runs'])
-
-        return {course_run['key']: course_run for course_run in course_runs}
-
-    @staticmethod
-    def get_course_runs_from_search_results(search_results):
-        """
-        Create and return a dict with "course run key", "course run" key value pairs.
-        """
-        course_runs = [
-            course_run for course_run in search_results if course_run.get('content_type', '') == 'courserun'
-        ]
-
-        return {course_run['key']: course_run for course_run in course_runs}
+        return content_metadata.values()
 
     @JwtLmsApiClient.refresh_token
     def _load_data(

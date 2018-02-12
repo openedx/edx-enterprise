@@ -15,7 +15,7 @@ from integrated_channels.degreed.models import (
     DegreedGlobalConfiguration,
     DegreedLearnerDataTransmissionAudit,
 )
-from integrated_channels.integrated_channel.models import CatalogTransmissionAudit, LearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
@@ -305,26 +305,6 @@ class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
     instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
     grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
     status = factory.LazyAttribute(lambda x: FAKER.word())
-
-
-class CatalogTransmissionAuditFactory(factory.django.DjangoModelFactory):
-    """
-    ``CatalogTransmissionAudit`` factory.
-
-    Creates an instance of ``CatalogTransmissionAudit`` with minimal boilerplate.
-    """
-
-    class Meta(object):
-        """
-        Meta for ``CatalogTransmissionAuditFactory``.
-        """
-
-        model = CatalogTransmissionAudit
-
-    enterprise_customer_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
-    total_courses = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    status = factory.LazyAttribute(lambda x: FAKER.word())
-    channel = 'SAP'
 
 
 class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):

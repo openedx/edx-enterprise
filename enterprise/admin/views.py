@@ -163,10 +163,10 @@ class EnterpriseCustomerTransmitCoursesView(View):
         if transmit_courses_metadata_form.is_valid():
             channel_worker_username = transmit_courses_metadata_form.cleaned_data['channel_worker_username']
 
-            # call `transmit_course_metadata` management command to trigger
+            # call `transmit_content_metadata` management command to trigger
             # transmission of enterprise courses metadata
             call_command(
-                'transmit_course_metadata',
+                'transmit_content_metadata',
                 '--catalog_user', channel_worker_username,
                 enterprise_customer=enterprise_customer_uuid
             )

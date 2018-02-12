@@ -1419,7 +1419,7 @@ class TestEnterpriseCustomerTransmitCoursesViewPost(BaseTestEnterpriseCustomerTr
             data={'channel_worker_username': self.enterprise_channel_worker.username}
         )
         mock_call_command.assert_called_once_with(
-            'transmit_course_metadata',
+            'transmit_content_metadata',
             '--catalog_user',
             self.enterprise_channel_worker.username,
             enterprise_customer=str(self.enterprise_customer.uuid),

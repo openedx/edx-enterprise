@@ -8,7 +8,7 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.integrated_channel.tasks import transmit_course_metadata
+from integrated_channels.integrated_channel.tasks import transmit_content_metadata
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
@@ -51,4 +51,4 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         for channel in channels:
             channel_code = channel.channel_code()
             channel_pk = channel.pk
-            transmit_course_metadata.delay(username, channel_code, channel_pk)
+            transmit_content_metadata.delay(username, channel_code, channel_pk)

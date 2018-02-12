@@ -9,9 +9,9 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
-from integrated_channels.degreed.exporters.course_metadata import DegreedCourseExporter
+from integrated_channels.degreed.exporters.content_metadata import DegreedContentMetadataExporter
 from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
-from integrated_channels.degreed.transmitters.course_metadata import DegreedCourseTransmitter
+from integrated_channels.degreed.transmitters.content_metadata import DegreedContentMetadataTransmitter
 from integrated_channels.degreed.transmitters.learner_data import DegreedLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from simple_history.models import HistoricalRecords
@@ -176,17 +176,17 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         """
         return DegreedLearnerExporter(user, self)
 
-    def get_course_data_transmitter(self):
+    def get_content_metadata_transmitter(self):
         """
-        Return a ``DegreedCourseTransmitter`` instance.
+        Return a ``DegreedContentMetadataTransmitter`` instance.
         """
-        return DegreedCourseTransmitter(self)
+        return DegreedContentMetadataTransmitter(self)
 
-    def get_course_data_exporter(self, user):
+    def get_content_metadata_exporter(self, user):
         """
-        Return a ``DegreedCourseExporter`` instance.
+        Return a ``DegreedContentMetadataExporter`` instance.
         """
-        return DegreedCourseExporter(user, self)
+        return DegreedContentMetadataExporter(user, self)
 
 
 @python_2_unicode_compatible

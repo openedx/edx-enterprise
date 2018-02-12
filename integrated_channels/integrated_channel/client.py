@@ -70,3 +70,21 @@ class IntegratedChannelApiClient(object):
         :param payload: The JSON encoded payload containing the course metadata.
         """
         raise NotImplementedError('Implement in concrete subclass.')
+
+    def create_content_metadata(self, serialized_data):
+        """
+        Create content metadata using the integrated channel's API.
+        """
+        raise NotImplementedError()
+
+    def update_content_metadata(self, serialized_data):
+        """
+        Update content metadata using the integrated channel's API.
+        """
+        raise NotImplementedError()
+
+    def delete_content_metadata(self, serialized_data):
+        """
+        Delete content metadata using the integrated channel's API.
+        """
+        raise NotImplementedError()

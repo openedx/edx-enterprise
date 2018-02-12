@@ -9,6 +9,7 @@ import datetime
 import time
 
 import requests
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 from django.apps import apps
@@ -116,6 +117,75 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             payload,
             self.CONTENT_PROVIDER_SCOPE
         )
+
+    def create_content_metadata(self, serialized_data):
+        """
+        Create content metadata using the Degreed course content API.
+
+        Args:
+            serialized_data: JSON-encoded object containing content metadata.
+
+        Raises:
+            ClientError: If Degreed API request fails.
+        """
+        self._sync_content_metadata(serialized_data, 'post')
+
+    def update_content_metadata(self, serialized_data):
+        """
+        Update content metadata using the Degreed course content API.
+
+        Args:
+            serialized_data: JSON-encoded object containing content metadata.
+
+        Raises:
+            ClientError: If Degreed API request fails.
+        """
+        self._sync_content_metadata(serialized_data, 'post')
+
+    def delete_content_metadata(self, serialized_data):
+        """
+        Delete content metadata using the Degreed course content API.
+
+        Args:
+            serialized_data: JSON-encoded object containing content metadata.
+
+        Raises:
+            ClientError: If Degreed API request fails.
+        """
+        self._sync_content_metadata(serialized_data, 'delete')
+
+    def _sync_content_metadata(self, serialized_data, method):
+        """
+        Synchronize content metadata using the Degreed course content API.
+
+        Args:
+            serialized_data: JSON-encoded object containing content metadata.
+            http_method: The HTTP method to use for the API request. 
+
+        Raises:
+            ClientError: If Degreed API request fails.
+        """
+        try:
+            status_code, response_body = self._post(
+                urljoin(self.global_degreed_config.degreed_base_url, self.global_degreed_config.course_api_path),
+                serialized_data,
+                self.CONTENT_PROVIDER_SCOPE
+            )
+        except requests.exceptions.RequestException as e:
+            raise ClientError(
+                'DegreedAPIClient request failed: {error} {message}'.format(
+                    error=e.__class__.__name__,
+                    message=str(e)
+                )
+            )
+
+        if status_code >= 400:
+            raise ClientError(
+                'DegreedAPIClient request failed with status {status_code}: {message}'.format(
+                    status_code=status_code,
+                    message=response_body
+                )
+            )
 
     def _post(self, url, data, scope):
         """

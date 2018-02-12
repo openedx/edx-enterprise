@@ -1370,25 +1370,6 @@ class TestLearnerDataTransmissionAudit(unittest.TestCase):
 
 @mark.django_db
 @ddt.ddt
-class TestCatalogTransmissionAudit(unittest.TestCase):
-    """
-    Tests of the CatalogTransmissionAudit model.
-    """
-
-    @ddt.data(str, repr)
-    def test_string_conversion(self, method):
-        """
-        Test ``CatalogTransmissionAudit`` conversion to string
-        """
-        course_audit = factories.CatalogTransmissionAuditFactory(id=1, total_courses=50)
-        expected_to_str = "<CatalogTransmissionAudit 1 for Enterprise {} and channel SAP> for 50 courses>".format(
-            course_audit.enterprise_customer_uuid
-        )
-        assert expected_to_str == method(course_audit)
-
-
-@mark.django_db
-@ddt.ddt
 class TestSapSuccessFactorsLearnerDataTransmissionAudit(unittest.TestCase):
     """
     Tests of the ``SapSuccessFactorsLearnerDataTransmissionAudit`` model.

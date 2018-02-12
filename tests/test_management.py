@@ -52,7 +52,7 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
     """
 
     @ddt.data('SAP', 'DEGREED')
-    def test_transmit_course_metadata_specific_channel(self, channel_code):
+    def test_transmit_content_metadata_specific_channel(self, channel_code):
         """
         Only the channel we input is what we get out.
         """
@@ -64,7 +64,7 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
 @ddt.ddt
 class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseMockMixin, CourseDiscoveryApiTestMixin):
     """
-    Test the ``transmit_course_metadata`` management command.
+    Test the ``transmit_content_metadata`` management command.
     """
 
     def setUp(self):
@@ -98,7 +98,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         invalid_customer_id = faker.uuid4()  # pylint: disable=no-member
         error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
         with raises(CommandError) as excinfo:
-            call_command('transmit_course_metadata', '--catalog_user', 'C-3PO', enterprise_customer=invalid_customer_id)
+            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO', enterprise_customer=invalid_customer_id)
         assert str(excinfo.value) == error
 
     def test_user_not_set(self):
@@ -106,13 +106,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         py2error = 'Error: argument --catalog_user is required'
         py3error = 'Error: the following arguments are required: --catalog_user'
         with raises(CommandError) as excinfo:
-            call_command('transmit_course_metadata', enterprise_customer=self.enterprise_customer.uuid)
+            call_command('transmit_content_metadata', enterprise_customer=self.enterprise_customer.uuid)
         assert str(excinfo.value) in (py2error, py3error)
 
     def test_override_user(self):
         error = 'A user with the username bob was not found.'
         with raises(CommandError) as excinfo:
-            call_command('transmit_course_metadata', '--catalog_user', 'bob')
+            call_command('transmit_content_metadata', '--catalog_user', 'bob')
         assert str(excinfo.value) == error
 
     @responses.activate
@@ -121,7 +121,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_course_content')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_course_content')
-    def test_transmit_course_metadata_task_with_error(
+    def test_transmit_content_metadata_task_with_error(
             self,
             sapsf_create_course_content_mock,
             sapsf_get_oauth_access_token_mock,
@@ -130,7 +130,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         """
         Verify the data transmission task for integrated channels with error.
 
-        Test that the management command `transmit_course_metadata` transmits
+        Test that the management command `transmit_content_metadata` transmits
         courses metadata related to other integrated channels even if an
         integrated channel fails to transmit due to some error.
         """
@@ -234,7 +234,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', 'C-3PO')
+            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
@@ -244,7 +244,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_course_content')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_course_content')
-    def test_transmit_course_metadata_task_success(
+    def test_transmit_content_metadata_task_success(
             self,
             sapsf_create_course_content_mock,
             sapsf_get_oauth_access_token_mock,
@@ -335,12 +335,12 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', 'C-3PO')
+            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
     @responses.activate
-    def test_transmit_course_metadata_task_no_channel(self):
+    def test_transmit_content_metadata_task_no_channel(self):
         """
         Test the data transmission task without any integrated channel.
         """
@@ -355,13 +355,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         DegreedEnterpriseCustomerConfiguration.objects.all().delete()
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', user.username)
+            call_command('transmit_content_metadata', '--catalog_user', user.username)
 
             # Because there are no IntegratedChannels, the process will end early.
             assert not log_capture.records
 
     @responses.activate
-    def test_transmit_course_metadata_task_no_catalog(self):
+    def test_transmit_content_metadata_task_no_catalog(self):
         """
         Test the data transmission task with enterprise customer that has no course catalog.
         """
@@ -376,13 +376,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         integrated_channel_enterprise.save()
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', self.user.username)
+            call_command('transmit_content_metadata', '--catalog_user', self.user.username)
 
             # Because there are no EnterpriseCustomers with a catalog, the process will end early.
             assert not log_capture.records
 
     @responses.activate
-    def test_transmit_course_metadata_task_inactive_customer(self):
+    def test_transmit_content_metadata_task_inactive_customer(self):
         """
         Test the data transmission task with a channel for an inactive customer
         """
@@ -398,7 +398,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', self.user.username)
+            call_command('transmit_content_metadata', '--catalog_user', self.user.username)
 
             # Because there are no active customers, the process will end early.
             assert not log_capture.records
