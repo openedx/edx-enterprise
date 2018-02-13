@@ -31,6 +31,7 @@ class UrlNames(object):
     """
     URL_PREFIX = "enterprise_"
     MANAGE_LEARNERS = URL_PREFIX + "manage_learners"
+    TRANSMIT_COURSES_METADATA = URL_PREFIX + "transmit_courses_metadata"
     PREVIEW_EMAIL_TEMPLATE = URL_PREFIX + "preview_email_template"
 
 
@@ -86,6 +87,9 @@ class ValidationMessages(object):
     USER_ALREADY_REGISTERED = _(
         "User with email address {email} is already registered with Enterprise "
         "Customer {ec_name}")
+    INVALID_CHANNEL_WORKER = _(
+        'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
+    )
 
 
 def parse_csv(file_stream, expected_columns=None):

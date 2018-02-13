@@ -10,6 +10,7 @@ from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.fields import BLANK_CHOICE_DASH
@@ -501,3 +502,33 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             'decrypted_password': forms.widgets.PasswordInput(),
             'decrypted_sftp_password': forms.widgets.PasswordInput(),
         }
+
+
+class TransmitEnterpriseCoursesForm(forms.Form):
+    """
+    Form to transmit courses metadata for enterprise customers.
+    """
+    channel_worker_username = forms.CharField(
+        label=_('Enter enterprise channel worker username.'),
+        required=True
+    )
+
+    def clean_channel_worker_username(self):
+        """
+        Clean enterprise channel worker user form field
+
+        Returns:
+            str: the cleaned value of channel user username for transmitting courses metadata.
+        """
+        channel_worker_username = self.cleaned_data['channel_worker_username'].strip()
+
+        try:
+            User.objects.get(username=channel_worker_username)
+        except User.DoesNotExist:
+            raise ValidationError(
+                ValidationMessages.INVALID_CHANNEL_WORKER.format(
+                    channel_worker_username=channel_worker_username
+                )
+            )
+
+        return channel_worker_username

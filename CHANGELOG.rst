@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.5] - 2018-02-13
+---------------------
+
+* Add functionality in enterprise django admin for transmitting courses metadata related to a specific enterprise.
+
 [0.65.4] - 2018-02-09
 ---------------------
 

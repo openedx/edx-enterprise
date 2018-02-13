@@ -19,8 +19,12 @@ from django.core import mail
 from django.test import Client, TestCase, override_settings
 
 from enterprise import admin as enterprise_admin
-from enterprise.admin import EnterpriseCustomerManageLearnersView, TemplatePreviewView
-from enterprise.admin.forms import ManageLearnersForm
+from enterprise.admin import (
+    EnterpriseCustomerManageLearnersView,
+    EnterpriseCustomerTransmitCoursesView,
+    TemplatePreviewView,
+)
+from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
 from enterprise.django_compatibility import reverse
 from enterprise.models import (
@@ -1319,3 +1323,124 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         assert response.status_code == 200
         assert json.loads(response.content.decode("utf-8")) == {}
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 0
+
+
+class BaseTestEnterpriseCustomerTransmitCoursesView(TestCase):
+    """
+    Common functionality for EnterpriseCustomerTransmitCoursesView tests.
+    """
+
+    def setUp(self):
+        """
+        Test set up
+        """
+        super(BaseTestEnterpriseCustomerTransmitCoursesView, self).setUp()
+        self.user = UserFactory.create(is_staff=True, is_active=True, id=1)
+        self.user.set_password('QWERTY')
+        self.user.save()
+        self.enterprise_channel_worker = UserFactory.create(is_staff=True, is_active=True)
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.default_context = {
+            'has_permission': True,
+            'opts': self.enterprise_customer._meta,
+            'user': self.user
+        }
+        self.transmit_courses_metadata_form = TransmitEnterpriseCoursesForm()
+        self.view_url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.TRANSMIT_COURSES_METADATA,
+            args=(self.enterprise_customer.uuid,)
+        )
+        self.client = Client()
+        self.context_parameters = EnterpriseCustomerTransmitCoursesView.ContextParameters
+
+    def _test_common_context(self, actual_context, context_overrides=None):
+        """
+        Test common context parts.
+        """
+        expected_context = {}
+        expected_context.update(self.default_context)
+        expected_context.update(context_overrides or {})
+
+        for context_key, expected_value in six.iteritems(expected_context):
+            assert actual_context[context_key] == expected_value
+
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password='QWERTY')
+
+
+@ddt.ddt
+@mark.django_db
+@override_settings(ROOT_URLCONF='test_utils.admin_urls')
+class TestEnterpriseCustomerTransmitCoursesViewGet(BaseTestEnterpriseCustomerTransmitCoursesView):
+    """
+    Tests for EnterpriseCustomerTransmitCoursesView GET endpoint.
+    """
+
+    def _test_get_response(self, response):
+        """
+        Test view GET response for common parts.
+        """
+        assert response.status_code == 200
+        self._test_common_context(response.context)
+        assert response.context[self.context_parameters.ENTERPRISE_CUSTOMER] == self.enterprise_customer
+        assert not response.context[self.context_parameters.TRANSMIT_COURSES_METADATA_FORM].is_bound
+
+    def test_get_not_logged_in(self):
+        response = self.client.get(self.view_url)
+        assert response.status_code == 302
+
+    def test_get_links(self):
+        self._login()
+
+        response = self.client.get(self.view_url)
+        self._test_get_response(response)
+
+
+@ddt.ddt
+@mark.django_db
+@override_settings(ROOT_URLCONF='test_utils.admin_urls')
+class TestEnterpriseCustomerTransmitCoursesViewPost(BaseTestEnterpriseCustomerTransmitCoursesView):
+    """
+    Tests for EnterpriseCustomerTransmitCoursesView POST endpoint.
+    """
+
+    def test_post_not_logged_in(self):
+        response = self.client.post(self.view_url, data={})
+        assert response.status_code == 302
+
+    @mock.patch('enterprise.admin.views.call_command')
+    def test_post_with_valid_enterprise_channel_worker(self, mock_call_command):
+        self._login()
+        response = self.client.post(
+            self.view_url,
+            data={'channel_worker_username': self.enterprise_channel_worker.username}
+        )
+        mock_call_command.assert_called_once_with(
+            'transmit_course_metadata',
+            '--catalog_user',
+            self.enterprise_channel_worker.username,
+            enterprise_customer=str(self.enterprise_customer.uuid),
+        )
+        self.assertRedirects(response, self.view_url)
+
+    def test_post_validation_errors(self):
+        self._login()
+        invalid_channel_worker = 'invalid_channel_worker'
+        response = self.client.post(
+            self.view_url,
+            data={'channel_worker_username': invalid_channel_worker}
+        )
+        assert response.status_code == 200
+        self._test_common_context(response.context)
+        transmit_courses_metadata_form = response.context[self.context_parameters.TRANSMIT_COURSES_METADATA_FORM]
+        assert transmit_courses_metadata_form.is_bound
+        assert transmit_courses_metadata_form.errors == {
+            'channel_worker_username': [
+                ValidationMessages.INVALID_CHANNEL_WORKER.format(
+                    channel_worker_username=invalid_channel_worker
+                )
+            ]
+        }

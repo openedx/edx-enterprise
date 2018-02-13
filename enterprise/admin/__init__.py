@@ -22,7 +22,11 @@ from enterprise.admin.forms import (
     EnterpriseCustomerReportingConfigAdminForm,
 )
 from enterprise.admin.utils import UrlNames
-from enterprise.admin.views import EnterpriseCustomerManageLearnersView, TemplatePreviewView
+from enterprise.admin.views import (
+    EnterpriseCustomerManageLearnersView,
+    EnterpriseCustomerTransmitCoursesView,
+    TemplatePreviewView,
+)
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -139,7 +143,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         get_clear_catalog_id_action()
     ]
 
-    change_actions = ('manage_learners',)
+    change_actions = ('manage_learners', 'transmit_courses_metadata')
 
     form = EnterpriseCustomerAdminForm
 
@@ -230,6 +234,17 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     manage_learners.label = "Manage Learners"
     manage_learners.short_description = "Allows managing learners for this Enterprise Customer"
 
+    def transmit_courses_metadata(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Object tool handler method - redirects to `Transmit Courses Metadata` view.
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        transmit_courses_metadata_url = reverse('admin:' + UrlNames.TRANSMIT_COURSES_METADATA, args=(obj.uuid,))
+        return HttpResponseRedirect(transmit_courses_metadata_url)
+
+    transmit_courses_metadata.label = 'Transmit Courses Metadata'
+    transmit_courses_metadata.short_description = 'Transmit courses metadata for this Enterprise Customer'
+
     def get_urls(self):
         """
         Returns the additional urls used by the custom object tools.
@@ -239,6 +254,11 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                 r"^([^/]+)/manage_learners$",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
                 name=UrlNames.MANAGE_LEARNERS
+            ),
+            url(
+                r"^([^/]+)/transmit_courses_metadata",
+                self.admin_site.admin_view(EnterpriseCustomerTransmitCoursesView.as_view()),
+                name=UrlNames.TRANSMIT_COURSES_METADATA
             )
         ]
         return customer_urls + super(EnterpriseCustomerAdmin, self).get_urls()

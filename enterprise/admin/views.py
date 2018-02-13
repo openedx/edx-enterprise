@@ -16,6 +16,7 @@ from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -24,7 +25,7 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
 
-from enterprise.admin.forms import ManageLearnersForm
+from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import (
     ValidationMessages,
     email_or_username__to__email,
@@ -88,6 +89,94 @@ class TemplatePreviewView(View):
         Get a human-readable name for the user.
         """
         return request.user.first_name or request.user.username
+
+
+class EnterpriseCustomerTransmitCoursesView(View):
+    """
+    Transmit courses view.
+
+    Allows transmitting of courses metadata for provided enterprise.
+    """
+    template = 'enterprise/admin/transmit_courses_metadata.html'
+
+    class ContextParameters(object):
+        """
+        Namespace-style class for custom context parameters.
+        """
+        ENTERPRISE_CUSTOMER = 'enterprise_customer'
+        TRANSMIT_COURSES_METADATA_FORM = 'transmit_courses_metadata_form'
+
+    @staticmethod
+    def _build_admin_context(request, customer):
+        """
+        Build common admin context.
+        """
+        opts = customer._meta
+        codename = get_permission_codename('change', opts)
+        has_change_permission = request.user.has_perm('%s.%s' % (opts.app_label, codename))
+        return {
+            'has_change_permission': has_change_permission,
+            'opts': opts
+        }
+
+    def _build_context(self, request, enterprise_customer_uuid):
+        """
+        Build common context parts used by different handlers in this view.
+        """
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)  # pylint: disable=no-member
+
+        context = {
+            self.ContextParameters.ENTERPRISE_CUSTOMER: enterprise_customer,
+        }
+        context.update(admin.site.each_context(request))
+        context.update(self._build_admin_context(request, enterprise_customer))
+        return context
+
+    def get(self, request, enterprise_customer_uuid):
+        """
+        Handle GET request - render "Transmit courses metadata" form.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            enterprise_customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        context = self._build_context(request, enterprise_customer_uuid)
+        transmit_courses_metadata_form = TransmitEnterpriseCoursesForm()
+        context.update({self.ContextParameters.TRANSMIT_COURSES_METADATA_FORM: transmit_courses_metadata_form})
+
+        return render(request, self.template, context)
+
+    def post(self, request, enterprise_customer_uuid):
+        """
+        Handle POST request - handle form submissions.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            enterprise_customer_uuid (str): Enterprise Customer UUID
+        """
+        transmit_courses_metadata_form = TransmitEnterpriseCoursesForm(request.POST)
+
+        # check that form data is well-formed
+        if transmit_courses_metadata_form.is_valid():
+            channel_worker_username = transmit_courses_metadata_form.cleaned_data['channel_worker_username']
+
+            # call `transmit_course_metadata` management command to trigger
+            # transmission of enterprise courses metadata
+            call_command(
+                'transmit_course_metadata',
+                '--catalog_user', channel_worker_username,
+                enterprise_customer=enterprise_customer_uuid
+            )
+
+            # Redirect to GET
+            return HttpResponseRedirect('')
+
+        context = self._build_context(request, enterprise_customer_uuid)
+        context.update({self.ContextParameters.TRANSMIT_COURSES_METADATA_FORM: transmit_courses_metadata_form})
+        return render(request, self.template, context)
 
 
 class EnterpriseCustomerManageLearnersView(View):
