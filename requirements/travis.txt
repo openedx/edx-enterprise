@@ -6,8 +6,8 @@
 #
 certifi==2018.1.18        # via requests
 chardet==3.0.4            # via requests
-codecov==2.0.14
-coverage==4.4.2           # via codecov
+codecov==2.0.15
+coverage==4.5.1           # via codecov
 idna==2.6                 # via requests
 pluggy==0.6.0             # via tox
 py==1.5.2                 # via tox

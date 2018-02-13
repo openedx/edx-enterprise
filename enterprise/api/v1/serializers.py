@@ -417,6 +417,9 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         )
 
     enterprise_customer = EnterpriseCustomerSerializer()
+    email = serializers.ListField(
+        child=serializers.EmailField()
+    )
 
 
 # pylint: disable=abstract-method
