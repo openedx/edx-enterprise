@@ -723,6 +723,17 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
             instance=enterprise_customer_identity_provider
         )
         assert 'Create a new identity provider' in form.fields['provider_id'].help_text
+        assert '/test_saml_app/test_saml_model/add/?source=1' in form.fields['provider_id'].help_text
+        assert form.fields['provider_id'].choices == list(self.idp_choices)
+
+        # Without provider id information.
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            {
+                'enterprise_customer': self.enterprise_customer
+            },
+            instance=None
+        )
+        assert '/test_saml_app/test_saml_model/add/?source=1' not in form.fields['provider_id'].help_text
         assert form.fields['provider_id'].choices == list(self.idp_choices)
 
     @mock.patch("enterprise.admin.forms.utils.get_identity_provider")

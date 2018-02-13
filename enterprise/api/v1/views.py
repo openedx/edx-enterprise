@@ -23,7 +23,6 @@ from django.utils.decorators import method_decorator
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.pagination import get_paginated_response
-from enterprise.api.renderers import IgnoreClientContentNegotiation
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
@@ -293,7 +292,6 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API Views for performing search through course discovery at the ``enterprise_catalogs`` API endpoint.
     """
-    content_negotiation_class = IgnoreClientContentNegotiation
     queryset = models.EnterpriseCustomerCatalog.objects.all()
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
