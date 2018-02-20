@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.65.8] - 2018-02-23
+---------------------
+
+* Add "Enrollment Closed" in course title if the course is no longer open for enrollment.
+
 [0.65.7] - 2018-02-14
 ---------------------
 

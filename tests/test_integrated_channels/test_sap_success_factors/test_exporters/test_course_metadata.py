@@ -104,16 +104,36 @@ class TestSapSuccessFactorsCourseExporter(unittest.TestCase, EnterpriseMockMixin
     @ddt.data(
         {
             'start': '2013-02-05T05:00:00Z',
+            'enrollment_start': None,
+            'enrollment_end': None,
             'pacing_type': 'instructor_paced',
             'availability': CourseExporter.AVAILABILITY_ARCHIVED,
             'title': 'edX Demonstration Course'
         },
         {
             'start': '2013-02-05T05:00:00Z',
+            'enrollment_start': None,
+            'enrollment_end': None,
             'availability': CourseExporter.AVAILABILITY_ARCHIVED,
             'pacing_type': 'self_paced',
             'title': 'edX Demonstration Course'
-        }
+        },
+        {
+            'start': '2013-02-05T05:00:00Z',
+            'enrollment_start': None,
+            'enrollment_end': '2012-02-05T05:00:00Z',
+            'pacing_type': 'instructor_paced',
+            'availability': CourseExporter.AVAILABILITY_CURRENT,
+            'title': 'edX Demonstration Course'
+        },
+        {
+            'start': '2013-02-05T05:00:00Z',
+            'enrollment_start': '2014-02-05T05:00:00Z',
+            'enrollment_end': '2015-02-05T05:00:00Z',
+            'pacing_type': 'instructor_paced',
+            'availability': CourseExporter.AVAILABILITY_UPCOMING,
+            'title': 'edX Demonstration Course'
+        },
     )
     @responses.activate
     def test_transform_title_includes_enrollment_closed(self, course_run):

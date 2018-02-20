@@ -18,6 +18,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.lms import parse_lms_api_datetime
+from enterprise.utils import is_course_run_enrollable
 
 LOGGER = getLogger(__name__)
 
@@ -135,6 +136,13 @@ class CourseExporter(Exporter):
         """
         Check if a course run is available for enrollment.
         """
-        return course_run['availability'] in [
+        is_course_archived = course_run['availability'] not in [
             self.AVAILABILITY_CURRENT, self.AVAILABILITY_STARTING_SOON, self.AVAILABILITY_UPCOMING
         ]
+        if is_course_archived:
+            # course is archived so not available for enrollment
+            return False
+
+        # now check if the course run is enrollable on the basis of enrollment
+        # start and end date
+        return is_course_run_enrollable(course_run)
