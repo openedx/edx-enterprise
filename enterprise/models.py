@@ -1041,7 +1041,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
         search_results = catalog_client.get_search_results(query, traverse_pagination=False)
         for content in search_results['results']:
-            if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
+            if content['content_type'] == 'courserun':
                 results.append(content)
             elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
                 results.append(content)
@@ -1078,7 +1078,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             results = CourseCatalogApiServiceClient().get_search_results(updated_content_filter)
             if results:
                 for content in results:
-                    if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
+                    if content['content_type'] == 'courserun':
                         content_ids_in_catalog.add(content[content_id_field_name])
                     elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
                         content_ids_in_catalog.add(content[content_id_field_name])
