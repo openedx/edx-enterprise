@@ -17,7 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise.models import EnterpriseCustomer
-from enterprise.utils import get_course_id_from_course_run_id
+from enterprise.utils import parse_course_key
 
 
 class DataSharingConsentQuerySet(models.query.QuerySet):
@@ -52,7 +52,7 @@ class DataSharingConsentQuerySet(models.query.QuerySet):
                 except DataSharingConsent.DoesNotExist:
                     # A record for the course run didn't exist, so modify the query
                     # parameters to look for just a course record on the second pass.
-                    kwargs['course_id'] = get_course_id_from_course_run_id(course_run_key)
+                    kwargs['course_id'] = parse_course_key(course_run_key)
 
         try:
             return self.get(*args, **kwargs)

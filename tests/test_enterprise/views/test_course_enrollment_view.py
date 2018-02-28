@@ -174,7 +174,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -292,7 +292,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
 
         course_enrollment_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
         querystring_dict = QueryDict('', mutable=True)
@@ -367,7 +367,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
 
         course_enrollment_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
         querystring_dict = QueryDict('', mutable=True)
@@ -460,7 +460,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
 
         course_enrollment_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
         querystring_dict = QueryDict('', mutable=True)
@@ -538,7 +538,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -617,7 +617,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -675,7 +675,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -717,7 +717,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -780,7 +780,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -841,7 +841,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -913,7 +913,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, course_id],
             )
         )
@@ -960,7 +960,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -1007,7 +1007,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -1054,7 +1054,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._login()
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -1087,7 +1087,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._setup_enrollment_client(enrollment_api_client_mock)
         self._login()
         course_enrollment_page_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=['some-fake-enterprise-customer-uuid', self.demo_course_id],
         )
         response = self.client.get(course_enrollment_page_url)
@@ -1115,7 +1115,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, course_id],
             )
         )
@@ -1178,7 +1178,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, course_id],
             )
         )
@@ -1239,7 +1239,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._login()
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, course_id],
             )
         )
@@ -1295,7 +1295,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._login()
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer_uuid, course_id],
             )
         )
@@ -1309,7 +1309,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
-                'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
             ),
             query_string=urlencode({FRESH_LOGIN_PARAMETER: 'yes'}),
         )
@@ -1382,7 +1382,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         course_enrollment_page_url = self._append_fresh_login_param(
             '{course_enrollment_url}?{query_string}'.format(
                 course_enrollment_url=reverse(
-                    'enterprise_course_enrollment_page', args=[enterprise_customer_uuid, course_id]
+                    'enterprise_course_run_enrollment_page', args=[enterprise_customer_uuid, course_id]
                 ),
                 query_string=urlencode({'catalog_uuid': enterprise_customer_catalog.uuid})
             )
@@ -1396,7 +1396,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
-                'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
             ),
             query_string=urlencode(OrderedDict([
                 ('catalog_uuid', enterprise_customer_catalog.uuid),
@@ -1445,7 +1445,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -1511,7 +1511,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._login()
         course_enrollment_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, course_id],
             )
         )
@@ -1563,7 +1563,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )
@@ -1632,7 +1632,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enforce_data_sharing_consent='at_enrollment',
         )
         enterprise_landing_page_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[enterprise_customer.uuid, self.demo_course_id],
         )
 
@@ -1678,7 +1678,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
         enterprise_landing_page_url = self._append_fresh_login_param(
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 args=[enterprise_customer.uuid, self.demo_course_id],
             )
         )

@@ -13,6 +13,7 @@ from uuid import UUID
 import analytics
 import pytz
 from eventtracking import tracker
+from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
 
@@ -30,7 +31,7 @@ from django.utils.translation import ungettext
 
 from enterprise.constants import PROGRAM_TYPE_DESCRIPTION
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
+from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlsplit, urlunsplit
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -430,7 +431,7 @@ def update_query_parameters(url, query_parameters):
     url_params.update(query_parameters)
 
     return urlunsplit(
-        (scheme, netloc, path, urlencode(url_params, doseq=True), fragment),
+        (scheme, netloc, path, urlencode(sorted(url_params.items()), doseq=True), fragment),
     )
 
 
@@ -467,20 +468,6 @@ def get_enterprise_customer_or_404(enterprise_uuid):
     except (ValueError, EnterpriseCustomer.DoesNotExist):
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
         raise Http404
-
-
-def get_course_id_from_course_run_id(course_run_id):
-    """
-    Given a course run id, return the corresponding course id.
-
-    Args:
-        course_run_id (str): The course run ID.
-
-    Returns:
-        (str): The course ID.
-    """
-    course_run_key = CourseKey.from_string(course_run_id)
-    return '{org}+{course}'.format(org=course_run_key.org, course=course_run_key.course)
 
 
 def clean_html_for_template_rendering(text):
@@ -693,7 +680,7 @@ def parse_datetime_handle_invalid(datetime_value):
 
 def is_course_run_enrollable(course_run):
     """
-    Return whether the course run is enrollable.
+    Return true if the course run is enrollable, false otherwise.
 
     We look for the following criteria:
     - end is greater than now OR null
@@ -707,3 +694,66 @@ def is_course_run_enrollable(course_run):
     return (not end or end > now) and \
            (not enrollment_start or enrollment_start < now) and \
            (not enrollment_end or enrollment_end > now)
+
+
+def is_course_run_upgradeable(course_run):
+    """
+    Return true if the course run has a verified seat with an unexpired upgrade deadline, false otherwise.
+    """
+    now = datetime.datetime.now(pytz.UTC)
+    for seat in course_run.get('seats', []):
+        if seat.get('type') == 'verified':
+            upgrade_deadline = parse_datetime_handle_invalid(seat.get('upgrade_deadline'))
+            return not upgrade_deadline or upgrade_deadline > now
+    return False
+
+
+def get_course_run_start(course_run, default=None):
+    """
+    Return the given course run's start date as a datetime.
+    """
+    return parse_datetime_handle_invalid(course_run.get('start')) or default
+
+
+def get_current_course_run(course):
+    """
+    Return the current course run.
+
+    Current is defined as the following:
+    - Course run is enrollable (see is_course_run_enrollable)
+    - Course run has a verified seat and the upgrade deadline has not expired.
+    - Course run start date is closer to now than any other enrollable/upgradeable course runs.
+    - If no enrollable/upgradeable course runs, return course run with most recent start date.
+    """
+    now = datetime.datetime.now(pytz.UTC)
+    never = now - datetime.timedelta(days=3650)
+    all_course_runs = course['course_runs']
+    filtered_course_runs = []
+
+    for course_run in all_course_runs:
+        if is_course_run_enrollable(course_run) and is_course_run_upgradeable(course_run):
+            filtered_course_runs.append(course_run)
+
+    if not filtered_course_runs:
+        # Consider all runs if there were not any enrollable/upgradeable ones.
+        filtered_course_runs = all_course_runs
+
+    if filtered_course_runs:
+        # Return course run with start date closest to now.
+        # Course runs with a null start date should be considered last.
+        return min(filtered_course_runs, key=lambda x: abs(get_course_run_start(x, never) - now))
+
+    return None
+
+
+def parse_course_key(course_identifier):
+    """
+    Return the serialized course key given either a course run ID or course key.
+    """
+    try:
+        course_run_key = CourseKey.from_string(course_identifier)
+    except InvalidKeyError:
+        # Assume we already have a course key.
+        return course_identifier
+
+    return quote_plus(' '.join([course_run_key.org, course_run_key.course]))
