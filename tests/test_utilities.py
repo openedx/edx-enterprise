@@ -24,7 +24,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
 )
-from test_utils import TEST_UUID, assert_url, create_items
+from test_utils import TEST_UUID, assert_url, create_items, fake_catalog_api
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -1144,6 +1144,123 @@ class TestEnterpriseUtils(unittest.TestCase):
         - True if none of the above plus, optionally, if any of the values are NULL.
         """
         assert utils.is_course_run_enrollable(course_run) == expected_enrollment_eligibility
+
+    @ddt.data(
+        ({"seats": [{"type": "verified", "upgrade_deadline": "3000-10-13T13:11:04Z"}]}, True),
+        ({"seats": [{"type": "verified", "upgrade_deadline": None}]}, True),
+        ({"seats": [{"type": "verified"}]}, True),
+        ({"seats": [{"type": "verified", "upgrade_deadline": "1977-10-13T13:11:04Z"}]}, False),
+        ({"seats": [{"type": "audit"}]}, False),
+        ({}, False),
+    )
+    @ddt.unpack
+    def test_is_course_run_upgradeable(self, course_run, expected_upgradeability):
+        """
+        ``is_course_run_upgradeable`` returns whether the course run is eligible
+        for an upgrade to the verified track.
+        """
+        assert utils.is_course_run_upgradeable(course_run) == expected_upgradeability
+
+    @ddt.data(
+        ({"start": "3000-10-13T13:11:04Z"}, utils.parse_datetime_handle_invalid("3000-10-13T13:11:04Z")),
+        ({}, None),
+    )
+    @ddt.unpack
+    def test_get_course_run_start(self, course_run, expected_start):
+        """
+        ``get_course_run_start`` returns the start date given the course run dict.
+        """
+        assert utils.get_course_run_start(course_run) == expected_start
+
+    def test_get_course_run_start_with_default(self):
+        """
+        ``get_course_run_start`` returns the appropriate default start date.
+        """
+        now = datetime.datetime.now()
+        assert utils.get_course_run_start({}) is None
+        assert utils.get_course_run_start({}, now) == now
+
+    @ddt.data(
+        (
+            # Test with two enrollable/upgradeable course runs.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(),
+                    fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
+                ],
+            },
+            fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
+        ),
+        (
+            # Test with one enrollable course run.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(),
+                    fake_catalog_api.create_course_run_dict(
+                        enrollment_end="2014-10-14T13:11:03Z",
+                    ),
+                ],
+            },
+            fake_catalog_api.create_course_run_dict(),
+        ),
+        (
+            # Test with no enrollable course runs.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(enrollment_end="2014-10-14T13:11:03Z"),
+                    fake_catalog_api.create_course_run_dict(
+                        start="2014-10-15T13:11:03Z",
+                        enrollment_end="2014-10-14T13:11:03Z",
+                    ),
+                ],
+            },
+            fake_catalog_api.create_course_run_dict(
+                start="2014-10-15T13:11:03Z",
+                enrollment_end="2014-10-14T13:11:03Z",
+            ),
+        ),
+        (
+            # Test with one upgradeable course run.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(),
+                    fake_catalog_api.create_course_run_dict(
+                        upgrade_deadline="2014-10-14T13:11:03Z",
+                    ),
+                ],
+            },
+            fake_catalog_api.create_course_run_dict(),
+        ),
+        (
+            # Test with no upgradeable course runs.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(upgrade_deadline="2014-10-14T13:11:03Z"),
+                    fake_catalog_api.create_course_run_dict(
+                        start="2014-10-15T13:11:03Z",
+                        upgrade_deadline="2014-10-14T13:11:03Z",
+                    ),
+                ],
+            },
+            fake_catalog_api.create_course_run_dict(
+                start="2014-10-15T13:11:03Z",
+                upgrade_deadline="2014-10-14T13:11:03Z",
+            ),
+        ),
+        (
+            # Test with no course runs.
+            {
+                "course_runs": [],
+            },
+            None
+        ),
+    )
+    @ddt.unpack
+    def test_get_current_course_run(self, course, expected_course_run):
+        """
+        ``get_current_course_run`` returns the current course run for the given course dictionary.
+        """
+        assert utils.get_current_course_run(course) == expected_course_run
 
 
 def get_transformed_course_metadata(course_id, status):

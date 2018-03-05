@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.66.0] - 2018-03-05
+---------------------
+
+* Add EnterpriseCustomerCatalog course detail endpoint.
+
 [0.65.8] - 2018-02-23
 ---------------------
 

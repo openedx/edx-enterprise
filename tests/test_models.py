@@ -5,7 +5,6 @@ Tests for the `edx-enterprise` models module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
-import copy
 import unittest
 from operator import itemgetter
 
@@ -212,12 +211,6 @@ class TestEnterpriseCustomer(unittest.TestCase):
 
         # Test when EnterpriseCustomerCatalogs do not contain the course run.
         mock_catalog_api.get_search_results.return_value = None
-        assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
-
-        # Test when EnterpriseCustomerCatalogs do not contain the course run when not any enrollable seats.
-        fake_course_run = copy.deepcopy(fake_catalog_api.FAKE_COURSE_RUN)
-        fake_course_run['has_enrollable_seats'] = False
-        mock_catalog_api.get_search_results.return_value = [fake_course_run]
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
 
@@ -875,13 +868,69 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         self.assertEqual(method(enterprise_catalog), expected_str)
 
     @mock.patch('enterprise.utils.configuration_helpers')
-    def test_catalog_querystring_in_course_enrollment_url(self, config_mock):
+    def test_catalog_param_in_course_enrollment_url(self, config_mock):
+        """
+        The ``get_course_enrollment_url`` method includes the ``catalog`` query string param.
+        """
+        config_mock.get_value.return_value = 'value'
+        course_key = 'edX+DemoX'
+
+        course_enrollment_url = reverse(
+            'enterprise_course_enrollment_page',
+            args=[self.enterprise_uuid, course_key],
+        )
+        querystring_dict = QueryDict('', mutable=True)
+        querystring_dict.update({
+            'utm_medium': 'enterprise',
+            'utm_source': self.enterprise_name,
+            'catalog': self.catalog_uuid,
+        })
+        expected_course_enrollment_url = '{course_enrollment_url}?{querystring}'.format(
+            course_enrollment_url=course_enrollment_url,
+            querystring=querystring_dict.urlencode()
+        )
+
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=self.catalog_uuid,
+            enterprise_customer=factories.EnterpriseCustomerFactory(
+                uuid=self.enterprise_uuid,
+                name=self.enterprise_name
+            )
+        )
+        enrollment_url = enterprise_catalog.get_course_enrollment_url(course_key=course_key)
+        assert_url(enrollment_url, expected_course_enrollment_url)
+
+    @mock.patch('enterprise.utils.configuration_helpers')
+    def test_audit_param_in_course_enrollment_url(self, config_mock):
+        """
+        The ``get_course_enrollment_url`` method includes the ``audit=true`` query string param when
+        publish_audit_enrollment_urls is enabled for the EnterpriseCustomerCatalog.
+        """
+        config_mock.get_value.return_value = 'value'
+        course_key = 'edX+DemoX'
+
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=self.catalog_uuid,
+            enterprise_customer=factories.EnterpriseCustomerFactory(
+                uuid=self.enterprise_uuid,
+                name=self.enterprise_name
+            ),
+            publish_audit_enrollment_urls=True
+        )
+        enrollment_url = enterprise_catalog.get_course_enrollment_url(course_key=course_key)
+        assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
+
+    @mock.patch('enterprise.utils.configuration_helpers')
+    def test_catalog_param_in_course_run_enrollment_url(self, config_mock):
+        """
+        The ``get_course_run_enrollment_url`` method includes the ``catalog`` query string param.
+        """
         config_mock.get_value.return_value = 'value'
         course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
         course_run_key = CourseKey.from_string(course_run_id)
 
         course_enrollment_url = reverse(
-            'enterprise_course_enrollment_page',
+            'enterprise_course_run_enrollment_page',
             args=[self.enterprise_uuid, course_run_id],
         )
         querystring_dict = QueryDict('', mutable=True)
@@ -906,7 +955,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         assert_url(enrollment_url, expected_course_enrollment_url)
 
     @mock.patch('enterprise.utils.configuration_helpers')
-    def test_audit_querystring_in_course_enrollment_url(self, config_mock):
+    def test_audit_param_in_course_run_enrollment_url(self, config_mock):
         """
         The ``get_course_run_enrollment_url`` method returns ``audit=true`` in the query string when
         publish_audit_enrollment_urls is enabled for the EnterpriseCustomerCatalog
@@ -927,7 +976,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 
     @mock.patch('enterprise.utils.configuration_helpers')
-    def test_catalog_querystring_in_program_enrollment_url(self, config_mock):
+    def test_catalog_param_in_program_enrollment_url(self, config_mock):
         config_mock.get_value.return_value = 'value'
         program_uuid = fake_catalog_api.FAKE_PROGRAM_RESPONSE1.get('uuid')
 
@@ -957,7 +1006,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         assert_url(enrollment_url, expected_program_enrollment_url)
 
     @mock.patch('enterprise.utils.configuration_helpers')
-    def test_audit_querystring_in_program_enrollment_url(self, config_mock):
+    def test_audit_param_in_program_enrollment_url(self, config_mock):
         """
         The ``get_program_enrollment_url`` method returns ``audit=true`` in the query string when
         publish_audit_enrollment_urls is enabled for the EnterpriseCustomerCatalog
@@ -976,12 +1025,12 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enrollment_url = enterprise_catalog.get_program_enrollment_url(program_uuid=program_uuid)
         assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 
-    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_content_items')
-    def test_get_course_and_course_run_no_content_items(self, contains_content_items_mock):
+    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_courses')
+    def test_get_course_and_course_run_no_content_items(self, contains_courses_mock):
         """
         The ``get_course_and_course_run`` method returns a tuple (None, None) when no content items exist.
         """
-        contains_content_items_mock.return_value = False
+        contains_courses_mock.return_value = False
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
 

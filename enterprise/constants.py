@@ -28,6 +28,8 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
     '{enterprise_customer_name}.'
 )
 
+COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
+
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
 
