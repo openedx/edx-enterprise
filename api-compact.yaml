@@ -13,6 +13,7 @@
 #   /enterprise/api/v1/enterprise_catalogs/
 #   /enterprise/api/v1/enterprise_catalogs/{uuid}/
 #   /enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/
+#   /enterprise/api/v1/enterprise_catalogs/{uuid}/courses/{course_key}/
 #   /enterprise/api/v1/enterprise_catalogs/{uuid}/programs/{program_uuid}/
 
 apigateway_responses: &apigateway_responses
@@ -295,7 +296,7 @@ x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course
   requestParameters:
     integration.request.header.Authorization: "method.request.header.Authorization"
     integration.request.path.uuid: "method.request.path.uuid"
-    integration.request.path.course_run_id: "method.request.path.course_key"
+    integration.request.path.course_key: "method.request.path.course_key"
     integration.request.querystring.page: "method.request.querystring.page"
     integration.request.querystring.page_size: "method.request.querystring.page_size"
 
