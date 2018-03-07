@@ -460,7 +460,7 @@ endpoints:
           httpMethod: GET
           requestParameters: 
             integration.request.header.Authorization: method.request.header.Authorization
-            integration.request.path.course_run_id: method.request.path.course_key
+            integration.request.path.course_key: method.request.path.course_key
             integration.request.path.uuid: method.request.path.uuid
             integration.request.querystring.page: method.request.querystring.page
             integration.request.querystring.page_size: method.request.querystring.page_size
@@ -937,7 +937,7 @@ x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course
   httpMethod: GET
   requestParameters: 
     integration.request.header.Authorization: method.request.header.Authorization
-    integration.request.path.course_run_id: method.request.path.course_key
+    integration.request.path.course_key: method.request.path.course_key
     integration.request.path.uuid: method.request.path.uuid
     integration.request.querystring.page: method.request.querystring.page
     integration.request.querystring.page_size: method.request.querystring.page_size
