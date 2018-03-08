@@ -50,6 +50,7 @@ INSTALLED_APPS = (
     "enterprise",
     "consent",
     "integrated_channels.integrated_channel",
+    "integrated_channels.csod_web_services",
     "integrated_channels.degreed",
     "integrated_channels.sap_success_factors",
 )
