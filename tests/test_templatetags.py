@@ -265,3 +265,19 @@ class EnterpriseTemplateFiltersTest(unittest.TestCase):
         template = Template("{% load enterprise %} {{ course_title|link_to_modal:0 }}")
         rendered = template.render(Context({'course_title': 'edX Demonstration Course'}))
         assert expected_content in rendered.strip()
+
+    @ddt.data(
+        ('<a href="http://example.com" target="_blank">Link</a>', '<a href="http://example.com">Link</a>'),
+        ('Strip script tag<script src="http://example.com/a.js"></script>', 'Strip script tag'),
+        ('Strip link tag<link href="http://example.com/a.css" />', 'Strip link tag'),
+        ('Strip iframe tag<iframe src="http://example.com"></iframe>', 'Strip iframe tag'),
+        ('Strip embed tag<embed src="example.swf">', 'Strip embed tag'),
+    )
+    @ddt.unpack
+    def test_only_safe_html(self, html, safe_html):
+        """
+        Test ``only_safe_html`` template filter.
+        """
+        template = Template("{% load enterprise %} {{ html_text|only_safe_html }}")
+        rendered = template.render(Context({'html_text': html}))
+        assert safe_html in rendered.strip()

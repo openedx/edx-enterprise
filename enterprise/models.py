@@ -212,6 +212,17 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
 
+    def get_data_sharing_consent_text_overrides(self, published_only=True):
+        """
+        Return DataSharingConsentTextOverrides associated with this instance.
+        """
+        # pylint: disable=invalid-name
+        DataSharingConsentTextOverrides = apps.get_model('consent', 'DataSharingConsentTextOverrides')
+        queryset = DataSharingConsentTextOverrides.objects.filter(enterprise_customer=self)
+        if published_only:
+            queryset = queryset.filter(published=True)
+        return queryset.first()
+
     def get_course_enrollment_url(self, course_key):
         """
         Return enterprise landing page url for the given course.

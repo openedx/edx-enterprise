@@ -11,6 +11,7 @@ import re
 from uuid import UUID
 
 import analytics
+import bleach
 import pytz
 from eventtracking import tracker
 from opaque_keys import InvalidKeyError
@@ -31,7 +32,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import PROGRAM_TYPE_DESCRIPTION
+from enterprise.constants import ALLOWED_TAGS, PROGRAM_TYPE_DESCRIPTION
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -744,6 +745,23 @@ def get_current_course_run(course):
         return min(filtered_course_runs, key=lambda x: abs(get_course_run_start(x, never) - now))
 
     return None
+
+
+def strip_html_tags(text, allowed_tags=None):
+    """
+    Strip all tags from a string except those tags provided in `allowed_tags` parameter.
+
+    Args:
+        text (str): string to strip html tags from
+        allowed_tags (list): allowed list of html tags
+
+    Returns: a string without html tags
+    """
+    if text is None:
+        return
+    if allowed_tags is None:
+        allowed_tags = ALLOWED_TAGS
+    return bleach.clean(text, tags=allowed_tags, attributes=['id', 'class', 'style', 'href', 'title'], strip=True)
 
 
 def parse_course_key(course_identifier):

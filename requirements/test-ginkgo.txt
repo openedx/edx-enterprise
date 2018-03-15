@@ -9,6 +9,7 @@ analytics-python==1.1.0
 anyjson==0.3.3            # via kombu
 attrs==17.4.0             # via pytest
 billiard==3.3.0.23        # via celery
+bleach==1.4
 celery==3.1.18
 cffi==1.11.5              # via cryptography
 cookies==2.2.1            # via responses
@@ -41,6 +42,7 @@ faker==0.8.12             # via factory-boy
 flaky==3.3.0
 freezegun==0.3.10
 funcsigs==1.0.2           # via mock, pytest
+html5lib==0.999           # via bleach
 idna==2.6                 # via cryptography
 ipaddress==1.0.19         # via cryptography, faker
 jsonfield==2.0.2

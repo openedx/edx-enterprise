@@ -58,6 +58,11 @@ PROGRAM_TYPE_DESCRIPTION = {
     ),
 }
 
+ALLOWED_TAGS = [
+    u'a', u'abbr', u'acronym', u'b', u'blockquote', u'em', u'i',
+    u'li', u'ol', u'strong', u'ul', u'p', u'h1', u'h2',
+]
+
 
 def json_serialized_course_modes():
     """
