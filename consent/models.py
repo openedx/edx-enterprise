@@ -292,11 +292,6 @@ class DataSharingConsentPage(TimeStampedModel):
         default=_('Data sharing consent required'),
         help_text=_('Title of page')
     )
-    left_sidebar_header = models.CharField(
-        max_length=255,
-        default=_('Welcome to {platform_name}.'),
-        help_text=_('Header text in left sidebar. platform_name variable may be available')
-    )
     left_sidebar_text = models.TextField(
         null=True,
         blank=True,
@@ -305,12 +300,6 @@ class DataSharingConsentPage(TimeStampedModel):
             "opportunities from the world's best universities."
         ),
         help_text=SIDEBAR_PARAGRAPH_HELP_TEXT
-    )
-    message_header = models.TextField(
-        null=True,
-        blank=True,
-        default=_('Consent to share your data'),
-        help_text=_('Heading of page')
     )
     top_paragraph = models.TextField(
         null=True,
