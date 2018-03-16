@@ -4,6 +4,7 @@ Utility functions for enterprise app.
 """
 from __future__ import absolute_import, division, unicode_literals
 
+import bleach
 import datetime
 import hashlib
 import logging
@@ -29,7 +30,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import PROGRAM_TYPE_DESCRIPTION
+from enterprise.constants import PROGRAM_TYPE_DESCRIPTION, ALLOWED_TAGS
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlsplit, urlunsplit
 
@@ -744,6 +745,23 @@ def get_current_course_run(course):
         return min(filtered_course_runs, key=lambda x: abs(get_course_run_start(x, never) - now))
 
     return None
+
+
+def strip_html_tags(text, allowed_tags=ALLOWED_TAGS):
+    """
+    Strips all tags from a string except those tags provided in `allowed_tags` parameter.
+
+    Args:
+        text (str): string to strip html tags from
+        allowed_tags (list): allowed list of html tags
+
+    Returns: a string without html tags
+    """
+
+    if text is None:
+        return
+
+    return bleach.clean(text, tags=allowed_tags, strip=True)
 
 
 def parse_course_key(course_identifier):

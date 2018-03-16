@@ -296,15 +296,21 @@ class DataSharingConsentPage(TimeStampedModel):
         null=True,
         blank=True,
         default=_(
-            "{enterprise_customer_name} has partnered with {platform_name} to offer you high-quality learning "
-            "opportunities from the world's best universities."
+            "<p>Welcome to {platform_name}</p>"
+            "<p>{enterprise_customer_name} has partnered with {platform_name} to offer you high-quality learning "
+            "opportunities from the world's best universities.</p>"
         ),
         help_text=SIDEBAR_PARAGRAPH_HELP_TEXT
     )
     top_paragraph = models.TextField(
         null=True,
         blank=True,
-        default=_('First paragraph of page'),
+        default=_('<h2>Consent to share your data</h2>'
+                  '<p>To access this {item}, you must first consent to share your learning achievements with '
+                  '<b>{enterprise_customer_name}</b></p>'
+                  '<p>{enterprise_customer_name} would like to know about:</p>'
+                  '<ul><li>your enrollment in this course</li><li>your learning progress</li>'
+                  '<li>course completion</li></ul>'),
         help_text=TOP_PARAGRAPH_HELP_TEXT
     )
     agreement_text = models.TextField(
@@ -337,7 +343,7 @@ class DataSharingConsentPage(TimeStampedModel):
     policy_paragraph = models.TextField(
         null=True,
         blank=True,
-        default=_('Policy paragraph of page'),
+        default=_('Policy paragraph'),
         help_text=POLICY_PARAGRAPH_HELP_TEXT
     )
     confirmation_modal_header = models.CharField(
@@ -364,7 +370,7 @@ class DataSharingConsentPage(TimeStampedModel):
     )
     enterprise_customer = models.OneToOneField(
         EnterpriseCustomer,
-        related_name="enterprise_consent_page",
+        related_name="data_sharing_consent_page",
         on_delete=models.deletion.CASCADE
     )
     history = HistoricalRecords()

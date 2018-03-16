@@ -2,19 +2,25 @@
 
 <main>
   <div class="consent-container">
-    <h2 class="consent-title">{{ consent_message_header }}</h2>
-    <div class="consent-message">
-      {% autoescape off %}
-        <p>{{ consent_request_prompt|safe }} {{ policy_link_template }}</p>
-      {% endautoescape %}
-      <p>{{ requested_permissions_header|safe }}
-        <ul class="consent-items">
-          {% for permission in requested_permissions %}
-            <li>{{ permission }}</li>
-          {% endfor %}
-        </ul>
-      </p>
-    </div>
+    {% if context_filled_from_db %}
+      <div class="consent-message">
+        {{ top_paragraph|only_safe_html }}
+      </div>
+    {% else %}
+      <h2 class="consent-title">{{ consent_message_header }}</h2>
+      <div class="consent-message">
+        {% autoescape off %}
+          <p>{{ consent_request_prompt|safe }} {{ policy_link_template }}</p>
+        {% endautoescape %}
+        <p>{{ requested_permissions_header|safe }}
+          <ul class="consent-items">
+            {% for permission in requested_permissions %}
+              <li>{{ permission }}</li>
+            {% endfor %}
+          </ul>
+        </p>
+      </div>
+    {% endif %}
     <div class="consent-input-container login-register">
       <form name="data-sharing-consent" method="POST" id="data-sharing">
         {% csrf_token %}
@@ -45,6 +51,7 @@
       </form>
     </div>
     <br/>
+    {% if policy_dropdown_header %}
     <button type="button" id="consent-policy-dropdown-bar" class="consent-policy-dropdown-bar background-input" aria-controls="consent-policy" aria-expanded="false">
       <span class="dropdown-text">{{ policy_dropdown_header }}</span>
       <span class="fa-stack fa-lg dropdown-icon-container" aria-hidden="true">
@@ -52,23 +59,28 @@
         <span id="consent-policy-dropdown-icon" class="fa fa-chevron-right fa-stack-1x" aria-hidden="true"></span>
       </span>
     </button>
+    {% endif %}
     <div class="consent-policy" id="consent-policy" style="display:none;">
-      <p>{{ sharable_items_header }}</p>
-      <ul class="consent-policy-bulletpoints">
-        {% for item in sharable_items %}
-          <li>{{ item }}</li>
-        {% endfor %}
-      </ul>
-      <p>{{ sharable_items_footer }}</p>
-      <p>{{ sharable_items_note_header }}</p>
-      <ul class="consent-policy-bulletpoints">
-        {% for item in sharable_items_notes %}
-          <li>{{ item }}</li>
-        {% endfor %}
-      </ul>
-      <p>
-        <a class="pull-right" href="#">{{ policy_return_link_text }}</a>
-      </p>
+      {% if policy_paragraph %}
+        <p>{{ policy_paragraph|only_safe_html }}</p>
+      {% else %}
+        <p>{{ sharable_items_header }}</p>
+        <ul class="consent-policy-bulletpoints">
+          {% for item in sharable_items %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        <p>{{ sharable_items_footer }}</p>
+        <p>{{ sharable_items_note_header }}</p>
+        <ul class="consent-policy-bulletpoints">
+          {% for item in sharable_items_notes %}
+            <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        <p>
+          <a class="pull-right" href="#">{{ policy_return_link_text }}</a>
+        </p>
+      {% endif %}
     </div>
   </div>
   <div id="consent-confirmation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-header-text" aria-hidden="true" tabindex="-1">
@@ -85,8 +97,7 @@
               {{ confirmation_modal_header }}
             </h2>
           </header>
-          <p>{{ confirmation_alert_prompt|safe }}</p>
-          <p>{{ confirmation_alert_prompt_warning }}</p>
+          <p>{{ confirmation_alert_prompt|only_safe_html }}</p>
           <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
           <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
         </div>

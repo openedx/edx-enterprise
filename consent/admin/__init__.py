@@ -8,7 +8,7 @@ from __future__ import absolute_import, unicode_literals
 from django.contrib import admin
 from simple_history.admin import SimpleHistoryAdmin
 
-from consent.models import DataSharingConsent
+from consent.models import DataSharingConsent, DataSharingConsentPage
 
 
 @admin.register(DataSharingConsent)
@@ -62,3 +62,32 @@ class DataSharingConsentAdmin(SimpleHistoryAdmin):
         Disable deletion permission for DataSharingConsent.
         """
         return False
+
+
+@admin.register(DataSharingConsentPage)
+class DataSharingConsentPageAdmin(SimpleHistoryAdmin):
+    """
+    Django admin model for DataSharingConsentPage
+    """
+
+    class Meta(object):
+        """
+        Meta class for ``DataSharingConsentPageAdmin``.
+        """
+
+        model = DataSharingConsentPage
+
+    list_display = (
+        'enterprise_customer',
+        'page_title',
+        'left_sidebar_text',
+    )
+
+    ordering = (
+        "enterprise_customer",
+    )
+
+    search_fields = (
+        'enterprise_customer__name',
+        'enterprise_customer__uuid',
+    )

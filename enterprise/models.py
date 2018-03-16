@@ -204,6 +204,16 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
 
+    def get_data_sharing_consent_page(self):
+        """
+        Return DataSharingConsentPage associated with this instance.
+        """
+        DataSharingConsentPage = apps.get_model('consent', 'DataSharingConsentPage')  # pylint: disable=invalid-name
+        try:
+            return self.data_sharing_consent_page
+        except DataSharingConsentPage.DoesNotExist:
+            return None
+
     def get_course_enrollment_url(self, course_key):
         """
         Return enterprise landing page url for the given course.

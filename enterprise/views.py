@@ -221,13 +221,11 @@ class GrantDataSharingPermissions(View):
         program_exists = program_uuid and CourseCatalogApiServiceClient().program_exists(program_uuid)
         return course_exists or program_exists
 
-    def get_default_context(self, enterprise_customer, request):
+    def get_default_context(self, enterprise_customer, platform_name):
         """
         Get the set of variables that will populate the template by default.
         """
-        context_data = get_global_context(request)
-        platform_name = context_data['platform_name']
-        context_data.update({
+        context_data = {
             'enterprise_customer': enterprise_customer,
             'welcome_text': self.welcome_text.format(platform_name=platform_name),
             'enterprise_welcome_text': self.enterprise_welcome_text.format(
@@ -273,7 +271,55 @@ class GrantDataSharingPermissions(View):
             'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
             'policy_link_template': self.policy_link_template,
             'policy_return_link_text': self.policy_return_link_text,
-        })
+        }
+        return context_data
+
+    def get_context_from_db(self, consent_page, platform_name, item):
+        """
+        Makes set of variables that will populate the data sharing consent page
+        template using consent_page which is fetched from database.
+        """
+        enterprise_customer = consent_page.enterprise_customer
+        context_data = {
+            'enterprise_customer': enterprise_customer,
+            'context_filled_from_db': True,
+            'page_title': consent_page.page_title,
+            'left_sidebar_text': consent_page.left_sidebar_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+            ),
+            'top_paragraph': consent_page.top_paragraph.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+            ),
+            'agreement_text': consent_page.agreement_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+            ),
+            'continue_text': consent_page.continue_text,
+            'abort_text': consent_page.abort_text,
+            'policy_dropdown_header': consent_page.policy_dropdown_header,
+            'policy_paragraph': consent_page.policy_paragraph.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+            ),
+            'confirmation_modal_header': consent_page.confirmation_modal_header.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+            ),
+            'confirmation_alert_prompt': consent_page.confirmation_modal_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+            ),
+            'confirmation_modal_affirm_decline_text': consent_page.modal_affirm_decline_text,
+            'confirmation_modal_abort_decline_text': consent_page.modal_abort_decline_text,
+        }
         return context_data
 
     @method_decorator(login_required)
@@ -304,7 +350,7 @@ class GrantDataSharingPermissions(View):
         item = 'course' if course_id else 'program'
 
         enterprise_customer = consent_record.enterprise_customer
-        context_data = self.get_default_context(enterprise_customer, request)
+        context_data = get_global_context(request)
 
         if course_id:
             try:
@@ -360,7 +406,6 @@ class GrantDataSharingPermissions(View):
                 bold_end='</b>',
                 item=item,
             ),
-            'confirmation_alert_prompt_warning': '',
             'redirect_url': success_url,
             'failure_url': failure_url,
             'defer_creation': request.GET.get('defer_creation') is not None,
@@ -371,6 +416,13 @@ class GrantDataSharingPermissions(View):
             ],
             'policy_link_template': '',
         })
+        platform_name = context_data['platform_name']
+        enterprise_consent_page = enterprise_customer.get_data_sharing_consent_page()
+        if enterprise_consent_page:
+            context_data.update(self.get_context_from_db(enterprise_consent_page, platform_name, item))
+        else:
+            context_data.update(self.get_default_context(enterprise_customer, platform_name))
+
         return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
     @method_decorator(login_required)

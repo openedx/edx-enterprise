@@ -165,7 +165,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
                 ),
                 'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any Test platform courses or programs that '
@@ -718,7 +717,6 @@ class TestProgramDataSharingPermissions(TestCase):
                     'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
                 ),
                 'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any Test platform courses or programs that '
