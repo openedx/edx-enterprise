@@ -9,10 +9,9 @@ from logging import getLogger
 from uuid import UUID
 
 import waffle
-from consent.helpers import get_data_sharing_consent
-from consent.models import DataSharingConsent
 from dateutil.parser import parse
 from ipware.ip import get_ip
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -23,10 +22,13 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
+from django.utils.translation import get_language_from_request
 from django.utils.translation import ugettext as _
-from django.utils.translation import get_language_from_request, ungettext
+from django.utils.translation import ungettext
 from django.views.generic import View
 
+from consent.helpers import get_data_sharing_consent
+from consent.models import DataSharingConsent
 from enterprise import messages
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
@@ -48,7 +50,6 @@ from enterprise.utils import (
     track_enrollment,
     ungettext_min_max,
 )
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 try:
     from openedx.core.djangoapps.catalog.utils import get_localized_price_text

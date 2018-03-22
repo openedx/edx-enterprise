@@ -5,8 +5,6 @@ Models for edX Enterprise's Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
-from consent.errors import InvalidProxyConsent
-from consent.mixins import ConsentModelMixin
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from simple_history.models import HistoricalRecords
@@ -16,6 +14,8 @@ from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
+from consent.errors import InvalidProxyConsent
+from consent.mixins import ConsentModelMixin
 from enterprise.models import EnterpriseCustomer
 from enterprise.utils import parse_course_key
 

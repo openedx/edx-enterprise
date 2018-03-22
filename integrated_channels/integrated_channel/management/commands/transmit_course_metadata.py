@@ -7,11 +7,11 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.integrated_channel.tasks import transmit_course_metadata
-
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
+
+from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
+from integrated_channels.integrated_channel.tasks import transmit_course_metadata
 
 LOGGER = getLogger(__name__)
 

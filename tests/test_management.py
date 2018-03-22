@@ -14,13 +14,6 @@ import mock
 import responses
 from faker import Factory as FakerFactory
 from freezegun import freeze_time
-from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
-from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.integrated_channel.management.commands import (
-    INTEGRATED_CHANNEL_CHOICES,
-    IntegratedChannelCommandMixin,
-)
-from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from pytest import mark, raises
 from requests.compat import urljoin
 from testfixtures import LogCapture
@@ -31,6 +24,13 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
+from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.integrated_channel.management.commands import (
+    INTEGRATED_CHANNEL_CHOICES,
+    IntegratedChannelCommandMixin,
+)
+from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import factories
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 from test_utils.fake_enterprise_api import EnterpriseMockMixin

@@ -9,9 +9,9 @@ import unittest
 
 import mock
 import responses
-from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
 from pytest import mark
 
+from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 

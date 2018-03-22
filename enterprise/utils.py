@@ -16,6 +16,8 @@ from eventtracking import tracker
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
+# pylint: disable=import-error,wrong-import-order,ungrouped-imports
+from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlsplit, urlunsplit
 
 from django.apps import apps
 from django.conf import settings
@@ -30,8 +32,6 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from enterprise.constants import PROGRAM_TYPE_DESCRIPTION
-# pylint: disable=import-error,wrong-import-order,ungrouped-imports
-from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlsplit, urlunsplit
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers

@@ -8,9 +8,10 @@ import time
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from integrated_channels.integrated_channel.management.commands import INTEGRATED_CHANNEL_CHOICES
 
 from django.contrib.auth.models import User
+
+from integrated_channels.integrated_channel.management.commands import INTEGRATED_CHANNEL_CHOICES
 
 LOGGER = get_task_logger(__name__)
 

@@ -10,8 +10,6 @@ import unittest
 import ddt
 import mock
 from faker import Factory as FakerFactory
-from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
-from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from pytest import mark, raises
 
 from django.core import mail
@@ -24,6 +22,8 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
 )
+from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
+from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import TEST_UUID, assert_url, create_items, fake_catalog_api
 from test_utils.factories import (
     EnterpriseCustomerFactory,

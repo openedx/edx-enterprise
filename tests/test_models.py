@@ -10,11 +10,7 @@ from operator import itemgetter
 
 import ddt
 import mock
-from consent.errors import InvalidProxyConsent
-from consent.helpers import get_data_sharing_consent
-from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from faker import Factory as FakerFactory
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 
@@ -25,6 +21,9 @@ from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from django.test.testcases import TransactionTestCase
 
+from consent.errors import InvalidProxyConsent
+from consent.helpers import get_data_sharing_consent
+from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -38,6 +37,7 @@ from enterprise.models import (
     logo_path,
 )
 from enterprise.utils import CourseEnrollmentDowngradeError
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 

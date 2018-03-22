@@ -12,13 +12,12 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
-from integrated_channels.integrated_channel.exporters import Exporter
-
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.utils import is_course_run_enrollable
+from integrated_channels.integrated_channel.exporters import Exporter
 
 LOGGER = getLogger(__name__)
 

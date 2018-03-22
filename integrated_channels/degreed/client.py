@@ -9,11 +9,11 @@ import datetime
 import time
 
 import requests
-from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 
 class DegreedAPIClient(IntegratedChannelApiClient):

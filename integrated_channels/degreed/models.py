@@ -9,15 +9,16 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
+from simple_history.models import HistoricalRecords
+
+from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
+
 from integrated_channels.degreed.exporters.course_metadata import DegreedCourseExporter
 from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
 from integrated_channels.degreed.transmitters.course_metadata import DegreedCourseTransmitter
 from integrated_channels.degreed.transmitters.learner_data import DegreedLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from simple_history.models import HistoricalRecords
-
-from django.db import models
-from django.utils.encoding import python_2_unicode_compatible
 
 LOGGER = getLogger(__name__)
 

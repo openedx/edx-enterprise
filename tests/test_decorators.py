@@ -12,6 +12,7 @@ import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark, raises
+from six.moves.urllib.parse import parse_qs, unquote, urlparse  # pylint: disable=import-error
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
@@ -26,7 +27,6 @@ from enterprise.decorators import (
     ignore_warning,
 )
 from enterprise.django_compatibility import reverse
-from six.moves.urllib.parse import parse_qs, unquote, urlparse  # pylint: disable=import-error
 from test_utils import get_magic_name, mock_view_function
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 

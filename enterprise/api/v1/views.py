@@ -15,6 +15,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework_xml.renderers import XMLRenderer
+from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
 
 from django.conf import settings
 from django.http import Http404
@@ -28,7 +29,6 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
-from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
 
 LOGGER = getLogger(__name__)
 

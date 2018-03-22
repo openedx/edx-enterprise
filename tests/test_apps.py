@@ -7,7 +7,6 @@ from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
 
-import integrated_channels
 import mock
 from pytest import mark
 
@@ -15,6 +14,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import pre_migrate
 
 import enterprise
+import integrated_channels
 from test_utils.factories import EnterpriseCustomerFactory, UserFactory
 
 

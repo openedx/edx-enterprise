@@ -14,6 +14,7 @@ from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
 from django.apps import apps
 from django.conf import settings
@@ -30,8 +31,8 @@ from django.utils.encoding import force_bytes, force_text, python_2_unicode_comp
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlquote
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
@@ -46,7 +47,6 @@ from enterprise.api_client.lms import (
 from enterprise.constants import json_serialized_course_modes
 from enterprise.utils import CourseEnrollmentDowngradeError, get_configuration_value, parse_course_key
 from enterprise.validators import validate_image_extension, validate_image_size
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
 LOGGER = getLogger(__name__)
 

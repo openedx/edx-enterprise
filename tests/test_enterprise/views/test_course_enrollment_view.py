@@ -12,6 +12,7 @@ import mock
 from dateutil.parser import parse
 from faker import Factory as FakerFactory
 from pytest import mark
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from slumber.exceptions import HttpClientError
 
 from django.conf import settings
@@ -23,7 +24,6 @@ from django.test import Client, TestCase
 
 from enterprise.decorators import FRESH_LOGIN_PARAMETER
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils import FAKE_UUIDS, fake_catalog_api, fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,

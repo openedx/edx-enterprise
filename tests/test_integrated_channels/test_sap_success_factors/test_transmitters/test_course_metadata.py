@@ -11,11 +11,11 @@ import unittest
 
 import ddt
 import mock
-from integrated_channels.integrated_channel.models import CatalogTransmissionAudit
-from integrated_channels.sap_success_factors.transmitters import course_metadata
 from pytest import mark
 from requests import RequestException
 
+from integrated_channels.integrated_channel.models import CatalogTransmissionAudit
+from integrated_channels.sap_success_factors.transmitters import course_metadata
 from test_utils import factories
 
 
