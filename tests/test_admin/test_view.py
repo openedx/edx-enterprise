@@ -245,30 +245,28 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
     def test_get_existing_links_only(self):
         self._login()
 
-        users = [
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-        ]
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
 
         response = self.client.get(self.view_url)
-        self._test_get_response(response, users, [])
+        # Test existing linked learners are not returned by default (until paging is added).
+        self._test_get_response(response, [], [])
 
     def test_get_existing_and_pending_links(self):
         self._login()
 
-        linked_learners = [
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-        ]
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
         pending_linked_learners = [
             PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
             PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
         ]
 
         response = self.client.get(self.view_url)
-        self._test_get_response(response, linked_learners, pending_linked_learners)
+        # Test existing linked learners are not returned by default (until paging is added).
+        self._test_get_response(response, [], pending_linked_learners)
 
     def test_get_with_search_param(self):
         self._login()
