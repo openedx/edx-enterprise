@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.66.1] - 2018-03-23
+---------------------
+
+* Temporarily disable linked learners list on manage learners Django admin view until paging can be added.
+
 [0.66.0] - 2018-03-05
 ---------------------
 

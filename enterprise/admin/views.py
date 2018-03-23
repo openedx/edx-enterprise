@@ -248,9 +248,12 @@ class EnterpriseCustomerManageLearnersView(View):
             customer_uuid (str): A unique identifier to filter down to only users linked to a
             particular EnterpriseCustomer.
         """
-        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
-
+        # TODO: Add paging so the admin view does not time out.
+        # For now, we will allow search, but will return an empty list
+        # if no search keyword is provided.
+        learners = []
         if search_keyword is not None:
+            learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
             user_ids = learners.values_list('user_id', flat=True)
             matching_users = User.objects.filter(
                 Q(pk__in=user_ids),
