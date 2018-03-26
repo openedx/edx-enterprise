@@ -1305,21 +1305,21 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
         mock_learner_transmitter.return_value = 'mock_learner_transmitter'
         assert self.config.get_learner_data_transmitter() == 'mock_learner_transmitter'
 
-    @mock.patch('integrated_channels.integrated_channel.models.CourseExporter')
+    @mock.patch('integrated_channels.integrated_channel.models.ContentMetadataExporter')
     def test_get_course_data_exporter_raises(self, mock_course_exporter):
         """
         The configuration returns the appropriate course exporter.
         """
         mock_course_exporter.return_value = 'mock_course_exporter'
-        assert self.config.get_course_data_exporter(None) == 'mock_course_exporter'
+        assert self.config.get_content_metadata_exporter(None) == 'mock_course_exporter'
 
-    @mock.patch('integrated_channels.integrated_channel.models.CourseTransmitter')
+    @mock.patch('integrated_channels.integrated_channel.models.ContentMetadataTransmitter')
     def test_get_course_data_transmitter_raises(self, mock_course_transmitter):
         """
         The configuration returns the appropriate course transmitter.
         """
         mock_course_transmitter.return_value = 'mock_course_transmitter'
-        assert self.config.get_course_data_transmitter() == 'mock_course_transmitter'
+        assert self.config.get_content_metadata_transmitter() == 'mock_course_transmitter'
 
 
 @mark.django_db
@@ -1366,25 +1366,6 @@ class TestLearnerDataTransmissionAudit(unittest.TestCase):
             '}'
         )
         assert learner_data_audit.serialize() == payload
-
-
-@mark.django_db
-@ddt.ddt
-class TestCatalogTransmissionAudit(unittest.TestCase):
-    """
-    Tests of the CatalogTransmissionAudit model.
-    """
-
-    @ddt.data(str, repr)
-    def test_string_conversion(self, method):
-        """
-        Test ``CatalogTransmissionAudit`` conversion to string
-        """
-        course_audit = factories.CatalogTransmissionAuditFactory(id=1, total_courses=50)
-        expected_to_str = "<CatalogTransmissionAudit 1 for Enterprise {} and channel SAP> for 50 courses>".format(
-            course_audit.enterprise_customer_uuid
-        )
-        assert expected_to_str == method(course_audit)
 
 
 @mark.django_db

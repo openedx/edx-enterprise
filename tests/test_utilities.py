@@ -22,9 +22,8 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
 )
-from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
-from test_utils import TEST_UUID, assert_url, create_items, fake_catalog_api
+from test_utils import TEST_UUID, create_items, fake_catalog_api
 from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -122,6 +121,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_enrollment_template",
                 "enterprisecustomerreportingconfiguration",
                 "enterprise_customer_consent",
+                "contentmetadataitemtransmission",
                 "degreedenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "created",
@@ -1263,39 +1263,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         assert utils.get_current_course_run(course) == expected_course_run
 
 
-def get_transformed_course_metadata(course_id, status):
-    """
-    Return the expected transformed data for TestSAPSuccessFactorsUtils tests.
-    """
-    return {
-        'courseID': course_id,
-        'providerID': 'EDX',
-        'status': status,
-        'title': [{'locale': 'English', 'value': ''}],
-        'description': [{'locale': 'English', 'value': ''}],
-        'thumbnailURI': '',
-        'content': [
-            {
-                'providerID': 'EDX',
-                'launchURL': '',
-                'contentTitle': '',
-                'contentID': course_id,
-                'launchType': 3,
-                'mobileEnabled': 'false',
-            }
-        ],
-        'price': [],
-        'schedule': [
-            {
-                'startDate': 0,
-                'endDate': 2147483647000,
-                'active': True
-            }
-        ],
-        'revisionNumber': 1,
-    }
-
-
 @mark.django_db
 @ddt.ddt
 class TestSAPSuccessFactorsUtils(unittest.TestCase):
@@ -1318,191 +1285,6 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
             key='key',
             secret='secret',
         )
-
-    @mock.patch('enterprise.api_client.enterprise.EnterpriseApiClient.get_enterprise_course_runs')
-    @mock.patch(
-        'integrated_channels.sap_success_factors.exporters.course_metadata.SapSuccessFactorsCourseExporter'
-        '.get_launch_url'
-    )
-    @ddt.data(
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-                {'key': 'course2', 'availability': 'Archived'},
-            ],
-            # previous audit summary
-            {},
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE)
-            ],
-        ),
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-                {'key': 'course2', 'availability': 'Archived'},
-            ],
-            # previous audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
-            },
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_INACTIVE),
-            ],
-        ),
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-                {'key': 'course2', 'availability': 'Archived'},
-            ],
-            # previous audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_INACTIVE),
-            ],
-        ),
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-            ],
-            # previous audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
-            },
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-            ],
-        ),
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-            ],
-            # previous audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': False, 'status': 'INACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-                {
-                    'courseID': 'course2',
-                    'providerID': 'EDX',
-                    'status': SapSuccessFactorsCourseExporter.STATUS_INACTIVE,
-                    'title': [{'locale': 'English', 'value': 'course2'}],
-                    'content': [
-                        {
-                            'providerID': 'EDX',
-                            'launchURL': '',
-                            'contentTitle': 'Course Description',
-                            'launchType': 3,
-                            'contentID': 'course2',
-                        }
-                    ],
-                },
-            ],
-        ),
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-                {'key': 'course2', 'availability': 'Current'},
-            ],
-            # previous audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'INACTIVE'},
-            },
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-            ],
-        ),
-        (
-            # course runs
-            [
-                {'key': 'course1', 'availability': 'Current'},
-                {'key': 'course2', 'availability': 'Current'},
-            ],
-            # previous audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected audit summary
-            {
-                'course1': {'in_catalog': True, 'status': 'ACTIVE'},
-                'course2': {'in_catalog': True, 'status': 'ACTIVE'},
-            },
-            # expected courses
-            [
-                get_transformed_course_metadata('course1', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-                get_transformed_course_metadata('course2', SapSuccessFactorsCourseExporter.STATUS_ACTIVE),
-            ],
-        ),
-    )
-    @ddt.unpack
-    def test_resolve_removed_courses(
-            self,
-            course_runs,
-            previous_audit_summary,
-            expected_audit_summary,
-            expected_courses,
-            get_launch_url,
-            get_enterprise_course_runs,
-    ):
-        get_launch_url.return_value = ''
-        get_enterprise_course_runs.return_value.values.return_value = course_runs
-        course_exporter = SapSuccessFactorsCourseExporter(self.user, self.enterprise_configuration)
-        audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
-        assert audit_summary == expected_audit_summary
-        assert course_exporter.removed_courses_resolved
-        assert course_exporter.courses == expected_courses
-        second_audit_summary = course_exporter.resolve_removed_courses(previous_audit_summary)
-        assert second_audit_summary == {}
 
     @ddt.data(
         (
@@ -1529,17 +1311,3 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         # audit course modes are not filtered out
         filtered_course_modes = utils.filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
-
-    @mock.patch('enterprise.api_client.enterprise.EnterpriseApiClient.get_enterprise_course_runs')
-    def test_get_launch_url_flag_on(self, get_enterprise_course_runs_mock):  # pylint: disable=unused-argument
-        """
-        Test `get_launch_url` helper method.
-        """
-        exporter = SapSuccessFactorsCourseExporter(self.user, self.enterprise_configuration)
-        course_id = 'course-v1:edX+DemoX+Demo_Course'
-        enterprise_uuid = '47432370-0a6e-4d95-90fe-77b4fe64de2c'
-        expected_url = ('http://lms.example.com/enterprise/47432370-0a6e-4d95-90fe-77b4fe64de2c/course/'
-                        'course-v1:edX+DemoX+Demo_Course/enroll/?utm_medium=enterprise&utm_source=test_enterprise')
-        enterprise_customer = EnterpriseCustomerFactory(uuid=enterprise_uuid, name='test_enterprise')
-        launch_url = exporter.get_launch_url(enterprise_customer, course_id)
-        assert_url(launch_url, expected_url)

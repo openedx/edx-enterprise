@@ -946,7 +946,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
 
 FAKE_SEARCH_ALL_SHORT_COURSE_RESULT = {
     "title": "edX Demonstration Course",
-    "full_description": None,
+    "full_description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
     "key": "edX+DemoX",
     "short_description": None,
     "aggregation_key": "course:edX+DemoX",
@@ -959,7 +959,7 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
         "full_description": None,
         "key": "edX+DemoX+2",
         "short_description": None,
-        "aggregation_key": "course:edX+DemoX+2",
+        "aggregation_key": "course:edX+DemoX",
         "content_type": "course"
     },
     {
@@ -967,7 +967,7 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
         "full_description": None,
         "key": "edX+DemoX+3",
         "short_description": None,
-        "aggregation_key": "course:edX+DemoX+3",
+        "aggregation_key": "course:edX+DemoX",
         "content_type": "course"
     },
 ]
