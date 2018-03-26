@@ -13,12 +13,13 @@ import unittest
 import requests
 import responses
 from flaky import flaky
+from pytest import mark, raises
+
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
 )
-from pytest import mark, raises
 
 
 @mark.django_db

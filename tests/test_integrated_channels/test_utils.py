@@ -9,9 +9,9 @@ import unittest
 
 import ddt
 import mock
-from integrated_channels import utils
 
 from enterprise.api_client.lms import parse_lms_api_datetime
+from integrated_channels import utils
 
 
 @ddt.ddt

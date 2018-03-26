@@ -4,10 +4,11 @@ Test mixins for enterprise tests.
 """
 from __future__ import absolute_import, unicode_literals
 
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+
 from django.contrib import messages
 
 from enterprise.decorators import FRESH_LOGIN_PARAMETER
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 
 class MessagesMixin(object):

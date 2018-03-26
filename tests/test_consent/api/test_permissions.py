@@ -7,13 +7,13 @@ from __future__ import absolute_import, unicode_literals
 
 import ddt
 import mock
-from consent.api.v1.views import DataSharingConsentView as DSCView
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 
 from django.conf import settings
 
+from consent.api.v1.views import DataSharingConsentView as DSCView
 from test_utils import TEST_COURSE, TEST_PASSWORD, TEST_USER_ID, TEST_USERNAME, TEST_UUID, APITest, factories
 
 

@@ -8,11 +8,6 @@ from __future__ import absolute_import, unicode_literals
 import json
 import logging
 
-from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
-from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-from integrated_channels.integrated_channel.transmitters.course_metadata import CourseTransmitter
-from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
-
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -20,6 +15,10 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise.models import EnterpriseCustomer
+from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
+from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.integrated_channel.transmitters.course_metadata import CourseTransmitter
+from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 
 LOGGER = logging.getLogger(__name__)
 

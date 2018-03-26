@@ -11,11 +11,11 @@ import unittest
 import ddt
 import mock
 from freezegun import freeze_time
-from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
 from pytest import mark
 
 from django.utils import timezone
 
+from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
 from test_utils import factories
 
 

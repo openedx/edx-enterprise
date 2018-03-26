@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.66.2] - 2018-03-26
+---------------------
+
+* Update isort version and sort imports after making consent and integrated_channels first party apps.
+
 [0.66.1] - 2018-03-23
 ---------------------
 

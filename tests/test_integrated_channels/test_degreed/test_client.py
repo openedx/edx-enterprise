@@ -12,12 +12,12 @@ import unittest
 import requests
 import responses
 from freezegun import freeze_time
-from integrated_channels.degreed.client import DegreedAPIClient
 from pytest import mark
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
 
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from integrated_channels.degreed.client import DegreedAPIClient
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)

@@ -9,9 +9,9 @@ from __future__ import absolute_import, unicode_literals
 from datetime import datetime
 from logging import getLogger
 
-from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
-
 from django.apps import apps
+
+from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 
 LOGGER = getLogger(__name__)
 

@@ -4,12 +4,12 @@ Transmits consenting enterprise learner data to the integrated channels.
 """
 from __future__ import absolute_import, unicode_literals
 
-from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
-from integrated_channels.integrated_channel.tasks import transmit_learner_data
-
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
+
+from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
+from integrated_channels.integrated_channel.tasks import transmit_learner_data
 
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):

@@ -9,9 +9,9 @@ import unittest
 
 import ddt
 import mock
-from integrated_channels.integrated_channel.transmitters.course_metadata import CourseTransmitter
 from pytest import mark
 
+from integrated_channels.integrated_channel.transmitters.course_metadata import CourseTransmitter
 from test_utils import factories
 
 

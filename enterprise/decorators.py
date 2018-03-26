@@ -9,12 +9,12 @@ import warnings
 from functools import wraps
 
 from requests.utils import quote
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse  # pylint: disable=import-error
 
 from django.http import Http404
 from django.shortcuts import redirect
 
 from enterprise.utils import get_enterprise_customer_or_404, get_identity_provider
-from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlunparse  # pylint: disable=import-error
 
 FRESH_LOGIN_PARAMETER = 'new_enterprise_login'
 

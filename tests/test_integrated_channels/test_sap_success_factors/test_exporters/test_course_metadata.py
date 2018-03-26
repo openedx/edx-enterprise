@@ -10,11 +10,11 @@ import unittest
 import ddt
 import mock
 import responses
-from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
-from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
 from pytest import mark, raises
 
 from enterprise.api_client.lms import parse_lms_api_datetime
+from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
+from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 

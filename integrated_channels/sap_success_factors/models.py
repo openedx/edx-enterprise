@@ -9,16 +9,17 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
-from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
-from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerExporter
-from integrated_channels.sap_success_factors.transmitters.course_metadata import SapSuccessFactorsCourseTransmitter
-from integrated_channels.sap_success_factors.transmitters.learner_data import SapSuccessFactorsLearnerTransmitter
 from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
+
+from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.sap_success_factors.exporters.course_metadata import SapSuccessFactorsCourseExporter
+from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerExporter
+from integrated_channels.sap_success_factors.transmitters.course_metadata import SapSuccessFactorsCourseTransmitter
+from integrated_channels.sap_success_factors.transmitters.learner_data import SapSuccessFactorsLearnerTransmitter
 
 LOGGER = getLogger(__name__)
 

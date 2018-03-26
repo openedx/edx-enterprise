@@ -11,6 +11,7 @@ import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -20,7 +21,6 @@ from django.test import Client, TestCase
 
 from enterprise.utils import NotConnectedToOpenEdX
 from enterprise.views import ProgramEnrollmentView
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,

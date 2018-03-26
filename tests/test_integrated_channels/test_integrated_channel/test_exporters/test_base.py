@@ -8,6 +8,7 @@ from __future__ import absolute_import, unicode_literals
 import unittest
 
 import mock
+
 from integrated_channels.integrated_channel.exporters import Exporter
 
 

@@ -8,8 +8,8 @@ from __future__ import absolute_import, unicode_literals
 import copy
 
 import mock
-
 from six.moves import reduce as six_reduce
+
 from test_utils import FAKE_UUIDS
 
 FAKE_COURSE_RUN = {

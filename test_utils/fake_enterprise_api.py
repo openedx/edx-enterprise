@@ -10,11 +10,11 @@ import responses
 from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from rest_framework.reverse import reverse
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
 
 from django.conf import settings
 from django.core.cache import cache
 
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
 from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 

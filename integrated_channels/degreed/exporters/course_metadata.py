@@ -8,11 +8,10 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
-from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
-
 from django.conf import settings
 
 from enterprise.utils import is_course_run_enrollable
+from integrated_channels.integrated_channel.exporters.course_metadata import CourseExporter
 
 LOGGER = getLogger(__name__)
 

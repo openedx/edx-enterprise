@@ -11,6 +11,13 @@ import ddt
 import mock
 from pytest import mark
 from rest_framework.reverse import reverse
+from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
+    parse_qs,
+    urlencode,
+    urljoin,
+    urlsplit,
+    urlunsplit,
+)
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -24,13 +31,6 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
-)
-from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
-    parse_qs,
-    urlencode,
-    urljoin,
-    urlsplit,
-    urlunsplit,
 )
 from test_utils import (
     FAKE_UUIDS,

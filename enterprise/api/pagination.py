@@ -7,7 +7,6 @@ from __future__ import absolute_import, unicode_literals
 from collections import OrderedDict
 
 from rest_framework.response import Response
-
 from six.moves.urllib.parse import urlparse  # pylint: disable=import-error
 
 

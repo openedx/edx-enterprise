@@ -8,24 +8,13 @@ from __future__ import absolute_import, unicode_literals
 from uuid import UUID
 
 import factory
-from consent.models import DataSharingConsent
 from faker import Factory as FakerFactory
-from integrated_channels.degreed.models import (
-    DegreedEnterpriseCustomerConfiguration,
-    DegreedGlobalConfiguration,
-    DegreedLearnerDataTransmissionAudit,
-)
-from integrated_channels.integrated_channel.models import CatalogTransmissionAudit, LearnerDataTransmissionAudit
-from integrated_channels.sap_success_factors.models import (
-    SAPSuccessFactorsEnterpriseCustomerConfiguration,
-    SAPSuccessFactorsGlobalConfiguration,
-    SapSuccessFactorsLearnerDataTransmissionAudit,
-)
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
+from consent.models import DataSharingConsent
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -36,6 +25,17 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
+)
+from integrated_channels.degreed.models import (
+    DegreedEnterpriseCustomerConfiguration,
+    DegreedGlobalConfiguration,
+    DegreedLearnerDataTransmissionAudit,
+)
+from integrated_channels.integrated_channel.models import CatalogTransmissionAudit, LearnerDataTransmissionAudit
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+    SapSuccessFactorsLearnerDataTransmissionAudit,
 )
 
 FAKER = FakerFactory.create()

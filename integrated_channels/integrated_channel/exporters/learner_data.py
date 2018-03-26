@@ -11,17 +11,17 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from consent.models import DataSharingConsent
-from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import parse_datetime_to_epoch_millis
 from slumber.exceptions import HttpNotFoundError
 
 from django.apps import apps
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from consent.models import DataSharingConsent
 from enterprise.api_client.lms import CertificatesApiClient, CourseApiClient, GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
+from integrated_channels.integrated_channel.exporters import Exporter
+from integrated_channels.utils import parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
