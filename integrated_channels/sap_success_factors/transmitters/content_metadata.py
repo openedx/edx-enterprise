@@ -34,39 +34,49 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         Transmit content metadata items to the integrated channel.
         """
         items_to_create, items_to_update, items_to_delete, transmission_map = self._partition_items(payload)
-        serialized_items = self._serialize_items(
+        prepared_items = [
             list(items_to_create.values()),
             list(items_to_update.values()),
-            list(items_to_delete.values())
-        )
-        try:
-            self.client.update_content_metadata(serialized_items)
-        except ClientError as exc:
-            LOGGER.error(exc)
-            LOGGER.error(
-                'Failed to update integrated channel content metadata items for [%s] [%s]: [%s]',
-                self.enterprise_configuration.enterprise_customer.name,
-                self.enterprise_configuration.channel_code,
-                serialized_items
-            )
-        else:
-            self._create_transmissions(items_to_create)
-            self._update_transmissions(items_to_update, transmission_map)
-            self._delete_transmissions(items_to_delete.keys())
+            self._prepare_items_for_delete(list(items_to_delete.values()))
+        ]
+
+        for chunk in chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size):
+            try:
+                self.client.update_content_metadata(self._serialize_items(chunk))
+            except ClientError as exc:
+                LOGGER.error(exc)
+                LOGGER.error(
+                    'Failed to update integrated channel content metadata items for [%s] [%s]: [%s]',
+                    self.enterprise_configuration.enterprise_customer.name,
+                    self.enterprise_configuration.channel_code,
+                    chunk
+                )
+
+                # Remove the failed items from the CRUD buckets,
+                # so ContentMetadataItemTransmission objects are
+                # not synchronized for these items below.
+                for item in self._deserialize_items(chunk):
+                    content_metadata_id = item['courseID']
+                    items_to_create.pop(content_metadata_id, None)
+                    items_to_update.pop(content_metadata_id, None)
+                    items_to_delete.pop(content_metadata_id, None)
+
+        self._create_transmissions(items_to_create)
+        self._update_transmissions(items_to_update, transmission_map)
+        self._delete_transmissions(items_to_delete.keys())
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         return {
             'ocnCourses': channel_metadata_items
         }
 
-    def _serialize_items(self, items_to_create, items_to_update, items_to_delete):
-        """
-        Serialize content metadata items for transmission to SAP SuccessFactors.
-        """
+    def _prepare_items_for_delete(self, items_to_delete):
         for item in items_to_delete:
             item['status'] = 'INACTIVE'
+        return items_to_delete
 
-        return json.dumps(
-            self._prepare_items_for_transmission(items_to_create + items_to_update + items_to_delete),
-            sort_keys=True
-        ).encode('utf-8')
+    def _deserialize_items(self, serialized_items):
+        """
+        Deserialize content metadata item JSON payload.
+        """
+        return json.loads(serialized_items)['ocnCourses']
