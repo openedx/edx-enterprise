@@ -101,27 +101,9 @@ class ContentMetadataTransmitter(Transmitter):
         """
         return channel_metadata_items
 
-    def _serialize_items_for_create(self, channel_metadata_items):
+    def _serialize_items(self, channel_metadata_items):
         """
         Serialize content metadata items for a create transmission to the integrated channel.
-        """
-        return json.dumps(
-            self._prepare_items_for_transmission(channel_metadata_items),
-            sort_keys=True
-        ).encode('utf-8')
-
-    def _serialize_items_for_update(self, channel_metadata_items):
-        """
-        Serialize content metadata items for an update transmission to the integrated channel.
-        """
-        return json.dumps(
-            self._prepare_items_for_transmission(channel_metadata_items),
-            sort_keys=True
-        ).encode('utf-8')
-
-    def _serialize_items_for_delete(self, channel_metadata_items):
-        """
-        Serialize content metadata items for a delete transmission to the integrated channel.
         """
         return json.dumps(
             self._prepare_items_for_transmission(channel_metadata_items),
@@ -133,7 +115,7 @@ class ContentMetadataTransmitter(Transmitter):
         Transmit content metadata creation to integrated channel.
         """
         for chunk in chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size):
-            serialized_chunk = self._serialize_items_for_create(list(chunk.values()))
+            serialized_chunk = self._serialize_items(list(chunk.values()))
             try:
                 self.client.create_content_metadata(serialized_chunk)
             except ClientError as exc:
@@ -152,7 +134,7 @@ class ContentMetadataTransmitter(Transmitter):
         Transmit content metadata update to integrated channel.
         """
         for chunk in chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size):
-            serialized_chunk = self._serialize_items_for_update(list(chunk.values()))
+            serialized_chunk = self._serialize_items(list(chunk.values()))
             try:
                 self.client.update_content_metadata(serialized_chunk)
             except ClientError as exc:
@@ -171,7 +153,7 @@ class ContentMetadataTransmitter(Transmitter):
         Transmit content metadata deletion to integrated channel.
         """
         for chunk in chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size):
-            serialized_chunk = self._serialize_items_for_delete(list(chunk.values()))
+            serialized_chunk = self._serialize_items(list(chunk.values()))
             try:
                 self.client.delete_content_metadata(serialized_chunk)
             except ClientError as exc:
