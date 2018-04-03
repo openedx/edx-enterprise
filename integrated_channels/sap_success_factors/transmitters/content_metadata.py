@@ -55,7 +55,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                 # Remove the failed items from the CRUD buckets,
                 # so ContentMetadataItemTransmission objects are
                 # not synchronized for these items below.
-                for item in self._deserialize_items(chunk)
+                for item in self._deserialize_items(chunk):
                     content_metadata_id = item['courseID']
                     items_to_create.pop(content_metadata_id, None)
                     items_to_update.pop(content_metadata_id, None)

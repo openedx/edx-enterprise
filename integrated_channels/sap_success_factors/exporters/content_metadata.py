@@ -18,6 +18,7 @@ from integrated_channels.sap_success_factors.exporters.utils import (
 from integrated_channels.utils import (
     UNIX_MAX_DATE_STRING,
     UNIX_MIN_DATE_STRING,
+    chunks,
     current_time_is_in_interval,
     parse_datetime_to_epoch_millis,
 )
