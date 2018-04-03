@@ -46,10 +46,14 @@ def current_time_is_in_interval(start, end):
     return interval_start <= timezone.now() <= interval_end
 
 
-def chunks(dictionary, chunk_size):
+def chunks(iterable, chunk_size):
     """
-    Yield successive n-sized chunks from dictionary.
+    Yield successive n-sized chunks from iterable.
     """
-    iterable = iter(dictionary)
-    for __ in range(0, len(dictionary), chunk_size):
-        yield {key: dictionary[key] for key in islice(iterable, chunk_size)}
+    is_dict = isinstance(iterable, dict)
+    iterator = iter(iterable)
+    for __ in range(0, len(iterable), chunk_size):
+        chunk = islice(iterator, chunk_size)
+        if is_dict:
+            yield {key: iterable[key] for key in chunk}
+        return chunk
