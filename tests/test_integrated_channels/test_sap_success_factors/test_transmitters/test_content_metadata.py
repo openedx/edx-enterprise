@@ -72,7 +72,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             transmitter.transmit({
                 content_id: ContentMetadataItemExport(
                     {'key': content_id, 'content_type': 'course'},
-                    {'update': True}
+                    {'courseID': content_id, 'update': True}
                 )
             })
             assert len(log_capture.records) == 2
@@ -84,7 +84,10 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             ).exists()
 
     @responses.activate
-    def test_serialize_items(self):
+    def test_prepare_items_for_delete(self):
+        """
+        Test status is set to INACTIVE for items that should be deleted.
+        """
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -92,6 +95,6 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             status=200
         )
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
-        serialized_items = transmitter._serialize_items([{}], [{}], [{}])  # pylint: disable=protected-access
-        assert b'ocnCourses' in serialized_items
-        assert b'INACTIVE' in serialized_items
+        items_to_delete = {'test': {}}
+        transmitter._prepare_items_for_delete(items_to_delete)  # pylint: disable=protected-access
+        assert items_to_delete['test']['status'] == 'INACTIVE'

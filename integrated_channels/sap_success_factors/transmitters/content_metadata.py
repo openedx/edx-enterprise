@@ -5,12 +5,12 @@ Class for transmitting content metadata to SuccessFactors.
 
 from __future__ import absolute_import, unicode_literals
 
-import json
 import logging
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.utils import chunks
 
 LOGGER = logging.getLogger(__name__)
 
@@ -34,39 +34,48 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         Transmit content metadata items to the integrated channel.
         """
         items_to_create, items_to_update, items_to_delete, transmission_map = self._partition_items(payload)
-        serialized_items = self._serialize_items(
-            list(items_to_create.values()),
-            list(items_to_update.values()),
-            list(items_to_delete.values())
-        )
-        try:
-            self.client.update_content_metadata(serialized_items)
-        except ClientError as exc:
-            LOGGER.error(exc)
-            LOGGER.error(
-                'Failed to update integrated channel content metadata items for [%s] [%s]: [%s]',
-                self.enterprise_configuration.enterprise_customer.name,
-                self.enterprise_configuration.channel_code,
-                serialized_items
-            )
-        else:
-            self._create_transmissions(items_to_create)
-            self._update_transmissions(items_to_update, transmission_map)
-            self._delete_transmissions(items_to_delete.keys())
+
+        self._prepare_items_for_delete(items_to_delete)
+
+        prepared_items = {}
+        prepared_items.update(items_to_create)
+        prepared_items.update(items_to_update)
+        prepared_items.update(items_to_delete)
+
+        for chunk in chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size):
+            chunked_items = list(chunk.values())
+            try:
+                self.client.update_content_metadata(self._serialize_items(chunked_items))
+            except ClientError as exc:
+                LOGGER.error(exc)
+                LOGGER.error(
+                    'Failed to update integrated channel content metadata items for [%s] [%s]: [%s]',
+                    self.enterprise_configuration.enterprise_customer.name,
+                    self.enterprise_configuration.channel_code,
+                    chunked_items
+                )
+
+                # Remove the failed items from the create, update, and delete dicts,
+                # so ContentMetadataItemTransmission objects are not synchronized for
+                # these items below.
+                for item in chunked_items:
+                    content_metadata_id = item['courseID']
+                    items_to_create.pop(content_metadata_id, None)
+                    items_to_update.pop(content_metadata_id, None)
+                    items_to_delete.pop(content_metadata_id, None)
+
+        self._create_transmissions(items_to_create)
+        self._update_transmissions(items_to_update, transmission_map)
+        self._delete_transmissions(items_to_delete.keys())
+
+    def _prepare_items_for_delete(self, items_to_delete):
+        """
+        Set status to INACTIVE for items that should be deleted.
+        """
+        for item in items_to_delete.values():
+            item['status'] = 'INACTIVE'
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         return {
             'ocnCourses': channel_metadata_items
         }
-
-    def _serialize_items(self, items_to_create, items_to_update, items_to_delete):
-        """
-        Serialize content metadata items for transmission to SAP SuccessFactors.
-        """
-        for item in items_to_delete:
-            item['status'] = 'INACTIVE'
-
-        return json.dumps(
-            self._prepare_items_for_transmission(items_to_create + items_to_update + items_to_delete),
-            sort_keys=True
-        ).encode('utf-8')
