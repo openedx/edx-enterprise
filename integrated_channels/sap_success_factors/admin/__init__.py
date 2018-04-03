@@ -45,6 +45,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'sapsf_user_id',
         'user_type',
         'has_access_token',
+        'transmission_chunk_size',
     )
 
     list_display = (
