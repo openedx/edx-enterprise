@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.2] - 2018-04-05
+---------------------
+
+* Fix the enterprise manage learner django admin tool is loading correctly for chrome users.
+
 [0.67.1] - 2018-04-04
 ---------------------
 
