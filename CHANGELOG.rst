@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.1] - 2018-04-04
+---------------------
+
+* Integrated channel refactoring cleanup.
+
 [0.67.0] - 2018-03-26
 ---------------------
 
