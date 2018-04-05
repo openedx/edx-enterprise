@@ -447,6 +447,25 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert EnterpriseCustomerUser.objects.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 1
 
+    def test_post_redirected_successfully(self):
+        """
+        Test post call to enroll user redirected successfully.
+        """
+        self._login()
+
+        email = FAKER.email()  # pylint: disable=no-member
+
+        user = UserFactory(email=email, id=2)
+        EnterpriseCustomerUserFactory(user_id=user.id)
+        response = self.client.post(
+            self.view_url + "?q=bob",
+            data={
+                ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email + ', john@smith.com'
+            }
+        )
+        self.assertRedirects(response, self.view_url + "?q=bob")
+        self.assertEqual(response.status_code, 302)
+
     def test_post_existing_pending_record(self):
         # precondition checks:
         self._login()
