@@ -190,11 +190,11 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit content metadata item creation with plugin configuration '
+            'Preparing to transmit creation of [1] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit content metadata item update with plugin configuration '
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit content metadata item deletion with plugin configuration '
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 dummy_sapsf
@@ -213,11 +213,11 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit content metadata item creation with plugin configuration '
+            'Preparing to transmit creation of [1] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit content metadata item update with plugin configuration '
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit content metadata item deletion with plugin configuration '
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 dummy_degreed
@@ -272,11 +272,11 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit content metadata item creation with plugin configuration '
+            'Preparing to transmit creation of [4] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit content metadata item update with plugin configuration '
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit content metadata item deletion with plugin configuration '
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 self.sapsf
@@ -294,11 +294,11 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit content metadata item creation with plugin configuration '
+            'Preparing to transmit creation of [4] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit content metadata item update with plugin configuration '
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit content metadata item deletion with plugin configuration '
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 self.degreed

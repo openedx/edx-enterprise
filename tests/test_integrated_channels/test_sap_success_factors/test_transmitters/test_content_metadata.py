@@ -76,7 +76,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
                 )
             })
             assert len(log_capture.records) == 2
-            assert 'Failed to update integrated channel content metadata items' in log_capture.records[1].getMessage()
+            assert 'Failed to update [1] content metadata items' in log_capture.records[0].getMessage()
             assert not ContentMetadataItemTransmission.objects.filter(
                 enterprise_customer=self.enterprise_config.enterprise_customer,
                 integrated_channel_code=self.enterprise_config.channel_code(),

@@ -45,13 +45,13 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
             try:
                 self.client.update_content_metadata(self._serialize_items(chunked_items))
             except ClientError as exc:
-                LOGGER.error(exc)
                 LOGGER.error(
-                    'Failed to update integrated channel content metadata items for [%s] [%s]: [%s]',
+                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                    len(chunked_items),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code,
-                    chunked_items
                 )
+                LOGGER.error(exc)
 
                 # Remove the failed items from the create/update/delete dictionaries,
                 # so ContentMetadataItemTransmission objects are not synchronized for
