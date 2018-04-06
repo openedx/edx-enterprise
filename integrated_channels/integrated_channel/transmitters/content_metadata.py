@@ -75,17 +75,20 @@ class ContentMetadataTransmitter(Transmitter):
                 items_to_create[content_id] = channel_metadata
 
         LOGGER.info(
-            'Preparing to transmit content metadata item creation with plugin configuration [%s]: [%s]',
+            'Preparing to transmit creation of [%s] content metadata items with plugin configuration [%s]: [%s]',
+            len(items_to_create),
             self.enterprise_configuration,
             items_to_create.keys(),
         )
         LOGGER.info(
-            'Preparing to transmit content metadata item update with plugin configuration [%s]: [%s]',
+            'Preparing to transmit update of [%s] content metadata items with plugin configuration [%s]: [%s]',
+            len(items_to_update),
             self.enterprise_configuration,
             items_to_update.keys(),
         )
         LOGGER.info(
-            'Preparing to transmit content metadata item deletion with plugin configuration [%s]: [%s]',
+            'Preparing to transmit deletion of [%s] content metadata items with plugin configuration [%s]: [%s]',
+            len(items_to_delete),
             self.enterprise_configuration,
             items_to_delete.keys(),
         )
@@ -119,13 +122,13 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 self.client.create_content_metadata(serialized_chunk)
             except ClientError as exc:
-                LOGGER.error(exc)
                 LOGGER.error(
-                    'Failed to create integrated channel content metadata items for [%s] [%s]: [%s]',
+                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                    len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code,
-                    chunk.keys()
                 )
+                LOGGER.error(exc)
             else:
                 self._create_transmissions(chunk)
 
@@ -138,13 +141,13 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 self.client.update_content_metadata(serialized_chunk)
             except ClientError as exc:
-                LOGGER.error(exc)
                 LOGGER.error(
-                    'Failed to update integrated channel content metadata items for [%s] [%s]: [%s]',
+                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                    len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code,
-                    chunk.keys()
                 )
+                LOGGER.error(exc)
             else:
                 self._update_transmissions(chunk, transmission_map)
 
@@ -157,13 +160,13 @@ class ContentMetadataTransmitter(Transmitter):
             try:
                 self.client.delete_content_metadata(serialized_chunk)
             except ClientError as exc:
-                LOGGER.error(exc)
                 LOGGER.error(
-                    'Failed to delete integrated channel content metadata items for [%s] [%s]: [%s]',
+                    'Failed to delete [%s] content metadata items for integrated channel [%s] [%s]',
+                    len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code,
-                    chunk.keys()
                 )
+                LOGGER.error(exc)
             else:
                 self._delete_transmissions(chunk.keys())
 

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.3] - 2018-04-05
+---------------------
+
+* Improved integrated channel logging.
+
 [0.67.2] - 2018-04-05
 ---------------------
 
