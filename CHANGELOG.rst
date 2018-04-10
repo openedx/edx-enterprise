@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.4] - 2018-04-12
+---------------------
+
+* Add configuration to allow replacing potentially sensitive SSO usernames.
+
 [0.67.3] - 2018-04-05
 ---------------------
 

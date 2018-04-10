@@ -668,6 +668,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': None,
+                'replace_sensitive_sso_username': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -695,6 +696,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False, 'identity_provider': None,
+                    'replace_sensitive_sso_username': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },
@@ -747,12 +749,12 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
+                'replace_sensitive_sso_username': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
             }],
         ),
-
     )
     @ddt.unpack
     def test_api_views(self, factory, url, sorting_key, model_items, expected_json):

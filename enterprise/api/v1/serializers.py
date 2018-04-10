@@ -107,7 +107,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         fields = (
             'uuid', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent', 'enforce_data_sharing_consent',
             'branding_configuration', 'enterprise_customer_entitlements', 'identity_provider',
-            'enable_audit_enrollment'
+            'enable_audit_enrollment', 'replace_sensitive_sso_username',
         )
 
     site = SiteSerializer()

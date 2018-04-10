@@ -155,6 +155,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    replace_sensitive_sso_username = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether to replace the display of potentially sensitive SSO usernames "
+            "with a more generic name, e.g. EnterpriseLearner."
+        )
+    )
+
     @property
     def identity_provider(self):
         """
