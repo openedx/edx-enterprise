@@ -323,6 +323,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enforce_data_sharing_consent",
             "enable_audit_enrollment",
             "enable_audit_data_reporting",
+            "replace_sensitive_sso_username",
         )
 
     class Media:
