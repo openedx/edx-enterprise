@@ -10,6 +10,7 @@ anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0        # via cryptography
 attrs==17.4.0             # via pytest
 billiard==3.3.0.23        # via celery
+bleach==1.4
 celery==3.1.18
 cffi==1.11.5              # via cryptography
 cookies==2.2.1            # via responses
@@ -42,13 +43,14 @@ faker==0.8.12             # via factory-boy
 flaky==3.3.0
 freezegun==0.3.10
 funcsigs==1.0.2           # via mock, pytest
+html5lib==0.999
 idna==2.6                 # via cryptography
 ipaddress==1.0.19         # via cryptography, faker
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
 mock==2.0.0
 pbr==3.1.1                # via mock, stevedore
-pillow==3.4
+Pillow==3.4
 pluggy==0.6.0             # via pytest
 py==1.5.3                 # via pytest, pytest-catchlog
 pycparser==2.18           # via cffi
@@ -63,7 +65,7 @@ pytz==2018.3              # via celery, event-tracking
 requests==2.9.1
 responses==0.8.1
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.11.0               # via analytics-python, cryptography, edx-opaque-keys, faker, freezegun, mock, pytest, python-dateutil, responses, stevedore
+six==1.11.0               # via analytics-python, bleach, cryptography, edx-opaque-keys, faker, freezegun, html5lib, mock, pytest, python-dateutil, responses, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 stevedore==1.28.0         # via edx-opaque-keys
 testfixtures==5.4.0

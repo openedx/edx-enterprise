@@ -14,7 +14,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
-from consent.models import DataSharingConsent
+from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -259,6 +259,24 @@ class DataSharingConsentFactory(factory.django.DjangoModelFactory):
     username = factory.LazyAttribute(lambda x: FAKER.user_name())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     granted = True
+
+
+class DataSharingConsentTextOverridesFactory(factory.django.DjangoModelFactory):
+    """
+    ``DataSharingConsentTextOverrides`` factory.
+
+    Creates an instance of ``DataSharingConsentTextOverrides`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``DataSharingConsentTextOverridesFactory``.
+        """
+
+        model = DataSharingConsentTextOverrides
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    published = True
 
 
 class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory):

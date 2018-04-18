@@ -6,6 +6,8 @@ from __future__ import absolute_import, unicode_literals
 from django import template
 from django.utils.safestring import mark_safe
 
+from enterprise.utils import strip_html_tags
+
 register = template.Library()  # pylint: disable=invalid-name
 
 MESSAGE_ICONS = {
@@ -111,3 +113,14 @@ def link_to_modal(link_text, index, autoescape=True):  # pylint: disable=unused-
         link_text=link_text,
     )
     return mark_safe(link)
+
+
+@register.filter()
+def only_safe_html(html_text):
+    """
+    Django template filter that strips all HTML tags excepts those degined in ALLOWED_TAGS.
+
+    General Usage:
+        {{ html_text|only_safe_html }}
+    """
+    return mark_safe(strip_html_tags(html_text))

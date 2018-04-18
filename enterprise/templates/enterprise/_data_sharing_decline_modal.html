@@ -1,0 +1,23 @@
+{% load i18n staticfiles enterprise %}
+
+<div id="consent-confirmation-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-header-text" aria-hidden="true" tabindex="-1">
+  <div class="modal-dialog modal-md" role="document">
+    <div id="consent-confirmation-modal-content" class="modal-content">
+      <div class="modal-header">
+        <button id="modal-close-button" type="button" class="close" data-dismiss="modal" aria-hidden="true" aria-label="{% trans "Close" %}">
+          {% fa_icon 'times' %}
+        </button>
+      </div>
+      <div class="modal-body">
+        <header class="modal-header-wrapper">
+          <h2 id="modal-header-text" class="modal-header-text">
+            {{ confirmation_modal_header }}
+          </h2>
+        </header>
+        <p>{{ confirmation_alert_prompt|only_safe_html }}</p>
+        <button class="consent-agreement-button" id="modal-no-consent-button">{{ confirmation_modal_affirm_decline_text }}</button>
+        <button class="failure-link" id="review-policy-link">{{ confirmation_modal_abort_decline_text }}</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.5] - 2018-04-18
+---------------------
+
+* Added ability to specify data sharing consent wording on a per enterprise basis.
+
 [0.67.4] - 2018-04-12
 ---------------------
 
