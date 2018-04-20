@@ -62,7 +62,8 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         return
 
     # proceed with the creation of a link between the user and the enterprise customer, then exit.
-    EnterpriseCustomerUser.objects.update_or_create(
+    enterprise_customer_user, _ = EnterpriseCustomerUser.objects.update_or_create(
         enterprise_customer=enterprise_customer,
         user_id=user.id
     )
+    enterprise_customer_user.update_session(request)
