@@ -120,8 +120,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             'course_start_date': parse(FAKE_COURSE_RUN['start']).strftime('%B %d, %Y'),
             'course_image_uri': FAKE_COURSE_RUN['image']['src'],
             'enterprise_welcome_text': (
-                '<strong>Starfleet Academy</strong> has partnered with <strong>Test platform</strong> to '
-                "offer you high-quality learning opportunities from the world's best universities."
+                "You have left the <strong>Starfleet Academy</strong> website and are now on the "
+                "Test platform site. Starfleet Academy has partnered with Test platform to offer you "
+                "high-quality, always available learning programs to help you advance your knowledge and career. "
+                "<br/>Please note that Test platform has a different <a href='https://www.edx.org/edx-privacy-policy' "
+                "target='_blank'>Privacy Policy </a> from Starfleet Academy."
             ),
             'confirmation_text': 'Confirm your course',
             'starts_at_text': 'Starts',
