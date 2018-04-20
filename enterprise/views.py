@@ -494,6 +494,7 @@ class GrantDataSharingPermissions(View):
                     enterprise_customer=consent_record.enterprise_customer,
                     user_id=request.user.id
                 )
+                enterprise_customer_user.update_session(request)
                 __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
@@ -882,6 +883,7 @@ class CourseEnrollmentView(NonAtomicView):
             enterprise_customer=enterprise_customer,
             user_id=request.user.id
         )
+        enterprise_customer_user.update_session(request)
 
         data_sharing_consent = DataSharingConsent.objects.proxied_get(
             username=enterprise_customer_user.username,
@@ -1341,6 +1343,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 enterprise_customer=enterprise_customer,
                 user_id=request.user.id
             )
+            enterprise_customer_user.update_session(request)
 
         program_details = self.get_program_details(request, program_uuid, enterprise_customer)
         if program_details['certificate_eligible_for_program']:
@@ -1477,6 +1480,7 @@ class RouterView(NonAtomicView):
                 enterprise_customer=enterprise_customer,
                 user_id=request.user.id
             )
+            enterprise_customer_user.update_session(request)
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
         resource_id = course_run_id or program_uuid
