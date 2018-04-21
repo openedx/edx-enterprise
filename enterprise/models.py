@@ -212,6 +212,12 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
 
+    @property
+    def serialized(self):
+        """Return a serialized version of this customer."""
+        from enterprise.api.v1 import serializers
+        return serializers.EnterpriseCustomerSerializer(self).data
+
     def get_data_sharing_consent_text_overrides(self, published_only=True):
         """
         Return DataSharingConsentTextOverrides associated with this instance.
@@ -643,6 +649,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     given_mode=mode,
                 )
             )
+
+    def update_session(self, request):
+        """Update the session of a request for this learner."""
+        request.session['enterprise_customer'] = self.enterprise_customer.serialized
 
 
 @python_2_unicode_compatible

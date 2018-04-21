@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.6] - 2018-04-20
+---------------------
+
+* Update user session when they become an Enterprise learner.
+
 [0.67.5] - 2018-04-18
 ---------------------
 
