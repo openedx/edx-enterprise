@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.7] - 2018-04-23
+---------------------
+
+* Update the messages when an enterprise learner leave an organization.
+
 [0.67.6] - 2018-04-20
 ---------------------
 
