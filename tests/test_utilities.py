@@ -1313,3 +1313,28 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         # audit course modes are not filtered out
         filtered_course_modes = utils.filter_audit_course_modes(self.customer, course_modes)
         assert len(filtered_course_modes) == 5
+
+
+@mark.django_db
+class TestEnterpriseRetirementUtils(unittest.TestCase):
+    """
+    Tests for enterprise utility functions which retire learner data.
+    """
+    def setUp(self):
+        """
+        Set up test environment.
+        """
+        super(TestEnterpriseRetirementUtils, self).setUp()
+        faker = FakerFactory.create()
+        self.provider_id = faker.slug()  # pylint: disable=no-member
+        self.uuid = faker.uuid4()  # pylint: disable=no-member
+        self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
+        # EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
+
+    def test_no_enterprise_data_for_learner(self):
+        """
+        Test what happens when no enterprise data exists for a learner.
+        """
+        user = UserFactory()
+        utils.retire_user(user, "test_learner@example.com")
+

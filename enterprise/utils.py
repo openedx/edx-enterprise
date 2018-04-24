@@ -784,3 +784,37 @@ def get_content_metadata_item_id(content_metadata_item):
     if content_metadata_item['content_type'] == 'program':
         return content_metadata_item['uuid']
     return content_metadata_item['key']
+
+
+def retire_user(user_to_retire, email):
+    """
+    Retires the user's data, deleting all necessary records.
+    """
+    PendingEnterpriseCustomerUser = apps.get_model('enterprise', 'PendingEnterpriseCustomerUser')  # pylint: disable=invalid-name
+    try:
+        # Check if this user has a pending enterprise customer link. If so, delete it.
+        # The deletion will cascade-delete any pending enrollments.
+        pending_enterprise_customer_user = PendingEnterpriseCustomerUser.objects.get(user_email=email)
+        pending_enterprise_customer_user.delete()
+    except PendingEnterpriseCustomerUser.DoesNotExist:
+        # If no link exists, just ignore. Not all users will have pending enterprise customer links.
+        pass
+
+    # If this user is associated with an enterprise customer, remove the linking record.
+    enterprise_user = get_enterprise_customer_for_user(user_to_retire)
+    if enterprise_user:
+        enterprise_user.delete()
+
+    # If there are any audit items denoting transfers to SAP SF for a user, delete them.
+    possible_sapsf_user_ids = [
+        str(user_to_retire.id),
+        str(user_to_retire.id).zfill(8),
+        str(user_to_retire.id) + 'U'
+    ]
+    SapSuccessFactorsLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        'sap_success_factors',
+        'SapSuccessFactorsLearnerDataTransmissionAudit'
+    )
+    sapsf_audit_items = SapSuccessFactorsLearnerDataTransmissionAudit.objects.filter(
+        sapsf_user_id__in=possible_sapsf_user_ids
+    ).delete()
