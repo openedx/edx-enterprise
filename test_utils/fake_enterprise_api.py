@@ -48,7 +48,7 @@ class EnterpriseMockMixin(object):
         """
         course_detail = {
             'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
-            'key': course_run_key.to_deprecated_string(),
+            'key': unicode(course_run_key),
             'aggregation_key': 'courserun:{org}+{course}'.format(
                 org=course_run_key.org, course=course_run_key.course
             ),
@@ -79,7 +79,7 @@ class EnterpriseMockMixin(object):
                 settings.LMS_ROOT_URL,
                 reverse(
                     'enterprise_course_run_enrollment_page',
-                    args=[enterprise_uuid, course_run_key.to_deprecated_string()],
+                    args=[enterprise_uuid, unicode(course_run_key)],
                 )
             ),
             'content_language': None,
@@ -106,7 +106,7 @@ class EnterpriseMockMixin(object):
         """
         DRY method to generate dummy course product SKU.
         """
-        md5_hash = md5(course_run_key.to_deprecated_string().encode('utf-8'))
+        md5_hash = md5(unicode(course_run_key).encode('utf-8'))
         digest = md5_hash.hexdigest()[-7:]
         sku = digest.upper()
         return sku
