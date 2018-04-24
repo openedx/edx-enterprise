@@ -5,7 +5,6 @@ django-model-utils        # Provides TimeStampedModel abstract base class
 factory_boy               # Test factory framework
 freezegun                 # Time freezing library
 mock                      # mocking library
-pytest-catchlog           # Show log output for test failures
 pytest-cov                # pytest extension for code coverage statistics
 pytest-django             # pytest extension for better Django support
 responses                 # utility library for mocking out the requests library

@@ -52,14 +52,13 @@ mock==2.0.0
 pbr==3.1.1                # via mock, stevedore
 pillow==3.4
 pluggy==0.6.0             # via pytest
-py==1.5.3                 # via pytest, pytest-catchlog
+py==1.5.3                 # via pytest
 pycparser==2.18           # via cffi
 pyjwt==1.6.1              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.6.1            # via edx-opaque-keys, event-tracking
-pytest-catchlog==1.2.2
 pytest-cov==2.5.1
 pytest-django==3.1.2
-pytest==3.4.2             # via pytest-catchlog, pytest-cov, pytest-django
+pytest==3.4.2             # via pytest-cov, pytest-django
 python-dateutil==2.7.0    # via analytics-python, edx-drf-extensions, faker, freezegun
 pytz==2018.3              # via celery, django, event-tracking
 requests==2.9.1
