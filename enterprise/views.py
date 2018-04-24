@@ -623,9 +623,11 @@ class CourseEnrollmentView(NonAtomicView):
     }
     WELCOME_TEXT_FORMAT = _('Welcome to {platform_name}.')
     ENT_WELCOME_TEXT_FORMAT = _(
-        "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
-        "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
-        "opportunities from the world's best universities."
+        u'You have left the {strong_start}{enterprise_customer_name}{strong_end} website and are now on the '
+        '{platform_name} site. {enterprise_customer_name} has partnered with {platform_name} to offer you '
+        'high-quality, always available learning programs to help you advance your knowledge and career. '
+        '{line_break}Please note that {platform_name} has a different {privacy_policy_link_start}Privacy Policy '
+        '{privacy_policy_link_end} from {enterprise_customer_name}.'
     )
     ENT_DISCOUNT_TEXT_FORMAT = _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}')
 
@@ -777,6 +779,11 @@ class CourseEnrollmentView(NonAtomicView):
                 platform_name=platform_name,
                 strong_start='<strong>',
                 strong_end='</strong>',
+                line_break='<br/>',
+                privacy_policy_link_start="<a href='{pp_url}' target='_blank'>".format(
+                    pp_url='https://www.edx.org/edx-privacy-policy'
+                ),
+                privacy_policy_link_end="</a>",
             )
         }
 
