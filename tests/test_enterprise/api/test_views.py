@@ -11,6 +11,7 @@ import ddt
 import mock
 from pytest import mark
 from rest_framework.reverse import reverse
+from rest_framework.test import APIClient
 from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
     parse_qs,
     urlencode,
@@ -1613,10 +1614,16 @@ class TestEnterpriseAPIViews(APITest):
             name="test_enterprise"
         )
 
-        expected_result = {'detail': 'You do not have permission to perform this action.'}
+        #creating a non staff user so verify the insufficient permission conditions.
+        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
+        user.set_password('test_password')  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+        expected_result = {u'detail': u'User is not allowed to access the view.'}
 
         # Make the call!
-        response = self.client.post(
+        response = client.post(
             settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
             data=json.dumps([{}]),
             content_type='application/json',
