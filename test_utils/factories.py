@@ -10,7 +10,7 @@ from uuid import UUID
 import factory
 from faker import Factory as FakerFactory
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
@@ -120,6 +120,20 @@ class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_email = factory.LazyAttribute(lambda x: FAKER.email())
+
+
+class GroupFactory(factory.DjangoModelFactory):
+    """
+    Group factory.
+
+    Creates an instance of Group with minimal boilerplate.
+    """
+
+    class Meta(object):
+        model = Group
+        django_get_or_create = ('name', )
+
+    name = factory.Sequence(u'group{0}'.format)
 
 
 class UserFactory(factory.DjangoModelFactory):

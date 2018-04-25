@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ----------
 
+[0.68.3] - 2018-05-11
+---------------------
+
+* Update enrollment api authorization to check group permissions.
 
 [0.68.2] - 2018-05-10
 ---------------------
