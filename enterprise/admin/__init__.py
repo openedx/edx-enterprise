@@ -525,6 +525,8 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
         "active",
         "delivery_method",
         "frequency",
+        "data_type",
+        "report_type",
     )
 
     list_filter = ("active",)
