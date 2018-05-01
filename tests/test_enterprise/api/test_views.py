@@ -788,6 +788,8 @@ class TestEnterpriseAPIViews(APITest):
             'day_of_month': 1,
             'day_of_week': None,
             'hour_of_day': 1,
+            'report_type': 'csv',
+            'data_type': 'progress',
         }
         self.create_items(factory, [model_item])
         response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT)

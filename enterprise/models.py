@@ -1370,7 +1370,6 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     FREQUENCY_TYPE_DAILY = 'daily'
     FREQUENCY_TYPE_MONTHLY = 'monthly'
     FREQUENCY_TYPE_WEEKLY = 'weekly'
-
     FREQUENCY_CHOICES = (
         (FREQUENCY_TYPE_DAILY, FREQUENCY_TYPE_DAILY),
         (FREQUENCY_TYPE_MONTHLY, FREQUENCY_TYPE_MONTHLY),
@@ -1379,10 +1378,21 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     DELIVERY_METHOD_EMAIL = 'email'
     DELIVERY_METHOD_SFTP = 'sftp'
-
     DELIVERY_METHOD_CHOICES = (
         (DELIVERY_METHOD_EMAIL, DELIVERY_METHOD_EMAIL),
         (DELIVERY_METHOD_SFTP, DELIVERY_METHOD_SFTP),
+    )
+
+    DATA_TYPE_PROGRESS = 'progress'
+    DATA_TYPE_CATALOG = 'catalog'
+    DATA_TYPE_CHOICES = (
+        (DATA_TYPE_PROGRESS, DATA_TYPE_PROGRESS),
+        (DATA_TYPE_CATALOG, DATA_TYPE_CATALOG),
+    )
+
+    REPORT_TYPE_CSV = 'csv'
+    REPORT_TYPE_CHOICES = (
+        (REPORT_TYPE_CSV, REPORT_TYPE_CSV),
     )
 
     DAYS_OF_WEEK = (
@@ -1406,6 +1416,22 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         default=DELIVERY_METHOD_EMAIL,
         verbose_name=_("Delivery Method"),
         help_text=_("The method in which the data should be sent.")
+    )
+    data_type = models.CharField(
+        max_length=20,
+        choices=DATA_TYPE_CHOICES,
+        blank=False,
+        default=DATA_TYPE_PROGRESS,
+        verbose_name=_("Data Type"),
+        help_text=_("The type of data this report should contain.")
+    )
+    report_type = models.CharField(
+        max_length=20,
+        choices=REPORT_TYPE_CHOICES,
+        blank=False,
+        default=REPORT_TYPE_CSV,
+        verbose_name=_("Report Type"),
+        help_text=_("The type this report should be sent as, e.g. CSV.")
     )
     email = MultiEmailField(
         blank=True,
