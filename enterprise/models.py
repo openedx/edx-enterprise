@@ -1370,7 +1370,6 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     FREQUENCY_TYPE_DAILY = 'daily'
     FREQUENCY_TYPE_MONTHLY = 'monthly'
     FREQUENCY_TYPE_WEEKLY = 'weekly'
-
     FREQUENCY_CHOICES = (
         (FREQUENCY_TYPE_DAILY, FREQUENCY_TYPE_DAILY),
         (FREQUENCY_TYPE_MONTHLY, FREQUENCY_TYPE_MONTHLY),
@@ -1379,10 +1378,21 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     DELIVERY_METHOD_EMAIL = 'email'
     DELIVERY_METHOD_SFTP = 'sftp'
-
     DELIVERY_METHOD_CHOICES = (
         (DELIVERY_METHOD_EMAIL, DELIVERY_METHOD_EMAIL),
         (DELIVERY_METHOD_SFTP, DELIVERY_METHOD_SFTP),
+    )
+
+    DATA_TYPE_PROGRESS = 'progress'
+    DATA_TYPE_CATALOG = 'catalog'
+    DATA_TYPE_CHOICES = (
+        (DATA_TYPE_PROGRESS, DATA_TYPE_PROGRESS),
+        (DATA_TYPE_CATALOG, DATA_TYPE_CATALOG),
+    )
+
+    REPORT_TYPE_CSV = 'csv'
+    REPORT_TYPE_CHOICES = (
+        (REPORT_TYPE_CSV, REPORT_TYPE_CSV),
     )
 
     DAYS_OF_WEEK = (
@@ -1395,8 +1405,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (6, 'Sunday'),
     )
 
-    enterprise_customer = models.OneToOneField(
-        EnterpriseCustomer, blank=False, null=False, verbose_name=_("Enterprise Customer")
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        related_name="reporting_configurations",
+        on_delete=models.deletion.CASCADE,
+        blank=False,
+        null=False,
+        verbose_name=_("Enterprise Customer")
     )
     active = models.BooleanField(blank=False, null=False, verbose_name=_("Active"))
     delivery_method = models.CharField(
@@ -1406,6 +1421,22 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         default=DELIVERY_METHOD_EMAIL,
         verbose_name=_("Delivery Method"),
         help_text=_("The method in which the data should be sent.")
+    )
+    data_type = models.CharField(
+        max_length=20,
+        choices=DATA_TYPE_CHOICES,
+        blank=False,
+        default=DATA_TYPE_PROGRESS,
+        verbose_name=_("Data Type"),
+        help_text=_("The type of data this report should contain.")
+    )
+    report_type = models.CharField(
+        max_length=20,
+        choices=REPORT_TYPE_CHOICES,
+        blank=False,
+        default=REPORT_TYPE_CSV,
+        verbose_name=_("Report Type"),
+        help_text=_("The type this report should be sent as, e.g. CSV.")
     )
     email = MultiEmailField(
         blank=True,
@@ -1488,6 +1519,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
+        unique_together = (('enterprise_customer', 'data_type', 'report_type', 'delivery_method',),)
 
     @property
     def encrypted_password(self):
@@ -1534,6 +1566,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         Override of clean method to perform additional validation on frequency and day_of_month/day_of week.
         """
         validation_errors = {}
+
+        # Check that the frequency selections make sense.
         if self.frequency == self.FREQUENCY_TYPE_DAILY:
             self.day_of_month = None
             self.day_of_week = None
@@ -1548,6 +1582,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         else:
             validation_errors[NON_FIELD_ERRORS] = _('Frequency must be set to either daily, weekly, or monthly.')
 
+        # Check that fields related to the delivery method make sense.
         if self.delivery_method == self.DELIVERY_METHOD_EMAIL:
             if not self.email:
                 validation_errors['email'] = _(
@@ -1564,6 +1599,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 validation_errors['sftp_username'] = _('SFTP username must be set if the delivery method is sftp.')
             if not self.sftp_file_path:
                 validation_errors['sftp_file_path'] = _('SFTP File Path must be set if the delivery method is sftp.')
+            if not self.decrypted_sftp_password:
+                validation_errors['decrypted_sftp_password'] = _(
+                    'Decrypted SFTP password must be set if the delivery method is SFTP.'
+                )
 
         if validation_errors:
             raise ValidationError(validation_errors)

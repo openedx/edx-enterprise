@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.68.0] - 2018-05-09
+---------------------
+
+* Allow reporting configs to work for arbitrary data and report types.
+
 [0.67.8] - 2018-05-04
 ---------------------
 

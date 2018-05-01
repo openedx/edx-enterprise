@@ -13,7 +13,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from django_object_actions import DjangoObjectActions
-from simple_history.admin import SimpleHistoryAdmin  # likely a bug in import order checker
+from simple_history.admin import SimpleHistoryAdmin
 
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
 from enterprise.admin.forms import (
@@ -41,7 +41,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
 )
-from enterprise.utils import get_all_field_names, get_catalog_admin_url
+from enterprise.utils import get_all_field_names
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -525,6 +525,8 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
         "active",
         "delivery_method",
         "frequency",
+        "data_type",
+        "report_type",
     )
 
     list_filter = ("active",)
