@@ -486,6 +486,8 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
         fields = (
             "enterprise_customer",
             "active",
+            "data_type",
+            "report_type",
             "delivery_method",
             "frequency",
             "day_of_month",

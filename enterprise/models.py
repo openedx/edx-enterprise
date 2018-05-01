@@ -1395,8 +1395,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (6, 'Sunday'),
     )
 
-    enterprise_customer = models.OneToOneField(
-        EnterpriseCustomer, blank=False, null=False, verbose_name=_("Enterprise Customer")
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        related_name="reporting_configurations",
+        on_delete=models.deletion.CASCADE,
+        blank=False,
+        null=False,
+        verbose_name=_("Enterprise Customer")
     )
     active = models.BooleanField(blank=False, null=False, verbose_name=_("Active"))
     delivery_method = models.CharField(
@@ -1503,6 +1508,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     class Meta:
         app_label = 'enterprise'
+        unique_together = (('enterprise_customer', 'data_type', 'report_type', 'delivery_method',),)
 
     @property
     def encrypted_password(self):
@@ -1549,6 +1555,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         Override of clean method to perform additional validation on frequency and day_of_month/day_of week.
         """
         validation_errors = {}
+
+        # Check that the frequency selections make sense.
         if self.frequency == self.FREQUENCY_TYPE_DAILY:
             self.day_of_month = None
             self.day_of_week = None
@@ -1563,6 +1571,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         else:
             validation_errors[NON_FIELD_ERRORS] = _('Frequency must be set to either daily, weekly, or monthly.')
 
+        # Check that fields related to the delivery method make sense.
         if self.delivery_method == self.DELIVERY_METHOD_EMAIL:
             if not self.email:
                 validation_errors['email'] = _(
