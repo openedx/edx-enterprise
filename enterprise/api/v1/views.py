@@ -91,7 +91,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     API views for the ``enterprise-customer`` API endpoint.
     """
 
-    queryset = models.EnterpriseCustomer.active_customers.order_by("created").all()
+    queryset = models.EnterpriseCustomer.active_customers.order_by('created').all()
     serializer_class = serializers.EnterpriseCustomerSerializer
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
@@ -197,7 +197,7 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
     API views for the ``enterprise-course-enrollment`` API endpoint.
     """
 
-    queryset = models.EnterpriseCourseEnrollment.objects.order_by("created").all()
+    queryset = models.EnterpriseCourseEnrollment.objects.order_by('created').all()
 
     USER_ID_FILTER = 'enterprise_customer_user__user_id'
     FIELDS = (
@@ -220,7 +220,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     API views for the ``enterprise-learner`` API endpoint.
     """
 
-    queryset = models.EnterpriseCustomerUser.objects.order_by("created").all()
+    queryset = models.EnterpriseCustomerUser.objects.order_by('created').all()
     filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
 
     FIELDS = (
@@ -262,7 +262,7 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
     API views for the ``enterprise-customer-branding`` API endpoint.
     """
 
-    queryset = models.EnterpriseCustomerBrandingConfiguration.objects.order_by("created").all()
+    queryset = models.EnterpriseCustomerBrandingConfiguration.objects.order_by('created').all()
     serializer_class = serializers.EnterpriseCustomerBrandingConfigurationSerializer
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
@@ -278,7 +278,7 @@ class EnterpriseCustomerEntitlementViewSet(EnterpriseReadOnlyModelViewSet):
     API views for the ``enterprise-customer-entitlements`` API endpoint.
     """
 
-    queryset = models.EnterpriseCustomerEntitlement.objects.order_by("created").all()
+    queryset = models.EnterpriseCustomerEntitlement.objects.order_by('created').all()
     serializer_class = serializers.EnterpriseCustomerEntitlementSerializer
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
@@ -293,7 +293,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API Views for performing search through course discovery at the ``enterprise_catalogs`` API endpoint.
     """
-    queryset = models.EnterpriseCustomerCatalog.objects.order_by("created").all()
+    queryset = models.EnterpriseCustomerCatalog.objects.order_by('created').all()
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
@@ -472,7 +472,7 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadOnlyModelVie
     API views for the ``enterprise-customer-reporting`` API endpoint.
     """
 
-    queryset = models.EnterpriseCustomerReportingConfiguration.objects.order_by("created").all()
+    queryset = models.EnterpriseCustomerReportingConfiguration.objects.order_by('created').all()
     serializer_class = serializers.EnterpriseCustomerReportingConfigurationSerializer
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
