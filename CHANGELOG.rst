@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.67.8] - 2018-05-04
+---------------------
+
+* Added ordering to resolve warnings of probable invalid pagination data.
+
 [0.67.7] - 2018-04-23
 ---------------------
 
