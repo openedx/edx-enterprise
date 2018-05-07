@@ -1596,6 +1596,7 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
             'SFTP Hostname must be set if the delivery method is sftp.',
             'SFTP File Path must be set if the delivery method is sftp.',
             'SFTP username must be set if the delivery method is sftp.',
+            'Decrypted SFTP password must be set if the delivery method is SFTP.',
         ]
         try:
             config.clean()
