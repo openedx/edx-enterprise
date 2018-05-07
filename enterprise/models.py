@@ -94,6 +94,7 @@ class EnterpriseCustomer(TimeStampedModel):
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer")
         verbose_name_plural = _("Enterprise Customers")
+        ordering = ['created']
 
     objects = models.Manager()
     active_customers = EnterpriseCustomerManager()
@@ -487,6 +488,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         verbose_name = _("Enterprise Customer Learner")
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
+        ordering = ['created']
 
     @property
     def user(self):
@@ -671,6 +673,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
 
     class Meta(object):
         app_label = 'enterprise'
+        ordering = ['created']
 
     def __str__(self):
         """
@@ -716,6 +719,7 @@ class PendingEnrollment(TimeStampedModel):
     class Meta(object):
         app_label = 'enterprise'
         unique_together = (("user", "course_id"),)
+        ordering = ['created']
 
     def complete_enrollment(self):
         """
@@ -790,6 +794,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         app_label = 'enterprise'
         verbose_name = _("Branding Configuration")
         verbose_name_plural = _("Branding Configurations")
+        ordering = ['created']
 
     def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
         """Save the enterprise customer branding config."""
@@ -849,6 +854,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
 
     class Meta(object):
         app_label = 'enterprise'
+        ordering = ['created']
 
     def __str__(self):
         """
@@ -887,6 +893,7 @@ class EnterpriseCustomerEntitlement(TimeStampedModel):
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Entitlement")
         verbose_name_plural = _("Enterprise Customer Entitlements")
+        ordering = ['created']
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, related_name="enterprise_customer_entitlements")
     entitlement_id = models.PositiveIntegerField(
@@ -928,6 +935,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     class Meta(object):
         unique_together = (('enterprise_customer_user', 'course_id',),)
         app_label = 'enterprise'
+        ordering = ['created']
 
     enterprise_customer_user = models.ForeignKey(
         EnterpriseCustomerUser,
@@ -1054,6 +1062,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         verbose_name = _("Enterprise Customer Catalog")
         verbose_name_plural = _("Enterprise Customer Catalogs")
         app_label = 'enterprise'
+        ordering = ['created']
 
     def __str__(self):
         """
@@ -1276,6 +1285,7 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
 
     class Meta(object):
         app_label = 'enterprise'
+        ordering = ['created']
 
     BODY_HELP_TEXT = mark_safe_lazy(_(
         'Fill in a standard Django template that, when rendered, produces the email you want '
@@ -1477,6 +1487,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
     class Meta:
         app_label = 'enterprise'
+        ordering = ['created']
 
     @property
     def encrypted_password(self):
