@@ -74,7 +74,7 @@ requirements/private.txt
 tests/__init__.py
 
 # Development task artifacts
-default.db
+default.db*
 
 # Geckodriver for Jasmine
 geckodriver/

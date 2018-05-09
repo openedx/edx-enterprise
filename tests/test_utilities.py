@@ -119,7 +119,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer_entitlements",
                 "enterprise_customer_catalogs",
                 "enterprise_enrollment_template",
-                "enterprisecustomerreportingconfiguration",
+                "reporting_configurations",
                 "enterprise_customer_consent",
                 "data_sharing_consent_page",
                 "contentmetadataitemtransmission",
