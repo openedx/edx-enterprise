@@ -1599,6 +1599,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 validation_errors['sftp_username'] = _('SFTP username must be set if the delivery method is sftp.')
             if not self.sftp_file_path:
                 validation_errors['sftp_file_path'] = _('SFTP File Path must be set if the delivery method is sftp.')
+            if not self.decrypted_sftp_password:
+                validation_errors['decrypted_sftp_password'] = _(
+                    'Decrypted SFTP password must be set if the delivery method is SFTP.'
+                )
 
         if validation_errors:
             raise ValidationError(validation_errors)

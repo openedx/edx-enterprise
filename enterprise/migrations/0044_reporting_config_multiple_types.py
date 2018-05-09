@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0042_replace_sensitive_sso_username'),
+        ('enterprise', '0043_auto_20180507_0138'),
     ]
 
     operations = [
