@@ -839,7 +839,6 @@ class CourseEnrollmentView(NonAtomicView):
             if not is_course_run_enrollable(course_run):
                 messages.add_unenrollable_item_message(request, 'course')
                 course_enrollable = False
-
             context_data.update({
                 'course_enrollable': course_enrollable,
                 'course_title': course_title,
@@ -860,7 +859,8 @@ class CourseEnrollmentView(NonAtomicView):
                     enterprise_customer_name=enterprise_customer.name,
                     strong_start='<strong>',
                     strong_end='</strong>',
-                )
+                ),
+                'hide_course_original_price': enterprise_customer.hide_course_original_price
             })
             html_template_for_rendering = 'enterprise/enterprise_course_enrollment_page.html'
 
