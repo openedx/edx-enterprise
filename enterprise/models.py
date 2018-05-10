@@ -1391,8 +1391,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     )
 
     REPORT_TYPE_CSV = 'csv'
+    REPORT_TYPE_JSON = 'json'
     REPORT_TYPE_CHOICES = (
         (REPORT_TYPE_CSV, REPORT_TYPE_CSV),
+        (REPORT_TYPE_JSON, REPORT_TYPE_JSON),
     )
 
     DAYS_OF_WEEK = (
