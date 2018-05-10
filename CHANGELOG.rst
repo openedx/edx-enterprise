@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[0.67.9] - 2018-05-09
+---------------------
+
+* Dropped sap_success_factors_historicalsapsuccessfactorsenterprisecus80ad table.
 
 [0.68.1] - 2018-05-09
 ---------------------
