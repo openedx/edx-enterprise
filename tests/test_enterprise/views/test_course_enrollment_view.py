@@ -210,6 +210,49 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.utils.Registry')
+    @ddt.data(True, False)
+    def test_hide_course_original_price_value_on_enrollment_page(
+            self,
+            hide_course_original_price,
+            registry_mock,
+            ecommerce_api_client_mock,
+            enrollment_api_client_mock,
+            course_catalog_client_mock,
+            embargo_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument
+        setup_course_catalog_api_client_mock(course_catalog_client_mock)
+        self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
+        self._setup_enrollment_client(enrollment_api_client_mock)
+        self._setup_embargo_api(embargo_api_mock)
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+            hide_course_original_price=hide_course_original_price,
+        )
+        self._setup_registry_mock(registry_mock, self.provider_id)
+        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
+        enterprise_landing_page_url = self._append_fresh_login_param(
+            reverse(
+                'enterprise_course_run_enrollment_page',
+                args=[enterprise_customer.uuid, self.demo_course_id],
+            )
+        )
+
+        self._login()
+        response = self.client.get(enterprise_landing_page_url)
+        if hide_course_original_price:
+            self.assertTrue(response.context['hide_course_original_price'])
+        else:
+            self.assertFalse(response.context['hide_course_original_price'])
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.api_client.lms.embargo_api')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(

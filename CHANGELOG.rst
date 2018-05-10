@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.68.5] - 2018-05-17
+---------------------
+
+* Configuration to show/hide original price on enterprise course landing page.
+
 [0.68.4] - 2018-05-16
 ---------------------
 
