@@ -27,6 +27,7 @@ from enterprise.api.pagination import get_paginated_response
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
+from enterprise.api.v1.permissions import HasEnterpriseEnrollmentAPIAccess
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 
@@ -171,8 +172,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer.update_enterprise_courses(enterprise_customer, catalog_id=enterprise_customer.catalog)
         return get_paginated_response(serializer.data, request)
 
-    @detail_route(methods=['post'])
-    def course_enrollments(self, request, pk):  # pylint: disable=invalid-name,unused-argument
+    @detail_route(methods=['post'], permission_classes=[
+        permissions.IsAuthenticated,
+        HasEnterpriseEnrollmentAPIAccess,
+    ])
+    # pylint: disable=invalid-name,unused-argument
+    def course_enrollments(self, request, pk):
         """
         Creates a course enrollment for an EnterpriseCustomerUser.
         """
