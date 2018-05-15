@@ -9,7 +9,6 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
-from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -97,8 +96,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         verbose_name="SAP User Type",
         help_text=_("Type of SAP User (admin or user).")
     )
-
-    history = HistoricalRecords()
 
     class Meta:
         app_label = 'sap_success_factors'

@@ -14,6 +14,26 @@ Change Log
 Unreleased
 ----------
 
+[0.68.3] - 2018-05-11
+---------------------
+
+* Update enrollment api authorization to check group permissions.
+
+[0.68.2] - 2018-05-10
+---------------------
+
+* Dropped sap_success_factors_historicalsapsuccessfactorsenterprisecus80ad table.
+
+[0.68.1] - 2018-05-09
+---------------------
+
+* Add `json` report type.
+
+[0.68.0] - 2018-05-09
+---------------------
+
+* Allow reporting configs to work for arbitrary data and report types.
+
 [0.67.9] - 2018-05-07
 ---------------------
 

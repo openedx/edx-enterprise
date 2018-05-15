@@ -82,6 +82,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
     enable_data_sharing_consent = True
     enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
+    hide_course_original_price = False
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
