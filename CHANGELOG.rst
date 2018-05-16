@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.68.4] - 2018-05-16
+---------------------
+
+* Remove constraints on the reporting config.
+
 [0.68.3] - 2018-05-11
 ---------------------
 

@@ -1521,7 +1521,6 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
-        unique_together = (('enterprise_customer', 'data_type', 'report_type', 'delivery_method',),)
 
     @property
     def encrypted_password(self):
