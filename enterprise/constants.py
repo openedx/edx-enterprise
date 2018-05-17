@@ -27,6 +27,14 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
     'If you do not consent to share your course data, that information may be shared with '
     '{enterprise_customer_name}.'
 )
+WELCOME_TEXT = _('Welcome to {platform_name}.')
+ENTERPRISE_WELCOME_TEXT = _(
+    u'You have left the {strong_start}{enterprise_customer_name}{strong_end} website and are now on the '
+    '{platform_name} site. {enterprise_customer_name} has partnered with {platform_name} to offer you '
+    'high-quality, always available learning programs to help you advance your knowledge and career. '
+    '{line_break}Please note that {platform_name} has a different {privacy_policy_link_start}Privacy Policy '
+    '{privacy_policy_link_end} from {enterprise_customer_name}.'
+)
 
 COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
 

@@ -160,6 +160,8 @@ COURSE_ID_PATTERN = COURSE_KEY_PATTERN.replace('course_key_string', 'course_id')
 
 USE_TZ = True
 
+MKTG_URLS = {}
+
 ################################### TRACKING ###################################
 
 LMS_SEGMENT_KEY = 'SOME_KEY'

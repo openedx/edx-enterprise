@@ -971,6 +971,14 @@ class TestEnterpriseUtils(unittest.TestCase):
         config_mock.get_value.return_value = 'value'
         assert utils.get_configuration_value('value', default='default') == 'value'
 
+    @mock.patch('enterprise.utils.get_url')
+    def test_get_configuration_value_url_type(self, get_url_mock):
+        """
+        ``get_configuration_value`` returns the appropriate non-default value for URL types when in Open edX.
+        """
+        get_url_mock.return_value = 'value'
+        assert utils.get_configuration_value('value', default='default', type='url') == 'value'
+
     def test_get_configuration_value_without_openedx(self):
         """
         ``get_configuration_value`` returns a default value of 'default' when not connected to Open edX.

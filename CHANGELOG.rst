@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.68.6] - 2018-05-22
+---------------------
+
+* Update DSC to show notification interstitial communicating to enterprise learner they are leaving company's site.
+
 [0.68.5] - 2018-05-17
 ---------------------
 
