@@ -30,7 +30,7 @@ from django.views.generic import View
 
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
-from enterprise import messages
+from enterprise import constants, messages
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
@@ -86,12 +86,14 @@ def verify_edx_resources():
             )
 
 
-def get_global_context(request):
+def get_global_context(request, enterprise_customer):
     """
     Get the set of variables that are needed by default across views.
     """
     platform_name = get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME)
+    # pylint: disable=no-member
     return {
+        'enterprise_customer': enterprise_customer,
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
         'tagline': get_configuration_value(
@@ -105,6 +107,18 @@ def get_global_context(request):
         'LMS_ROOT_URL': settings.LMS_ROOT_URL,
         'platform_name': platform_name,
         'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
+        'welcome_text': constants.WELCOME_TEXT.format(platform_name=platform_name),
+        'enterprise_welcome_text': constants.ENTERPRISE_WELCOME_TEXT.format(
+            enterprise_customer_name=enterprise_customer.name,
+            platform_name=platform_name,
+            strong_start='<strong>',
+            strong_end='</strong>',
+            line_break='<br/>',
+            privacy_policy_link_start="<a href='{pp_url}' target='_blank'>".format(
+                pp_url=settings.MKTG_URLS.get('PRIVACY', 'https://www.edx.org/edx-privacy-policy'),
+            ),
+            privacy_policy_link_end="</a>",
+        ),
     }
 
 
@@ -211,12 +225,6 @@ class GrantDataSharingPermissions(View):
         end_link='</a>',
     )
     policy_return_link_text = _('Return to Top')
-    welcome_text = _('Welcome to {platform_name}.')
-    enterprise_welcome_text = _(
-        "{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
-        "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
-        "opportunities from the world's best universities."
-    )
     preview_mode = False
 
     def course_or_program_exist(self, course_id, program_uuid):
@@ -232,14 +240,6 @@ class GrantDataSharingPermissions(View):
         Get the set of variables that will populate the template by default.
         """
         context_data = {
-            'enterprise_customer': enterprise_customer,
-            'welcome_text': self.welcome_text.format(platform_name=platform_name),
-            'enterprise_welcome_text': self.enterprise_welcome_text.format(
-                enterprise_customer_name=enterprise_customer.name,
-                platform_name=platform_name,
-                strong_start='<strong>',
-                strong_end='</strong>',
-            ),
             'page_title': self.page_title,
             'consent_message_header': self.consent_message_header,
             'requested_permissions_header': self.requested_permissions_header.format(
@@ -293,7 +293,6 @@ class GrantDataSharingPermissions(View):
         course_title = context.get('course_title', None)
         course_start_date = context.get('course_start_date', None)
         context_data = {
-            'enterprise_customer': enterprise_customer,
             'text_override_available': True,
             'page_title': consent_page.page_title,
             'left_sidebar_text': consent_page.left_sidebar_text.format(
@@ -413,7 +412,7 @@ class GrantDataSharingPermissions(View):
                 raise PermissionDenied()
             enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
 
-        context_data = get_global_context(request)
+        context_data = get_global_context(request, enterprise_customer)
         context_data.update(
             self.get_course_or_program_context(enterprise_customer, course_id=course_id, program_uuid=program_uuid)
         )
@@ -621,14 +620,6 @@ class CourseEnrollmentView(NonAtomicView):
         'course_full_description_text': _('About This Course'),
         'staff_text': _('Course Staff'),
     }
-    WELCOME_TEXT_FORMAT = _('Welcome to {platform_name}.')
-    ENT_WELCOME_TEXT_FORMAT = _(
-        u'You have left the {strong_start}{enterprise_customer_name}{strong_end} website and are now on the '
-        '{platform_name} site. {enterprise_customer_name} has partnered with {platform_name} to offer you '
-        'high-quality, always available learning programs to help you advance your knowledge and career. '
-        '{line_break}Please note that {platform_name} has a different {privacy_policy_link_start}Privacy Policy '
-        '{privacy_policy_link_end} from {enterprise_customer_name}.'
-    )
     ENT_DISCOUNT_TEXT_FORMAT = _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}')
 
     def set_final_prices(self, modes, request):
@@ -769,24 +760,8 @@ class CourseEnrollmentView(NonAtomicView):
         """
         Render enterprise-specific course track selection page.
         """
-        platform_name = get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME)
+        context_data = get_global_context(request, enterprise_customer)
         html_template_for_rendering = 'enterprise/enterprise_course_enrollment_error_page.html'
-        context_data = {
-            'enterprise_customer': enterprise_customer,
-            'welcome_text': self.WELCOME_TEXT_FORMAT.format(platform_name=platform_name),
-            'enterprise_welcome_text': self.ENT_WELCOME_TEXT_FORMAT.format(
-                enterprise_customer_name=enterprise_customer.name,
-                platform_name=platform_name,
-                strong_start='<strong>',
-                strong_end='</strong>',
-                line_break='<br/>',
-                privacy_policy_link_start="<a href='{pp_url}' target='_blank'>".format(
-                    pp_url='https://www.edx.org/edx-privacy-policy'
-                ),
-                privacy_policy_link_end="</a>",
-            )
-        }
-
         if course and course_run:
             course_enrollable = True
             course_start_date = ''
@@ -865,8 +840,6 @@ class CourseEnrollmentView(NonAtomicView):
             html_template_for_rendering = 'enterprise/enterprise_course_enrollment_page.html'
 
         context_data.update(self.STATIC_TEXT_FORMAT)
-        global_context_data = get_global_context(request)
-        context_data.update(global_context_data)
         return render(request, html_template_for_rendering, context=context_data)
 
     @method_decorator(enterprise_login_required)
@@ -1257,7 +1230,7 @@ class ProgramEnrollmentView(NonAtomicView):
 
         # Update our context with the above calculated details and more.
         context_data = self.context_data.copy()
-        context_data.update(get_global_context(request))
+        context_data.update(get_global_context(request, enterprise_customer))
         context_data.update({
             'program_type_description_header': self.context_data['program_type_description_header'].format(
                 platform_name=platform_name,
@@ -1266,7 +1239,6 @@ class ProgramEnrollmentView(NonAtomicView):
             'platform_description_header': self.context_data['platform_description_header'].format(
                 platform_name=platform_name
             ),
-            'enterprise_customer': enterprise_customer,
             'organization_name': organization.get('name'),
             'organization_logo': organization.get('logo_image_url'),
             'organization_text': self.context_data['organization_text'].format(organization=organization.get('name')),

@@ -181,6 +181,15 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
                 'LMS_ROOT_URL': 'http://lms.example.com',
                 'course_start_date': expected_course_start_date,
+                'enterprise_customer': enterprise_customer,
+                'enterprise_welcome_text': (
+                    "You have left the <strong>Starfleet Academy</strong> website and are now on the "
+                    "Test platform site. Starfleet Academy has partnered with Test platform to offer you "
+                    "high-quality, always available learning programs to help you advance your knowledge "
+                    "and career. <br/>Please note that Test platform has a different "
+                    "<a href='https://www.edx.org/edx-privacy-policy' target='_blank'>Privacy Policy </a> "
+                    "from Starfleet Academy."
+                ),
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
@@ -734,6 +743,14 @@ class TestProgramDataSharingPermissions(TestCase):
                 'sharable_items_note_header': 'Please note',
                 "enterprise_customer": enterprise_customer,
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
+                'enterprise_welcome_text': (
+                    "You have left the <strong>Starfleet Academy</strong> website and are now on the "
+                    "Test platform site. Starfleet Academy has partnered with Test platform to offer you "
+                    "high-quality, always available learning programs to help you advance your knowledge "
+                    "and career. <br/>Please note that Test platform has a different "
+                    "<a href='https://www.edx.org/edx-privacy-policy' target='_blank'>Privacy Policy </a> "
+                    "from Starfleet Academy."
+                ),
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
