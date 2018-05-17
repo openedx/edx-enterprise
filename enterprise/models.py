@@ -107,6 +107,12 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Course catalog for the Enterprise Customer.")
     )
     active = models.BooleanField(default=True)
+    hide_course_original_price = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specify whether display the course original price on enterprise course landing page or not."
+        )
+    )
     history = HistoricalRecords()
     site = models.ForeignKey(
         Site,
