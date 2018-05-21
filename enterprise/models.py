@@ -1095,22 +1095,24 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         return set(self.content_filter.get('key', []) + self.content_filter.get('uuid', []))
 
-    def get_paginated_content(self, query_parameters):
+    def get_paginated_content(self, query_parameters, version):
         """
         Return paginated discovery service search results.
 
         Arguments:
             query_parameters (dict): Additional query parameters to add to the search API call, e.g. page.
+            version (str): a version string that `CourseCatalogApiServiceClient` can accept.
         Returns:
             dict: The paginated discovery service search results.
         """
         results = []
         query = self.content_filter.copy()
         query.update(query_parameters)
-        catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
+        catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site, version=version)
         search_results = catalog_client.get_search_results(query, traverse_pagination=False)
         for content in search_results['results']:
-            if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
+            # TODO: Make sure the course run has an enrollable seat
+            if content['content_type'] == 'courserun':
                 results.append(content)
             elif content['content_type'] == 'course':
                 results.append(content)
@@ -1122,7 +1124,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             'next': search_results['next'],
             'previous': search_results['previous'],
             'results': results,
-            }
+        }
 
         return response
 

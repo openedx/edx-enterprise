@@ -192,6 +192,8 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
     the catalog's discovery service search query results.
     """
 
+    COURSE_DISCOVERY_CLIENT_VERSION = 'v1'
+
     def to_representation(self, instance):
         """
         Serialize the EnterpriseCustomerCatalog object.
@@ -208,7 +210,7 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         representation = super(EnterpriseCustomerCatalogDetailSerializer, self).to_representation(instance)
 
         # Retrieve the EnterpriseCustomerCatalog search results from the discovery service.
-        paginated_content = instance.get_paginated_content(request.GET)
+        paginated_content = instance.get_paginated_content(request.GET, version=self.COURSE_DISCOVERY_CLIENT_VERSION)
         count = paginated_content['count']
         search_results = paginated_content['results']
 
