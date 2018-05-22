@@ -34,7 +34,7 @@ def add_consent_declined_message(request, enterprise_customer, item):
             link_start='<a href="{support_link}" target="_blank">'.format(
                 support_link=get_configuration_value(
                     'ENTERPRISE_SUPPORT_URL',
-                    getattr(settings, 'ENTERPRISE_SUPPORT_URL', '')  # Remove the `getattr` when setting is upstreamed.
+                    settings.get('ENTERPRISE_SUPPORT_URL', '')
                 ),
             ),
             platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
@@ -67,7 +67,7 @@ def add_missing_price_information_message(request, item):
             link_start='<a href="{support_link}" target="_blank">'.format(
                 support_link=get_configuration_value(
                     'ENTERPRISE_SUPPORT_URL',
-                    getattr(settings, 'ENTERPRISE_SUPPORT_URL', '')  # Remove the `getattr` when setting is upstreamed.
+                    settings.get('ENTERPRISE_SUPPORT_URL', '')
                 ),
             ),
             platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),

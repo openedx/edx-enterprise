@@ -40,6 +40,11 @@ except ImportError:
     configuration_helpers = None
 
 try:
+    from lms.djangoapps.branding.api import get_url
+except ImportError:
+    get_url = None
+
+try:
     # Try to import identity provider registry if third_party_auth is present
     from third_party_auth.provider import Registry
 except ImportError:
@@ -603,6 +608,13 @@ def get_configuration_value(val_name, default=None, **kwargs):
     Get a configuration value, or fall back to ``default`` if it doesn't exist.
     """
     return configuration_helpers.get_value(val_name, default, **kwargs) if configuration_helpers else default
+
+
+def get_configuration_url(key, default=None):
+    """
+    Get a URL through configuration, or fall back to ``default`` if it doesn't exist.
+    """
+    return get_url(key) or default if callable(get_url) else default
 
 
 def get_request_value(request, key, default=None):

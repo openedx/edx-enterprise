@@ -994,6 +994,20 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         assert utils.get_configuration_value_for_site(SiteFactory(), 'key', 'default') == 'default'
 
+    @mock.patch('enterprise.utils.get_url')
+    def test_get_configuration_url_with_openedx(self, config_mock):
+        """
+        ``get_configuration_url`` returns the appropriate non-default value when connected to Open edX.
+        """
+        config_mock.return_value = 'value'
+        assert utils.get_configuration_url('key', default='default') == 'value'
+
+    def test_get_configuration_url_without_openedx(self):
+        """
+        ``get_configuration_url`` returns a default value of 'default' when not connected to Open edX.
+        """
+        assert utils.get_configuration_url('key', default='default') == 'default'
+
     @ddt.data('GET', 'DELETE')
     def test_get_request_value_query_params(self, method):
         """
