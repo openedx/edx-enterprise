@@ -43,7 +43,6 @@ from enterprise.utils import (
     filter_audit_course_modes,
     format_price,
     get_configuration_value,
-    get_configuration_url,
     get_current_course_run,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
@@ -97,10 +96,10 @@ def get_global_context(request, enterprise_customer):
         'enterprise_customer': enterprise_customer,
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
-        'tagline': get_configuration_value("ENTERPRISE_TAGLINE", settings.get("ENTERPRISE_TAGLINE", '')),
+        'tagline': get_configuration_value("ENTERPRISE_TAGLINE", settings.ENTERPRISE_TAGLINE),
         'platform_description': get_configuration_value(
             "PLATFORM_DESCRIPTION",
-            settings.get("PLATFORM_DESCRIPTION", '')
+            settings.PLATFORM_DESCRIPTION,
         ),
         'LMS_ROOT_URL': settings.LMS_ROOT_URL,
         'platform_name': platform_name,
@@ -113,7 +112,7 @@ def get_global_context(request, enterprise_customer):
             strong_end='</strong>',
             line_break='<br/>',
             privacy_policy_link_start="<a href='{pp_url}' target='_blank'>".format(
-                pp_url=get_configuration_url('PRIVACY', 'https://www.edx.org/edx-privacy-policy'),
+                pp_url=get_configuration_value('PRIVACY', 'https://www.edx.org/edx-privacy-policy', type='url'),
             ),
             privacy_policy_link_end="</a>",
         ),

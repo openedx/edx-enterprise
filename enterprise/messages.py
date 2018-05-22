@@ -32,10 +32,7 @@ def add_consent_declined_message(request, enterprise_customer, item):
             em_end='</em>',
             enterprise_customer_name=enterprise_customer.name,
             link_start='<a href="{support_link}" target="_blank">'.format(
-                support_link=get_configuration_value(
-                    'ENTERPRISE_SUPPORT_URL',
-                    settings.get('ENTERPRISE_SUPPORT_URL', '')
-                ),
+                support_link=get_configuration_value('ENTERPRISE_SUPPORT_URL', settings.ENTERPRISE_SUPPORT_URL),
             ),
             platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
             link_end='</a>',
@@ -65,10 +62,7 @@ def add_missing_price_information_message(request, item):
             em_start='<em>',
             em_end='</em>',
             link_start='<a href="{support_link}" target="_blank">'.format(
-                support_link=get_configuration_value(
-                    'ENTERPRISE_SUPPORT_URL',
-                    settings.get('ENTERPRISE_SUPPORT_URL', '')
-                ),
+                support_link=get_configuration_value('ENTERPRISE_SUPPORT_URL', settings.ENTERPRISE_SUPPORT_URL),
             ),
             platform_name=get_configuration_value('PLATFORM_NAME', settings.PLATFORM_NAME),
             link_end='</a>',
