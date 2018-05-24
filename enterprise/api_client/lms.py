@@ -23,44 +23,17 @@ from enterprise.utils import NotConnectedToOpenEdX
 
 try:
     from student.models import CourseEnrollment
-except ImportError:
-    CourseEnrollment = None
-
-try:
     from openedx.core.djangoapps.embargo import api as embargo_api
-except ImportError:
-    embargo_api = None
-
-try:
     from openedx.core.lib.token_utils import JwtBuilder
 except ImportError:
+    CourseEnrollment = None
+    embargo_api = None
     JwtBuilder = None
 
 
 LOGGER = logging.getLogger(__name__)
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
-
-
-class LmsApiClient(object):
-    """
-    Object builds an API client to make calls to the edxapp LMS API.
-
-    Authenticates using settings.EDX_API_KEY.
-    """
-
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
-    APPEND_SLASH = False
-
-    def __init__(self):
-        """
-        Create an LMS API client, authenticated with the API token from Django settings.
-        """
-        session = Session()
-        session.headers = {"X-Edx-Api-Key": settings.EDX_API_KEY}
-        self.client = EdxRestApiClient(
-            self.API_BASE_URL, append_slash=self.APPEND_SLASH, session=session
-        )
 
 
 class JwtLmsApiClient(object):
@@ -138,7 +111,7 @@ class EmbargoApiClient(object):
                 return redirect_url
 
 
-class EnrollmentApiClient(LmsApiClient):
+class EnrollmentApiClient(object):
     """
     Object builds an API client to make calls to the Enrollment API.
     """
@@ -299,7 +272,7 @@ class EnrollmentApiClient(LmsApiClient):
         return self.client.enrollment.get(user=username)
 
 
-class CourseApiClient(LmsApiClient):
+class CourseApiClient(object):
     """
     Object builds an API client to make calls to the Course API.
     """
@@ -324,7 +297,7 @@ class CourseApiClient(LmsApiClient):
             return None
 
 
-class ThirdPartyAuthApiClient(LmsApiClient):
+class ThirdPartyAuthApiClient(object):
     """
     Object builds an API client to make calls to the Third Party Auth API.
     """
@@ -381,17 +354,13 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         return None
 
 
-class GradesApiClient(JwtLmsApiClient):
+class GradesApiClient(object):
     """
     Object builds an API client to make calls to the LMS Grades API.
 
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/grades/v0/'
-    APPEND_SLASH = True
-
-    @JwtLmsApiClient.refresh_token
     def get_course_grade(self, course_id, username):
         """
         Retrieve the grade for the given username for the given course_id.
@@ -423,17 +392,13 @@ class GradesApiClient(JwtLmsApiClient):
         raise HttpNotFoundError('No grade record found for course={}, username={}'.format(course_id, username))
 
 
-class CertificatesApiClient(JwtLmsApiClient):
+class CertificatesApiClient(object):
     """
     Object builds an API client to make calls to the LMS Certificates API.
 
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/certificates/v0/'
-    APPEND_SLASH = True
-
-    @JwtLmsApiClient.refresh_token
     def get_course_certificate(self, course_id, username):
         """
         Retrieve the certificate for the given username for the given course_id.

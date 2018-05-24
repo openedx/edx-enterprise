@@ -54,12 +54,9 @@ from enterprise.utils import (
 
 try:
     from openedx.core.djangoapps.catalog.utils import get_localized_price_text
-except ImportError:
-    get_localized_price_text = None
-
-try:
     from openedx.core.djangoapps.programs.utils import ProgramDataExtender
 except ImportError:
+    get_localized_price_text = None
     ProgramDataExtender = None
 
 LOGGER = getLogger(__name__)

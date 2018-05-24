@@ -7,12 +7,9 @@ from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 
 try:
     from social_core.pipeline.partial import partial
-except ImportError:
-    from enterprise.decorators import null_decorator as partial  # pylint:disable=ungrouped-imports
-
-try:
     from third_party_auth.provider import Registry
 except ImportError:
+    from enterprise.decorators import null_decorator as partial  # pylint:disable=ungrouped-imports
     Registry = None
 
 

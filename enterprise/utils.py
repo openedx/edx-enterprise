@@ -36,18 +36,11 @@ from enterprise.constants import ALLOWED_TAGS, PROGRAM_TYPE_DESCRIPTION
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-except ImportError:
-    configuration_helpers = None
-
-try:
     from lms.djangoapps.branding.api import get_url
-except ImportError:
-    get_url = None
-
-try:
-    # Try to import identity provider registry if third_party_auth is present
     from third_party_auth.provider import Registry
 except ImportError:
+    configuration_helpers = None
+    get_url = None
     Registry = None
 
 LOGGER = logging.getLogger(__name__)
