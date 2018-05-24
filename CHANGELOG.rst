@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.68.7] - 2018-05-24
+---------------------
+
+* Admin tooling enterprise customer reporting configuration enhancement - Order by Enterprise Customer Name.
+
 [0.68.6] - 2018-05-22
 ---------------------
 
