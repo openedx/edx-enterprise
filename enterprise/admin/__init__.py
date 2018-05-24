@@ -531,6 +531,7 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
 
     list_filter = ("active",)
     search_fields = ("enterprise_customer__name", "email")
+    ordering = ('enterprise_customer__name',)
 
     form = EnterpriseCustomerReportingConfigAdminForm
 
