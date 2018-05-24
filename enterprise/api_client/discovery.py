@@ -25,17 +25,11 @@ from enterprise.utils import (
 
 try:
     from openedx.core.lib.token_utils import JwtBuilder
-except ImportError:
-    JwtBuilder = None
-
-try:
     from openedx.core.djangoapps.catalog.models import CatalogIntegration
-except ImportError:
-    CatalogIntegration = None
-
-try:
     from openedx.core.lib.edx_api_utils import get_edx_api_data
 except ImportError:
+    JwtBuilder = None
+    CatalogIntegration = None
     get_edx_api_data = None
 
 
