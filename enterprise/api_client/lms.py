@@ -11,7 +11,6 @@ from time import time
 
 from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
-from requests import Session
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
@@ -22,13 +21,15 @@ from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
 from enterprise.utils import NotConnectedToOpenEdX
 
 try:
-    from student.models import CourseEnrollment
+    import enrollment
     from openedx.core.djangoapps.embargo import api as embargo_api
     from openedx.core.lib.token_utils import JwtBuilder
+    from student.models import CourseEnrollment
 except ImportError:
-    CourseEnrollment = None
+    enrollment = None
     embargo_api = None
     JwtBuilder = None
+    CourseEnrollment = None
 
 
 LOGGER = logging.getLogger(__name__)
@@ -116,8 +117,6 @@ class EnrollmentApiClient(object):
     Object builds an API client to make calls to the Enrollment API.
     """
 
-    API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
-
     def get_course_details(self, course_id):
         """
         Query the Enrollment API for the course details of the given course_id.
@@ -128,14 +127,7 @@ class EnrollmentApiClient(object):
         Returns:
             dict: A dictionary containing details about the course, in an enrollment context (allowed modes, etc.)
         """
-        try:
-            return self.client.course(course_id).get()
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception(
-                'Failed to retrieve course enrollment details for course [%s] due to: [%s]',
-                course_id, str(exc)
-            )
-            return {}
+        return enrollment.api.get_course_enrollment_details(course_id)
 
     def _sort_course_modes(self, modes):
         """
@@ -201,13 +193,7 @@ class EnrollmentApiClient(object):
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
 
         """
-        return self.client.enrollment.post(
-            {
-                'user': username,
-                'course_details': {'course_id': course_id},
-                'mode': mode,
-            }
-        )
+        return enrollment.api.add_enrollment(username, course_id, mode=mode)
 
     def get_course_enrollment(self, username, course_id):
         """
@@ -221,27 +207,7 @@ class EnrollmentApiClient(object):
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
 
         """
-        endpoint = getattr(
-            self.client.enrollment,
-            '{username},{course_id}'.format(username=username, course_id=course_id)
-        )
-        try:
-            result = endpoint.get()
-        except HttpNotFoundError:
-            # This enrollment data endpoint returns a 404 if either the username or course_id specified isn't valid
-            LOGGER.error(
-                'Course enrollment details not found for invalid username or course; username=[%s], course=[%s]',
-                username,
-                course_id
-            )
-            return None
-        # This enrollment data endpoint returns an empty string if the username and course_id is valid, but there's
-        # no matching enrollment found
-        if not result:
-            LOGGER.info('Failed to find course enrollment details for user [%s] and course [%s]', username, course_id)
-            return None
-
-        return result
+        return enrollment.api.get_enrollment(username, course_id)
 
     def is_enrolled(self, username, course_run_id):
         """
@@ -269,16 +235,13 @@ class EnrollmentApiClient(object):
             list: A list of course objects, along with relevant user-specific enrollment details.
 
         """
-        return self.client.enrollment.get(user=username)
+        return enrollment.api.get_enrollments(username)
 
 
 class CourseApiClient(object):
     """
     Object builds an API client to make calls to the Course API.
     """
-
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
-    APPEND_SLASH = True
 
     def get_course_details(self, course_id):
         """
