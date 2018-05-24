@@ -14,10 +14,10 @@ Change Log
 Unreleased
 ----------
 
-[0.68.6] - 2018-05-22
+[0.68.7] - 2018-05-24
 ---------------------
 
-* Update DSC to show notification interstitial communicating to enterprise learner they are leaving company's site.
+* Admin tooling enterprise customer reporting configuration enhancement - Order by Enterprise Customer Name.
 
 [0.68.5] - 2018-05-17
 ---------------------
