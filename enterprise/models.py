@@ -486,6 +486,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     user_id = models.PositiveIntegerField(null=False, blank=False)
+    active = models.BooleanField(default=True)
 
     objects = EnterpriseCustomerUserManager()
 

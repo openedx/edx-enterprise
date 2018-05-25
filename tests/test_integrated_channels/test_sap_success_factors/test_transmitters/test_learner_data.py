@@ -8,6 +8,7 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import unittest
 
+import ddt
 import mock
 from pytest import mark
 from requests import RequestException
@@ -17,6 +18,7 @@ from integrated_channels.sap_success_factors.transmitters import learner_data
 from test_utils import factories
 
 
+@ddt.ddt
 @mark.django_db
 class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
     """
@@ -27,6 +29,13 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         super(TestSapSuccessFactorsLearnerDataTransmitter, self).setUp()
         self.global_config = factories.SAPSuccessFactorsGlobalConfigurationFactory()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer
+        )
+        self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            id=5,
+            enterprise_customer_user=self.enterprise_customer_user
+        )
         self.enterprise_config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             key="client_id",
@@ -36,7 +45,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             secret="client_secret"
         )
         self.payload = SapSuccessFactorsLearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=5,
+            enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             sapsf_user_id='sap_user',
             course_id='course-v1:edX+DemoX+DemoCourse',
             course_completed=True,
@@ -76,7 +85,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         """
         self.create_course_completion_mock.return_value = 200, '{"success":"true"}'
         payload = SapSuccessFactorsLearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=5,
+            enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             sapsf_user_id='sap_user',
             course_id='course-v1:edX+DemoX+DemoCourse',
             course_completed=True,
@@ -92,11 +101,11 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
 
     def test_transmit_failure(self):
         """
-        Learner data fails for some reason and the payload is saved with the appropriate data.
+        Learner data transmission fails for some reason and the payload is saved with the appropriate data.
         """
         self.create_course_completion_mock.side_effect = RequestException('error occurred')
         payload = SapSuccessFactorsLearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=5,
+            enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             sapsf_user_id='sap_user',
             course_id='course-v1:edX+DemoX+DemoCourse',
             course_completed=True,
@@ -107,5 +116,34 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
         transmitter.transmit(self.exporter(payload))
         self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
+        assert payload.status == '500'
+        assert payload.error_message == 'error occurred'
+
+    @ddt.data(
+        ('user account is inactive', False),
+        ('meh, usual network problem', True)
+    )
+    @ddt.unpack
+    def test_transmit_failure_user_inactive(self, content, ecu_active_expectation):
+        """Learner data transmission fails because the user is inactive on the SAPSF side, so we mark them inactive
+        internally."""
+        self.create_course_completion_mock.side_effect = RequestException(
+            'error occurred',
+            response=mock.MagicMock(content=content),
+        )
+        payload = SapSuccessFactorsLearnerDataTransmissionAudit(
+            enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+            sapsf_user_id='sap_user',
+            course_id='course-v1:edX+DemoX+DemoCourse',
+            course_completed=True,
+            completed_timestamp=1486755998,
+            instructor_name='Professor Professorson',
+            grade='Pass',
+        )
+        transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
+        transmitter.transmit(self.exporter(payload))
+        self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
+        self.enterprise_customer_user.refresh_from_db()
+        assert self.enterprise_customer_user.active == ecu_active_expectation
         assert payload.status == '500'
         assert payload.error_message == 'error occurred'
