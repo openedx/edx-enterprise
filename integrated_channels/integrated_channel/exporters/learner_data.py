@@ -92,6 +92,7 @@ class LearnerExporter(Exporter):
             'enterprise_customer_user'
         ).filter(
             enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            enterprise_customer_user__active=True,
         ).order_by('course_id')
 
         # Fetch course details from the Course API, and cache between calls.
