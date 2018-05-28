@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[0.68.9] - 2018-05-31
+---------------------
+
+* Increased character limit from 20 to 255 for field title in EnterpriseCustomerCatalog model
+* Reorder list display for EnterpriseCustomerCatalogAdmin
+* Add sorting order for EnterpriseCustomerCatalogAdmin
+
 [0.68.8] - 2018-05-30
 ---------------------
 
