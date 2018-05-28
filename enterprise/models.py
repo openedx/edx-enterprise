@@ -1029,7 +1029,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
     )
     title = models.CharField(
         default='All Content',
-        max_length=20,
+        max_length=255,
         blank=False,
         null=False
     )
