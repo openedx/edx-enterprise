@@ -1034,6 +1034,21 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
 
+    def test_title_length(self):
+        """
+        Test `EnterpriseCustomerCatalog.title` field can take 255 characters.
+        """
+        faker = FakerFactory.create()
+        uuid = faker.uuid4()  # pylint: disable=no-member
+        title = 't'*255
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=uuid,
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            title=title
+        )
+        enterprise_catalog.save()
+        assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
+
 
 @mark.django_db
 @ddt.ddt
