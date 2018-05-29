@@ -64,6 +64,7 @@ class CourseCatalogApiClient(object):
     """
 
     SEARCH_ALL_ENDPOINT = 'search/all/'
+    SEARCH_ALL_DETAIL_ENDPOINT = 'search/all/details/'
     CATALOGS_ENDPOINT = 'catalogs'
     CATALOGS_COURSES_ENDPOINT = 'catalogs/{}/courses/'
     COURSES_ENDPOINT = 'courses'
@@ -73,7 +74,7 @@ class CourseCatalogApiClient(object):
 
     DEFAULT_VALUE_SAFEGUARD = object()
 
-    def __init__(self, user, site=None):
+    def __init__(self, user, site=None, version='v1'):
         """
         Create an Course Catalog API client setup with authentication for the specified user.
 
@@ -91,7 +92,10 @@ class CourseCatalogApiClient(object):
                 _("To parse a Catalog API response, this package must be "
                   "installed in an Open edX environment.")
             )
+        if version not in ['v1', 'v2']:
+            raise ImproperlyConfigured(_("The API client version must be either v1 or v2."))
 
+        self.version = version
         self.user = user
         catalog_url = get_configuration_value_for_site(
             site,
@@ -114,7 +118,8 @@ class CourseCatalogApiClient(object):
 
         """
         return self._load_data(
-            self.SEARCH_ALL_ENDPOINT,
+            # TODO: probably needs to be done better, to actually account for 'v2' and what not
+            self.SEARCH_ALL_ENDPOINT if self.version == 'v1' else self.SEARCH_ALL_DETAIL_ENDPOINT,
             default=[],
             querystring=querystring,
             traverse_pagination=traverse_pagination,
@@ -437,7 +442,7 @@ class CourseCatalogApiServiceClient(CourseCatalogApiClient):
     Catalog API client which uses the configured Catalog service user.
     """
 
-    def __init__(self, site=None):
+    def __init__(self, site=None, version='v1'):
         """
         Create an Course Catalog API client setup with authentication for the
         configured catalog service user.
@@ -452,7 +457,7 @@ class CourseCatalogApiServiceClient(CourseCatalogApiClient):
         if catalog_integration.enabled:
             try:
                 user = catalog_integration.get_service_user()
-                super(CourseCatalogApiServiceClient, self).__init__(user, site)
+                super(CourseCatalogApiServiceClient, self).__init__(user, site, version=version)
             except ObjectDoesNotExist:
                 raise ImproperlyConfigured(_("The configured CatalogIntegration service user does not exist."))
         else:
