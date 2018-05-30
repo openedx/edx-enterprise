@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.68.8] - 2018-05-30
+---------------------
+
+* Mark ECU as inactive internally if SAPSF says the ECU is inactive on their side.
+
 [0.68.7] - 2018-05-24
 ---------------------
 
