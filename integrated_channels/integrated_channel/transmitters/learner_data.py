@@ -81,13 +81,13 @@ class LearnerTransmitter(Transmitter):
             except RequestException as request_exception:
                 code = 500
                 body = str(request_exception)
-                self.transmission_error_handler(learner_data, request_exception)
+                self.handle_transmission_error(learner_data, request_exception)
 
             learner_data.status = str(code)
             learner_data.error_message = body if code >= 400 else ''
             learner_data.save()
 
-    def transmission_error_handler(self, learner_data, request_exception):
+    def handle_transmission_error(self, learner_data, request_exception):
         """Handle the case where the transmission fails."""
         try:
             sys_msg = request_exception.response.content

@@ -497,13 +497,15 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCustomerCatalog.
     """
 
+    ordering = ('enterprise_customer__name', 'title')
+
     class Meta(object):
         model = EnterpriseCustomerCatalog
 
     list_display = (
         'uuid',
-        'title',
         'enterprise_customer',
+        'title',
     )
 
     search_fields = (
