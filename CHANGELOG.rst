@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.69.0] - 2018-05-31
+---------------------
+
+* Add a `progress_v2` option in the reporting config to be used for data API fetching.
+
 [0.68.9] - 2018-05-31
 ---------------------
 
