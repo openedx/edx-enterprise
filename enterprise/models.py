@@ -1390,10 +1390,12 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (DELIVERY_METHOD_SFTP, DELIVERY_METHOD_SFTP),
     )
 
-    DATA_TYPE_PROGRESS = 'progress'
+    DATA_TYPE_PROGRESS = 'progress'  # Refers to gathering progress data from Vertica (to be deprecated)
+    DATA_TYPE_PROGRESS_V2 = 'progress_v2'  # Refers to gathering progress data from the Analytics Data API
     DATA_TYPE_CATALOG = 'catalog'
     DATA_TYPE_CHOICES = (
         (DATA_TYPE_PROGRESS, DATA_TYPE_PROGRESS),
+        (DATA_TYPE_PROGRESS_V2, DATA_TYPE_PROGRESS_V2),
         (DATA_TYPE_CATALOG, DATA_TYPE_CATALOG),
     )
 
