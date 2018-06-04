@@ -1410,7 +1410,7 @@ class RouterView(NonAtomicView):
         path = re.sub('{}|{}'.format(enterprise_customer_uuid, re.escape(resource_id)), '{}', request.path)
 
         # Remove course_key from kwargs if it exists because delegate views are not expecting it.
-        # kwargs.pop('course_key', None)
+        kwargs.pop('course_key', None)
 
         return self.VIEWS[path].as_view()(request, *args, **kwargs)
 
