@@ -1404,7 +1404,7 @@ class RouterView(NonAtomicView):
         else:
             raise Http404
 
-    def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id):
+    def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id, course_key=None):
         """
         Return whether a request is eligible for direct audit enrollment for a particular enterprise customer.
 
@@ -1414,9 +1414,12 @@ class RouterView(NonAtomicView):
         - The customer's catalog contains the course in question.
         - The audit track is an available mode for the course.
         """
+
+        course_identifier = course_key or course_run_id
+
         # Return it in one big statement to utilize short-circuiting behavior. Avoid the API call if possible.
         return request.GET.get('audit') and \
-            request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_run_id) and \
+            request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_identifier) and \
             enterprise_customer.catalog_contains_course(course_run_id) and \
             EnrollmentApiClient().has_course_mode(course_run_id, 'audit')
 
@@ -1462,7 +1465,7 @@ class RouterView(NonAtomicView):
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
         resource_id = course_run_id or program_uuid
-        if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
+        if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id, course_key):
             try:
                 enterprise_customer_user.enroll(resource_id, 'audit')
                 track_enrollment('direct-audit-enrollment', request.user.id, resource_id, request.get_full_path())
@@ -1478,6 +1481,7 @@ class RouterView(NonAtomicView):
         """
         Run some custom POST logic for Enterprise workflows before routing the user through existing views.
         """
+        # pylint: disable=unused-variable
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
 
