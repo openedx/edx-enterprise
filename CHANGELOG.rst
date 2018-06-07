@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.69.1] - 2018-06-07
+---------------------
+
+* 500 error when attempting to enroll using course-level URL.
+
 [0.69.0] - 2018-05-31
 ---------------------
 

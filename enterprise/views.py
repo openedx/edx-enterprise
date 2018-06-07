@@ -1383,6 +1383,27 @@ class RouterView(NonAtomicView):
 
         return enterprise_customer_uuid, course_run_id, course_key, program_uuid
 
+    @staticmethod
+    def get_course_run_id(enterprise_customer, course_key):
+        """
+        User is requesting a course, we need to translate that into the current course run.
+
+        :param enterprise_customer:
+        :param course_key:
+        :return: course_run_id
+        """
+        try:
+            course = CourseCatalogApiServiceClient(enterprise_customer.site).get_course_details(course_key)
+        except ImproperlyConfigured:
+            raise Http404
+
+        course_run = get_current_course_run(course)
+        if course_run:
+            course_run_id = course_run['key']
+            return course_run_id
+        else:
+            raise Http404
+
     def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id):
         """
         Return whether a request is eligible for direct audit enrollment for a particular enterprise customer.
@@ -1427,20 +1448,8 @@ class RouterView(NonAtomicView):
         """
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
-
         if course_key:
-            # User is requesting a course, we need to translate that into the current course run.
-            try:
-                course = CourseCatalogApiServiceClient(enterprise_customer.site).get_course_details(course_key)
-            except ImproperlyConfigured:
-                raise Http404
-
-            course_run = get_current_course_run(course)
-            if course_run:
-                course_run_id = course_run['key']
-                kwargs['course_id'] = course_run_id
-            else:
-                raise Http404
+            kwargs['course_id'] = RouterView.get_course_run_id(enterprise_customer, course_key)
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
@@ -1469,4 +1478,11 @@ class RouterView(NonAtomicView):
         """
         Run some custom POST logic for Enterprise workflows before routing the user through existing views.
         """
+        # pylint: disable=unused-variable
+        enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
+
+        if course_key:
+            kwargs['course_id'] = RouterView.get_course_run_id(enterprise_customer, course_key)
+
         return self.redirect(request, *args, **kwargs)
