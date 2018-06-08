@@ -1417,6 +1417,22 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
     def test_channel_code(self):
         assert self.config.channel_code() == 'SAP'
 
+    def test_locales_wo_additional_locales(self):
+        """
+        Verify that ``SAPSuccessFactorsEnterpriseCustomerConfiguration.get_locales`` works without additional_locales
+        """
+        assert self.config.additional_locales == ''
+        assert self.config.get_locales() == set(['English'])
+
+    def test_locales_w_additional_locales(self):
+        """
+        Verify that ``SAPSuccessFactorsEnterpriseCustomerConfiguration.get_locales`` works with additional_locales
+        """
+        self.config.additional_locales = 'Malay,Arabic,English United Kingdom'
+        self.config.save()
+
+        assert self.config.get_locales() == set(['English', 'Malay', 'Arabic', 'English United Kingdom'])
+
 
 @mark.django_db
 @ddt.ddt
