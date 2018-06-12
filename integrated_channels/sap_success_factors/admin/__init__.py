@@ -46,6 +46,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'user_type',
         'has_access_token',
         'transmission_chunk_size',
+        'additional_locales',
     )
 
     list_display = (

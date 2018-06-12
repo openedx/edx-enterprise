@@ -58,23 +58,33 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         """
         Return the title of the content item.
         """
-        return [{
-            'locale': 'English',
-            'value':  content_metadata_item.get('title', '')
-        }]
+        title_with_locales = []
+
+        for locale in self.enterprise_configuration.get_locales():
+            title_with_locales.append({
+                'locale': locale,
+                'value':  content_metadata_item.get('title', '')
+            })
+
+        return title_with_locales
 
     def transform_description(self, content_metadata_item):
         """
         Return the description of the content item.
         """
-        return [{
-            'locale': 'English',
-            'value': (
-                content_metadata_item.get('full_description') or
-                content_metadata_item.get('short_description') or
-                content_metadata_item.get('title', '')
-            )
-        }]
+        description_with_locales = []
+
+        for locale in self.enterprise_configuration.get_locales():
+            description_with_locales.append({
+                'locale': locale,
+                'value': (
+                    content_metadata_item.get('full_description') or
+                    content_metadata_item.get('short_description') or
+                    content_metadata_item.get('title', '')
+                )
+            })
+
+        return description_with_locales
 
     def transform_image(self, content_metadata_item):
         """
