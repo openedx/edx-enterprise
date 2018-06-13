@@ -33,11 +33,13 @@ from enterprise.admin.utils import (
     email_or_username__to__email,
     get_course_runs_from_program,
     get_earliest_start_date_from_program,
+    paginated_list,
     parse_csv,
     split_usernames_and_emails,
     validate_email_to_link,
 )
 from enterprise.api_client.lms import EnrollmentApiClient
+from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -221,7 +223,7 @@ class EnterpriseCustomerManageLearnersView(View):
         enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
 
         search_keyword = self.get_search_keyword(request)
-        linked_learners = self.get_enterprise_customer_user_queryset(search_keyword, customer_uuid)
+        linked_learners = self.get_enterprise_customer_user_queryset(request, search_keyword, customer_uuid)
         pending_linked_learners = self.get_pending_users_queryset(search_keyword, customer_uuid)
 
         context = {
@@ -241,30 +243,28 @@ class EnterpriseCustomerManageLearnersView(View):
         """
         return request.GET.get('q', None)
 
-    def get_enterprise_customer_user_queryset(self, search_keyword, customer_uuid):
+    def get_enterprise_customer_user_queryset(self, request, search_keyword, customer_uuid, page_size=PAGE_SIZE):
         """
         Get the list of EnterpriseCustomerUsers we want to render.
 
-        Args:
+        Arguments:
+            request (HttpRequest): HTTP Request instance.
             search_keyword (str): The keyword to search for in users' email addresses and usernames.
             customer_uuid (str): A unique identifier to filter down to only users linked to a
             particular EnterpriseCustomer.
+            page_size (int): Number of learners displayed in each paginated set.
         """
-        # TODO: Add paging so the admin view does not time out.
-        # For now, we will allow search, but will return an empty list
-        # if no search keyword is provided.
-        learners = []
+        page = request.GET.get('page', 1)
+        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
+        user_ids = learners.values_list('user_id', flat=True)
+        matching_users = User.objects.filter(pk__in=user_ids)
         if search_keyword is not None:
-            learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
-            user_ids = learners.values_list('user_id', flat=True)
-            matching_users = User.objects.filter(
-                Q(pk__in=user_ids),
+            matching_users = matching_users.filter(
                 Q(email__icontains=search_keyword) | Q(username__icontains=search_keyword)
             )
-            matching_user_ids = matching_users.values_list('pk', flat=True)
-            learners = learners.filter(user_id__in=matching_user_ids)
-
-        return learners
+        matching_user_ids = matching_users.values_list('pk', flat=True)
+        learners = learners.filter(user_id__in=matching_user_ids)
+        return paginated_list(learners, page, page_size)
 
     def get_pending_users_queryset(self, search_keyword, customer_uuid):
         """
