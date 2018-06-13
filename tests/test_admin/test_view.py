@@ -2,9 +2,10 @@
 """
 Tests for the `edx-enterprise` admin forms module.
 """
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 import json
+from math import ceil
 
 import ddt
 import mock
@@ -26,6 +27,7 @@ from enterprise.admin import (
 )
 from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
+from enterprise.constants import PAGE_SIZE
 from enterprise.django_compatibility import reverse
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -218,6 +220,31 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
     Tests for EnterpriseCustomerManageLearnersView GET endpoint.
     """
 
+    def _verify_pagination(
+            self,
+            page_object,
+            total_result,
+            page_number=1,
+            page_start=0,
+            page_end=PAGE_SIZE,
+            page_size=PAGE_SIZE
+    ):
+        """
+        Verifies pagination.
+        """
+        # Verify current page details
+        assert page_object.number == page_number
+        assert list(page_object.object_list) == total_result[page_start:page_end]
+
+        # Verify pagination details
+        assert page_object.paginator.count == len(total_result)
+        assert page_object.paginator.per_page == page_size
+
+        # if no record is set, pagination will have 1 empty page i.e showing Page 1 of 1.
+        result_pages = int(ceil(len(total_result) / float(page_size))) if total_result else 1
+        assert page_object.paginator.num_pages == result_pages
+        assert list(page_object.paginator.object_list) == total_result
+
     def _test_get_response(self, response, linked_learners, pending_linked_learners):
         """
         Test view GET response for common parts.
@@ -228,6 +255,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         assert list(response.context[self.context_parameters.PENDING_LEARNERS]) == pending_linked_learners
         assert response.context[self.context_parameters.ENTERPRISE_CUSTOMER] == self.enterprise_customer
         assert not response.context[self.context_parameters.MANAGE_LEARNERS_FORM].is_bound
+        self._verify_pagination(response.context[self.context_parameters.LEARNERS], linked_learners)
 
     def test_get_not_logged_in(self):
         assert settings.SESSION_COOKIE_NAME not in self.client.cookies  # precondition check - no session cookie
@@ -245,28 +273,46 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
     def test_get_existing_links_only(self):
         self._login()
 
-        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
-        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
-        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
-
+        linked_learners = [
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+        ]
         response = self.client.get(self.view_url)
-        # Test existing linked learners are not returned by default (until paging is added).
-        self._test_get_response(response, [], [])
+        self._test_get_response(response, linked_learners, [])
 
     def test_get_existing_and_pending_links(self):
         self._login()
 
-        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
-        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
-        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        linked_learners = [
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+            EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory().id,
+            ),
+        ]
         pending_linked_learners = [
             PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
             PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
         ]
-
         response = self.client.get(self.view_url)
-        # Test existing linked learners are not returned by default (until paging is added).
-        self._test_get_response(response, [], pending_linked_learners)
+        self._test_get_response(response, linked_learners, pending_linked_learners)
 
     def test_get_with_search_param(self):
         self._login()
@@ -316,6 +362,40 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
 
         response = self.client.get(self.view_url + '?q=longstringthatdoesnthappen')
         self._test_get_response(response, [], [])
+
+    @ddt.data(
+        (1, 0, 25),
+        (2, 25, 50),
+        (3, 50, 75)
+    )
+    @ddt.unpack
+    def test_get_pagination(self, current_page_number, page_start, page_end):
+        """
+        Test pagination for linked learners list works expectedly.
+        """
+        self._login()
+        linked_learners = []
+        for i in range(0, 250):
+            learner = EnterpriseCustomerUserFactory(
+                enterprise_customer=self.enterprise_customer,
+                user_id=UserFactory(
+                    username='user{user_index}'.format(user_index=i),
+                    id=i + 10,  # Just to make sure we don't get IntegrityError.
+                ).id
+            )
+            linked_learners.append(learner)
+
+        # Verify we get the paginated result for correct page.
+        response = self.client.get('{view_url}?page={page_number}'.format(
+            view_url=self.view_url, page_number=current_page_number
+        ))
+        self._verify_pagination(
+            response.context[self.context_parameters.LEARNERS],
+            linked_learners,
+            page_number=current_page_number,
+            page_start=page_start,
+            page_end=page_end
+        )
 
 
 @ddt.ddt

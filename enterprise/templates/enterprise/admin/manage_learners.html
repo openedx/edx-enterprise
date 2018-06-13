@@ -86,8 +86,6 @@ global Javascript variables that can be used in any of the loaded packages.
                  id="searchbar"
                  placeholder="{% trans 'Search email address or username' %}">
           <input type="submit" value="Search">
-          <!-- TODO: Remove this message when paging is added to this list. -->
-          <label>You must enter a search keyword to list linked learners.</label>
         </div>
       </form>
     </div>
@@ -120,7 +118,20 @@ global Javascript variables that can be used in any of the loaded packages.
       {% endfor %}
       </tbody>
     </table>
-
+    {% if learners.has_other_pages %}
+      <p class="paginator">
+        {% for page_number in learners.paginator.page_range %}
+          {% if page_number == '.' %}
+          ...
+          {% elif learners.number == page_number %}
+          <span class="this-page">{{ page_number }}</span>
+          {% else %}
+          <a href="?page={{ page_number }}">{{ page_number }}</a>
+          {% endif %}
+        {% endfor %}
+        {{ learners.paginator.count }} learner{{ learners.paginator.count|pluralize}}
+      </p>
+    {% endif %}
     <h1>Pending linked learners</h1>
     <table class="learners-table pending-linked-learners">
       <thead>
