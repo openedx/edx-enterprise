@@ -96,6 +96,33 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         verbose_name="SAP User Type",
         help_text=_("Type of SAP User (admin or user).")
     )
+    additional_locales = models.TextField(
+        blank=True,
+        default='',
+        verbose_name="Additional Locales",
+        help_text=_("A comma-separated list of additional locales.")
+    )
+
+    def get_locales(self, default_locale=None):
+        """
+        Get the list of all(default + additional) locales
+
+        Args:
+            default_locale (str): Value of the default locale
+
+        Returns:
+            list: available locales
+        """
+        locales = []
+
+        if default_locale is None:
+            locales.append('English')
+        else:
+            locales.append(default_locale)
+
+        return set(
+            locales + [locale for locale in self.additional_locales.split(",") if locale]
+        )
 
     class Meta:
         app_label = 'sap_success_factors'
