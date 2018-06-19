@@ -18,7 +18,6 @@ from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.urlresolvers import reverse
-from django.core.paginator import EmptyPage, Paginator, PageNotAnInteger
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -38,6 +37,9 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
+
+from enterprise.admin.paginator import EmptyPage, Paginator, PageNotAnInteger
+
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -251,11 +253,15 @@ class EnterpriseCustomerManageLearnersView(View):
             customer_uuid (str): A unique identifier to filter down to only users linked to a
             particular EnterpriseCustomer.
         """
-        paginate_by = 10
-        page = request.GET.get('p', 1)
-        all_learners = request.GET.get('all', None)
+        DOT = '.'
+        ON_EACH_SIDE = 3
+        ON_ENDS = 2
 
-        if all_learners or search_keyword is None:
+        paginate_by = 1
+        page = request.GET.get('p', 1)
+        show_all = request.GET.get('all', None)
+
+        if show_all or search_keyword is None:
             learners = EnterpriseCustomerUser.objects.all()
         else:
             learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
@@ -267,7 +273,8 @@ class EnterpriseCustomerManageLearnersView(View):
             matching_user_ids = matching_users.values_list('pk', flat=True)
             learners = learners.filter(user_id__in=matching_user_ids)
 
-        if all_learners is None:
+        pagination_required = show_all is None
+        if pagination_required:
             paginator = Paginator(learners, paginate_by)
             try:
                 learners = paginator.page(page)
@@ -275,6 +282,30 @@ class EnterpriseCustomerManageLearnersView(View):
                 learners = paginator.page(1)
             except EmptyPage:
                 learners = paginator.page(paginator.num_pages)
+
+            page_range = []
+            page_num = learners.number
+
+            # If there are 10 or fewer pages, display links to every page.
+            # Otherwise, do some fancy
+            if paginator.num_pages <= paginate_by:
+                page_range = range(paginator.num_pages)
+            else:
+                # Insert "smart" pagination links, so that there are always ON_ENDS
+                # links at either end of the list of pages, and there are always
+                # ON_EACH_SIDE links at either end of the "current page" link.
+                if page_num > (ON_EACH_SIDE + ON_ENDS):
+                    page_range += [i for i in range(0, ON_ENDS)] + [DOT]
+                    page_range += [i for i in range(page_num - ON_EACH_SIDE, page_num + 1)]
+                else:
+                    page_range.extend(range(0, page_num + 1))
+                if page_num < (paginator.num_pages - ON_EACH_SIDE - ON_ENDS - 1):
+                    page_range += [i for i in range(page_num + 1, page_num + ON_EACH_SIDE + 1)] + [DOT]
+                    page_range += [i for i in range(paginator.num_pages - ON_ENDS, paginator.num_pages)]
+                else:
+                    page_range.extend(range(page_num + 1, paginator.num_pages))
+
+                learners.paginator.page_range = page_range
         return learners
 
     def get_pending_users_queryset(self, search_keyword, customer_uuid):

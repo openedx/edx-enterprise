@@ -121,13 +121,16 @@ global Javascript variables that can be used in any of the loaded packages.
     {% if learners.has_other_pages %}
       <p class="paginator">
         {% for i in learners.paginator.page_range %}
-          {% if learners.number == i %}
+          {% if i == '.' %}
+          ...
+          {% elif learners.number == i %}
           <span class="this-page"> {{ i }}</span>
           {% else %}
           <a href="?p={{ i }}">{{ i }}</a>
           {% endif %}
         {% endfor %}
-        {{learners.paginator.count}} learners <a href="?all=" class="showall">Show all</a>
+        {{learners.paginator.count}} learners
+        <a href="?all=" class="showall">Show all</a>
       </p>
     {% endif %}
     <h1>Pending linked learners</h1>
