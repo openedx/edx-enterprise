@@ -1404,21 +1404,24 @@ class RouterView(NonAtomicView):
         else:
             raise Http404
 
-    def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id):
+    def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, resource_id, course_key=None):
         """
         Return whether a request is eligible for direct audit enrollment for a particular enterprise customer.
 
+        'resource_id' can be either course_run_id or program_uuid.
         We check for the following criteria:
         - The `audit` query parameter.
         - The user's being routed to the course enrollment landing page.
         - The customer's catalog contains the course in question.
         - The audit track is an available mode for the course.
         """
+        course_identifier = course_key or resource_id
+
         # Return it in one big statement to utilize short-circuiting behavior. Avoid the API call if possible.
         return request.GET.get('audit') and \
-            request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_run_id) and \
-            enterprise_customer.catalog_contains_course(course_run_id) and \
-            EnrollmentApiClient().has_course_mode(course_run_id, 'audit')
+            request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_identifier) and \
+            enterprise_customer.catalog_contains_course(resource_id) and \
+            EnrollmentApiClient().has_course_mode(resource_id, 'audit')
 
     def redirect(self, request, *args, **kwargs):
         """
@@ -1462,7 +1465,7 @@ class RouterView(NonAtomicView):
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
         resource_id = course_run_id or program_uuid
-        if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
+        if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id, course_key):
             try:
                 enterprise_customer_user.enroll(resource_id, 'audit')
                 track_enrollment('direct-audit-enrollment', request.user.id, resource_id, request.get_full_path())

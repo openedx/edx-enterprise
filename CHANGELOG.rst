@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.69.2] - 2018-06-18
+---------------------
+
+* Fix the Direct-to-Audit enrollment issue in case of course.
+
 [0.69.1] - 2018-06-07
 ---------------------
 
