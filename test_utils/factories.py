@@ -38,6 +38,7 @@ from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsGlobalConfiguration,
     SapSuccessFactorsLearnerDataTransmissionAudit,
 )
+from integrated_channels.xapi.models import XAPILRSConfiguration
 
 FAKER = FakerFactory.create()
 
@@ -492,3 +493,25 @@ class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFacto
     course_completed = True
     completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     status = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class XAPILRSConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``XAPILRSConfiguration`` factory.
+
+    Creates an instance of ``XAPILRSConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``XAPILRSConfiguration``.
+        """
+
+        model = XAPILRSConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    version = '1.0.1'
+    endpoint = factory.LazyAttribute(lambda x: FAKER.url())
+    key = factory.LazyAttribute(lambda x: FAKER.slug())
+    secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
+    active = True

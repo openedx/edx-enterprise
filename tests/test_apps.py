@@ -117,3 +117,22 @@ class TestDegreedConfig(unittest.TestCase):
 
     def test_name(self):
         assert self.app_config.name == 'degreed'
+
+
+@mark.django_db
+class TestXAPIConfig(unittest.TestCase):
+    """
+    Test integrated_channels.xapi app config.
+    """
+
+    def setUp(self):
+        """
+        Set up test environment
+        """
+        super(TestXAPIConfig, self).setUp()
+        self.app_config = integrated_channels.xapi.apps.XAPIConfig(
+            'xapi', integrated_channels.xapi
+        )
+
+    def test_name(self):
+        assert self.app_config.name == 'xapi'
