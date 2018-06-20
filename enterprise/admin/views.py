@@ -244,16 +244,18 @@ class EnterpriseCustomerManageLearnersView(View):
         """
         return request.GET.get('q', None)
 
-    def get_enterprise_customer_user_queryset(self, request, search_keyword, customer_uuid):
+    def get_enterprise_customer_user_queryset(self, request, search_keyword, customer_uuid, page_size=10):
         """
         Get the list of EnterpriseCustomerUsers we want to render.
 
-        Args:
+        Arguments:
+            request (HttpRequest): HTTP Request instance.
             search_keyword (str): The keyword to search for in users' email addresses and usernames.
             customer_uuid (str): A unique identifier to filter down to only users linked to a
             particular EnterpriseCustomer.
+            page_size (int): Number of learners displayed in each paginated set.
         """
-        page = request.GET.get('p', 1)
+        page = request.GET.get('page', 1)
         show_all = request.GET.get('all', None)
 
         if show_all or search_keyword is None:
@@ -268,7 +270,10 @@ class EnterpriseCustomerManageLearnersView(View):
             matching_user_ids = matching_users.values_list('pk', flat=True)
             learners = learners.filter(user_id__in=matching_user_ids)
 
-        return paginated_list(learners, page, show_all)
+        if show_all is None:
+            learners = paginated_list(learners, page, page_size)
+
+        return learners
 
     def get_pending_users_queryset(self, search_keyword, customer_uuid):
         """

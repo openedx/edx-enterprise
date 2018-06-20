@@ -7,8 +7,7 @@ from django.core.paginator import EmptyPage, Page, InvalidPage, PageNotAnInteger
 
 class Paginator(object):
     """
-    Adopted from django/core/paginator. We needed to override page_range property so as to implement
-    smart links pagination in custom views.
+    Adopted from django/core/paginator so as to implement smart links pagination in custom views.
     """
 
     def __init__(self, object_list, per_page, orphans=0,
