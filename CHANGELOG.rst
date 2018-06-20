@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.69.3] - 2018-06-20
+---------------------
+
+* Add and transmit customer specific locales so that SuccessFactors show course title and description.
+
 [0.69.2] - 2018-06-18
 ---------------------
 
