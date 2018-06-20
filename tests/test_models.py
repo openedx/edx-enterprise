@@ -1432,18 +1432,29 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
     def test_channel_code(self):
         assert self.config.channel_code() == 'SAP'
 
-    def test_locales_wo_additional_locales(self):
+    @ddt.data(
+        {
+            'default_locale': None,
+            'expected_locale': u'English'
+        },
+        {
+            'default_locale': u'Spanish',
+            'expected_locale': u'Spanish'
+        },
+    )
+    @ddt.unpack
+    def test_locales_wo_additional_locales(self, default_locale, expected_locale):
         """
         Verify that ``SAPSuccessFactorsEnterpriseCustomerConfiguration.get_locales`` works without additional_locales
         """
         assert self.config.additional_locales == ''
-        assert self.config.get_locales() == set(['English'])
+        assert self.config.get_locales(default_locale) == set([expected_locale])
 
     def test_locales_w_additional_locales(self):
         """
         Verify that ``SAPSuccessFactorsEnterpriseCustomerConfiguration.get_locales`` works with additional_locales
         """
-        self.config.additional_locales = 'Malay,Arabic,English United Kingdom'
+        self.config.additional_locales = 'Malay,     Arabic,English United Kingdom,   '
         self.config.save()
 
         assert self.config.get_locales() == set(['English', 'Malay', 'Arabic', 'English United Kingdom'])

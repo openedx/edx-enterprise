@@ -121,7 +121,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             locales.append(default_locale)
 
         return set(
-            locales + [locale for locale in self.additional_locales.split(",") if locale]
+            locales + [locale.strip() for locale in self.additional_locales.split(",") if locale.strip()]
         )
 
     class Meta:
