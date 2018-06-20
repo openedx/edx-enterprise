@@ -19,7 +19,6 @@ class Paginator(object):
         self._num_pages = self._count = None
         self.page_range = []
 
-
     def validate_number(self, number):
         """
         Validates the given 1-based page number.

@@ -13,7 +13,6 @@ from django.core.paginator import EmptyPage, InvalidPage, PageNotAnInteger
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
-
 from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCustomerUser
 
@@ -259,16 +258,16 @@ def paginated_list(object_list, page, page_size=10):
         # Insert "smart" pagination links, so that there are always ON_ENDS
         # links at either end of the list of pages, and there are always
         # ON_EACH_SIDE links at either end of the "current page" link.
-        if page_num > (ON_EACH_SIDE + ON_ENDS):
-            page_range += [i for i in range(0, ON_ENDS)] + [DOT]
+        if page_num > (ON_EACH_SIDE + ON_ENDS + 1):
+            page_range += [i for i in range(1, ON_ENDS + 1)] + [DOT]
             page_range += [i for i in range(page_num - ON_EACH_SIDE, page_num + 1)]
         else:
-            page_range.extend(range(0, page_num + 1))
-        if page_num < (paginator.num_pages - ON_EACH_SIDE - ON_ENDS - 1):
+            page_range.extend(range(1, page_num + 1))
+        if page_num < (paginator.num_pages - ON_EACH_SIDE - ON_ENDS):
             page_range += [i for i in range(page_num + 1, page_num + ON_EACH_SIDE + 1)] + [DOT]
-            page_range += [i for i in range(paginator.num_pages - ON_ENDS, paginator.num_pages)]
+            page_range += [i for i in range(paginator.num_pages + 1 - ON_ENDS, paginator.num_pages + 1)]
         else:
-            page_range.extend(range(page_num + 1, paginator.num_pages))
+            page_range.extend(range(page_num + 1, paginator.num_pages + 1))
 
         # Override page range to implement custom smart links.
         object_list.paginator.page_range = page_range
