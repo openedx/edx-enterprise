@@ -1415,7 +1415,7 @@ class RouterView(NonAtomicView):
         - The customer's catalog contains the course in question.
         - The audit track is an available mode for the course.
         """
-        course_identifier = course_key or resource_id
+        course_identifier = course_key if course_key else resource_id
 
         # Return it in one big statement to utilize short-circuiting behavior. Avoid the API call if possible.
         return request.GET.get('audit') and \
@@ -1452,7 +1452,8 @@ class RouterView(NonAtomicView):
         enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
         if course_key:
-            kwargs['course_id'] = RouterView.get_course_run_id(enterprise_customer, course_key)
+            course_run_id = RouterView.get_course_run_id(enterprise_customer, course_key)
+            kwargs['course_id'] = course_run_id
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
