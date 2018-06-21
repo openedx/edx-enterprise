@@ -16,7 +16,7 @@ from django.utils.translation import ugettext as _
 from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCustomerUser
 
-from enterprise.admin.paginator import Paginator
+from enterprise.admin.paginator import CustomPaginator
 
 
 class ProgramStatuses(object):
@@ -239,7 +239,7 @@ def paginated_list(object_list, page, page_size=10):
     ON_EACH_SIDE = 3
     ON_ENDS = 2
 
-    paginator = Paginator(object_list, page_size)
+    paginator = CustomPaginator(object_list, page_size)
     try:
         object_list = paginator.page(page)
     except PageNotAnInteger:
