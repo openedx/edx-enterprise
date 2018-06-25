@@ -27,39 +27,49 @@ def process_catalog_results(results, course_keys):
     for course in results:
         for course_run in course['course_runs']:
             # is the end date already in the past?
+            include_course = True
             if course_run['end']:
                 try:
                     end_date = datetime.datetime.strptime(course_run['end'], '%Y-%m-%dT%H:%M:%SZ')
                     if end_date < datetime.datetime.now():
-                        break
+                        #LOGGER.info('Excluding {} because end date in the past'.format(course_run['key']))
+                        include_course = False
                 except ValueError:
                     LOGGER.exception('Unable to parse end date {} for course {}'.format(
                         course_run['end'], course_run['key']
                     ))
 
             verified_seat = None
+            #LOGGER.info('Course seats: {}'.format(course_run['seats']))
             for seat in course_run['seats']:
-                if seat['type'] == 'verified':
+                if seat['type'] in ['verified', 'professional', 'no-id-professional']:
                     verified_seat = seat
                     break
 
             # is there a verified seat?
             if not verified_seat:
-                break
+                #LOGGER.info('Excluding {} because no verified seat'.format(course_run['key']))
+                include_course = False
             # if that verified seat has an upgrade deadline, is it in the past?
             elif verified_seat and verified_seat['upgrade_deadline']:
                 try:
                     upgrade_deadline = datetime.datetime.strptime(verified_seat['upgrade_deadline'], '%Y-%m-%dT%H:%M:%SZ')
                     if upgrade_deadline < datetime.datetime.now():
-                        break
+                        #LOGGER.info('Excluding {} because upgrade deadline in the past'.format(course_run['key']))
+                        include_course = False
                 except ValueError:
                     LOGGER.exception('Unable to parse upgrade deadline date {} for course {}'.format(
                         verified_seat['upgrade_deadline'], course_run['key']
                     ))
 
             # this course should get an enrollment code!
-            LOGGER.info(course_run['key'])
-            course_keys.append(course_run['key'])
+            if include_course:
+                LOGGER.info('course: {}, mode: {}, bulk sku: {}'.format(
+                    course_run['key'],
+                    verified_seat['type'],
+                    verified_seat['bulk_sku']
+                ))
+                course_keys.append(course_run['key'])
 
 
 
