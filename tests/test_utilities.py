@@ -129,6 +129,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "modified",
                 "uuid",
                 "name",
+                "slug",
                 "catalog",
                 "active",
                 "hide_course_original_price",
