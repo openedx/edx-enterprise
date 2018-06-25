@@ -31,5 +31,15 @@ jsonfield==2.0.2                        # Provides a Django model field which se
 flaky==3.3.0                            # Rerun flaky tests automatically if they fail, up to a limit
 analytics-python==1.1.0                 # Used for Segment analytics
 event-tracking==0.2.4                   # Tracks context-aware semi-structured system events
+
+# These are packages that edx-enterprise uses that are pinned to previous versions in edx-platform.
+# We pin them here to make sure our tests are installing the same requirements
+# as the environment the production code will have.
+
 django-ipware==1.1.0
 bleach==1.4
+html5lib==0.999
+diff-cover==0.9.8
+path.py==8.2.1
+python-dateutil==2.4.0
+pytz==2016.10
