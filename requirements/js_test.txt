@@ -20,4 +20,4 @@ pytz==2018.4              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.6.0           # via jasmine
 six==1.11.0               # via cheroot, cherrypy, jasmine, more-itertools, tempora
-tempora==1.11             # via portend
+tempora==1.12             # via portend

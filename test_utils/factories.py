@@ -77,6 +77,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     name = factory.LazyAttribute(lambda x: FAKER.company())
+    slug = factory.LazyAttribute(lambda x: FAKER.slug())
     active = True
     site = factory.SubFactory(SiteFactory)
     catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
