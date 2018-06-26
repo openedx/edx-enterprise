@@ -123,7 +123,7 @@ sphinxcontrib-websupport==1.1.0  # via sphinx
 stevedore==1.28.0         # via doc8, edx-opaque-keys
 testfixtures==6.2.0
 text-unidecode==1.2       # via faker
-tox-battery==0.5
+tox-battery==0.5.1
 tox==3.0.0
 tqdm==4.23.4              # via twine
 twine==1.11.0

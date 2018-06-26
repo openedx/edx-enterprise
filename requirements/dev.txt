@@ -93,7 +93,7 @@ slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.28.0         # via edx-opaque-keys
 testfixtures==6.2.0
-tox-battery==0.5
+tox-battery==0.5.1
 tox==3.0.0
 tqdm==4.23.4              # via twine
 twine==1.11.0

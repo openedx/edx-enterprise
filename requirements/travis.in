@@ -2,4 +2,4 @@
 
 codecov                   # Code coverage reporting
 tox                       # Virtualenv management for tests
-tox-battery==0.2.0        # Makes tox aware of requirements file changes
+tox-battery==0.5.1        # Makes tox aware of requirements file changes

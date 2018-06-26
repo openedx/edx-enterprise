@@ -539,7 +539,8 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
                 'site': customer.site.id,
                 'name': customer.name,
-                'active': customer.active
+                'active': customer.active,
+                'slug': customer.slug,
             },
             instance=customer,
         )
@@ -571,7 +572,8 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
                 'site': customer.site.id,
                 'name': customer.name,
-                'active': customer.active
+                'active': customer.active,
+                'slug': customer.slug,
             },
             instance=customer,
         )

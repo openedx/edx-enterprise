@@ -101,6 +101,13 @@ class EnterpriseCustomer(TimeStampedModel):
 
     uuid = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     name = models.CharField(max_length=255, blank=False, null=False, help_text=_("Enterprise Customer name."))
+    slug = models.SlugField(
+        max_length=30, unique=True, default='default',
+        help_text=(
+            'A short string uniquely identifying this enterprise. '
+            'Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"'
+        )
+    )
     catalog = models.PositiveIntegerField(
         null=True,
         blank=True,
