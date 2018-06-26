@@ -116,6 +116,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
     list_display = (
         'name',
+        'slug',
         'site',
         'active',
         'has_logo',
