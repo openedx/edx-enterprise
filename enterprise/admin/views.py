@@ -33,14 +33,14 @@ from enterprise.admin.utils import (
     email_or_username__to__email,
     get_course_runs_from_program,
     get_earliest_start_date_from_program,
+    paginated_list,
     parse_csv,
     split_usernames_and_emails,
     validate_email_to_link,
 )
 
-from enterprise.admin.utils import paginated_list
-
 from enterprise.api_client.lms import EnrollmentApiClient
+from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -244,7 +244,7 @@ class EnterpriseCustomerManageLearnersView(View):
         """
         return request.GET.get('q', None)
 
-    def get_enterprise_customer_user_queryset(self, request, search_keyword, customer_uuid, page_size=10):
+    def get_enterprise_customer_user_queryset(self, request, search_keyword, customer_uuid, page_size=PAGE_SIZE):
         """
         Get the list of EnterpriseCustomerUsers we want to render.
 
@@ -256,24 +256,16 @@ class EnterpriseCustomerManageLearnersView(View):
             page_size (int): Number of learners displayed in each paginated set.
         """
         page = request.GET.get('page', 1)
-        show_all = request.GET.get('all', None)
-
-        if show_all or search_keyword is None:
-            learners = EnterpriseCustomerUser.objects.all()
-        else:
-            learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
-            user_ids = learners.values_list('user_id', flat=True)
-            matching_users = User.objects.filter(
-                Q(pk__in=user_ids),
+        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
+        user_ids = learners.values_list('user_id', flat=True)
+        matching_users = User.objects.filter(pk__in=user_ids)
+        if search_keyword is not None:
+            matching_users = matching_users.filter(
                 Q(email__icontains=search_keyword) | Q(username__icontains=search_keyword)
             )
-            matching_user_ids = matching_users.values_list('pk', flat=True)
-            learners = learners.filter(user_id__in=matching_user_ids)
-
-        if show_all is None:
-            learners = paginated_list(learners, page, page_size)
-
-        return learners
+        matching_user_ids = matching_users.values_list('pk', flat=True)
+        learners = learners.filter(user_id__in=matching_user_ids)
+        return paginated_list(learners, page, page_size)
 
     def get_pending_users_queryset(self, search_keyword, customer_uuid):
         """

@@ -130,7 +130,6 @@ global Javascript variables that can be used in any of the loaded packages.
           {% endif %}
         {% endfor %}
         {{ learners.paginator.count }} learner{{ learners.paginator.count|pluralize}}
-        {% if learners.paginator.num_pages <= 10 %}<a href="?all=" class="showall">Show all</a>{% endif %}
       </p>
     {% endif %}
     <h1>Pending linked learners</h1>

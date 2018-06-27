@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.0] - 2018-06-26
+---------------------
+
+* Add unique slug field to EnterpriseCustomer.
+
 [0.69.6] - 2018-06-25
 ---------------------
 

@@ -8,15 +8,17 @@ import unicodecsv
 
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-
-from django.core.paginator import EmptyPage, InvalidPage, PageNotAnInteger
+from django.core.paginator import EmptyPage, PageNotAnInteger
 from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
+from enterprise.admin.paginator import CustomPaginator
 from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCustomerUser
 
-from enterprise.admin.paginator import CustomPaginator
+DOT = '.'
+PAGES_ON_EACH_SIDE = 3
+PAGES_ON_ENDS = 2
 
 
 class ProgramStatuses(object):
@@ -221,8 +223,8 @@ def split_usernames_and_emails(email_field):
     """
     return [name.strip() for name in email_field.split(',')]
 
-
-def paginated_list(object_list, page, page_size=10):
+# pylint: disable=range-builtin-not-iterating
+def paginated_list(object_list, page, page_size=25):
     """
     Returns paginated list.
 
@@ -233,12 +235,8 @@ def paginated_list(object_list, page, page_size=10):
         show_all (bool): Whether to show all records.
 
     Adopted from django/contrib/admin/templatetags/admin_list.py
-    https://github.com/django/django/blob/94a180402c9e52bca2e911b6427c88f436e95449/django/contrib/admin/templatetags/admin_list.py#L45
+    https://github.com/django/django/blob/1.11.1/django/contrib/admin/templatetags/admin_list.py#L50
     """
-    DOT = '.'
-    ON_EACH_SIDE = 3
-    ON_ENDS = 2
-
     paginator = CustomPaginator(object_list, page_size)
     try:
         object_list = paginator.page(page)
@@ -258,14 +256,16 @@ def paginated_list(object_list, page, page_size=10):
         # Insert "smart" pagination links, so that there are always ON_ENDS
         # links at either end of the list of pages, and there are always
         # ON_EACH_SIDE links at either end of the "current page" link.
-        if page_num > (ON_EACH_SIDE + ON_ENDS + 1):
-            page_range += [i for i in range(1, ON_ENDS + 1)] + [DOT]
-            page_range += [i for i in range(page_num - ON_EACH_SIDE, page_num + 1)]
+        if page_num > (PAGES_ON_EACH_SIDE + PAGES_ON_ENDS + 1):
+            page_range.extend(range(1, PAGES_ON_ENDS + 1))
+            page_range.append(DOT)
+            page_range.extend(range(page_num - PAGES_ON_EACH_SIDE, page_num + 1))
         else:
             page_range.extend(range(1, page_num + 1))
-        if page_num < (paginator.num_pages - ON_EACH_SIDE - ON_ENDS):
-            page_range += [i for i in range(page_num + 1, page_num + ON_EACH_SIDE + 1)] + [DOT]
-            page_range += [i for i in range(paginator.num_pages + 1 - ON_ENDS, paginator.num_pages + 1)]
+        if page_num < (paginator.num_pages - PAGES_ON_EACH_SIDE - PAGES_ON_ENDS):
+            page_range.extend(range(page_num + 1, page_num + PAGES_ON_EACH_SIDE + 1))
+            page_range.append(DOT)
+            page_range.extend(range(paginator.num_pages + 1 - PAGES_ON_ENDS, paginator.num_pages + 1))
         else:
             page_range.extend(range(page_num + 1, paginator.num_pages + 1))
 
