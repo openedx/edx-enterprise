@@ -44,6 +44,8 @@ COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'aud
 # Course modes that should not be displayed to users.
 EXCLUDED_COURSE_MODES = ['credit']
 
+# Number of records to display in each paginated set.
+PAGE_SIZE = 25
 
 PROGRAM_TYPE_DESCRIPTION = {
     'MicroMasters Certificate': _(
