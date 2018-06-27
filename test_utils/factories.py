@@ -18,6 +18,7 @@ from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
+    EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerEntitlement,
     EnterpriseCustomerIdentityProvider,
@@ -205,7 +206,7 @@ class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):
     EnterpriseCustomerEntitlement factory.
 
     Creates an instance of EnterpriseCustomerEntitlement with minimal boilerplate - uses this class' attributes as
-    default parameters for EnterpriseCustomerBrandingFactory constructor.
+    default parameters for EnterpriseCustomerEntitlementFactory constructor.
     """
 
     class Meta(object):
@@ -217,6 +218,26 @@ class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):
 
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+
+class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCustomerBrandingConfiguration factory.
+
+    Creates an instance of EnterpriseCustomerBrandingConfiguration with minimal boilerplate - uses this class'
+     attributes as default parameters for EnterpriseCustomerBrandingFactory constructor.
+    """
+
+    class Meta(object):
+        """
+        Meta for EnterpriseCustomerBrandingConfigurationFactory.
+        """
+
+        model = EnterpriseCustomerBrandingConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    logo = factory.LazyAttribute(lambda x: FAKER.image_url())
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
 

@@ -81,8 +81,16 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
     class Meta:
         model = models.EnterpriseCustomerBrandingConfiguration
         fields = (
-            'enterprise_customer', 'logo'
+            'enterprise_customer', 'enterprise_slug', 'logo'
         )
+
+    enterprise_slug = serializers.SerializerMethodField()
+
+    def get_enterprise_slug(self, obj):
+        """
+        Return the slug of the associated enterprise customer.
+        """
+        return obj.enterprise_customer.slug
 
 
 class EnterpriseCustomerEntitlementSerializer(serializers.ModelSerializer):
@@ -105,9 +113,9 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomer
         fields = (
-            'uuid', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent', 'enforce_data_sharing_consent',
-            'branding_configuration', 'enterprise_customer_entitlements', 'identity_provider',
-            'enable_audit_enrollment', 'replace_sensitive_sso_username',
+            'uuid', 'name', 'slug', 'catalog', 'active', 'site', 'enable_data_sharing_consent',
+            'enforce_data_sharing_consent', 'branding_configuration', 'enterprise_customer_entitlements',
+            'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
         )
 
     site = SiteSerializer()
