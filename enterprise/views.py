@@ -626,7 +626,12 @@ class CourseEnrollmentView(NonAtomicView):
         result = []
         for mode in modes:
             if mode['premium']:
-                mode['final_price'] = EcommerceApiClient(request.user).get_course_final_price(mode)
+                mode['final_price'] = EcommerceApiClient(request.user).get_course_final_price(
+                    mode=mode,
+                    enterprise_customer_catalog_uuid=request.GET.get(
+                        'enterprise_customer_catalog_uuid'
+                    ) if request.method=='GET' else None,
+                )
             result.append(mode)
         return result
 
@@ -758,6 +763,9 @@ class CourseEnrollmentView(NonAtomicView):
         Render enterprise-specific course track selection page.
         """
         context_data = get_global_context(request, enterprise_customer)
+        enterprise_customer_catalog_uuid = request.GET.get(
+            'enterprise_customer_catalog_uuid'
+        ) if request.method=='GET' else None
         html_template_for_rendering = 'enterprise/enterprise_course_enrollment_error_page.html'
         if course and course_run:
             course_enrollable = True
@@ -826,6 +834,7 @@ class CourseEnrollmentView(NonAtomicView):
                 'course_level_type': course_level_type,
                 'premium_modes': premium_modes,
                 'expected_learning_items': expected_learning_items,
+                'enterprise_customer_catalog_uuid': enterprise_customer_catalog_uuid,
                 'staff': staff,
                 'discount_text': self.ENT_DISCOUNT_TEXT_FORMAT.format(
                     enterprise_customer_name=enterprise_customer.name,
@@ -870,6 +879,7 @@ class CourseEnrollmentView(NonAtomicView):
         except EnterpriseCourseEnrollment.DoesNotExist:
             enterprise_course_enrollment = None
 
+        enterprise_customer_catalog_uuid = request.POST.get('enterprise_customer_catalog_uuid')
         selected_course_mode_name = request.POST.get('course_mode')
         selected_course_mode = None
         for course_mode in course_modes:
@@ -956,7 +966,13 @@ class CourseEnrollmentView(NonAtomicView):
         # not required, redirect the enterprise learner to the ecommerce
         # flow in LMS.
         # Note: LMS start flow automatically detects the paid mode
-        return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
+        premium_flow = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
+        if enterprise_customer_catalog_uuid:
+            premium_flow += '?enterprise_customer_catalog_uuid={catalog_uuid}'.format(
+                catalog_uuid=enterprise_customer_catalog_uuid
+            )
+
+        return redirect(premium_flow)
 
     @method_decorator(enterprise_login_required)
     @method_decorator(force_fresh_session)
