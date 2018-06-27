@@ -17,6 +17,7 @@ from django.test import Client, TestCase
 from enterprise.models import EnterpriseCourseEnrollment
 from enterprise.views import LMS_COURSEWARE_URL, LMS_DASHBOARD_URL, LMS_START_PREMIUM_COURSE_FLOW_URL
 from test_utils.factories import (
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
@@ -265,6 +266,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        enterprise_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
         faker = FakerFactory.create()
         provider_id = faker.slug()  # pylint: disable=no-member
         self._setup_registry_mock(registry_mock, provider_id)
@@ -281,11 +283,17 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
                 consent_enrollment_url=reverse(
                     'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
                 ),
-                params=urlencode({'course_mode': 'professional'})
+                params=urlencode({
+                    'course_mode': 'professional',
+                    'enterprise_customer_catalog_uuid': enterprise_catalog.uuid
+                })
             )
         )
         response = self.client.get(handle_consent_enrollment_url)
         redirect_url = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
+        redirect_url += '?enterprise_customer_catalog_uuid={catalog_uuid}'.format(
+            catalog_uuid=enterprise_catalog.uuid
+        )
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
         self.assertTrue(EnterpriseCourseEnrollment.objects.filter(

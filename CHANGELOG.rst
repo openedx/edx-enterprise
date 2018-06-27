@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.3] - 2018-06-29
+---------------------
+
+* Apply enterprise catalog conditional offer by the provided enterprise catalog UUID.
+
 [0.70.2] - 2018-06-28
 ---------------------
 
