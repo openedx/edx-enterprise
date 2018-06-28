@@ -97,7 +97,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
-        'uuid', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent',
+        'uuid', 'slug', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent',
         'enforce_data_sharing_consent',
     )
     filter_fields = FIELDS
@@ -272,10 +272,11 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
-        'enterprise_customer',
+        'enterprise_customer__slug',
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+    lookup_field = 'enterprise_customer__slug'
 
 
 class EnterpriseCustomerEntitlementViewSet(EnterpriseReadOnlyModelViewSet):

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.2] - 2018-06-28
+---------------------
+
+* Modify enterprise branding config API to use enterprise slug as the lookup_field.
+
 [0.70.1] - 2018-06-27
 ---------------------
 
