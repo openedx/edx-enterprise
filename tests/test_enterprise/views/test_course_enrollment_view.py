@@ -1274,6 +1274,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+
         if enterprise_enrollment_exists:
             EnterpriseCourseEnrollmentFactory(
                 course_id=course_id,
@@ -1289,7 +1291,18 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 args=[enterprise_customer.uuid, course_id],
             )
         )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': enrollment_mode})
+
+        post_data = {
+            'course_mode': enrollment_mode
+        }
+        if enrollment_mode == 'professional':
+            enterprise_catalog_uuid = str(enterprise_customer.enterprise_customer_catalogs.first().uuid)
+            post_data.update({
+                'enterprise_customer_catalog_uuid': enterprise_catalog_uuid
+            })
+            expected_redirect_url += '?enterprise_customer_catalog_uuid={}'.format(enterprise_catalog_uuid)
+
+        response = self.client.post(course_enrollment_page_url, post_data)
 
         if enterprise_enrollment_exists or enrollment_mode == 'professional':
             track_enrollment_mock.assert_not_called()
@@ -1552,6 +1565,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         self._login()
@@ -1561,12 +1575,21 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 args=[enterprise_customer.uuid, course_id],
             )
         )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': 'professional'})
+        enterprise_catalog_uuid = str(enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        response = self.client.post(
+            course_enrollment_page_url, {
+                'course_mode': 'professional',
+                'enterprise_customer_catalog_uuid': enterprise_catalog_uuid
+            }
+        )
 
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/',
+            'http://lms.example.com/verify_student/start-flow/{}/?enterprise_customer_catalog_uuid={}'.format(
+                'course-v1:edX+DemoX+Demo_Course',
+                enterprise_catalog_uuid
+            ),
             fetch_redirect_response=False
         )
 
