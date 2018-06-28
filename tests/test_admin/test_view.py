@@ -364,18 +364,22 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         self._test_get_response(response, [], [])
 
     @ddt.data(
-        (1, 0, 25),
-        (2, 25, 50),
-        (3, 50, 75)
+        (1, 1, 0, 25, 50),
+        (6, 6, 125, 150, 300),
+        (7, 7, 150, 175, 300),
+        #  Invalid page values
+        ('invalid-page-value', 1, 0, 25, 50),
+        (100, 2, 25, 50, 50),
+        (-1, 2, 25, 50, 50)
     )
     @ddt.unpack
-    def test_get_pagination(self, current_page_number, page_start, page_end):
+    def test_get_pagination(self, current_page_number, expected_page_number, page_start, page_end, total_records):
         """
         Test pagination for linked learners list works expectedly.
         """
         self._login()
         linked_learners = []
-        for i in range(0, 250):
+        for i in range(0, total_records):
             learner = EnterpriseCustomerUserFactory(
                 enterprise_customer=self.enterprise_customer,
                 user_id=UserFactory(
@@ -392,7 +396,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         self._verify_pagination(
             response.context[self.context_parameters.LEARNERS],
             linked_learners,
-            page_number=current_page_number,
+            page_number=expected_page_number,
             page_start=page_start,
             page_end=page_end
         )

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.1] - 2018-06-27
+---------------------
+
+* Paginate linked learners list on manage learners Django admin view.
+
 [0.70.0] - 2018-06-26
 ---------------------
 
