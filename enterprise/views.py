@@ -926,11 +926,17 @@ class CourseEnrollmentView(NonAtomicView):
             # the learner to course specific DSC with enterprise UUID from
             # there the learner will be directed to the ecommerce flow after
             # providing DSC.
+            query_string_params = {
+                'course_mode': selected_course_mode_name,
+            }
+            if enterprise_catalog_uuid:
+                query_string_params.update({'enterprise_customer_catalog_uuid': enterprise_catalog_uuid})
+
             next_url = '{handle_consent_enrollment_url}?{query_string}'.format(
                 handle_consent_enrollment_url=reverse(
                     'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
                 ),
-                query_string=urlencode({'course_mode': selected_course_mode_name})
+                query_string=urlencode(query_string_params)
             )
 
             failure_url = reverse('enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id])
