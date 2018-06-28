@@ -525,6 +525,7 @@ class HandleConsentEnrollment(View):
         redirected to ecommerce basket flow for payment of premium modes.
         """
         enrollment_course_mode = request.GET.get('course_mode')
+        enterprise_catalog_uuid = request.GET.get('enterprise_customer_catalog_uuid')
 
         # Redirect the learner to LMS dashboard in case no course mode is
         # provided as query parameter `course_mode`
@@ -580,7 +581,13 @@ class HandleConsentEnrollment(View):
 
         # redirect the enterprise learner to the ecommerce flow in LMS
         # Note: LMS start flow automatically detects the paid mode
-        return redirect(LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id))
+        premium_flow = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
+        if enterprise_catalog_uuid:
+            premium_flow += '?enterprise_customer_catalog_uuid={catalog_uuid}'.format(
+                catalog_uuid=enterprise_catalog_uuid
+            )
+
+        return redirect(premium_flow)
 
 
 class CourseEnrollmentView(NonAtomicView):
