@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.5] - 2018-07-06
+---------------------
+
+* Send learner data transmissions to integrated channels by course key and course run id.
+
 [0.70.4] - 2018-07-03
 ---------------------
 
