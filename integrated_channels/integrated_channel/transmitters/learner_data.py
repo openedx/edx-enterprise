@@ -51,7 +51,7 @@ class LearnerTransmitter(Transmitter):
         )
         for learner_data in payload.export():
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
-            LOGGER.info('Attempting to transmit serialized payload: %s', serialized_payload)
+            LOGGER.debug('Attempting to transmit serialized payload: %s', serialized_payload)
 
             enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id
             if learner_data.completed_timestamp is None:

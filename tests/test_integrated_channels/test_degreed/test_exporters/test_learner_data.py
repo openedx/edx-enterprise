@@ -73,11 +73,12 @@ class TestDegreedLearnerExporter(unittest.TestCase):
             course_id=self.course_id,
         )
         exporter = DegreedLearnerExporter('fake-user', self.config)
-        learner_data_record = exporter.get_learner_data_record(
+        learner_data_records = exporter.get_learner_data_records(
             enterprise_course_enrollment,
             completed_date=completed_date,
             is_passing=is_passing,
         )
+        learner_data_record = learner_data_records[0]
 
         assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
         assert learner_data_record.degreed_user_email == 'degreed@email.com'
@@ -93,4 +94,4 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         """
         self.tpa_client.return_value.get_remote_id.return_value = None
         exporter = DegreedLearnerExporter('fake-user', self.config)
-        assert exporter.get_learner_data_record(factories.EnterpriseCourseEnrollmentFactory()) is None
+        assert exporter.get_learner_data_records(factories.EnterpriseCourseEnrollmentFactory()) is None

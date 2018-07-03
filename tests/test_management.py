@@ -355,6 +355,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
 
 COURSE_ID = 'course-v1:edX+DemoX+DemoCourse'
+COURSE_KEY = 'edX+DemoX'
 
 # Mock passing certificate data
 MOCK_PASSING_CERTIFICATE = dict(
@@ -594,6 +595,7 @@ def get_expected_output(**expected_completion):
     Returns the expected JSON record logged by the ``transmit_learner_data`` command.
     """
     action = 'Successfully sent completion status call for'
+    action2 = 'Skipping previously sent'
     if expected_completion['timestamp'] == NOW_TIMESTAMP:
         degreed_timestamp = '"{}"'.format(NOW_TIMESTAMP_FORMATTED)
     elif expected_completion['timestamp'] == PAST_TIMESTAMP:
@@ -601,6 +603,7 @@ def get_expected_output(**expected_completion):
     else:
         degreed_timestamp = 'null'
         action = 'Skipping in-progress'
+        action2 = action
 
     degreed_output_template = (
         '{{'
@@ -629,7 +632,7 @@ def get_expected_output(**expected_completion):
         "[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>]",
         "Attempting to transmit serialized payload: " + sapsf_output_template.format(
             user_id='remote-user-id',
-            course_id=COURSE_ID,
+            course_id=COURSE_KEY,
             provider_id="SAP",
             **expected_completion
         ),
@@ -640,7 +643,21 @@ def get_expected_output(**expected_completion):
             provider_id="SAP",
             **expected_completion
         ),
+        "{} enterprise enrollment 2".format(action2),
+        "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+            user_id='remote-user-id',
+            course_id=COURSE_KEY,
+            provider_id="SAP",
+            **expected_completion
+        ),
         "{} enterprise enrollment 3".format(action),
+        "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+            user_id='remote-user-id',
+            course_id=COURSE_ID,
+            provider_id="SAP",
+            **expected_completion
+        ),
+        "{} enterprise enrollment 3".format(action2),
         "Learner data transmission task for integrated channel configuration "
         "[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>] took [0.0] seconds",
 
@@ -739,7 +756,7 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
         using all the ways we can invoke it.
         """
         with transmit_learner_data_context(command_kwargs, certificate, self_paced, end_date, passed) as (args, kwargs):
-            with LogCapture(level=logging.INFO) as log_capture:
+            with LogCapture(level=logging.DEBUG) as log_capture:
                 expected_output = get_expected_output(**expected_completion)
                 call_command('transmit_learner_data', *args, **kwargs)
                 for index, message in enumerate(expected_output):

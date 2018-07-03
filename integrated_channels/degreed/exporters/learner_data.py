@@ -21,7 +21,7 @@ class DegreedLearnerExporter(LearnerExporter):
     Class to provide a Degreed learner data transmission audit prepared for serialization.
     """
 
-    def get_learner_data_record(
+    def get_learner_data_records(
             self,
             enterprise_enrollment,
             completed_date=None,
@@ -42,13 +42,15 @@ class DegreedLearnerExporter(LearnerExporter):
                 'degreed',
                 'DegreedLearnerDataTransmissionAudit'
             )
-            return DegreedLearnerDataTransmissionAudit(
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                course_id=enterprise_enrollment.course_id,
-                course_completed=completed_date is not None and is_passing,
-                completed_timestamp=completed_timestamp,
-            )
+            return [
+                DegreedLearnerDataTransmissionAudit(
+                    enterprise_course_enrollment_id=enterprise_enrollment.id,
+                    degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
+                    course_id=enterprise_enrollment.course_id,
+                    course_completed=completed_date is not None and is_passing,
+                    completed_timestamp=completed_timestamp,
+                )
+            ]
         else:
             LOGGER.debug(
                 'No learner data was sent for user [%s] because a Degreed user ID could not be found.',
