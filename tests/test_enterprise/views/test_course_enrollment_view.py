@@ -1298,9 +1298,9 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         if enrollment_mode == 'professional':
             enterprise_catalog_uuid = str(enterprise_customer.enterprise_customer_catalogs.first().uuid)
             post_data.update({
-                'enterprise_customer_catalog_uuid': enterprise_catalog_uuid
+                'catalog': enterprise_catalog_uuid
             })
-            expected_redirect_url += '?enterprise_customer_catalog_uuid={}'.format(enterprise_catalog_uuid)
+            expected_redirect_url += '?catalog={}'.format(enterprise_catalog_uuid)
 
         response = self.client.post(course_enrollment_page_url, post_data)
 
@@ -1361,7 +1361,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         response = self.client.post(
             course_enrollment_page_url,
-            {'course_mode': 'audit', 'enterprise_customer_catalog_uuid': enterprise_customer_catalog.uuid}
+            {'course_mode': 'audit', 'catalog': enterprise_customer_catalog.uuid}
         )
 
         assert response.status_code == 302
@@ -1370,7 +1370,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
             enterprise_customer_uuid, course_id, urlencode({
                 'course_mode': 'audit',
-                'enterprise_customer_catalog_uuid': enterprise_customer_catalog.uuid
+                'catalog': enterprise_customer_catalog.uuid
             })
         )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
@@ -1455,7 +1455,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
         response = self.client.post(
             course_enrollment_page_url,
-            {'course_mode': 'audit', 'enterprise_customer_catalog_uuid': enterprise_customer_catalog.uuid}
+            {'course_mode': 'audit', 'catalog': enterprise_customer_catalog.uuid}
         )
         assert response.status_code == 302
 
@@ -1463,7 +1463,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
             enterprise_customer_uuid, course_id, urlencode({
                 'course_mode': 'audit',
-                'enterprise_customer_catalog_uuid': enterprise_customer_catalog.uuid
+                'catalog': enterprise_customer_catalog.uuid
             })
         )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
@@ -1592,14 +1592,14 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         response = self.client.post(
             course_enrollment_page_url, {
                 'course_mode': 'professional',
-                'enterprise_customer_catalog_uuid': enterprise_catalog_uuid
+                'catalog': enterprise_catalog_uuid
             }
         )
 
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://lms.example.com/verify_student/start-flow/{}/?enterprise_customer_catalog_uuid={}'.format(
+            'http://lms.example.com/verify_student/start-flow/{}/?catalog={}'.format(
                 'course-v1:edX+DemoX+Demo_Course',
                 enterprise_catalog_uuid
             ),
