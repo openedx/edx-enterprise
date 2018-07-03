@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.4] - 2018-07-03
+---------------------
+
+* Use query param "catalog" instead of "enterprise_customer_catalog_uuid" for catalog based enterprise discounts.
+
 [0.70.3] - 2018-06-29
 ---------------------
 
