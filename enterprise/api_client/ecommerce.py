@@ -56,7 +56,7 @@ class EcommerceApiClient(object):
             price_details = self.client.baskets.calculate.get(
                 sku=[mode['sku']],
                 username=self.user.username,
-                enterprise_customer_catalog_uuid=enterprise_catalog_uuid,
+                catalog=enterprise_catalog_uuid,
             )
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception('Failed to get price details for sku %s due to: %s', mode['sku'], str(exc))

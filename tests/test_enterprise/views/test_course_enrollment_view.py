@@ -1298,9 +1298,15 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         if enrollment_mode == 'professional':
             enterprise_catalog_uuid = str(enterprise_customer.enterprise_customer_catalogs.first().uuid)
             post_data.update({
+<<<<<<< HEAD
                 'enterprise_customer_catalog_uuid': enterprise_catalog_uuid
             })
             expected_redirect_url += '?enterprise_customer_catalog_uuid={}'.format(enterprise_catalog_uuid)
+=======
+                'catalog': enterprise_catalog_uuid
+            })
+            expected_redirect_url += '?catalog={}'.format(enterprise_catalog_uuid)
+>>>>>>> zub/ENT-1052-rename-enterprise-customer-catalog-uuid-queryparam
 
         response = self.client.post(course_enrollment_page_url, post_data)
 
@@ -1348,6 +1354,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enforce_data_sharing_consent='at_enrollment',
             enable_audit_enrollment=True,
         )
+        enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
         enterprise_customer_uuid = enterprise_customer.uuid
@@ -1358,13 +1365,19 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 args=[enterprise_customer_uuid, course_id],
             )
         )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'})
+        response = self.client.post(
+            course_enrollment_page_url,
+            {'course_mode': 'audit', 'catalog': enterprise_customer_catalog.uuid}
+        )
 
         assert response.status_code == 302
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
-            enterprise_customer_uuid, course_id, urlencode({'course_mode': 'audit'})
+            enterprise_customer_uuid, course_id, urlencode({
+                'course_mode': 'audit',
+                'catalog': enterprise_customer_catalog.uuid
+            })
         )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
@@ -1446,12 +1459,18 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 query_string=urlencode({'catalog_uuid': enterprise_customer_catalog.uuid})
             )
         )
-        response = self.client.post(course_enrollment_page_url, {'course_mode': 'audit'}, )
+        response = self.client.post(
+            course_enrollment_page_url,
+            {'course_mode': 'audit', 'catalog': enterprise_customer_catalog.uuid}
+        )
         assert response.status_code == 302
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
         consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
-            enterprise_customer_uuid, course_id, urlencode({'course_mode': 'audit'})
+            enterprise_customer_uuid, course_id, urlencode({
+                'course_mode': 'audit',
+                'catalog': enterprise_customer_catalog.uuid
+            })
         )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
@@ -1579,14 +1598,14 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         response = self.client.post(
             course_enrollment_page_url, {
                 'course_mode': 'professional',
-                'enterprise_customer_catalog_uuid': enterprise_catalog_uuid
+                'catalog': enterprise_catalog_uuid
             }
         )
 
         assert response.status_code == 302
         self.assertRedirects(
             response,
-            'http://lms.example.com/verify_student/start-flow/{}/?enterprise_customer_catalog_uuid={}'.format(
+            'http://lms.example.com/verify_student/start-flow/{}/?catalog={}'.format(
                 'course-v1:edX+DemoX+Demo_Course',
                 enterprise_catalog_uuid
             ),
