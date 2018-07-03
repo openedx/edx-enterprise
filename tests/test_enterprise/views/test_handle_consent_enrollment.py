@@ -285,13 +285,13 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
                 ),
                 params=urlencode({
                     'course_mode': 'professional',
-                    'enterprise_customer_catalog_uuid': enterprise_catalog.uuid
+                    'catalog': enterprise_catalog.uuid
                 })
             )
         )
         response = self.client.get(handle_consent_enrollment_url)
         redirect_url = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
-        redirect_url += '?enterprise_customer_catalog_uuid={catalog_uuid}'.format(
+        redirect_url += '?catalog={catalog_uuid}'.format(
             catalog_uuid=enterprise_catalog.uuid
         )
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)

@@ -50,7 +50,7 @@
           {% if course_enrollable %}
             <form method="POST">
               <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
-              <input type="hidden" name="enterprise_customer_catalog_uuid" value="{{ enterprise_customer_catalog_uuid }}" />
+              <input type="hidden" name="catalog" value="{{ catalog }}" />
               {% if course_modes|length > 1 %}<div class="caption">{{ select_mode_text }}</div>{% endif %}
               {% for course_mode in course_modes %}
               <div class="radio-block">
