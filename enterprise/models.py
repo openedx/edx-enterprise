@@ -1048,7 +1048,15 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     content_filter = JSONField(
-        default={},
+        default={
+            "content_type": "course",
+            "partner": "edx",
+            "level_type": [
+                "Introductory",
+                "Intermediate",
+                "Advanced"
+            ]
+        },
         blank=True,
         null=True,
         load_kwargs={'object_pairs_hook': collections.OrderedDict},
