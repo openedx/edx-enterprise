@@ -276,7 +276,6 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    content_filter = {}
 
 
 class DataSharingConsentFactory(factory.django.DjangoModelFactory):

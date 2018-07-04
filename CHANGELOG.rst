@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.7] - 2018-07-12
+---------------------
+
+* Make customer catalog content filter's default value configurable.
+
 [0.70.6] - 2018-07-09
 ---------------------
 
