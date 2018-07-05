@@ -3,7 +3,6 @@
 
 owner: edx/platform-team
 nick: edx-enterprise
-openedx-release: {ref: master, requirements: requirements/base.txt}
 tags: [enterprise, ent]
 track-pulls: true
 oeps: {}
