@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.3] - 2018-08-08
+---------------------
+
+* Added LearnerInfoSerializer and CourseInfoSerializer for serializing xAPI payload data.
+
 [0.72.2] - 2018-07-27
 ---------------------
 
