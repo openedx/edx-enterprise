@@ -26,6 +26,8 @@ from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.template import Context, Template
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
@@ -1048,15 +1050,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         on_delete=models.deletion.CASCADE
     )
     content_filter = JSONField(
-        default={
-            "content_type": "course",
-            "partner": "edx",
-            "level_type": [
-                "Introductory",
-                "Intermediate",
-                "Advanced"
-            ]
-        },
+        default={},
         blank=True,
         null=True,
         load_kwargs={'object_pairs_hook': collections.OrderedDict},
@@ -1297,6 +1291,16 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             url = utils.update_query_parameters(url, {'audit': 'true'})
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
+
+
+@receiver(post_save, sender=EnterpriseCustomerCatalog, dispatch_uid='default_content_filter')
+def default_content_filter(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Set default value for `EnterpriseCustomerCatalog.content_filter` if not already set.
+    """
+    if kwargs['created'] and not instance.content_filter:
+        instance.content_filter = settings.ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER
+        instance.save()
 
 
 @python_2_unicode_compatible

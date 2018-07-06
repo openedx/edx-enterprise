@@ -14,11 +14,13 @@ from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
+from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 
 from consent.errors import InvalidProxyConsent
@@ -1048,6 +1050,19 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         )
         enterprise_catalog.save()
         assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
+
+    @ddt.data(
+        {'favourite_hero': 'Batman'},
+        {'favourite_hero': 'Flash'},
+        {'favourite_hero': 'Superman'}
+    )
+    def test_default_content_filter(self, default_content_filter):
+        """
+        Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
+        """
+        with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER=default_content_filter):
+            enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
+            assert enterprise_catalog.content_filter == settings.ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER
 
 
 @mark.django_db

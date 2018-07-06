@@ -162,6 +162,16 @@ USE_TZ = True
 
 MKTG_URLS = {}
 
+ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER = {
+    'content_type': 'course',
+    'partner': 'edx',
+    'level_type': [
+        'Introductory',
+        'Intermediate',
+        'Advanced'
+    ]
+}
+
 ################################### TRACKING ###################################
 
 LMS_SEGMENT_KEY = 'SOME_KEY'
