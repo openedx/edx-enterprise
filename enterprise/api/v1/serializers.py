@@ -5,6 +5,9 @@ Serializers for enterprise api version 1.
 from __future__ import absolute_import, unicode_literals
 
 import copy
+import operator
+import pytz
+from datetime import datetime
 
 from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
@@ -368,6 +371,13 @@ class CourseDetailSerializer(ImmutableStateSerializer):
     for the given course and course runs.
     """
 
+    @staticmethod
+    def include_course_run(course_run):
+        """
+        Include course run if `course_run.availability == current` and `course_run.status == published`
+        """
+        return course_run['availability'] == 'current' and course_run['status'] == 'published'
+
     def to_representation(self, instance):
         """
         Return the updated course data dictionary.
@@ -383,10 +393,15 @@ class CourseDetailSerializer(ImmutableStateSerializer):
         updated_course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(
             updated_course['key']
         )
-        for course_run in updated_course['course_runs']:
-            course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                course_run['key']
-            )
+
+        for index, course_run in enumerate(instance['course_runs']):
+            if self.include_course_run(course_run):
+                course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
+                    course_run['key']
+                )
+            else:
+                updated_course['course_runs'].pop(index)
+
         return updated_course
 
 
