@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.6] - 2018-07-09
+---------------------
+
+* Pass catalog value only when provided on enterprise course enrollment page.
+
 [0.70.5] - 2018-07-06
 ---------------------
 
