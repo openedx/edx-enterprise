@@ -49,9 +49,16 @@ class LearnerTransmitter(Transmitter):
             app_label=kwargs.get('app_label', 'integrated_channel'),
             model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
         )
+        # Since we have started sending courses to integrated channels instead of course runs,
+        # we need to attempt to send transmissions with course keys and course run ids in order to
+        # ensure that we account for whether courses or course runs exist in the integrated channel.
+        # The exporters have been changed to return multiple transmission records to attempt,
+        # one by course key and one by course run id.
+        # If the transmission with the course key succeeds, the next one will get skipped.
+        # If it fails, the one with the course run id will be attempted and (presumably) succeed.
         for learner_data in payload.export():
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
-            LOGGER.info('Attempting to transmit serialized payload: %s', serialized_payload)
+            LOGGER.debug('Attempting to transmit serialized payload: %s', serialized_payload)
 
             enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id
             if learner_data.completed_timestamp is None:

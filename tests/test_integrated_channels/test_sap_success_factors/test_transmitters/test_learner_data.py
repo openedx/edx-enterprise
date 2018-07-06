@@ -44,17 +44,21 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             sapsf_user_id="user_id",
             secret="client_secret"
         )
-        self.payload = SapSuccessFactorsLearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
-            sapsf_user_id='sap_user',
-            course_id='course-v1:edX+DemoX+DemoCourse',
-            course_completed=True,
-            completed_timestamp=1486855998,
-            instructor_name='Professor Professorson',
-            grade='Passing even more',
-            error_message='',
+        self.payloads = [
+            SapSuccessFactorsLearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+                sapsf_user_id='sap_user',
+                course_id='course-v1:edX+DemoX+DemoCourse',
+                course_completed=True,
+                completed_timestamp=1486855998,
+                instructor_name='Professor Professorson',
+                grade='Passing even more',
+                error_message='',
+            )
+        ]
+        self.exporter = lambda payloads=self.payloads: mock.MagicMock(
+            export=mock.MagicMock(return_value=iter(payloads))
         )
-        self.exporter = lambda payload=self.payload: mock.MagicMock(export=mock.MagicMock(return_value=iter([payload])))
 
         # Mocks
         get_oauth_access_token_mock = mock.patch(
@@ -74,7 +78,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         """
         If we already sent a payload (we can tell if we did if it exists), don't send again.
         """
-        self.payload.save()
+        self.payloads[0].save()
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
         transmitter.transmit(self.exporter())
         self.create_course_completion_mock.assert_not_called()
@@ -94,7 +98,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             grade='Pass',
         )
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
-        transmitter.transmit(self.exporter(payload))
+        transmitter.transmit(self.exporter([payload]))
         self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
         assert payload.status == '200'
         assert payload.error_message == ''
@@ -114,7 +118,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             grade='Pass',
         )
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
-        transmitter.transmit(self.exporter(payload))
+        transmitter.transmit(self.exporter([payload]))
         self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
         assert payload.status == '500'
         assert payload.error_message == 'error occurred'
@@ -141,9 +145,86 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
             grade='Pass',
         )
         transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
-        transmitter.transmit(self.exporter(payload))
+        transmitter.transmit(self.exporter([payload]))
         self.create_course_completion_mock.assert_called_with(payload.sapsf_user_id, payload.serialize())
         self.enterprise_customer_user.refresh_from_db()
         assert self.enterprise_customer_user.active == ecu_active_expectation
         assert payload.status == '500'
         assert payload.error_message == 'error occurred'
+
+    def test_transmit_by_course_key_success(self):
+        """
+        This tests the case where the transmission with the course key succeeds, and as a result
+        the transmission with the course run id does not get attempted.
+        """
+        self.create_course_completion_mock.return_value = 200, '{"success":"true"}'
+        payloads = [
+            SapSuccessFactorsLearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+                sapsf_user_id='sap_user',
+                course_id='edX+DemoX',
+                course_completed=True,
+                completed_timestamp=1486755998,
+                instructor_name='Professor Professorson',
+                grade='Pass',
+            ),
+            SapSuccessFactorsLearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+                sapsf_user_id='sap_user',
+                course_id='course-v1:edX+DemoX+DemoCourse',
+                course_completed=True,
+                completed_timestamp=1486755998,
+                instructor_name='Professor Professorson',
+                grade='Pass',
+            )
+        ]
+        transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
+        transmitter.transmit(self.exporter(payloads))
+        self.create_course_completion_mock.assert_called_once()
+        self.create_course_completion_mock.assert_called_with(payloads[0].sapsf_user_id, payloads[0].serialize())
+
+        assert payloads[0].status == '200'
+        assert payloads[0].error_message == ''
+        assert not payloads[1].status
+
+    def test_transmit_by_course_id_success(self):
+        """
+        This tests the case where the transmission with the course key fails, and as a result
+        the transmission with the course run id is sent as well and succeeds.
+        """
+        self.create_course_completion_mock.side_effect = [
+            RequestException('error occurred'),
+            (200, '{"success":"true"}')
+        ]
+        payloads = [
+            SapSuccessFactorsLearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+                sapsf_user_id='sap_user',
+                course_id='edX+DemoX',
+                course_completed=True,
+                completed_timestamp=1486755998,
+                instructor_name='Professor Professorson',
+                grade='Pass',
+            ),
+            SapSuccessFactorsLearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
+                sapsf_user_id='sap_user',
+                course_id='course-v1:edX+DemoX+DemoCourse',
+                course_completed=True,
+                completed_timestamp=1486755998,
+                instructor_name='Professor Professorson',
+                grade='Pass',
+            )
+        ]
+        transmitter = learner_data.SapSuccessFactorsLearnerTransmitter(self.enterprise_config)
+        transmitter.transmit(self.exporter(payloads))
+        expected_calls = [
+            mock.call(payloads[0].sapsf_user_id, payloads[0].serialize()),
+            mock.call(payloads[1].sapsf_user_id, payloads[1].serialize()),
+        ]
+        self.create_course_completion_mock.assert_has_calls(expected_calls)
+
+        assert payloads[0].status == '500'
+        assert payloads[0].error_message == 'error occurred'
+        assert payloads[1].status == '200'
+        assert payloads[1].error_message == ''

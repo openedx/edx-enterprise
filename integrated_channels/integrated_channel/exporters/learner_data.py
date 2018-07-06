@@ -131,22 +131,23 @@ class LearnerExporter(Exporter):
             else:
                 completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
 
-            record = self.get_learner_data_record(
+            records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
                 completed_date=completed_date,
                 grade=grade,
                 is_passing=is_passing,
             )
-            if record:
+            if records:
                 # There are some cases where we won't receive a record from the above
                 # method; right now, that should only happen if we have an Enterprise-linked
                 # user for the integrated channel, and transmission of that user's
                 # data requires an upstream user identifier that we don't have (due to a
                 # failure of SSO or similar). In such a case, `get_learner_data_record`
                 # would return None, and we'd simply skip yielding it here.
-                yield record
+                for record in records:
+                    yield record
 
-    def get_learner_data_record(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
+    def get_learner_data_records(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
         """
         Generate a learner data transmission audit with fields properly filled in.
         """
@@ -158,13 +159,15 @@ class LearnerExporter(Exporter):
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
             course_completed = is_passing
 
-        return LearnerDataTransmissionAudit(
-            enterprise_course_enrollment_id=enterprise_enrollment.id,
-            course_id=enterprise_enrollment.course_id,
-            course_completed=course_completed,
-            completed_timestamp=completed_timestamp,
-            grade=grade,
-        )
+        return [
+            LearnerDataTransmissionAudit(
+                enterprise_course_enrollment_id=enterprise_enrollment.id,
+                course_id=enterprise_enrollment.course_id,
+                course_completed=course_completed,
+                completed_timestamp=completed_timestamp,
+                grade=grade,
+            )
+        ]
 
     def _collect_certificate_data(self, enterprise_enrollment):
         """

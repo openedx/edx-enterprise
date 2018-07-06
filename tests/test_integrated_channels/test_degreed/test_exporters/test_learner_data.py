@@ -32,6 +32,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
     def setUp(self):
         self.user = factories.UserFactory(username='C3PO', id=1, email='degreed@email.com')
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.course_key = 'edX+DemoX'
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=self.user.id,
@@ -73,19 +74,22 @@ class TestDegreedLearnerExporter(unittest.TestCase):
             course_id=self.course_id,
         )
         exporter = DegreedLearnerExporter('fake-user', self.config)
-        learner_data_record = exporter.get_learner_data_record(
+        learner_data_records = exporter.get_learner_data_records(
             enterprise_course_enrollment,
             completed_date=completed_date,
             is_passing=is_passing,
         )
+        assert len(learner_data_records) == 2
+        assert learner_data_records[0].course_id == self.course_key
+        assert learner_data_records[1].course_id == self.course_id
 
-        assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
-        assert learner_data_record.degreed_user_email == 'degreed@email.com'
-        assert learner_data_record.course_id == enterprise_course_enrollment.course_id
-        assert learner_data_record.course_completed == (completed_date is not None and is_passing)
-        assert learner_data_record.completed_timestamp == (
-            self.NOW.strftime('%F') if completed_date is not None else None
-        )
+        for learner_data_record in learner_data_records:
+            assert learner_data_record.enterprise_course_enrollment_id == enterprise_course_enrollment.id
+            assert learner_data_record.degreed_user_email == 'degreed@email.com'
+            assert learner_data_record.course_completed == (completed_date is not None and is_passing)
+            assert learner_data_record.completed_timestamp == (
+                self.NOW.strftime('%F') if completed_date is not None else None
+            )
 
     def test_no_remote_id(self):
         """
@@ -93,4 +97,4 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         """
         self.tpa_client.return_value.get_remote_id.return_value = None
         exporter = DegreedLearnerExporter('fake-user', self.config)
-        assert exporter.get_learner_data_record(factories.EnterpriseCourseEnrollmentFactory()) is None
+        assert exporter.get_learner_data_records(factories.EnterpriseCourseEnrollmentFactory()) is None
