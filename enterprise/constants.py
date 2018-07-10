@@ -74,6 +74,17 @@ ALLOWED_TAGS = [
 ]
 
 
+CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER = {
+    'content_type': 'course',
+    'partner': 'edx',
+    'level_type': [
+        'Introductory',
+        'Intermediate',
+        'Advanced'
+    ]
+}
+
+
 def json_serialized_course_modes():
     """
     :return: serialized course modes.

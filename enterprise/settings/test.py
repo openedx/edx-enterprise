@@ -11,6 +11,8 @@ from os.path import abspath, dirname, join
 
 from celery import Celery
 
+from enterprise.constants import CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER
+
 
 def here(*args):
     """
@@ -162,15 +164,7 @@ USE_TZ = True
 
 MKTG_URLS = {}
 
-ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER = {
-    'content_type': 'course',
-    'partner': 'edx',
-    'level_type': [
-        'Introductory',
-        'Intermediate',
-        'Advanced'
-    ]
-}
+ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER = CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER
 
 ################################### TRACKING ###################################
 

@@ -47,7 +47,12 @@ from enterprise.api_client.lms import (
     parse_lms_api_datetime,
 )
 from enterprise.constants import json_serialized_course_modes
-from enterprise.utils import CourseEnrollmentDowngradeError, get_configuration_value, parse_course_key
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    default_customer_catalog_content_filter,
+    get_configuration_value,
+    parse_course_key,
+)
 from enterprise.validators import validate_image_extension, validate_image_size
 
 LOGGER = getLogger(__name__)
@@ -1299,7 +1304,7 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
     Set default value for `EnterpriseCustomerCatalog.content_filter` if not already set.
     """
     if kwargs['created'] and not instance.content_filter:
-        instance.content_filter = settings.ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER
+        instance.content_filter = default_customer_catalog_content_filter()
         instance.save()
 
 
