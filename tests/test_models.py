@@ -1052,19 +1052,21 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
     @ddt.data(
         (
-            {'favourite_hero': 'Batman'},
-            {'favourite_hero': 'Batman'}
+            {'hero_name': 'Batman'},
+            {'hero_name': 'Batman'}
         ),
         (
-            {'favourite_hero': 'Flash'},
-            {'favourite_hero': 'Flash'}
+            {'hero_name': 'Flash'},
+            {'hero_name': 'Flash'}
         ),
+        # if the value is not set is settings, it picks default value from constant.
         (
-            {'favourite_hero': 'Superman'},
-            {'favourite_hero': 'Superman'}
+            {},
+            {'hero_name': 'Superman'}
         )
     )
     @ddt.unpack
+    @mock.patch('enterprise.utils.CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER', {'hero_name': 'Superman'})
     def test_default_content_filter(self, default_content_filter, expected_content_filter):
         """
         Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
