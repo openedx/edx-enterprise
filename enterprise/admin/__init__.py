@@ -4,6 +4,8 @@ Django admin integration for enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+import json
+
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import settings
@@ -41,7 +43,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
 )
-from enterprise.utils import get_all_field_names
+from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -515,6 +517,11 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer__name',
         'enterprise_customer__uuid',
     )
+
+    def get_form(self, request, obj=None, **kwargs):
+        form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, **kwargs)
+        form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
+        return form
 
 
 @admin.register(EnterpriseCustomerReportingConfiguration)
