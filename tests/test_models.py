@@ -1052,26 +1052,44 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
     @ddt.data(
         (
-            {'hero_name': 'Batman'},
-            {'hero_name': 'Batman'}
+            {
+                'content_type': 'course',
+                'partner': 'edx'
+            },
+            {
+                'content_type': 'course',
+                'partner': 'edx'
+            }
         ),
         (
-            {'hero_name': 'Flash'},
-            {'hero_name': 'Flash'}
+            {
+                'content_type': 'course',
+                'level_type': [
+                    'Introductory',
+                    'Intermediate'
+                ]
+            },
+            {
+                'content_type': 'course',
+                'level_type': [
+                    'Introductory',
+                    'Intermediate'
+                ]
+            }
         ),
         # if the value is not set is settings, it picks default value from constant.
         (
             {},
-            {'hero_name': 'Superman'}
+            {'content_type': 'course'}
         )
     )
     @ddt.unpack
-    @mock.patch('enterprise.utils.CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER', {'hero_name': 'Superman'})
+    @mock.patch('enterprise.utils.DEFAULT_CATALOG_CONTENT_FILTER', {'content_type': 'course'})
     def test_default_content_filter(self, default_content_filter, expected_content_filter):
         """
         Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
         """
-        with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER=default_content_filter):
+        with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER=default_content_filter):
             enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
             assert enterprise_catalog.content_filter == expected_content_filter
 

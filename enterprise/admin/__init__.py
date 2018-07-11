@@ -43,7 +43,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
 )
-from enterprise.utils import get_all_field_names, default_customer_catalog_content_filter
+from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -520,7 +520,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, **kwargs)
-        form.base_fields['content_filter'].initial = json.dumps(default_customer_catalog_content_filter())
+        form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return form
 
 

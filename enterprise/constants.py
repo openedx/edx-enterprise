@@ -74,7 +74,7 @@ ALLOWED_TAGS = [
 ]
 
 
-CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER = {
+DEFAULT_CATALOG_CONTENT_FILTER = {
     'content_type': 'course',
     'partner': 'edx',
     'level_type': [

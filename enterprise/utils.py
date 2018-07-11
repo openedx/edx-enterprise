@@ -32,7 +32,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import ALLOWED_TAGS, CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
+from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -797,8 +797,8 @@ def get_content_metadata_item_id(content_metadata_item):
     return content_metadata_item['key']
 
 
-def default_customer_catalog_content_filter():
+def get_default_catalog_content_filter():
     """
-    Return default customer catalog content filter.
+    Return default enterprise customer catalog content filter.
     """
-    return settings.ENTERPRISE_CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER or CUSTOMER_CATALOG_DEFULT_CONTENT_FILTER
+    return settings.ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER or DEFAULT_CATALOG_CONTENT_FILTER
