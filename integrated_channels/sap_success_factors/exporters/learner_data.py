@@ -43,11 +43,8 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 'sap_success_factors',
                 'SapSuccessFactorsLearnerDataTransmissionAudit'
             )
-            # Since we have started sending courses to SuccessFactors instead of course runs,
-            # we need to attempt to send transmissions with course keys and course run ids in order to
-            # ensure that we account for whether courses or course runs exist in the SuccessFactors instance.
-            # If the transmission with the course key succeeds, the next one will get skipped.
-            # If it fails, the one with the course run id will be attempted and (presumably) succeed.
+            # We return two records here, one with the course key and one with the course run id, to account for
+            # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
             return [
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,

@@ -11,6 +11,7 @@ from logging import getLogger
 
 from django.apps import apps
 
+from enterprise.utils import parse_course_key
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 
 LOGGER = getLogger(__name__)
@@ -42,7 +43,16 @@ class DegreedLearnerExporter(LearnerExporter):
                 'degreed',
                 'DegreedLearnerDataTransmissionAudit'
             )
+            # We return two records here, one with the course key and one with the course run id, to account for
+            # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
             return [
+                DegreedLearnerDataTransmissionAudit(
+                    enterprise_course_enrollment_id=enterprise_enrollment.id,
+                    degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
+                    course_id=parse_course_key(enterprise_enrollment.course_id),
+                    course_completed=completed_date is not None and is_passing,
+                    completed_timestamp=completed_timestamp,
+                ),
                 DegreedLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,

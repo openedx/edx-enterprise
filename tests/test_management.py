@@ -666,16 +666,28 @@ def get_expected_output(**expected_completion):
         "[<DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>]",
         "Attempting to transmit serialized payload: " + degreed_output_template.format(
             user_email='example@email.com',
-            course_id=COURSE_ID,
+            course_id=COURSE_KEY,
             timestamp=degreed_timestamp
         ),
         "{} enterprise enrollment 2".format(action),
+        "Attempting to transmit serialized payload: " + degreed_output_template.format(
+            user_email='example@email.com',
+            course_id=COURSE_ID,
+            timestamp=degreed_timestamp
+        ),
+        "{} enterprise enrollment 2".format(action2),
+        "Attempting to transmit serialized payload: " + degreed_output_template.format(
+            user_email='example2@email.com',
+            course_id=COURSE_KEY,
+            timestamp=degreed_timestamp
+        ),
+        "{} enterprise enrollment 3".format(action),
         "Attempting to transmit serialized payload: " + degreed_output_template.format(
             user_email='example2@email.com',
             course_id=COURSE_ID,
             timestamp=degreed_timestamp
         ),
-        "{} enterprise enrollment 3".format(action),
+        "{} enterprise enrollment 3".format(action2),
         "Learner data transmission task for integrated channel configuration "
         "[<DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>] took [0.0] seconds"
     ]
