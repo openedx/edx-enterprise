@@ -90,6 +90,11 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         """
         Return the image URI of the content item.
         """
+        if content_metadata_item['content_type'] == 'course':
+            return content_metadata_item.get('card_image_url')
+        elif content_metadata_item['content_type'] == 'courserun':
+            return content_metadata_item.get('image_url')
+
         return (content_metadata_item.get('image') or {}).get('src', '') or ''
 
     def transform_launch_points(self, content_metadata_item):
