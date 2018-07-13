@@ -110,6 +110,11 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
     extra = 0
     can_delete = False
 
+    def get_formset(self, request, obj=None, **kwargs):
+        formset = super(EnterpriseCustomerCatalogInline, self).get_formset(request, obj, **kwargs)
+        formset.form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
+        return formset
+
 
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
