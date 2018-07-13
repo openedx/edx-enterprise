@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.70.8] - 2018-07-13
+---------------------
+
+* Display customer catalog content filter's default value on enterprise customer admin.
+
 [0.70.7] - 2018-07-12
 ---------------------
 
