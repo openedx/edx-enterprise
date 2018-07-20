@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.71.0] - 2018-07-13
+---------------------
+
+* Updated TinCanPython package to support python 3
+
 [0.70.8] - 2018-07-13
 ---------------------
 

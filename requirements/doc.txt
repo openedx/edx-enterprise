@@ -4,9 +4,11 @@
 #
 #    pip-compile --output-file requirements/doc.txt requirements/base.in requirements/test-master.in requirements/doc.in
 #
+-e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 alabaster==0.7.11         # via sphinx
 amqp==1.4.9               # via kombu
 analytics-python==1.1.0
+aniso8601==3.0.2
 anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0        # via cryptography
 babel==2.6.0              # via sphinx
@@ -39,14 +41,12 @@ edx-drf-extensions==1.2.3
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
 edx-sphinx-theme==1.3.0
-enum34==1.1.6             # via cryptography
 event-tracking==0.2.4
 flaky==3.3.0
 html5lib==0.999
 idna==2.7                 # via cryptography
 imagesize==1.0.0          # via sphinx
 inflect==0.3.1            # via jinja2-pluralize
-ipaddress==1.0.22         # via cryptography
 jinja2-pluralize==0.3.0   # via diff-cover
 jinja2==2.10              # via diff-cover, jinja2-pluralize, sphinx
 jsondiff==1.1.1
@@ -55,13 +55,13 @@ kombu==3.0.37             # via celery
 markupsafe==1.0           # via jinja2
 packaging==17.1           # via sphinx
 path.py==8.2.1
-pbr==4.0.4                # via stevedore
+pbr==4.1.1                # via stevedore
 pillow==3.4
 pockets==0.6.2            # via sphinxcontrib-napoleon
 pycparser==2.18           # via cffi
 pygments==2.2.0           # via diff-cover, readme-renderer, sphinx
 pyjwt==1.6.4              # via djangorestframework-jwt, edx-rest-api-client
-pymongo==3.6.1            # via edx-opaque-keys, event-tracking
+pymongo==3.7.1            # via edx-opaque-keys, event-tracking
 pyparsing==2.2.0          # via packaging
 python-dateutil==2.4.0
 pytz==2016.10
@@ -72,10 +72,9 @@ shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.11.0               # via analytics-python, bleach, cryptography, diff-cover, doc8, edx-opaque-keys, edx-sphinx-theme, html5lib, packaging, pockets, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.7.5
+sphinx==1.7.6
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.1.0  # via sphinx
-stevedore==1.28.0         # via doc8, edx-opaque-keys
+stevedore==1.29.0         # via doc8, edx-opaque-keys
 testfixtures==6.2.0
-typing==3.6.4             # via sphinx
 unicodecsv==0.14.1
