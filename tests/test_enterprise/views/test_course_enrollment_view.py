@@ -438,7 +438,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             (
                 messages.INFO,
                 '<strong>Something happened.</strong> '
-                '<span>This course is not available. Please start over and select a different course.</span>'
+                '<span>This course link is currently invalid. '
+                'Please reach out to your Administrator for assistance to this course.</span>'
             )
         ]
         response = self.client.get(enterprise_landing_page_url)
@@ -530,7 +531,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             (
                 messages.INFO,
                 '<strong>Something happened.</strong> '
-                '<span>This course is not available. Please start over and select a different course.</span>'
+                '<span>This course link is currently invalid. '
+                'Please reach out to your Administrator for assistance to this course.</span>'
             )
         ]
         response = self.client.get(enterprise_landing_page_url)
@@ -1016,7 +1018,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             (
                 messages.INFO,
                 '<strong>Something happened.</strong> '
-                '<span>This course is not available. Please start over and select a different course.</span>'
+                '<span>This course link is currently invalid. '
+                'Please reach out to your Administrator for assistance to this course.</span>'
             )
         ]
         self._assert_django_test_client_messages(response, expected_log_messages)
@@ -1063,7 +1066,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             (
                 messages.INFO,
                 '<strong>Something happened.</strong> '
-                '<span>This course is not available. Please start over and select a different course.</span>'
+                '<span>This course link is currently invalid. '
+                'Please reach out to your Administrator for assistance to this course.</span>'
             )
         ]
         self._assert_django_test_client_messages(response, expected_log_messages)
@@ -1111,7 +1115,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             (
                 messages.INFO,
                 '<strong>Something happened.</strong> '
-                '<span>This course is not available. Please start over and select a different course.</span>'
+                '<span>This course link is currently invalid. '
+                'Please reach out to your Administrator for assistance to this course.</span>'
             )
         ]
         self._assert_django_test_client_messages(response, expected_log_messages)

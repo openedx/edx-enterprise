@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[0.71.1] - 2018-07-23
+---------------------
+
+* Updated message for invalid Enterprise Customer Catalog references in B2B enrollment workflow.
 
 [0.71.0] - 2018-07-20
 ---------------------
