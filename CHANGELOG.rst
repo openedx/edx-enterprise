@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[0.71.2] - 2018-07-23
+---------------------
+
+* Add thumbnail images in exported metadata content by content type.
+
 [0.71.1] - 2018-07-23
 ---------------------
 
