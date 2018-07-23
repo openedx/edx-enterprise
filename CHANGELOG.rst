@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.71.0] - 2018-07-20
+---------------------
+
+* Updated TinCanPython package to support python 3
+* Updated UUID field to nowrap in admin interface of enterprise customer catalog model.
+
 [0.70.8] - 2018-07-13
 ---------------------
 
