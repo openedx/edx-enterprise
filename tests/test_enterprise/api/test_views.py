@@ -89,6 +89,7 @@ ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT = reverse('enterprise-customer-c
 ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
 ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitlements', (1,))
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
+ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 
 
 def side_effect(url, query_parameters):
@@ -406,6 +407,30 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
         assert expected_json == response['results'][0]['data_sharing_consent_records']
 
+    def test_get_enterprise_customer_user_with_groups(self):
+        user = factories.UserFactory()
+        group1 = factories.GroupFactory(name='enterprise_enrollment_api_access')
+        group1.user_set.add(user)
+        group2 = factories.GroupFactory(name='some_other_group')
+        group2.user_set.add(user)
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer
+        )
+
+        expected_groups = ['enterprise_enrollment_api_access']
+
+        response = self.client.get(
+            '{host}{path}?username={username}'.format(
+                host=settings.TEST_SERVER,
+                path=ENTERPRISE_LEARNER_LIST_ENDPOINT,
+                username=user.username
+            )
+        )
+        response = self.load_json(response.content)
+        assert expected_groups == response['results'][0]['groups']
+
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @ddt.data(
         (True, 201),
@@ -694,7 +719,7 @@ class TestEnterpriseAPIViews(APITest):
 
             }],
             [{
-                'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent_records': [],
+                'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
@@ -824,6 +849,80 @@ class TestEnterpriseAPIViews(APITest):
 
         assert result_item['encrypted_password'] is not None
         assert result_item['encrypted_sftp_password'] is not None
+
+    @ddt.data(
+        (True, False, [], {}, False,
+         ['You must provide at least one of the following query parameters: permissions.']),
+        (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, True, None),
+        (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
+         {'detail': 'User is not allowed to access the view.'}),
+        (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
+         False, {'count': 0, 'next': None, 'previous': None, 'results': []}),
+        (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
+         {'detail': 'User is not allowed to access the view.'}),
+        (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
+         True, None),
+        (False, True, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None),
+    )
+    @ddt.unpack
+    def test_enterprise_customer_with_access_to(
+            self,
+            is_staff,
+            is_linked_to_enterprise,
+            user_groups,
+            query_params,
+            has_access_to_enterprise,
+            expected_error
+    ):
+        """
+        ``enterprise_customer``'s detail list endpoint ``with_access_to`` should validate permissions
+         and serialize the ``EnterpriseCustomer`` objects the user has access to.
+        """
+        enterprise_customer_data = {
+            'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+            'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+            'enforce_data_sharing_consent': 'at_enrollment',
+            'site__domain': 'example.com', 'site__name': 'example.com',
+        }
+        enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
+
+        # creating a non staff user so verify the insufficient permission conditions.
+        user = factories.UserFactory(username='test_user', is_active=True, is_staff=is_staff)
+        user.set_password('test_password')  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+
+        if is_linked_to_enterprise:
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=enterprise_customer,
+            )
+
+        for group_name in user_groups:
+            group = factories.GroupFactory(name=group_name)
+            group.user_set.add(user)
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        response = client.get(settings.TEST_SERVER +
+                              ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT +
+                              '?' + urlencode(query_params, True))
+        response = self.load_json(response.content)
+        if has_access_to_enterprise:
+            assert response['results'][0] == {
+                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'enforce_data_sharing_consent': 'at_enrollment',
+                'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                'enable_audit_enrollment': False, 'identity_provider': None,
+                'replace_sensitive_sso_username': False,
+                'site': {
+                    'domain': 'example.com', 'name': 'example.com'
+                },
+            }
+        else:
+            assert response == expected_error
 
     def test_enterprise_customer_branding_detail(self):
         """

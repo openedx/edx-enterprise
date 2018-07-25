@@ -9,7 +9,7 @@ from logging import getLogger
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
 from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import NotFound
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -27,7 +27,7 @@ from enterprise.api.pagination import get_paginated_response
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
-from enterprise.api.v1.permissions import HasEnterpriseEnrollmentAPIAccess
+from enterprise.api.v1.permissions import HasEnterpriseEnrollmentAPIAccess, IsAdminUserOrInGroup
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 
@@ -195,6 +195,17 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             return Response(serializer.data, status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    @method_decorator(require_at_least_one_query_parameter('permissions'))
+    @list_route(permission_classes=[
+        permissions.IsAuthenticated,
+        IsAdminUserOrInGroup,
+    ])
+    def with_access_to(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
+        """
+        Returns the list of enterprise customers the user has a specified group permission access to.
+        """
+        return self.list(request, *args, **kwargs)
 
 
 class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
