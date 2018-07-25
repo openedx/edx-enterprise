@@ -17,6 +17,7 @@ from django.utils.translation import ugettext_lazy as _
 from enterprise import models, utils
 from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
+from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import track_enrollment
 
 
@@ -261,12 +262,13 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'id', 'enterprise_customer', 'user_id', 'user', 'data_sharing_consent_records'
+            'id', 'enterprise_customer', 'user_id', 'user', 'data_sharing_consent_records', 'groups'
         )
 
     user = UserSerializer()
     enterprise_customer = EnterpriseCustomerSerializer()
     data_sharing_consent_records = serializers.SerializerMethodField()
+    groups = serializers.SerializerMethodField()
 
     def get_data_sharing_consent_records(self, obj):
         """
@@ -279,6 +281,15 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
             list of dict: The serialized DataSharingConsent records associated with the EnterpriseCustomerUser.
         """
         return [record.serialize() for record in obj.data_sharing_consent_records]
+
+    def get_groups(self, obj):
+        """
+        Return the enterprise related django groups that this user is a part of.
+        """
+        if obj.user:
+            return [group.name for group in obj.user.groups.filter(name__in=ENTERPRISE_PERMISSION_GROUPS)]
+        else:
+            return []
 
 
 class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
