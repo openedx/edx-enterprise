@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.0] - 2018-07-24
+---------------------
+
+* Implemented reporting channel of course completion via X-API
+
 [0.71.2] - 2018-07-23
 ---------------------
 

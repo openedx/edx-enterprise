@@ -125,6 +125,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "contentmetadataitemtransmission",
                 "degreedenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
+                "xapilrsconfiguration",
                 "created",
                 "modified",
                 "uuid",
