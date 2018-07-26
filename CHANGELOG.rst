@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.72.1] - 2018-07-26
+---------------------
+
+* Added missing migrations for xAPI LRS Configuration model
+
+
 [0.72.0] - 2018-07-24
 ---------------------
 
