@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.2] - 2018-07-27
+---------------------
+
+* Added endpoint to check a user's authorization to Enterprises based on membership in a given django group.
+
 [0.72.1] - 2018-07-26
 ---------------------
 
