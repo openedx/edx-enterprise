@@ -14,6 +14,33 @@ Change Log
 Unreleased
 ----------
 
+[0.72.1] - 2018-07-26
+---------------------
+
+* Added missing migrations for xAPI LRS Configuration model
+
+
+[0.72.0] - 2018-07-24
+---------------------
+
+* Implemented reporting channel of course completion via X-API
+
+[0.71.2] - 2018-07-23
+---------------------
+
+* Add thumbnail images in exported metadata content by content type.
+
+[0.71.1] - 2018-07-23
+---------------------
+
+* Updated message for invalid Enterprise Customer Catalog references in B2B enrollment workflow.
+
+[0.71.0] - 2018-07-20
+---------------------
+
+* Updated TinCanPython package to support python 3
+* Updated UUID field to nowrap in admin interface of enterprise customer catalog model.
+
 [0.70.8] - 2018-07-13
 ---------------------
 

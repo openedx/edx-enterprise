@@ -52,6 +52,7 @@ INSTALLED_APPS = (
     "integrated_channels.integrated_channel",
     "integrated_channels.degreed",
     "integrated_channels.sap_success_factors",
+    "integrated_channels.xapi",
 )
 
 MIDDLEWARE_CLASSES = [

@@ -511,7 +511,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         model = EnterpriseCustomerCatalog
 
     list_display = (
-        'uuid',
+        'uuid_nowrap',
         'enterprise_customer',
         'title',
     )
@@ -522,6 +522,13 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer__name',
         'enterprise_customer__uuid',
     )
+
+    def uuid_nowrap(self, obj):
+        """
+        Inject html for disabling wrap for uuid
+        """
+        return format_html('<span style="white-space: nowrap;">{uuid}</span>'.format(uuid=obj.uuid))
+    uuid_nowrap.short_description = 'UUID'
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, **kwargs)

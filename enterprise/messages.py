@@ -109,8 +109,8 @@ def add_generic_info_message_for_error(request):
         request,
         _(
             '{strong_start}Something happened.{strong_end} '
-            '{span_start}This course is not available. '
-            'Please start over and select a different course.{span_end}'
+            '{span_start}This course link is currently invalid. '
+            'Please reach out to your Administrator for assistance to this course.{span_end}'
         ).format(
             span_start='<span>',
             span_end='</span>',
