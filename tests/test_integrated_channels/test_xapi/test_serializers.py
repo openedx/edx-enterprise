@@ -8,14 +8,20 @@ from __future__ import absolute_import, unicode_literals
 import unittest
 from datetime import datetime, timedelta
 
+import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark
 
+from integrated_channels.utils import strfdelta
 from integrated_channels.xapi.serializers import CourseInfoSerializer, LearnerInfoSerializer
-from test_utils import factories
+from test_utils import TEST_COURSE, factories
 
+FAKER = FakerFactory.create()
+
+NOW = datetime.now()
 TEST_ENTERPRISE_SSO_UID = 'saml-user-id'
+TEST_COURSE_DESCRIPTION = FAKER.text()  # pylint: disable=no-member
 
 
 @mark.django_db
@@ -69,41 +75,60 @@ class TestLearnerInfoSerializer(unittest.TestCase):
             assert LearnerInfoSerializer(self.user).data == self.expected_data
 
 
+@ddt.ddt
 @mark.django_db
 class TestCourseInfoSerializer(unittest.TestCase):
     """
     Tests for the ``CourseInfoSerializer`` model.
     """
 
-    def setUp(self):
-        super(TestCourseInfoSerializer, self).setUp()
-        self.faker = FakerFactory.create()
-        self.course_overview = factories.UserFactory()
-
-        now = datetime.now()
-        self.course_overview_mock_data = dict(
-            id=self.faker.text(max_nb_chars=25),  # pylint: disable=no-member
-            display_name=self.faker.text(max_nb_chars=25),  # pylint: disable=no-member
-            short_description=self.faker.text(),  # pylint: disable=no-member
-            marketing_url=self.faker.url(),  # pylint: disable=no-member
-            effort=self.faker.text(max_nb_chars=10),  # pylint: disable=no-member
-            start=now,
-            end=now + timedelta(weeks=3, days=4),
-        )
-        self.course_overview = mock.Mock(**self.course_overview_mock_data)
-
-        self.expected_data = {
-            'course_description': self.course_overview_mock_data['short_description'],
-            'course_title': self.course_overview_mock_data['display_name'],
-            'course_duration': self.course_overview_mock_data['end'] - self.course_overview_mock_data['start'],
-            'course_effort': self.course_overview_mock_data['effort'],
-            'course_details_url': self.course_overview_mock_data['marketing_url'],
-            'course_id': self.course_overview_mock_data['id'],
-        }
-
-    def test_data(self):
+    @ddt.data(
+        (
+            mock.Mock(
+                **dict(
+                    id=TEST_COURSE,
+                    display_name='Test Course',
+                    short_description=TEST_COURSE_DESCRIPTION,
+                    marketing_url='https://edx.org/edx-test-course',
+                    effort='3-4 weeks',
+                    start=NOW,
+                    end=NOW + timedelta(weeks=3, days=4),
+                )
+            ),
+            dict(
+                course_description=TEST_COURSE_DESCRIPTION,
+                course_title='Test Course',
+                course_duration=strfdelta((NOW + timedelta(weeks=3, days=4)) - NOW, '{W} weeks {D} days.'),
+                course_effort='3-4 weeks',
+                course_details_url='https://edx.org/edx-test-course',
+                course_id=TEST_COURSE,
+            )
+        ),
+        (
+            mock.Mock(
+                **dict(
+                    id=TEST_COURSE,
+                    display_name='Test Course',
+                    short_description=TEST_COURSE_DESCRIPTION,
+                    marketing_url='https://edx.org/edx-test-course',
+                    effort='3-4 weeks',
+                    start=None,
+                    end=None,
+                )
+            ),
+            dict(
+                course_description=TEST_COURSE_DESCRIPTION,
+                course_title='Test Course',
+                course_duration='',
+                course_effort='3-4 weeks',
+                course_details_url='https://edx.org/edx-test-course',
+                course_id=TEST_COURSE,
+            )
+        ),
+    )
+    @ddt.unpack
+    def test_data(self, course_overview, expected_data):
         """
         Verify that serializer data is as expected.
         """
-
-        assert CourseInfoSerializer(self.course_overview).data == self.expected_data
+        assert CourseInfoSerializer(course_overview).data == expected_data

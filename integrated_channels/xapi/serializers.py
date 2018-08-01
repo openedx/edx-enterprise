@@ -9,6 +9,7 @@ from rest_framework import serializers
 
 from enterprise.api.v1.serializers import ImmutableStateSerializer
 from enterprise.models import EnterpriseCustomerUser
+from integrated_channels.utils import strfdelta
 
 
 class LearnerInfoSerializer(ImmutableStateSerializer):
@@ -36,12 +37,11 @@ class LearnerInfoSerializer(ImmutableStateSerializer):
         Returns:
             (int): Primary Key identifier for enterprise user object.
         """
-        try:
-            enterprise_learner = EnterpriseCustomerUser.objects.get(user_id=obj.id)
-        except EnterpriseCustomerUser.DoesNotExist:
-            return
+        # An enterprise learner can not belong to multiple enterprise customer at the same time
+        # but if such scenario occurs we will pick the first.
+        enterprise_learner = EnterpriseCustomerUser.objects.filter(user_id=obj.id).first()
 
-        return enterprise_learner.id
+        return enterprise_learner and enterprise_learner.id
 
     def get_enterprise_sso_uid(self, obj):
         """
@@ -53,12 +53,11 @@ class LearnerInfoSerializer(ImmutableStateSerializer):
         Returns:
             (str): string containing UUID for enterprise customer's Identity Provider.
         """
-        try:
-            enterprise_learner = EnterpriseCustomerUser.objects.get(user_id=obj.id)
-        except EnterpriseCustomerUser.DoesNotExist:
-            return
+        # An enterprise learner can not belong to multiple enterprise customer at the same time
+        # but if such scenario occurs we will pick the first.
+        enterprise_learner = EnterpriseCustomerUser.objects.filter(user_id=obj.id).first()
 
-        return enterprise_learner.get_remote_id()
+        return enterprise_learner and enterprise_learner.get_remote_id()
 
 
 class CourseInfoSerializer(ImmutableStateSerializer):
@@ -84,4 +83,7 @@ class CourseInfoSerializer(ImmutableStateSerializer):
         Returns:
             (timedelta): Duration of a course.
         """
-        return obj.end - obj.start if obj.start and obj.end else None
+        duration = obj.end - obj.start if obj.start and obj.end else None
+        if duration:
+            return strfdelta(duration, '{W} weeks {D} days.')
+        return ''
