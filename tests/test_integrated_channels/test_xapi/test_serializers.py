@@ -78,7 +78,6 @@ class TestCourseInfoSerializer(unittest.TestCase):
     def setUp(self):
         super(TestCourseInfoSerializer, self).setUp()
         self.faker = FakerFactory.create()
-        self.course_overview = factories.UserFactory()
 
         now = datetime.now()
         self.course_overview_mock_data = dict(
