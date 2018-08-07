@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.4] - 2018-08-08
+---------------------
+
+* Move some fields from Global Degreed Configuration to Enterprise Degreed Configuration.
+
 [0.72.3] - 2018-08-08
 ---------------------
 

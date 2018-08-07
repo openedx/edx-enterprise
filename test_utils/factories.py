@@ -445,13 +445,9 @@ class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
         model = DegreedGlobalConfiguration
 
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    degreed_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
     completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
-    degreed_user_id = factory.LazyAttribute(lambda x: FAKER.user_name())
-    degreed_user_password = factory.LazyAttribute(lambda x: FAKER.word())
-    provider_id = 'DEGREED'
 
 
 class DegreedEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
@@ -471,6 +467,10 @@ class DegreedEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFa
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     active = True
     degreed_company_id = factory.LazyAttribute(lambda x: FAKER.company())
+    degreed_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
+    degreed_user_id = factory.LazyAttribute(lambda x: FAKER.user_name())
+    degreed_user_password = factory.LazyAttribute(lambda x: FAKER.word())
+    provider_id = 'DEGREED'
 
 
 class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):

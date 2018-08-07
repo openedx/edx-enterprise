@@ -50,17 +50,17 @@ class TestDegreedApiClient(unittest.TestCase):
         self.access_token = "access_token"
         self.expected_token_response_body = {"expires_in": self.expires_in, "access_token": self.access_token}
         factories.DegreedGlobalConfigurationFactory(
-            degreed_base_url=self.url_base,
             completion_status_api_path=self.completion_status_api_path,
             course_api_path=self.course_api_path,
             oauth_api_path=self.oauth_api_path,
-            degreed_user_id=self.user_id,
-            degreed_user_password=self.user_pass,
         )
         self.enterprise_config = factories.DegreedEnterpriseCustomerConfigurationFactory(
             key=self.client_id,
             secret=self.client_secret,
             degreed_company_id=self.company_id,
+            degreed_base_url=self.url_base,
+            degreed_user_id=self.user_id,
+            degreed_user_password=self.user_pass,
         )
 
     @responses.activate
