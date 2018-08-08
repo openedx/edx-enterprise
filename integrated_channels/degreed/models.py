@@ -29,12 +29,6 @@ class DegreedGlobalConfiguration(ConfigurationModel):
     The global configuration for integrating with Degreed.
     """
 
-    degreed_base_url = models.CharField(
-        max_length=255,
-        verbose_name="Degreed Base URL",
-        help_text="The base URL used for API requests to Degreed, i.e. https://degreed.com."
-    )
-
     completion_status_api_path = models.CharField(
         max_length=255,
         verbose_name="Completion Status API Path",
@@ -54,33 +48,6 @@ class DegreedGlobalConfiguration(ConfigurationModel):
             "The API path for making OAuth-related POST requests to Degreed. "
             "This will be used to gain the OAuth access token which is required for other API calls."
         )
-    )
-
-    degreed_user_id = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Degreed User ID",
-        help_text=(
-            "The Degreed User ID provided to the content provider by Degreed. "
-            "It is required for getting the OAuth access token."
-        )
-    )
-
-    degreed_user_password = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Degreed User Password",
-        help_text=(
-            "The Degreed User Password provided to the content provider by Degreed. "
-            "It is required for getting the OAuth access token."
-        )
-    )
-
-    provider_id = models.CharField(
-        max_length=100,
-        default='EDX',
-        verbose_name="Provider Code",
-        help_text="The provider code that Degreed gives to the content provider."
     )
 
     class Meta:
@@ -132,6 +99,40 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         help_text="The organization code provided to the enterprise customer by Degreed."
     )
 
+    degreed_base_url = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Degreed Base URL",
+        help_text="The base URL used for API requests to Degreed, i.e. https://degreed.com."
+    )
+
+    degreed_user_id = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Degreed User ID",
+        help_text=(
+            "The Degreed User ID provided to the content provider by Degreed. "
+            "It is required for getting the OAuth access token."
+        )
+    )
+
+    degreed_user_password = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Degreed User Password",
+        help_text=(
+            "The Degreed User Password provided to the content provider by Degreed. "
+            "It is required for getting the OAuth access token."
+        )
+    )
+
+    provider_id = models.CharField(
+        max_length=100,
+        default='EDX',
+        verbose_name="Provider Code",
+        help_text="The provider code that Degreed gives to the content provider."
+    )
+
     history = HistoricalRecords()
 
     class Meta(object):
@@ -157,13 +158,6 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """
         return 'DEGREED'
-
-    @property
-    def provider_id(self):
-        '''
-        Fetch ``provider_id`` from global configuration settings
-        '''
-        return DegreedGlobalConfiguration.current().provider_id
 
     def get_learner_data_transmitter(self):
         """

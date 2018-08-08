@@ -17,13 +17,9 @@ class DegreedGlobalConfigurationAdmin(ConfigurationModelAdmin):
     """
 
     list_display = (
-        "degreed_base_url",
         "completion_status_api_path",
         "course_api_path",
         "oauth_api_path",
-        "degreed_user_id",
-        "degreed_user_password",
-        "provider_id",
     )
 
     class Meta(object):
@@ -42,6 +38,10 @@ class DegreedEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         "key",
         "secret",
         "degreed_company_id",
+        "degreed_base_url",
+        "degreed_user_id",
+        "degreed_user_password",
+        "provider_id",
     )
 
     readonly_fields = (

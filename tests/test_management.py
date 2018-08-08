@@ -76,9 +76,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             enterprise_customer=self.enterprise_customer,
             key='key',
             secret='secret',
-            degreed_company_id='Degreed Company'
-        )
-        self.degreed_global_configuration = factories.DegreedGlobalConfigurationFactory(
+            degreed_company_id='Degreed Company',
             degreed_base_url='https://www.degreed.com/',
         )
         self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
@@ -158,6 +156,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             key='key',
             secret='secret',
             degreed_company_id='Degreed Company',
+            degreed_base_url='https://www.degreed.com/',
             active=True,
         )
         dummy_sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
@@ -439,9 +438,9 @@ class TestTransmitLearnerData(unittest.TestCase):
             secret='secret',
             degreed_company_id='Degreed Company',
             active=True,
+            degreed_base_url='https://www.degreed.com/',
         )
         self.degreed_global_configuration = factories.DegreedGlobalConfigurationFactory(
-            degreed_base_url='https://www.degreed.com/',
             oauth_api_path='oauth/token',
         )
         self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(

@@ -57,7 +57,10 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             HTTPError: if we received a failure response code from Degreed
         """
         return self._post(
-            urljoin(self.global_degreed_config.degreed_base_url, self.global_degreed_config.completion_status_api_path),
+            urljoin(
+                self.enterprise_configuration.degreed_base_url,
+                self.global_degreed_config.completion_status_api_path
+            ),
             payload,
             self.COMPLETION_PROVIDER_SCOPE
         )
@@ -77,7 +80,10 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             HTTPError: if we received a failure response code from Degreed
         """
         return self._delete(
-            urljoin(self.global_degreed_config.degreed_base_url, self.global_degreed_config.completion_status_api_path),
+            urljoin(
+                self.enterprise_configuration.degreed_base_url,
+                self.global_degreed_config.completion_status_api_path
+            ),
             payload,
             self.COMPLETION_PROVIDER_SCOPE
         )
@@ -131,7 +137,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         """
         try:
             status_code, response_body = getattr(self, '_' + http_method)(
-                urljoin(self.global_degreed_config.degreed_base_url, self.global_degreed_config.course_api_path),
+                urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.course_api_path),
                 serialized_data,
                 self.CONTENT_PROVIDER_SCOPE
             )
@@ -193,8 +199,8 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             oauth_access_token, expires_at = self._get_oauth_access_token(
                 self.enterprise_configuration.key,
                 self.enterprise_configuration.secret,
-                self.global_degreed_config.degreed_user_id,
-                self.global_degreed_config.degreed_user_password,
+                self.enterprise_configuration.degreed_user_id,
+                self.enterprise_configuration.degreed_user_password,
                 scope
             )
             session = requests.Session()
@@ -223,7 +229,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             RequestException: If an unexpected response format was received that we could not parse.
         """
         response = requests.post(
-            urljoin(self.global_degreed_config.degreed_base_url, self.global_degreed_config.oauth_api_path),
+            urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.oauth_api_path),
             data={
                 'grant_type': 'password',
                 'username': user_id,
