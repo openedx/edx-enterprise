@@ -86,41 +86,29 @@ class Command(BaseCommand):
         """
         query = '''
             SELECT
-                u.id AS user_id,
-                ec.uuid AS enterprise_customer_uuid,
-                sce.course_id AS course_run_id
-            FROM
-                enterprise_enterprisecustomeruser ecu
-            JOIN
-                enterprise_enterprisecustomer ec
-            ON
-                ecu.enterprise_customer_id = ec.uuid
-                {enterprise_customer_filter}
-            JOIN
-                auth_user u
-            ON
-                ecu.user_id = u.id AND
-                u.email NOT LIKE '%@edx.org'
-            JOIN
-                student_courseenrollment sce
-            ON
-                ecu.user_id = sce.user_id AND
-                ecu.created <= sce.created
-            LEFT JOIN
-                enterprise_enterprisecourseenrollment ece
-            ON
-                ecu.id = ece.enterprise_customer_user_id
+                au.id as user_id,
+                ecu.enterprise_customer_id as enterprise_customer_uuid,
+                sce.course_id as course_run_id
+            FROM student_courseenrollment sce
+            JOIN auth_user au
+                ON au.id = sce.user_id
+            JOIN enterprise_enterprisecustomeruser ecu
+                ON ecu.user_id = au.id
+            LEFT JOIN enterprise_enterprisecourseenrollment ece
+                ON ece.enterprise_customer_user_id = ecu.id
+                AND ece.course_id = sce.course_id
             WHERE
                 ece.id IS NULL
-            ORDER BY
-                ec.name,
-                sce.created DESC;
+                AND ecu.created <= sce.created
+                AND au.email NOT LIKE '%@edx.org'
+                {enterprise_customer_filter}
+            ORDER BY sce.created;
         '''
 
         with connection.cursor() as cursor:
             if enterprise_customer_uuid:
                 cursor.execute(
-                    query.format(enterprise_customer_filter='AND ec.uuid = %s'),
+                    query.format(enterprise_customer_filter='AND ecu.enterprise_customer_id = %s'),
                     [enterprise_customer_uuid]
                 )
             else:
