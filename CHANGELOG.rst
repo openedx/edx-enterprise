@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.5] - 2018-08-09
+---------------------
+
+* Revise management command query to include all potentially-applicable enrollment records
+
 [0.72.4] - 2018-08-08
 ---------------------
 
