@@ -39,6 +39,7 @@ TEST_COURSE_KEY = 'edX+DemoX'
 TEST_UUID = 'd2098bfb-2c78-44f1-9eb2-b94475356a3f'
 TEST_USER_ID = 1
 TEST_SLUG = 'test-enterprise-customer'
+TEST_ENTERPRISE_NAME = 'Test Enterprise Customer'
 
 
 def get_magic_name(value):

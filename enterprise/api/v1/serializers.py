@@ -82,16 +82,23 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
     class Meta:
         model = models.EnterpriseCustomerBrandingConfiguration
         fields = (
-            'enterprise_customer', 'enterprise_slug', 'logo'
+            'enterprise_customer', 'enterprise_slug', 'logo', 'enterprise_name',
         )
 
     enterprise_slug = serializers.SerializerMethodField()
+    enterprise_name = serializers.SerializerMethodField()
 
     def get_enterprise_slug(self, obj):
         """
         Return the slug of the associated enterprise customer.
         """
         return obj.enterprise_customer.slug
+
+    def get_enterprise_name(self, obj):
+        """
+        Return the name of the associated enterprise customer.
+        """
+        return obj.enterprise_customer.name
 
 
 class EnterpriseCustomerEntitlementSerializer(serializers.ModelSerializer):
