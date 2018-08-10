@@ -37,6 +37,7 @@ from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
     TEST_COURSE_KEY,
+    TEST_ENTERPRISE_NAME,
     TEST_PASSWORD,
     TEST_SLUG,
     TEST_USERNAME,
@@ -224,7 +225,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': TEST_ENTERPRISE_NAME, 'enterprise_customer__catalog': 1,
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -246,7 +247,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': TEST_ENTERPRISE_NAME, 'enterprise_customer__catalog': 1,
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -268,7 +269,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': TEST_ENTERPRISE_NAME, 'enterprise_customer__catalog': 1,
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -290,7 +291,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': TEST_ENTERPRISE_NAME, 'enterprise_customer__catalog': 1,
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -311,7 +312,7 @@ class TestEnterpriseAPIViews(APITest):
             [
                 factories.EnterpriseCustomerFactory,
                 [{
-                    'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
+                    'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME,
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'site__domain': 'example.com', 'site__name': 'example.com',
@@ -465,7 +466,7 @@ class TestEnterpriseAPIViews(APITest):
         self.create_items(
             factories.EnterpriseCustomerFactory,
             [{
-                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
+                'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME,
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
@@ -686,13 +687,13 @@ class TestEnterpriseAPIViews(APITest):
             ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
             itemgetter('uuid'),
             [{
-                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_SLUG,
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }],
             [{
-                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_SLUG,
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
@@ -710,7 +711,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'id': 1, 'user_id': 0,
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
-                'enterprise_customer__name': 'Test Enterprise Customer',
+                'enterprise_customer__name': TEST_ENTERPRISE_NAME,
                 'enterprise_customer__slug': TEST_SLUG, 'enterprise_customer__catalog': 1,
                 'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
@@ -721,7 +722,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
-                    'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                    'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_SLUG,
                     'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
@@ -766,7 +767,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'provider_id': FAKE_UUIDS[0],
                 'enterprise_customer__uuid': FAKE_UUIDS[1],
-                'enterprise_customer__name': 'Test Enterprise Customer',
+                'enterprise_customer__name': TEST_ENTERPRISE_NAME,
                 'enterprise_customer__slug': TEST_SLUG, 'enterprise_customer__catalog': 1,
                 'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
@@ -775,7 +776,7 @@ class TestEnterpriseAPIViews(APITest):
 
             }],
             [{
-                'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                'uuid': FAKE_UUIDS[1], 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_SLUG,
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
@@ -794,11 +795,13 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__slug': TEST_SLUG,
                 'logo': 'enterprise/branding/1/1_logo.png',
+                'enterprise_customer__name': TEST_ENTERPRISE_NAME,
             }],
             [{
                 'enterprise_customer': FAKE_UUIDS[0],
                 'enterprise_slug': TEST_SLUG,
                 'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
+                'enterprise_name': TEST_ENTERPRISE_NAME,
             }],
         ),
     )
@@ -880,7 +883,7 @@ class TestEnterpriseAPIViews(APITest):
          and serialize the ``EnterpriseCustomer`` objects the user has access to.
         """
         enterprise_customer_data = {
-            'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+            'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_SLUG,
             'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
             'enforce_data_sharing_consent': 'at_enrollment',
             'site__domain': 'example.com', 'site__name': 'example.com',
@@ -911,7 +914,7 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
         if has_access_to_enterprise:
             assert response['results'][0] == {
-                'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
+                'uuid': FAKE_UUIDS[0], 'name': TEST_ENTERPRISE_NAME, 'slug': TEST_SLUG,
                 'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
@@ -935,17 +938,21 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__slug': TEST_SLUG,
                 'logo': 'enterprise/branding/1/1_logo.png',
+                'enterprise_customer__name': TEST_ENTERPRISE_NAME,
+
             },
             {
                 'enterprise_customer__uuid': FAKE_UUIDS[1],
                 'enterprise_customer__slug': 'another-slug',
                 'logo': 'enterprise/branding/2/2_logo.png',
+                'enterprise_customer__name': TEST_ENTERPRISE_NAME,
             },
         ]
         expected_item = {
             'enterprise_customer': FAKE_UUIDS[0],
             'enterprise_slug': TEST_SLUG,
             'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
+            'enterprise_name': TEST_ENTERPRISE_NAME,
         }
         self.create_items(factory, model_items)
         response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT)

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.6] - 2018-08-10
+---------------------
+
+* Add the `EnterpriseCustomer`'s name to the `/enterprise-customer-branding` endpoint.
+
 [0.72.5] - 2018-08-09
 ---------------------
 
