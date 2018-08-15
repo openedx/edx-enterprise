@@ -199,9 +199,6 @@ class Command(BaseCommand):
         if not CourseOverview:
             raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
 
-        course_overviews = CourseOverview.get_from_ids_if_exists(
+        return CourseOverview.get_from_ids_if_exists(
             [grade.course_id for grade in persistent_course_grades]
         )
-        return {
-            course.id: course for course in course_overviews
-        }
