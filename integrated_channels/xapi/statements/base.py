@@ -44,7 +44,7 @@ class EnterpriseStatement(Statement):
         return Activity(
             id=X_API_ACTIVITY_COURSE,
             definition=ActivityDefinition(
-                name=LanguageMap({'en-US': name}),
-                description=LanguageMap({'en-US': description}),
+                name=LanguageMap({'en-US': name.encode("ascii", "ignore")}),
+                description=LanguageMap({'en-US': description.encode("ascii", "ignore")}),
             ),
         )
