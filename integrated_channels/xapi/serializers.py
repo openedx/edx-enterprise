@@ -9,6 +9,7 @@ from rest_framework import serializers
 
 from enterprise.api.v1.serializers import ImmutableStateSerializer
 from enterprise.models import EnterpriseCustomerUser
+from integrated_channels.utils import strfdelta
 
 
 class LearnerInfoSerializer(ImmutableStateSerializer):
@@ -88,4 +89,7 @@ class CourseInfoSerializer(ImmutableStateSerializer):
         Returns:
             (timedelta): Duration of a course.
         """
-        return obj.end - obj.start if obj.start and obj.end else None
+        duration = obj.end - obj.start if obj.start and obj.end else None
+        if duration:
+            return strfdelta(duration, '{W} weeks {D} days.')
+        return ''
