@@ -37,7 +37,9 @@ class LearnerInfoSerializer(ImmutableStateSerializer):
             (int): Primary Key identifier for enterprise user object.
         """
         try:
-            enterprise_learner = EnterpriseCustomerUser.objects.get(user_id=obj.id)
+            # An enterprise learner can not belong to multiple enterprise customer at the same time
+            # but if such scenario occurs we will pick the first.
+            enterprise_learner = EnterpriseCustomerUser.objects.filter(user_id=obj.id).first()
         except EnterpriseCustomerUser.DoesNotExist:
             return
 
@@ -54,7 +56,9 @@ class LearnerInfoSerializer(ImmutableStateSerializer):
             (str): string containing UUID for enterprise customer's Identity Provider.
         """
         try:
-            enterprise_learner = EnterpriseCustomerUser.objects.get(user_id=obj.id)
+            # An enterprise learner can not belong to multiple enterprise customer at the same time
+            # but if such scenario occurs we will pick the first.
+            enterprise_learner = EnterpriseCustomerUser.objects.filter(user_id=obj.id).first()
         except EnterpriseCustomerUser.DoesNotExist:
             return
 
