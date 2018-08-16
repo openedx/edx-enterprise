@@ -91,7 +91,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
     """
-    
+
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
 
@@ -431,7 +431,6 @@ class EnterpriseCourseCatalogViewSet(EnterpriseWrapperApiViewSet):
         Returns:
             (Response): DRF response object containing course catalogs.
         """
-        print "MADE IT HERE"
         catalog_api = CourseCatalogApiClient(request.user)
         catalogs = catalog_api.get_paginated_catalogs(request.GET)
         self.ensure_data_exists(request, catalogs)
