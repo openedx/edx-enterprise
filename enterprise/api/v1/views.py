@@ -30,7 +30,7 @@ from enterprise.api.v1.decorators import enterprise_customer_required, require_a
 from enterprise.api.v1.permissions import HasEnterpriseEnrollmentAPIAccess, IsAdminUserOrInGroup
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
-
+import re
 LOGGER = getLogger(__name__)
 
 
@@ -91,7 +91,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer`` API endpoint.
     """
-
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
 
@@ -205,6 +204,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
         Returns the list of enterprise customers the user has a specified group permission access to.
         """
+        enterprise_name = self.request.query_params.get('search', None)
+        if enterprise_name is not None:
+            filtered_enterprises = self.queryset.filter(name__icontains=enterprise_name)
+            self.queryset = filtered_enterprises
         return self.list(request, *args, **kwargs)
 
 
@@ -425,6 +428,7 @@ class EnterpriseCourseCatalogViewSet(EnterpriseWrapperApiViewSet):
         Returns:
             (Response): DRF response object containing course catalogs.
         """
+        print "MADE IT HERE"
         catalog_api = CourseCatalogApiClient(request.user)
         catalogs = catalog_api.get_paginated_catalogs(request.GET)
         self.ensure_data_exists(request, catalogs)
