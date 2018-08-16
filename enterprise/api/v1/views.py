@@ -30,7 +30,7 @@ from enterprise.api.v1.decorators import enterprise_customer_required, require_a
 from enterprise.api.v1.permissions import HasEnterpriseEnrollmentAPIAccess, IsAdminUserOrInGroup
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
-import re
+
 LOGGER = getLogger(__name__)
 
 
