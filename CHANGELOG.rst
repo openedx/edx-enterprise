@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.6] - 2018-08-17
+---------------------
+
+* Added management command to send course enrollment and course completion info for enterprise customers.
+
 [0.72.5] - 2018-08-09
 ---------------------
 

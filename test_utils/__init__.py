@@ -10,6 +10,7 @@ from __future__ import absolute_import, unicode_literals
 
 import copy
 import json
+import logging
 import uuid
 
 from django.conf import settings
@@ -275,8 +276,38 @@ class APITest(APITestCase):
 
         Returns:
             dict object containing parsed json from response.content
-
         """
         if isinstance(content, bytes):
             content = content.decode('utf-8')
         return json.loads(content)
+
+
+class MockLoggingHandler(logging.Handler):
+    """
+    Mock logging handler to help check for logging statements.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """
+        Reset messages with each initialization.
+        """
+        self.reset()
+        logging.Handler.__init__(self, *args, **kwargs)
+
+    def emit(self, record):
+        """
+        Override to catch messages and store them messages in our internal dicts.
+        """
+        self.messages[record.levelname.lower()].append(record.getMessage())
+
+    def reset(self):
+        """
+        Clear out all messages, also called to initially populate messages dict.
+        """
+        self.messages = {
+            'debug': [],
+            'info': [],
+            'warning': [],
+            'error': [],
+            'critical': [],
+        }
