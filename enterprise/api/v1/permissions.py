@@ -7,9 +7,26 @@ from __future__ import absolute_import, unicode_literals
 from rest_framework import permissions
 
 
+class IsInEnterpriseGroup(permissions.BasePermission):
+    """
+    Find out if the requesting user belongs to a django group meant for granting access to an enterprise feature.
+    This check applies to both staff and non-staff users.
+    """
+    ALLOWED_API_GROUPS = []  # pylint: disable=invalid-name
+    message = u'User is not allowed to access the view.'
+
+    def has_permission(self, request, view):
+        return (
+            super(IsInEnterpriseGroup, self).has_permission(request, view) and (
+                request.user.groups.filter(name__in=self.ALLOWED_API_GROUPS).exists() or
+                request.user.groups.filter(name__in=request.query_params.getlist('permissions')).exists()
+            )
+        )
+
+
 class IsAdminUserOrInGroup(permissions.IsAdminUser):
     """
-    Find the requesting user is either staff or belong to specific group.
+    Find out if the requesting user is either staff or belongs to specific django group.
     It will return a 403 forbidden response with a message if the user is not authorized to access the view.
     """
     ALLOWED_API_GROUPS = []  # pylint: disable=invalid-name
@@ -29,18 +46,16 @@ class IsAdminUserOrInGroup(permissions.IsAdminUser):
 
 class HasEnterpriseEnrollmentAPIAccess(IsAdminUserOrInGroup):
     """
-    Find the requesting user is either staff or belong to enterprise_enrollment_api_access group.
-    It will return a 403 forbidden response with a message if the user is not authorized to access the view.
+    Find the requesting user has access to the Enterprise Enrollment API feature set.
     """
     def __init__(self):
         """ Initialize the class with a API_ALLOWED_GROUPS """
         self.ALLOWED_API_GROUPS = [u'enterprise_enrollment_api_access', ]  # pylint: disable=invalid-name
 
 
-class HasEnterpriseDataAPIAccess(IsAdminUserOrInGroup):
+class HasEnterpriseDataAPIAccess(IsInEnterpriseGroup):
     """
-    Find the requesting user is either staff or belong to enterprise_data_api_access group.
-    It will return a 403 forbidden response with a message if the user is not authorized to access the view.
+    Find the requesting user has access to the Enterprise Data API feature set.
     """
     def __init__(self):
         """ Initialize the class with a API_ALLOWED_GROUPS """

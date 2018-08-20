@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.73.0] - 2018-08-21
+---------------------
+
+* Changed permission logic and added filtering options for the enterprise with_access_to endpoint.
+
 [0.72.7] - 2018-08-20
 ---------------------
 
