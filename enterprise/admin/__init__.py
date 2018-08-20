@@ -5,7 +5,6 @@ Django admin integration for enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import json
-
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import settings
@@ -43,7 +42,17 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
 )
-from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
+from enterprise.utils import (
+    get_all_field_names,
+    get_default_catalog_content_filter,
+    NotConnectedToOpenEdX,
+)
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+
+try:
+    from openedx.core.djangoapps.catalog.models import CatalogIntegration
+except ImportError:
+    CatalogIntegration = None
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -504,7 +513,6 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     """
     Django admin model for EnterpriseCustomerCatalog.
     """
-
     ordering = ('enterprise_customer__name', 'title')
 
     class Meta(object):
@@ -514,6 +522,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'uuid_nowrap',
         'enterprise_customer',
         'title',
+        'discovery_query_url',
     )
 
     search_fields = (
@@ -522,6 +531,37 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer__name',
         'enterprise_customer__uuid',
     )
+
+    fields = (
+        'title',
+        'enterprise_customer',
+        'content_filter',
+        'enabled_course_modes',
+        'publish_audit_enrollment_urls',
+    )
+
+    def discovery_query_url(self, obj):
+        """
+        Return discovery url for preview.
+        """
+        if CatalogIntegration is None:
+            raise NotConnectedToOpenEdX(
+                _('To get a CatalogIntegration object, this package must be '
+                  'installed in an Open edX environment.')
+            )
+        discovery_root_url = CatalogIntegration.current().get_internal_api_url()
+        disc_url = '{discovery_root_url}{search_all_endpoint}?{query_string}'.format(
+            discovery_root_url=discovery_root_url,
+            search_all_endpoint='search/all/',
+            query_string=urlencode(obj.content_filter, doseq=True)
+        )
+        return format_html(
+            '<a href="{url}" target="_blank">Preview</a>',
+            url=disc_url
+        )
+    readonly_fields = ('discovery_query_url',)
+    discovery_query_url.allow_tags = True
+    discovery_query_url.short_description = 'Preview Catalog Courses'
 
     def uuid_nowrap(self, obj):
         """
