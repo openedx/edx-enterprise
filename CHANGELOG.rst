@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.72.7] - 2018-08-20
+---------------------
+
+* Added preview field that takes user to Discovery with elastic search results for the catalog
+
 [0.72.6] - 2018-08-17
 ---------------------
 
