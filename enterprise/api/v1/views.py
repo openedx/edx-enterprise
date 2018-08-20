@@ -205,6 +205,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
         Returns the list of enterprise customers the user has a specified group permission access to.
         """
+        self.queryset = self.queryset.order_by('name')
+        
+        enterprise_name = self.request.query_params.get('search', None)
+        if enterprise_name is not None:
+            filtered_enterprises = self.queryset.filter(name__icontains=enterprise_name)
+            self.queryset = filtered_enterprises
         return self.list(request, *args, **kwargs)
 
 
