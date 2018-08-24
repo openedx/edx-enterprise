@@ -851,19 +851,44 @@ class TestEnterpriseAPIViews(APITest):
         assert result_item['encrypted_sftp_password'] is not None
 
     @ddt.data(
-        (True, False, [], {}, False,
-         ['You must provide at least one of the following query parameters: permissions.']),
-        (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, True, None),
+        # Request missing required permissions query param.
+        (True, False, [], {}, False, {'detail': 'User is not allowed to access the view.'}),
+        # Staff user that does not have the specified group permission.
+        (True, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
+         {'detail': 'User is not allowed to access the view.'}),
+        # Staff user that does have the specified group permission.
+        (True, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
+         True, None),
+        # Non staff user that is not linked to the enterprise, nor do they have the group permission.
         (False, False, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
          {'detail': 'User is not allowed to access the view.'}),
+        # Non staff user that is not linked to the enterprise, but does have the group permission.
         (False, False, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
          False, {'count': 0, 'next': None, 'previous': None, 'results': []}),
+        # Non staff user that is linked to the enterprise, but does not have the group permission.
         (False, True, [], {'permissions': ['enterprise_enrollment_api_access']}, False,
          {'detail': 'User is not allowed to access the view.'}),
+        # Non staff user that is linked to the enterprise and does have the group permission
         (False, True, ['enterprise_enrollment_api_access'], {'permissions': ['enterprise_enrollment_api_access']},
          True, None),
+        # Non staff user that is linked to the enterprise and has group permission and the request has passed
+        # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None),
+        # Staff user with group permission filtering on non existent enteprise id.
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
+         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+        # Staff user with group permission filtering on enterprise id successfully.
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[0]}, True, None),
+        # Staff user with group permission filtering on search param with no results.
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'search': 'blah'}, False,
+         {'count': 0, 'next': None, 'previous': None, 'results': []}),
+        # Staff user with group permission filtering on search param with results.
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True, None),
     )
     @ddt.unpack
     def test_enterprise_customer_with_access_to(
