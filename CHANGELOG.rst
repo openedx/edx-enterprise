@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.73.1] - 2018-08-30
+---------------------
+
+* Remove the SailThru flags for enterprise learner when un-linking it from enterprise.
+
 [0.73.0] - 2018-08-21
 ---------------------
 
