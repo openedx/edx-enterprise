@@ -25,6 +25,18 @@ class TestSendCourseCompletions(unittest.TestCase):
     Tests for the ``send_course_completions`` management command.
     """
 
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.PersistentCourseGrade',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.CourseGradeFactory',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.CourseOverview',
+        mock.MagicMock()
+    )
     def test_parse_arguments(self):
         """
         Make sure command runs only when correct arguments are passed.
@@ -38,6 +50,18 @@ class TestSendCourseCompletions(unittest.TestCase):
         ):
             call_command('send_course_completions', days=1, enterprise_customer_uuid=enterprise_uuid)
 
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.PersistentCourseGrade',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.CourseGradeFactory',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.CourseOverview',
+        mock.MagicMock()
+    )
     def test_error_for_missing_lrs_configuration(self):
         """
         Make sure CommandError is raised if XAPILRSConfiguration does not exis for the given enterprise customer.
@@ -95,38 +119,20 @@ class TestSendCourseCompletions(unittest.TestCase):
         expected = {user.id: user}
         assert Command.prefetch_users([mock.Mock(user_id=user.id)]) == expected
 
-    def test_prefetch_courses(self):
-        """
-        Make sure prefetch_courses method works as expected.
-        """
-        # Import is placed here because if placed at the top it affects mocking.
-        from integrated_channels.xapi.management.commands.send_course_completions import Command
-
-        # Make sure NotConnectedToOpenEdX is raised if called out side of edx-platform
-        with raises(
-            NotConnectedToOpenEdX,
-            match='This package must be installed in an OpenEdX environment.'
-        ):
-            Command.prefetch_courses([])
-
-        # Verify that prefetch_courses returns CoursesOverview records
-        with mock.patch(
-            'integrated_channels.xapi.management.commands.send_course_completions.CourseOverview'
-        ) as mock_course_overview:
-            test_course = mock.Mock(id='test-course')
-
-            mock_course_overview.get_from_ids_if_exists.return_value = [test_course]
-            expected = {
-                test_course.id: test_course
-            }
-            assert Command.prefetch_courses([]) == expected
-
     @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_completions.CourseGradeFactory',
         mock.MagicMock()
     )
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.PersistentCourseGrade',
+        mock.MagicMock()
+    )
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_completions.CourseOverview',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.User',
         mock.MagicMock()
     )
     @mock.patch(
@@ -182,6 +188,10 @@ class TestSendCourseCompletions(unittest.TestCase):
             )
 
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.PersistentCourseGrade',
+        mock.MagicMock()
+    )
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_completions.CourseGradeFactory',
         mock.MagicMock()
     )
@@ -190,10 +200,14 @@ class TestSendCourseCompletions(unittest.TestCase):
         mock.MagicMock()
     )
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.User',
+        mock.MagicMock()
+    )
+    # pylint: disable=invalid-name
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_completions.Command.get_course_completions',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
-    # pylint: disable=invalid-name
     @mock.patch('integrated_channels.xapi.management.commands.send_course_completions.send_course_completion_statement')
     def test_command(self, mock_send_course_completion_statement):
         """
@@ -205,6 +219,10 @@ class TestSendCourseCompletions(unittest.TestCase):
         assert mock_send_course_completion_statement.called
 
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.PersistentCourseGrade',
+        mock.MagicMock()
+    )
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_completions.CourseGradeFactory',
         mock.MagicMock()
     )
@@ -213,10 +231,14 @@ class TestSendCourseCompletions(unittest.TestCase):
         mock.MagicMock()
     )
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_completions.User',
+        mock.MagicMock()
+    )
+    # pylint: disable=invalid-name
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_completions.Command.get_course_completions',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
-    # pylint: disable=invalid-name
     @mock.patch('integrated_channels.xapi.management.commands.send_course_completions.send_course_completion_statement')
     def test_command_once_for_all_customers(self, mock_send_course_completion_statement):
         """

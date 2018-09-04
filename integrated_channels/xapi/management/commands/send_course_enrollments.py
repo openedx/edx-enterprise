@@ -86,6 +86,9 @@ class Command(BaseCommand):
         """
         Send xAPI statements.
         """
+        if not CourseEnrollment:
+            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
+
         days, enterprise_customer = self.parse_arguments(*args, **options)
 
         if enterprise_customer:
@@ -137,9 +140,6 @@ class Command(BaseCommand):
         Returns:
             (list): A list of CourseEnrollment objects.
         """
-        if not CourseEnrollment:
-            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
-
         return CourseEnrollment.objects.filter(
             created__gt=datetime.datetime.now() - datetime.timedelta(days=days)
         ).filter(

@@ -25,6 +25,10 @@ class TestSendCourseEnrollments(unittest.TestCase):
     Tests for the ``send_course_enrollments`` management command.
     """
 
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        mock.MagicMock()
+    )
     def test_parse_arguments(self):
         """
         Make sure command runs only when correct arguments are passed.
@@ -38,6 +42,10 @@ class TestSendCourseEnrollments(unittest.TestCase):
         ):
             call_command('send_course_enrollments', days=1, enterprise_customer_uuid=enterprise_uuid)
 
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        mock.MagicMock()
+    )
     def test_error_for_missing_lrs_configuration(self):
         """
         Make sure CommandError is raised if XAPILRSConfiguration does not exis for the given enterprise customer.
@@ -77,10 +85,14 @@ class TestSendCourseEnrollments(unittest.TestCase):
             assert mock_enrollments.objects.filter.called
 
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        mock.MagicMock()
+    )
+    # pylint: disable=invalid-name
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_enrollments.Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
-    # pylint: disable=invalid-name
     @mock.patch('integrated_channels.xapi.management.commands.send_course_enrollments.send_course_enrollment_statement')
     def test_command(self, mock_send_course_enrollment_statement):
         """
@@ -91,6 +103,10 @@ class TestSendCourseEnrollments(unittest.TestCase):
 
         assert mock_send_course_enrollment_statement.called
 
+    @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        mock.MagicMock()
+    )
     @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_enrollments.Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock()])
@@ -117,10 +133,14 @@ class TestSendCourseEnrollments(unittest.TestCase):
         assert handler.messages['error'][0] == expected_message
 
     @mock.patch(
+        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        mock.MagicMock()
+    )
+    # pylint: disable=invalid-name
+    @mock.patch(
         'integrated_channels.xapi.management.commands.send_course_enrollments.Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
-    # pylint: disable=invalid-name
     @mock.patch('integrated_channels.xapi.management.commands.send_course_enrollments.send_course_enrollment_statement')
     def test_command_once_for_all_customers(self, mock_send_course_enrollment_statement):
         """

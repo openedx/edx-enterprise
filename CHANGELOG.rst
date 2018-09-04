@@ -14,6 +14,26 @@ Change Log
 Unreleased
 ----------
 
+[0.73.1] - 2018-08-30
+---------------------
+
+* Remove the SailThru flags for enterprise learner when un-linking it from enterprise.
+
+[0.73.0] - 2018-08-21
+---------------------
+
+* Changed permission logic and added filtering options for the enterprise with_access_to endpoint.
+
+[0.72.7] - 2018-08-20
+---------------------
+
+* Added preview field that takes user to Discovery with elastic search results for the catalog
+
+[0.72.6] - 2018-08-17
+---------------------
+
+* Added management command to send course enrollment and course completion info for enterprise customers.
+
 [0.72.5] - 2018-08-09
 ---------------------
 

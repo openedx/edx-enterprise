@@ -8,8 +8,8 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 from logging import getLogger
 
-from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth.models import User
+from django.core.management.base import BaseCommand, CommandError
 
 from enterprise.models import EnterpriseCustomer
 from enterprise.utils import NotConnectedToOpenEdX
@@ -97,6 +97,9 @@ class Command(BaseCommand):
         """
         Send xAPI statements.
         """
+        if not all((PersistentCourseGrade, CourseOverview, CourseGradeFactory)):
+            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
+
         days, enterprise_customer = self.parse_arguments(*args, **options)
 
         if enterprise_customer:
@@ -125,9 +128,6 @@ class Command(BaseCommand):
                 of the LRS where to send xAPI  learner analytics.
             days (int): Include course enrollment of this number of days.
         """
-        if not CourseGradeFactory:
-            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
-
         persistent_course_grades = self.get_course_completions(lrs_configuration.enterprise_customer, days)
         users = self.prefetch_users(persistent_course_grades)
         course_overviews = self.prefetch_courses(persistent_course_grades)
@@ -158,9 +158,6 @@ class Command(BaseCommand):
         Returns:
             (list): A list of PersistentCourseGrade objects.
         """
-        if not PersistentCourseGrade:
-            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
-
         return PersistentCourseGrade.objects.filter(
             passed_timestamp__gt=datetime.datetime.now() - datetime.timedelta(days=days)
         ).filter(
@@ -196,9 +193,6 @@ class Command(BaseCommand):
         Returns:
             (dict): A dictionary containing course_id to course_overview mapping.
         """
-        if not CourseOverview:
-            raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
-
         return CourseOverview.get_from_ids_if_exists(
             [grade.course_id for grade in persistent_course_grades]
         )
