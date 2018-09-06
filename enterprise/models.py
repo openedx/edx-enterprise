@@ -55,6 +55,11 @@ from enterprise.utils import (
 )
 from enterprise.validators import validate_image_extension, validate_image_size
 
+try:
+    from lms.djangoapps.email_marketing.tasks import update_user
+except ImportError:
+    update_user = None
+
 LOGGER = getLogger(__name__)
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
@@ -473,6 +478,17 @@ class EnterpriseCustomerUserManager(models.Manager):
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             link_record = self.get(enterprise_customer=enterprise_customer, user_id=existing_user.id)
             link_record.delete()
+
+            if update_user:
+                # Remove the SailThru flags for enterprise learner.
+                update_user.delay(
+                    sailthru_vars={
+                        'is_enterprise_learner': False,
+                        'enterprise_name': None,
+                        },
+                    email=user_email
+                )
+
         except User.DoesNotExist:
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             pending_link = PendingEnterpriseCustomerUser.objects.get(
