@@ -2080,6 +2080,18 @@ class TestEnterpriseAPIViews(APITest):
         ),
         (
             True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+                'email_students': True,
+                'cohort': 'masters',
+            }],
+        ),
+
+        (
+            True,
             {'is_active': True, 'mode': 'audit'},
             [{
                 'course_mode': 'verified',
@@ -2165,7 +2177,8 @@ class TestEnterpriseAPIViews(APITest):
                 mock_enrollment_client.return_value.enroll_user_in_course.assert_called_once_with(
                     user.username,
                     payload.get('course_run_id'),
-                    payload.get('course_mode')
+                    payload.get('course_mode'),
+                    cohort=payload.get('cohort'),
                 )
         elif 'user_email' in post_data:
             # If a new user given via for user_email, check that the appropriate objects were created.

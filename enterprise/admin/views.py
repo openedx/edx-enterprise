@@ -466,7 +466,7 @@ class EnterpriseCustomerManageLearnersView(View):
         return users, missing_emails
 
     @classmethod
-    def enroll_users_in_program(cls, enterprise_customer, program_details, course_mode, emails):
+    def enroll_users_in_program(cls, enterprise_customer, program_details, course_mode, emails, cohort=None):
         """
         Enroll existing users in all courses in a program, and create pending enrollments for nonexisting users.
 
@@ -500,7 +500,8 @@ class EnterpriseCustomerManageLearnersView(View):
             pending_user = enterprise_customer.enroll_user_pending_registration(
                 email,
                 course_mode,
-                *course_ids
+                *course_ids,
+                cohort=cohort
             )
             pending.append(pending_user)
 

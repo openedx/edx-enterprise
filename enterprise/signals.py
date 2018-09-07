@@ -6,11 +6,13 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from django.db import transaction
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.utils import track_enrollment
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+
 
 
 @disable_for_loaddata
@@ -51,14 +53,12 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         enterprise_customer=pending_ecu.enterprise_customer,
         user_id=user_instance.id
     )
-    for enrollment in pending_ecu.pendingenrollment_set.all():
-        # EnterpriseCustomers may enroll users in courses before the users themselves
-        # actually exist in the system; in such a case, the enrollment for each such
-        # course is finalized when the user registers with the OpenEdX platform.
-        enrollment.complete_enrollment()
-        EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=enterprise_customer_user,
-            course_id=enrollment.course_id,
-        )
-        track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
-    pending_ecu.delete()
+    def _complete_user_enrollment():
+        for enrollment in pending_ecu.pendingenrollment_set.all():
+            # EnterpriseCustomers may enroll users in courses before the users themselves
+            # actually exist in the system; in such a case, the enrollment for each such
+            # course is finalized when the user registers with the OpenEdX platform.
+            enterprise_customer_user.enroll(enrollment.course_id, enrollment.course_mode, cohort=enrollment.cohort_name)
+            track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
+        pending_ecu.delete()
+    transaction.on_commit(_complete_user_enrollment)

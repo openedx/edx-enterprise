@@ -88,7 +88,8 @@ def test_enroll_user_in_course():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     course_details = {"course_id": course_id}
     mode = "audit"
-    expected_response = dict(user=user, course_details=course_details, mode=mode)
+    cohort = "masters"
+    expected_response = dict(user=user, course_details=course_details, mode=mode, cohort=cohort)
     responses.add(
         responses.POST,
         _url(
@@ -98,7 +99,7 @@ def test_enroll_user_in_course():
         json=expected_response
     )
     client = lms_api.EnrollmentApiClient()
-    actual_response = client.enroll_user_in_course(user, course_id, mode)
+    actual_response = client.enroll_user_in_course(user, course_id, mode, cohort=cohort)
     assert actual_response == expected_response
     request = responses.calls[0][0]
     assert json.loads(request.body) == expected_response
@@ -378,11 +379,6 @@ def test_unenroll_already_unenrolled():
     client = lms_api.EnrollmentApiClient()
     unenrolled = client.unenroll_user_from_course(user, course_id)
     assert not unenrolled
-
-
-def test_enroll_locally_raises():
-    with raises(NotConnectedToOpenEdX):
-        lms_api.enroll_user_in_course_locally(None, None, None)
 
 
 @responses.activate
