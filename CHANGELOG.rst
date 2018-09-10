@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[0.73.2] - 2018-09-11
+---------------------
+
+* Fixed 500 error on enterprise customer admin screen.
+
 [0.73.1] - 2018-08-30
 ---------------------
 

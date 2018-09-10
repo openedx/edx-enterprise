@@ -11,7 +11,7 @@ from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.exceptions import ValidationError
 from django.core.urlresolvers import reverse
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.utils.safestring import mark_safe
@@ -418,12 +418,15 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
                 saml_provider_configuration._meta.model_name))
             if provider_id:
                 identity_provider = utils.get_identity_provider(provider_id)
-                update_url = url + '?source={}'.format(identity_provider.pk)
-                help_text = '<p><a href="{update_url}" target="_blank">View "{identity_provider}" details</a><p>'.\
-                    format(update_url=update_url, identity_provider=identity_provider.name)
-
-            help_text += '<p style="margin-top:-5px;"><a target="_blank" href={add_url}>' \
-                         'Create a new identity provider</a></p>'.format(add_url=url)
+                if identity_provider:
+                    update_url = url + '?source={}'.format(identity_provider.pk)
+                    help_text = '<p><a href="{update_url}" target="_blank">View "{identity_provider}" details</a><p>'.\
+                        format(update_url=update_url, identity_provider=identity_provider.name)
+                else:
+                    help_text += '<p style="margin-top:-5px;"> Make sure you have added a valid provider_id.</p>'
+            else:
+                help_text += '<p style="margin-top:-5px;"><a target="_blank" href={add_url}>' \
+                             'Create a new identity provider</a></p>'.format(add_url=url)
 
         if idp_choices is not None:
             self.fields['provider_id'] = forms.TypedChoiceField(
@@ -447,9 +450,9 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
             # field validation for either provider_id or enterprise_customer has already raised
             # a validation error.
             return
-        try:
-            identity_provider = utils.get_identity_provider(provider_id)
-        except ObjectDoesNotExist:
+
+        identity_provider = utils.get_identity_provider(provider_id)
+        if not identity_provider:
             # This should not happen, as identity providers displayed in drop down are fetched dynamically.
             message = _(
                 "The specified Identity Provider does not exist. For more "

@@ -14,7 +14,6 @@ from faker import Factory as FakerFactory
 from pytest import mark
 
 from django import forms
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db.models.fields import BLANK_CHOICE_DASH
 
@@ -684,7 +683,7 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
 
         Test validation error when selected identity provider does not exists in the system.
         """
-        mock_method.side_effect = ObjectDoesNotExist
+        mock_method.return_value = None
 
         form = EnterpriseCustomerIdentityProviderAdminForm(
             data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid},
@@ -724,7 +723,6 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
             },
             instance=enterprise_customer_identity_provider
         )
-        assert 'Create a new identity provider' in form.fields['provider_id'].help_text
         assert '/test_saml_app/test_saml_model/add/?source=1' in form.fields['provider_id'].help_text
         assert form.fields['provider_id'].choices == list(self.idp_choices)
 
@@ -735,8 +733,19 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
             },
             instance=None
         )
+        assert 'Create a new identity provider' in form.fields['provider_id'].help_text
         assert '/test_saml_app/test_saml_model/add/?source=1' not in form.fields['provider_id'].help_text
         assert form.fields['provider_id'].choices == list(self.idp_choices)
+
+        mock_method.return_value = None
+        # Invalid provider id.
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            {
+                'enterprise_customer': self.enterprise_customer
+            },
+            instance=enterprise_customer_identity_provider
+        )
+        assert 'Make sure you have added a valid provider_id' in form.fields['provider_id'].help_text
 
     @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
     def test_clean_runs_without_errors(self, mock_method):

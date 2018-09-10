@@ -44,13 +44,14 @@ try:
 except ImportError:
     get_url = None
 
-try:
-    # Try to import identity provider registry if third_party_auth is present
-    from third_party_auth.provider import Registry
-except ImportError:
-    Registry = None
-
 LOGGER = logging.getLogger(__name__)
+
+try:
+    from third_party_auth.provider import Registry  # pylint: disable=unused-import
+except ImportError as exception:
+    LOGGER.warning("Could not import Registry from third_party_auth.provider")
+    LOGGER.warning(exception)
+    Registry = None
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -107,6 +108,13 @@ def get_identity_provider(provider_id):
         Instance of ProviderConfig or None.
     """
     try:
+        from third_party_auth.provider import Registry   # pylint: disable=redefined-outer-name
+    except ImportError as exception:
+        LOGGER.warning("Could not import Registry from third_party_auth.provider")
+        LOGGER.warning(exception)
+        Registry = None  # pylint: disable=redefined-outer-name
+
+    try:
         return Registry and Registry.get(provider_id)
     except ValueError:
         return None
@@ -119,6 +127,13 @@ def get_idp_choices():
     Return:
         A list of choices of all identity providers, None if it can not get any available identity provider.
     """
+    try:
+        from third_party_auth.provider import Registry   # pylint: disable=redefined-outer-name
+    except ImportError as exception:
+        LOGGER.warning("Could not import Registry from third_party_auth.provider")
+        LOGGER.warning(exception)
+        Registry = None  # pylint: disable=redefined-outer-name
+
     first = [("", "-"*7)]
     if Registry:
         return first + [(idp.provider_id, idp.name) for idp in Registry.enabled()]
