@@ -317,6 +317,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
         fields = (
             "name",
             "slug",
+            "country",
             "active",
             "site",
             "catalog",
