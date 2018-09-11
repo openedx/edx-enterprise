@@ -69,44 +69,6 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
 
-    def test_get_idp_choices(self):
-        """
-        Test get_idp_choices returns correct options for choice field or returns None if
-        thirdParty_auth is not installed.
-        """
-        options = utils.get_idp_choices()
-        self.assertIsNone(options)
-        expected_list = [('', '-'*7), ('test1', 'test1'), ('test2', 'test2')]
-
-        with mock.patch('enterprise.utils.Registry') as mock_registry:
-            mock_registry.enabled = mock_get_available_idps(['test1', 'test2'])
-
-            choices = utils.get_idp_choices()
-            self.assertListEqual(choices, expected_list)
-
-    def test_get_identity_provider(self):
-        """
-        Test get_identity_provider returns correct value.
-        """
-        faker = FakerFactory.create()
-        name = faker.name()
-        provider_id = faker.slug()  # pylint: disable=no-member
-
-        # test that get_identity_provider returns None if third_party_auth is not available.
-        identity_provider = utils.get_identity_provider(provider_id=provider_id)
-        assert identity_provider is None
-
-        # test that get_identity_provider does not return None if third_party_auth is  available.
-        with mock.patch('enterprise.utils.Registry') as mock_registry:
-            mock_registry.get.return_value.configure_mock(name=name, provider_id=provider_id)
-            identity_provider = utils.get_identity_provider(provider_id=provider_id)
-            assert identity_provider is not None
-
-        # Test that with an invalid provider ID, the function returns None
-        with mock.patch('enterprise.utils.Registry') as mock_registry:
-            mock_registry.get.side_effect = ValueError
-            assert utils.get_identity_provider('bad#$@#$providerid') is None
-
     @ddt.unpack
     @ddt.data(
         (

@@ -264,13 +264,13 @@ class TestEnterpriseDecorators(unittest.TestCase):
         # Assert that view function was called.
         assert view_function.called
 
-    @mock.patch('enterprise.utils.Registry')
-    def test_force_fresh_session_param_not_received(self, mock_registry):
+    @mock.patch('enterprise.decorators.get_identity_provider')
+    def test_force_fresh_session_param_not_received(self, mock_get_identity_provider):
         """
         Test that the force_fresh_session decorator redirects authenticated
         users with the appropriate provider config depending on the IdPs configuration.
         """
-        mock_registry.get.return_value.configure_mock(
+        mock_get_identity_provider.return_value.configure_mock(
             provider_id=self.provider_id,
         )
         view_function = mock_view_function()
