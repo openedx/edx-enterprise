@@ -35,6 +35,7 @@ from django.utils.http import urlquote
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
+from django_countries.fields import CountryField
 
 from model_utils.models import TimeStampedModel
 
@@ -126,6 +127,7 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Course catalog for the Enterprise Customer.")
     )
     active = models.BooleanField(default=True)
+    country = CountryField(null=True)
     hide_course_original_price = models.BooleanField(
         default=False,
         help_text=_(
