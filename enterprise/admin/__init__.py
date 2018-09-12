@@ -134,6 +134,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         'name',
         'slug',
         'site',
+        'country',
         'active',
         'has_logo',
         'enable_dsc',
