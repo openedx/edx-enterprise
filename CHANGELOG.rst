@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[0.73.4] - 2018-09-17
+---------------------
+
+* Added ability to assign cohort upon enrollment.
+* Added ability to unenroll in enrollment API.
+
 [0.73.3] - 2018-09-14
 ---------------------
 
