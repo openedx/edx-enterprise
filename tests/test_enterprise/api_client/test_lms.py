@@ -324,6 +324,61 @@ def test_get_enrolled_courses():
     actual_response = client.get_enrolled_courses(user)
     assert actual_response == expected_response
 
+@responses.activate
+def test_unenroll():
+    user = "some_user"
+    course_id = "course-v1:edx+DemoX+Demo_Course"
+    mode = 'audit'
+    is_active = True
+    expected_response = dict(user=user, course_details={'course_id': course_id}, mode=mode, is_active=is_active)
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        json=expected_response
+    )
+    expected_response = dict(user=user, is_active=False)
+    responses.add(
+        responses.POST,
+        _url(
+            "enrollment",
+            "enrollment",
+        ),
+        json=expected_response
+    )
+    client = lms_api.EnrollmentApiClient()
+    unenrolled = client.unenroll_user_from_course(user, course_id)
+    assert unenrolled
+
+@responses.activate
+def test_unenroll_already_unenrolled():
+    user = "some_user"
+    course_id = "course-v1:edx+DemoX+Demo_Course"
+    mode = 'audit'
+    expected_response = dict(user=user, course_details={'course_id': course_id}, mode=mode, is_active=False)
+    responses.add(
+        responses.GET,
+        _url(
+            "enrollment",
+            "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
+        ),
+        json=expected_response
+    )
+    expected_response = dict(user=user, is_active=False)
+    responses.add(
+        responses.POST,
+        _url(
+            "enrollment",
+            "enrollment",
+        ),
+        json=expected_response
+    )
+    client = lms_api.EnrollmentApiClient()
+    unenrolled = client.unenroll_user_from_course(user, course_id)
+    assert not unenrolled
+
 
 def test_enroll_locally_raises():
     with raises(NotConnectedToOpenEdX):
