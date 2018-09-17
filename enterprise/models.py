@@ -691,6 +691,16 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 )
             )
 
+    def unenroll(self, course_run_id):
+        """
+        Unenroll a user from a course track.
+        """
+        enrollment_api_client = EnrollmentApiClient()
+        if enrollment_api_client.unenroll_user_from_course(self.username, course_run_id):
+            EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=self, course_id=course_run_id).delete()
+            return True
+        return False
+
     def update_session(self, request):
         """Update the session of a request for this learner."""
         request.session['enterprise_customer'] = self.enterprise_customer.serialized
