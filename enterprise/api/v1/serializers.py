@@ -591,12 +591,15 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             if is_active:
                 track_enrollment('enterprise-customer-enrollment-api', enterprise_customer_user.user_id, course_run_id)
         else:
-            enterprise_customer_user = enterprise_customer.enroll_user_pending_registration(
-                user_email,
-                course_mode,
-                course_run_id,
-                cohort=cohort
-            )
+            if is_active:
+                enterprise_customer_user = enterprise_customer.enroll_user_pending_registration(
+                    user_email,
+                    course_mode,
+                    course_run_id,
+                    cohort=cohort
+                )
+            else:
+                enterprise_customer.clear_pending_registration(user_email, course_run_id)
 
         if email_students:
             enterprise_customer.notify_enrolled_learners(
