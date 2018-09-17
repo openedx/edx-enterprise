@@ -62,5 +62,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
                 # course is finalized when the user registers with the OpenEdX platform.
                 enterprise_customer_user.enroll(enrollment.course_id, enrollment.course_mode, cohort=enrollment.cohort_name)
                 track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
+            pending_ecu.delete()
         transaction.on_commit(_complete_user_enrollment)
-    pending_ecu.delete()
+    else:
+        pending_ecu.delete()

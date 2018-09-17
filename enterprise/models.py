@@ -358,6 +358,20 @@ class EnterpriseCustomer(TimeStampedModel):
             )
         return pending_ecu
 
+    def clear_pending_registration(self, email, *course_ids):
+        """
+        Clear pending enrollments for the user in the given courses.
+        Args:
+            email: The email address which may have previously been used.
+            course_ids: An iterable containing any number of course IDs.
+        """
+        try:
+            pending_ecu = PendingEnterpriseCustomerUser.objects.get(user_email=email, enterprise_customer=self)
+        except PendingEnterpriseCustomerUser.DoesNotExist:
+            pass
+        else:
+            PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
+
     def notify_enrolled_learners(self, catalog_api_user, course_id, users):
         """
         Notify learners about a course in which they've been enrolled.
