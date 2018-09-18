@@ -215,7 +215,7 @@ class EnrollmentApiClient(LmsApiClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
-    def enroll_user_in_course(self, username, course_id, mode):
+    def enroll_user_in_course(self, username, course_id, mode, cohort=None):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
 
@@ -223,6 +223,7 @@ class EnrollmentApiClient(LmsApiClient):
             username (str): The username by which the user goes on the OpenEdX platform
             course_id (str): The string value of the course's unique identifier
             mode (str): The enrollment mode which should be used for the enrollment
+            cohort (str): Add the user to this named cohort
 
         Returns:
             dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
@@ -233,8 +234,30 @@ class EnrollmentApiClient(LmsApiClient):
                 'user': username,
                 'course_details': {'course_id': course_id},
                 'mode': mode,
+                'cohort': cohort,
             }
         )
+
+    def unenroll_user_from_course(self, username, course_id):
+        """
+        Call the enrollment API to unenroll the user in the course specified by course_id.
+        Args:
+            username (str): The username by which the user goes on the OpenEdx platform
+            course_id (str): The string value of the course's unique identifier
+        Returns:
+            bool: Whether the unenrollment succeeded
+        """
+        enrollment = self.get_course_enrollment(username, course_id)
+        if enrollment and enrollment['is_active']:
+            response = self.client.enrollment.post({
+                'user': username,
+                'course_details': {'course_id': course_id},
+                'is_active': False,
+                'mode': enrollment['mode']
+                })
+            return not response['is_active']
+        else:
+            return False
 
     def get_course_enrollment(self, username, course_id):
         """
@@ -461,25 +484,6 @@ class CertificatesApiClient(JwtLmsApiClient):
 
         """
         return self.client.certificates(username).courses(course_id).get()
-
-
-def enroll_user_in_course_locally(user, course_id, mode):
-    """
-    Enroll a user in a course, using local database methods.
-
-    This is only used in one place; in models.py. It is necessary
-    because the enrollment API can't enroll a user before it exists, and
-    the post_save signal for users results in a user not actually being
-    saved until after the API call is made.
-
-    In Django 1.9 and later, there's a transaction.on_commit hook that we can
-    use to create a callback. Once we're able to depend on having Django 1.9, we
-    can shift over to that, but for right now, we have to do it this way.
-    """
-    if CourseEnrollment is None:
-        raise NotConnectedToOpenEdX("This package must be installed in an OpenEdX environment.")
-
-    CourseEnrollment.enroll(user, CourseKey.from_string(course_id), mode=mode, check_access=True)
 
 
 def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):

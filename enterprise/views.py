@@ -817,6 +817,8 @@ class CourseEnrollmentView(NonAtomicView):
             # Filter audit course modes.
             course_modes = filter_audit_course_modes(enterprise_customer, course_modes)
 
+            # Allows automatic assignment to a cohort upon enrollment.
+            cohort = request.GET.get('cohort')
             # Add a message to the message display queue if the learner
             # has gone through the data sharing consent flow and declined
             # to give data sharing consent.
@@ -836,6 +838,7 @@ class CourseEnrollmentView(NonAtomicView):
                 'course_modes': course_modes,
                 'course_effort': course_effort,
                 'course_full_description': course_full_description,
+                'cohort': cohort,
                 'organization_logo': organization_logo,
                 'organization_name': organization_name,
                 'course_level_type': course_level_type,
@@ -888,6 +891,8 @@ class CourseEnrollmentView(NonAtomicView):
 
         enterprise_catalog_uuid = request.POST.get('catalog')
         selected_course_mode_name = request.POST.get('course_mode')
+        cohort_name = request.POST.get('cohort')
+
         selected_course_mode = None
         for course_mode in course_modes:
             if course_mode['mode'] == selected_course_mode_name:
@@ -923,7 +928,7 @@ class CourseEnrollmentView(NonAtomicView):
                 track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
 
             client = EnrollmentApiClient()
-            client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name)
+            client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name, cohort=cohort_name)
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 
@@ -1497,7 +1502,7 @@ class RouterView(NonAtomicView):
         resource_id = course_run_id or program_uuid
         if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id, course_key):
             try:
-                enterprise_customer_user.enroll(resource_id, 'audit')
+                enterprise_customer_user.enroll(resource_id, 'audit', cohort=request.GET.get('cohort'))
                 track_enrollment('direct-audit-enrollment', request.user.id, resource_id, request.get_full_path())
             except CourseEnrollmentDowngradeError:
                 pass

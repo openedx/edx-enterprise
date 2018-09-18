@@ -1247,10 +1247,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(
-        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', False),
-        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', True),
-        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', False),
-        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', True),
+        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', False, None),
+        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', True, None),
+        ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', True, 'My Cohort'),
+        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', False, None),
+        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', True, None),
     )
     @ddt.unpack
     def test_post_course_specific_enrollment_view(
@@ -1258,6 +1259,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enrollment_mode,
             expected_redirect_url,
             enterprise_enrollment_exists,
+            cohort_name,
             registry_mock,
             get_data_sharing_consent_mock,
             enrollment_api_client_mock,
@@ -1300,6 +1302,9 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         post_data = {
             'course_mode': enrollment_mode
         }
+        if cohort_name:
+            post_data['cohort'] = cohort_name
+
         if enrollment_mode == 'professional':
             enterprise_catalog_uuid = str(enterprise_customer.enterprise_customer_catalogs.first().uuid)
             post_data.update({
@@ -1326,7 +1331,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             fetch_redirect_response=False
         )
         if enrollment_mode == 'audit':
-            enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit')
+            enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit', cohort=cohort_name)
 
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')

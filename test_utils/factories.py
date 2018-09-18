@@ -200,6 +200,7 @@ class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     course_mode = 'audit'
     user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)
+    cohort_name = None
 
 
 class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):

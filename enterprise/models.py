@@ -44,7 +44,6 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalo
 from enterprise.api_client.lms import (
     EnrollmentApiClient,
     ThirdPartyAuthApiClient,
-    enroll_user_in_course_locally,
     parse_lms_api_datetime,
 )
 from enterprise.constants import json_serialized_course_modes
@@ -332,7 +331,7 @@ class EnterpriseCustomer(TimeStampedModel):
 
         return False
 
-    def enroll_user_pending_registration(self, email, course_mode, *course_ids):
+    def enroll_user_pending_registration(self, email, course_mode, *course_ids, **kwargs):
         """
         Create pending enrollments for the user in any number of courses, which will take effect on registration.
 
@@ -340,7 +339,7 @@ class EnterpriseCustomer(TimeStampedModel):
             email: The email address for the pending link to be created
             course_mode: The mode with which the eventual enrollment should be created
             *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
-
+            cohort (optional): name of cohort to assign
         Returns:
             The PendingEnterpriseCustomerUser attached to the email address
         """
@@ -353,10 +352,25 @@ class EnterpriseCustomer(TimeStampedModel):
                 user=pending_ecu,
                 course_id=course_id,
                 defaults={
-                    'course_mode': course_mode
+                    'course_mode': course_mode,
+                    'cohort_name': kwargs.get('cohort', None)
                 }
             )
         return pending_ecu
+
+    def clear_pending_registration(self, email, *course_ids):
+        """
+        Clear pending enrollments for the user in the given courses.
+        Args:
+            email: The email address which may have previously been used.
+            course_ids: An iterable containing any number of course IDs.
+        """
+        try:
+            pending_ecu = PendingEnterpriseCustomerUser.objects.get(user_email=email, enterprise_customer=self)
+        except PendingEnterpriseCustomerUser.DoesNotExist:
+            pass
+        else:
+            PendingEnrollment.objects.filter(user=pending_ecu, course_id__in=course_ids).delete()
 
     def notify_enrolled_learners(self, catalog_api_user, course_id, users):
         """
@@ -653,7 +667,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 
-    def enroll(self, course_run_id, mode):
+    def enroll(self, course_run_id, mode, cohort=None):
         """
         Enroll a user into a course track, and register an enterprise course enrollment.
         """
@@ -665,15 +679,17 @@ class EnterpriseCustomerUser(TimeStampedModel):
         audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
         paid_modes = ['verified', 'professional']
         is_upgrading = mode in paid_modes and course_enrollment.get('mode') in audit_modes
+
         if not enrolled_in_course or is_upgrading:
             # Directly enroll into the specified track.
-            enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode)
+            enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
             utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
                 'category': 'enterprise',
                 'label': course_run_id,
                 'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
                 'enterprise_customer_name': self.enterprise_customer.name,
                 'mode': mode,
+                'cohort': cohort,
                 'is_upgrading': is_upgrading,
             })
             EnterpriseCourseEnrollment.objects.get_or_create(
@@ -690,6 +706,16 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     given_mode=mode,
                 )
             )
+
+    def unenroll(self, course_run_id):
+        """
+        Unenroll a user from a course track.
+        """
+        enrollment_api_client = EnrollmentApiClient()
+        if enrollment_api_client.unenroll_user_from_course(self.username, course_run_id):
+            EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=self, course_id=course_run_id).delete()
+            return True
+        return False
 
     def update_session(self, request):
         """Update the session of a request for this learner."""
@@ -754,20 +780,16 @@ class PendingEnrollment(TimeStampedModel):
         max_length=25,
         blank=False
     )
+    cohort_name = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
 
     class Meta(object):
         app_label = 'enterprise'
         unique_together = (("user", "course_id"),)
         ordering = ['created']
-
-    def complete_enrollment(self):
-        """
-        Enroll the linked user in the linked course.
-        """
-        user = User.objects.get(email=self.user.user_email)
-        course_id = self.course_id
-        course_mode = self.course_mode
-        enroll_user_in_course_locally(user, course_id, course_mode)
 
     def __str__(self):
         """
