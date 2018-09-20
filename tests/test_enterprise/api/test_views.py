@@ -2080,6 +2080,28 @@ class TestEnterpriseAPIViews(APITest):
         ),
         (
             True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+                'email_students': True,
+                'cohort': 'masters',
+            }],
+        ),
+        (
+            True,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'user_email': 'foo@bar.com',
+                'email_students': True,
+                'cohort': 'masters',
+            }],
+        ),
+        (
+            True,
             {'is_active': True, 'mode': 'audit'},
             [{
                 'course_mode': 'verified',
@@ -2094,6 +2116,16 @@ class TestEnterpriseAPIViews(APITest):
                 'course_mode': 'verified',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 1,
+                'is_active': False,
+            }],
+        ),
+        (
+            False,
+            None,
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'user_email': 'foo@bar.com',
                 'is_active': False,
             }],
         ),
@@ -2165,7 +2197,8 @@ class TestEnterpriseAPIViews(APITest):
                 mock_enrollment_client.return_value.enroll_user_in_course.assert_called_once_with(
                     user.username,
                     payload.get('course_run_id'),
-                    payload.get('course_mode')
+                    payload.get('course_mode'),
+                    cohort=payload.get('cohort'),
                 )
         elif 'user_email' in post_data:
             # If a new user given via for user_email, check that the appropriate objects were created.
@@ -2175,11 +2208,16 @@ class TestEnterpriseAPIViews(APITest):
             )
 
             assert pending_ecu is not None
-            assert PendingEnrollment.objects.filter(
+            pending_enrollment = PendingEnrollment.objects.filter(
                 user=pending_ecu,
                 course_id=payload.get('course_run_id'),
                 course_mode=payload.get('course_mode')
             )
+            if payload.get('is_active', True):
+                assert pending_enrollment
+                assert pending_enrollment.cohort_name == payload.get('cohort')
+            else:
+                assert not pending_enrollment
             mock_enrollment_client.return_value.get_course_enrollment.assert_not_called()
             mock_enrollment_client.return_value.enroll_user_in_course.assert_not_called()
 
@@ -2203,6 +2241,7 @@ class TestEnterpriseAPIViews(APITest):
         """
         tpa_user_id = 'abc'
         new_user_email = 'abc@test.com'
+        pending_email = 'foo@bar.com'
         lms_user_id = 1
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
         payload = [
@@ -2224,6 +2263,30 @@ class TestEnterpriseAPIViews(APITest):
             {
                 'course_mode': 'audit',
                 'course_run_id': course_run_id,
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'user_email': pending_email,
+                'cohort': 'test'
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'user_email': pending_email,
+                'is_active': False,
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'user_email': pending_email,
+                'is_active': True,
+            },
+            {
+                'course_mode': 'audit',
+                'course_run_id': course_run_id,
+                'user_email': pending_email,
+                'is_active': False,
             }
         ]
 
@@ -2241,7 +2304,11 @@ class TestEnterpriseAPIViews(APITest):
                     'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
                     'lms_user_id, tpa_user_id, user_email'
                 ]
-            }
+            },
+            {'detail': 'success'},
+            {'detail': 'success'},
+            {'detail': 'success'},
+            {'detail': 'success'},
         ]
 
         enterprise_customer = factories.EnterpriseCustomerFactory(
@@ -2291,6 +2358,7 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         self.assertListEqual(response, expected_response)
+        self.assertFalse(PendingEnrollment.objects.filter(user__user_email=pending_email, course_id=course_run_id).exists())
 
     def test_enterprise_customer_catalogs_response_formats(self):
         """
