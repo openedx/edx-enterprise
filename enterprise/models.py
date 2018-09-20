@@ -10,6 +10,7 @@ from logging import getLogger
 from uuid import uuid4
 
 import six
+from django_countries.fields import CountryField
 from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
@@ -35,17 +36,12 @@ from django.utils.http import urlquote
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
-from django_countries.fields import CountryField
 
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
-from enterprise.api_client.lms import (
-    EnrollmentApiClient,
-    ThirdPartyAuthApiClient,
-    parse_lms_api_datetime,
-)
+from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
 from enterprise.constants import json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -361,6 +357,7 @@ class EnterpriseCustomer(TimeStampedModel):
     def clear_pending_registration(self, email, *course_ids):
         """
         Clear pending enrollments for the user in the given courses.
+
         Args:
             email: The email address which may have previously been used.
             course_ids: An iterable containing any number of course IDs.

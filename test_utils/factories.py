@@ -86,6 +86,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     enable_data_sharing_consent = True
     enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
     hide_course_original_price = False
+    country = 'US'
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):

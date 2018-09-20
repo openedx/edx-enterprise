@@ -2358,7 +2358,9 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         self.assertListEqual(response, expected_response)
-        self.assertFalse(PendingEnrollment.objects.filter(user__user_email=pending_email, course_id=course_run_id).exists())
+        self.assertFalse(PendingEnrollment.objects.filter(
+            user__user_email=pending_email,
+            course_id=course_run_id).exists())
 
     def test_enterprise_customer_catalogs_response_formats(self):
         """
