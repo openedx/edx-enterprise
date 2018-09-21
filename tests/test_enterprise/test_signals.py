@@ -9,8 +9,8 @@ import unittest
 
 import ddt
 import mock
-from opaque_keys.edx.keys import CourseKey
 from pytest import mark
+
 from django.db import transaction
 
 from enterprise.models import (
@@ -99,7 +99,12 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
     @mock.patch('enterprise.utils.track_event')
     @mock.patch('enterprise.signals.track_enrollment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    def test_handle_user_post_save_with_pending_course_enrollment(self, mock_course_enrollment, mock_track_enrollment, mock_track_event):
+    def test_handle_user_post_save_with_pending_course_enrollment(
+            self,
+            mock_course_enrollment,
+            mock_track_enrollment,
+            mock_track_event  # pylint: disable=unused-argument
+    ):
         mock_course_enrollment.enroll.return_value = None
         email = "fake_email@edx.org"
         user = UserFactory(id=1, email=email)

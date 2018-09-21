@@ -95,6 +95,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "slug",
                 "catalog",
                 "active",
+                "country",
                 "hide_course_original_price",
                 "site",
                 "enable_data_sharing_consent",

@@ -928,7 +928,12 @@ class CourseEnrollmentView(NonAtomicView):
                 track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
 
             client = EnrollmentApiClient()
-            client.enroll_user_in_course(request.user.username, course_id, selected_course_mode_name, cohort=cohort_name)
+            client.enroll_user_in_course(
+                request.user.username,
+                course_id,
+                selected_course_mode_name,
+                cohort=cohort_name
+            )
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 

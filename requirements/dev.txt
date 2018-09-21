@@ -4,7 +4,6 @@
 #
 #    pip-compile --output-file requirements/dev.txt requirements/base.in requirements/test-master.in requirements/dev.in requirements/quality.in
 #
-
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 amqp==1.4.9               # via kombu
 analytics-python==1.1.0
@@ -75,7 +74,7 @@ pluggy==0.7.1             # via tox
 polib==1.1.0              # via edx-i18n-tools
 py==1.6.0                 # via tox
 pycodestyle==2.4.0
-pycparser==2.18           # via cffi
+pycparser==2.19           # via cffi
 pydocstyle==2.1.1
 pygments==2.2.0           # via diff-cover
 pyjwt==1.6.4              # via djangorestframework-jwt, edx-rest-api-client
@@ -84,7 +83,7 @@ pylint-django==0.7.2      # via edx-lint
 pylint-plugin-utils==0.4  # via pylint-celery, pylint-django
 pylint==1.7.1             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
 pymongo==3.7.1            # via edx-opaque-keys, event-tracking
-pyparsing==2.2.0          # via packaging
+pyparsing==2.2.1          # via packaging
 python-dateutil==2.4.0
 pytz==2016.10
 pyyaml==3.13              # via edx-i18n-tools
@@ -97,9 +96,10 @@ slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.29.0         # via edx-opaque-keys
 testfixtures==6.3.0
+toml==0.9.6               # via tox
 tox-battery==0.5.1
-tox==3.2.1
-tqdm==4.25.0              # via twine
+tox==3.4.0
+tqdm==4.26.0              # via twine
 twine==1.11.0
 unicodecsv==0.14.1
 virtualenv==16.0.0        # via tox

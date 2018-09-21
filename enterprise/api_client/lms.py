@@ -22,11 +22,6 @@ from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
 from enterprise.utils import NotConnectedToOpenEdX
 
 try:
-    from student.models import CourseEnrollment
-except ImportError:
-    CourseEnrollment = None
-
-try:
     from openedx.core.djangoapps.embargo import api as embargo_api
 except ImportError:
     embargo_api = None
@@ -256,8 +251,8 @@ class EnrollmentApiClient(LmsApiClient):
                 'mode': enrollment['mode']
                 })
             return not response['is_active']
-        else:
-            return False
+
+        return False
 
     def get_course_enrollment(self, username, course_id):
         """

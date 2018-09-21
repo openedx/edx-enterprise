@@ -7,8 +7,6 @@ python:
   - 3.5
 
 env:
-  - TOXENV=ficus
-  - TOXENV=ginkgo
   - TOXENV=hawthorn
   - TOXENV=master
 
@@ -48,7 +46,7 @@ install:
   - npm install
 
 script:
-  - if env | grep RUNJSHINT; then make jshint; else tox; fi
+  - if [[ -v RUNJSHINT ]]; then make jshint; else tox; fi
 
 after_success:
   - codecov

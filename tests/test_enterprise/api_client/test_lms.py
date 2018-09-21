@@ -325,6 +325,7 @@ def test_get_enrolled_courses():
     actual_response = client.get_enrolled_courses(user)
     assert actual_response == expected_response
 
+
 @responses.activate
 def test_unenroll():
     user = "some_user"
@@ -352,6 +353,7 @@ def test_unenroll():
     client = lms_api.EnrollmentApiClient()
     unenrolled = client.unenroll_user_from_course(user, course_id)
     assert unenrolled
+
 
 @responses.activate
 def test_unenroll_already_unenrolled():
