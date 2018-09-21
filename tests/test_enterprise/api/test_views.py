@@ -889,6 +889,13 @@ class TestEnterpriseAPIViews(APITest):
         # Staff user with group permission filtering on search param with results.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'search': 'test'}, True, None),
+        # Staff user with group permission filtering on slug with results.
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'slug': TEST_SLUG}, True, None),
+        # Staff user with group permissions filtering on slug with no results.
+        (True, False, ['enterprise_enrollment_api_access'],
+         {'permissions': ['enterprise_enrollment_api_access'], 'slug': 'blah'}, False,
+         {'count': 0, 'next': None, 'previous': None, 'results': []}),
     )
     @ddt.unpack
     def test_enterprise_customer_with_access_to(
