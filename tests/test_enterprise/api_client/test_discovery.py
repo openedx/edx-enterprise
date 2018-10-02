@@ -5,11 +5,14 @@ Tests for the `edx-enterprise` course catalogs api module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import logging
 import unittest
 
 import ddt
 import mock
+import responses
 from pytest import raises
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from slumber.exceptions import HttpClientError
 
 from django.contrib.auth.models import User
@@ -17,6 +20,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
 from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
+from test_utils import MockLoggingHandler
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 
 
@@ -539,6 +543,50 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         self.get_data_mock.side_effect = HttpClientError
         assert self.api._load_data('', default=default) == default  # pylint: disable=protected-access
+
+    @responses.activate
+    def test_get_catalog_results(self):
+        """
+        Verify `get_catalog_results` of CourseCatalogApiClient works as expected.
+        """
+        query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        response_dict = {
+            'next': 'next',
+            'previous': 'previous',
+            'results': [{
+                'enterprise_id': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
+                'catalog_id': 1111,
+                'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
+                'aggregation_key': 'course:edX+DemoX',
+                'content_type': 'course',
+                'title': 'edX Demonstration Course',
+            }],
+        }
+        responses.add(
+            responses.POST,
+            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
+            json=response_dict,
+            status=200,
+        )
+        actual_result = self.api.get_catalog_results(query=query)
+        assert actual_result == response_dict
+
+    @responses.activate
+    def test_get_catalog_results_with_exception(self):
+        """
+        Verify `get_catalog_results` of CourseCatalogApiClient works as expected in case of exception.
+        """
+        responses.add(
+            responses.POST,
+            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
+            body=HttpClientError(content='boom'),
+        )
+        logger = logging.getLogger('enterprise.api_client.discovery')
+        handler = MockLoggingHandler(level="ERROR")
+        logger.addHandler(handler)
+        assert self.api.get_catalog_results(query='query') == {}
+        expected_message = 'Failed to retrieve data from the catalog API. content -- [boom]'
+        assert handler.messages['error'][0] == expected_message
 
 
 class TestCourseCatalogApiServiceClientInitialization(unittest.TestCase):
