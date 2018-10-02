@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ----------
 
+[0.73.6] - 2018-10-04
+---------------------
+* SuccessFactors: Submit batch/chunk of OCN items to tenants until error status
+
 [0.73.5] - 2018-09-21
 ---------------------
 * Added ability to query enterprises by slug on the with_access_to endpoint

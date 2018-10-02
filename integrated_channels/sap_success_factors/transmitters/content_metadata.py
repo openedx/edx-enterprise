@@ -40,31 +40,55 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         prepared_items.update(items_to_update)
         prepared_items.update(items_to_delete)
 
+        skip_metadata_transmission = False
+
         for chunk in chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size):
             chunked_items = list(chunk.values())
-            try:
-                self.client.update_content_metadata(self._serialize_items(chunked_items))
-            except ClientError as exc:
-                LOGGER.error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
-                    len(chunked_items),
-                    self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code,
-                )
-                LOGGER.error(exc)
-
+            if skip_metadata_transmission:
                 # Remove the failed items from the create/update/delete dictionaries,
                 # so ContentMetadataItemTransmission objects are not synchronized for
                 # these items below.
-                for item in chunked_items:
-                    content_metadata_id = item['courseID']
-                    items_to_create.pop(content_metadata_id, None)
-                    items_to_update.pop(content_metadata_id, None)
-                    items_to_delete.pop(content_metadata_id, None)
+                self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
+            else:
+                try:
+                    self.client.update_content_metadata(self._serialize_items(chunked_items))
+                except ClientError as exc:
+                    LOGGER.error(
+                        'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                        len(chunked_items),
+                        self.enterprise_configuration.enterprise_customer.name,
+                        self.enterprise_configuration.channel_code,
+                    )
+                    LOGGER.error(exc)
+
+                    # Remove the failed items from the create/update/delete dictionaries,
+                    # so ContentMetadataItemTransmission objects are not synchronized for
+                    # these items below.
+                    self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
+
+                    # SAP servers throttle incoming traffic, If a request fails than the subsequent would fail too,
+                    # So, no need to keep trying and failing. We should stop here and retry later.
+                    skip_metadata_transmission = True
 
         self._create_transmissions(items_to_create)
         self._update_transmissions(items_to_update, transmission_map)
         self._delete_transmissions(items_to_delete.keys())
+
+    def _remove_failed_items(self, failed_items, items_to_create, items_to_update, items_to_delete):
+        """
+        Remove content metadata items from the `items_to_create`, `items_to_update`, `items_to_delete` dicts.
+
+        Arguments:
+            failed_items (list): Failed Items to be removed.
+            items_to_create (dict): dict containing the items created successfully.
+            items_to_update (dict): dict containing the items updated successfully.
+            items_to_delete (dict): dict containing the items deleted successfully.
+        """
+        for item in failed_items:
+            content_metadata_id = item['courseID']
+            items_to_create.pop(content_metadata_id, None)
+            items_to_update.pop(content_metadata_id, None)
+            items_to_delete.pop(content_metadata_id, None)
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         return {
