@@ -2,7 +2,7 @@
 
 NODE_BIN := ./node_modules/.bin
 
-ALL_PLATFORMS := ficus ginkgo hawthorn master
+ALL_PLATFORMS := hawthorn master
 TARGET_PLATFORM := master
 
 define BROWSER_PYSCRIPT

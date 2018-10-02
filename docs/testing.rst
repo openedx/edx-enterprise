@@ -47,7 +47,7 @@ To run all tests under certain python versions and edx-platform dependency envir
 
 .. code-block:: bash
 
-    $ tox -e py27-ficus    # run all tests under python 2.7 and Ficus dependencies
+    $ tox -e py27-hawthorn    # run all tests under python 2.7 and Hawthorn dependencies
     $ tox -e py35-master   # run all tests under python 3.5 and master branch dependencies
 
 Finally, various options to run only subset of tests:

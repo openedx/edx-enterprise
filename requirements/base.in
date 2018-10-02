@@ -5,4 +5,5 @@ django-object-actions==0.10.0           # Object actions in Django admin
 djangorestframework-xml==1.3.0
 django-multi-email-field==0.5.1         # Multi email input field in Django admin
 jsondiff==1.1.1                         # Used to detect content metadata changes
+django-countries==4.6.1
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35

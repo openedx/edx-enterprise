@@ -7,12 +7,12 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 
 from django.db import transaction
+
 from enterprise.decorators import disable_for_loaddata
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.utils import track_enrollment
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
-
 
 
 @disable_for_loaddata
@@ -55,12 +55,15 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     )
     pending_enrollments = list(pending_ecu.pendingenrollment_set.all())
     if pending_enrollments:
-        def _complete_user_enrollment():
+        def _complete_user_enrollment():  # pylint: disable=missing-docstring
             for enrollment in pending_enrollments:
                 # EnterpriseCustomers may enroll users in courses before the users themselves
                 # actually exist in the system; in such a case, the enrollment for each such
                 # course is finalized when the user registers with the OpenEdX platform.
-                enterprise_customer_user.enroll(enrollment.course_id, enrollment.course_mode, cohort=enrollment.cohort_name)
+                enterprise_customer_user.enroll(
+                    enrollment.course_id, enrollment.course_mode, cohort=enrollment.cohort_name)
                 track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
+            pending_ecu.delete()
         transaction.on_commit(_complete_user_enrollment)
-    pending_ecu.delete()
+    else:
+        pending_ecu.delete()

@@ -1250,8 +1250,18 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', False, None),
         ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', True, None),
         ('audit', 'http://lms.example.com/courses/course-v1:edX+DemoX+Demo_Course/courseware', True, 'My Cohort'),
-        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', False, None),
-        ('professional', 'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/', True, None),
+        (
+            'professional',
+            'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/',
+            False,
+            None
+        ),
+        (
+            'professional',
+            'http://lms.example.com/verify_student/start-flow/course-v1:edX+DemoX+Demo_Course/',
+            True,
+            None
+        ),
     )
     @ddt.unpack
     def test_post_course_specific_enrollment_view(
@@ -1331,7 +1341,12 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             fetch_redirect_response=False
         )
         if enrollment_mode == 'audit':
-            enrollment_client.enroll_user_in_course.assert_called_once_with(self.user.username, course_id, 'audit', cohort=cohort_name)
+            enrollment_client.enroll_user_in_course.assert_called_once_with(
+                self.user.username,
+                course_id,
+                'audit',
+                cohort=cohort_name
+            )
 
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')

@@ -62,6 +62,10 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                     items_to_update.pop(content_metadata_id, None)
                     items_to_delete.pop(content_metadata_id, None)
 
+                # SAP servers throttle incoming traffic, If a request fails than the subsequent would fail too,
+                # So, no need to keep trying and failing. We should stop here and retry later.
+                break
+
         self._create_transmissions(items_to_create)
         self._update_transmissions(items_to_update, transmission_map)
         self._delete_transmissions(items_to_delete.keys())
