@@ -16,7 +16,7 @@ from integrated_channels.integrated_channel.management.commands import INTEGRATE
 LOGGER = get_task_logger(__name__)
 
 
-@shared_task
+@shared_task(routing_key=settings.LOW_PRIORITY_QUEUE)
 def transmit_content_metadata(username, channel_code, channel_pk):
     """
     Task to send content metadata to each linked integrated channel.
