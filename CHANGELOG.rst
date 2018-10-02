@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.0.4] - 2018-11-07
+---------------------
+
+* Make HTTP POST request to get catalog results from discovery.
+
 [1.0.3] - 2018-11-02
 ---------------------
 
