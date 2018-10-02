@@ -1170,10 +1170,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             dict: The paginated discovery service search results.
         """
         results = []
-        query = self.content_filter.copy()
-        query.update(query_parameters)
+        content_filter_query = self.content_filter.copy()
         catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
-        search_results = catalog_client.get_search_results(query, traverse_pagination=False)
+        search_results = catalog_client.get_catalog_results(content_filter_query, query_parameters.dict())
         for content in search_results['results']:
             if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
                 results.append(content)

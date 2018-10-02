@@ -91,12 +91,12 @@ class CourseCatalogApiClient(object):
             )
 
         self.user = user
-        catalog_url = get_configuration_value_for_site(
+        self.catalog_url = get_configuration_value_for_site(
             site,
             'COURSE_CATALOG_API_URL',
             settings.COURSE_CATALOG_API_URL
         )
-        self.client = course_discovery_api_client(user, catalog_url)
+        self.client = course_discovery_api_client(user, self.catalog_url)
 
     def get_search_results(self, querystring=None, traverse_pagination=True):
         """
@@ -118,6 +118,34 @@ class CourseCatalogApiClient(object):
             traverse_pagination=traverse_pagination,
             many=False,
         )
+
+    def get_catalog_results(self, content_filter_query, query_params):
+        """
+        Return results from the discovery service's search/all endpoint.
+
+        Arguments:
+            content_filter_query (dict): query parameters used to filter catalog results.
+            query_params (dict): query parameters used to paginate results.
+
+        Returns:
+            dict: The paginated response.
+        """
+        response = {
+            'next': None,
+            'previous': None,
+            'results': [],
+        }
+
+        try:
+            endpoint = getattr(self.client, self.SEARCH_ALL_ENDPOINT)
+            response = endpoint().post(data=content_filter_query, **query_params)
+        except Exception as ex:  # pylint: disable=broad-except
+            LOGGER.exception(
+                'Failed to retrieve data from the catalog API. content -- [%s]',
+                getattr(ex, 'content', '')
+            )
+
+        return response
 
     def get_all_catalogs(self):
         """
@@ -414,6 +442,7 @@ class CourseCatalogApiClient(object):
             dict: Deserialized response from Course Catalog API
 
         """
+
         default_val = default if default != self.DEFAULT_VALUE_SAFEGUARD else {}
         try:
             return get_edx_api_data(

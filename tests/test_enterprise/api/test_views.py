@@ -1107,7 +1107,7 @@ class TestEnterpriseAPIViews(APITest):
                 enterprise_customer=enterprise_customer
             )
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(
+            get_catalog_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS
             ),
         )
@@ -1136,7 +1136,7 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(
+            get_catalog_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION
             ),
         )
@@ -1172,7 +1172,7 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(
+            get_catalog_results=mock.Mock(
                 return_value=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION_1
             ),
         )
