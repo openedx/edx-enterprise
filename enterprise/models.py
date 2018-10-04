@@ -1160,7 +1160,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         query = self.content_filter.copy()
         query.update(query_parameters)
         catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
-        search_results = catalog_client.get_search_results(query, traverse_pagination=False)
+        search_results = catalog_client.get_catalog_results(query)
         for content in search_results['results']:
             if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
                 results.append(content)
