@@ -59,6 +59,11 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         Test unsuccessful creation of content metadata during transmission.
         """
         content_id = 'course:DemoX'
+        content_id_2 = 'course:DemoX2'
+
+        # Set the chunk size to 1 to simulate 2 network calls
+        self.enterprise_config.transmission_chunk_size = 1
+        self.enterprise_config.save()
         update_content_metadata_mock.side_effect = ClientError('error occurred')
         responses.add(
             responses.POST,
@@ -73,6 +78,10 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
                 content_id: ContentMetadataItemExport(
                     {'key': content_id, 'content_type': 'course'},
                     {'courseID': content_id, 'update': True}
+                ),
+                content_id_2: ContentMetadataItemExport(
+                    {'key': content_id_2, 'content_type': 'course'},
+                    {'courseID': content_id_2, 'update': True}
                 )
             })
             assert len(log_capture.records) == 2
@@ -81,6 +90,12 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
                 enterprise_customer=self.enterprise_config.enterprise_customer,
                 integrated_channel_code=self.enterprise_config.channel_code(),
                 content_id=content_id,
+            ).exists()
+
+            assert not ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_config.enterprise_customer,
+                integrated_channel_code=self.enterprise_config.channel_code(),
+                content_id=content_id_2,
             ).exists()
 
     @responses.activate
