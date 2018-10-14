@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 from hashlib import md5
 
 import responses
+import six
 from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from rest_framework.reverse import reverse
@@ -48,7 +49,7 @@ class EnterpriseMockMixin(object):
         """
         course_detail = {
             'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
-            'key': course_run_key.to_deprecated_string(),
+            'key': six.text_type(course_run_key),
             'aggregation_key': 'courserun:{org}+{course}'.format(
                 org=course_run_key.org, course=course_run_key.course
             ),
@@ -79,7 +80,7 @@ class EnterpriseMockMixin(object):
                 settings.LMS_ROOT_URL,
                 reverse(
                     'enterprise_course_run_enrollment_page',
-                    args=[enterprise_uuid, course_run_key.to_deprecated_string()],
+                    args=[enterprise_uuid, six.text_type(course_run_key)],
                 )
             ),
             'content_language': None,
@@ -106,7 +107,7 @@ class EnterpriseMockMixin(object):
         """
         DRY method to generate dummy course product SKU.
         """
-        md5_hash = md5(course_run_key.to_deprecated_string().encode('utf-8'))
+        md5_hash = md5(six.text_type(course_run_key).encode('utf-8'))
         digest = md5_hash.hexdigest()[-7:]
         sku = digest.upper()
         return sku
