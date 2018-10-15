@@ -132,7 +132,7 @@ def enterprise_login_required(view):
         # Now verify if the user is logged in. If user is not logged in then
         # send the user to the login screen to sign in with an
         # Enterprise-linked IdP and the pipeline will get them back here.
-        if not request.user.is_authenticated():
+        if not request.user.is_authenticated:
             parsed_current_url = urlparse(request.get_full_path())
             parsed_query_string = parse_qs(parsed_current_url.query)
             parsed_query_string.update({

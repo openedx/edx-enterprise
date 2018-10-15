@@ -24,7 +24,7 @@ from enterprise.utils import (
 )
 
 try:
-    from openedx.core.lib.token_utils import JwtBuilder
+    from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder
 except ImportError:
     JwtBuilder = None
 
@@ -52,9 +52,7 @@ def course_discovery_api_client(user, catalog_url):
               "installed in an Open edX environment.")
         )
 
-    scopes = ['email', 'profile']
-    expires_in = settings.OAUTH_ID_TOKEN_EXPIRATION
-    jwt = JwtBuilder(user).build_token(scopes, expires_in)
+    jwt = JwtBuilder.create_jwt_for_user(user)
     return EdxRestApiClient(catalog_url, jwt=jwt)
 
 
