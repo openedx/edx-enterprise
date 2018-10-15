@@ -5,7 +5,8 @@ A generic API for edX Enterprise's Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
-from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
+from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
+from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
