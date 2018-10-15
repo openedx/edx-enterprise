@@ -18,7 +18,7 @@ from enterprise import models, utils
 from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
-from enterprise.utils import track_enrollment
+from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -584,7 +584,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                     enterprise_customer_user.enroll(course_run_id, course_mode, cohort=cohort)
                 else:
                     enterprise_customer_user.unenroll(course_run_id)
-            except (utils.CourseEnrollmentDowngradeError, HttpClientError) as exc:
+            except (CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, HttpClientError) as exc:
                 validated_data['detail'] = str(exc)
                 return validated_data
 

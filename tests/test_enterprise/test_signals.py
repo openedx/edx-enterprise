@@ -109,6 +109,8 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         email = "fake_email@edx.org"
         user = UserFactory(id=1, email=email)
         pending_link = PendingEnterpriseCustomerUserFactory(user_email=email)
+        pending_link.enterprise_customer.enable_autocohorting = True
+        pending_link.enterprise_customer.save()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         PendingEnrollmentFactory(user=pending_link, course_id=course_id, cohort_name=u'test_cohort')
 

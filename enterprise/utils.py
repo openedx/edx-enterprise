@@ -100,6 +100,12 @@ class CourseEnrollmentDowngradeError(Exception):
     """
 
 
+class CourseEnrollmentPermissionError(Exception):
+    """
+    Exception to raise when an enterprise attempts to use enrollment features it's not configured to use.
+    """
+
+
 def get_identity_provider(provider_id):
     """
     Get Identity Provider with given id.

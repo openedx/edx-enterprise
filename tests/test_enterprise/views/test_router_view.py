@@ -218,6 +218,7 @@ class TestRouterView(TestCase):
         """
         ``get`` redirects to the LMS courseware when the request is fully eligible for direct audit enrollment.
         """
+        self.request.GET.get = mock.MagicMock(return_value={})
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=True)
         response = router_view_mock.get(self.request, **self.kwargs)
