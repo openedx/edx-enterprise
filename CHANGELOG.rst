@@ -2,7 +2,7 @@ Change Log
 ==========
 
 ..
-   All enhancements and patches to edx-enteprise will be documented
+   All enhancements and patches to edx-enterprise will be documented
    in this file.  It adheres to the structure of http://keepachangelog.com/ ,
    but in reStructuredText instead of Markdown (for ease of incorporation into
    Sphinx documentation and the PyPI description).
@@ -13,6 +13,7 @@ Change Log
 
 Unreleased
 ----------
+* Update edx-drf-extensions imports due to refactoring.
 
 [0.73.6] - 2018-10-04
 ---------------------
