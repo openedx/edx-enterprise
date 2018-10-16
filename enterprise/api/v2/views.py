@@ -64,13 +64,23 @@ class EnterpriseCustomerViewSetV2(EnterpriseCustomerViewSet):
         for catalog in enterprise_customer.enterprise_customer_catalogs.all():
             if not catalog.content_filter:
                 continue
-            self._update_content_filters(combined_content_filter, catalog.content_filter)
+            update_content_filters(combined_content_filter, catalog.content_filter)
 
+        ######################### CONSTRUCTION ZONE #########################
+        # - Now that we have combined_content_filter, do something with it here
+        # - Call the discovery service using it
+        # - Get the results and serialize it
+        # (Looks like you can use something like get_catalog_courses, except while
+        #  accepting a query string. Need to figure out how to take this dict we created
+        #  and turn it into the proper datatype for the `querystring` variable)
+        catalog_api = CourseCatalogApiClient(request.user, enterprise_customer.site)
+        courses = catalog_api.get_search_results(pk, request.GET) # TO CHANGE!
         serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
 
         # Add enterprise related context for the courses.
         serializer.update_enterprise_courses(enterprise_customer, catalog_id=enterprise_customer.catalog)
         return get_paginated_response(serializer.data, request)
+        #####################################################################
 
 def update_content_filters(combined_content_filter, new_content_filter):
     """
