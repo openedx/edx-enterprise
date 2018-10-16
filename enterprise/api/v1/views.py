@@ -6,7 +6,8 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
+from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
+from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import filters, permissions, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route, list_route

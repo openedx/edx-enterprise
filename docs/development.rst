@@ -23,10 +23,9 @@ In order to maintain the separation of edx-enterprise from the edx-platform, fol
 Other noteworthy points:
 
 * ``edx-enterprise`` does not interact with Studio.
-* ``edx-enterprise`` supports multiple python and edx-platform versions:
+* ``edx-enterprise`` supports multiple python versions:
 
   * Python 2.7 and python 3.5.
-  * edx-platform Ficus, Ginkgo, the current master branch, and, speculatively, Hawthorn.
 
 * High test coverage is expected - all new python code must have 100% diff coverage.
   JS test were only recently introduced, so it's not as strict so far, but aim for 100% diff coverage as well.

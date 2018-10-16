@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.0.0] - 2018-10-16
+--------------------
+* Upgrade edx-drf-extensions with refactored imports.
+* Remove Hawthorn testing for upcoming backward incompatible change.
+
 [0.73.6] - 2018-10-04
 ---------------------
 * SuccessFactors: Submit batch/chunk of OCN items to tenants until error status

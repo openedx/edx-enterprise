@@ -5,9 +5,9 @@
 #    pip-compile --output-file requirements/js_test.txt requirements/js_test.in
 #
 argparse==1.4.0           # via jasmine
-backports.functools-lru-cache==1.5  # via cheroot, jaraco.functools
+backports.functools-lru-cache==1.5  # via cheroot
 cheroot==6.5.2            # via cherrypy
-cherrypy==17.3.0          # via jasmine
+cherrypy==17.3.0
 contextlib2==0.5.5        # via cherrypy
 glob2==0.6                # via jasmine-core
 jaraco.functools==1.20    # via tempora

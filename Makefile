@@ -2,7 +2,7 @@
 
 NODE_BIN := ./node_modules/.bin
 
-ALL_PLATFORMS := hawthorn master
+ALL_PLATFORMS := master
 TARGET_PLATFORM := master
 
 define BROWSER_PYSCRIPT
