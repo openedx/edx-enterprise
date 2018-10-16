@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.0.2] - 2018-10-25
+---------------------
+
+* Updated EnterpriseCustomerReportingConfiguration model with PGP key
+
 [1.0.1] - 2018-10-24
 ---------------------
 
