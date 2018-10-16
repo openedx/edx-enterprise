@@ -62,14 +62,26 @@ class EnterpriseCustomerViewSetV2(EnterpriseCustomerViewSet):
         enterprise_customer = self.get_object()
         combined_content_filter = {}
         for catalog in enterprise_customer.enterprise_customer_catalogs.all():
-            if catalog.content_filter == {}:
-                combined_content_filter = {}
-                break
-            else:
-                pass
+            if not catalog.content_filter:
+                continue
+            self._update_content_filters(combined_content_filter, catalog.content_filter)
 
         serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
 
         # Add enterprise related context for the courses.
         serializer.update_enterprise_courses(enterprise_customer, catalog_id=enterprise_customer.catalog)
         return get_paginated_response(serializer.data, request)
+
+    def _update_content_filters(self, combined_content_filter, new_content_filter):
+        """
+        Helper method for combining 2 content filter dicts
+        """
+        for filter_key, filter_value in new_content_filter.items():
+            if filter_key in combined_content_filter:
+                old_value = combined_content_filter[filter_key]
+                if isinstance(filter_value, list):
+                    combined_content_filter[filter_key] = set(old_value) + set(filter_value)
+                elif filter_value != old_value:
+                    combined_content_filter[filter_key] = [filter_value, old_value]
+            else:
+                combined_content_filter[filter_key] = filter_value
