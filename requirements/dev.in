@@ -6,6 +6,6 @@ edx-i18n-tools            # For i18n_tool dummy
 pip-tools                 # Requirements file management
 tox                       # virtualenv management for tests
 tox-battery==0.5.1        # Makes tox aware of requirements file changes (it's experimental, so keep it pinned)
-twine                     # Utility for PyPI package uploads
+twine==1.11.0             # Utility for PyPI package uploads
 wheel                     # For generation of wheels for PyPI
 django-countries          # For django EnterpriseCustomer country field
