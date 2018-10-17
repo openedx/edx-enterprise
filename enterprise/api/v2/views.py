@@ -5,6 +5,7 @@ Views for enterprise api version 2 endpoint.
 from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
+from uuid import uuid4
 
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
 from rest_framework import filters, permissions, viewsets
@@ -26,6 +27,7 @@ from enterprise.api.v1.views import EnterpriseCustomerViewSet
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.pagination import get_paginated_response
 from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.api.utils import update_content_filters
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import HasEnterpriseEnrollmentAPIAccess, IsInEnterpriseGroup
@@ -66,32 +68,12 @@ class EnterpriseCustomerViewSetV2(EnterpriseCustomerViewSet):
                 continue
             update_content_filters(combined_content_filter, catalog.content_filter)
 
-        ######################### CONSTRUCTION ZONE #########################
-        # - Now that we have combined_content_filter, do something with it here
-        # - Call the discovery service using it
-        # - Get the results and serialize it
-        # (Looks like you can use something like get_catalog_courses, except while
-        #  accepting a query string. Need to figure out how to take this dict we created
-        #  and turn it into the proper datatype for the `querystring` variable)
-        catalog_api = CourseCatalogApiClient(request.user, enterprise_customer.site)
-        courses = catalog_api.get_search_results(pk, request.GET) # TO CHANGE!
-        serializer = serializers.EnterpriseCatalogCoursesReadOnlySerializer(courses)
-
-        # Add enterprise related context for the courses.
-        serializer.update_enterprise_courses(enterprise_customer, catalog_id=enterprise_customer.catalog)
-        return get_paginated_response(serializer.data, request)
-        #####################################################################
-
-def update_content_filters(combined_content_filter, new_content_filter):
-    """
-    Helper method for combining 2 content filter dicts
-    """
-    for filter_key, filter_value in new_content_filter.items():
-        if filter_key in combined_content_filter:
-            old_value = combined_content_filter[filter_key]
-            if isinstance(filter_value, list):
-                combined_content_filter[filter_key] = list(set(old_value) | set(filter_value))
-            elif filter_value != old_value:
-                combined_content_filter[filter_key] = [filter_value, old_value]
-        else:
-            combined_content_filter[filter_key] = filter_value
+        # Create temp catalog object to be serialized with new combined filter
+        temp_course_catalog = models.EnterpriseCustomerCatalog(
+            uuid=uuid4,
+            title='',
+            enterprise_customer=enterprise_customer,
+            content_filter=combined_content_filter,
+        )
+        serializer = serializers.EnterpriseCustomerCatalogDetailSerializer(temp_course_catalog)
+        return Response(serializer.data)

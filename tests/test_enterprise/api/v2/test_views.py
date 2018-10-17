@@ -24,7 +24,7 @@ from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
-from enterprise.api.v2.views import EnterpriseCustomerViewSetV2, update_content_filters
+from enterprise.api.v2.views import EnterpriseCustomerViewSetV2
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -98,29 +98,14 @@ class TestEnterpriseAPIViews(APITest):
     Tests for enterprise api views.
     """
 
-    def test_update_content_filters(self):
+    def test_enterprisecustomer_courses_v2_detail_route(self):
         """
-        _update_content_filters should properly combine catalog filter dicts
+        enterprisecustomer v2 detail route should take a enterprisecustomer id
+        and then return all courses within all enterprise catalogs linked to the
+        enterprise
         """
-        original_filters = {
-            "key1": "true",
-            "key2": "cat",
-            "key3": ["rock", "stick", "leaf"],
-        }
-        new_filters = {
-            "key1": "true",
-            "key2": "dog",
-            "key3": ["leaf", "branch", "tree"],
-            "key4": "soup",
-        }
-        expected = {
-            "key1": "true",
-            "key2": ["cat", "dog"],
-            "key3": ["rock", "stick", "leaf", "branch", "tree"],
-            "key4": "soup"
-        }
-        update_content_filters(original_filters, new_filters)
-        assert original_filters["key1"] == expected["key1"]
-        assert original_filters["key2"].sort() == expected["key2"].sort()
-        assert original_filters["key3"].sort() == expected["key3"].sort()
-        assert original_filters["key4"] == expected["key4"]
+        # Create your enterprise customer
+        # Create a few different catalogs associated with the enterprise customer
+        # Do that enterprisecustomeruser link thing other tests did
+        # Hit the new end point and assert that the correct data is being returned
+        pass
