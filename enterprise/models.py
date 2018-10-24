@@ -187,6 +187,9 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    # This setting is a temporary fix to hide the cohort API.
+    # It should be removed/refactored once there's a better model for organization-wide settings
+    # in edx-platform.
     enable_autocohorting = models.BooleanField(
         default=False,
         help_text=_(
