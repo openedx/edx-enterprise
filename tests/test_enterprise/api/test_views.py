@@ -1848,13 +1848,15 @@ class TestEnterpriseAPIViews(APITest):
             course_enrollment,
             mock_catalog_contains_course,
             course_in_catalog,
+            enable_autocohorting=False
     ):
         """
         Set up for tests that call the enterprise customer course enrollments detail route.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
-            name="test_enterprise"
+            name="test_enterprise",
+            enable_autocohorting=enable_autocohorting
         )
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
@@ -1993,6 +1995,23 @@ class TestEnterpriseAPIViews(APITest):
                 )
             }],
         ),
+        (
+            True,
+            True,
+            {'is_active': False, 'mode': 'audit'},
+            [{
+                'course_mode': 'audit',
+                'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
+                'lms_user_id': 1,
+                'cohort': 'masters'
+            }],
+            [{
+                'detail': (
+                    'Auto-cohorting is not enabled for this enterprise'
+                )
+            }],
+        ),
+
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
@@ -2167,7 +2186,8 @@ class TestEnterpriseAPIViews(APITest):
             mock_enrollment_client,
             course_enrollment,
             mock_catalog_contains_course,
-            True
+            True,
+            enable_autocohorting=True
         )
 
         # Make the call!

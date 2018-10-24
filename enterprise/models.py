@@ -45,6 +45,7 @@ from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClie
 from enterprise.constants import json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
+    CourseEnrollmentPermissionError,
     get_configuration_value,
     get_default_catalog_content_filter,
     parse_course_key,
@@ -183,6 +184,16 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_(
             "Specifies whether to replace the display of potentially sensitive SSO usernames "
             "with a more generic name, e.g. EnterpriseLearner."
+        )
+    )
+
+    # This setting is a temporary fix to hide the cohort API.
+    # It should be removed/refactored once there's a better model for organization-wide settings
+    # in edx-platform.
+    enable_autocohorting = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether the customer is able to assign learners to cohorts upon enrollment."
         )
     )
 
@@ -678,6 +689,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         is_upgrading = mode in paid_modes and course_enrollment.get('mode') in audit_modes
 
         if not enrolled_in_course or is_upgrading:
+            if cohort and not self.enterprise_customer.enable_autocohorting:
+                raise CourseEnrollmentPermissionError("Auto-cohorting is not enabled for this enterprise")
             # Directly enroll into the specified track.
             enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
             utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {

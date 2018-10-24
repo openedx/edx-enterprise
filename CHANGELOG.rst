@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.0.1] - 2018-10-24
+---------------------
+
+* Made autocohorting API availability based on a configuration option.
+
 [1.0.0] - 2018-10-16
 --------------------
 * Upgrade edx-drf-extensions with refactored imports.
