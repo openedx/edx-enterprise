@@ -1507,6 +1507,12 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("Delivery Method"),
         help_text=_("The method in which the data should be sent.")
     )
+    pgp_encryption_key = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("PGP Encryption Key"),
+        help_text=_('The key for encryption, if PGP encrypted file is required.')
+    )
     data_type = models.CharField(
         max_length=20,
         choices=DATA_TYPE_CHOICES,
