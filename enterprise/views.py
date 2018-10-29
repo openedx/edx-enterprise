@@ -590,29 +590,6 @@ class CourseEnrollmentView(NonAtomicView):
         'instructor_paced': _('Instructor-Paced'),
         'self_paced': _('Self-Paced')
     }
-    STATIC_TEXT_FORMAT = {
-        'page_title': _('Confirm your course'),
-        'confirmation_text': _('Confirm your course'),
-        'starts_at_text': _('Starts'),
-        'view_course_details_text': _('View Course Details'),
-        'select_mode_text': _('Please select one:'),
-        'price_text': _('Price'),
-        'free_price_text': _('FREE'),
-        'verified_text': _(
-            'Earn a verified certificate!'
-        ),
-        'audit_text': _(
-            'Not eligible for a certificate.'
-        ),
-        'continue_link_text': _('Continue'),
-        'level_text': _('Level'),
-        'effort_text': _('Effort'),
-        'close_modal_button_text': _('Close'),
-        'expected_learning_items_text': _("What you'll learn"),
-        'course_full_description_text': _('About This Course'),
-        'staff_text': _('Course Staff'),
-    }
-    ENT_DISCOUNT_TEXT_FORMAT = _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}')
 
     def set_final_prices(self, modes, request):
         """
@@ -726,11 +703,11 @@ class CourseEnrollmentView(NonAtomicView):
             if mode['min_price']:
                 price_text = get_price_text(mode['min_price'], request)
             else:
-                price_text = self.STATIC_TEXT_FORMAT['free_price_text']
+                price_text = _('FREE')
             if mode['slug'] in audit_modes:
-                description = self.STATIC_TEXT_FORMAT['audit_text']
+                description = _('Not eligible for a certificate.')
             else:
-                description = self.STATIC_TEXT_FORMAT['verified_text']
+                description = _('Earn a verified certificate!')
             course_modes.append({
                 'mode': mode['slug'],
                 'min_price': mode['min_price'],
@@ -834,7 +811,7 @@ class CourseEnrollmentView(NonAtomicView):
                 'expected_learning_items': expected_learning_items,
                 'catalog': enterprise_catalog_uuid,
                 'staff': staff,
-                'discount_text': self.ENT_DISCOUNT_TEXT_FORMAT.format(
+                'discount_text': _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}').format(
                     enterprise_customer_name=enterprise_customer.name,
                     strong_start='<strong>',
                     strong_end='</strong>',
@@ -843,7 +820,21 @@ class CourseEnrollmentView(NonAtomicView):
             })
             html_template_for_rendering = 'enterprise/enterprise_course_enrollment_page.html'
 
-        context_data.update(self.STATIC_TEXT_FORMAT)
+        context_data.update({
+            'page_title': _('Confirm your course'),
+            'confirmation_text': _('Confirm your course'),
+            'starts_at_text': _('Starts'),
+            'view_course_details_text': _('View Course Details'),
+            'select_mode_text': _('Please select one:'),
+            'price_text': _('Price'),
+            'continue_link_text': _('Continue'),
+            'level_text': _('Level'),
+            'effort_text': _('Effort'),
+            'close_modal_button_text': _('Close'),
+            'expected_learning_items_text': _("What you'll learn"),
+            'course_full_description_text': _('About This Course'),
+            'staff_text': _('Course Staff'),
+        })
         return render(request, html_template_for_rendering, context=context_data)
 
     @method_decorator(enterprise_login_required)
@@ -1055,48 +1046,6 @@ class ProgramEnrollmentView(NonAtomicView):
     and other several pieces of Enterprise context.
     """
 
-    actions = {
-        'purchase_unenrolled_courses': _('Purchase all unenrolled courses'),
-        'purchase_program': _('Pursue the program'),
-    }
-
-    items = {
-        'enrollment': _('enrollment'),
-        'program_enrollment': _('program enrollment'),
-    }
-
-    context_data = {
-        'program_type_description_header': _('What is an {platform_name} {program_type}?'),
-        'platform_description_header': _('What is {platform_name}?'),
-        'page_title': _('Confirm your {item}'),
-        'organization_text': _('Presented by {organization}'),
-        'item_bullet_points': [
-            _('Credit- and Certificate-eligible'),
-            _('Self-paced; courses can be taken in any order'),
-        ],
-        'purchase_text': _('{purchase_action} for'),
-        'enrolled_in_course_and_paid_text': _('enrolled'),
-        'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
-        'expected_learning_items_text': _("What you'll learn"),
-        'expected_learning_items_show_count': 2,
-        'corporate_endorsements_text': _('Real Career Impact'),
-        'corporate_endorsements_show_count': 1,
-        'see_more_text': _('See More'),
-        'see_less_text': _('See Less'),
-        'confirm_button_text': _('Confirm Program'),
-        'summary_header': _('Program Summary'),
-        'price_text': _('Price'),
-        'length_text': _('Length'),
-        'length_info_text': _('{}-{} weeks per course'),
-        'effort_text': _('Effort'),
-        'effort_info_text': _('{}-{} hours per week, per course'),
-        'level_text': _('Level'),
-        'course_full_description_text': _('About This Course'),
-        'staff_text': _('Course Staff'),
-        'close_modal_button_text': _('Close'),
-        'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
-    }
-
     @staticmethod
     def extend_course(course, enterprise_customer):
         """
@@ -1215,25 +1164,25 @@ class ProgramEnrollmentView(NonAtomicView):
         effort_info_text = ungettext_min_max(
             '{} hour per week, per course',
             '{} hours per week, per course',
-            self.context_data['effort_info_text'],
+            _('{}-{} hours per week, per course'),
             program_details.get('min_hours_effort_per_week'),
             program_details.get('max_hours_effort_per_week'),
         )
         length_info_text = ungettext_min_max(
             '{} week per course',
             '{} weeks per course',
-            self.context_data['length_info_text'],
+            _('{}-{} weeks per course'),
             program_details.get('weeks_to_complete_min'),
             program_details.get('weeks_to_complete_max'),
         )
 
         # Update some enrollment-related text requirements.
         if program_details['enrolled_in_program']:
-            purchase_action = self.actions['purchase_unenrolled_courses']
-            item = self.items['enrollment']
+            purchase_action = _('Purchase all unenrolled courses')
+            item = _('enrollment')
         else:
-            purchase_action = self.actions['purchase_program']
-            item = self.items['program_enrollment']
+            purchase_action = _('Pursue the program')
+            item = _('program enrollment')
 
         # Add any DSC warning messages.
         program_data_sharing_consent = get_data_sharing_consent(
@@ -1252,21 +1201,37 @@ class ProgramEnrollmentView(NonAtomicView):
         elif discount_data.get('total_incl_tax_excl_discounts') is None:
             messages.add_missing_price_information_message(request, program_title)
 
-        # Update our context with the above calculated details and more.
-        context_data = self.context_data.copy()
-        context_data.update(get_global_context(request, enterprise_customer))
+        context_data = get_global_context(request, enterprise_customer)
         context_data.update({
-            'program_type_description_header': self.context_data['program_type_description_header'].format(
+            'enrolled_in_course_and_paid_text': _('enrolled'),
+            'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
+            'expected_learning_items_text': _("What you'll learn"),
+            'expected_learning_items_show_count': 2,
+            'corporate_endorsements_text': _('Real Career Impact'),
+            'corporate_endorsements_show_count': 1,
+            'see_more_text': _('See More'),
+            'see_less_text': _('See Less'),
+            'confirm_button_text': _('Confirm Program'),
+            'summary_header': _('Program Summary'),
+            'price_text': _('Price'),
+            'length_text': _('Length'),
+            'effort_text': _('Effort'),
+            'level_text': _('Level'),
+            'course_full_description_text': _('About This Course'),
+            'staff_text': _('Course Staff'),
+            'close_modal_button_text': _('Close'),
+            'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
+            'program_type_description_header': _('What is an {platform_name} {program_type}?').format(
                 platform_name=platform_name,
                 program_type=program_type,
             ),
-            'platform_description_header': self.context_data['platform_description_header'].format(
+            'platform_description_header': _('What is {platform_name}?').format(
                 platform_name=platform_name
             ),
             'organization_name': organization.get('name'),
             'organization_logo': organization.get('logo_image_url'),
-            'organization_text': self.context_data['organization_text'].format(organization=organization.get('name')),
-            'page_title': self.context_data['page_title'].format(item=item),
+            'organization_text': _('Presented by {organization}').format(organization=organization.get('name')),
+            'page_title': _('Confirm your {item}').format(item=item),
             'program_type_logo': program_type_details['logo_image'].get('medium', {}).get('url', ''),
             'program_type': program_type,
             'program_type_description': get_program_type_description(program_type),
@@ -1277,8 +1242,11 @@ class ProgramEnrollmentView(NonAtomicView):
             'program_discounted_price': get_price_text(discount_data.get('total_incl_tax', 0), request),
             'is_discounted': discount_data.get('is_discounted', False),
             'courses': program_courses,
-            'item_bullet_points': self.context_data['item_bullet_points'],
-            'purchase_text': self.context_data['purchase_text'].format(purchase_action=purchase_action),
+            'item_bullet_points': [
+                _('Credit- and Certificate-eligible'),
+                _('Self-paced; courses can be taken in any order'),
+            ],
+            'purchase_text': _('{purchase_action} for').format(purchase_action=purchase_action),
             'expected_learning_items': program_details['expected_learning_items'],
             'corporate_endorsements': program_details['corporate_endorsements'],
             'course_count_text': course_count_text,
