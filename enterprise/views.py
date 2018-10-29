@@ -161,68 +161,6 @@ class GrantDataSharingPermissions(View):
     consent to be provided, and a POST view that consumes said form.
     """
 
-    page_title = _('Data sharing consent required')
-    consent_message_header = _('Consent to share your data')
-    requested_permissions_header = _(
-        'Per the {start_link}Data Sharing Policy{end_link}, '
-        '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
-    )
-    agreement_text = _(
-        'I agree to allow {platform_name} to share data about my enrollment, completion and performance '
-        'in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}.'
-    )
-    continue_text = _('Yes, continue')
-    abort_text = _('No, take me back.')
-    policy_dropdown_header = _('Data Sharing Policy')
-    sharable_items_header = _(
-        'Enrollment, completion, and performance data that may be shared with {enterprise_customer_name} '
-        '(or its designee) for these courses and programs are limited to the following:'
-    )
-    sharable_items = [
-        _('My email address for my {platform_name} account, and the date when I created my {platform_name} account'),
-        _('My {platform_name} ID, and if I log in via single sign-on, my {enterprise_customer_name} SSO user-ID'),
-        _('My {platform_name} username'),
-        _('My country or region of residence'),
-        _(
-            'What courses and/or programs I\'ve enrolled in or unenrolled from, what track I '
-            'enrolled in (audit or verified) and the date when I enrolled in each course or program'
-        ),
-        _(
-            'Information about each course or program I\'ve enrolled in, '
-            'including its duration and level of effort required'
-        ),
-        _(
-            'Whether I completed specific parts of each course or program (for example, whether '
-            'I watched a given video or completed a given homework assignment)'
-        ),
-        _(
-            'My overall percentage completion of each course or program on a periodic basis, '
-            'including the total time spent in each course or program and the date when I last '
-            'logged in to each course or program'
-        ),
-        _('My performance in each course or program'),
-        _('My final grade in each course or program, and the date when I completed each course or program'),
-        _('Whether I received a certificate in each course or program'),
-    ]
-    sharable_items_footer = _(
-        'My permission applies only to data from courses or programs that are sponsored by {enterprise_customer_name}, '
-        'and not to data from any {platform_name} courses or programs that I take on my own. I understand that '
-        'I may withdraw my permission only by fully unenrolling from any courses or programs that are sponsored by '
-        '{enterprise_customer_name}.'
-    )
-    sharable_items_note_header = _('Please note')
-    sharable_items_notes = [
-        _('If you decline to consent, that fact may be shared with {enterprise_customer_name}.'),
-    ]
-    confirmation_modal_header = _('Are you aware...')
-    modal_affirm_decline_msg = _('I decline')
-    modal_abort_decline_msg = _('View the data sharing policy')
-    policy_link_template = _('View the {start_link}data sharing policy{end_link}.').format(
-        start_link='<a href="#consent-policy-dropdown-bar" class="policy-dropdown-link background-input" '
-                   'id="policy-dropdown-link">',
-        end_link='</a>',
-    )
-    policy_return_link_text = _('Return to Top')
     preview_mode = False
 
     def course_or_program_exist(self, course_id, program_uuid):
@@ -238,9 +176,12 @@ class GrantDataSharingPermissions(View):
         Get the set of variables that will populate the template by default.
         """
         context_data = {
-            'page_title': self.page_title,
-            'consent_message_header': self.consent_message_header,
-            'requested_permissions_header': self.requested_permissions_header.format(
+            'page_title': _('Data sharing consent required'),
+            'consent_message_header': _('Consent to share your data'),
+            'requested_permissions_header': _(
+                'Per the {start_link}Data Sharing Policy{end_link}, '
+                '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
+            ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 bold_start='<b>',
                 bold_end='</b>',
@@ -248,38 +189,83 @@ class GrantDataSharingPermissions(View):
                            'class="policy-dropdown-link background-input" id="policy-dropdown-link">',
                 end_link='</a>',
             ),
-            'agreement_text': self.agreement_text.format(
+            'agreement_text': _(
+                'I agree to allow {platform_name} to share data about my enrollment, completion and performance in all '
+                '{platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}.'
+            ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,
             ),
-            'continue_text': self.continue_text,
-            'abort_text': self.abort_text,
-            'policy_dropdown_header': self.policy_dropdown_header,
-            'sharable_items_header': self.sharable_items_header.format(
+            'continue_text': _('Yes, continue'),
+            'abort_text': _('No, take me back.'),
+            'policy_dropdown_header': _('Data Sharing Policy'),
+            'sharable_items_header': _(
+                'Enrollment, completion, and performance data that may be shared with {enterprise_customer_name} '
+                '(or its designee) for these courses and programs are limited to the following:'
+            ).format(
                 enterprise_customer_name=enterprise_customer.name
             ),
             'sharable_items': [
-                item.format(
-                    enterprise_customer_name=enterprise_customer.name,
+                _(
+                    'My email address for my {platform_name} account, '
+                    'and the date when I created my {platform_name} account'
+                ).format(
                     platform_name=platform_name
-                ) for item in self.sharable_items
+                ),
+                _(
+                    'My {platform_name} ID, and if I log in via single sign-on, '
+                    'my {enterprise_customer_name} SSO user-ID'
+                ).format(
+                    platform_name=platform_name,
+                    enterprise_customer_name=enterprise_customer.name,
+                ),
+                _('My {platform_name} username').format(platform_name=platform_name),
+                _('My country or region of residence'),
+                _(
+                    'What courses and/or programs I\'ve enrolled in or unenrolled from, what track I '
+                    'enrolled in (audit or verified) and the date when I enrolled in each course or program'
+                ),
+                _(
+                    'Information about each course or program I\'ve enrolled in, '
+                    'including its duration and level of effort required'
+                ),
+                _(
+                    'Whether I completed specific parts of each course or program (for example, whether '
+                    'I watched a given video or completed a given homework assignment)'
+                ),
+                _(
+                    'My overall percentage completion of each course or program on a periodic basis, '
+                    'including the total time spent in each course or program and the date when I last '
+                    'logged in to each course or program'
+                ),
+                _('My performance in each course or program'),
+                _('My final grade in each course or program, and the date when I completed each course or program'),
+                _('Whether I received a certificate in each course or program'),
             ],
-            'sharable_items_footer': self.sharable_items_footer.format(
+            'sharable_items_footer': _(
+                'My permission applies only to data from courses or programs that are sponsored by '
+                '{enterprise_customer_name}, and not to data from any {platform_name} courses or programs that '
+                'I take on my own. I understand that I may withdraw my permission only by fully unenrolling '
+                'from any courses or programs that are sponsored by {enterprise_customer_name}.'
+            ).format(
                 enterprise_customer_name=enterprise_customer.name,
                 platform_name=platform_name,
             ),
-            'sharable_items_note_header': self.sharable_items_note_header,
+            'sharable_items_note_header': _('Please note'),
             'sharable_items_notes': [
-                item.format(
-                    enterprise_customer_name=enterprise_customer.name,
-                    platform_name=platform_name
-                ) for item in self.sharable_items_notes
+                _('If you decline to consent, that fact may be shared with {enterprise_customer_name}.').format(
+                    enterprise_customer_name=enterprise_customer.name
+                ),
             ],
-            'confirmation_modal_header': self.confirmation_modal_header,
-            'confirmation_modal_affirm_decline_text': self.modal_affirm_decline_msg,
-            'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
-            'policy_link_template': self.policy_link_template,
-            'policy_return_link_text': self.policy_return_link_text,
+            'confirmation_modal_header': _('Are you aware...'),
+            'confirmation_modal_affirm_decline_text': _('I decline'),
+            'confirmation_modal_abort_decline_text': _('View the data sharing policy'),
+            'policy_link_template': _('View the {start_link}data sharing policy{end_link}.').format(
+                start_link='<a href="#consent-policy-dropdown-bar" class="policy-dropdown-link background-input" '
+                           'id="policy-dropdown-link">',
+                end_link='</a>',
+            ),
+            'policy_return_link_text': _('Return to Top'),
         }
         return context_data
 
@@ -603,29 +589,6 @@ class CourseEnrollmentView(NonAtomicView):
         'instructor_paced': _('Instructor-Paced'),
         'self_paced': _('Self-Paced')
     }
-    STATIC_TEXT_FORMAT = {
-        'page_title': _('Confirm your course'),
-        'confirmation_text': _('Confirm your course'),
-        'starts_at_text': _('Starts'),
-        'view_course_details_text': _('View Course Details'),
-        'select_mode_text': _('Please select one:'),
-        'price_text': _('Price'),
-        'free_price_text': _('FREE'),
-        'verified_text': _(
-            'Earn a verified certificate!'
-        ),
-        'audit_text': _(
-            'Not eligible for a certificate.'
-        ),
-        'continue_link_text': _('Continue'),
-        'level_text': _('Level'),
-        'effort_text': _('Effort'),
-        'close_modal_button_text': _('Close'),
-        'expected_learning_items_text': _("What you'll learn"),
-        'course_full_description_text': _('About This Course'),
-        'staff_text': _('Course Staff'),
-    }
-    ENT_DISCOUNT_TEXT_FORMAT = _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}')
 
     def set_final_prices(self, modes, request):
         """
@@ -739,11 +702,11 @@ class CourseEnrollmentView(NonAtomicView):
             if mode['min_price']:
                 price_text = get_price_text(mode['min_price'], request)
             else:
-                price_text = self.STATIC_TEXT_FORMAT['free_price_text']
+                price_text = _('FREE')
             if mode['slug'] in audit_modes:
-                description = self.STATIC_TEXT_FORMAT['audit_text']
+                description = _('Not eligible for a certificate.')
             else:
-                description = self.STATIC_TEXT_FORMAT['verified_text']
+                description = _('Earn a verified certificate!')
             course_modes.append({
                 'mode': mode['slug'],
                 'min_price': mode['min_price'],
@@ -847,7 +810,7 @@ class CourseEnrollmentView(NonAtomicView):
                 'expected_learning_items': expected_learning_items,
                 'catalog': enterprise_catalog_uuid,
                 'staff': staff,
-                'discount_text': self.ENT_DISCOUNT_TEXT_FORMAT.format(
+                'discount_text': _('Discount provided by {strong_start}{enterprise_customer_name}{strong_end}').format(
                     enterprise_customer_name=enterprise_customer.name,
                     strong_start='<strong>',
                     strong_end='</strong>',
@@ -856,7 +819,21 @@ class CourseEnrollmentView(NonAtomicView):
             })
             html_template_for_rendering = 'enterprise/enterprise_course_enrollment_page.html'
 
-        context_data.update(self.STATIC_TEXT_FORMAT)
+        context_data.update({
+            'page_title': _('Confirm your course'),
+            'confirmation_text': _('Confirm your course'),
+            'starts_at_text': _('Starts'),
+            'view_course_details_text': _('View Course Details'),
+            'select_mode_text': _('Please select one:'),
+            'price_text': _('Price'),
+            'continue_link_text': _('Continue'),
+            'level_text': _('Level'),
+            'effort_text': _('Effort'),
+            'close_modal_button_text': _('Close'),
+            'expected_learning_items_text': _("What you'll learn"),
+            'course_full_description_text': _('About This Course'),
+            'staff_text': _('Course Staff'),
+        })
         return render(request, html_template_for_rendering, context=context_data)
 
     @method_decorator(enterprise_login_required)
@@ -1068,48 +1045,6 @@ class ProgramEnrollmentView(NonAtomicView):
     and other several pieces of Enterprise context.
     """
 
-    actions = {
-        'purchase_unenrolled_courses': _('Purchase all unenrolled courses'),
-        'purchase_program': _('Pursue the program'),
-    }
-
-    items = {
-        'enrollment': _('enrollment'),
-        'program_enrollment': _('program enrollment'),
-    }
-
-    context_data = {
-        'program_type_description_header': _('What is an {platform_name} {program_type}?'),
-        'platform_description_header': _('What is {platform_name}?'),
-        'page_title': _('Confirm your {item}'),
-        'organization_text': _('Presented by {organization}'),
-        'item_bullet_points': [
-            _('Credit- and Certificate-eligible'),
-            _('Self-paced; courses can be taken in any order'),
-        ],
-        'purchase_text': _('{purchase_action} for'),
-        'enrolled_in_course_and_paid_text': _('enrolled'),
-        'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
-        'expected_learning_items_text': _("What you'll learn"),
-        'expected_learning_items_show_count': 2,
-        'corporate_endorsements_text': _('Real Career Impact'),
-        'corporate_endorsements_show_count': 1,
-        'see_more_text': _('See More'),
-        'see_less_text': _('See Less'),
-        'confirm_button_text': _('Confirm Program'),
-        'summary_header': _('Program Summary'),
-        'price_text': _('Price'),
-        'length_text': _('Length'),
-        'length_info_text': _('{}-{} weeks per course'),
-        'effort_text': _('Effort'),
-        'effort_info_text': _('{}-{} hours per week, per course'),
-        'level_text': _('Level'),
-        'course_full_description_text': _('About This Course'),
-        'staff_text': _('Course Staff'),
-        'close_modal_button_text': _('Close'),
-        'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
-    }
-
     @staticmethod
     def extend_course(course, enterprise_customer):
         """
@@ -1228,25 +1163,25 @@ class ProgramEnrollmentView(NonAtomicView):
         effort_info_text = ungettext_min_max(
             '{} hour per week, per course',
             '{} hours per week, per course',
-            self.context_data['effort_info_text'],
+            _('{}-{} hours per week, per course'),
             program_details.get('min_hours_effort_per_week'),
             program_details.get('max_hours_effort_per_week'),
         )
         length_info_text = ungettext_min_max(
             '{} week per course',
             '{} weeks per course',
-            self.context_data['length_info_text'],
+            _('{}-{} weeks per course'),
             program_details.get('weeks_to_complete_min'),
             program_details.get('weeks_to_complete_max'),
         )
 
         # Update some enrollment-related text requirements.
         if program_details['enrolled_in_program']:
-            purchase_action = self.actions['purchase_unenrolled_courses']
-            item = self.items['enrollment']
+            purchase_action = _('Purchase all unenrolled courses')
+            item = _('enrollment')
         else:
-            purchase_action = self.actions['purchase_program']
-            item = self.items['program_enrollment']
+            purchase_action = _('Pursue the program')
+            item = _('program enrollment')
 
         # Add any DSC warning messages.
         program_data_sharing_consent = get_data_sharing_consent(
@@ -1265,21 +1200,37 @@ class ProgramEnrollmentView(NonAtomicView):
         elif discount_data.get('total_incl_tax_excl_discounts') is None:
             messages.add_missing_price_information_message(request, program_title)
 
-        # Update our context with the above calculated details and more.
-        context_data = self.context_data.copy()
-        context_data.update(get_global_context(request, enterprise_customer))
+        context_data = get_global_context(request, enterprise_customer)
         context_data.update({
-            'program_type_description_header': self.context_data['program_type_description_header'].format(
+            'enrolled_in_course_and_paid_text': _('enrolled'),
+            'enrolled_in_course_and_unpaid_text': _('already enrolled, must pay for certificate'),
+            'expected_learning_items_text': _("What you'll learn"),
+            'expected_learning_items_show_count': 2,
+            'corporate_endorsements_text': _('Real Career Impact'),
+            'corporate_endorsements_show_count': 1,
+            'see_more_text': _('See More'),
+            'see_less_text': _('See Less'),
+            'confirm_button_text': _('Confirm Program'),
+            'summary_header': _('Program Summary'),
+            'price_text': _('Price'),
+            'length_text': _('Length'),
+            'effort_text': _('Effort'),
+            'level_text': _('Level'),
+            'course_full_description_text': _('About This Course'),
+            'staff_text': _('Course Staff'),
+            'close_modal_button_text': _('Close'),
+            'program_not_eligible_for_one_click_purchase_text': _('Program not eligible for one-click purchase.'),
+            'program_type_description_header': _('What is an {platform_name} {program_type}?').format(
                 platform_name=platform_name,
                 program_type=program_type,
             ),
-            'platform_description_header': self.context_data['platform_description_header'].format(
+            'platform_description_header': _('What is {platform_name}?').format(
                 platform_name=platform_name
             ),
             'organization_name': organization.get('name'),
             'organization_logo': organization.get('logo_image_url'),
-            'organization_text': self.context_data['organization_text'].format(organization=organization.get('name')),
-            'page_title': self.context_data['page_title'].format(item=item),
+            'organization_text': _('Presented by {organization}').format(organization=organization.get('name')),
+            'page_title': _('Confirm your {item}').format(item=item),
             'program_type_logo': program_type_details['logo_image'].get('medium', {}).get('url', ''),
             'program_type': program_type,
             'program_type_description': get_program_type_description(program_type),
@@ -1290,8 +1241,11 @@ class ProgramEnrollmentView(NonAtomicView):
             'program_discounted_price': get_price_text(discount_data.get('total_incl_tax', 0), request),
             'is_discounted': discount_data.get('is_discounted', False),
             'courses': program_courses,
-            'item_bullet_points': self.context_data['item_bullet_points'],
-            'purchase_text': self.context_data['purchase_text'].format(purchase_action=purchase_action),
+            'item_bullet_points': [
+                _('Credit- and Certificate-eligible'),
+                _('Self-paced; courses can be taken in any order'),
+            ],
+            'purchase_text': _('{purchase_action} for').format(purchase_action=purchase_action),
             'expected_learning_items': program_details['expected_learning_items'],
             'corporate_endorsements': program_details['corporate_endorsements'],
             'course_count_text': course_count_text,

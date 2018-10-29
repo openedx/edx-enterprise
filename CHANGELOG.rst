@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.0.3] - 2018-11-02
+---------------------
+
+* Fix translations for enterprise pages.
+
 [1.0.2] - 2018-10-25
 ---------------------
 
