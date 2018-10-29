@@ -160,6 +160,7 @@ class GrantDataSharingPermissions(View):
     hasn't yet been provided - this view contains a GET view that provides a form for
     consent to be provided, and a POST view that consumes said form.
     """
+
     preview_mode = False
 
     def course_or_program_exist(self, course_id, program_uuid):
