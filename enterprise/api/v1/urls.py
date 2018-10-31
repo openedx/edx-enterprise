@@ -6,6 +6,8 @@ from __future__ import absolute_import, unicode_literals
 
 from rest_framework.routers import DefaultRouter
 
+from django.conf.urls import url
+
 from enterprise.api.v1 import views
 
 router = DefaultRouter()  # pylint: disable=invalid-name
@@ -29,3 +31,13 @@ router.register(
     views.EnterpriseCustomerReportingConfigurationViewSet,
     'enterprise-customer-reporting',
 )
+
+urlpatterns = [
+    url(
+        r'^request_codes$',
+        views.CouponCodesView.as_view(),
+        name='request-codes'
+    ),
+]
+
+urlpatterns += router.urls

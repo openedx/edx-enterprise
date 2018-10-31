@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 from operator import itemgetter
+from smtplib import SMTPException
 
 import ddt
 import mock
@@ -2401,3 +2402,97 @@ class TestEnterpriseAPIViews(APITest):
 
         response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
         self.assertEqual(response_xml['content-type'], 'application/xml; charset=utf-8')
+
+    @mock.patch('django.core.mail.send_mail')
+    @ddt.data(
+        (
+            # A valid request.
+            {
+                'email': 'johndoe@unknown.com',
+                'enterprise_name': 'Oracle',
+                'number_of_codes': '50',
+            },
+            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': u'50'},
+            200,
+            None,
+            True,
+            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+        ),
+        (
+            # A valid request without codes
+            {
+                'email': 'johndoe@unknown.com',
+                'enterprise_name': 'Oracle',
+                'number_of_codes': None,
+            },
+            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': None},
+            200,
+            None,
+            True,
+            u'johndoe@unknown.com from Oracle has requested additional codes. Please reach out to them.'
+        ),
+        (
+            # A bad request due to a missing field
+            {
+                'email': 'johndoe@unknown.com',
+                'number_of_codes': '50',
+            },
+            {u'error': u'Some required parameter(s) missing: enterprise_name'},
+            400,
+            None,
+            False,
+            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+        ),
+        (
+            # Email send issue
+            {
+                'email': 'johndoe@unknown.com',
+                'enterprise_name': 'Oracle',
+                'number_of_codes': '50',
+            },
+            {u'error': u'Request codes email could not be sent'},
+            500,
+            SMTPException(),
+            True,
+            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+        )
+    )
+    @ddt.unpack
+    def test_post_request_codes(
+            self,
+            post_data,
+            response_data,
+            status_code,
+            mock_side_effect,
+            mail_attempted,
+            expected_email_message,
+            mock_send_mail,
+    ):
+        """
+        Ensure endpoint response data and status codes.
+        """
+        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
+        user.set_password('test_password')  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+        group = factories.GroupFactory(name='enterprise_data_api_access')
+        group.user_set.add(user)
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        endpoint_name = 'request-codes'
+        mock_send_mail.side_effect = mock_side_effect
+        response = client.post(
+            settings.TEST_SERVER + reverse(endpoint_name),
+            data=json.dumps(post_data),
+            content_type='application/json',
+        )
+        assert response.status_code == status_code
+        response = self.load_json(response.content)
+
+        self.assertDictEqual(response_data, response)
+        if mail_attempted:
+            mock_send_mail.assert_called_once()
+            call_args = (str(w) for w in mock_send_mail.call_args_list)
+            self.assertIn(expected_email_message, ''.join(call_args))
+        else:
+            mock_send_mail.assert_not_called()
