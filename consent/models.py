@@ -382,9 +382,7 @@ class DataSharingConsentTextOverrides(TimeStampedModel):
     )
     published = models.BooleanField(
         default=False,
-        help_text=_(
-            _("Specifies whether data sharing consent page is published.")
-        )
+        help_text=_("Specifies whether data sharing consent page is published.")
     )
 
     def __str__(self):

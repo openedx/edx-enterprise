@@ -247,7 +247,7 @@ class APITest(APITestCase):
         Perform operations common to all tests.
         """
         super(APITest, self).setUp()
-        self.create_user(username=TEST_USERNAME, password=TEST_PASSWORD)
+        self.create_user(username=TEST_USERNAME, email=TEST_EMAIL, password=TEST_PASSWORD)
         self.client = APIClient()
         self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
 

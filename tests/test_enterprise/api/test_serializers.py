@@ -60,6 +60,7 @@ class TestImmutableStateSerializer(APITest):
             self.serializer.create(self.validated_data)
 
 
+# pylint: disable=test-inherits-tests
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCatalogCoursesSerializer(TestImmutableStateSerializer):

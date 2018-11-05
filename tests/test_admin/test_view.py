@@ -379,7 +379,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         """
         self._login()
         linked_learners = []
-        for i in range(0, total_records):
+        for i in range(total_records):
             learner = EnterpriseCustomerUserFactory(
                 enterprise_customer=self.enterprise_customer,
                 user_id=UserFactory(

@@ -8,14 +8,14 @@ certifi==2018.10.15       # via requests
 chardet==3.0.4            # via requests
 codecov==2.0.15
 coverage==4.5.1           # via codecov
-filelock==3.0.9           # via tox
+filelock==3.0.10          # via tox
 idna==2.7                 # via requests
 pluggy==0.8.0             # via tox
 py==1.7.0                 # via tox
-requests==2.19.1          # via codecov
+requests==2.20.0          # via codecov
 six==1.11.0               # via tox
 toml==0.10.0              # via tox
 tox-battery==0.5.1
-tox==3.5.2
-urllib3==1.23             # via requests
-virtualenv==16.0.0        # via tox
+tox==3.5.3
+urllib3==1.24.1           # via requests
+virtualenv==16.1.0        # via tox

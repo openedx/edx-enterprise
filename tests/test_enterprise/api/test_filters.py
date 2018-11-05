@@ -9,11 +9,10 @@ import ddt
 from pytest import mark
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APIClient
 
 from django.conf import settings
 
-from test_utils import FAKE_UUIDS, TEST_EMAIL, TEST_PASSWORD, TEST_USERNAME, APITest, factories
+from test_utils import FAKE_UUIDS, TEST_EMAIL, TEST_USERNAME, APITest, factories
 
 
 @ddt.ddt
@@ -24,14 +23,12 @@ class TestUserFilterBackend(APITest):
     """
 
     def setUp(self):
-        self.create_user(id=1)
+        super(TestUserFilterBackend, self).setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
             user_id=self.user.id,
         )
-        self.client = APIClient()
-        self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
 
     @ddt.data(
         (False, 1),
@@ -89,12 +86,10 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
     """
 
     def setUp(self):
-        self.create_user(email=TEST_EMAIL, id=1)
+        super(TestEnterpriseCustomerUserFilterBackend, self).setUp()
         enterprise_customer = factories.EnterpriseCustomerFactory()
         factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=self.user.id)
         self.url = settings.TEST_SERVER + reverse('enterprise-learner-list')
-        self.client = APIClient()
-        self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
 
     @ddt.data(
         # Staff user
