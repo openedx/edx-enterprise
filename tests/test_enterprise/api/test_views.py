@@ -2394,10 +2394,10 @@ class TestEnterpriseAPIViews(APITest):
         ``enterprise_catalogs``'s xml and json responses verification.
         """
         response_default = self.client.get('/enterprise/api/v1/enterprise_catalogs/')
-        self.assertTrue(response_default['content-type'] == 'application/json')
+        self.assertEqual(response_default['content-type'], 'application/json')
 
         response_json = self.client.get('/enterprise/api/v1/enterprise_catalogs.json')
-        self.assertTrue(response_json['content-type'] == 'application/json')
+        self.assertEqual(response_json['content-type'], 'application/json')
 
         response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
-        self.assertTrue(response_xml['content-type'] == 'application/xml; charset=utf-8')
+        self.assertEqual(response_xml['content-type'], 'application/xml; charset=utf-8')

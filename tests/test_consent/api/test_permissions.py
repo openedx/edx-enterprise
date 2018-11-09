@@ -9,12 +9,11 @@ import ddt
 import mock
 from rest_framework import status
 from rest_framework.reverse import reverse
-from rest_framework.test import APIClient
 
 from django.conf import settings
 
 from consent.api.v1.views import DataSharingConsentView as DSCView
-from test_utils import TEST_COURSE, TEST_PASSWORD, TEST_USER_ID, TEST_USERNAME, TEST_UUID, APITest, factories
+from test_utils import TEST_COURSE, TEST_PASSWORD, TEST_USERNAME, TEST_UUID, APITest, factories
 
 
 @ddt.ddt
@@ -35,9 +34,7 @@ class TestConsentAPIPermissions(APITest):
         """
         Perform operations common to all tests.
         """
-        self.create_user(username=TEST_USERNAME, password=TEST_PASSWORD, id=TEST_USER_ID)
-        self.client = APIClient()
-        self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
+        super(TestConsentAPIPermissions, self).setUp()
         discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiServiceClient')
         self.discovery_client = discovery_client_class.start().return_value
         self.discovery_client.is_course_in_catalog.return_value = True

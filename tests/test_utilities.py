@@ -770,7 +770,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         )
 
         assert len(mail.outbox) == 1
-        assert getattr(mail.outbox[0], 'from_email') == expected_from_email_address
+        assert mail.outbox[0].from_email == expected_from_email_address
         assert mail.outbox[0].connection is conn
 
     def test_get_enterprise_customer_for_user(self):

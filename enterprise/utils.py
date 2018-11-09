@@ -590,6 +590,7 @@ def ungettext_min_max(singular, plural, range_text, min_val, max_val):
     if min_val is None and max_val is None:
         return None
     if min_val == max_val or min_val is None or max_val is None:
+        # pylint: disable=translation-of-non-string
         return ungettext(singular, plural, min_val or max_val).format(min_val or max_val)
     return range_text.format(min_val, max_val)
 
@@ -680,7 +681,7 @@ def track_event(user_id, event_name, properties):
     """
     Emit a track event to segment (and forwarded to GA) for some parts of the Enterprise workflows.
     """
-    if getattr(settings, 'LMS_SEGMENT_KEY'):
+    if settings.LMS_SEGMENT_KEY:
         tracking_context = tracker.get_tracker().resolve_context()
         analytics.track(user_id, event_name, properties, context={
             'ip': tracking_context.get('ip'),
