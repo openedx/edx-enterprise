@@ -24,6 +24,7 @@ class SAPSuccessFactorsGlobalConfigurationAdmin(ConfigurationModelAdmin):
         "course_api_path",
         "oauth_api_path",
         "provider_id",
+        "search_student_api_path",
     )
 
     class Meta(object):

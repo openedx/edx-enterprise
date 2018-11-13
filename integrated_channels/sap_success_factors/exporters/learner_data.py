@@ -10,8 +10,11 @@ from logging import getLogger
 
 from django.apps import apps
 
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.tpa_pipeline import get_user_from_social_auth
 from enterprise.utils import parse_course_key
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.utils import parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
@@ -68,3 +71,57 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 'No learner data was sent for user [%s] because an SAP SuccessFactors user ID could not be found.',
                 enterprise_enrollment.enterprise_customer_user.username
             )
+
+
+class SapSuccessFactorsLearnerManger(object):
+    """
+    Class to manage SAPSF learners data and their relation with enterprise.
+    """
+
+    def __init__(self, enterprise_configuration, client=SAPSuccessFactorsAPIClient):
+        """
+        Use the ``SAPSuccessFactorsAPIClient`` for content metadata transmission to SAPSF.
+
+        Arguments:
+            enterprise_configuration (required): SAPSF configuration connecting an enterprise to an integrated channel.
+            client: The REST API client that will fetch data from integrated channel.
+        """
+        self.enterprise_configuration = enterprise_configuration
+        self.client = client(enterprise_configuration) if client else None
+
+    def unlink_learners(self):
+        """
+        Iterate over each learner and unlink inactive SAP channel learners.
+
+        This method iterates over each enterprise learner and unlink learner
+        from the enterprise if the learner is marked inactive in the related
+        integrated channel.
+        """
+        sap_inactive_learners = self.client.get_inactive_sap_learners()
+        enterprise_customer = self.enterprise_configuration.enterprise_customer
+        try:
+            tpa_provider = enterprise_customer.enterprise_customer_identity_provider.provider_id
+        except EnterpriseCustomer.enterprise_customer_identity_provider.RelatedObjectDoesNotExist:
+            LOGGER.info(
+                'Enterprise customer {%s} has no associated identity provider',
+                enterprise_customer.name
+            )
+            return None
+
+        for sap_inactive_learner in sap_inactive_learners:
+            social_auth_user = get_user_from_social_auth(tpa_provider, sap_inactive_learner['studentID'])
+            if not social_auth_user:
+                continue
+
+            try:
+                # Unlink user email from related Enterprise Customer
+                EnterpriseCustomerUser.objects.unlink_user(
+                    enterprise_customer=enterprise_customer,
+                    user_email=social_auth_user.email,
+                )
+            except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
+                LOGGER.info(
+                    'Email {%s} is not associated with Enterprise Customer {%s}',
+                    social_auth_user.email,
+                    enterprise_customer.name
+                )
