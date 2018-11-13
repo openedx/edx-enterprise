@@ -15,11 +15,15 @@ Unreleased
 ----------
 
 
+[1.2.3] - 2019-01-10
+---------------------
+
+* Add managemenet command "unlink_inactive_sap_learners" to unlink inactive SAP learners from the related enterprises
+
 [1.2.2] - 2019-01-09
 ---------------------
 
 * Update styling for future courses start date visibility
-
 
 [1.2.1] - 2018-12-21
 ---------------------

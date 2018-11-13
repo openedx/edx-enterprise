@@ -16,7 +16,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
-from integrated_channels.sap_success_factors.exporters.learner_data import SapSuccessFactorsLearnerExporter
+from integrated_channels.sap_success_factors.exporters.learner_data import (
+    SapSuccessFactorsLearnerExporter,
+    SapSuccessFactorsLearnerManger,
+)
 from integrated_channels.sap_success_factors.transmitters.content_metadata import (
     SapSuccessFactorsContentMetadataTransmitter,
 )
@@ -34,6 +37,7 @@ class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
     completion_status_api_path = models.CharField(max_length=255)
     course_api_path = models.CharField(max_length=255)
     oauth_api_path = models.CharField(max_length=255)
+    search_student_api_path = models.CharField(max_length=255)
     provider_id = models.CharField(max_length=100, default='EDX')
 
     class Meta:
@@ -178,6 +182,19 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         Return a ``SapSuccessFactorsContentMetadataExporter`` instance.
         """
         return SapSuccessFactorsContentMetadataExporter(user, self)
+
+    def get_learner_manger(self):
+        """
+        Return a ``SapSuccessFactorsLearnerManger`` instance.
+        """
+        return SapSuccessFactorsLearnerManger(self)
+
+    def unlink_inactive_learners(self):
+        """
+        Unlink inactive SAP learners form their related enterprises
+        """
+        sap_learner_manager = self.get_learner_manger()
+        sap_learner_manager.unlink_learners()
 
 
 @python_2_unicode_compatible

@@ -576,6 +576,12 @@ class EnterpriseCustomerUserManager(models.Manager):
             )
             pending_link.delete()
 
+        LOGGER.info(
+            'Enterprise learner {%s} successfully unlinked from Enterprise Customer {%s}',
+            user_email,
+            enterprise_customer.name
+        )
+
 
 @python_2_unicode_compatible
 class EnterpriseCustomerUser(TimeStampedModel):
