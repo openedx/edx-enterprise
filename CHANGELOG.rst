@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.0.5] - 2018-11-14
+---------------------
+
+* Added enterprise api for requesting additional coupon codes.
+
 [1.0.4] - 2018-11-07
 ---------------------
 
