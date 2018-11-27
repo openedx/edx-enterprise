@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.0.6] - 2018-11-27
+---------------------
+
+* Added username and user email in EnterpriseCustomerUserAdmin list display.
+* Added search by username and user email in EnterpriseCustomerUserAdmin.
+
 [1.0.5] - 2018-11-14
 ---------------------
 
