@@ -5,9 +5,11 @@ Django admin integration for enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import json
+from django.db.models import Q
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import settings
+from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.html import format_html
@@ -309,15 +311,27 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'enrolled_courses',
     )
 
-    def username(self, enterprise_customer_user):
-        """
-        Return the username for the attached user.
+    list_display = ('username', 'user_email')
+    search_fields = ('user_id',)
 
-        Args:
-            enterprise_customer_user: The instance of EnterpriseCustomerUser
-                being rendered with this admin form.
-        """
-        return enterprise_customer_user.user.username
+    def get_search_results(self, request, queryset, search_term):
+        search_term = search_term.strip()
+        use_distinct = False
+
+        if search_term:
+            queryset = EnterpriseCustomerUser.objects.filter(
+                user_id__in=User.objects.filter(
+                    Q(email__icontains=search_term) | Q(username__icontains=search_term)
+                )
+            )
+        else:
+            queryset, use_distinct = super(EnterpriseCustomerUserAdmin, self).get_search_results(
+                request,
+                queryset,
+                search_term
+            )
+
+        return queryset, use_distinct
 
     def enrolled_courses(self, enterprise_customer_user):
         """
@@ -344,7 +358,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         Get an HTML string representing the courses the user is enrolled in.
         """
         enrollment_client = EnrollmentApiClient()
-        enrolled_courses = enrollment_client.get_enrolled_courses(self.username(enterprise_customer_user))
+        enrolled_courses = enrollment_client.get_enrolled_courses(enterprise_customer_user.username)
         course_details = []
         courses_client = CourseApiClient()
         for course in enrolled_courses:
