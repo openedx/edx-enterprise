@@ -1605,6 +1605,11 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("SFTP file path"),
         help_text=_("If the delivery method is sftp, the path on the host to deliver the report to.")
     )
+    enterprise_customer_catalogs = models.ManyToManyField(
+        EnterpriseCustomerCatalog,
+        null=True,
+        verbose_name=_("Enterprise Customer Catalogs"),
+    )
 
     class Meta:
         app_label = 'enterprise'
@@ -1654,6 +1659,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         """
         Override of clean method to perform additional validation on frequency and day_of_month/day_of week.
         """
+        super(EnterpriseCustomerReportingConfiguration, self).clean()
+
         validation_errors = {}
 
         # Check that the frequency selections make sense.
@@ -1692,6 +1699,18 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 validation_errors['decrypted_sftp_password'] = _(
                     'Decrypted SFTP password must be set if the delivery method is SFTP.'
                 )
+
+        # Check that any selected catalogs are tied to the selected enterprise.
+        invalid_catalog_ids = [catalog.uuid for catalog in self.cleaned_data.get('enterprise_customer_catalog')
+            if catalog.enterprise_customer != self.cleaned_data.get('enterprise_customer')]
+        
+        if invalid_catalogs:
+            validation_errors['enterprise_customer_catalogs'] = _(
+                'These catalogs for reporting do not match enterprise customer ${enterprise_customer}: ${invalid_catalog_ids}',
+            ).format(
+                self.cleaned_data.get('enterprise_customer'),
+                invalid_catalog_ids,
+            )
 
         if validation_errors:
             raise ValidationError(validation_errors)
