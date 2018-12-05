@@ -628,7 +628,7 @@ class CourseEnrollmentView(NonAtomicView):
             if not modes:
                 LOGGER.warning(
                     'No course modes found for EnterpriseCustomerCatalog [{enterprise_catalog_uuid}]'.format(
-                        enterprise_catalog_uuid=enterprise_catalog_uuid,
+                        enterprise_catalog_uuid=enterprise_catalog,
                     )
                 )
                 messages.add_generic_info_message_for_error(request)
