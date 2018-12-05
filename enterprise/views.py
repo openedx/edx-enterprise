@@ -626,6 +626,11 @@ class CourseEnrollmentView(NonAtomicView):
             modes = [mode for mode in modes if mode['slug'] in enterprise_catalog.enabled_course_modes]
             modes.sort(key=lambda course_mode: enterprise_catalog.enabled_course_modes.index(course_mode['slug']))
             if not modes:
+                LOGGER.warning(
+                    'No course modes found for EnterpriseCustomerCatalog [{enterprise_catalog_uuid}]'.format(
+                        enterprise_catalog_uuid=enterprise_catalog_uuid,
+                    )
+                )
                 messages.add_generic_info_message_for_error(request)
 
         return modes
@@ -651,6 +656,11 @@ class CourseEnrollmentView(NonAtomicView):
                     uuid=enterprise_catalog_uuid
                 )
             except (ValueError, EnterpriseCustomerCatalog.DoesNotExist):
+                LOGGER.warning(
+                    'EnterpriseCustomerCatalog [{enterprise_catalog_uuid}] does not exist'.format(
+                        enterprise_catalog_uuid=enterprise_catalog_uuid,
+                    )
+                )
                 messages.add_generic_info_message_for_error(request)
 
         course = None
@@ -664,6 +674,7 @@ class CourseEnrollmentView(NonAtomicView):
                     enterprise_customer.site
                 ).get_course_and_course_run(course_run_id)
             except ImproperlyConfigured:
+                LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
                 messages.add_generic_info_message_for_error(request)
                 return enterprise_customer, course, course_run, course_modes
 
