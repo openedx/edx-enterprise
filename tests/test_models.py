@@ -526,8 +526,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         assert sorted(enterprise_customer_user.entitlements, key=itemgetter('entitlement_id')) == \
             sorted(expected_entitlements, key=itemgetter('entitlement_id'))
 
-    @mock.patch('enterprise.utils.tracker')
-    @mock.patch('enterprise.utils.analytics')
+    @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     def test_enroll_learner(self, enrollment_api_client_mock, analytics_mock, *args):  # pylint: disable=unused-argument
         """
@@ -552,8 +551,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
 
-    @mock.patch('enterprise.utils.tracker')
-    @mock.patch('enterprise.utils.analytics')
+    @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     # pylint: disable=unused-argument
     def test_enroll_learner_upgrade_mode(self, enrollment_api_client_mock, analytics_mock, *args):

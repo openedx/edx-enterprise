@@ -10,10 +10,8 @@ import logging
 import re
 from uuid import UUID
 
-import analytics
 import bleach
 import pytz
-from eventtracking import tracker
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
@@ -52,6 +50,13 @@ except ImportError as exception:
     LOGGER.warning("Could not import Registry from third_party_auth.provider")
     LOGGER.warning(exception)
     Registry = None
+
+try:
+    from track import segment
+except ImportError as exception:
+    LOGGER.warning("Could not import segment from common.djangoapps.track")
+    LOGGER.warning(exception)
+    segment = None
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -681,14 +686,8 @@ def track_event(user_id, event_name, properties):
     """
     Emit a track event to segment (and forwarded to GA) for some parts of the Enterprise workflows.
     """
-    if settings.LMS_SEGMENT_KEY:
-        tracking_context = tracker.get_tracker().resolve_context()
-        analytics.track(user_id, event_name, properties, context={
-            'ip': tracking_context.get('ip'),
-            'Google Analytics': {
-                'clientId': tracking_context.get('client_id')
-            }
-        })
+    if segment:
+        segment.track(user_id, event_name, properties)
 
 
 def track_enrollment(pathway, user_id, course_run_id, url_path=None):

@@ -54,11 +54,7 @@ class TestRouterView(TestCase):
         self.views_mock = views_mock.start()
         self.views_mock.__getitem__.side_effect = self.TEST_VIEWS.__getitem__
         self.addCleanup(views_mock.stop)
-        tracker_mock = mock.patch('enterprise.utils.tracker')
-        self.tracker_mock = tracker_mock.start()
-        self.tracker_mock.get_tracker.return_value.resolve_context.return_value = {}
-        self.addCleanup(tracker_mock.stop)
-        analytics = mock.patch('enterprise.utils.analytics')
+        analytics = mock.patch('enterprise.utils.segment')
         self.analytics = analytics.start()
         self.addCleanup(analytics.stop)
 
