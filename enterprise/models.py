@@ -1140,9 +1140,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return human-readable string representation.
         """
         return (
-            "<EnterpriseCustomerCatalog with uuid '{uuid}' "
+            "<EnterpriseCustomerCatalog '{title}' "
             "for EnterpriseCustomer {enterprise_customer_name}>".format(
-                uuid=self.uuid,
+                title=self.title,
                 enterprise_customer_name=self.enterprise_customer.name
             )
         )
@@ -1604,6 +1604,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         null=True,
         verbose_name=_("SFTP file path"),
         help_text=_("If the delivery method is sftp, the path on the host to deliver the report to.")
+    )
+    enterprise_customer_catalogs = models.ManyToManyField(
+        EnterpriseCustomerCatalog,
+        verbose_name=_("Enterprise Customer Catalogs"),
     )
 
     class Meta:

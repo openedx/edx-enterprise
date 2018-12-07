@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[1.1.0] - 2018-12-06
+---------------------
+
+* Updating EnterpriseCustomerReportingConfiguration model. ManyToMany relationship with EnterpriseCustomerCatalog
+* Updating EnterpriseCustomerReportingConfigurationAdminForm validation
+* Updating EnterpriseCustomerReportingConfigurationSerializer
+
 [1.0.6] - 2018-11-28
 ---------------------
 
