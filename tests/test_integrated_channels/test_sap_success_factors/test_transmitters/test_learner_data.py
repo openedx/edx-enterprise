@@ -9,11 +9,11 @@ import datetime
 import unittest
 
 import mock
-from integrated_channels.sap_success_factors.models import SapSuccessFactorsLearnerDataTransmissionAudit
-from integrated_channels.sap_success_factors.transmitters import learner_data
 from pytest import mark
 from requests import RequestException
 
+from integrated_channels.sap_success_factors.models import SapSuccessFactorsLearnerDataTransmissionAudit
+from integrated_channels.sap_success_factors.transmitters import learner_data
 from test_utils import factories
 
 

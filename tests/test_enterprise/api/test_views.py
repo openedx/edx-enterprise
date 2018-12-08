@@ -11,6 +11,13 @@ import ddt
 import mock
 from pytest import mark
 from rest_framework.reverse import reverse
+from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
+    parse_qs,
+    urlencode,
+    urljoin,
+    urlsplit,
+    urlunsplit,
+)
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -25,22 +32,19 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
-    parse_qs,
-    urlencode,
-    urljoin,
-    urlsplit,
-    urlunsplit,
-)
 from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
+    TEST_COURSE_KEY,
     TEST_PASSWORD,
     TEST_USERNAME,
     APITest,
     factories,
     fake_catalog_api,
     fake_enterprise_api,
+    update_course_run_with_enterprise_context,
+    update_course_with_enterprise_context,
+    update_program_with_enterprise_context,
 )
 
 CATALOGS_LIST_ENDPOINT = reverse('catalogs-list')
@@ -54,6 +58,11 @@ ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
 ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-catalogs-contains-content-items',
     kwargs={'pk': FAKE_UUIDS[1]}
+)
+ENTERPRISE_CATALOGS_COURSE_ENDPOINT = reverse(
+    # pylint: disable=anomalous-backslash-in-string
+    'enterprise-catalogs-courses/(?P<course-key>[^/+]+(/|\+)[^/+]+)',
+    kwargs={'pk': FAKE_UUIDS[1], 'course_key': TEST_COURSE_KEY}
 )
 ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT = reverse(
     # pylint: disable=anomalous-backslash-in-string
@@ -659,6 +668,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': None,
+                'replace_sensitive_sso_username': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -686,6 +696,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False, 'identity_provider': None,
+                    'replace_sensitive_sso_username': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },
@@ -738,12 +749,12 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
+                'replace_sensitive_sso_username': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
             }],
         ),
-
     )
     @ddt.unpack
     def test_api_views(self, factory, url, sorting_key, model_items, expected_json):
@@ -854,7 +865,7 @@ class TestEnterpriseAPIViews(APITest):
             False,
             True,
             fake_enterprise_api.build_fake_enterprise_catalog_detail(
-                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                 include_enterprise_context=True,
                 add_utm_info=False
             ),
@@ -863,7 +874,7 @@ class TestEnterpriseAPIViews(APITest):
             True,
             False,
             fake_enterprise_api.build_fake_enterprise_catalog_detail(
-                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                 include_enterprise_context=True,
                 add_utm_info=False
             ),
@@ -872,7 +883,7 @@ class TestEnterpriseAPIViews(APITest):
             True,
             True,
             fake_enterprise_api.build_fake_enterprise_catalog_detail(
-                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS_2,
+                paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
                 include_enterprise_context=True,
                 add_utm_info=False
             ),
@@ -1124,7 +1135,11 @@ class TestEnterpriseAPIViews(APITest):
             True,
             True,
             fake_catalog_api.FAKE_COURSE_RUN,
-            fake_catalog_api.FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT,
+            update_course_run_with_enterprise_context(
+                fake_catalog_api.FAKE_COURSE_RUN,
+                add_utm_info=True,
+                enterprise_catalog_uuid=FAKE_UUIDS[1]
+            ),
         ),
         (True, False, False, {}, {'detail': 'Not found.'}),
         (True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1134,7 +1149,11 @@ class TestEnterpriseAPIViews(APITest):
             True,
             True,
             fake_catalog_api.FAKE_COURSE_RUN,
-            fake_catalog_api.FAKE_COURSE_RUN_WITH_ENTERPRISE_CONTEXT,
+            update_course_run_with_enterprise_context(
+                fake_catalog_api.FAKE_COURSE_RUN,
+                add_utm_info=True,
+                enterprise_catalog_uuid=FAKE_UUIDS[1]
+            ),
         ),
     )
     @ddt.unpack
@@ -1142,7 +1161,7 @@ class TestEnterpriseAPIViews(APITest):
     def test_enterprise_catalog_course_run_detail(self, is_staff, is_linked_to_enterprise, is_course_run_in_catalog,
                                                   mocked_course_run, expected_result, mock_catalog_api_client):
         """
-        The ``programs`` detail endpoint should return correct results from course discovery,
+        The ``course_run`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], name="test_enterprise")
@@ -1172,6 +1191,70 @@ class TestEnterpriseAPIViews(APITest):
         assert response == expected_result
 
     @ddt.data(
+        (False, False, False, {}, {'detail': 'Not found.'}),
+        (False, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
+        (False, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
+        (
+            False,
+            True,
+            True,
+            fake_catalog_api.FAKE_COURSE,
+            update_course_with_enterprise_context(
+                fake_catalog_api.FAKE_COURSE,
+                add_utm_info=True,
+                enterprise_catalog_uuid=FAKE_UUIDS[1]
+            ),
+        ),
+        (True, False, False, {}, {'detail': 'Not found.'}),
+        (True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
+        (True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
+        (
+            True,
+            True,
+            True,
+            fake_catalog_api.FAKE_COURSE,
+            update_course_with_enterprise_context(
+                fake_catalog_api.FAKE_COURSE,
+                add_utm_info=True,
+                enterprise_catalog_uuid=FAKE_UUIDS[1]
+            ),
+        ),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_enterprise_catalog_course_detail(self, is_staff, is_linked_to_enterprise, is_course_in_catalog,
+                                              mocked_course, expected_result, mock_catalog_api_client):
+        """
+        The ``course`` detail endpoint should return correct results from course discovery,
+        with enterprise context in courses and course runs.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], name="test_enterprise")
+        factories.EnterpriseCustomerCatalogFactory(
+            uuid=FAKE_UUIDS[1],
+            enterprise_customer=enterprise_customer,
+        )
+        if is_staff:
+            self.user.is_staff = True
+            self.user.save()
+        if is_linked_to_enterprise:
+            factories.EnterpriseCustomerUserFactory(
+                user_id=self.user.id,
+                enterprise_customer=enterprise_customer
+            )
+        search_results = None
+        if is_course_in_catalog:
+            search_results = [fake_catalog_api.FAKE_COURSE]
+
+        mock_catalog_api_client.return_value = mock.Mock(
+            get_search_results=mock.Mock(return_value=search_results),
+            get_course_details=mock.Mock(return_value=mocked_course),
+        )
+        response = self.client.get(ENTERPRISE_CATALOGS_COURSE_ENDPOINT)
+        response = self.load_json(response.content)
+
+        assert response == expected_result
+
+    @ddt.data(
         (False, False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
         (False, True, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1181,7 +1264,11 @@ class TestEnterpriseAPIViews(APITest):
             True,
             True,
             fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
-            fake_catalog_api.FAKE_PROGRAM_RESPONSE1_WITH_ENTERPRISE_CONTEXT,
+            update_program_with_enterprise_context(
+                fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
+                add_utm_info=True,
+                enterprise_catalog_uuid=FAKE_UUIDS[1]
+            ),
         ),
         (True, False, False, False, {}, {'detail': 'Not found.'}),
         (True, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1192,7 +1279,11 @@ class TestEnterpriseAPIViews(APITest):
             True,
             True,
             fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
-            fake_catalog_api.FAKE_PROGRAM_RESPONSE1_WITH_ENTERPRISE_CONTEXT,
+            update_program_with_enterprise_context(
+                fake_catalog_api.FAKE_PROGRAM_RESPONSE1,
+                add_utm_info=True,
+                enterprise_catalog_uuid=FAKE_UUIDS[1]
+            ),
         ),
     )
     @ddt.unpack
@@ -1202,7 +1293,7 @@ class TestEnterpriseAPIViews(APITest):
                                                mock_catalog_api_client):
         """
         The ``programs`` detail endpoint should return correct results from course discovery,
-        with enterprise context in courses.
+        with enterprise context in courses and course runs.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0], name="test_enterprise")
         factories.EnterpriseCustomerIdentityProviderFactory(

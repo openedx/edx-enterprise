@@ -14,6 +14,61 @@ Change Log
 Unreleased
 ----------
 
+[0.67.6] - 2018-04-20
+---------------------
+
+* Update user session when they become an Enterprise learner.
+
+[0.67.5] - 2018-04-18
+---------------------
+
+* Added ability to specify data sharing consent wording on a per enterprise basis.
+
+[0.67.4] - 2018-04-12
+---------------------
+
+* Add configuration to allow replacing potentially sensitive SSO usernames.
+
+[0.67.3] - 2018-04-05
+---------------------
+
+* Improved integrated channel logging.
+
+[0.67.2] - 2018-04-05
+---------------------
+
+* Fix the enterprise manage learner django admin tool is loading correctly for chrome users.
+
+[0.67.1] - 2018-04-04
+---------------------
+
+* Integrated channel refactoring cleanup.
+
+[0.67.0] - 2018-03-26
+---------------------
+
+* Refactored integrated channel code to allow for greater flexibility when transmitting content metadata.
+
+[0.66.2] - 2018-03-26
+---------------------
+
+* Update isort version and sort imports after making consent and integrated_channels first party apps.
+
+[0.66.1] - 2018-03-23
+---------------------
+
+* Temporarily disable linked learners list on manage learners Django admin view until paging can be added.
+
+[0.66.0] - 2018-03-05
+---------------------
+
+* Add EnterpriseCustomerCatalog course detail endpoint.
+
+[0.65.8] - 2018-02-23
+---------------------
+
+* Add "Enrollment Closed" in course title if the course is no longer open for enrollment.
+
 [0.65.7] - 2018-02-14
 ---------------------
 

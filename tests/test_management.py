@@ -14,6 +14,15 @@ import mock
 import responses
 from faker import Factory as FakerFactory
 from freezegun import freeze_time
+from pytest import mark, raises
+from requests.compat import urljoin
+from testfixtures import LogCapture
+
+from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.utils import timezone
+
+from enterprise.api_client import lms as lms_api
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
@@ -21,16 +30,6 @@ from integrated_channels.integrated_channel.management.commands import (
     IntegratedChannelCommandMixin,
 )
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
-from pytest import mark, raises
-from requests.compat import urljoin
-from testfixtures import LogCapture
-
-from django.conf import settings
-from django.core.management import call_command
-from django.core.management.base import CommandError
-from django.utils import timezone
-
-from enterprise.api_client import lms as lms_api
 from test_utils import factories
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -52,7 +51,7 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
     """
 
     @ddt.data('SAP', 'DEGREED')
-    def test_transmit_course_metadata_specific_channel(self, channel_code):
+    def test_transmit_content_metadata_specific_channel(self, channel_code):
         """
         Only the channel we input is what we get out.
         """
@@ -64,7 +63,7 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
 @ddt.ddt
 class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseMockMixin, CourseDiscoveryApiTestMixin):
     """
-    Test the ``transmit_course_metadata`` management command.
+    Test the ``transmit_content_metadata`` management command.
     """
 
     def setUp(self):
@@ -98,7 +97,12 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         invalid_customer_id = faker.uuid4()  # pylint: disable=no-member
         error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
         with raises(CommandError) as excinfo:
-            call_command('transmit_course_metadata', '--catalog_user', 'C-3PO', enterprise_customer=invalid_customer_id)
+            call_command(
+                'transmit_content_metadata',
+                '--catalog_user',
+                'C-3PO',
+                enterprise_customer=invalid_customer_id
+            )
         assert str(excinfo.value) == error
 
     def test_user_not_set(self):
@@ -106,37 +110,37 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         py2error = 'Error: argument --catalog_user is required'
         py3error = 'Error: the following arguments are required: --catalog_user'
         with raises(CommandError) as excinfo:
-            call_command('transmit_course_metadata', enterprise_customer=self.enterprise_customer.uuid)
+            call_command('transmit_content_metadata', enterprise_customer=self.enterprise_customer.uuid)
         assert str(excinfo.value) in (py2error, py3error)
 
     def test_override_user(self):
         error = 'A user with the username bob was not found.'
         with raises(CommandError) as excinfo:
-            call_command('transmit_course_metadata', '--catalog_user', 'bob')
+            call_command('transmit_content_metadata', '--catalog_user', 'bob')
         assert str(excinfo.value) == error
 
     @responses.activate
     @freeze_time(NOW)
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_course_content')
+    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
-    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_course_content')
-    def test_transmit_course_metadata_task_with_error(
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_transmit_content_metadata_task_with_error(
             self,
-            sapsf_create_course_content_mock,
+            sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-            degreed_create_course_content_mock,
+            degreed_create_content_metadata_mock,
     ):  # pylint: disable=invalid-name
         """
         Verify the data transmission task for integrated channels with error.
 
-        Test that the management command `transmit_course_metadata` transmits
+        Test that the management command `transmit_content_metadata` transmits
         courses metadata related to other integrated channels even if an
         integrated channel fails to transmit due to some error.
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
-        sapsf_create_course_content_mock.return_value = 200, '{}'
-        degreed_create_course_content_mock.return_value = 200, '{}'
+        sapsf_update_content_metadata_mock.return_value = 200, '{}'
+        degreed_create_content_metadata_mock.return_value = 200, '{}'
 
         # Mock first integrated channel with failure
         enterprise_uuid_for_failure = str(self.enterprise_customer.uuid)
@@ -170,92 +174,79 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             course_run_ids=[course_run_id_for_success]
         )
 
-        degreed_expected_dump = (
-            '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_id_for_success + '", '
-            '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
-            '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", '
-            '"publishDate": "2013-02-05", "title": "edX Demonstration Course (Starts: February 2013)", '
-            '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/course/'
-            '' + course_run_id_for_success + '/enroll/", "videoUrl": ""}], '
-            '"orgCode": "Degreed Company", "providerCode": "DEGREED"}'
-        )
-        sapsf_expected_dump = (
-            '{"ocnCourses": [{"content": [{"contentID": "' + course_run_id_for_success + '", '
-            '"contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, "launchURL": '
-            '"' + settings.LMS_ROOT_URL + '/enterprise/' + enterprise_uuid_for_success + '/'
-            'course/' + course_run_id_for_success + '/enroll/", "mobileEnabled": '
-            'false, "providerID": "SAP"}], "courseID": "' + course_run_id_for_success + '"'
-            ', "description": [{"locale": "English", "value": "edX Demonstration Course"}], '
-            '"price": [], "providerID": "SAP", "revisionNumber": 1, "schedule": '
-            '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
-            '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
-            '"value": "edX Demonstration Course (Starts: February 2013)"}]}]}'
-        )
         # Verify that first integrated channel logs failure but the second
         # integrated channel still successfully transmits courseware data.
         expected_messages = [
             # SAPSF
-            'Processing course runs for integrated channel using configuration: '
+            'Transmitting content metadata to integrated channel using configuration: '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Transmission of course metadata failed for user [C-3PO] and for integrated channel with '
+            'Transmission of content metadata failed for user [C-3PO] and for integrated channel with '
             'code [SAP] and id [1].',
-            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 self.sapsf
             ),
-            'Processing course runs for integrated channel using configuration: '
+            'Transmitting content metadata to integrated channel using configuration: '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Retrieving course run list for enterprise [{}]'.format(dummy_enterprise_customer.name),
-            'Processing course run with ID [{}]'.format(course_run_id_for_success),
-            'Sending course run with plugin configuration '
+            'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
+            'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            sapsf_expected_dump,
-            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+            'Preparing to transmit creation of [1] content metadata items with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 dummy_sapsf
             ),
 
             # Degreed
-            'Processing course runs for integrated channel using configuration: '
+            'Transmitting content metadata to integrated channel using configuration: '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Transmission of course metadata failed for user [C-3PO] and for integrated channel with '
+            'Transmission of content metadata failed for user [C-3PO] and for integrated channel with '
             'code [DEGREED] and id [1].',
-            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 self.degreed
             ),
-            'Processing course runs for integrated channel using configuration: '
+            'Transmitting content metadata to integrated channel using configuration: '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Retrieving course run list for enterprise [{}]'.format(dummy_enterprise_customer.name),
-            'Processing course run with ID [{}]'.format(course_run_id_for_success),
-            'Sending course run with plugin configuration '
+            'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
+            'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            degreed_expected_dump,
-            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+            'Preparing to transmit creation of [1] content metadata items with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 dummy_degreed
             )
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', 'C-3PO')
+            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
     @responses.activate
     @freeze_time(NOW)
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_course_content')
+    @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
-    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.create_course_content')
-    def test_transmit_course_metadata_task_success(
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_transmit_content_metadata_task_success(
             self,
-            sapsf_create_course_content_mock,
+            sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-            degreed_create_course_content_mock,
+            degreed_create_content_metadata_mock,
     ):  # pylint: disable=invalid-name
         """
         Test the data transmission task.
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
-        sapsf_create_course_content_mock.return_value = 200, '{}'
-        degreed_create_course_content_mock.return_value = 200, '{}'
+        sapsf_update_content_metadata_mock.return_value = 200, '{}'
+        degreed_create_content_metadata_mock.return_value = 200, '{}'
 
         uuid = str(self.enterprise_customer.uuid)
         course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
@@ -266,81 +257,61 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(
-            uuid, enterprise_catalog_uuid, course_run_ids[1:]
-        )
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
-        degreed_expected_dump = (
-            '{"courses": [{"authors": [], "categoryTags": [], "contentId": "' + course_run_ids[0] + '", '
-            '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
-            '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course (Starts: February 2013)", '
-            '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[0] + '/enroll/", '
-            '"videoUrl": ""}, {"authors": [], "categoryTags": [], "contentId": "'+course_run_ids[1]+'", '
-            '"costType": "Paid", "description": "edX Demonstration Course", "difficulty": "", "duration": 0, '
-            '"format": "Instructor", "imageUrl": "", "institution": "", "language": "en", "publishDate": "2013-02-05", '
-            '"title": "edX Demonstration Course (Starts: February 2013)", '
-            '"url": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[1] + '/enroll/", '
-            '"videoUrl": ""}], "orgCode": "Degreed Company", "providerCode": "DEGREED"}'
-        )
-        sapsf_expected_dump = (
-            '{"ocnCourses": [{"content": [{"contentID": "' + course_run_ids[0] + '", '
-            '"contentTitle": "edX Demonstration Course (Starts: February 2013)", "launchType": 3, "launchURL": '
-            '"' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/' + course_run_ids[0] + '/enroll/'
-            '", "mobileEnabled": false, "providerID": "SAP"}], "courseID": "' + course_run_ids[0] + '"'
-            ', "description": [{"locale": "English", "value": "edX Demonstration Course"}], '
-            '"price": [], "providerID": "SAP", "revisionNumber": 1, "schedule": '
-            '[{"active": true, "endDate": 2147483647000, "startDate": 1360040400000}], '
-            '"status": "ACTIVE", "thumbnailURI": "", "title": [{"locale": "English", '
-            '"value": "edX Demonstration Course (Starts: February 2013)"}]}, {"content": [{"contentID": '
-            '"' + course_run_ids[1] + '", "contentTitle": "edX Demonstration Course (Starts: February 2013)", '
-            '"launchType": 3, "launchURL": "' + settings.LMS_ROOT_URL + '/enterprise/' + uuid + '/course/'
-            '' + course_run_ids[1] + '/enroll/", "mobileEnabled": false, "providerID": "SAP"}], '
-            '"courseID": "' + course_run_ids[1] + '", "description": [{"locale": "English", '
-            '"value": "edX Demonstration Course"}], "price": [], "providerID": "SAP", '
-            '"revisionNumber": 1, "schedule": [{"active": true, "endDate": 2147483647000, '
-            '"startDate": 1360040400000}], "status": "ACTIVE", "thumbnailURI": "", '
-            '"title": [{"locale": "English", "value": "edX Demonstration Course (Starts: February 2013)"}]}]}'
-        )
         expected_messages = [
             # SAPSF
-            'Processing course runs for integrated channel using configuration: '
+            'Transmitting content metadata to integrated channel using configuration: '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Retrieving course run list for enterprise [{}]'.format(self.enterprise_customer.name),
-            'Processing course run with ID [{}]'.format(course_run_ids[0]),
-            'Sending course run with plugin configuration '
+            'Retrieved content metadata for enterprise [{}]'.format(self.enterprise_customer.name),
+            'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Processing course run with ID [{}]'.format(course_run_ids[1]),
-            'Sending course run with plugin configuration '
+            'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            sapsf_expected_dump,
-            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+            'Exporting content metadata item with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Exporting content metadata item with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Preparing to transmit creation of [4] content metadata items with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 self.sapsf
             ),
 
             # Degreed
-            'Processing course runs for integrated channel using configuration: '
+            'Transmitting content metadata to integrated channel using configuration: '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Retrieving course run list for enterprise [{}]'.format(self.enterprise_customer.name),
-            'Processing course run with ID [{}]'.format(course_run_ids[0]),
-            'Sending course run with plugin configuration '
+            'Retrieved content metadata for enterprise [{}]'.format(self.enterprise_customer.name),
+            'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Processing course run with ID [{}]'.format(course_run_ids[1]),
-            'Sending course run with plugin configuration '
+            'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            degreed_expected_dump,
-            'Course metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
+            'Exporting content metadata item with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Exporting content metadata item with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Preparing to transmit creation of [4] content metadata items with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Preparing to transmit update of [0] content metadata items with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
                 self.degreed
             )
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', 'C-3PO')
+            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
     @responses.activate
-    def test_transmit_course_metadata_task_no_channel(self):
+    def test_transmit_content_metadata_task_no_channel(self):
         """
         Test the data transmission task without any integrated channel.
         """
@@ -355,34 +326,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         DegreedEnterpriseCustomerConfiguration.objects.all().delete()
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', user.username)
+            call_command('transmit_content_metadata', '--catalog_user', user.username)
 
             # Because there are no IntegratedChannels, the process will end early.
             assert not log_capture.records
 
     @responses.activate
-    def test_transmit_course_metadata_task_no_catalog(self):
-        """
-        Test the data transmission task with enterprise customer that has no course catalog.
-        """
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_ids = ['course-v1:edX+DemoX+Demo_Course']
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=course_run_ids
-        )
-        integrated_channel_enterprise = self.sapsf.enterprise_customer
-        integrated_channel_enterprise.catalog = None
-        integrated_channel_enterprise.save()
-
-        with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', self.user.username)
-
-            # Because there are no EnterpriseCustomers with a catalog, the process will end early.
-            assert not log_capture.records
-
-    @responses.activate
-    def test_transmit_course_metadata_task_inactive_customer(self):
+    def test_transmit_content_metadata_task_inactive_customer(self):
         """
         Test the data transmission task with a channel for an inactive customer
         """
@@ -398,7 +348,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
 
         with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_course_metadata', '--catalog_user', self.user.username)
+            call_command('transmit_content_metadata', '--catalog_user', self.user.username)
 
             # Because there are no active customers, the process will end early.
             assert not log_capture.records

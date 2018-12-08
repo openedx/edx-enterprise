@@ -28,6 +28,8 @@ CONFIRMATION_ALERT_PROMPT_WARNING = _(
     '{enterprise_customer_name}.'
 )
 
+COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
+
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
 
@@ -55,6 +57,11 @@ PROGRAM_TYPE_DESCRIPTION = {
         'XSeries Certificate that illustrates your achievement.'
     ),
 }
+
+ALLOWED_TAGS = [
+    u'a', u'abbr', u'acronym', u'b', u'blockquote', u'em', u'i',
+    u'li', u'ol', u'strong', u'ul', u'p', u'h1', u'h2',
+]
 
 
 def json_serialized_course_modes():

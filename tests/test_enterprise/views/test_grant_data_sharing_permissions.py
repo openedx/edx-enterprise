@@ -19,6 +19,7 @@ from enterprise.models import EnterpriseCourseEnrollment
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
+    DataSharingConsentTextOverridesFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     UserFactory,
@@ -165,7 +166,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
                 ),
                 'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any Test platform courses or programs that '
@@ -691,6 +691,7 @@ class TestProgramDataSharingPermissions(TestCase):
         self.get_data_sharing_consent.return_value.consent_required.return_value = True
         enterprise_customer = self.get_data_sharing_consent.return_value.enterprise_customer
         enterprise_customer.name = 'Starfleet Academy'
+        enterprise_customer.get_data_sharing_consent_text_overrides.return_value = None
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
         params = self.valid_get_params.copy()
@@ -718,7 +719,6 @@ class TestProgramDataSharingPermissions(TestCase):
                     'Data Sharing Policy</a>, <b>Starfleet Academy</b> would like to know about:'
                 ),
                 'confirmation_alert_prompt': expected_alert,
-                'confirmation_alert_prompt_warning': '',
                 'sharable_items_footer': (
                     'My permission applies only to data from courses or programs that are sponsored by '
                     'Starfleet Academy, and not to data from any Test platform courses or programs that '
@@ -735,4 +735,271 @@ class TestProgramDataSharingPermissions(TestCase):
                 "enterprise_customer": enterprise_customer,
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         }.items():
+            assert response.context[key] == value  # pylint:disable=no-member
+
+
+@mark.django_db
+@ddt.ddt
+class TestGrantDataSharingPermissionsWithDB(TestCase):
+    """
+    Test GrantDataSharingPermissions when content is fetched from database.
+    """
+
+    def setUp(self):
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password("QWERTY")
+        self.user.save()
+        self.client = Client()
+        self.url = reverse('grant_data_sharing_permissions')
+        self.platform_name = 'Test platform'
+        self.course_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.program_uuid = '25c10a26-0b00-0000-bd06-7813546c29eb'
+        self.course_details = {
+            'name': 'edX Demo Course',
+        }
+        self.course_run_details = {
+            'start': '2013-02-05T05:00:00Z',
+            'title': 'Demo Course'
+        }
+        self.next_url = 'https://google.com'
+        self.failure_url = 'https://facebook.com'
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        self.ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer
+        )
+        self.left_sidebar_text = """
+        <p class="partnered-text">Welcome to {platform_name}</p>
+        <p class="partnered-text"><b>{enterprise_customer_name}</b> has partnered with {platform_name}
+        to offer you high-quality learning opportunities from the world\'s best universities.</p>
+        """
+        self.top_paragraph = """
+        <h2 class="consent-title">Consent to share your data</h2>
+        <p>To access this {item}, you must first consent to share your learning achievements with
+        <b>{enterprise_customer_name}</b></p>
+        <p>{enterprise_customer_name} would like to know about:</p>
+        <p><ul><li>your enrollment in this course</li><li>your learning progress</li>
+        <li>course completion</li></ul></p>
+        """
+        self.agreement_text = """
+        I agree to allow {platform_name} to share data about my enrollment, completion and performance
+        in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}.
+        """
+        self.confirmation_modal_text = """
+        In order to start this {item} and use your discount, you must consent
+        to share your {item} data with {enterprise_customer_name}.
+        """
+
+        self.dsc_page = DataSharingConsentTextOverridesFactory(
+            enterprise_customer=self.enterprise_customer,
+            left_sidebar_text=self.left_sidebar_text,
+            top_paragraph=self.top_paragraph,
+            agreement_text=self.agreement_text,
+            continue_text='Yes, continue',
+            abort_text='No, take me back.',
+            policy_dropdown_header='Data Sharing Policy',
+            policy_paragraph='Policy paragraph',
+            confirmation_modal_header='Are you aware...',
+            confirmation_modal_text=self.confirmation_modal_text,
+            modal_affirm_decline_text='I decline',
+            modal_abort_decline_text='View the data sharing policy',
+        )
+        super(TestGrantDataSharingPermissionsWithDB, self).setUp()
+
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password="QWERTY")
+
+    def _make_paragraphs(self, item):
+        """
+        Returns text to be used paragraphs of data sharing consent page
+        """
+        left_sidebar_text = (
+            self.left_sidebar_text
+        ).format(
+            enterprise_customer_name=self.enterprise_customer.name,
+            platform_name=self.platform_name,
+        )
+        top_paragraph = (
+            self.top_paragraph
+        ).format(
+            enterprise_customer_name=self.enterprise_customer.name,
+            item=item,
+        )
+        agreement_text = (
+            self.agreement_text
+        ).format(
+            enterprise_customer_name=self.enterprise_customer.name,
+            platform_name=self.platform_name,
+        )
+        confirmation_modal_text = (
+            self.confirmation_modal_text
+        ).format(
+            enterprise_customer_name=self.enterprise_customer.name,
+            item=item,
+        )
+        return left_sidebar_text, top_paragraph, agreement_text, confirmation_modal_text
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.get_data_sharing_consent')
+    @ddt.data(
+        (False, True, True),
+        (False, False, True),
+        (True, False, True),
+        (False, True, False),
+        (False, False, False),
+        (True, False, False),
+    )
+    @ddt.unpack
+    def test_db_data_sharing_consent_page_data(
+            self,
+            defer_creation,
+            existing_course_enrollment,
+            view_for_course,
+            get_data_sharing_consent_mock,
+            course_api_client_mock,
+            course_catalog_api_client_view_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        get_data_sharing_consent_mock.return_value.consent_required.return_value = True
+        get_data_sharing_consent_mock.return_value.enterprise_customer = self.enterprise_customer
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
+        course_catalog_api_client_view_mock.return_value.get_course_run.return_value = self.course_run_details
+        item = 'course' if view_for_course else 'program'
+        self._login()
+        if existing_course_enrollment:
+            EnterpriseCourseEnrollment.objects.create(
+                enterprise_customer_user=self.ecu,
+                course_id=self.course_id
+            )
+        params = {
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+            'next': self.next_url,
+            'failure_url': self.failure_url
+        }
+        if view_for_course:
+            params.update({'course_id': self.course_id})
+        else:
+            params.update({'program_uuid': self.program_uuid})
+        if defer_creation:
+            params['defer_creation'] = True
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 200
+        left_sidebar_text, top_paragraph, agreement_text, confirmation_modal_text = self._make_paragraphs(item)
+        expected_context = {
+            'platform_name': self.platform_name,
+            'platform_description': 'Test description',
+            'enterprise_customer': self.enterprise_customer,
+            'left_sidebar_text': left_sidebar_text,
+            'top_paragraph': top_paragraph,
+            'agreement_text': agreement_text,
+            'continue_text': 'Yes, continue',
+            'abort_text': 'No, take me back.',
+            'policy_dropdown_header': 'Data Sharing Policy',
+            'policy_paragraph': 'Policy paragraph',
+            'confirmation_modal_header': 'Are you aware...',
+            'confirmation_alert_prompt': confirmation_modal_text,
+            'confirmation_modal_affirm_decline_text': 'I decline',
+            'confirmation_modal_abort_decline_text': 'View the data sharing policy',
+            'redirect_url': self.next_url,
+            'defer_creation': defer_creation,
+        }
+
+        if view_for_course:
+            expected_context.update({
+                'course_id': self.course_id,
+                'course_specific': True,
+            })
+        else:
+            expected_context.update({
+                'program_uuid': self.program_uuid,
+                'program_specific': True,
+            })
+
+        for key, value in expected_context.items():
+            assert response.context[key] == value  # pylint:disable=no-member
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @ddt.data(True, False)
+    def test_db_data_sharing_consent_page_preview_mode_non_staff(
+            self,
+            view_for_course,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        self.user.is_staff = False
+        self.user.save()
+        self._login()
+        params = {
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+            'next': self.next_url,
+            'failure_url': self.failure_url,
+            'preview_mode': 'true'
+        }
+        if view_for_course:
+            params.update({'course_id': self.course_id})
+        else:
+            params.update({'program_uuid': self.program_uuid})
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 403
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @ddt.data(True, False)
+    def test_db_data_sharing_consent_page_preview_mode_staff(
+            self,
+            view_for_course,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        self._login()
+        params = {
+            'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+            'next': self.next_url,
+            'failure_url': self.failure_url,
+            'preview_mode': 'true'
+        }
+        if view_for_course:
+            params.update({'course_id': self.course_id})
+        else:
+            params.update({'program_uuid': self.program_uuid})
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 200
+        item = 'course' if view_for_course else 'program'
+        left_sidebar_text, top_paragraph, agreement_text, confirmation_modal_text = self._make_paragraphs(item)
+        expected_context = {
+            'platform_name': self.platform_name,
+            'platform_description': 'Test description',
+            'enterprise_customer': self.enterprise_customer,
+            'left_sidebar_text': left_sidebar_text,
+            'top_paragraph': top_paragraph,
+            'agreement_text': agreement_text,
+            'continue_text': 'Yes, continue',
+            'abort_text': 'No, take me back.',
+            'policy_dropdown_header': 'Data Sharing Policy',
+            'policy_paragraph': 'Policy paragraph',
+            'confirmation_modal_header': 'Are you aware...',
+            'confirmation_alert_prompt': confirmation_modal_text,
+            'confirmation_modal_affirm_decline_text': 'I decline',
+            'confirmation_modal_abort_decline_text': 'View the data sharing policy',
+            'redirect_url': self.next_url,
+        }
+
+        if view_for_course:
+            expected_context.update({
+                'course_id': self.course_id,
+                'course_specific': True,
+            })
+        else:
+            expected_context.update({
+                'program_uuid': self.program_uuid,
+                'program_specific': True,
+            })
+
+        for key, value in expected_context.items():
             assert response.context[key] == value  # pylint:disable=no-member

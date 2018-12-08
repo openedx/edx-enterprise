@@ -6,11 +6,11 @@ Tests for helper functions in the Consent application.
 from __future__ import absolute_import, unicode_literals
 
 import ddt
-from consent import helpers
 from pytest import mark
 
 from django.test import testcases
 
+from consent import helpers
 from test_utils import TEST_UUID
 
 

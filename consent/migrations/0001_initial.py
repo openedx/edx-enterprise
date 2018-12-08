@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import consent.mixins
-
 import django.db.models.deletion
 import django.utils.timezone
 from django.conf import settings
 from django.db import migrations, models
 
 import model_utils.fields
+
+import consent.mixins
 
 
 class Migration(migrations.Migration):

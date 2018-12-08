@@ -7,11 +7,12 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-from integrated_channels.integrated_channel.transmitters import Transmitter
 from requests import RequestException
 
 from django.apps import apps
+
+from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.integrated_channel.transmitters import Transmitter
 
 LOGGER = logging.getLogger(__name__)
 

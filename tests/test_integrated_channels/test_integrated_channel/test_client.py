@@ -36,16 +36,23 @@ class TestIntegratedChannelApiClient(unittest.TestCase):
         with self.assertRaises(NotImplementedError):
             IntegratedChannelApiClient('fake-config').delete_course_completion('fake-user', 'fake-payload')
 
-    def test_create_course_content(self):
+    def test_create_content_metadata(self):
         """
-        The ``create_course_content`` method isn't implemented at the base, and should raise ``NotImplementedError``.
+        The ``create_content_metadata`` method isn't implemented at the base, and should raise ``NotImplementedError``.
         """
         with self.assertRaises(NotImplementedError):
-            IntegratedChannelApiClient('fake-config').create_course_content('fake-payload')
+            IntegratedChannelApiClient('fake-config').create_content_metadata('fake-payload')
 
-    def test_delete_course_content(self):
+    def test_update_content_metadata(self):
         """
-        The ``delete_course_content`` method isn't implemented at the base, and should raise ``NotImplementedError``.
+        The ``update_content_metadata`` method isn't implemented at the base, and should raise ``NotImplementedError``.
         """
         with self.assertRaises(NotImplementedError):
-            IntegratedChannelApiClient('fake-config').delete_course_content('fake-payload')
+            IntegratedChannelApiClient('fake-config').update_content_metadata('fake-payload')
+
+    def test_delete_content_metadata(self):
+        """
+        The ``delete_content_metadata`` method isn't implemented at the base, and should raise ``NotImplementedError``.
+        """
+        with self.assertRaises(NotImplementedError):
+            IntegratedChannelApiClient('fake-config').delete_content_metadata('fake-payload')

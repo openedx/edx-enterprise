@@ -15,6 +15,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework_xml.renderers import XMLRenderer
+from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
 
 from django.conf import settings
 from django.http import Http404
@@ -27,7 +28,7 @@ from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
 from enterprise.api_client.discovery import CourseCatalogApiClient
-from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
+from enterprise.constants import COURSE_KEY_URL_PATTERN
 
 LOGGER = getLogger(__name__)
 
@@ -119,8 +120,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         contains_content_items = False
         for catalog in enterprise_customer.enterprise_customer_catalogs.all():
-            contains_course_runs = not course_run_ids or catalog.contains_content_items('key', course_run_ids)
-            contains_program_uuids = not program_uuids or catalog.contains_content_items('uuid', program_uuids)
+            contains_course_runs = not course_run_ids or catalog.contains_courses(course_run_ids)
+            contains_program_uuids = not program_uuids or catalog.contains_programs(program_uuids)
             if contains_course_runs and contains_program_uuids:
                 contains_content_items = True
                 break
@@ -326,14 +327,32 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
         contains_content_items = True
         if course_run_ids:
-            contains_content_items = enterprise_customer_catalog.contains_content_items('key', course_run_ids)
+            contains_content_items = enterprise_customer_catalog.contains_courses(course_run_ids)
         if program_uuids:
-            contains_content_items = contains_content_items and enterprise_customer_catalog.contains_content_items(
-                'uuid',
-                program_uuids
+            contains_content_items = (
+                contains_content_items and
+                enterprise_customer_catalog.contains_programs(program_uuids)
             )
 
         return Response({'contains_content_items': contains_content_items})
+
+    @detail_route(url_path='courses/{}'.format(COURSE_KEY_URL_PATTERN))
+    def course_detail(self, request, pk, course_key):  # pylint: disable=invalid-name,unused-argument
+        """
+        Return the metadata for the specified course.
+
+        The course needs to be included in the specified EnterpriseCustomerCatalog
+        in order for metadata to be returned from this endpoint.
+        """
+        enterprise_customer_catalog = self.get_object()
+        course = enterprise_customer_catalog.get_course(course_key)
+        if not course:
+            raise Http404
+
+        context = self.get_serializer_context()
+        context['enterprise_customer_catalog'] = enterprise_customer_catalog
+        serializer = serializers.CourseDetailSerializer(course, context=context)
+        return Response(serializer.data)
 
     @detail_route(url_path='course_runs/{}'.format(settings.COURSE_ID_PATTERN))
     def course_run_detail(self, request, pk, course_id):  # pylint: disable=invalid-name,unused-argument
@@ -349,7 +368,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
             raise Http404
 
         context = self.get_serializer_context()
-        context['enterprise_customer'] = enterprise_customer_catalog.enterprise_customer
+        context['enterprise_customer_catalog'] = enterprise_customer_catalog
         serializer = serializers.CourseRunDetailSerializer(course_run, context=context)
         return Response(serializer.data)
 
@@ -367,7 +386,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
             raise Http404
 
         context = self.get_serializer_context()
-        context['enterprise_customer'] = enterprise_customer_catalog.enterprise_customer
+        context['enterprise_customer_catalog'] = enterprise_customer_catalog
         serializer = serializers.ProgramDetailSerializer(program, context=context)
         return Response(serializer.data)
 

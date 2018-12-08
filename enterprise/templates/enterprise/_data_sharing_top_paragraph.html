@@ -1,0 +1,21 @@
+{% load i18n staticfiles enterprise %}
+
+{% if text_override_available %}
+  <div class="consent-message">
+    {{ top_paragraph|only_safe_html }}
+  </div>
+{% else %}
+  <h2 class="consent-title">{{ consent_message_header }}</h2>
+  <div class="consent-message">
+    {% autoescape off %}
+      <p>{{ consent_request_prompt|safe }} {{ policy_link_template }}</p>
+    {% endautoescape %}
+    <p>{{ requested_permissions_header|safe }}
+      <ul class="consent-items">
+        {% for permission in requested_permissions %}
+          <li>{{ permission }}</li>
+        {% endfor %}
+      </ul>
+    </p>
+  </div>
+{% endif %}

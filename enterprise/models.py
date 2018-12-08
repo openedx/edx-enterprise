@@ -14,6 +14,7 @@ from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
 from django.apps import apps
 from django.conf import settings
@@ -27,11 +28,11 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.template import Context, Template
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
-from django.utils.functional import lazy
+from django.utils.functional import cached_property, lazy
 from django.utils.http import urlquote
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import ugettext
+from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
@@ -44,9 +45,8 @@ from enterprise.api_client.lms import (
     parse_lms_api_datetime,
 )
 from enterprise.constants import json_serialized_course_modes
-from enterprise.utils import CourseEnrollmentDowngradeError, get_configuration_value
+from enterprise.utils import CourseEnrollmentDowngradeError, get_configuration_value, parse_course_key
 from enterprise.validators import validate_image_extension, validate_image_size
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
 LOGGER = getLogger(__name__)
 
@@ -155,6 +155,14 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    replace_sensitive_sso_username = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Specifies whether to replace the display of potentially sensitive SSO usernames "
+            "with a more generic name, e.g. EnterpriseLearner."
+        )
+    )
+
     @property
     def identity_provider(self):
         """
@@ -204,6 +212,41 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         return self.enable_audit_enrollment and self.enable_audit_data_reporting
 
+    @property
+    def serialized(self):
+        """Return a serialized version of this customer."""
+        from enterprise.api.v1 import serializers
+        return serializers.EnterpriseCustomerSerializer(self).data
+
+    def get_data_sharing_consent_text_overrides(self, published_only=True):
+        """
+        Return DataSharingConsentTextOverrides associated with this instance.
+        """
+        # pylint: disable=invalid-name
+        DataSharingConsentTextOverrides = apps.get_model('consent', 'DataSharingConsentTextOverrides')
+        queryset = DataSharingConsentTextOverrides.objects.filter(enterprise_customer=self)
+        if published_only:
+            queryset = queryset.filter(published=True)
+        return queryset.first()
+
+    def get_course_enrollment_url(self, course_key):
+        """
+        Return enterprise landing page url for the given course.
+
+        Arguments:
+            course_key (str): The course key for the course to be displayed.
+        Returns:
+            (str): Enterprise landing page url.
+        """
+        url = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            reverse(
+                'enterprise_course_enrollment_page',
+                kwargs={'enterprise_uuid': self.uuid, 'course_key': course_key}
+            )
+        )
+        return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
+
     def get_course_run_enrollment_url(self, course_run_key):
         """
         Return enterprise landing page url for the given course.
@@ -216,7 +259,7 @@ class EnterpriseCustomer(TimeStampedModel):
         url = urljoin(
             get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
             reverse(
-                'enterprise_course_enrollment_page',
+                'enterprise_course_run_enrollment_page',
                 kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
             )
         )
@@ -256,7 +299,7 @@ class EnterpriseCustomer(TimeStampedModel):
                 return True
 
         for catalog in self.enterprise_customer_catalogs.all():
-            if catalog.contains_content_items('key', [course_run_id]):
+            if catalog.contains_courses([course_run_id]):
                 return True
 
         return False
@@ -606,6 +649,10 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     given_mode=mode,
                 )
             )
+
+    def update_session(self, request):
+        """Update the session of a request for this learner."""
+        request.session['enterprise_customer'] = self.enterprise_customer.serialized
 
 
 @python_2_unicode_compatible
@@ -1026,6 +1073,13 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         return self.__str__()
 
+    @cached_property
+    def content_filter_ids(self):
+        """
+        Return the list of any content IDs specified in the catalog's content filter.
+        """
+        return set(self.content_filter.get('key', []) + self.content_filter.get('uuid', []))
+
     def get_paginated_content(self, query_parameters):
         """
         Return paginated discovery service search results.
@@ -1043,6 +1097,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         for content in search_results['results']:
             if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
                 results.append(content)
+            elif content['content_type'] == 'course':
+                results.append(content)
             elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
                 results.append(content)
 
@@ -1055,38 +1111,65 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return response
 
-    def contains_content_items(self, content_id_field_name, content_id_values):
+    def _filter_members(self, content_id_field_name, content_id_values):
         """
-        Return True if this catalog contains the items identified by `content_id_field_name` and `content_id_values`.
+        Filter the given list of content_id_values, returning only those that are members of the catalog.
+
+        A content ID is the unique identifier for a content metadata entity, e.g. course, course run, program.
 
         Arguments:
             content_id_field_name (str): The name of the field on the catalog content item
                                          that stores the item's unique identifier, e.g. "key", "uuid".
-            content_id_values (list): The unique identifiers of the catalog content items.
+            content_id_values (list): If provided, return only the content IDs that are members of this list
+                                      and members of the catalog.
 
         Returns:
-            bool: True if this catalog contains the given content items, else false.
+            list: The list of content IDs that are members of the catalog.
         """
-        # Check the content_filter defined for this catalog to see if the
-        # unique key is a part of the filter that defines this catalog.
-        content_ids_in_catalog = set(self.content_filter.get(content_id_field_name, []))
-        if not content_ids_in_catalog:
-            # Otherwise add the unique key values to the content_filter and query
-            # the discovery service for the existence of the content.
-            updated_content_filter = self.content_filter.copy()
-            updated_content_filter[content_id_field_name] = content_id_values
-            results = CourseCatalogApiServiceClient().get_search_results(updated_content_filter)
-            if results:
-                for content in results:
-                    if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
-                        content_ids_in_catalog.add(content[content_id_field_name])
-                    elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
-                        content_ids_in_catalog.add(content[content_id_field_name])
+        updated_content_filter = self.content_filter.copy()
+        updated_content_filter[content_id_field_name] = content_id_values
+        results = CourseCatalogApiServiceClient().get_search_results(updated_content_filter) or []
+        return {x[content_id_field_name] for x in results}
 
-        # Diff the content IDs found in the catalog with the set of
-        # IDs which we are checking for existence.
-        intersection = set(content_id_values) & content_ids_in_catalog
-        return len(intersection) == len(content_id_values)
+    def contains_courses(self, content_ids):
+        """
+        Return true if this catalog contains the given courses.
+
+        The content_ids parameter should be a list containing course keys
+        and/or course run ids.
+        """
+        # Translate any provided course run IDs to course keys.
+        course_keys = {parse_course_key(k) for k in content_ids}
+
+        content_ids_in_catalog = self.content_filter_ids
+        if not content_ids_in_catalog:
+            content_ids_in_catalog = self._filter_members('key', course_keys)
+
+        return set(content_ids).issubset(content_ids_in_catalog) or course_keys.issubset(content_ids_in_catalog)
+
+    def contains_programs(self, program_uuids):
+        """
+        Return true if this catalog contains the given programs.
+        """
+        content_ids_in_catalog = self.content_filter_ids
+        if not content_ids_in_catalog:
+            content_ids_in_catalog = self._filter_members('uuid', program_uuids)
+
+        return set(program_uuids).issubset(content_ids_in_catalog)
+
+    def get_course(self, course_key):
+        """
+        Get all of the metadata for the given course.
+
+        Arguments:
+            course_key (str): The course key which identifies the course.
+
+        Return:
+            dict: The course metadata.
+        """
+        if not self.contains_courses([course_key]):
+            return None
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_details(course_key)
 
     def get_course_run(self, course_run_id):
         """
@@ -1098,8 +1181,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course run metadata.
         """
-        if not self.contains_content_items('key', [course_run_id]):
+        if not self.contains_courses([course_run_id]):
             return None
+
         return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_run(course_run_id)
 
     def get_course_and_course_run(self, course_run_id):
@@ -1116,8 +1200,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             ImproperlyConfigured: Missing or invalid catalog integration.
 
         """
-        if not self.contains_content_items('key', [course_run_id]):
+        if not self.contains_courses([course_run_id]):
             return None, None
+
         return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_and_course_run(course_run_id)
 
     def get_program(self, program_uuid):
@@ -1130,9 +1215,25 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The program metadata.
         """
-        if not self.contains_content_items('uuid', [program_uuid]):
+        if not self.contains_programs([program_uuid]):
             return None
         return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
+
+    def get_course_enrollment_url(self, course_key):
+        """
+        Return enterprise course enrollment page url with the catalog information for the given course.
+
+        Arguments:
+            course_key (str): The course key for the course to be displayed.
+
+        Returns:
+            (str): Enterprise landing page url.
+        """
+        url = self.enterprise_customer.get_course_enrollment_url(course_key)
+        if self.publish_audit_enrollment_urls:
+            url = utils.update_query_parameters(url, {'audit': 'true'})
+
+        return utils.update_query_parameters(url, {'catalog': self.uuid})
 
     def get_course_run_enrollment_url(self, course_run_key):
         """

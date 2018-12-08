@@ -5,15 +5,15 @@ A generic API for edX Enterprise's Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
-from consent.api import permissions
-from consent.errors import ConsentAPIRequestError
-from consent.helpers import get_data_sharing_consent
 from edx_rest_framework_extensions.authentication import BearerAuthentication, JwtAuthentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
+from consent.api import permissions
+from consent.errors import ConsentAPIRequestError
+from consent.helpers import get_data_sharing_consent
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.utils import get_request_value
 

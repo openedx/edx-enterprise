@@ -8,24 +8,13 @@ from __future__ import absolute_import, unicode_literals
 from uuid import UUID
 
 import factory
-from consent.models import DataSharingConsent
 from faker import Factory as FakerFactory
-from integrated_channels.degreed.models import (
-    DegreedEnterpriseCustomerConfiguration,
-    DegreedGlobalConfiguration,
-    DegreedLearnerDataTransmissionAudit,
-)
-from integrated_channels.integrated_channel.models import CatalogTransmissionAudit, LearnerDataTransmissionAudit
-from integrated_channels.sap_success_factors.models import (
-    SAPSuccessFactorsEnterpriseCustomerConfiguration,
-    SAPSuccessFactorsGlobalConfiguration,
-    SapSuccessFactorsLearnerDataTransmissionAudit,
-)
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
+from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
@@ -36,6 +25,17 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
+)
+from integrated_channels.degreed.models import (
+    DegreedEnterpriseCustomerConfiguration,
+    DegreedGlobalConfiguration,
+    DegreedLearnerDataTransmissionAudit,
+)
+from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+    SapSuccessFactorsLearnerDataTransmissionAudit,
 )
 
 FAKER = FakerFactory.create()
@@ -261,6 +261,24 @@ class DataSharingConsentFactory(factory.django.DjangoModelFactory):
     granted = True
 
 
+class DataSharingConsentTextOverridesFactory(factory.django.DjangoModelFactory):
+    """
+    ``DataSharingConsentTextOverrides`` factory.
+
+    Creates an instance of ``DataSharingConsentTextOverrides`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``DataSharingConsentTextOverridesFactory``.
+        """
+
+        model = DataSharingConsentTextOverrides
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    published = True
+
+
 class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory):
     """
     ``EnterpriseCustomerReportingConfiguration`` factory.
@@ -305,26 +323,6 @@ class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
     instructor_name = factory.LazyAttribute(lambda x: FAKER.name())
     grade = factory.LazyAttribute(lambda x: FAKER.bothify('?', letters='ABCDF') + FAKER.bothify('?', letters='+-'))
     status = factory.LazyAttribute(lambda x: FAKER.word())
-
-
-class CatalogTransmissionAuditFactory(factory.django.DjangoModelFactory):
-    """
-    ``CatalogTransmissionAudit`` factory.
-
-    Creates an instance of ``CatalogTransmissionAudit`` with minimal boilerplate.
-    """
-
-    class Meta(object):
-        """
-        Meta for ``CatalogTransmissionAuditFactory``.
-        """
-
-        model = CatalogTransmissionAudit
-
-    enterprise_customer_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
-    total_courses = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    status = factory.LazyAttribute(lambda x: FAKER.word())
-    channel = 'SAP'
 
 
 class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFactory):

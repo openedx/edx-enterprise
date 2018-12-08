@@ -107,7 +107,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         fields = (
             'uuid', 'name', 'catalog', 'active', 'site', 'enable_data_sharing_consent', 'enforce_data_sharing_consent',
             'branding_configuration', 'enterprise_customer_entitlements', 'identity_provider',
-            'enable_audit_enrollment'
+            'enable_audit_enrollment', 'replace_sensitive_sso_username',
         )
 
     site = SiteSerializer()
@@ -220,6 +220,8 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
                     marketing_url, utils.get_enterprise_utm_context(enterprise_customer)
                 )
             # Add the Enterprise enrollment URL to each content item returned from the discovery service.
+            if content_type == 'course':
+                item['enrollment_url'] = instance.get_course_enrollment_url(item['key'])
             if content_type == 'courserun':
                 item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'])
             if content_type == 'program':
@@ -350,6 +352,36 @@ class EnterpriseCatalogCoursesReadOnlySerializer(ResponsePaginationSerializer, E
     pass
 
 
+class CourseDetailSerializer(ImmutableStateSerializer):
+    """
+    Serializer for course data retrieved from the discovery service course detail API endpoint.
+
+    This serializer updates the course and course run data with the EnterpriseCustomer-specific enrollment page URL
+    for the given course and course runs.
+    """
+
+    def to_representation(self, instance):
+        """
+        Return the updated course data dictionary.
+
+        Arguments:
+            instance (dict): The course data.
+
+        Returns:
+            dict: The updated course data.
+        """
+        updated_course = copy.deepcopy(instance)
+        enterprise_customer_catalog = self.context['enterprise_customer_catalog']
+        updated_course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(
+            updated_course['key']
+        )
+        for course_run in updated_course['course_runs']:
+            course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
+                course_run['key']
+            )
+        return updated_course
+
+
 class CourseRunDetailSerializer(ImmutableStateSerializer):
     """
     Serializer for course run data retrieved from the discovery service course_run detail API endpoint.
@@ -369,8 +401,8 @@ class CourseRunDetailSerializer(ImmutableStateSerializer):
             dict: The updated course run data.
         """
         updated_course_run = copy.deepcopy(instance)
-        enterprise_customer = self.context['enterprise_customer']
-        updated_course_run['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(
+        enterprise_customer_catalog = self.context['enterprise_customer_catalog']
+        updated_course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
             updated_course_run['key']
         )
         return updated_course_run
@@ -395,11 +427,16 @@ class ProgramDetailSerializer(ImmutableStateSerializer):
             dict: The updated program data.
         """
         updated_program = copy.deepcopy(instance)
-        enterprise_customer = self.context['enterprise_customer']
-        updated_program['enrollment_url'] = enterprise_customer.get_program_enrollment_url(updated_program['uuid'])
+        enterprise_customer_catalog = self.context['enterprise_customer_catalog']
+        updated_program['enrollment_url'] = enterprise_customer_catalog.get_program_enrollment_url(
+            updated_program['uuid']
+        )
         for course in updated_program['courses']:
+            course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(course['key'])
             for course_run in course['course_runs']:
-                course_run['enrollment_url'] = enterprise_customer.get_course_run_enrollment_url(course_run['key'])
+                course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
+                    course_run['key']
+                )
         return updated_program
 
 

@@ -17,6 +17,7 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
+from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -27,6 +28,7 @@ from django.views.generic import View
 
 from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import (
+    UrlNames,
     ValidationMessages,
     email_or_username__to__email,
     get_course_runs_from_program,
@@ -163,10 +165,10 @@ class EnterpriseCustomerTransmitCoursesView(View):
         if transmit_courses_metadata_form.is_valid():
             channel_worker_username = transmit_courses_metadata_form.cleaned_data['channel_worker_username']
 
-            # call `transmit_course_metadata` management command to trigger
+            # call `transmit_content_metadata` management command to trigger
             # transmission of enterprise courses metadata
             call_command(
-                'transmit_course_metadata',
+                'transmit_content_metadata',
                 '--catalog_user', channel_worker_username,
                 enterprise_customer=enterprise_customer_uuid
             )
@@ -248,9 +250,12 @@ class EnterpriseCustomerManageLearnersView(View):
             customer_uuid (str): A unique identifier to filter down to only users linked to a
             particular EnterpriseCustomer.
         """
-        learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
-
+        # TODO: Add paging so the admin view does not time out.
+        # For now, we will allow search, but will return an empty list
+        # if no search keyword is provided.
+        learners = []
         if search_keyword is not None:
+            learners = EnterpriseCustomerUser.objects.filter(enterprise_customer__uuid=customer_uuid)
             user_ids = learners.values_list('user_id', flat=True)
             matching_users = User.objects.filter(
                 Q(pk__in=user_ids),
@@ -836,7 +841,11 @@ class EnterpriseCustomerManageLearnersView(View):
                 )
 
             # Redirect to GET if everything went smooth.
-            return HttpResponseRedirect("")
+            manage_learners_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS, args=(customer_uuid,))
+            search_keyword = self.get_search_keyword(request)
+            if search_keyword:
+                manage_learners_url = manage_learners_url + "?q=" + search_keyword
+            return HttpResponseRedirect(manage_learners_url)
 
         # if something went wrong - display bound form on the page
         context = self._build_context(request, customer_uuid)

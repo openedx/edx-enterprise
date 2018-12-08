@@ -97,6 +97,11 @@ auth_header:
   name: Authorization
   required: true
   type: string
+course_key_parameter: 
+  in: path
+  name: course_key
+  required: true
+  type: string
 course_run_id_parameter: 
   in: path
   name: course_run_id
@@ -404,6 +409,78 @@ endpoints:
               statusCode: "400"
           type: http
           uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/"
+    enterpriseCustomerCatalogCourseByKey: 
+      get: 
+        operationId: get_enterprise_customer_catalog_course_by_key
+        parameters: 
+          - 
+            in: header
+            name: Authorization
+            required: true
+            type: string
+          - 
+            in: path
+            name: uuid
+            required: true
+            type: string
+          - 
+            in: path
+            name: course_key
+            required: true
+            type: string
+          - 
+            in: query
+            name: page
+            required: false
+            type: number
+          - 
+            in: query
+            name: page_size
+            required: false
+            type: number
+        produces: 
+          - application/json
+          - application/csv
+        responses: 
+          200: 
+            description: OK
+          400: 
+            description: "Bad Request"
+          401: 
+            description: Unauthorized
+          403: 
+            description: Forbidden
+          404: 
+            description: "Not Found"
+          429: 
+            description: "Too Many Requests"
+          500: 
+            description: "Internal Server Error"
+        x-amazon-apigateway-integration: 
+          httpMethod: GET
+          requestParameters: 
+            integration.request.header.Authorization: method.request.header.Authorization
+            integration.request.path.course_key: method.request.path.course_key
+            integration.request.path.uuid: method.request.path.uuid
+            integration.request.querystring.page: method.request.querystring.page
+            integration.request.querystring.page_size: method.request.querystring.page_size
+          responses: 
+            200: 
+              statusCode: "200"
+            401: 
+              statusCode: "401"
+            403: 
+              statusCode: "403"
+            404: 
+              statusCode: "404"
+            429: 
+              statusCode: "429"
+            500: 
+              statusCode: "500"
+            default: 
+              statusCode: "400"
+          type: http
+          uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/enterprise_catalogs/{uuid}/courses/{course_key}/"
     enterpriseCustomerCatalogCourseRunByUuid: 
       get: 
         operationId: get_enterprise_customer_catalog_course_run_by_id
@@ -856,6 +933,30 @@ x-amazon-apigateway-integration-id-response:
     default: 
       statusCode: "400"
   type: http
+x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course-key-parameters: 
+  httpMethod: GET
+  requestParameters: 
+    integration.request.header.Authorization: method.request.header.Authorization
+    integration.request.path.course_key: method.request.path.course_key
+    integration.request.path.uuid: method.request.path.uuid
+    integration.request.querystring.page: method.request.querystring.page
+    integration.request.querystring.page_size: method.request.querystring.page_size
+  responses: 
+    200: 
+      statusCode: "200"
+    401: 
+      statusCode: "401"
+    403: 
+      statusCode: "403"
+    404: 
+      statusCode: "404"
+    429: 
+      statusCode: "429"
+    500: 
+      statusCode: "500"
+    default: 
+      statusCode: "400"
+  type: http
 x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course-run-id-parameters: 
   httpMethod: GET
   requestParameters: 
@@ -960,4 +1061,3 @@ x-amazon-apigateway-integration-with-id-and-querystring-parameters:
     default: 
       statusCode: "400"
   type: http
-

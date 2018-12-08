@@ -5,10 +5,9 @@ Helper functions for the Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
-from consent.models import ProxyDataSharingConsent
-
 from django.apps import apps
 
+from consent.models import ProxyDataSharingConsent
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.utils import get_enterprise_customer
 

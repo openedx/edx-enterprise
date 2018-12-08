@@ -11,12 +11,12 @@ import unittest
 import ddt
 import mock
 from freezegun import freeze_time
-from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from pytest import mark
 from slumber.exceptions import HttpNotFoundError
 
 from django.utils import timezone
 
+from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from test_utils import factories
 
 

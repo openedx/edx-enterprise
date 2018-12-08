@@ -245,30 +245,28 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
     def test_get_existing_links_only(self):
         self._login()
 
-        users = [
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-        ]
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
 
         response = self.client.get(self.view_url)
-        self._test_get_response(response, users, [])
+        # Test existing linked learners are not returned by default (until paging is added).
+        self._test_get_response(response, [], [])
 
     def test_get_existing_and_pending_links(self):
         self._login()
 
-        linked_learners = [
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-            EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
-        ]
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer)
         pending_linked_learners = [
             PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
             PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer),
         ]
 
         response = self.client.get(self.view_url)
-        self._test_get_response(response, linked_learners, pending_linked_learners)
+        # Test existing linked learners are not returned by default (until paging is added).
+        self._test_get_response(response, [], pending_linked_learners)
 
     def test_get_with_search_param(self):
         self._login()
@@ -448,6 +446,25 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         assert EnterpriseCustomerUser.objects.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 1
+
+    def test_post_redirected_successfully(self):
+        """
+        Test post call to enroll user redirected successfully.
+        """
+        self._login()
+
+        email = FAKER.email()  # pylint: disable=no-member
+
+        user = UserFactory(email=email, id=2)
+        EnterpriseCustomerUserFactory(user_id=user.id)
+        response = self.client.post(
+            self.view_url + "?q=bob",
+            data={
+                ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email + ', john@smith.com'
+            }
+        )
+        self.assertRedirects(response, self.view_url + "?q=bob")
+        self.assertEqual(response.status_code, 302)
 
     def test_post_existing_pending_record(self):
         # precondition checks:
@@ -1419,7 +1436,7 @@ class TestEnterpriseCustomerTransmitCoursesViewPost(BaseTestEnterpriseCustomerTr
             data={'channel_worker_username': self.enterprise_channel_worker.username}
         )
         mock_call_command.assert_called_once_with(
-            'transmit_course_metadata',
+            'transmit_content_metadata',
             '--catalog_user',
             self.enterprise_channel_worker.username,
             enterprise_customer=str(self.enterprise_customer.uuid),

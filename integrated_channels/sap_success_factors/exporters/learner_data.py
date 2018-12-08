@@ -8,10 +8,10 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from django.apps import apps
+
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.utils import parse_datetime_to_epoch_millis
-
-from django.apps import apps
 
 LOGGER = getLogger(__name__)
 

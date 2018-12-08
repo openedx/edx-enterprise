@@ -10,11 +10,11 @@ import responses
 from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from rest_framework.reverse import reverse
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
 
 from django.conf import settings
 from django.core.cache import cache
 
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
 from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 
@@ -49,6 +49,9 @@ class EnterpriseMockMixin(object):
         course_detail = {
             'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
             'key': course_run_key.to_deprecated_string(),
+            'aggregation_key': 'courserun:{org}+{course}'.format(
+                org=course_run_key.org, course=course_run_key.course
+            ),
             'title': 'edX Demonstration Course',
             'short_description': None,
             'full_description': None,
@@ -75,7 +78,7 @@ class EnterpriseMockMixin(object):
             'enrollment_url': urljoin(
                 settings.LMS_ROOT_URL,
                 reverse(
-                    'enterprise_course_enrollment_page',
+                    'enterprise_course_run_enrollment_page',
                     args=[enterprise_uuid, course_run_key.to_deprecated_string()],
                 )
             ),
@@ -121,6 +124,10 @@ class EnterpriseMockMixin(object):
                 'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
                 'tpa_hint': 'testshib',
                 'key': '{org}+{course}'.format(org=course_run_key.org, course=course_run_key.course),
+                'aggregation_key': 'courserun:{org}+{course}'.format(
+                    org=course_run_key.org, course=course_run_key.course
+                ),
+                'content_type': 'courserun',
                 'title': 'edX Demonstration Course',
                 'short_description': None,
                 'full_description': None,
@@ -178,29 +185,17 @@ class EnterpriseMockMixin(object):
                 content_type='application/json',
             )
 
-    def mock_enterprise_customer_catalogs(self, enterprise_uuid, enterprise_catalog_uuid, course_run_ids):
+    def mock_enterprise_customer_catalogs(self, enterprise_catalog_uuid):
         """
         DRY function to register enterprise customer catalog API.
         """
-        course_runs = []
-        for course_run_id in course_run_ids:
-            course_run_key = CourseKey.from_string(course_run_id)
-            course_runs.append(self.build_fake_enterprise_course_detail(enterprise_uuid, course_run_key))
-
-        api_response = {
-            'uuid': enterprise_catalog_uuid,
-            'title': 'All Course Runs',
-            'enterprise_customer': enterprise_uuid,
-            'count': 1,
-            'previous': None,
-            'next': None,
-            'results': course_runs
-        }
-
         responses.add(
             responses.GET,
             url=self.build_enterprise_api_url('enterprise-catalogs-detail', enterprise_catalog_uuid),
-            json=api_response,
+            json=build_fake_enterprise_catalog_detail(
+                enterprise_catalog_uuid=enterprise_catalog_uuid,
+                include_enterprise_context=True,
+            ),
             status=200,
             content_type='application/json',
         )

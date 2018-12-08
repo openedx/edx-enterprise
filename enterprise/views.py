@@ -4,29 +4,32 @@ User-facing views for the Enterprise app.
 """
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import re
 from logging import getLogger
 from uuid import UUID
 
 import waffle
-from consent.helpers import get_data_sharing_consent
-from consent.models import DataSharingConsent
 from dateutil.parser import parse
 from ipware.ip import get_ip
+from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import ImproperlyConfigured
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
+from django.utils.translation import get_language_from_request
 from django.utils.translation import ugettext as _
-from django.utils.translation import get_language_from_request, ungettext
+from django.utils.translation import ungettext
 from django.views.generic import View
 
+from consent.helpers import get_data_sharing_consent
+from consent.models import DataSharingConsent
 from enterprise import messages
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
@@ -40,6 +43,7 @@ from enterprise.utils import (
     filter_audit_course_modes,
     format_price,
     get_configuration_value,
+    get_current_course_run,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
@@ -47,7 +51,6 @@ from enterprise.utils import (
     track_enrollment,
     ungettext_min_max,
 )
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 try:
     from openedx.core.djangoapps.catalog.utils import get_localized_price_text
@@ -148,7 +151,10 @@ class GrantDataSharingPermissions(View):
 
     page_title = _('Data sharing consent required')
     consent_message_header = _('Consent to share your data')
-    requested_permissions_header = _('{enterprise_customer_name} would like to know about:')
+    requested_permissions_header = _(
+        'Per the {start_link}Data Sharing Policy{end_link}, '
+        '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
+    )
     agreement_text = _(
         'I agree to allow {platform_name} to share data about my enrollment, completion and performance '
         'in all {platform_name} courses and programs where my enrollment is sponsored by {enterprise_customer_name}.'
@@ -211,6 +217,7 @@ class GrantDataSharingPermissions(View):
         "{strong_start}{platform_name}{strong_end} to offer you high-quality learning "
         "opportunities from the world's best universities."
     )
+    preview_mode = False
 
     def course_or_program_exist(self, course_id, program_uuid):
         """
@@ -220,13 +227,11 @@ class GrantDataSharingPermissions(View):
         program_exists = program_uuid and CourseCatalogApiServiceClient().program_exists(program_uuid)
         return course_exists or program_exists
 
-    def get_default_context(self, enterprise_customer, request):
+    def get_default_context(self, enterprise_customer, platform_name):
         """
         Get the set of variables that will populate the template by default.
         """
-        context_data = get_global_context(request)
-        platform_name = context_data['platform_name']
-        context_data.update({
+        context_data = {
             'enterprise_customer': enterprise_customer,
             'welcome_text': self.welcome_text.format(platform_name=platform_name),
             'enterprise_welcome_text': self.enterprise_welcome_text.format(
@@ -238,7 +243,12 @@ class GrantDataSharingPermissions(View):
             'page_title': self.page_title,
             'consent_message_header': self.consent_message_header,
             'requested_permissions_header': self.requested_permissions_header.format(
-                enterprise_customer_name=enterprise_customer.name
+                enterprise_customer_name=enterprise_customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                start_link='<a href="#consent-policy-dropdown-bar" '
+                           'class="policy-dropdown-link background-input" id="policy-dropdown-link">',
+                end_link='</a>',
             ),
             'agreement_text': self.agreement_text.format(
                 enterprise_customer_name=enterprise_customer.name,
@@ -272,7 +282,102 @@ class GrantDataSharingPermissions(View):
             'confirmation_modal_abort_decline_text': self.modal_abort_decline_msg,
             'policy_link_template': self.policy_link_template,
             'policy_return_link_text': self.policy_return_link_text,
-        })
+        }
+        return context_data
+
+    def get_context_from_db(self, consent_page, platform_name, item, context):
+        """
+        Make set of variables(populated from db) that will be used in data sharing consent page.
+        """
+        enterprise_customer = consent_page.enterprise_customer
+        course_title = context.get('course_title', None)
+        course_start_date = context.get('course_start_date', None)
+        context_data = {
+            'enterprise_customer': enterprise_customer,
+            'text_override_available': True,
+            'page_title': consent_page.page_title,
+            'left_sidebar_text': consent_page.left_sidebar_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+                course_title=course_title,
+                course_start_date=course_start_date,
+            ),
+            'top_paragraph': consent_page.top_paragraph.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+                course_title=course_title,
+                course_start_date=course_start_date,
+            ),
+            'agreement_text': consent_page.agreement_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+                course_title=course_title,
+                course_start_date=course_start_date,
+            ),
+            'continue_text': consent_page.continue_text,
+            'abort_text': consent_page.abort_text,
+            'policy_dropdown_header': consent_page.policy_dropdown_header,
+            'policy_paragraph': consent_page.policy_paragraph.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+                course_title=course_title,
+                course_start_date=course_start_date,
+            ),
+            'confirmation_modal_header': consent_page.confirmation_modal_header.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+                course_title=course_title,
+                course_start_date=course_start_date,
+            ),
+            'confirmation_alert_prompt': consent_page.confirmation_modal_text.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                item=item,
+                course_title=course_title,
+                course_start_date=course_start_date,
+            ),
+            'confirmation_modal_affirm_decline_text': consent_page.modal_affirm_decline_text,
+            'confirmation_modal_abort_decline_text': consent_page.modal_abort_decline_text,
+        }
+        return context_data
+
+    def get_course_or_program_context(self, enterprise_customer, course_id=None, program_uuid=None):
+        """
+        Return a dict having course or program specific keys for data sharing consent page.
+        """
+        context_data = {}
+        if course_id:
+            context_data.update({'course_id': course_id, 'course_specific': True})
+            if not self.preview_mode:
+                try:
+                    catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+                except ImproperlyConfigured:
+                    raise Http404
+
+                course_run_details = catalog_api_client.get_course_run(course_id)
+                course_start_date = ''
+                if course_run_details['start']:
+                    course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
+
+                context_data.update({
+                    'course_title': course_run_details['title'],
+                    'course_start_date': course_start_date,
+                })
+            else:
+                context_data.update({
+                    'course_title': 'Demo Course',
+                    'course_start_date': datetime.datetime.now().strftime('%B %d, %Y'),
+                })
+        else:
+            context_data.update({
+                'program_uuid': program_uuid,
+                'program_specific': True,
+            })
         return context_data
 
     @method_decorator(login_required)
@@ -283,51 +388,37 @@ class GrantDataSharingPermissions(View):
         enterprise_customer_uuid = request.GET.get('enterprise_customer_uuid')
         success_url = request.GET.get('next')
         failure_url = request.GET.get('failure_url')
+        course_id = request.GET.get('course_id', '')
+        program_uuid = request.GET.get('program_uuid', '')
+        self.preview_mode = bool(request.GET.get('preview_mode', False))
         if not (enterprise_customer_uuid and success_url and failure_url):
             raise Http404
 
-        course_id = request.GET.get('course_id', '')
-        program_uuid = request.GET.get('program_uuid', '')
-        if not self.course_or_program_exist(course_id, program_uuid):
-            raise Http404
-
-        consent_record = get_data_sharing_consent(
-            request.user.username,
-            enterprise_customer_uuid,
-            program_uuid=program_uuid,
-            course_id=course_id
-        )
-        if consent_record is None or not consent_record.consent_required():
-            raise Http404
-
-        item = 'course' if course_id else 'program'
-
-        enterprise_customer = consent_record.enterprise_customer
-        context_data = self.get_default_context(enterprise_customer, request)
-
-        if course_id:
-            try:
-                catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
-            except ImproperlyConfigured:
+        if not self.preview_mode:
+            if not self.course_or_program_exist(course_id, program_uuid):
                 raise Http404
 
-            course_run_details = catalog_api_client.get_course_run(course_id)
-            course_start_date = ''
-            if course_run_details['start']:
-                course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
+            consent_record = get_data_sharing_consent(
+                request.user.username,
+                enterprise_customer_uuid,
+                program_uuid=program_uuid,
+                course_id=course_id
+            )
+            if consent_record is None or not consent_record.consent_required():
+                raise Http404
 
-            context_data.update({
-                'course_id': course_id,
-                'course_specific': True,
-                'course_title': course_run_details['title'],
-                'course_start_date': course_start_date,
-            })
+            enterprise_customer = consent_record.enterprise_customer
         else:
-            context_data.update({
-                'program_uuid': program_uuid,
-                'program_specific': True,
-            })
+            if not request.user.is_staff:
+                raise PermissionDenied()
+            enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
 
+        context_data = get_global_context(request)
+        context_data.update(
+            self.get_course_or_program_context(enterprise_customer, course_id=course_id, program_uuid=program_uuid)
+        )
+
+        item = 'course' if course_id else 'program'
         # Translators: bold_start and bold_end are HTML tags for specifying enterprise name in bold text.
         context_data.update({
             'consent_request_prompt': _(
@@ -339,17 +430,6 @@ class GrantDataSharingPermissions(View):
                 bold_end='</b>',
                 item=item,
             ),
-            'requested_permissions_header': _(
-                'Per the {start_link}Data Sharing Policy{end_link}, '
-                '{bold_start}{enterprise_customer_name}{bold_end} would like to know about:'
-            ).format(
-                enterprise_customer_name=enterprise_customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-                start_link='<a href="#consent-policy-dropdown-bar" '
-                           'class="policy-dropdown-link background-input" id="policy-dropdown-link">',
-                end_link='</a>',
-            ),
             'confirmation_alert_prompt': _(
                 'In order to start this {item} and use your discount, {bold_start}you must{bold_end} consent '
                 'to share your {item} data with {enterprise_customer_name}.'
@@ -359,7 +439,6 @@ class GrantDataSharingPermissions(View):
                 bold_end='</b>',
                 item=item,
             ),
-            'confirmation_alert_prompt_warning': '',
             'redirect_url': success_url,
             'failure_url': failure_url,
             'defer_creation': request.GET.get('defer_creation') is not None,
@@ -370,6 +449,16 @@ class GrantDataSharingPermissions(View):
             ],
             'policy_link_template': '',
         })
+        platform_name = context_data['platform_name']
+        published_only = False if self.preview_mode else True
+        enterprise_consent_page = enterprise_customer.get_data_sharing_consent_text_overrides(
+            published_only=published_only
+        )
+        if enterprise_consent_page:
+            context_data.update(self.get_context_from_db(enterprise_consent_page, platform_name, item, context_data))
+        else:
+            context_data.update(self.get_default_context(enterprise_customer, platform_name))
+
         return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
     @method_decorator(login_required)
@@ -405,6 +494,7 @@ class GrantDataSharingPermissions(View):
                     enterprise_customer=consent_record.enterprise_customer,
                     user_id=request.user.id
                 )
+                enterprise_customer_user.update_session(request)
                 __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
@@ -616,9 +706,14 @@ class CourseEnrollmentView(NonAtomicView):
             # EnterpriseCustomerCatalog, or does not exist at all in the
             # discovery service.
             LOGGER.warning(
-                'Failed to fetch course "{course}" or course run "{course_run}" details for '
-                'enterprise "{enterprise_uuid}"'.format(
-                    course=course, course_run=course_run, enterprise_uuid=enterprise_customer.uuid
+                'Failed to fetch course [{course}] or course run [{course_run}] details for '
+                'course run [{course_run_id}] enterprise [{enterprise_uuid}] '
+                'catalog [{enterprise_catalog_uuid}]'.format(
+                    course=course,
+                    course_run=course_run,
+                    course_run_id=course_run_id,
+                    enterprise_uuid=enterprise_customer.uuid,
+                    enterprise_catalog_uuid=enterprise_catalog_uuid,
                 )
             )
             messages.add_generic_info_message_for_error(request)
@@ -781,6 +876,7 @@ class CourseEnrollmentView(NonAtomicView):
             enterprise_customer=enterprise_customer,
             user_id=request.user.id
         )
+        enterprise_customer_user.update_session(request)
 
         data_sharing_consent = DataSharingConsent.objects.proxied_get(
             username=enterprise_customer_user.username,
@@ -850,7 +946,7 @@ class CourseEnrollmentView(NonAtomicView):
                 query_string=urlencode({'course_mode': selected_course_mode_name})
             )
 
-            failure_url = reverse('enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id])
+            failure_url = reverse('enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id])
             if request.META['QUERY_STRING']:
                 # Preserve all querystring parameters in the request to build
                 # failure url, so that learner views the same enterprise course
@@ -860,7 +956,7 @@ class CourseEnrollmentView(NonAtomicView):
                 # https://docs.djangoproject.com/en/1.11/ref/request-response/#django.http.HttpRequest.META
                 failure_url = '{course_enrollment_url}?{query_string}'.format(
                     course_enrollment_url=reverse(
-                        'enterprise_course_enrollment_page', args=[enterprise_customer.uuid, course_id]
+                        'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
                     ),
                     query_string=request.META['QUERY_STRING']
                 )
@@ -1240,6 +1336,7 @@ class ProgramEnrollmentView(NonAtomicView):
                 enterprise_customer=enterprise_customer,
                 user_id=request.user.id
             )
+            enterprise_customer_user.update_session(request)
 
         program_details = self.get_program_details(request, program_uuid, enterprise_customer)
         if program_details['certificate_eligible_for_program']:
@@ -1305,8 +1402,10 @@ class RouterView(NonAtomicView):
         """
         enterprise_customer_uuid = kwargs.get('enterprise_uuid', '')
         course_run_id = kwargs.get('course_id', '')
+        course_key = kwargs.get('course_key', '')
         program_uuid = kwargs.get('program_uuid', '')
-        return enterprise_customer_uuid, course_run_id or program_uuid
+
+        return enterprise_customer_uuid, course_run_id, course_key, program_uuid
 
     def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, course_run_id):
         """
@@ -1328,10 +1427,15 @@ class RouterView(NonAtomicView):
         """
         Redirects to the appropriate view depending on where the user came from.
         """
-        enterprise_customer_uuid, resource_id = RouterView.get_path_variables(**kwargs)
+        enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
+        resource_id = course_key or course_run_id or program_uuid
         # Replace enterprise UUID and resource ID with '{}', to easily match with a path in RouterView.VIEWS. Example:
         # /enterprise/fake-uuid/course/course-v1:cool+course+2017/enroll/ -> /enterprise/{}/course/{}/enroll/
         path = re.sub('{}|{}'.format(enterprise_customer_uuid, re.escape(resource_id)), '{}', request.path)
+
+        # Remove course_key from kwargs if it exists because delegate views are not expecting it.
+        kwargs.pop('course_key', None)
+
         return self.VIEWS[path].as_view()(request, *args, **kwargs)
 
     @method_decorator(enterprise_login_required)
@@ -1341,10 +1445,26 @@ class RouterView(NonAtomicView):
         Run some custom GET logic for Enterprise workflows before routing the user through existing views.
 
         In particular, before routing to existing views:
+        - If the requested resource is a course, find the current course run for that course,
+          and make that course run the requested resource instead.
         - Look to see whether a request is eligible for direct audit enrollment, and if so, directly enroll the user.
         """
-        enterprise_customer_uuid, resource_id = RouterView.get_path_variables(**kwargs)
+        enterprise_customer_uuid, course_run_id, course_key, program_uuid = RouterView.get_path_variables(**kwargs)
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
+
+        if course_key:
+            # User is requesting a course, we need to translate that into the current course run.
+            try:
+                course = CourseCatalogApiServiceClient(enterprise_customer.site).get_course_details(course_key)
+            except ImproperlyConfigured:
+                raise Http404
+
+            course_run = get_current_course_run(course)
+            if course_run:
+                course_run_id = course_run['key']
+                kwargs['course_id'] = course_run_id
+            else:
+                raise Http404
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
@@ -1353,8 +1473,10 @@ class RouterView(NonAtomicView):
                 enterprise_customer=enterprise_customer,
                 user_id=request.user.id
             )
+            enterprise_customer_user.update_session(request)
 
         # Directly enroll in audit mode if the request in question has full direct audit enrollment eligibility.
+        resource_id = course_run_id or program_uuid
         if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id):
             try:
                 enterprise_customer_user.enroll(resource_id, 'audit')

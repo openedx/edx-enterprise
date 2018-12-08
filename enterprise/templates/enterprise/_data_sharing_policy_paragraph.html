@@ -1,0 +1,33 @@
+{% load i18n staticfiles enterprise %}
+
+{% if policy_dropdown_header %}
+<button type="button" id="consent-policy-dropdown-bar" class="consent-policy-dropdown-bar background-input" aria-controls="consent-policy" aria-expanded="false">
+  <span class="dropdown-text">{{ policy_dropdown_header }}</span>
+  <span class="fa-stack fa-lg dropdown-icon-container" aria-hidden="true">
+    <span id="consent-policy-dropdown-icon-surround" class="fa fa-circle fa-stack-2x" aria-hidden="true"></span>
+    <span id="consent-policy-dropdown-icon" class="fa fa-chevron-right fa-stack-1x" aria-hidden="true"></span>
+  </span>
+</button>
+{% endif %}
+<div class="consent-policy" id="consent-policy" style="display:none;">
+  {% if policy_paragraph %}
+    <p>{{ policy_paragraph|only_safe_html }}</p>
+  {% else %}
+    <p>{{ sharable_items_header }}</p>
+    <ul class="consent-policy-bulletpoints">
+      {% for item in sharable_items %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    <p>{{ sharable_items_footer }}</p>
+    <p>{{ sharable_items_note_header }}</p>
+    <ul class="consent-policy-bulletpoints">
+      {% for item in sharable_items_notes %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+    <p>
+      <a class="pull-right" href="#">{{ policy_return_link_text }}</a>
+    </p>
+  {% endif %}
+</div>

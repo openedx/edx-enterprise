@@ -5,19 +5,25 @@ Models for edX Enterprise's Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
-from consent.errors import InvalidProxyConsent
-from consent.mixins import ConsentModelMixin
+import six
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from simple_history.models import HistoricalRecords
 
 from django.db import models
+from django.utils.encoding import python_2_unicode_compatible
+from django.utils.functional import lazy
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
+from consent.errors import InvalidProxyConsent
+from consent.mixins import ConsentModelMixin
 from enterprise.models import EnterpriseCustomer
-from enterprise.utils import get_course_id_from_course_run_id
+from enterprise.utils import parse_course_key
+
+mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
 
 
 class DataSharingConsentQuerySet(models.query.QuerySet):
@@ -52,7 +58,7 @@ class DataSharingConsentQuerySet(models.query.QuerySet):
                 except DataSharingConsent.DoesNotExist:
                     # A record for the course run didn't exist, so modify the query
                     # parameters to look for just a course record on the second pass.
-                    kwargs['course_id'] = get_course_id_from_course_run_id(course_run_key)
+                    kwargs['course_id'] = parse_course_key(course_run_key)
 
         try:
             return self.get(*args, **kwargs)
@@ -239,3 +245,158 @@ class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-m
         help_text=_("Course key for which data sharing consent is granted.")
     )
     history = HistoricalRecords()
+
+
+@python_2_unicode_compatible
+class DataSharingConsentTextOverrides(TimeStampedModel):
+    """
+    Stores texts overrides for data sharing consent page.
+    """
+
+    class Meta(object):
+        app_label = 'consent'
+        verbose_name_plural = _('Data sharing consent text overrides')
+
+    TOP_PARAGRAPH_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a text for first paragraph of page. The following variables may be available:<br />'
+        '<ul>'
+        '<li>enterprise_customer_name: A name of enterprise customer.</li>'
+        '<li>platform_name: Name of platform.</li>'
+        '<li>item: A string which is "course" or "program" depending on the type of consent.</li>'
+        '<li>course_title: Title of course. Available when type of consent is course.</li>'
+        '<li>course_start_date: Course start date. Available when type of consent is course.</li>'
+        '</ul>'
+    ))
+    POLICY_PARAGRAPH_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a text for policy paragraph at the bottom of page. The following variables may be available:<br />'
+        '<ul>'
+        '<li>enterprise_customer_name: A name of enterprise customer.</li>'
+        '<li>platform_name: Name of platform.</li>'
+        '<li>item: A string which is "course" or "program" depending on the type of consent.</li>'
+        '<li>course_title: Title of course. Available when type of consent is course.</li>'
+        '<li>course_start_date: Course start date. Available when type of consent is course.</li>'
+        '</ul>'
+    ))
+    SIDEBAR_PARAGRAPH_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a text for left sidebar paragraph. The following variables may be available:<br />'
+        '<ul>'
+        '<li>enterprise_customer_name: A name of enterprise customer.</li>'
+        '<li>platform_name: Name of platform.</li>'
+        '<li>item: A string which is "course" or "program" depending on the type of consent.</li>'
+        '<li>course_title: Title of course. Available when type of consent is course.</li>'
+        '<li>course_start_date: Course start date. Available when type of consent is course.</li>'
+        '</ul>'
+    ))
+    CONFIRMATION_MODAL_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a text for dialog which appears when user decline to provide consent. '
+        'The following variables may be available:<br />'
+        '<ul>'
+        '<li>enterprise_customer_name: A name of enterprise customer.</li>'
+        '<li>item: A string which is "course" or "program" depending on the type of consent.</li>'
+        '<li>course_title: Title of course. Available when type of consent is course.</li>'
+        '<li>course_start_date: Course start date. Available when type of consent is course.</li>'
+        '</ul>'
+    ))
+    NOTIFICATION_TITLE_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a text for title of the notification which appears on dashboard '
+        'when user decline to provide consent. '
+        'The following variables may be available:<br />'
+        '<ul>'
+        '<li>enterprise_customer_name: A name of enterprise customer.</li>'
+        '<li>course_title: Title of course. Available when type of consent is course.</li>'
+        '</ul>'
+    ))
+    NOTIFICATION_MESSAGE_HELP_TEXT = mark_safe_lazy(_(
+        'Fill in a text for message of the notification which appears on dashboard '
+        'when user decline to provide consent. '
+        'The following variables may be available:<br />'
+        '<ul>'
+        '<li>enterprise_customer_name: A name of enterprise customer.</li>'
+        '<li>course_title: Title of course. Available when type of consent is course.</li>'
+        '</ul>'
+    ))
+
+    page_title = models.CharField(
+        max_length=255,
+        help_text=_('Title of page')
+    )
+    left_sidebar_text = models.TextField(
+        null=True,
+        blank=True,
+        help_text=SIDEBAR_PARAGRAPH_HELP_TEXT
+    )
+    top_paragraph = models.TextField(
+        null=True,
+        blank=True,
+        help_text=TOP_PARAGRAPH_HELP_TEXT
+    )
+    agreement_text = models.TextField(
+        null=True,
+        blank=True,
+        help_text=_('Text next to agreement check mark')
+    )
+    continue_text = models.CharField(
+        max_length=255,
+        help_text=_('Text of agree button')
+    )
+    abort_text = models.CharField(
+        max_length=255,
+        help_text=_('Text of decline link')
+    )
+    policy_dropdown_header = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_('Text of policy drop down')
+    )
+    policy_paragraph = models.TextField(
+        null=True,
+        blank=True,
+        help_text=POLICY_PARAGRAPH_HELP_TEXT
+    )
+    confirmation_modal_header = models.CharField(
+        max_length=255,
+        help_text=_('Heading text of dialog box which appears when user decline to provide consent')
+    )
+    confirmation_modal_text = models.TextField(
+        help_text=CONFIRMATION_MODAL_HELP_TEXT
+    )
+    modal_affirm_decline_text = models.CharField(
+        max_length=255,
+        help_text=_('Text of decline button on confirmation dialog box')
+    )
+    modal_abort_decline_text = models.CharField(
+        max_length=255,
+        help_text=_('Text of abort decline link on confirmation dialog box')
+    )
+    declined_notification_title = models.TextField(
+        help_text=NOTIFICATION_TITLE_HELP_TEXT
+    )
+    declined_notification_message = models.TextField(
+        help_text=NOTIFICATION_MESSAGE_HELP_TEXT
+    )
+    enterprise_customer = models.OneToOneField(
+        EnterpriseCustomer,
+        related_name="data_sharing_consent_page",
+        on_delete=models.deletion.CASCADE
+    )
+    published = models.BooleanField(
+        default=False,
+        help_text=_(
+            _("Specifies whether data sharing consent page is published.")
+        )
+    )
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return 'DataSharingConsentTextOverrides for EnterpriseCustomer with UUID {}>'.format(
+            self.enterprise_customer.uuid
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()

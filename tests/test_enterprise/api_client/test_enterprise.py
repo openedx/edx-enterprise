@@ -14,7 +14,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from enterprise.api_client import enterprise as enterprise_api
-from enterprise.utils import get_cache_key
+from enterprise.utils import get_cache_key, get_content_metadata_item_id
 from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -46,14 +46,14 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         cache.clear()
         super(TestEnterpriseApiClient, self).tearDown()
 
-    def _assert_enterprise_courses_api_response(self, course_run_ids, course_runs, expected_courses_count):
+    def _assert_enterprise_courses_api_response(self, content_ids, content_metadata, expected_count):
         """
         DRY method to verify the enterprise courses api response.
         """
-        assert len(course_run_ids) == len(course_runs)
-        assert expected_courses_count == len(course_runs)
-        for course_run in course_runs.values():
-            assert course_run['key'] in course_run_ids
+        assert len(content_ids) == len(content_metadata)
+        assert expected_count == len(content_metadata)
+        for item in content_metadata:
+            assert get_content_metadata_item_id(item) in content_ids
 
     def _assert_num_requests(self, expected_count):
         """
@@ -115,9 +115,9 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data', mock.Mock())
     @mock.patch('enterprise.api_client.discovery.JwtBuilder', mock.Mock())
-    def test_get_enterprise_course_runs(self):
+    def test_get_content_metadata(self):
         """
-        Verify that the client method `get_enterprise_course_runs` works as expected.
+        Verify that the client method `get_content_metadata` works as expected.
         """
         uuid = str(self.enterprise_customer.uuid)
         course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
@@ -138,16 +138,20 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
 
         # Verify that by default enterprise client fetches all the course runs associated with the catalog.
         client = enterprise_api.EnterpriseApiClient(self.user)
-        api_response = client.get_enterprise_course_runs(self.enterprise_customer)
-        self._assert_enterprise_courses_api_response(course_run_ids, api_response, expected_courses_count=2)
+        api_response = client.get_content_metadata(self.enterprise_customer)
+        self._assert_enterprise_courses_api_response(
+            ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2'],
+            api_response,
+            expected_count=2
+        )
         # Verify the enterprise API was hit twice
         self._assert_num_requests(2)
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    def test_get_enterprise_course_runs_with_enterprise_catalogs(self):
+    def test_get_content_metadata_with_enterprise_catalogs(self):
         """
-        Verify that the client method `get_enterprise_course_runs` works as expected.
+        Verify that the client method `get_content_metadata` works as expected.
         """
         EnterpriseCustomerCatalogFactory(
             enterprise_customer=self.enterprise_customer,
@@ -160,12 +164,8 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
             course_run_ids=course_run_ids
         )
 
-        # pylint: disable=invalid-name
-        enterprise_catalog_course_run_ids = ['course-v1:edX+DemoX+Demo_Course_3', 'course-v1:edX+DemoX+Demo_Course_4']
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        self.mock_enterprise_customer_catalogs(
-            uuid, enterprise_catalog_uuid, enterprise_catalog_course_run_ids
-        )
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
         api_resource_name = 'enterprise-customer'
         cache_key = get_cache_key(
@@ -179,14 +179,14 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
 
         # Verify that by default enterprise client fetches all the course runs associated with the catalog.
         client = enterprise_api.EnterpriseApiClient(self.user)
-        course_runs = client.get_enterprise_course_runs(self.enterprise_customer)
-        assert len(course_runs) == 4
+        course_runs = client.get_content_metadata(self.enterprise_customer)
+        assert len(course_runs) == 5
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    def test_get_enterprise_course_runs_with_enterprise_catalog_set_to_none(self):
+    def test_get_content_metadata_with_enterprise_catalog_set_to_none(self):
         """
-        Verify that the client method `get_enterprise_course_runs` returns courses from
+        Verify that the client method `get_content_metadata` returns courses from
         associated EnterpriseCustomerCatalog objects only if EnterpriseCustomer.catalog is set to None.
         """
         # Remove EnterpriseCustomer.catalog
@@ -204,11 +204,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         )
 
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
-        # pylint: disable=invalid-name
-        enterprise_catalog_course_run_ids = ['course-v1:edX+DemoX+Demo_Course_3', 'course-v1:edX+DemoX+Demo_Course_4']
-        self.mock_enterprise_customer_catalogs(
-            uuid, enterprise_catalog_uuid, enterprise_catalog_course_run_ids
-        )
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
         api_resource_name = 'enterprise-customer'
         cache_key = get_cache_key(
@@ -222,5 +218,5 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
 
         # Verify that by default enterprise client fetches all the course runs associated with the enterprise catalog.
         client = enterprise_api.EnterpriseApiClient(self.user)
-        course_runs = client.get_enterprise_course_runs(self.enterprise_customer)
-        assert len(course_runs) == 2
+        course_runs = client.get_content_metadata(self.enterprise_customer)
+        assert len(course_runs) == 3

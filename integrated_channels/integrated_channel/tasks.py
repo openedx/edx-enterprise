@@ -8,38 +8,39 @@ import time
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
-from integrated_channels.integrated_channel.management.commands import INTEGRATED_CHANNEL_CHOICES
 
 from django.contrib.auth.models import User
+
+from integrated_channels.integrated_channel.management.commands import INTEGRATED_CHANNEL_CHOICES
 
 LOGGER = get_task_logger(__name__)
 
 
 @shared_task
-def transmit_course_metadata(username, channel_code, channel_pk):
+def transmit_content_metadata(username, channel_code, channel_pk):
     """
-    Task to send course metadata to each linked integrated channel.
+    Task to send content metadata to each linked integrated channel.
 
     Arguments:
-        username (str): The username of the User to be used for making API requests for course metadata.
-        channel_code (str): Capitalized identifier for the integrated channel
-        channel_pk (str): Primary key for identifying integrated channel
+        username (str): The username of the User to be used for making API requests to retrieve content metadata.
+        channel_code (str): Capitalized identifier for the integrated channel.
+        channel_pk (str): Primary key for identifying integrated channel.
 
     """
     start = time.time()
     api_user = User.objects.get(username=username)
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
-    LOGGER.info('Processing course runs for integrated channel using configuration: [%s]', integrated_channel)
+    LOGGER.info('Transmitting content metadata to integrated channel using configuration: [%s]', integrated_channel)
     try:
-        integrated_channel.transmit_course_data(api_user)
+        integrated_channel.transmit_content_metadata(api_user)
     except Exception:  # pylint: disable=broad-except
         LOGGER.exception(
-            'Transmission of course metadata failed for user [%s] and for integrated '
+            'Transmission of content metadata failed for user [%s] and for integrated '
             'channel with code [%s] and id [%s].', username, channel_code, channel_pk
         )
     duration = time.time() - start
     LOGGER.info(
-        'Course metadata transmission task for integrated channel configuration [%s] took [%s] seconds',
+        'Content metadata transmission task for integrated channel configuration [%s] took [%s] seconds',
         integrated_channel,
         duration
     )
