@@ -543,9 +543,11 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'active': customer.active,
                 'slug': customer.slug,
                 'country': customer.country,
+                'customer_type': customer.customer_type_id,
             },
             instance=customer,
         )
+        # import pytest; pytest.set_trace()
         assert form.is_valid()
         form.save()
         assert customer.catalog is None
@@ -577,6 +579,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'active': customer.active,
                 'slug': customer.slug,
                 'country': customer.country,
+                'customer_type': customer.customer_type_id,
             },
             instance=customer,
         )

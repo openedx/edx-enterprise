@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.1.2] - 2018-12-10
+---------------------
+
+* Update EnterpriseCustomer model to introduce customer type field
+
 [1.1.0] - 2018-12-06
 ---------------------
 

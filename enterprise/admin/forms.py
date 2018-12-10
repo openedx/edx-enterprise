@@ -320,6 +320,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "slug",
             "country",
             "active",
+            "customer_type",
             "site",
             "catalog",
             "enable_data_sharing_consent",

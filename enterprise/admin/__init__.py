@@ -34,6 +34,7 @@ from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCustomer,
+    EnterpriseCustomerType,
     EnterpriseCustomerUser,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerIdentityProvider,
@@ -127,6 +128,23 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
         return formset
 
 
+@admin.register(EnterpriseCustomerType)
+class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerType.
+    """
+
+    class Meta(object):
+        model = EnterpriseCustomerType
+
+    fields = (
+        'name',
+    )
+
+    list_display = ('name', )
+    search_fields = ('name', )
+
+
 @admin.register(EnterpriseCustomer)
 class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     """
@@ -135,6 +153,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     list_display = (
         'name',
         'slug',
+        'customer_type',
         'site',
         'country',
         'active',
