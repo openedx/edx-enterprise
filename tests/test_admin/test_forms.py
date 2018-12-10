@@ -543,6 +543,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'active': customer.active,
                 'slug': customer.slug,
                 'country': customer.country,
+                'customer_type': customer.customer_type,
             },
             instance=customer,
         )
@@ -577,6 +578,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'active': customer.active,
                 'slug': customer.slug,
                 'country': customer.country,
+                'customer_type': customer.customer_type,
             },
             instance=customer,
         )
