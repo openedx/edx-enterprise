@@ -104,6 +104,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_audit_data_reporting",
                 "replace_sensitive_sso_username",
                 "enable_autocohorting",
+                "customer_type",
             ]
         ),
         (
