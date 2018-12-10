@@ -20,6 +20,7 @@ from django.db.models.fields import BLANK_CHOICE_DASH
 from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
+    EnterpriseCustomerReportingConfigAdminForm,
     ManageLearnersForm,
 )
 from enterprise.admin.utils import ValidationMessages
@@ -27,6 +28,7 @@ from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.utils import MultipleProgramMatchError
 from test_utils import fake_catalog_api, fake_enrollment_api
 from test_utils.factories import (
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
@@ -541,6 +543,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'active': customer.active,
                 'slug': customer.slug,
                 'country': customer.country,
+                'customer_type': customer.customer_type,
             },
             instance=customer,
         )
@@ -575,6 +578,7 @@ class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.Te
                 'active': customer.active,
                 'slug': customer.slug,
                 'country': customer.country,
+                'customer_type': customer.customer_type,
             },
             instance=customer,
         )
@@ -783,3 +787,86 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
 
         # Validate and clean form data
         assert form.is_valid()
+
+
+@mark.django_db
+class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
+    """
+    Tests for EnterpriseCustomerReportingConfigAdminForm.
+    """
+
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super(TestEnterpriseCustomerReportingConfigAdminForm, self).setUp()
+
+        self.ent_customer1 = EnterpriseCustomerFactory()
+        self.ent_customer2 = EnterpriseCustomerFactory()
+
+        self.ent_catalogs1 = [
+            EnterpriseCustomerCatalogFactory(enterprise_customer=self.ent_customer1)
+            for _ in range(3)
+        ]
+        self.ent_catalogs2 = [
+            EnterpriseCustomerCatalogFactory(enterprise_customer=self.ent_customer2)
+            for _ in range(2)
+        ]
+
+        self.form_data = {
+            'enterprise_customer': self.ent_customer1.uuid,
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'delivery_method': 'email',
+            'frequency': 'daily',
+            'hour_of_day': 1,
+            'email': 'fake@edx.org',
+            'decrypted_password': 'password',
+        }
+
+    def test_form_no_catalogs(self):
+        """
+        Test clean method on form that has no catalogs set
+        """
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            data=self.form_data,
+        )
+        assert form.is_valid()
+
+    def test_form_catalogs_same_entcustomer_only(self):
+        """
+        Clean should not throw errors about catalogs if catalogs selected have
+        same enterprise customer as reporting config
+        """
+        self.form_data['enterprise_customer_catalogs'] = self.ent_catalogs1
+
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            data=self.form_data,
+        )
+        assert form.is_valid()
+
+    def test_form_catalogs_different_entcustomer_only(self):
+        """
+        Clean should throw errors about catalogs if catalogs selected have
+        different enterprise customer as reporting config
+        """
+        self.form_data['enterprise_customer_catalogs'] = self.ent_catalogs2
+
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            data=self.form_data,
+        )
+        assert not form.is_valid()
+
+    def test_form_catalogs_mixed_entcustomer(self):
+        """
+        Clean should throw errors about catalogs if catalogs selected have a
+        mix of enterprise customers, at least one of which matches the
+        config reporting object
+        """
+        self.form_data['enterprise_customer_catalogs'] = (
+            self.ent_catalogs1 + self.ent_catalogs2
+        )
+        form = EnterpriseCustomerReportingConfigAdminForm(
+            data=self.form_data,
+        )
+        assert not form.is_valid()

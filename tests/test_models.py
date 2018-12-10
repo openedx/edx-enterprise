@@ -848,14 +848,14 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         Test ``EnterpriseCustomerCatalog`` conversion to string.
         """
         faker = FakerFactory.create()
-        uuid = faker.uuid4()  # pylint: disable=no-member
+        title = faker.name()  # pylint: disable=no-member
         name = 'EnterpriseWithACatalog'
         enterprise_catalog = EnterpriseCustomerCatalog(
-            uuid=uuid,
+            title=title,
             enterprise_customer=factories.EnterpriseCustomerFactory(name=name)
         )
-        expected_str = "<EnterpriseCustomerCatalog with uuid '{uuid}' for EnterpriseCustomer {name}>".format(
-            uuid=uuid,
+        expected_str = "<EnterpriseCustomerCatalog '{title}' for EnterpriseCustomer {name}>".format(
+            title=title,
             name=name
         )
         self.assertEqual(method(enterprise_catalog), expected_str)

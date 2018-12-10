@@ -197,6 +197,24 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    TYPE_ENTERPRISE = 'enterprise'
+    TYPE_PARTNER = 'partner'
+    TYPE_NON_PROD = 'non_prod'
+    CUSTOMER_TYPE_CHOICES = (
+        (TYPE_ENTERPRISE, 'Enterprise Customer'),
+        (TYPE_PARTNER, 'Partner Customer'),
+        (TYPE_NON_PROD, 'Non Production Customer'),
+    )
+    customer_type = models.CharField(
+        max_length=25,
+        blank=False,
+        choices=CUSTOMER_TYPE_CHOICES,
+        default=TYPE_ENTERPRISE,
+        help_text=_(
+            'Specifies enterprise customer type according to the Partner.'
+        )
+    )
+
     @property
     def identity_provider(self):
         """
@@ -1140,9 +1158,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return human-readable string representation.
         """
         return (
-            "<EnterpriseCustomerCatalog with uuid '{uuid}' "
+            "<EnterpriseCustomerCatalog '{title}' "
             "for EnterpriseCustomer {enterprise_customer_name}>".format(
-                uuid=self.uuid,
+                title=self.title,
                 enterprise_customer_name=self.enterprise_customer.name
             )
         )
@@ -1604,6 +1622,10 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         null=True,
         verbose_name=_("SFTP file path"),
         help_text=_("If the delivery method is sftp, the path on the host to deliver the report to.")
+    )
+    enterprise_customer_catalogs = models.ManyToManyField(
+        EnterpriseCustomerCatalog,
+        verbose_name=_("Enterprise Customer Catalogs"),
     )
 
     class Meta:
