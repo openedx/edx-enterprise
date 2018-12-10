@@ -201,9 +201,9 @@ class EnterpriseCustomer(TimeStampedModel):
     TYPE_PARTNER = 'partner'
     TYPE_NON_PROD = 'non_prod'
     CUSTOMER_TYPE_CHOICES = (
-        (TYPE_ENTERPRISE, 'Enterprise'),
-        (TYPE_PARTNER, 'Partner'),
-        (TYPE_NON_PROD, 'Non Production'),
+        (TYPE_ENTERPRISE, _('Enterprise')),
+        (TYPE_PARTNER, _('Partner')),
+        (TYPE_NON_PROD, _('Non Production')),
     )
     customer_type = models.CharField(
         max_length=25,
