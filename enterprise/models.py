@@ -197,6 +197,24 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    TYPE_ENTERPRISE = 'enterprise'
+    TYPE_PARTNER = 'partner'
+    TYPE_NON_PROD = 'non_prod'
+    CUSTOMER_TYPE_CHOICES = (
+        (TYPE_ENTERPRISE, 'Enterprise Customer'),
+        (TYPE_PARTNER, 'Partner Customer'),
+        (TYPE_NON_PROD, 'Non Production Customer'),
+    )
+    customer_type = models.CharField(
+        max_length=25,
+        blank=False,
+        choices=CUSTOMER_TYPE_CHOICES,
+        default=TYPE_ENTERPRISE,
+        help_text=_(
+            'Specifies enterprise customer type according to the Partner.'
+        )
+    )
+
     @property
     def identity_provider(self):
         """
