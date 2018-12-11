@@ -275,24 +275,10 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         Returns: List of inactive learners data
         [
             {
-                u'studentID': u'admint6',
-                u'firstName': u'Compensation',
-                u'profileStatus': u'ACTIVE',
-                u'lastName': u'Admin',
-                u'personExternalID': u'admint6',
-                u'emailAddr': u'',
-                u'notActive': u'yes',
-                u'termDate': None
+                u'studentID': u'admint6'
             },
             {
-                u'studentID': u'adminsap1',
-                u'firstName': u'SAP1',
-                u'profileStatus': u'ACTIVE',
-                u'lastName': u'Administrator',
-                u'personExternalID': u'adminsap1',
-                u'emailAddr': u'',
-                u'notActive': u'yes',
-                u'termDate': None
+                u'studentID': u'adminsap1'
             }
         ]
         """

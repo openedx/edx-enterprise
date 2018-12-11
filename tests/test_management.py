@@ -789,6 +789,10 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             catalog=1,
             name='Veridian Dynamics',
         )
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=self.enterprise_customer,
+            provider_id='ubc-bestrun',
+        )
         self.degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             key='key',
@@ -859,10 +863,12 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    @mock.patch('enterprise.tpa_pipeline.UserSocialAuth')
     def test_unlink_inactive_sap_learners_task_success(
             self,
             learners,
             unlinked_sap_learners,
+            user_social_auth_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
     ):  # pylint: disable=invalid-name
@@ -884,8 +890,26 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
+        valid_sap_user_id = 'bestrun:' + self.user.username
 
-        # Now mock SAPSF searchStudent for inactive learner
+        def mock_get_user_social_auth(**kwargs):
+            """DRY method to raise exception for invalid users."""
+            uid = kwargs.get('uid')
+            if uid and uid == valid_sap_user_id:
+                # Add a valid social auth record
+                return mock.MagicMock(
+                    user=self.user,
+                    provider='tpa_saml',
+                    uid=valid_sap_user_id,
+                    extra_data={},
+                )
+
+            raise Exception
+
+        user_social_auth_mock.objects.get.side_effect = mock_get_user_social_auth
+        user_social_auth_mock.DoesNotExist = Exception
+
+        # Now mock SAPSF searchStudent call for learners
         responses.add(
             responses.GET,
             url=self.sap_search_student_url,
@@ -894,7 +918,10 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
                 u'value': [
                     {
                         u'studentID': self.user.username,
-                    }
+                    },
+                    {
+                        u'studentID': 'SOME-NON-EXISTING-STUDENT-ID',
+                    },
                 ]
             },
             status=200,
@@ -929,7 +956,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         Test the unlink inactive sap learners task with failed response from SAPSF.
         """
-        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         uuid = str(self.enterprise_customer.uuid)
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'

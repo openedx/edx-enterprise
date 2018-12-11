@@ -11,6 +11,11 @@ except ImportError:
     from enterprise.decorators import null_decorator as partial  # pylint:disable=ungrouped-imports
 
 try:
+    from social_django.models import UserSocialAuth
+except ImportError:
+    UserSocialAuth = None
+
+try:
     from third_party_auth.provider import Registry
 except ImportError:
     Registry = None
@@ -67,3 +72,24 @@ def handle_enterprise_logistration(backend, user, **kwargs):
         user_id=user.id
     )
     enterprise_customer_user.update_session(request)
+
+
+def get_user_from_social_auth(tpa_provider, tpa_username):
+    """
+    Find the LMS user from the UserSocialAuth model by the provide `tpa_username`.
+
+    Arguments:
+        tpa_provider (str): Slug for the third party auth
+        tpa_username (str): Username returned by the third party auth
+
+    """
+    user_id = '{provider}:{username}'.format(
+        provider=tpa_provider.split('-')[-1],
+        username=tpa_username
+    )
+
+    try:
+        user_social_auth = UserSocialAuth.objects.get(uid=user_id)
+        return user_social_auth.user
+    except UserSocialAuth.DoesNotExist:
+        return None

@@ -10,7 +10,8 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomerUser
+from enterprise.tpa_pipeline import get_user_from_social_auth
 from enterprise.utils import parse_course_key
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
@@ -96,22 +97,14 @@ class SapSuccessFactorsLearnerManger(object):
         from the enterprise if the learner is marked inactive in the related
         integrated channel.
         """
-        enterprise_learner_enrollments = EnterpriseCourseEnrollment.objects.select_related(
-            'enterprise_customer_user'
-        ).filter(
-            enterprise_customer_user__enterprise_customer=self.enterprise_configuration.enterprise_customer,
-            enterprise_customer_user__active=True,
-        ).order_by('enterprise_customer_user').distinct()
         sap_inactive_learners = self.client.get_inactive_sap_learners()
-        for enrollment in enterprise_learner_enrollments:
-            learner = enrollment.enterprise_customer_user
-            if any(inactive_learner['studentID'] == learner.username for inactive_learner in sap_inactive_learners):
-                # User exists on SAP SuccessFactors and is marked as inactive
-                try:
-                    # Unlink user email from related Enterprise Customer
-                    EnterpriseCustomerUser.objects.unlink_user(
-                        enterprise_customer=self.enterprise_configuration.enterprise_customer,
-                        user_email=learner.user_email,
-                    )
-                except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
-                    pass
+        enterprise_customer = self.enterprise_configuration.enterprise_customer
+        tpa_provider = enterprise_customer.enterprise_customer_identity_provider.provider_id
+        for sap_inactive_learner in sap_inactive_learners:
+            social_auth_user = get_user_from_social_auth(tpa_provider, sap_inactive_learner['studentID'])
+            if social_auth_user:
+                # Unlink user email from related Enterprise Customer
+                EnterpriseCustomerUser.objects.unlink_user(
+                    enterprise_customer=enterprise_customer,
+                    user_email=social_auth_user.email,
+                )
