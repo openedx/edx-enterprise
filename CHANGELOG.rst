@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.1.1] - 2018-12-11
+---------------------
+
+* Use LMS-defined segment track() method
+
 [1.1.0] - 2018-12-06
 ---------------------
 
