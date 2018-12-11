@@ -34,6 +34,7 @@ from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCustomer,
+    EnterpriseCustomerType,
     EnterpriseCustomerUser,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerIdentityProvider,
@@ -125,6 +126,23 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
         formset = super(EnterpriseCustomerCatalogInline, self).get_formset(request, obj, **kwargs)
         formset.form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return formset
+
+
+@admin.register(EnterpriseCustomerType)
+class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCustomerType.
+    """
+
+    class Meta(object):
+        model = EnterpriseCustomerType
+
+    fields = (
+        'name',
+    )
+
+    list_display = ('name', )
+    search_fields = ('name', )
 
 
 @admin.register(EnterpriseCustomer)
