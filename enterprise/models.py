@@ -89,8 +89,8 @@ class EnterpriseCustomerType(TimeStampedModel):
 
     class Meta:
         app_label = 'enterprise'
-        verbose_name = _("Enterprise Customer Type")
-        verbose_name_plural = _("Enterprise Customer Types")
+        verbose_name = _('Enterprise Customer Type')
+        verbose_name_plural = _('Enterprise Customer Types')
         ordering = ['created']
 
     name = models.CharField(
@@ -116,7 +116,7 @@ class EnterpriseCustomerType(TimeStampedModel):
 
 def get_default_customer_type():
     """
-    The default enterprise customer type to use when creating a new EnterpriseCustomer model.
+    Get default enterprise customer type id to use when creating a new EnterpriseCustomer model.
     """
     enterprise_customer_type, __ = EnterpriseCustomerType.objects.get_or_create(
         name='Enterprise'
@@ -241,7 +241,7 @@ class EnterpriseCustomer(TimeStampedModel):
     )
     customer_type = models.ForeignKey(
         EnterpriseCustomerType,
-        verbose_name=_('Enterprise Customer'),
+        verbose_name=_('Customer Type'),
         default=get_default_customer_type,
         help_text=_(
             'Specifies enterprise customer type.'
