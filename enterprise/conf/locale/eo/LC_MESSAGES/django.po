@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-02-13 04:30-0600\n"
+"POT-Creation-Date: 2018-12-12 01:51-0600\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,6 +16,30 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: consent/admin/__init__.py enterprise/admin/__init__.py
+msgid "Preview (course)"
+msgstr "Prévïéw (çöürsé) Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
+
+#: consent/admin/__init__.py
+msgid ""
+"Preview the data sharing consent page rendered in the context of a course "
+"enrollment."
+msgstr ""
+"Prévïéw thé dätä shärïng çönsént pägé réndéréd ïn thé çöntéxt öf ä çöürsé "
+"énröllmént. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
+
+#: consent/admin/__init__.py enterprise/admin/__init__.py
+msgid "Preview (program)"
+msgstr "Prévïéw (prögräm) Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмє#"
+
+#: consent/admin/__init__.py
+msgid ""
+"Preview the data sharing consent page rendered in the context of a program "
+"enrollment."
+msgstr ""
+"Prévïéw thé dätä shärïng çönsént pägé réndéréd ïn thé çöntéxt öf ä prögräm "
+"énröllmént. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
 
 #: consent/models.py
 msgid "Name of the user whose consent state is stored."
@@ -41,9 +65,161 @@ msgstr ""
 "Çöürsé kéý för whïçh dätä shärïng çönsént ïs gräntéd. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт"
 " αмєт, ¢σηѕє¢тєтυя α#"
 
-#: enterprise/admin/__init__.py
-msgid "Preview (course)"
-msgstr "Prévïéw (çöürsé) Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
+#: consent/models.py
+msgid "Data sharing consent text overrides"
+msgstr ""
+"Dätä shärïng çönsént téxt övérrïdés Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєт#"
+
+#: consent/models.py
+msgid ""
+"Fill in a text for first paragraph of page. The following variables may be "
+"available:<br /><ul><li>enterprise_customer_name: A name of enterprise "
+"customer.</li><li>platform_name: Name of platform.</li><li>item: A string "
+"which is \"course\" or \"program\" depending on the type of "
+"consent.</li><li>course_title: Title of course. Available when type of "
+"consent is course.</li><li>course_start_date: Course start date. Available "
+"when type of consent is course.</li></ul>"
+msgstr ""
+"Fïll ïn ä téxt för fïrst pärägräph öf pägé. Thé föllöwïng värïäßlés mäý ßé "
+"äväïläßlé:<br /><ul><li>éntérprïsé_çüstömér_nämé: À nämé öf éntérprïsé "
+"çüstömér.</li><li>plätförm_nämé: Nämé öf plätförm.</li><li>ïtém: À strïng "
+"whïçh ïs \"çöürsé\" ör \"prögräm\" dépéndïng ön thé týpé öf "
+"çönsént.</li><li>çöürsé_tïtlé: Tïtlé öf çöürsé. Àväïläßlé whén týpé öf "
+"çönsént ïs çöürsé.</li><li>çöürsé_stärt_däté: Çöürsé stärt däté. Àväïläßlé "
+"whén týpé öf çönsént ïs çöürsé.</li></ul>#"
+
+#: consent/models.py
+msgid ""
+"Fill in a text for policy paragraph at the bottom of page. The following "
+"variables may be available:<br /><ul><li>enterprise_customer_name: A name of"
+" enterprise customer.</li><li>platform_name: Name of platform.</li><li>item:"
+" A string which is \"course\" or \"program\" depending on the type of "
+"consent.</li><li>course_title: Title of course. Available when type of "
+"consent is course.</li><li>course_start_date: Course start date. Available "
+"when type of consent is course.</li></ul>"
+msgstr ""
+"Fïll ïn ä téxt för pölïçý pärägräph ät thé ßöttöm öf pägé. Thé föllöwïng "
+"värïäßlés mäý ßé äväïläßlé:<br /><ul><li>éntérprïsé_çüstömér_nämé: À nämé öf"
+" éntérprïsé çüstömér.</li><li>plätförm_nämé: Nämé öf plätförm.</li><li>ïtém:"
+" À strïng whïçh ïs \"çöürsé\" ör \"prögräm\" dépéndïng ön thé týpé öf "
+"çönsént.</li><li>çöürsé_tïtlé: Tïtlé öf çöürsé. Àväïläßlé whén týpé öf "
+"çönsént ïs çöürsé.</li><li>çöürsé_stärt_däté: Çöürsé stärt däté. Àväïläßlé "
+"whén týpé öf çönsént ïs çöürsé.</li></ul>#"
+
+#: consent/models.py
+msgid ""
+"Fill in a text for left sidebar paragraph. The following variables may be "
+"available:<br /><ul><li>enterprise_customer_name: A name of enterprise "
+"customer.</li><li>platform_name: Name of platform.</li><li>item: A string "
+"which is \"course\" or \"program\" depending on the type of "
+"consent.</li><li>course_title: Title of course. Available when type of "
+"consent is course.</li><li>course_start_date: Course start date. Available "
+"when type of consent is course.</li></ul>"
+msgstr ""
+"Fïll ïn ä téxt för léft sïdéßär pärägräph. Thé föllöwïng värïäßlés mäý ßé "
+"äväïläßlé:<br /><ul><li>éntérprïsé_çüstömér_nämé: À nämé öf éntérprïsé "
+"çüstömér.</li><li>plätförm_nämé: Nämé öf plätförm.</li><li>ïtém: À strïng "
+"whïçh ïs \"çöürsé\" ör \"prögräm\" dépéndïng ön thé týpé öf "
+"çönsént.</li><li>çöürsé_tïtlé: Tïtlé öf çöürsé. Àväïläßlé whén týpé öf "
+"çönsént ïs çöürsé.</li><li>çöürsé_stärt_däté: Çöürsé stärt däté. Àväïläßlé "
+"whén týpé öf çönsént ïs çöürsé.</li></ul>#"
+
+#: consent/models.py
+msgid ""
+"Fill in a text for dialog which appears when user decline to provide "
+"consent. The following variables may be available:<br "
+"/><ul><li>enterprise_customer_name: A name of enterprise "
+"customer.</li><li>item: A string which is \"course\" or \"program\" "
+"depending on the type of consent.</li><li>course_title: Title of course. "
+"Available when type of consent is course.</li><li>course_start_date: Course "
+"start date. Available when type of consent is course.</li></ul>"
+msgstr ""
+"Fïll ïn ä téxt för dïälög whïçh äppéärs whén üsér déçlïné tö prövïdé "
+"çönsént. Thé föllöwïng värïäßlés mäý ßé äväïläßlé:<br "
+"/><ul><li>éntérprïsé_çüstömér_nämé: À nämé öf éntérprïsé "
+"çüstömér.</li><li>ïtém: À strïng whïçh ïs \"çöürsé\" ör \"prögräm\" "
+"dépéndïng ön thé týpé öf çönsént.</li><li>çöürsé_tïtlé: Tïtlé öf çöürsé. "
+"Àväïläßlé whén týpé öf çönsént ïs çöürsé.</li><li>çöürsé_stärt_däté: Çöürsé "
+"stärt däté. Àväïläßlé whén týpé öf çönsént ïs çöürsé.</li></ul>#"
+
+#: consent/models.py
+msgid ""
+"Fill in a text for title of the notification which appears on dashboard when"
+" user decline to provide consent. The following variables may be "
+"available:<br /><ul><li>enterprise_customer_name: A name of enterprise "
+"customer.</li><li>course_title: Title of course. Available when type of "
+"consent is course.</li></ul>"
+msgstr ""
+"Fïll ïn ä téxt för tïtlé öf thé nötïfïçätïön whïçh äppéärs ön däshßöärd whén"
+" üsér déçlïné tö prövïdé çönsént. Thé föllöwïng värïäßlés mäý ßé "
+"äväïläßlé:<br /><ul><li>éntérprïsé_çüstömér_nämé: À nämé öf éntérprïsé "
+"çüstömér.</li><li>çöürsé_tïtlé: Tïtlé öf çöürsé. Àväïläßlé whén týpé öf "
+"çönsént ïs çöürsé.</li></ul> Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя "
+"α∂ιριѕι¢ιηg єłιт, ѕє∂ ∂σ єιυѕмσ∂ тємρσя ιη¢ι∂ι∂υηт υт łαвσяє єт ∂σłσяє мαgηα"
+" αłιqυα. υт єηιм α∂ мιηιм νєηιαм, qυιѕ ησѕтяυ∂ єχєя¢ιтα#"
+
+#: consent/models.py
+msgid ""
+"Fill in a text for message of the notification which appears on dashboard "
+"when user decline to provide consent. The following variables may be "
+"available:<br /><ul><li>enterprise_customer_name: A name of enterprise "
+"customer.</li><li>course_title: Title of course. Available when type of "
+"consent is course.</li></ul>"
+msgstr ""
+"Fïll ïn ä téxt för méssägé öf thé nötïfïçätïön whïçh äppéärs ön däshßöärd "
+"whén üsér déçlïné tö prövïdé çönsént. Thé föllöwïng värïäßlés mäý ßé "
+"äväïläßlé:<br /><ul><li>éntérprïsé_çüstömér_nämé: À nämé öf éntérprïsé "
+"çüstömér.</li><li>çöürsé_tïtlé: Tïtlé öf çöürsé. Àväïläßlé whén týpé öf "
+"çönsént ïs çöürsé.</li></ul> Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя "
+"α∂ιριѕι¢ιηg єłιт, ѕє∂ ∂σ єιυѕмσ∂ тємρσя ιη¢ι∂ι∂υηт υт łαвσяє єт ∂σłσяє мαgηα"
+" αłιqυα. υт єηιм α∂ мιηιм νєηιαм, qυιѕ ησѕтяυ∂ єχєя#"
+
+#: consent/models.py
+msgid "Title of page"
+msgstr "Tïtlé öf pägé Ⱡ'σяєм ιρѕυм ∂σłσя ѕι#"
+
+#: consent/models.py
+msgid "Text next to agreement check mark"
+msgstr ""
+"Téxt néxt tö ägréémént çhéçk märk Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тє#"
+
+#: consent/models.py
+msgid "Text of agree button"
+msgstr "Téxt öf ägréé ßüttön Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, #"
+
+#: consent/models.py
+msgid "Text of decline link"
+msgstr "Téxt öf déçlïné lïnk Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, #"
+
+#: consent/models.py
+msgid "Text of policy drop down"
+msgstr "Téxt öf pölïçý dröp döwn Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢ση#"
+
+#: consent/models.py
+msgid ""
+"Heading text of dialog box which appears when user decline to provide "
+"consent"
+msgstr ""
+"Héädïng téxt öf dïälög ßöx whïçh äppéärs whén üsér déçlïné tö prövïdé "
+"çönsént Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєт#"
+
+#: consent/models.py
+msgid "Text of decline button on confirmation dialog box"
+msgstr ""
+"Téxt öf déçlïné ßüttön ön çönfïrmätïön dïälög ßöx Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт "
+"αмєт, ¢σηѕє¢тєтυя α#"
+
+#: consent/models.py
+msgid "Text of abort decline link on confirmation dialog box"
+msgstr ""
+"Téxt öf äßört déçlïné lïnk ön çönfïrmätïön dïälög ßöx Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт"
+" αмєт, ¢σηѕє¢тєтυя α#"
+
+#: consent/models.py
+msgid "Specifies whether data sharing consent page is published."
+msgstr ""
+"Spéçïfïés whéthér dätä shärïng çönsént pägé ïs püßlïshéd. Ⱡ'σяєм ιρѕυм ∂σłσя"
+" ѕιт αмєт, ¢σηѕє¢тєтυя α#"
 
 #: enterprise/admin/__init__.py
 msgid ""
@@ -53,15 +229,20 @@ msgstr ""
 "Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя#"
 
 #: enterprise/admin/__init__.py
-msgid "Preview (program)"
-msgstr "Prévïéw (prögräm) Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмє#"
-
-#: enterprise/admin/__init__.py
 msgid ""
 "Preview the HTML template rendered in the context of a program enrollment."
 msgstr ""
 "Prévïéw thé HTML témpläté réndéréd ïn thé çöntéxt öf ä prögräm énröllmént. "
 "Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυ#"
+
+#: enterprise/admin/__init__.py enterprise/api_client/discovery.py
+#: enterprise/api_client/discovery.py
+msgid ""
+"To get a CatalogIntegration object, this package must be installed in an "
+"Open edX environment."
+msgstr ""
+"Tö gét ä ÇätälögÌntégrätïön ößjéçt, thïs päçkägé müst ßé ïnställéd ïn än "
+"Öpén édX énvïrönmént. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢#"
 
 #: enterprise/admin/actions.py
 msgid "Unlink selected objects from existing course catalogs"
@@ -185,6 +366,16 @@ msgstr ""
 " αłιqυα. υт єηιм α∂ мιηιм νєηιαм, qυιѕ ησѕтяυ∂ єχєя¢ιтαтιση υłłαм¢σ łαвσяιѕ "
 "ηιѕι υт αłιqυιρ єχ єα ¢σммσ∂σ ¢σηѕєqυαт. ∂υιѕ αυтє ιяυяє ∂σłσя ιη "
 "яєρяєнєη∂єяιт ιη νσłυρтαтє νєłιт єѕѕє ¢ιłłυм ∂σłσяє єυ ƒυgιαт ηυłłα ραяι#"
+
+#: enterprise/admin/forms.py
+#, python-brace-format
+msgid ""
+"These catalogs for reporting do not match enterprisecustomer "
+"{enterprise_customer}: {invalid_catalogs}"
+msgstr ""
+"Thésé çätälögs för répörtïng dö nöt mätçh éntérprïséçüstömér "
+"{enterprise_customer}: {invalid_catalogs} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя #"
 
 #: enterprise/admin/forms.py
 msgid "Enter enterprise channel worker username."
@@ -472,6 +663,42 @@ msgstr ""
 "Ûsérnämés öf üsérs wïth éxplïçït äççéss tö vïéw thïs çätälög Ⱡ'σяєм ιρѕυм "
 "∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя α#"
 
+#: enterprise/api/v1/views.py
+#, python-brace-format
+msgid "Code Management - Request for Codes by {token_enterprise_name}"
+msgstr ""
+"Çödé Mänägémént - Réqüést för Çödés ßý {token_enterprise_name} Ⱡ'σяєм ιρѕυм "
+"∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя #"
+
+#: enterprise/api/v1/views.py
+#, python-brace-format
+msgid ""
+"{token_email} from {token_enterprise_name} has requested "
+"{token_number_codes} additional codes. Please reach out to them."
+msgstr ""
+"{token_email} fröm {token_enterprise_name} häs réqüéstéd "
+"{token_number_codes} äddïtïönäl çödés. Pléäsé réäçh öüt tö thém. Ⱡ'σяєм "
+"ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυ#"
+
+#: enterprise/api/v1/views.py
+#, python-brace-format
+msgid ""
+"{token_email} from {token_enterprise_name} has requested additional codes. "
+"Please reach out to them."
+msgstr ""
+"{token_email} fröm {token_enterprise_name} häs réqüéstéd äddïtïönäl çödés. "
+"Pléäsé réäçh öüt tö thém. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя #"
+
+#: enterprise/api/v1/views.py
+#, python-brace-format
+msgid ""
+"[Enterprise API] Failure in sending e-mail to {token_cs_email} for "
+"{token_email} from {token_enterprise_name}"
+msgstr ""
+"[Éntérprïsé ÀPÌ] Fäïlüré ïn séndïng é-mäïl tö {token_cs_email} för "
+"{token_email} fröm {token_enterprise_name} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя #"
+
 #: enterprise/api_client/discovery.py
 msgid ""
 "To get a Catalog API client, this package must be installed in an Open edX "
@@ -479,14 +706,6 @@ msgid ""
 msgstr ""
 "Tö gét ä Çätälög ÀPÌ çlïént, thïs päçkägé müst ßé ïnställéd ïn än Öpén édX "
 "énvïrönmént. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє#"
-
-#: enterprise/api_client/discovery.py enterprise/api_client/discovery.py
-msgid ""
-"To get a CatalogIntegration object, this package must be installed in an "
-"Open edX environment."
-msgstr ""
-"Tö gét ä ÇätälögÌntégrätïön ößjéçt, thïs päçkägé müst ßé ïnställéd ïn än "
-"Öpén édX énvïrönmént. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢#"
 
 #: enterprise/api_client/discovery.py
 msgid ""
@@ -551,6 +770,33 @@ msgid ""
 msgstr ""
 "Ìf ýöü dö nöt çönsént tö shäré ýöür çöürsé dätä, thät ïnförmätïön mäý ßé "
 "shäréd wïth {enterprise_customer_name}. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕ#"
+
+#: enterprise/constants.py
+#, python-brace-format
+msgid "Welcome to {platform_name}."
+msgstr "Wélçömé tö {platform_name}. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт α#"
+
+#: enterprise/constants.py
+#, python-brace-format
+msgid ""
+"You have left the {strong_start}{enterprise_customer_name}{strong_end} "
+"website and are now on the {platform_name} site. {enterprise_customer_name} "
+"has partnered with {platform_name} to offer you high-quality, always "
+"available learning programs to help you advance your knowledge and career. "
+"{line_break}Please note that {platform_name} has a different "
+"{privacy_policy_link_start}Privacy Policy {privacy_policy_link_end} from "
+"{enterprise_customer_name}."
+msgstr ""
+"Ýöü hävé léft thé {strong_start}{enterprise_customer_name}{strong_end} "
+"wéßsïté änd äré nöw ön thé {platform_name} sïté. {enterprise_customer_name} "
+"häs pärtnéréd wïth {platform_name} tö öffér ýöü hïgh-qüälïtý, älwäýs "
+"äväïläßlé léärnïng prögräms tö hélp ýöü ädvänçé ýöür knöwlédgé änd çäréér. "
+"{line_break}Pléäsé nöté thät {platform_name} häs ä dïfférént "
+"{privacy_policy_link_start}Prïväçý Pölïçý {privacy_policy_link_end} fröm "
+"{enterprise_customer_name}. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя "
+"α∂ιριѕι¢ιηg єłιт, ѕє∂ ∂σ єιυѕмσ∂ тємρσя ιη¢ι∂ι∂υηт υт łαвσяє єт ∂σłσяє мαgηα"
+" αłιqυα. υт єηιм α∂ мιηιм νєηιαм, qυιѕ ησѕтяυ∂ єχєя¢ιтαтιση υłłαм¢σ łαвσяιѕ "
+"ηιѕι υт αłιqυιρ єχ єα ¢σммσ∂σ ¢σηѕєq#"
 
 #: enterprise/constants.py
 msgid ""
@@ -653,12 +899,32 @@ msgstr ""
 #: enterprise/messages.py
 #, python-brace-format
 msgid ""
-"{strong_start}Something happened.{strong_end} {span_start}This course is not"
-" available. Please start over and select a different course.{span_end}"
+"{strong_start}Something happened.{strong_end} {span_start}This course link "
+"is currently invalid. Please reach out to your Administrator for assistance "
+"to this course.{span_end}"
 msgstr ""
-"{strong_start}Söméthïng häppénéd.{strong_end} {span_start}Thïs çöürsé ïs nöt"
-" äväïläßlé. Pléäsé stärt övér änd séléçt ä dïfférént çöürsé.{span_end} "
-"Ⱡ'σяєм ιρѕυм ∂σłσя ѕ#"
+"{strong_start}Söméthïng häppénéd.{strong_end} {span_start}Thïs çöürsé lïnk "
+"ïs çürréntlý ïnvälïd. Pléäsé réäçh öüt tö ýöür Àdmïnïsträtör för ässïstänçé "
+"tö thïs çöürsé.{span_end} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя "
+"α∂ιριѕι¢ιηg єłιт, ѕє∂ ∂σ єιυѕмσ∂ тємρσя ιη¢ι∂ι∂υηт υт łαвσяє єт ∂σłσяє мαgηα"
+" αłιqυα. υт єηιм α∂ мιηιм νєηιαм, qυιѕ ησѕтяυ∂ єχєя¢ιтαтιση υłłαм¢σ łαвσяιѕ "
+"ηιѕι υт αłιqυιρ єχ єα ¢σммσ∂σ ¢σηѕєqυαт. ∂υιѕ αυтє ιяυяє ∂σłσя ιη "
+"яєρяєнєη∂єяιт ιη νσłυρтαтє νєłιт єѕѕє ¢ιłłυм ∂σłσяє єυ ƒυgιαт ηυłłα "
+"ραяιαтυя. єχ¢єρтєυя ѕιηт σ¢¢αє¢αт ¢υρι∂αтαт ηση ρяσι∂єηт, ѕυηт ιη ¢υłρα qυι "
+"σƒƒι¢ια ∂єѕєяυηт мσłłιт αηιм ι∂ єѕт ł#"
+
+#: enterprise/models.py
+msgid "Enterprise Customer Type"
+msgstr "Éntérprïsé Çüstömér Týpé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢ση#"
+
+#: enterprise/models.py
+msgid "Enterprise Customer Types"
+msgstr "Éntérprïsé Çüstömér Týpés Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕ#"
+
+#: enterprise/models.py enterprise/models.py
+msgid "Specifies enterprise customer type."
+msgstr ""
+"Spéçïfïés éntérprïsé çüstömér týpé. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєт#"
 
 #: enterprise/models.py enterprise/models.py
 msgid "Enterprise Customer"
@@ -677,6 +943,14 @@ msgid "Course catalog for the Enterprise Customer."
 msgstr ""
 "Çöürsé çätälög för thé Éntérprïsé Çüstömér. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
 "¢σηѕє¢тєтυя #"
+
+#: enterprise/models.py
+msgid ""
+"Specify whether display the course original price on enterprise course "
+"landing page or not."
+msgstr ""
+"Spéçïfý whéthér dïspläý thé çöürsé örïgïnäl prïçé ön éntérprïsé çöürsé "
+"ländïng pägé ör nöt. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢ση#"
 
 #: enterprise/models.py
 msgid ""
@@ -716,6 +990,26 @@ msgid ""
 msgstr ""
 "Spéçïfïés whéthér tö päss-ßäçk äüdït träçk énröllmént dätä thröügh än "
 "ïntégrätéd çhännél. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕ#"
+
+#: enterprise/models.py
+msgid ""
+"Specifies whether to replace the display of potentially sensitive SSO "
+"usernames with a more generic name, e.g. EnterpriseLearner."
+msgstr ""
+"Spéçïfïés whéthér tö répläçé thé dïspläý öf pöténtïällý sénsïtïvé SSÖ "
+"üsérnämés wïth ä möré générïç nämé, é.g. ÉntérprïséLéärnér. Ⱡ'σ#"
+
+#: enterprise/models.py
+msgid ""
+"Specifies whether the customer is able to assign learners to cohorts upon "
+"enrollment."
+msgstr ""
+"Spéçïfïés whéthér thé çüstömér ïs äßlé tö ässïgn léärnérs tö çöhörts üpön "
+"énröllmént. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
+
+#: enterprise/models.py
+msgid "Customer Type"
+msgstr "Çüstömér Týpé Ⱡ'σяєм ιρѕυм ∂σłσя ѕι#"
 
 #: enterprise/models.py
 msgid ""
@@ -822,7 +1116,7 @@ msgstr ""
 msgid "Enterprise Customer Catalog"
 msgstr "Éntérprïsé Çüstömér Çätälög Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє#"
 
-#: enterprise/models.py
+#: enterprise/models.py enterprise/models.py
 msgid "Enterprise Customer Catalogs"
 msgstr "Éntérprïsé Çüstömér Çätälögs Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
 
@@ -865,8 +1159,44 @@ msgstr ""
 "¢σηѕє¢тєтυя #"
 
 #: enterprise/models.py
+msgid "PGP Encryption Key"
+msgstr "PGP Énçrýptïön Kéý Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт#"
+
+#: enterprise/models.py
+msgid "The key for encryption, if PGP encrypted file is required."
+msgstr ""
+"Thé kéý för énçrýptïön, ïf PGP énçrýptéd fïlé ïs réqüïréd. Ⱡ'σяєм ιρѕυм "
+"∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя α#"
+
+#: enterprise/models.py
+msgid "Data Type"
+msgstr "Dätä Týpé Ⱡ'σяєм ιρѕυм ∂σł#"
+
+#: enterprise/models.py
+msgid "The type of data this report should contain."
+msgstr ""
+"Thé týpé öf dätä thïs répört shöüld çöntäïn. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя #"
+
+#: enterprise/models.py
+msgid "Report Type"
+msgstr "Répört Týpé Ⱡ'σяєм ιρѕυм ∂σłσя #"
+
+#: enterprise/models.py
+msgid "The type this report should be sent as, e.g. CSV."
+msgstr ""
+"Thé týpé thïs répört shöüld ßé sént äs, é.g. ÇSV. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт "
+"αмєт, ¢σηѕє¢тєтυя α#"
+
+#: enterprise/models.py
 msgid "Email"
 msgstr "Émäïl Ⱡ'σяєм ιρѕ#"
+
+#: enterprise/models.py
+msgid "The email(s), one per line, where the report should be sent."
+msgstr ""
+"Thé émäïl(s), öné pér lïné, whéré thé répört shöüld ßé sént. Ⱡ'σяєм ιρѕυм "
+"∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя α#"
 
 #: enterprise/models.py
 msgid "Frequency"
@@ -1001,6 +1331,12 @@ msgstr ""
 "∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя α#"
 
 #: enterprise/models.py
+msgid "Email(s) must be set if the delivery method is email."
+msgstr ""
+"Émäïl(s) müst ßé sét ïf thé délïvérý méthöd ïs émäïl. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт"
+" αмєт, ¢σηѕє¢тєтυя α#"
+
+#: enterprise/models.py
 msgid "Decrypted password must be set if the delivery method is email."
 msgstr ""
 "Déçrýptéd pässwörd müst ßé sét ïf thé délïvérý méthöd ïs émäïl. Ⱡ'σяєм ιρѕυм"
@@ -1024,7 +1360,13 @@ msgstr ""
 "SFTP Fïlé Päth müst ßé sét ïf thé délïvérý méthöd ïs sftp. Ⱡ'σяєм ιρѕυм "
 "∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя α#"
 
-#: enterprise/templates/enterprise/_data_sharing_policy.html
+#: enterprise/models.py
+msgid "Decrypted SFTP password must be set if the delivery method is SFTP."
+msgstr ""
+"Déçrýptéd SFTP pässwörd müst ßé sét ïf thé délïvérý méthöd ïs SFTP. Ⱡ'σяєм "
+"ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя #"
+
+#: enterprise/templates/enterprise/_data_sharing_decline_modal.html
 #: enterprise/views.py enterprise/views.py
 msgid "Close"
 msgstr "Çlösé Ⱡ'σяєм ιρѕ#"
@@ -1215,10 +1557,13 @@ msgstr "Çönsént tö shäré ýöür dätä Ⱡ'σяєм ιρѕυм ∂σłσ�
 
 #: enterprise/views.py
 #, python-brace-format
-msgid "{enterprise_customer_name} would like to know about:"
+msgid ""
+"Per the {start_link}Data Sharing Policy{end_link}, "
+"{bold_start}{enterprise_customer_name}{bold_end} would like to know about:"
 msgstr ""
-"{enterprise_customer_name} wöüld lïké tö knöw äßöüt: Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт "
-"αмєт, ¢σηѕє¢#"
+"Pér thé {start_link}Dätä Shärïng Pölïçý{end_link}, "
+"{bold_start}{enterprise_customer_name}{bold_end} wöüld lïké tö knöw äßöüt: "
+"Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя #"
 
 #: enterprise/views.py
 #, python-brace-format
@@ -1421,22 +1766,6 @@ msgstr ""
 msgid "Return to Top"
 msgstr "Rétürn tö Töp Ⱡ'σяєм ιρѕυм ∂σłσя ѕι#"
 
-#: enterprise/views.py enterprise/views.py
-#, python-brace-format
-msgid "Welcome to {platform_name}."
-msgstr "Wélçömé tö {platform_name}. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт α#"
-
-#: enterprise/views.py enterprise/views.py
-#, python-brace-format
-msgid ""
-"{strong_start}{enterprise_customer_name}{strong_end} has partnered with "
-"{strong_start}{platform_name}{strong_end} to offer you high-quality learning"
-" opportunities from the world's best universities."
-msgstr ""
-"{strong_start}{enterprise_customer_name}{strong_end} häs pärtnéréd wïth "
-"{strong_start}{platform_name}{strong_end} tö öffér ýöü hïgh-qüälïtý léärnïng"
-" öppörtünïtïés fröm thé wörld's ßést ünïvérsïtïés. Ⱡ'σяєм ιρ#"
-
 #: enterprise/views.py
 #, python-brace-format
 msgid ""
@@ -1446,16 +1775,6 @@ msgstr ""
 "Tö äççéss thïs {item}, ýöü müst fïrst çönsént tö shäré ýöür léärnïng "
 "äçhïévéménts wïth {bold_start}{enterprise_customer_name}{bold_end}. Ⱡ'σяєм "
 "ιρѕυм ∂σłσя ѕιт αмєт, ¢#"
-
-#: enterprise/views.py
-#, python-brace-format
-msgid ""
-"Per the {start_link}Data Sharing Policy{end_link}, "
-"{bold_start}{enterprise_customer_name}{bold_end} would like to know about:"
-msgstr ""
-"Pér thé {start_link}Dätä Shärïng Pölïçý{end_link}, "
-"{bold_start}{enterprise_customer_name}{bold_end} wöüld lïké tö knöw äßöüt: "
-"Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тєтυя #"
 
 #: enterprise/views.py
 #, python-brace-format
@@ -1489,9 +1808,34 @@ msgstr "Ìnstrüçtör-Päçéd Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#
 msgid "Self-Paced"
 msgstr "Sélf-Päçéd Ⱡ'σяєм ιρѕυм ∂σłσ#"
 
+#: enterprise/views.py
+msgid "FREE"
+msgstr "FRÉÉ Ⱡ'σяєм ι#"
+
+#: enterprise/views.py
+msgid "Not eligible for a certificate."
+msgstr "Nöt élïgïßlé för ä çértïfïçäté. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
+
+#: enterprise/views.py
+msgid "Earn a verified certificate!"
+msgstr "Éärn ä vérïfïéd çértïfïçäté! Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
+
+#: enterprise/views.py
+#, python-brace-format
+msgid ""
+"Discount provided by {strong_start}{enterprise_customer_name}{strong_end}"
+msgstr ""
+"Dïsçöünt prövïdéd ßý {strong_start}{enterprise_customer_name}{strong_end} "
+"Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
+
 #: enterprise/views.py enterprise/views.py
 msgid "Confirm your course"
 msgstr "Çönfïrm ýöür çöürsé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт,#"
+
+#: enterprise/views.py
+#: integrated_channels/sap_success_factors/exporters/content_metadata.py
+msgid "Starts"
+msgstr "Stärts Ⱡ'σяєм ιρѕυ#"
 
 #: enterprise/views.py
 msgid "View Course Details"
@@ -1504,18 +1848,6 @@ msgstr "Pléäsé séléçt öné: Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт α
 #: enterprise/views.py enterprise/views.py
 msgid "Price"
 msgstr "Prïçé Ⱡ'σяєм ιρѕ#"
-
-#: enterprise/views.py
-msgid "FREE"
-msgstr "FRÉÉ Ⱡ'σяєм ι#"
-
-#: enterprise/views.py
-msgid "Earn a verified certificate!"
-msgstr "Éärn ä vérïfïéd çértïfïçäté! Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
-
-#: enterprise/views.py
-msgid "Not eligible for a certificate."
-msgstr "Nöt élïgïßlé för ä çértïfïçäté. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
 
 #: enterprise/views.py
 msgid "Continue"
@@ -1542,65 +1874,42 @@ msgid "Course Staff"
 msgstr "Çöürsé Stäff Ⱡ'σяєм ιρѕυм ∂σłσя ѕ#"
 
 #: enterprise/views.py
+msgid "{} week"
+msgid_plural "{} weeks"
+msgstr[0] "{} wéék Ⱡ'σяєм ιρѕυм #"
+msgstr[1] "{} wééks Ⱡ'σяєм ιρѕυм ∂#"
+
+#: enterprise/views.py
 #, python-brace-format
-msgid ""
-"Discount provided by {strong_start}{enterprise_customer_name}{strong_end}"
+msgid "{count} Course"
+msgid_plural "{count} Courses"
+msgstr[0] "{count} Çöürsé Ⱡ'σяєм ιρѕυм ∂σłσ#"
+msgstr[1] "{count} Çöürsés Ⱡ'σяєм ιρѕυм ∂σłσя #"
+
+#: enterprise/views.py
+msgid "{}-{} hours per week, per course"
 msgstr ""
-"Dïsçöünt prövïdéd ßý {strong_start}{enterprise_customer_name}{strong_end} "
-"Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
+"{}-{} höürs pér wéék, pér çöürsé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тє#"
+
+#: enterprise/views.py
+msgid "{}-{} weeks per course"
+msgstr "{}-{} wééks pér çöürsé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢#"
 
 #: enterprise/views.py
 msgid "Purchase all unenrolled courses"
 msgstr "Pürçhäsé äll ünénrölléd çöürsés Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢т#"
 
 #: enterprise/views.py
-msgid "Pursue the program"
-msgstr "Pürsüé thé prögräm Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт#"
-
-#: enterprise/views.py
 msgid "enrollment"
 msgstr "énröllmént Ⱡ'σяєм ιρѕυм ∂σłσ#"
 
 #: enterprise/views.py
+msgid "Pursue the program"
+msgstr "Pürsüé thé prögräm Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт#"
+
+#: enterprise/views.py
 msgid "program enrollment"
 msgstr "prögräm énröllmént Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт#"
-
-#: enterprise/views.py
-#, python-brace-format
-msgid "What is an {platform_name} {program_type}?"
-msgstr ""
-"Whät ïs än {platform_name} {program_type}? Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт,#"
-
-#: enterprise/views.py
-#, python-brace-format
-msgid "What is {platform_name}?"
-msgstr "Whät ïs {platform_name}? Ⱡ'σяєм ιρѕυм ∂σłσя ѕ#"
-
-#: enterprise/views.py
-#, python-brace-format
-msgid "Confirm your {item}"
-msgstr "Çönfïrm ýöür {item} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
-
-#: enterprise/views.py
-#, python-brace-format
-msgid "Presented by {organization}"
-msgstr "Préséntéd ßý {organization} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
-
-#: enterprise/views.py
-msgid "Credit- and Certificate-eligible"
-msgstr ""
-"Çrédït- änd Çértïfïçäté-élïgïßlé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тє#"
-
-#: enterprise/views.py
-msgid "Self-paced; courses can be taken in any order"
-msgstr ""
-"Sélf-päçéd; çöürsés çän ßé täkén ïn äný ördér Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
-"¢σηѕє¢тєтυя #"
-
-#: enterprise/views.py
-#, python-brace-format
-msgid "{purchase_action} for"
-msgstr "{purchase_action} för Ⱡ'σяєм ιρѕυм #"
 
 #: enterprise/views.py
 msgid "enrolled"
@@ -1637,32 +1946,47 @@ msgid "Length"
 msgstr "Léngth Ⱡ'σяєм ιρѕυ#"
 
 #: enterprise/views.py
-msgid "{}-{} weeks per course"
-msgstr "{}-{} wééks pér çöürsé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢#"
-
-#: enterprise/views.py
-msgid "{}-{} hours per week, per course"
-msgstr ""
-"{}-{} höürs pér wéék, pér çöürsé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тє#"
-
-#: enterprise/views.py
 msgid "Program not eligible for one-click purchase."
 msgstr ""
 "Prögräm nöt élïgïßlé för öné-çlïçk pürçhäsé. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
 "¢σηѕє¢тєтυя #"
 
 #: enterprise/views.py
-msgid "{} week"
-msgid_plural "{} weeks"
-msgstr[0] "{} wéék Ⱡ'σяєм ιρѕυм #"
-msgstr[1] "{} wééks Ⱡ'σяєм ιρѕυм ∂#"
+#, python-brace-format
+msgid "What is an {platform_name} {program_type}?"
+msgstr ""
+"Whät ïs än {platform_name} {program_type}? Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт,#"
 
 #: enterprise/views.py
 #, python-brace-format
-msgid "{count} Course"
-msgid_plural "{count} Courses"
-msgstr[0] "{count} Çöürsé Ⱡ'σяєм ιρѕυм ∂σłσ#"
-msgstr[1] "{count} Çöürsés Ⱡ'σяєм ιρѕυм ∂σłσя #"
+msgid "What is {platform_name}?"
+msgstr "Whät ïs {platform_name}? Ⱡ'σяєм ιρѕυм ∂σłσя ѕ#"
+
+#: enterprise/views.py
+#, python-brace-format
+msgid "Presented by {organization}"
+msgstr "Préséntéd ßý {organization} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
+
+#: enterprise/views.py
+#, python-brace-format
+msgid "Confirm your {item}"
+msgstr "Çönfïrm ýöür {item} Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
+
+#: enterprise/views.py
+msgid "Credit- and Certificate-eligible"
+msgstr ""
+"Çrédït- änd Çértïfïçäté-élïgïßlé Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тє#"
+
+#: enterprise/views.py
+msgid "Self-paced; courses can be taken in any order"
+msgstr ""
+"Sélf-päçéd; çöürsés çän ßé täkén ïn äný ördér Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя #"
+
+#: enterprise/views.py
+#, python-brace-format
+msgid "{purchase_action} for"
+msgstr "{purchase_action} för Ⱡ'σяєм ιρѕυм #"
 
 #: integrated_channels/integrated_channel/management/commands/__init__.py
 msgid ""
@@ -1723,14 +2047,28 @@ msgstr ""
 "αмєт, ¢σηѕє¢тєтυя #"
 
 #: integrated_channels/integrated_channel/models.py
+#: integrated_channels/xapi/models.py
 msgid "Enterprise Customer associated with the configuration."
 msgstr ""
 "Éntérprïsé Çüstömér ässöçïätéd wïth thé çönfïgürätïön. Ⱡ'σяєм ιρѕυм ∂σłσя "
 "ѕιт αмєт, ¢σηѕє¢тєтυя α#"
 
 #: integrated_channels/integrated_channel/models.py
+#: integrated_channels/xapi/models.py
 msgid "Is this configuration active?"
 msgstr "Ìs thïs çönfïgürätïön äçtïvé? Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢#"
+
+#: integrated_channels/integrated_channel/models.py
+msgid ""
+"The maximum number of data items to transmit to the integrated channel with "
+"each request."
+msgstr ""
+"Thé mäxïmüm nümßér öf dätä ïtéms tö tränsmït tö thé ïntégrätéd çhännél wïth "
+"éäçh réqüést. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕ#"
+
+#: integrated_channels/sap_success_factors/exporters/content_metadata.py
+msgid "Enrollment Closed"
+msgstr "Énröllmént Çlöséd Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмє#"
 
 #: integrated_channels/sap_success_factors/models.py
 msgid "OAuth client identifier."
@@ -1759,3 +2097,25 @@ msgstr "ÖÀüth çlïént séçrét. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт
 msgid "Type of SAP User (admin or user)."
 msgstr ""
 "Týpé öf SÀP Ûsér (ädmïn ör üsér). Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, ¢σηѕє¢тє#"
+
+#: integrated_channels/sap_success_factors/models.py
+msgid "A comma-separated list of additional locales."
+msgstr ""
+"À çömmä-sépärätéd lïst öf äddïtïönäl löçälés. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт, "
+"¢σηѕє¢тєтυя #"
+
+#: integrated_channels/xapi/models.py
+msgid "Version of xAPI."
+msgstr "Vérsïön öf xÀPÌ. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
+
+#: integrated_channels/xapi/models.py
+msgid "URL of the LRS."
+msgstr "ÛRL öf thé LRS. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт α#"
+
+#: integrated_channels/xapi/models.py
+msgid "Key of xAPI LRS."
+msgstr "Kéý öf xÀPÌ LRS. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αм#"
+
+#: integrated_channels/xapi/models.py
+msgid "secret of xAPI LRS."
+msgstr "séçrét öf xÀPÌ LRS. Ⱡ'σяєм ιρѕυм ∂σłσя ѕιт αмєт,#"
