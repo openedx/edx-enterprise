@@ -22,6 +22,11 @@ Unreleased
 [1.1.2] - 2018-12-12
 ---------------------
 
+* Upgrade django-simple-history required version
+
+[1.1.2] - 2018-12-12
+---------------------
+
 * Update EnterpriseCustomer model to introduce customer type field
 
 [1.1.1] - 2018-12-11

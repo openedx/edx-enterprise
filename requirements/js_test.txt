@@ -21,6 +21,6 @@ portend==2.3              # via cherrypy
 pytz==2018.7              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.6.0           # via jasmine
-six==1.11.0               # via cheroot, cherrypy, jasmine, more-itertools, tempora
+six==1.12.0               # via cheroot, cherrypy, jasmine, more-itertools, tempora
 tempora==1.14             # via portend
 zc.lockfile==1.4          # via cherrypy
