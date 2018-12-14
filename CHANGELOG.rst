@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.1.3] - 2018-12-18
+---------------------
+
+*  Add option on EnterpriseCustomer for displaying code management in portal
+
 [1.1.2] - 2018-12-12
 ---------------------
 
