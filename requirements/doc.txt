@@ -7,7 +7,6 @@
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 alabaster==0.7.12         # via sphinx
 amqp==1.4.9               # via kombu
-analytics-python==1.1.0
 aniso8601==4.0.1
 anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0        # via cryptography
@@ -42,48 +41,47 @@ edx-django-utils==1.0.1   # via edx-drf-extensions
 edx-drf-extensions==2.0.0
 edx-opaque-keys==0.4.0
 edx-rest-api-client==1.7.1
-edx-sphinx-theme==1.3.0
+edx-sphinx-theme==1.4.0
 enum34==1.1.6             # via cryptography
-event-tracking==0.2.4
 flaky==3.3.0
 future==0.17.1            # via pyjwkest
 html5lib==0.999
-idna==2.7                 # via cryptography
+idna==2.8                 # via cryptography
 imagesize==1.1.0          # via sphinx
-inflect==1.0.1            # via jinja2-pluralize
+inflect==2.1.0            # via jinja2-pluralize
 ipaddress==1.0.22         # via cryptography
 jinja2-pluralize==0.3.0   # via diff-cover
 jinja2==2.10              # via diff-cover, jinja2-pluralize, sphinx
 jsondiff==1.1.1
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
-markupsafe==1.0           # via jinja2
-newrelic==4.4.1.104       # via edx-django-utils
+markupsafe==1.1.0         # via jinja2
+newrelic==4.8.0.110       # via edx-django-utils
 packaging==18.0           # via sphinx
 path.py==8.2.1
-pbr==5.1.0                # via stevedore
+pbr==5.1.1                # via stevedore
 pillow==3.4
 pockets==0.7.2            # via sphinxcontrib-napoleon
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
 pycparser==2.19           # via cffi
-pycryptodomex==3.7.0      # via pyjwkest
-pygments==2.2.0           # via diff-cover, readme-renderer, sphinx
+pycryptodomex==3.7.2      # via pyjwkest
+pygments==2.3.0           # via diff-cover, readme-renderer, sphinx
 pyjwkest==1.3.2           # via edx-drf-extensions
-pyjwt==1.6.4              # via djangorestframework-jwt, edx-rest-api-client
-pymongo==3.7.2            # via edx-opaque-keys, event-tracking
+pyjwt==1.7.0              # via djangorestframework-jwt, edx-rest-api-client
+pymongo==3.7.2            # via edx-opaque-keys
 pyparsing==2.3.0          # via packaging
 python-dateutil==2.4.0
 pytz==2016.10
 readme_renderer==0.7.0
 requests==2.9.1
 rest-condition==1.0.3     # via edx-drf-extensions
-restructuredtext-lint==1.1.3  # via doc8
+restructuredtext-lint==1.2.1  # via doc8
 semantic-version==2.6.0   # via edx-drf-extensions
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-six==1.11.0               # via analytics-python, bleach, cryptography, diff-cover, doc8, edx-drf-extensions, edx-opaque-keys, edx-sphinx-theme, html5lib, packaging, pockets, pyjwkest, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
+six==1.11.0               # via bleach, cryptography, diff-cover, doc8, edx-drf-extensions, edx-opaque-keys, edx-sphinx-theme, html5lib, packaging, pockets, pyjwkest, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.8.1
+sphinx==1.8.2
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.1.0  # via sphinx
 stevedore==1.30.0         # via doc8, edx-opaque-keys

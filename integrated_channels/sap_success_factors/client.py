@@ -5,14 +5,18 @@ Client for connecting to SAP SuccessFactors.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
+import logging
 import time
 
 import requests
+from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+LOGGER = logging.getLogger(__name__)
 
 
 class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable=abstract-method
@@ -235,3 +239,76 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             self._create_session()
         response = self.session.post(url, data=payload)
         return response.status_code, response.text
+
+    def get_inactive_sap_learners(self):
+        """
+        Make a GET request using the session object to a SuccessFactors endpoint for inactive learners.
+
+        Example:
+            sap_search_student_url: "/learning/odatav4/searchStudent/v1/Students?$filter=criteria/isActive eq False"
+            SAP API response: {
+                u'@odata.metadataEtag': u'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
+                u'value': [
+                    {
+                        u'studentID': u'admint6',
+                        u'firstName': u'Compensation',
+                        u'profileStatus': u'ACTIVE',
+                        u'lastName': u'Admin',
+                        u'personExternalID': u'admint6',
+                        u'emailAddr': u'',
+                        u'notActive': u'yes',
+                        u'termDate': None
+                    },
+                    {
+                        u'studentID': u'adminsap1',
+                        u'firstName': u'SAP1',
+                        u'profileStatus': u'ACTIVE',
+                        u'lastName': u'Administrator',
+                        u'personExternalID': u'adminsap1',
+                        u'emailAddr': u'',
+                        u'notActive': u'yes',
+                        u'termDate': None
+                    }
+                ]
+            }
+
+        Returns: List of inactive learners data
+        [
+            {
+                u'studentID': u'admint6'
+            },
+            {
+                u'studentID': u'adminsap1'
+            }
+        ]
+        """
+        now = datetime.datetime.utcnow()
+        if now >= self.expires_at:
+            # Create a new session with a valid token
+            self.session.close()
+            self._create_session()
+
+        sap_search_student_url = '{sapsf_base_url}/{search_students_path}?$filter={search_filter}'.format(
+            sapsf_base_url=self.enterprise_configuration.sapsf_base_url.rstrip('/'),
+            search_students_path=self.global_sap_config.search_student_api_path.rstrip('/'),
+            search_filter='criteria/isActive eq False&$select=studentID',
+        )
+        try:
+            response = self.session.get(sap_search_student_url)
+            sap_inactive_learners = response.json()
+        except (ConnectionError, Timeout):
+            LOGGER.warning(
+                'Unable to fetch inactive learners from SAP searchStudent API with url '
+                '"{%s}".', sap_search_student_url,
+            )
+            return None
+
+        if 'error' in sap_inactive_learners:
+            LOGGER.warning(
+                'SAP searchStudent API returned response with error message "%s" and with error code "%s".',
+                sap_inactive_learners['error'].get('message'),
+                sap_inactive_learners['error'].get('code'),
+            )
+            return None
+
+        return sap_inactive_learners['value']

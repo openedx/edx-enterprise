@@ -84,14 +84,14 @@ class EnterpriseCustomerManager(models.Manager):
 @python_2_unicode_compatible
 class EnterpriseCustomerType(TimeStampedModel):
     """
-    Enterprise Customer Types are used to differentiate Enterprise learners from Partners.
+    Enterprise Customer Types are used to differentiate Enterprise learners.
     """
 
     class Meta:
         app_label = 'enterprise'
         verbose_name = _('Enterprise Customer Type')
         verbose_name_plural = _('Enterprise Customer Types')
-        ordering = ['created']
+        ordering = ['name']
 
     name = models.CharField(
         max_length=25,
