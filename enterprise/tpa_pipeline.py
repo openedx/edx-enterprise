@@ -76,7 +76,7 @@ def handle_enterprise_logistration(backend, user, **kwargs):
 
 def get_user_from_social_auth(tpa_provider, tpa_username):
     """
-    Find the LMS user from the UserSocialAuth model by the provide `tpa_username`.
+    Find the LMS user from the LMS model `UserSocialAuth`.
 
     Arguments:
         tpa_provider (str): Slug for the third party auth

@@ -298,7 +298,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             sap_inactive_learners = response.json()
         except (ConnectionError, Timeout):
             LOGGER.warning(
-                'Unable to fetch inactive learners from SAP searchStudent API.',
+                'Unable to fetch inactive learners from SAP searchStudent API with url '
+                '"{%s}".', sap_search_student_url,
             )
             return None
 

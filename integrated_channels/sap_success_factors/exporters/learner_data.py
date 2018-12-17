@@ -10,7 +10,7 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.models import EnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
 from enterprise.utils import parse_course_key
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
@@ -102,9 +102,18 @@ class SapSuccessFactorsLearnerManger(object):
         tpa_provider = enterprise_customer.enterprise_customer_identity_provider.provider_id
         for sap_inactive_learner in sap_inactive_learners:
             social_auth_user = get_user_from_social_auth(tpa_provider, sap_inactive_learner['studentID'])
-            if social_auth_user:
+            if not social_auth_user:
+                continue
+
+            try:
                 # Unlink user email from related Enterprise Customer
                 EnterpriseCustomerUser.objects.unlink_user(
                     enterprise_customer=enterprise_customer,
                     user_email=social_auth_user.email,
+                )
+            except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
+                LOGGER.info(
+                    'Email {%s} is not associated with Enterprise Customer {%s}',
+                    social_auth_user.email,
+                    enterprise_customer.name
                 )
