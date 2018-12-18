@@ -105,6 +105,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "replace_sensitive_sso_username",
                 "enable_autocohorting",
                 "customer_type",
+                "enable_portal_code_management_screen",
             ]
         ),
         (

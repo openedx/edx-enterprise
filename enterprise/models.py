@@ -248,6 +248,11 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    enable_portal_code_management_screen = models.BooleanField(  # pylint: disable=invalid-name
+        default=False,
+        help_text=_("Specifies whether to allow access to the code management screen in the admin portal.")
+    )
+
     @property
     def identity_provider(self):
         """

@@ -698,7 +698,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': None,
-                'replace_sensitive_sso_username': False,
+                'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -727,7 +727,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False, 'identity_provider': None,
-                    'replace_sensitive_sso_username': False,
+                    'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },
@@ -781,7 +781,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
-                'replace_sensitive_sso_username': False,
+                'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -915,7 +915,7 @@ class TestEnterpriseAPIViews(APITest):
         enterprise_customer_data = {
             'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
             'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
-            'enforce_data_sharing_consent': 'at_enrollment',
+            'enforce_data_sharing_consent': 'at_enrollment', 'enable_portal_code_management_screen': True,
             'site__domain': 'example.com', 'site__name': 'example.com',
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
@@ -949,7 +949,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': None,
-                'replace_sensitive_sso_username': False,
+                'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': True,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
