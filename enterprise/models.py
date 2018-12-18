@@ -1263,7 +1263,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         updated_content_filter = self.content_filter.copy()
         updated_content_filter[content_id_field_name] = content_id_values
-        results = CourseCatalogApiServiceClient().get_search_results(updated_content_filter) or []
+        response = CourseCatalogApiServiceClient().get_catalog_results(updated_content_filter, traverse_pagination=True)
+        results = response.get('results', [])
         return {x[content_id_field_name] for x in results}
 
     def contains_courses(self, content_ids):
@@ -1278,7 +1279,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         content_ids_in_catalog = self.content_filter_ids
         if not content_ids_in_catalog:
-            content_ids_in_catalog = self._filter_members('key', course_keys)
+            content_ids_in_catalog = self._filter_members('key', list(course_keys))
 
         return set(content_ids).issubset(content_ids_in_catalog) or course_keys.issubset(content_ids_in_catalog)
 
