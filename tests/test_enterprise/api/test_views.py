@@ -1188,8 +1188,8 @@ class TestEnterpriseAPIViews(APITest):
         assert response == expected_result
 
     @ddt.data(
-        (False, {'course_run_ids': ['fake1', 'fake2']}, None),
-        (False, {'program_uuids': ['fake1', 'fake2']}, None),
+        (False, {'course_run_ids': ['fake1', 'fake2']}, {}),
+        (False, {'program_uuids': ['fake1', 'fake2']}, {}),
         (
             True,
             {
@@ -1198,7 +1198,12 @@ class TestEnterpriseAPIViews(APITest):
                     fake_catalog_api.FAKE_COURSE_RUN2['key']
                 ]
             },
-            [fake_catalog_api.FAKE_COURSE_RUN, fake_catalog_api.FAKE_COURSE_RUN2]
+            {
+                'results': [
+                    fake_catalog_api.FAKE_COURSE_RUN,
+                    fake_catalog_api.FAKE_COURSE_RUN2
+                ]
+            }
         ),
         (
             True,
@@ -1208,7 +1213,12 @@ class TestEnterpriseAPIViews(APITest):
                     fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
             },
-            [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1, fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2]
+            {
+                'results': [
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2
+                ]
+            }
         ),
     )
     @ddt.unpack
@@ -1227,7 +1237,7 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(return_value=search_results)
+            get_catalog_results=mock.Mock(return_value=search_results)
         )
 
         response = self.client.get(ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))
@@ -1282,7 +1292,7 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(return_value=None)
+            get_catalog_results=mock.Mock(return_value={})
         )
 
         response = self.client.get(ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))
@@ -1360,12 +1370,12 @@ class TestEnterpriseAPIViews(APITest):
                 user_id=self.user.id,
                 enterprise_customer=enterprise_customer
             )
-        search_results = None
+        search_results = {}
         if is_course_run_in_catalog:
-            search_results = [fake_catalog_api.FAKE_COURSE_RUN]
+            search_results = {'results': [fake_catalog_api.FAKE_COURSE_RUN]}
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(return_value=search_results),
+            get_catalog_results=mock.Mock(return_value=search_results),
             get_course_run=mock.Mock(return_value=mocked_course_run),
         )
         response = self.client.get(ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT)
@@ -1424,12 +1434,12 @@ class TestEnterpriseAPIViews(APITest):
                 user_id=self.user.id,
                 enterprise_customer=enterprise_customer
             )
-        search_results = None
+        search_results = {}
         if is_course_in_catalog:
-            search_results = [fake_catalog_api.FAKE_COURSE]
+            search_results = {'results': [fake_catalog_api.FAKE_COURSE]}
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(return_value=search_results),
+            get_catalog_results=mock.Mock(return_value=search_results),
             get_course_details=mock.Mock(return_value=mocked_course),
         )
         response = self.client.get(ENTERPRISE_CATALOGS_COURSE_ENDPOINT)
@@ -1496,12 +1506,12 @@ class TestEnterpriseAPIViews(APITest):
                 uuid=FAKE_UUIDS[1],
                 enterprise_customer=enterprise_customer,
             )
-        search_results = None
+        search_results = {}
         if is_program_in_catalog:
-            search_results = [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1]
+            search_results = {'results': [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1]}
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(return_value=search_results),
+            get_catalog_results=mock.Mock(return_value=search_results),
             get_program_by_uuid=mock.Mock(return_value=mocked_program),
         )
         response = self.client.get(ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT)
@@ -1708,8 +1718,8 @@ class TestEnterpriseAPIViews(APITest):
         )
 
     @ddt.data(
-        (False, {'course_run_ids': ['fake1', 'fake2']}, None),
-        (False, {'program_uuids': ['fake1', 'fake2']}, None),
+        (False, {'course_run_ids': ['fake1', 'fake2']}, {}),
+        (False, {'program_uuids': ['fake1', 'fake2']}, {}),
         (
             True,
             {
@@ -1718,7 +1728,12 @@ class TestEnterpriseAPIViews(APITest):
                     fake_catalog_api.FAKE_COURSE_RUN2['key']
                 ]
             },
-            [fake_catalog_api.FAKE_COURSE_RUN, fake_catalog_api.FAKE_COURSE_RUN2]
+            {
+                'results': [
+                    fake_catalog_api.FAKE_COURSE_RUN,
+                    fake_catalog_api.FAKE_COURSE_RUN2
+                ]
+            }
         ),
         (
             True,
@@ -1728,7 +1743,12 @@ class TestEnterpriseAPIViews(APITest):
                     fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2['uuid']
                 ]
             },
-            [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1, fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2]
+            {
+                'results': [
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1,
+                    fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_2
+                ]
+            }
         ),
     )
     @ddt.unpack
@@ -1745,7 +1765,7 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         mock_catalog_api_client.return_value = mock.Mock(
-            get_search_results=mock.Mock(return_value=search_results)
+            get_catalog_results=mock.Mock(return_value=search_results)
         )
 
         response = self.client.get(ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT + '?' + urlencode(query_params, True))

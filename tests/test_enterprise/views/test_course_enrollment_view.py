@@ -305,8 +305,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enabled_course_modes=enabled_course_modes,
         )
         catalog_api_client_models_mock.return_value = mock.Mock(
-            get_search_results=mock.Mock(
-                return_value=[fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]
+            get_catalog_results=mock.Mock(
+                return_value={'results': [fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]}
             ),
             get_course_and_course_run=mock.Mock(
                 return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
@@ -496,8 +496,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enabled_course_modes=['invalid-course-mode'],
         )
         catalog_api_client_models_mock.return_value = mock.Mock(
-            get_search_results=mock.Mock(
-                return_value=[fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]
+            get_catalog_results=mock.Mock(
+                return_value={'results': [fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]}
             ),
             get_course_and_course_run=mock.Mock(
                 return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
@@ -1463,8 +1463,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             enabled_course_modes=['audit', 'professional'],
         )
         catalog_api_client_models_mock.return_value = mock.Mock(
-            get_search_results=mock.Mock(
-                return_value=[fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]
+            get_catalog_results=mock.Mock(
+                return_value={'results': [fake_catalog_api.FAKE_SEARCH_ALL_COURSE_RESULT]}
             ),
             get_course_and_course_run=mock.Mock(
                 return_value=(fake_catalog_api.FAKE_COURSE, fake_catalog_api.FAKE_COURSE_RUN)
