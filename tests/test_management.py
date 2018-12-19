@@ -548,8 +548,8 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
         responses.add(
             responses.GET,
             urljoin(lms_api.GradesApiClient.API_BASE_URL,
-                    "course_grade/{course}/users/?username={user}".format(course=testcase.course_id,
-                                                                          user=user.username)),
+                    "courses/{course}/?username={user}".format(course=testcase.course_id,
+                                                               user=user.username)),
             match_querystring=True,
             json=[dict(
                 username=user.username,

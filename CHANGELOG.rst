@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+
+[1.2.0] - 2018-12-19
+---------------------
+
+* Updating the course grade api url called in lms api
+ 
 [1.1.4] - 2018-12-19
 ---------------------
 

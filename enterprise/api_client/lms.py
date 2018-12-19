@@ -405,7 +405,7 @@ class GradesApiClient(JwtLmsApiClient):
     Note that this API client requires a JWT token, and so it keeps its token alive.
     """
 
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/grades/v0/'
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/grades/v1/'
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token
@@ -432,7 +432,7 @@ class GradesApiClient(JwtLmsApiClient):
         * ``letter_grade``: A letter grade as defined in grading_policy (e.g. 'A' 'B' 'C' for 6.002x) or None
 
         """
-        results = self.client.course_grade(course_id).users().get(username=username)
+        results = self.client.courses(course_id).get(username=username)
         for row in results:
             if row.get('username') == username:
                 return row
