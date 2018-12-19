@@ -119,7 +119,7 @@ class CourseCatalogApiClient(object):
             many=False,
         )
 
-    def get_catalog_results(self, content_filter_query, query_params):
+    def get_catalog_results(self, content_filter_query, query_params=None):
         """
         Return results from the discovery service's search/all endpoint.
 
@@ -130,6 +130,8 @@ class CourseCatalogApiClient(object):
         Returns:
             dict: The paginated response.
         """
+        query_params = query_params or {}
+
         response = {
             'next': None,
             'previous': None,
