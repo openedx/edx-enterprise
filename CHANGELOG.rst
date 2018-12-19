@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.1.4] - 2018-12-19
+---------------------
+
+* Upgrade django-simple-history required version
+
 [1.1.3] - 2018-12-18
 ---------------------
 
