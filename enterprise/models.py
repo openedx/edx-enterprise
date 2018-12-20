@@ -1263,7 +1263,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         updated_content_filter = self.content_filter.copy()
         updated_content_filter[content_id_field_name] = content_id_values
-        response = CourseCatalogApiServiceClient().get_catalog_results(updated_content_filter)
+        response = CourseCatalogApiServiceClient().get_catalog_results(updated_content_filter, traverse_pagination=True)
         results = response.get('results', [])
         return {x[content_id_field_name] for x in results}
 
