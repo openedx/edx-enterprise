@@ -98,27 +98,6 @@ class CourseCatalogApiClient(object):
         )
         self.client = course_discovery_api_client(user, self.catalog_url)
 
-    def get_search_results(self, querystring=None, traverse_pagination=True):
-        """
-        Return results from the discovery service's search/all endpoint.
-
-        Arguments:
-            querystring (dict): Querystring parameters used to filter search results.
-            traverse_pagination (bool): True to return all results, False to return the paginated response.
-                                        Defaults to True.
-        Returns:
-            list or dict: The paginated response dict if traverse_pagination is False, otherwise the extracted
-                          results list.
-
-        """
-        return self._load_data(
-            self.SEARCH_ALL_ENDPOINT,
-            default=[],
-            querystring=querystring,
-            traverse_pagination=traverse_pagination,
-            many=False,
-        )
-
     @staticmethod
     def traverse_pagination(response, endpoint, content_filter_query, query_params):
         """
@@ -134,13 +113,11 @@ class CourseCatalogApiClient(object):
             list: all the results returned by the API.
         """
         results = response.get('results', [])
-        # setting page_size to 100 to minimize the http calls to discovery service
-        page_size = query_params.get('page_size', 100)
 
         page = 1
         while response.get('next'):
             page += 1
-            response = endpoint().post(content_filter_query, **dict(query_params, page=page, page_size=page_size))
+            response = endpoint().post(content_filter_query, **dict(query_params, page=page))
             results += response.get('results', [])
 
         return results
