@@ -113,13 +113,11 @@ class CourseCatalogApiClient(object):
             list: all the results returned by the API.
         """
         results = response.get('results', [])
-        # setting page_size to 100 to minimize the http calls to discovery service
-        page_size = query_params.get('page_size', 100)
 
         page = 1
         while response.get('next'):
             page += 1
-            response = endpoint().post(content_filter_query, **dict(query_params, page=page, page_size=page_size))
+            response = endpoint().post(content_filter_query, **dict(query_params, page=page))
             results += response.get('results', [])
 
         return results
