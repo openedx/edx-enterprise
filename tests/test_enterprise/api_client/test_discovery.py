@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` course catalogs api module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import json
 import logging
 import unittest
 
@@ -573,6 +574,56 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
             query_params={'page': 2}
         )
         assert actual_result == response_dict
+
+    @responses.activate
+    def test_get_catalog_results_with_traverse_pagination(self):
+        """
+        Verify `get_catalog_results` of CourseCatalogApiClient works as expected with traverse_pagination=True.
+        """
+        content_filter_query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        response_dict = {
+            'next': 'next',
+            'previous': None,
+            'results': [{
+                'enterprise_id': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
+                'catalog_id': 1111,
+                'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
+                'aggregation_key': 'course:edX+DemoX',
+                'content_type': 'course',
+                'title': 'edX Demonstration Course',
+            }],
+        }
+        def request_callback(request):
+            payload = json.loads(request.body)
+            response = response_dict
+            if 'page=2' in request.url:
+                response = dict(response, next=None)
+            return (200, {}, json.dumps(response))
+
+        responses.add_callback(
+            responses.POST,
+            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
+            callback=request_callback,
+            content_type='application/json',
+        )
+        responses.add_callback(
+            responses.POST,
+            url='{}?{}'.format(urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT), '?page=2&page_size=100'),
+            callback=request_callback,
+            content_type='application/json',
+        )
+
+        recieved_response = self.api.get_catalog_results(
+            content_filter_query=content_filter_query,
+            traverse_pagination=True
+        )
+        complete_response = {
+            'next': None,
+            'previous': None,
+            'results': response_dict['results'] * 2
+        }
+
+        assert recieved_response == complete_response
 
     @responses.activate
     def test_get_catalog_results_with_exception(self):

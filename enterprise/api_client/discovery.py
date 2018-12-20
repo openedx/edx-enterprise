@@ -119,19 +119,46 @@ class CourseCatalogApiClient(object):
             many=False,
         )
 
-    def get_catalog_results(self, content_filter_query, query_params=None):
+    @staticmethod
+    def traverse_pagination(response, endpoint, content_filter_query, query_params):
+        """
+        Traverse a paginated API response and extracts and concatenates "results" returned by API.
+
+        Arguments:
+            response (dict): API response object.
+            endpoint (Slumber.Resource): API endpoint object.
+            content_filter_query (dict): query parameters used to filter catalog results.
+            query_params (dict): query parameters used to paginate results.
+
+        Returns:
+            list: all the results returned by the API.
+        """
+        results = response.get('results', [])
+        # setting page_size to 100 to minimize the http calls to discovery service
+        page_size = query_params.get('page_size', 100)
+
+        page = 1
+        while response.get('next'):
+            page += 1
+            response = endpoint().post(content_filter_query, **dict(query_params, page=page, page_size=page_size))
+            results += response.get('results', [])
+
+        return results
+
+    def get_catalog_results(self, content_filter_query, query_params=None, traverse_pagination=False):
         """
         Return results from the discovery service's search/all endpoint.
 
         Arguments:
             content_filter_query (dict): query parameters used to filter catalog results.
             query_params (dict): query parameters used to paginate results.
+            traverse_pagination (bool): True to return all results, False to return the paginated response.
+                                        Defaults to False.
 
         Returns:
-            dict: The paginated response.
+            dict: Paginated response or all the records.
         """
         query_params = query_params or {}
-
         response = {
             'next': None,
             'previous': None,
@@ -141,6 +168,9 @@ class CourseCatalogApiClient(object):
         try:
             endpoint = getattr(self.client, self.SEARCH_ALL_ENDPOINT)
             response = endpoint().post(data=content_filter_query, **query_params)
+            if traverse_pagination:
+                response['results'] = self.traverse_pagination(response, endpoint, content_filter_query, query_params)
+                response['next'] = response['previous'] = None
         except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(
                 'Failed to retrieve data from the catalog API. content -- [%s]',
