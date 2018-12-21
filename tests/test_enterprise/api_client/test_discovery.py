@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` course catalogs api module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import json
 import logging
 import unittest
 
@@ -75,28 +76,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         }
 
     _make_run = _make_course_run.__func__  # unwrapping to use within class definition
-
-    def test_get_search_results(self):
-        """
-        Verify get_search_results of CourseCatalogApiClient works as expected.
-        """
-        querystring = 'very'
-        response_dict = {"very": "complex", "json": {"with": " nested object"}}
-        self.get_data_mock.return_value = response_dict
-        actual_result = self.api.get_search_results(querystring=querystring)
-        assert self.get_data_mock.call_count == 1
-        resource, resource_id = self._get_important_parameters(self.get_data_mock)
-        assert resource == CourseCatalogApiClient.SEARCH_ALL_ENDPOINT
-        assert resource_id is None
-        assert actual_result == response_dict
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_search_results_empty_response(self, response):
-        """
-        Verify get_search_results of CourseCatalogApiClient works as expected for empty responses.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_search_results(querystring='querystring') == []
 
     def test_get_all_catalogs(self):
         """
@@ -573,6 +552,59 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
             query_params={'page': 2}
         )
         assert actual_result == response_dict
+
+    @responses.activate
+    def test_get_catalog_results_with_traverse_pagination(self):
+        """
+        Verify `get_catalog_results` of CourseCatalogApiClient works as expected with traverse_pagination=True.
+        """
+        content_filter_query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        response_dict = {
+            'next': 'next',
+            'previous': None,
+            'results': [{
+                'enterprise_id': 'a9e8bb52-0c8d-4579-8496-1a8becb0a79c',
+                'catalog_id': 1111,
+                'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
+                'aggregation_key': 'course:edX+DemoX',
+                'content_type': 'course',
+                'title': 'edX Demonstration Course',
+            }],
+        }
+
+        def request_callback(request):
+            """
+            Mocked callback for POST request to search/all endpoint.
+            """
+            response = response_dict
+            if 'page=2' in request.url:
+                response = dict(response, next=None)
+            return (200, {}, json.dumps(response))
+
+        responses.add_callback(
+            responses.POST,
+            url=urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT),
+            callback=request_callback,
+            content_type='application/json',
+        )
+        responses.add_callback(
+            responses.POST,
+            url='{}?{}'.format(urljoin(self.api.catalog_url, self.api.SEARCH_ALL_ENDPOINT), '?page=2&page_size=100'),
+            callback=request_callback,
+            content_type='application/json',
+        )
+
+        recieved_response = self.api.get_catalog_results(
+            content_filter_query=content_filter_query,
+            traverse_pagination=True
+        )
+        complete_response = {
+            'next': None,
+            'previous': None,
+            'results': response_dict['results'] * 2
+        }
+
+        assert recieved_response == complete_response
 
     @responses.activate
     def test_get_catalog_results_with_exception(self):

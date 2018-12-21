@@ -190,7 +190,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         """
         mock_catalog_api = mock_catalog_api_class.return_value
         mock_catalog_api.is_course_in_catalog.return_value = False
-        mock_catalog_api.get_search_results.return_value = [fake_catalog_api.FAKE_COURSE_RUN]
+        mock_catalog_api.get_catalog_results.return_value = {'results': [fake_catalog_api.FAKE_COURSE_RUN]}
 
         # Test with no discovery service catalog.
         enterprise_customer = factories.EnterpriseCustomerFactory(catalog=None)
@@ -203,7 +203,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
 
         # Test when EnterpriseCustomerCatalogs do not contain the course run.
-        mock_catalog_api.get_search_results.return_value = None
+        mock_catalog_api.get_catalog_results.return_value = {}
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
 
