@@ -14,6 +14,22 @@ Change Log
 Unreleased
 ----------
 
+
+[1.2.1] - 2018-12-21
+---------------------
+
+* Handle /search/all/ endpoint large catalog queries to discovery through HTTP POST
+
+[1.2.0] - 2018-12-19
+---------------------
+
+* Updating the course grade api url called in lms api
+
+[1.1.4] - 2018-12-19
+---------------------
+
+* Upgrade django-simple-history required version
+
 [1.1.3] - 2018-12-18
 ---------------------
 

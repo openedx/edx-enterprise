@@ -597,7 +597,7 @@ def test_get_course_grades_not_found():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
-        _url("course_grades", "course_grade/{course}/users/?username={user}".format(course=course_id, user=username)),
+        _url("course_grades", "courses/{course}/?username={user}".format(course=course_id, user=username)),
         match_querystring=True,
         status=404
     )
@@ -620,7 +620,7 @@ def test_get_course_grade_no_results():
     }]
     responses.add(
         responses.GET,
-        _url("course_grades", "course_grade/{course}/users/?username={user}".format(course=course_id, user=username)),
+        _url("course_grades", "courses/{course}/?username={user}".format(course=course_id, user=username)),
         match_querystring=True,
         json=expected_response,
     )
@@ -643,7 +643,7 @@ def test_get_course_grade():
     }]
     responses.add(
         responses.GET,
-        _url("course_grades", "course_grade/{course}/users/?username={user}".format(course=course_id, user=username)),
+        _url("course_grades", "courses/{course}/?username={user}".format(course=course_id, user=username)),
         match_querystring=True,
         json=expected_response,
     )

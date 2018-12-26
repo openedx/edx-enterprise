@@ -18,11 +18,13 @@ from pytest import mark, raises
 from requests.compat import urljoin
 from testfixtures import LogCapture
 
+from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
+from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
@@ -548,8 +550,8 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
         responses.add(
             responses.GET,
             urljoin(lms_api.GradesApiClient.API_BASE_URL,
-                    "course_grade/{course}/users/?username={user}".format(course=testcase.course_id,
-                                                                          user=user.username)),
+                    "courses/{course}/?username={user}".format(course=testcase.course_id,
+                                                               user=user.username)),
             match_querystring=True,
             json=[dict(
                 username=user.username,
@@ -772,3 +774,272 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
                 call_command('transmit_learner_data', *args, **kwargs)
                 for index, message in enumerate(expected_output):
                     assert message in log_capture.records[index].getMessage()
+
+
+@mark.django_db
+@ddt.ddt
+class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMixin, CourseDiscoveryApiTestMixin):
+    """
+    Test the ``unlink_sap_learners`` management command.
+    """
+
+    def setUp(self):
+        self.user = factories.UserFactory(username='C-3PO')
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            catalog=1,
+            name='Veridian Dynamics',
+        )
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=self.enterprise_customer,
+            provider_id='ubc-bestrun',
+        )
+        self.degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            key='key',
+            secret='secret',
+            degreed_company_id='Degreed Company',
+            degreed_base_url='https://www.degreed.com/',
+        )
+        self.sapsf = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
+            enterprise_customer=self.enterprise_customer,
+            sapsf_base_url='http://enterprise.successfactors.com/',
+            key='key',
+            secret='secret',
+            active=True,
+        )
+        self.sapsf_global_configuration = factories.SAPSuccessFactorsGlobalConfigurationFactory(
+            search_student_api_path='learning/odatav4/searchStudent/v1/Students'
+        )
+        self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
+        self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+        learner = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id
+        )
+        factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=learner,
+            course_id=self.course_run_id,
+        )
+        factories.DataSharingConsentFactory(
+            enterprise_customer=self.enterprise_customer,
+            username=self.user.username,
+            course_id=self.course_run_id
+        )
+        self.sap_search_student_url = '{sapsf_base_url}/{search_students_path}?$filter={search_filter}'.format(
+            sapsf_base_url=self.sapsf.sapsf_base_url.rstrip('/'),
+            search_students_path=self.sapsf_global_configuration.search_student_api_path.rstrip('/'),
+            search_filter='criteria/isActive eq False&$select=studentID',
+        )
+        self.search_student_paginated_url = '{sap_search_student_url}&{pagination_criterion}'.format(
+            sap_search_student_url=self.sap_search_student_url,
+            pagination_criterion='$count=true&$top={page_size}&$skip={start_at}'.format(
+                page_size=500,
+                start_at=0,
+            ),
+        )
+        super(TestUnlinkSAPLearnersManagementCommand, self).setUp()
+
+    @responses.activate
+    def test_unlink_inactive_sap_learners_task_with_no_sap_channel(self):
+        """
+        Test the unlink inactive learners task without any SAP integrated channel.
+        """
+        # Remove all SAP integrated channels but keep Degreed integrated channels
+        SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.all().delete()
+
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('unlink_inactive_sap_learners')
+
+            # Because there are no SAP IntegratedChannels, the process will
+            # end without any processing.
+            assert not log_capture.records
+
+    def assert_info_logs_sap_learners_unlink(self, expected_messages):
+        """
+        DRY method to verify log messages for management command "unlink_inactive_sap_learners".
+        """
+        with LogCapture(level=logging.INFO) as log_capture:
+            call_command('unlink_inactive_sap_learners')
+            for index, message in enumerate(expected_messages):
+                assert message in log_capture.records[index].getMessage()
+
+    @responses.activate
+    @ddt.data(
+        (
+            ['C-3PO', 'Only-Edx-Learner', 'Always-Active-sap-learner'],
+            ['bestrun:C-3PO', 'bestrun:Only-Edx-Learner', 'bestrun:Always-Active-sap-learner'],
+            ['C-3PO', 'Only-Edx-Learner', 'Only-Inactive-Sap-Learner'],
+            ['C-3PO'],
+        )
+    )
+    @ddt.unpack
+    @freeze_time(NOW)
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    @mock.patch('enterprise.tpa_pipeline.UserSocialAuth')
+    def test_unlink_inactive_sap_learners_task_success(
+            self,
+            lms_learners,
+            social_auth_learners,
+            inactive_sap_learners,
+            unlinked_sap_learners,
+            user_social_auth_mock,
+            sapsf_update_content_metadata_mock,
+            sapsf_get_oauth_access_token_mock,
+    ):  # pylint: disable=invalid-name
+        """
+        Test the unlink inactive sap learners task with valid inactive learners.
+        """
+        for learner_username in lms_learners:
+            if User.objects.filter(username=learner_username).count() == 0:
+                factories.UserFactory(username=learner_username)
+
+        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_update_content_metadata_mock.return_value = 200, '{}'
+        uuid = str(self.enterprise_customer.uuid)
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=[self.course_run_id]
+        )
+        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
+
+        def mock_get_user_social_auth(**kwargs):
+            """DRY method to raise exception for invalid users."""
+            uid = kwargs.get('uid')
+            if uid and uid in social_auth_learners:
+                # Add a valid social auth record
+                username = uid.split(':')[-1]   # uid has format "{provider}:{username}"
+                return mock.MagicMock(
+                    user=User.objects.get(username=username),
+                    provider='tpa_saml',
+                    uid=uid,
+                    extra_data={},
+                )
+
+            raise Exception
+
+        user_social_auth_mock.objects.get.side_effect = mock_get_user_social_auth
+        user_social_auth_mock.DoesNotExist = Exception
+
+        # Now mock SAPSF searchStudent call for learners with pagination
+        for response_page, inactive_learner in enumerate(inactive_sap_learners):
+            search_student_paginated_url = '{sap_search_student_url}&{pagination_criterion}'.format(
+                sap_search_student_url=self.sap_search_student_url,
+                pagination_criterion='$count=true&$top={page_size}&$skip={start_at}'.format(
+                    page_size=500,
+                    start_at=500 * response_page,
+                )
+            )
+            sapsf_search_student_response = {
+                u'@odata.metadataEtag': u'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
+                u"@odata.count": 500 * len(inactive_sap_learners),
+                u'value': [{'studentID': inactive_learner}]
+            }
+            responses.add(
+                responses.GET,
+                url=search_student_paginated_url,
+                json=sapsf_search_student_response,
+                status=200,
+                content_type='application/json',
+            )
+
+        expected_messages = [
+            'Processing learners to unlink inactive users using configuration: '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Email {{{email}}} is not associated with Enterprise '
+            'Customer {{Veridian Dynamics}}'.format(email=User.objects.get(username='Only-Edx-Learner').email),
+            'Unlink inactive learners task for integrated channel configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>] took [0.0] seconds'
+        ]
+        self.assert_info_logs_sap_learners_unlink(expected_messages)
+
+        # Now verify that only inactive SAP learners have been unlinked
+        for unlinked_sap_learner_username in unlinked_sap_learners:
+            learner = User.objects.get(username=unlinked_sap_learner_username)
+            assert EnterpriseCustomerUser.objects.filter(
+                enterprise_customer=self.enterprise_customer, user_id=learner.id
+            ).count() == 0
+
+    @responses.activate
+    @freeze_time(NOW)
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_unlink_inactive_sap_learners_task_sapsf_failure(
+            self,
+            sapsf_update_content_metadata_mock,
+            sapsf_get_oauth_access_token_mock,
+    ):  # pylint: disable=invalid-name
+        """
+        Test the unlink inactive sap learners task with failed response from SAPSF.
+        """
+        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
+        sapsf_update_content_metadata_mock.return_value = 200, '{}'
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=[course_run_id]
+        )
+
+        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
+
+        expected_messages = [
+            'Processing learners to unlink inactive users using configuration: '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Unable to fetch inactive learners from SAP searchStudent API with '
+            'url "{%s}".' % self.search_student_paginated_url
+        ]
+        self.assert_info_logs_sap_learners_unlink(expected_messages)
+
+    @responses.activate
+    @freeze_time(NOW)
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_unlink_inactive_sap_learners_task_sapsf_error_response(
+            self,
+            sapsf_update_content_metadata_mock,
+            sapsf_get_oauth_access_token_mock,
+    ):  # pylint: disable=invalid-name
+        """
+        Test the unlink inactive sap learners task with error response from SAPSF.
+        """
+        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
+        sapsf_update_content_metadata_mock.return_value = 200, '{}'
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=[course_run_id]
+        )
+        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
+
+        # Now mock SAPSF searchStudent for inactive learner
+        responses.add(
+            responses.GET,
+            url=self.search_student_paginated_url,
+            json={
+                u'error': {
+                    u'message': u"The property 'InvalidProperty', used in a query expression, "
+                                u"is not defined in type 'com.sap.lms.odata.Student'.",
+                    u'code': None
+                }
+            },
+            status=400,
+            content_type='application/json',
+        )
+        expected_messages = [
+            'Processing learners to unlink inactive users using configuration: '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            '''SAP searchStudent API returned response with error message "The property 'InvalidProperty', used in '''
+            '''a query expression, is not defined in type 'com.sap.lms.odata.Student'." and with error code "None".'''
+        ]
+        self.assert_info_logs_sap_learners_unlink(expected_messages)
