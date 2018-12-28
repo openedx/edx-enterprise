@@ -10,7 +10,7 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
 from enterprise.utils import parse_course_key
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
@@ -99,7 +99,15 @@ class SapSuccessFactorsLearnerManger(object):
         """
         sap_inactive_learners = self.client.get_inactive_sap_learners()
         enterprise_customer = self.enterprise_configuration.enterprise_customer
-        tpa_provider = enterprise_customer.enterprise_customer_identity_provider.provider_id
+        try:
+            tpa_provider = enterprise_customer.enterprise_customer_identity_provider.provider_id
+        except EnterpriseCustomer.enterprise_customer_identity_provider.RelatedObjectDoesNotExist:
+            LOGGER.info(
+                'Enterprise customer {%s} has no associated identity provider',
+                enterprise_customer.name
+            )
+            return None
+
         for sap_inactive_learner in sap_inactive_learners:
             social_auth_user = get_user_from_social_auth(tpa_provider, sap_inactive_learner['studentID'])
             if not social_auth_user:

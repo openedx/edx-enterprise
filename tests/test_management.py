@@ -24,7 +24,7 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
-from enterprise.models import EnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomerUser, EnterpriseCustomerIdentityProvider
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
@@ -994,6 +994,57 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Unable to fetch inactive learners from SAP searchStudent API with '
             'url "{%s}".' % self.search_student_paginated_url
+        ]
+        self.assert_info_logs_sap_learners_unlink(expected_messages)
+
+    @responses.activate
+    @freeze_time(NOW)
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_unlink_inactive_sap_learners_task_identity_failure(
+            self,
+            sapsf_update_content_metadata_mock,
+            sapsf_get_oauth_access_token_mock,
+    ):  # pylint: disable=invalid-name
+        """
+        Test the unlink inactive sap learners task with failed response for no identity provider.
+        """
+        sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
+        sapsf_update_content_metadata_mock.return_value = 200, '{}'
+        uuid = str(self.enterprise_customer.uuid)
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+        self.mock_ent_courses_api_with_pagination(
+            enterprise_uuid=uuid,
+            course_run_ids=[course_run_id]
+        )
+
+        # Delete the identity providers
+        EnterpriseCustomerIdentityProvider.objects.all().delete()
+
+        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+        self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
+
+        # Now mock SAPSF searchStudent for inactive learner
+        responses.add(
+            responses.GET,
+            url=self.search_student_paginated_url,
+            json={
+                u'@odata.metadataEtag': u'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
+                u"@odata.count": 1,
+                u'value': [{'studentID': self.user.username}]
+            },
+            status=200,
+            content_type='application/json',
+        )
+
+        expected_messages = [
+            'Processing learners to unlink inactive users using configuration: '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Enterprise customer {Veridian Dynamics} has no associated identity provider',
+            'Unlink inactive learners task for integrated channel configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>] took [0.0] seconds'
         ]
         self.assert_info_logs_sap_learners_unlink(expected_messages)
 
