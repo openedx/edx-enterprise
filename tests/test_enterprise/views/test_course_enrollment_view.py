@@ -5,6 +5,7 @@ Tests for the ``CourseEnrollmentView`` view of the Enterprise app.
 
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 from collections import OrderedDict
 
 import ddt
@@ -118,6 +119,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             'course_short_description': FAKE_COURSE_RUN['short_description'],
             'course_pacing': 'Instructor-Paced',
             'course_start_date': parse(FAKE_COURSE_RUN['start']).strftime('%B %d, %Y'),
+            'course_in_future': False,
             'course_image_uri': FAKE_COURSE_RUN['image']['src'],
             'enterprise_welcome_text': (
                 "You have left the <strong>Starfleet Academy</strong> website and are now on the "
@@ -164,7 +166,11 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
-        setup_course_catalog_api_client_mock(course_catalog_client_mock)
+        future_date = datetime.datetime.utcnow() + datetime.timedelta(days=365)
+        setup_course_catalog_api_client_mock(
+            course_catalog_client_mock,
+            course_run_overrides={'start': future_date.isoformat() + 'Z'}
+        )
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
         self._setup_embargo_api(embargo_api_mock)
@@ -199,6 +205,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
             'premium_modes': course_modes,
+            'course_start_date': future_date.strftime('%B %d, %Y'),
+            'course_in_future': True,
         }
 
         self._login()
@@ -972,6 +980,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             'platform_description': 'Test description',
             'page_title': 'Confirm your course',
             'course_start_date': '',
+            'course_in_future': False,
         }
         for key, value in expected_context.items():
             assert response.context[key] == value  # pylint: disable=no-member
