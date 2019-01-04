@@ -27,6 +27,12 @@
           </div>
           <div class="media-content">
             <div class="course-title">{{ course_title }}</div>
+
+            {% if course_in_future and course_modes|length != 0 %}
+              <div class="course-org">
+                {{ organization_name }}
+              </div>
+            {% endif %}
           </div>
         </div>
         {% if course_modes|length == 0 %}
@@ -37,10 +43,12 @@
           </div>
         {% else %}
           <div class="course-detail">
-            <div class="course-org">
-              {{ organization_name }}
-            </div>
-            <div class="course-info">
+            {% if not course_in_future %}
+              <div class="course-org">
+                {{ organization_name }}
+              </div>
+            {% endif %}
+            <div class="course-info {% if course_in_future %}course_in_future{% endif %}">
               <i class="fa fa-clock-o" aria-hidden="true"></i>
               <span>{{ starts_at_text }} {{ course_start_date }} &nbsp;| &nbsp; {{ course_pacing }}</span>
             </div>
