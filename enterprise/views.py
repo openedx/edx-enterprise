@@ -9,6 +9,7 @@ import re
 from logging import getLogger
 from uuid import UUID
 
+import pytz
 import waffle
 from dateutil.parser import parse
 from ipware.ip import get_ip
@@ -752,6 +753,7 @@ class CourseEnrollmentView(NonAtomicView):
         if course and course_run:
             course_enrollable = True
             course_start_date = ''
+            course_in_future = False
             organization_name = ''
             organization_logo = ''
             expected_learning_items = course['expected_learning_items']
@@ -769,6 +771,8 @@ class CourseEnrollmentView(NonAtomicView):
             course_pacing = self.PACING_FORMAT.get(course_run['pacing_type'], '')
             if course_run['start']:
                 course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
+                now = datetime.datetime.now(pytz.UTC)
+                course_in_future = parse(course_run['start']) > now
 
             course_level_type = course_run.get('level_type', '')
             staff = course_run['staff']
@@ -809,6 +813,7 @@ class CourseEnrollmentView(NonAtomicView):
                 'course_short_description': course_short_description,
                 'course_pacing': course_pacing,
                 'course_start_date': course_start_date,
+                'course_in_future': course_in_future,
                 'course_image_uri': course_image_uri,
                 'course_modes': course_modes,
                 'course_effort': course_effort,

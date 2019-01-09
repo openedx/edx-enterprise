@@ -15,6 +15,12 @@ Unreleased
 ----------
 
 
+[1.2.2] - 2019-01-09
+---------------------
+
+* Update styling for future courses start date visibility
+
+
 [1.2.1] - 2018-12-21
 ---------------------
 
