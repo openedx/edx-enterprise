@@ -9,6 +9,7 @@ enterprise customer.
 
 from __future__ import absolute_import, unicode_literals
 
+import json
 from logging import getLogger
 
 from slumber.exceptions import HttpNotFoundError
@@ -238,8 +239,20 @@ class LearnerExporter(Exporter):
         try:
             grades_data = self.grades_api.get_course_grade(course_id, username)
 
-        except HttpNotFoundError:
+        except HttpNotFoundError as error:
             # Grade not found, so we have nothing to report.
+            if hasattr(error, 'content'):
+                response_content = json.loads(error.content)
+                if response_content.get('error_code', '') == 'user_not_enrolled':
+                    # This means the user has an enterprise enrollment record but is not enrolled in the course yet
+                    LOGGER.info(
+                        "User [%s] not enrolled in course [%s], enterprise enrollment [%d]",
+                        username,
+                        course_id,
+                        enterprise_enrollment.pk
+                    )
+                    return None, None, None
+
             LOGGER.error("No grades data found for [%d]: [%s], [%s]", enterprise_enrollment.pk, course_id, username)
             return None, None, None
 
