@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.2.4] - 2019-01-16
+--------------------
+
+* Remove HandleConsentEnrollment view and replaced with a function inside GrantDataSharingPermissions view. Removed
+  GET side effect
 
 [1.2.3] - 2019-01-10
 ---------------------
