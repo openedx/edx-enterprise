@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.2.5] - 2019-01-16
+--------------------
+
+* Updating launch_points data in SapSuccessFactorsContentMetadataExporter so SuccessFactors can be mobile ready
+
 [1.2.4] - 2019-01-16
 --------------------
 

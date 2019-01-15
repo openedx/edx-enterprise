@@ -113,7 +113,8 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
             'contentTitle': content_metadata_item['title'],
             'contentID': self.get_content_id(content_metadata_item),
             'launchType': 3,  # This tells SAPSF to launch the course in a new browser window.
-            'mobileEnabled': self.is_mobile_enabled(content_metadata_item)
+            'mobileEnabled': True,  # Always return True per ENT-1401
+            'mobileLaunchURL': content_metadata_item['enrollment_url'],
         }]
 
     def transform_revision_number(self, content_metadata_item):  # pylint: disable=unused-argument
@@ -202,9 +203,3 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         if content_metadata_item['content_type'] == 'program':
             content_id = content_metadata_item.get('uuid', '')
         return content_id
-
-    def is_mobile_enabled(self, content_metadata_item):
-        """
-        Return `True` if mobile is available for the active, otherwise `False`
-        """
-        return content_metadata_item.get('mobile_available', False)
