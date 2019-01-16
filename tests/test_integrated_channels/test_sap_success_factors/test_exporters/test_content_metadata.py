@@ -210,3 +210,30 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         """
         exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_image(content_metadata_item) == expected_thumbnail_url
+
+    @responses.activate
+    def test_transform_launch_points(self):
+        """
+        Transforming launch points generates list containing a dict that we expect
+        """
+        content_metadata_item = {
+            'enrollment_url': 'http://some/enrollment/url/',
+            'aggregation_key': 'course:edX+DemoX',
+            'title': 'edX Demonstration Course',
+            'key': 'edX+DemoX',
+            'content_type': 'course',
+            'card_image_url': 'https://edx.devstack.lms:18000/'
+                              'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
+            'short_description': 'Some short description.',
+            'full_description': 'Detailed description of edx demo course.',
+        }
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
+        launch_points = exporter.transform_launch_points(content_metadata_item)
+
+        assert launch_points[0]['providerID'] == 'EDX'
+        assert launch_points[0]['launchURL'] == content_metadata_item['enrollment_url']
+        assert launch_points[0]['contentTitle'] == content_metadata_item['title']
+        assert launch_points[0]['contentID'] == 'edX+DemoX'
+        assert launch_points[0]['launchType'] == 3
+        assert launch_points[0]['mobileEnabled'] is True
+        assert launch_points[0]['mobileLaunchURL'] == content_metadata_item['enrollment_url']
