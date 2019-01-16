@@ -32,9 +32,6 @@ class TestRouterView(TestCase):
         views.RouterView.PROGRAM_ENROLLMENT_VIEW_URL: mock.MagicMock(
             as_view=mock.MagicMock(return_value=lambda request, *args, **kwargs: 'program_enrollment_view')
         ),
-        views.RouterView.HANDLE_CONSENT_ENROLLMENT_VIEW_URL: mock.MagicMock(
-            as_view=mock.MagicMock(return_value=lambda request, *args, **kwargs: 'handle_consent_enrollment_view')
-        ),
     }
 
     def setUp(self):
@@ -141,16 +138,6 @@ class TestRouterView(TestCase):
             'program_uuid': '52ad909b-c57d-4ff1-bab3-999813a2479b'
         }
         assert views.RouterView().redirect(self.request, **self.kwargs) == 'program_enrollment_view'
-
-    def test_redirect_to_handle_consent_enrollment_view(self):
-        """
-        ``redirect`` properly redirects to ``enterprise.views.HandleConsentEnrollmentView``.
-        """
-        self.request = mock.MagicMock(path=reverse(
-            'enterprise_handle_consent_enrollment',
-            args=[self.enterprise_customer.uuid, self.course_run_id]
-        ))
-        assert views.RouterView().redirect(self.request, **self.kwargs) == 'handle_consent_enrollment_view'
 
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
     def test_get_redirects_by_default(self, router_view_mock):
