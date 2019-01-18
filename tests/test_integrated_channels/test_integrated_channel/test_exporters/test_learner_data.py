@@ -265,7 +265,9 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock grades data not found
-        mock_grades_api.return_value.get_course_grade.side_effect = HttpNotFoundError
+        mock_grades_api.return_value.get_course_grade.side_effect = HttpNotFoundError(
+            'No grade record found for course={}, username={}'.format(self.course_id, self.user.username)
+        )
 
         # Mock enrollment data
         mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
