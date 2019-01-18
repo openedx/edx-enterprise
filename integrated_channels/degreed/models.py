@@ -27,6 +27,8 @@ LOGGER = getLogger(__name__)
 class DegreedGlobalConfiguration(ConfigurationModel):
     """
     The global configuration for integrating with Degreed.
+
+    .. no_pii::
     """
 
     completion_status_api_path = models.CharField(
@@ -70,6 +72,8 @@ class DegreedGlobalConfiguration(ConfigurationModel):
 class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguration):
     """
     The Enterprise-specific configuration we need for integrating with Degreed.
+
+    .. no_pii::
     """
 
     key = models.CharField(
@@ -188,6 +192,10 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
 class DegreedLearnerDataTransmissionAudit(models.Model):
     """
     The payload we sent to Degreed at a given point in time for an enterprise course enrollment.
+
+    .. pii:: The degreed_user_email model field contains PII.
+    .. pii_types:: email_address
+    .. pii_retirement:: consumer_api
     """
 
     degreed_user_email = models.CharField(
