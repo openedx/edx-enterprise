@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.2.7] - 2019-01-18
+--------------------
+
+* Replace error level log with info level log when enterprise user is not enrolled in course yet and the `transmit_learner_data` command is run
+
 [1.2.5] - 2019-01-16
 --------------------
 
