@@ -1401,6 +1401,12 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         assert response.status_code == 302
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
+        consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
+            enterprise_customer_uuid, course_id, urlencode({
+                'course_mode': 'audit',
+                'catalog': enterprise_customer_catalog.uuid
+            })
+        )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
                 'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
@@ -1412,11 +1418,10 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             expected_url_format.format(
                 urlencode(
                     {
+                        'next': consent_enrollment_url,
                         'failure_url': expected_failure_url,
                         'enterprise_customer_uuid': enterprise_customer_uuid,
                         'course_id': course_id,
-                        'course_mode': 'audit',
-                        'catalog': enterprise_customer_catalog.uuid
                     }
                 )
             ),
@@ -1489,6 +1494,12 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         assert response.status_code == 302
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
+        consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
+            enterprise_customer_uuid, course_id, urlencode({
+                'course_mode': 'audit',
+                'catalog': enterprise_customer_catalog.uuid
+            })
+        )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
                 'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
@@ -1503,11 +1514,10 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             expected_url_format.format(
                 urlencode(
                     {
+                        'next': consent_enrollment_url,
                         'failure_url': expected_failure_url,
                         'enterprise_customer_uuid': enterprise_customer_uuid,
                         'course_id': course_id,
-                        'course_mode': 'audit',
-                        'catalog': enterprise_customer_catalog.uuid
                     }
                 )
             ),
