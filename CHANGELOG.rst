@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.2.8] - 2019-01-22
+--------------------
+
+* Revert 1.2.4 to restore DSC functionality.
+
 [1.2.7] - 2019-01-18
 --------------------
 
