@@ -5,20 +5,20 @@
 #    pip-compile --output-file requirements/js_test.txt requirements/js_test.in
 #
 argparse==1.4.0           # via jasmine
-backports.functools-lru-cache==1.5  # via cheroot, jaraco.functools
-cheroot==6.5.2            # via cherrypy
+backports.functools-lru-cache==1.5  # via cheroot
+cheroot==6.5.4            # via cherrypy
 cherrypy==17.3.0
 contextlib2==0.5.5        # via cherrypy
 glob2==0.6                # via jasmine-core
-jaraco.functools==1.20    # via tempora
+jaraco.functools==2.0     # via tempora
 jasmine-core==2.99.1      # via jasmine
 jasmine==2.9.0
 jinja2==2.10              # via jasmine
 markupsafe==1.1.0         # via jinja2
-more-itertools==4.3.0     # via cheroot, cherrypy, jaraco.functools
+more-itertools==5.0.0     # via cheroot, cherrypy, jaraco.functools
 ordereddict==1.1          # via jasmine-core
 portend==2.3              # via cherrypy
-pytz==2018.7              # via tempora
+pytz==2018.9              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.6.0           # via jasmine
 six==1.12.0               # via cheroot, cherrypy, jasmine, more-itertools, tempora
