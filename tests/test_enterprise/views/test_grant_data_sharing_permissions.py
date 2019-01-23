@@ -13,6 +13,7 @@ from pytest import mark
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment
@@ -193,7 +194,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
@@ -233,8 +233,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             'failure_url': 'https://facebook.com',
             'defer_creation': True,
         }
-        response = self.client.get(self.url, data=params)
-        assert response.status_code == 404
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()
+            self.client.get(self.url, data=params)
+            assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
@@ -268,6 +270,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
         )
         params = {
+            'enterprise_customer_uuid': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
             'course_id': 'course-v1:edX+DemoX+Demo_Course',
             'next': 'https://google.com',
             'defer_creation': True,
@@ -348,18 +351,16 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
         )
         response = self.client.get(
-            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
+            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com',
         )
         assert response.status_code == 404
 
-    @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_not_needed(
             self,
             course_api_client_mock,
             course_catalog_api_client_mock,
-            *args
     ):  # pylint: disable=unused-argument
         self._login()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -389,7 +390,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             granted=True
         )
         response = self.client.get(
-            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com'
+            self.url + '?course_id=course-v1%3AedX%2BDemoX%2BDemo_Course&next=https%3A%2F%2Fgoogle.com',
         )
         assert response.status_code == 404
 
@@ -496,7 +497,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             self.url,
             data={
                 'course_id': course_id,
-                'redirect_url': '/successful_enrollment'
+                'redirect_url': '/successful_enrollment',
             },
         )
         assert resp.status_code == 302
@@ -545,7 +546,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             data={
                 'course_id': course_id,
                 'data_sharing_consent': data_sharing_consent,
-                'redirect_url': '/successful_enrollment'
+                'redirect_url': '/successful_enrollment',
+                'enterprise_customer_uuid': 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
             },
         )
         assert resp.status_code == 404
@@ -562,20 +564,6 @@ class TestProgramDataSharingPermissions(TestCase):
 
     url = reverse('grant_data_sharing_permissions')
 
-    valid_get_params = {
-        'enterprise_customer_uuid': 'fake-uuid',
-        'next': 'https://google.com/',
-        'failure_url': 'https://facebook.com/',
-        'program_uuid': 'fake-program-uuid',
-    }
-    valid_post_params = {
-        'enterprise_customer_uuid': 'fake-uuid',
-        'redirect_url': 'https://google.com/',
-        'failure_url': 'https://facebook.com/',
-        'program_uuid': 'fake-program-uuid',
-        'data_sharing_consent': 'true',
-    }
-
     def setUp(self):
         self.user = UserFactory.create(username='john', is_staff=True, is_active=True)
         self.user.set_password("QWERTY")
@@ -587,7 +575,47 @@ class TestProgramDataSharingPermissions(TestCase):
         course_catalog_api_client = mock.patch('enterprise.views.CourseCatalogApiServiceClient')
         self.course_catalog_api_client = course_catalog_api_client.start()
         self.addCleanup(course_catalog_api_client.stop)
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        self.ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer
+        )
+        self.valid_get_params = {
+            'enterprise_customer_uuid': self.enterprise_customer.uuid,
+            'next': 'https://google.com/',
+            'failure_url': 'https://facebook.com/',
+            'program_uuid': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+        }
+        self.valid_post_params = {
+            'enterprise_customer_uuid': self.enterprise_customer.uuid,
+            'redirect_url': 'https://google.com/',
+            'failure_url': 'https://facebook.com/',
+            'program_uuid': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+            'data_sharing_consent': 'true',
+        }
         super(TestProgramDataSharingPermissions, self).setUp()
+
+    def _assert_get_returns_404_with_mock(self, url, get_params):
+        """
+        Mock the render method, run a GET, and assert it returns 404.
+        """
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()
+            self.client.get(url, get_params)
+            assert mock_render.call_args_list[0][1]['status'] == 404
+
+    def _assert_post_returns_404_with_mock(self, url, get_params):
+        """
+        Mock the render method, run a POST, and assert it returns 404.
+        """
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()
+            self.client.post(url, get_params)
+            assert mock_render.call_args_list[0][1]['status'] == 404
 
     def _login(self):
         """
@@ -596,7 +624,6 @@ class TestProgramDataSharingPermissions(TestCase):
         assert self.client.login(username=self.user.username, password="QWERTY")
 
     @ddt.data(
-        'enterprise_customer_uuid',
         'next',
         'failure_url',
         'program_uuid',
@@ -606,31 +633,34 @@ class TestProgramDataSharingPermissions(TestCase):
         valid_get_params = self.valid_get_params.copy()
         valid_get_params.pop(missing_parameter)
         self._login()
+        self._assert_get_returns_404_with_mock(self.url, valid_get_params)
+
+    def test_get_program_consent_missing_parameter_enterprise_customer(self):
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
+        valid_get_params = self.valid_get_params.copy()
+        valid_get_params.pop('enterprise_customer_uuid')
+        self._login()
         response = self.client.get(self.url, valid_get_params)
         assert response.status_code == 404
 
     def test_get_consent_program_does_not_exist(self):
         self.course_catalog_api_client.return_value.program_exists.return_value = False
         self._login()
-        response = self.client.get(self.url, self.valid_get_params)
-        assert response.status_code == 404
+        self._assert_get_returns_404_with_mock(self.url, self.valid_get_params)
 
     def test_get_program_consent_no_ec(self):
         self.get_data_sharing_consent.return_value = None
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
-        response = self.client.get(self.url, self.valid_get_params)
-        assert response.status_code == 404
+        self._assert_get_returns_404_with_mock(self.url, self.valid_get_params)
 
     def test_get_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
-        response = self.client.get(self.url, self.valid_get_params)
-        assert response.status_code == 404
+        self._assert_get_returns_404_with_mock(self.url, self.valid_get_params)
 
     @ddt.data(
-        'enterprise_customer_uuid',
         'redirect_url',
         'failure_url',
         'program_uuid',
@@ -640,28 +670,33 @@ class TestProgramDataSharingPermissions(TestCase):
         valid_post_params = self.valid_post_params.copy()
         valid_post_params.pop(missing_parameter)
         self._login()
+        self._assert_post_returns_404_with_mock(self.url, valid_post_params)
+
+    def test_post_program_consent_missing_parameter_enterprise_customer(self):
+        self.course_catalog_api_client.return_value.program_exists.return_value = True
+        valid_post_params = self.valid_post_params.copy()
+        valid_post_params.pop('enterprise_customer_uuid')
+        self._login()
         response = self.client.post(self.url, valid_post_params)
         assert response.status_code == 404
 
     def test_post_consent_program_does_not_exist(self):
         self.course_catalog_api_client.return_value.program_exists.return_value = False
         self._login()
-        response = self.client.post(self.url, self.valid_post_params)
-        assert response.status_code == 404
+        self._assert_post_returns_404_with_mock(self.url, self.valid_post_params)
 
     def test_post_program_consent_no_ec(self):
         self.get_data_sharing_consent.return_value = None
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
-        response = self.client.post(self.url, self.valid_post_params)
-        assert response.status_code == 404
+        self._assert_post_returns_404_with_mock(self.url, self.valid_post_params)
 
     def test_post_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
-        response = self.client.get(self.url, self.valid_post_params)
-        assert response.status_code == 404
+        response = self.client.post(self.url, self.valid_post_params)
+        assert response.status_code == 302
 
     def test_post_program_consent(self):
         consent_record = self.get_data_sharing_consent.return_value

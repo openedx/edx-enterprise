@@ -497,7 +497,7 @@ def get_enterprise_customer_or_404(enterprise_uuid):
     try:
         enterprise_uuid = UUID(enterprise_uuid)
         return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)  # pylint: disable=no-member
-    except (ValueError, EnterpriseCustomer.DoesNotExist):
+    except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist):
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
         raise Http404
 
