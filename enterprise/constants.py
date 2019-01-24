@@ -90,6 +90,9 @@ ENTERPRISE_PERMISSION_GROUPS = [
     'enterprise_data_api_access',
 ]
 
+# Used in place of a URL to handle instead of redirect
+HANDLE_CONSENT_ENROLLMENT = 'HANDLE_CONSENT_ENROLLMENT'
+
 
 def json_serialized_course_modes():
     """

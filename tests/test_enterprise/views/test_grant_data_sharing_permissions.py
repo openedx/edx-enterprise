@@ -15,11 +15,14 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
 
+from enterprise.constants import HANDLE_CONSENT_ENROLLMENT
 from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.views import LMS_COURSEWARE_URL, LMS_DASHBOARD_URL, LMS_START_PREMIUM_COURSE_FLOW_URL
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
     DataSharingConsentTextOverridesFactory,
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     UserFactory,
@@ -399,8 +402,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
-        (True, True, '/successful_enrollment'),
-        (False, True, '/successful_enrollment'),
+        (True, True, '/dashboard'),
+        (False, True, '/dashboard'),
         (True, False, '/failure_url'),
         (False, False, '/failure_url'),
     )
@@ -444,7 +447,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         post_data = {
             'enterprise_customer_uuid': enterprise_customer.uuid,
             'course_id': course_id,
-            'redirect_url': '/successful_enrollment',
+            'redirect_url': HANDLE_CONSENT_ENROLLMENT,
             'failure_url': '/failure_url',
         }
         if defer_creation:
@@ -552,6 +555,252 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         dsc.refresh_from_db()
         assert dsc.granted is False
 
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_handle_consent_enrollment_without_course_mode(
+            self,
+            course_catalog_api_client_mock,
+            course_api_client_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        """
+        Verify that user is redirected to LMS dashboard if course_mode is not
+        passed in the redirect_url.
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
+        post_data = {
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'course_id': course_id,
+            'redirect_url': HANDLE_CONSENT_ENROLLMENT,
+            'failure_url': '/failure_url',
+            'data_sharing_consent': True
+        }
+
+        resp = self.client.post(self.url, post_data)
+        self.assertRedirects(resp, LMS_DASHBOARD_URL, fetch_redirect_response=False)
+
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_handle_consent_enrollment_with_no_course_modes_for_course(
+            self,
+            course_catalog_api_client_mock,
+            course_api_client_mock,
+            enrollment_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        """
+        Verify that user gets HTTP 404 response if there are no course modes
+        for the course id delivered
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
+        enrollment_api_mock.return_value.get_course_modes.return_value = ()
+        post_data = {
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'course_id': course_id,
+            'redirect_url': HANDLE_CONSENT_ENROLLMENT,
+            'course_mode': 'audit',
+            'failure_url': '/failure_url',
+            'data_sharing_consent': True
+        }
+
+        resp = self.client.post(self.url, post_data)
+
+        assert resp.status_code == 404
+
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_handle_consent_enrollment_with_no_matching_course_modes(
+            self,
+            course_catalog_api_client_mock,
+            course_api_client_mock,
+            enrollment_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        """
+        Verify that user gets HTTP 404 response if there are no course modes
+        for the course id delivered
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
+        enrollment_api_mock.return_value.get_course_modes.return_value = (
+            {
+                "slug": "professional",
+                "name": "Professional Track",
+                "min_price": 100,
+                "sku": "sku-audit",
+            },
+            {
+                "slug": "audit",
+                "name": "Audit Track",
+                "min_price": 0,
+                "sku": "sku-audit",
+            },
+        )
+        post_data = {
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'course_id': course_id,
+            'redirect_url': HANDLE_CONSENT_ENROLLMENT,
+            'course_mode': 'some-invalid-course-mode',
+            'failure_url': '/failure_url',
+            'data_sharing_consent': True,
+        }
+
+        resp = self.client.post(self.url, post_data)
+
+        assert resp.url.endswith('/dashboard')  # pylint: disable=no-member
+        assert resp.status_code == 302
+
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_handle_consent_enrollment_with_audit_course_mode(
+            self,
+            course_catalog_api_client_mock,
+            course_api_client_mock,
+            enrollment_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        """
+        Verify that user is redirected to course in case the provided
+        course mode is audit track.
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enterprise_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
+        enrollment_api_mock.return_value.get_course_modes.return_value = (
+            {
+                "slug": "professional",
+                "name": "Professional Track",
+                "min_price": 100,
+                "sku": "sku-audit",
+            },
+            {
+                "slug": "audit",
+                "name": "Audit Track",
+                "min_price": 0,
+                "sku": "sku-audit",
+            },
+        )
+        post_data = {
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'course_id': course_id,
+            'redirect_url': HANDLE_CONSENT_ENROLLMENT,
+            'catalog': enterprise_catalog.uuid,
+            'course_mode': 'audit',
+            'failure_url': '/failure_url',
+            'data_sharing_consent': True
+        }
+
+        resp = self.client.post(self.url, post_data)
+        redirect_url = LMS_COURSEWARE_URL.format(course_id=course_id)
+        self.assertRedirects(resp, redirect_url, fetch_redirect_response=False)
+        self.assertTrue(EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user__enterprise_customer=enterprise_customer,
+            enterprise_customer_user__user_id=ecu.user_id,
+            course_id=course_id
+        ).exists())
+
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    def test_handle_consent_enrollment_with_verified_course_mode(
+            self,
+            course_catalog_api_client_mock,
+            course_api_client_mock,
+            enrollment_api_mock,
+            *args
+    ):  # pylint: disable=unused-argument,invalid-name
+        """
+        Verify that user is redirected to course in case the provided
+        course mode is audit track.
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enterprise_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
+        enrollment_api_mock.return_value.get_course_modes.return_value = (
+            {
+                "slug": "professional",
+                "name": "Professional Track",
+                "min_price": 100,
+                "sku": "sku-audit",
+            },
+            {
+                "slug": "audit",
+                "name": "Audit Track",
+                "min_price": 0,
+                "sku": "sku-audit",
+            },
+        )
+        post_data = {
+            'enterprise_customer_uuid': enterprise_customer.uuid,
+            'course_id': course_id,
+            'redirect_url': HANDLE_CONSENT_ENROLLMENT,
+            'course_mode': 'professional',
+            'catalog': enterprise_catalog.uuid,
+            'failure_url': '/failure_url',
+            'data_sharing_consent': True
+        }
+
+        resp = self.client.post(self.url, post_data)
+        redirect_url = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
+        redirect_url += '?catalog={catalog_uuid}'.format(
+            catalog_uuid=enterprise_catalog.uuid
+        )
+        self.assertRedirects(resp, redirect_url, fetch_redirect_response=False)
+
+        self.assertTrue(EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user__enterprise_customer=enterprise_customer,
+            enterprise_customer_user__user_id=ecu.user_id,
+            course_id=course_id
+        ).exists())
+
 
 @mark.django_db
 @ddt.ddt
@@ -570,7 +819,7 @@ class TestProgramDataSharingPermissions(TestCase):
     }
     valid_post_params = {
         'enterprise_customer_uuid': 'fake-uuid',
-        'redirect_url': 'https://google.com/',
+        'redirect_url': 'http://lms.example.com/dashboard',
         'failure_url': 'https://facebook.com/',
         'program_uuid': 'fake-program-uuid',
         'data_sharing_consent': 'true',
@@ -670,7 +919,7 @@ class TestProgramDataSharingPermissions(TestCase):
         self._login()
         response = self.client.post(self.url, self.valid_post_params, follow=False)
         consent_record.save.assert_called_once()
-        self.assertRedirects(response, 'https://google.com/', fetch_redirect_response=False)
+        self.assertRedirects(response, 'http://lms.example.com/dashboard', fetch_redirect_response=False)
 
     def test_post_program_consent_not_provided(self):
         consent_record = self.get_data_sharing_consent.return_value
@@ -692,7 +941,7 @@ class TestProgramDataSharingPermissions(TestCase):
         params['defer_creation'] = 'True'
         response = self.client.post(self.url, params, follow=False)
         consent_record.save.assert_not_called()
-        self.assertRedirects(response, 'https://google.com/', fetch_redirect_response=False)
+        self.assertRedirects(response, 'http://lms.example.com/dashboard', fetch_redirect_response=False)
 
     @ddt.data(False, True)
     @mock.patch('enterprise.views.render', side_effect=fake_render)
