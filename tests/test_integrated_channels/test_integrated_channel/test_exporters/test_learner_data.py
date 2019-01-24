@@ -32,7 +32,7 @@ class TestLearnerExporter(unittest.TestCase):
     NOW_TIMESTAMP = 1483326245000
     TOMORROW = NOW + datetime.timedelta(days=1)
     YESTERDAY = NOW + datetime.timedelta(days=-1)
-    YESTERDAY_TIMESTAMP = NOW_TIMESTAMP - 24*60*60*1000
+    YESTERDAY_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
 
     def setUp(self):
         self.user = factories.UserFactory(username='C3PO', id=1)

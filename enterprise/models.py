@@ -565,7 +565,7 @@ class EnterpriseCustomerUserManager(models.Manager):
                     sailthru_vars={
                         'is_enterprise_learner': False,
                         'enterprise_name': None,
-                        },
+                    },
                     email=user_email
                 )
 
@@ -689,7 +689,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 "entitlement_id": entitlement.entitlement_id,
                 "requires_consent": False,
             } for entitlement in entitlements.all()
-            ]
+        ]
 
     @property
     def data_sharing_consent_records(self):
@@ -1248,7 +1248,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             'next': search_results['next'],
             'previous': search_results['previous'],
             'results': results,
-            }
+        }
 
         return response
 

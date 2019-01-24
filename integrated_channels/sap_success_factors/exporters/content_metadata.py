@@ -63,7 +63,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         for locale in self.enterprise_configuration.get_locales():
             title_with_locales.append({
                 'locale': locale,
-                'value':  content_metadata_item.get('title', '')
+                'value': content_metadata_item.get('title', '')
             })
 
         return title_with_locales
@@ -153,7 +153,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         for locale in self.enterprise_configuration.get_locales(default_locale=content_metadata_language_code):
             title_with_locales.append({
                 'locale': locale,
-                'value':  title
+                'value': title
             })
 
         return title_with_locales

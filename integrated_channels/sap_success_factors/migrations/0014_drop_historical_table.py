@@ -14,6 +14,7 @@ def dropHistoricalTable(apps, schema_editor):
             name=table_name,
         )
 
+
 class Migration(migrations.Migration):
 
     dependencies = [

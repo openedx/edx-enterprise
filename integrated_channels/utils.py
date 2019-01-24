@@ -97,13 +97,13 @@ def strfdelta(tdelta, fmt='{D:02}d {H:02}h {M:02}m {S:02}s', input_type='timedel
     elif input_type in ['s', 'seconds']:
         remainder = int(tdelta)
     elif input_type in ['m', 'minutes']:
-        remainder = int(tdelta)*60
+        remainder = int(tdelta) * 60
     elif input_type in ['h', 'hours']:
-        remainder = int(tdelta)*3600
+        remainder = int(tdelta) * 3600
     elif input_type in ['d', 'days']:
-        remainder = int(tdelta)*86400
+        remainder = int(tdelta) * 86400
     elif input_type in ['w', 'weeks']:
-        remainder = int(tdelta)*604800
+        remainder = int(tdelta) * 604800
     else:
         raise ValueError(
             'input_type is not valid. Valid input_type strings are: "timedelta", "s", "m", "h", "d", "w"'
