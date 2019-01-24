@@ -27,6 +27,12 @@
     {% if defer_creation %}
       <input type="hidden" name="defer_creation" value="true" />
     {% endif %}
+    {% if course_mode %}
+      <input type="hidden" name="course_mode" value="{{ course_mode }}" />
+    {% endif %}
+    {% if catalog %}
+      <input type="hidden" name="catalog" value="{{ catalog }}" />
+    {% endif %}
   </form>
 </div>
 <br/>

@@ -31,10 +31,11 @@ from django.views.generic import View
 
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
-from enterprise import constants, messages
+from enterprise import messages
 from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.constants import ENTERPRISE_WELCOME_TEXT, HANDLE_CONSENT_ENROLLMENT, WELCOME_TEXT
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
 from enterprise.utils import (
@@ -106,8 +107,8 @@ def get_global_context(request, enterprise_customer):
         'LMS_ROOT_URL': settings.LMS_ROOT_URL,
         'platform_name': platform_name,
         'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
-        'welcome_text': constants.WELCOME_TEXT.format(platform_name=platform_name),
-        'enterprise_welcome_text': constants.ENTERPRISE_WELCOME_TEXT.format(
+        'welcome_text': WELCOME_TEXT.format(platform_name=platform_name),
+        'enterprise_welcome_text': ENTERPRISE_WELCOME_TEXT.format(
             enterprise_customer_name=enterprise_customer.name,
             platform_name=platform_name,
             strong_start='<strong>',
@@ -364,6 +365,87 @@ class GrantDataSharingPermissions(View):
             })
         return context_data
 
+    def handle_consent_enrollment(
+            self,
+            user,
+            enterprise_uuid,
+            course_id,
+            enrollment_course_mode,
+            enterprise_catalog_uuid,
+            path
+    ):
+        """
+        Handle the enrollment of enterprise learner in the provided course.
+
+        Based on `enterprise_uuid` in URL, the view will decide which
+        enterprise customer's course enrollment record should be created.
+
+        Depending on the value of query parameter `course_mode` then learner
+        will be either redirected to LMS dashboard for audit modes or
+        redirected to ecommerce basket flow for payment of premium modes.
+        """
+        # Redirect the learner to LMS dashboard in case no course mode is
+        # provided as query parameter `course_mode`
+        if not enrollment_course_mode:
+            return redirect(LMS_DASHBOARD_URL)
+
+        enrollment_api_client = EnrollmentApiClient()
+        course_modes = enrollment_api_client.get_course_modes(course_id)
+        if not course_modes:
+            raise Http404
+
+        # Verify that the request user belongs to the enterprise against the
+        # provided `enterprise_uuid`.
+        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
+
+        selected_course_mode = None
+        for course_mode in course_modes:
+            if course_mode['slug'] == enrollment_course_mode:
+                selected_course_mode = course_mode
+                break
+
+        if not selected_course_mode:
+            return redirect(LMS_DASHBOARD_URL)
+
+        # Create the Enterprise backend database records for this course
+        # enrollment
+        _, created = EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+        )
+        if created:
+            track_enrollment('course-landing-page-enrollment', user.id, course_id, path)
+
+        DataSharingConsent.objects.update_or_create(
+            username=enterprise_customer_user.username,
+            course_id=course_id,
+            enterprise_customer=enterprise_customer_user.enterprise_customer,
+            defaults={
+                'granted': True
+            },
+        )
+
+        audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
+        if selected_course_mode['slug'] in audit_modes:
+            # In case of Audit course modes enroll the learner directly through
+            # enrollment API client and redirect the learner to dashboard.
+            enrollment_api_client.enroll_user_in_course(
+                user.username, course_id, selected_course_mode['slug']
+            )
+
+            return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
+
+        # redirect the enterprise learner to the ecommerce flow in LMS
+        # Note: LMS start flow automatically detects the paid mode
+        premium_flow = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
+        if enterprise_catalog_uuid:
+            premium_flow += '?catalog={catalog_uuid}'.format(
+                catalog_uuid=enterprise_catalog_uuid
+            )
+
+        return redirect(premium_flow)
+
     @method_decorator(login_required)
     def get(self, request):
         """
@@ -432,6 +514,8 @@ class GrantDataSharingPermissions(View):
                 _('course completion'),
             ],
             'policy_link_template': '',
+            'course_mode': request.GET.get('course_mode', ''),
+            'catalog': request.GET.get('catalog', ''),
         })
         platform_name = context_data['platform_name']
         published_only = False if self.preview_mode else True
@@ -489,93 +573,19 @@ class GrantDataSharingPermissions(View):
             consent_record.granted = consent_provided
             consent_record.save()
 
+        if consent_provided and success_url == HANDLE_CONSENT_ENROLLMENT:
+            course_mode = request.POST.get('course_mode')
+            catalog_uuid = request.POST.get('catalog')
+            # Will redirect user
+            return self.handle_consent_enrollment(
+                request.user,
+                enterprise_uuid,
+                course_id,
+                course_mode,
+                catalog_uuid,
+                request.get_full_path()
+            )
         return redirect(success_url if consent_provided else failure_url)
-
-
-class HandleConsentEnrollment(View):
-    """
-    Handle enterprise course enrollment at providing data sharing consent.
-
-    View handles the case for enterprise course enrollment after successful
-    consent.
-    """
-
-    @method_decorator(enterprise_login_required)
-    def get(self, request, enterprise_uuid, course_id):
-        """
-        Handle the enrollment of enterprise learner in the provided course.
-
-        Based on `enterprise_uuid` in URL, the view will decide which
-        enterprise customer's course enrollment record should be created.
-
-        Depending on the value of query parameter `course_mode` then learner
-        will be either redirected to LMS dashboard for audit modes or
-        redirected to ecommerce basket flow for payment of premium modes.
-        """
-        enrollment_course_mode = request.GET.get('course_mode')
-        enterprise_catalog_uuid = request.GET.get('catalog')
-
-        # Redirect the learner to LMS dashboard in case no course mode is
-        # provided as query parameter `course_mode`
-        if not enrollment_course_mode:
-            return redirect(LMS_DASHBOARD_URL)
-
-        enrollment_api_client = EnrollmentApiClient()
-        course_modes = enrollment_api_client.get_course_modes(course_id)
-        if not course_modes:
-            raise Http404
-
-        # Verify that the request user belongs to the enterprise against the
-        # provided `enterprise_uuid`.
-        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
-        enterprise_customer_user = get_enterprise_customer_user(request.user.id, enterprise_customer.uuid)
-
-        selected_course_mode = None
-        for course_mode in course_modes:
-            if course_mode['slug'] == enrollment_course_mode:
-                selected_course_mode = course_mode
-                break
-
-        if not selected_course_mode:
-            return redirect(LMS_DASHBOARD_URL)
-
-        # Create the Enterprise backend database records for this course
-        # enrollment
-        __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-            enterprise_customer_user=enterprise_customer_user,
-            course_id=course_id,
-        )
-        if created:
-            track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
-
-        DataSharingConsent.objects.update_or_create(
-            username=enterprise_customer_user.username,
-            course_id=course_id,
-            enterprise_customer=enterprise_customer_user.enterprise_customer,
-            defaults={
-                'granted': True
-            },
-        )
-
-        audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
-        if selected_course_mode['slug'] in audit_modes:
-            # In case of Audit course modes enroll the learner directly through
-            # enrollment API client and redirect the learner to dashboard.
-            enrollment_api_client.enroll_user_in_course(
-                request.user.username, course_id, selected_course_mode['slug']
-            )
-
-            return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
-
-        # redirect the enterprise learner to the ecommerce flow in LMS
-        # Note: LMS start flow automatically detects the paid mode
-        premium_flow = LMS_START_PREMIUM_COURSE_FLOW_URL.format(course_id=course_id)
-        if enterprise_catalog_uuid:
-            premium_flow += '?catalog={catalog_uuid}'.format(
-                catalog_uuid=enterprise_catalog_uuid
-            )
-
-        return redirect(premium_flow)
 
 
 class CourseEnrollmentView(NonAtomicView):
@@ -937,18 +947,6 @@ class CourseEnrollmentView(NonAtomicView):
             # the learner to course specific DSC with enterprise UUID from
             # there the learner will be directed to the ecommerce flow after
             # providing DSC.
-            query_string_params = {
-                'course_mode': selected_course_mode_name,
-            }
-            if enterprise_catalog_uuid:
-                query_string_params.update({'catalog': enterprise_catalog_uuid})
-
-            next_url = '{handle_consent_enrollment_url}?{query_string}'.format(
-                handle_consent_enrollment_url=reverse(
-                    'enterprise_handle_consent_enrollment', args=[enterprise_customer.uuid, course_id]
-                ),
-                query_string=urlencode(query_string_params)
-            )
 
             failure_url = reverse('enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id])
             if request.META['QUERY_STRING']:
@@ -965,17 +963,21 @@ class CourseEnrollmentView(NonAtomicView):
                     query_string=request.META['QUERY_STRING']
                 )
 
+            query_string_params = {
+                'next': HANDLE_CONSENT_ENROLLMENT,  # Tells GrantDataSharingPermissions to handle instead of redirect
+                'failure_url': failure_url,
+                'enterprise_customer_uuid': enterprise_customer.uuid,
+                'course_id': course_id,
+                'course_mode': selected_course_mode_name,
+            }
+
+            if enterprise_catalog_uuid:
+                query_string_params.update({'catalog': enterprise_catalog_uuid})
+
             return redirect(
                 '{grant_data_sharing_url}?{params}'.format(
                     grant_data_sharing_url=reverse('grant_data_sharing_permissions'),
-                    params=urlencode(
-                        {
-                            'next': next_url,
-                            'failure_url': failure_url,
-                            'enterprise_customer_uuid': enterprise_customer.uuid,
-                            'course_id': course_id,
-                        }
-                    )
+                    params=urlencode(query_string_params)
                 )
             )
 
@@ -1369,11 +1371,9 @@ class RouterView(NonAtomicView):
     # pylint: disable=invalid-name
     COURSE_ENROLLMENT_VIEW_URL = '/enterprise/{}/course/{}/enroll/'
     PROGRAM_ENROLLMENT_VIEW_URL = '/enterprise/{}/program/{}/enroll/'
-    HANDLE_CONSENT_ENROLLMENT_VIEW_URL = '/enterprise/handle_consent_enrollment/{}/course/{}/'
     VIEWS = {
         COURSE_ENROLLMENT_VIEW_URL: CourseEnrollmentView,
         PROGRAM_ENROLLMENT_VIEW_URL: ProgramEnrollmentView,
-        HANDLE_CONSENT_ENROLLMENT_VIEW_URL: HandleConsentEnrollment,
     }
 
     @staticmethod

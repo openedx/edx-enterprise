@@ -23,6 +23,7 @@ from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from django.test import Client, TestCase
 
+from enterprise.constants import HANDLE_CONSENT_ENROLLMENT
 from enterprise.decorators import FRESH_LOGIN_PARAMETER
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from test_utils import FAKE_UUIDS, fake_catalog_api, fake_render
@@ -1401,29 +1402,30 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         assert response.status_code == 302
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
-        consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
-            enterprise_customer_uuid, course_id, urlencode({
-                'course_mode': 'audit',
-                'catalog': enterprise_customer_catalog.uuid
-            })
-        )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
                 'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
             ),
             query_string=urlencode({FRESH_LOGIN_PARAMETER: 'yes'}),
         )
+        expected_params = {
+            'next': HANDLE_CONSENT_ENROLLMENT,
+            'failure_url': expected_failure_url,
+            'enterprise_customer_uuid': enterprise_customer_uuid,
+            'course_id': course_id,
+            'course_mode': 'audit',
+        }
+
+        # Due to a combination of non-deterministic dictionary ordering, and assertRedirects not ignoring
+        # query string order, we have to use an `update` here to match the ordering in the view. assertRedirects
+        # ignores order of params after 24959e48d949a20be969f649ece3576dbc7ce422 which is on track for the Django 2.2
+        # release. This can then be removed.
+        expected_params.update({'catalog': enterprise_customer_catalog.uuid})
+
         self.assertRedirects(
             response,
             expected_url_format.format(
-                urlencode(
-                    {
-                        'next': consent_enrollment_url,
-                        'failure_url': expected_failure_url,
-                        'enterprise_customer_uuid': enterprise_customer_uuid,
-                        'course_id': course_id,
-                    }
-                )
+                urlencode(expected_params)
             ),
             fetch_redirect_response=False
         )
@@ -1494,12 +1496,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         assert response.status_code == 302
 
         expected_url_format = '/enterprise/grant_data_sharing_permissions?{}'
-        consent_enrollment_url = '/enterprise/handle_consent_enrollment/{}/course/{}/?{}'.format(
-            enterprise_customer_uuid, course_id, urlencode({
-                'course_mode': 'audit',
-                'catalog': enterprise_customer_catalog.uuid
-            })
-        )
         expected_failure_url = '{course_enrollment_url}?{query_string}'.format(
             course_enrollment_url=reverse(
                 'enterprise_course_run_enrollment_page', args=[enterprise_customer.uuid, course_id]
@@ -1509,17 +1505,26 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 (FRESH_LOGIN_PARAMETER, 'yes'),
             ]))
         )
+
+        expected_params = {
+            'next': HANDLE_CONSENT_ENROLLMENT,
+            'failure_url': expected_failure_url,
+            'enterprise_customer_uuid': enterprise_customer_uuid,
+            'course_id': course_id,
+            'course_mode': 'audit',
+        }
+        # Due to a combination of non-deterministic dictionary ordering, and assertRedirects not ignoring
+        # query string order, we have to use an `update` here to match the ordering in the view. assertRedirects
+        # ignores order of params after 24959e48d949a20be969f649ece3576dbc7ce422 which is on track for the Django 2.2
+        # release. This can then be removed.
+        expected_params.update({
+            'catalog': enterprise_customer_catalog.uuid,
+        })
+
         self.assertRedirects(
             response,
             expected_url_format.format(
-                urlencode(
-                    {
-                        'next': consent_enrollment_url,
-                        'failure_url': expected_failure_url,
-                        'enterprise_customer_uuid': enterprise_customer_uuid,
-                        'course_id': course_id,
-                    }
-                )
+                urlencode(expected_params)
             ),
             fetch_redirect_response=False
         )
