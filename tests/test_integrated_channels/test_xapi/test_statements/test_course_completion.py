@@ -51,34 +51,28 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
         }
 
         self.expected = {
-            'verb':
-                {
-                    'id': X_API_VERB_COMPLETED,
-                    'display': {'en-US': 'completed'}
-                },
+            'verb': {
+                'id': X_API_VERB_COMPLETED,
+                'display': {'en-US': 'completed'}
+            },
             'version': '1.0.1',
-            'actor':
-                {
-                    'mbox': 'mailto:{email}'.format(email=self.user.email),
-                    'name': self.user.username,
-                    'objectType': 'Agent'
+            'actor': {
+                'mbox': 'mailto:{email}'.format(email=self.user.email),
+                'name': self.user.username,
+                'objectType': 'Agent'
+            },
+            'object': {
+                'definition': {
+                    'description': {
+                        'en-US': self.course_overview.short_description
+                    },
+                    'name': {
+                        'en-US': self.course_overview.display_name
+                    }
                 },
-            'object':
-                {
-                    'definition':
-                        {
-                            'description':
-                                {
-                                    'en-US': self.course_overview.short_description
-                                },
-                            'name':
-                                {
-                                    'en-US': self.course_overview.display_name
-                                }
-                        },
-                    'id': X_API_ACTIVITY_COURSE,
-                    'objectType': 'Activity'
-                },
+                'id': X_API_ACTIVITY_COURSE,
+                'objectType': 'Activity'
+            },
             'result': {
                 'score': {
                     'scaled': 0.8,
@@ -88,14 +82,13 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
                 },
                 'success': True,
                 'completion': True,
-                },
-            'context':
-                {
-                    'extensions': {
-                        'http://id.tincanapi.com/extension/course-details': self.course_details,
-                        'http://id.tincanapi.com/extension/user-details': self.user_details
-                    }
-                },
+            },
+            'context': {
+                'extensions': {
+                    'http://id.tincanapi.com/extension/course-details': self.course_details,
+                    'http://id.tincanapi.com/extension/user-details': self.user_details
+                }
+            },
         }
 
     def test_statement(self):

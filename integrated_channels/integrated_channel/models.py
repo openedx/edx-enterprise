@@ -110,6 +110,8 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
 class LearnerDataTransmissionAudit(models.Model):
     """
     The payload we send to an integrated channel  at a given point in time for an enterprise course enrollment.
+
+    .. no_pii::
     """
 
     enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False)
@@ -182,6 +184,8 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     This model can be queried to find the content metadata items that have been
     transmitted to an integrated channel. It is used to synchronize the content
     metadata items available in an enterprise's catalog with the integrated channel.
+
+    .. no_pii::
     """
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer)

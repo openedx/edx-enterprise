@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[1.2.9] - 2019-01-23
+--------------------
+
+* Upgrade requirements, and add code-annotations.
+* Add PII annotations to all apps in this repo.
+* Enable PII checking during CI.
+
 [1.2.8] - 2019-01-22
 --------------------
 

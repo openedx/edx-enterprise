@@ -1,0 +1,26 @@
+# This is a Code Annotations automatically-generated Django model safelist file.
+# These models must be annotated as follows in order to be counted in the coverage report.
+# See https://code-annotations.readthedocs.io/en/latest/safelist.html for more information.
+#
+# fake_app_1.FakeModelName:
+#    ".. no_pii::": "This model has no PII"
+# fake_app_2.FakeModel2:
+#    ".. choice_annotation::": foo, bar, baz
+
+consent.HistoricalDataSharingConsent:
+    ".. pii::": "The username field inherited from DataSharingConsent contains PII"
+    ".. pii_types::": username
+    ".. pii_retirement::": consumer_api
+degreed.HistoricalDegreedEnterpriseCustomerConfiguration:
+    ".. no_pii::": ""
+enterprise.HistoricalEnrollmentNotificationEmailTemplate:
+    ".. no_pii::": ""
+enterprise.HistoricalEnterpriseCourseEnrollment:
+    ".. no_pii::": ""
+enterprise.HistoricalEnterpriseCustomer:
+    ".. no_pii::": ""
+enterprise.HistoricalEnterpriseCustomerCatalog:
+    ".. no_pii::": ""
+enterprise.HistoricalEnterpriseCustomerEntitlement:
+    ".. no_pii::": ""
+

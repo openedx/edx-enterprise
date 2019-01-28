@@ -1,29 +1,28 @@
 # Deviations:
 # - In edx-platform, DRF is a custom version; we do not use the extra features.
 
-celery==3.1.18                          # Run task workers in other locations
-cryptography==1.9                       # For random password generation
-django==1.11.15                         # Application server
+celery==3.1.25                          # Run task workers in other locations
+cryptography==2.4.2                     # For random password generation
+django==1.11.18                         # Application server
 djangorestframework==3.6.3              # REST API extensions for Django
 djangorestframework-oauth==1.1.0        # For enterprise REST API endpoint
 django-fernet-fields==0.5               # Fernet symmetric encryption for Django model fields, using the cryptography library.
 django-filter==1.0.4                    # HTTP Request filters for Django and DRF
-django-model-utils==2.3.1               # Provides TimeStampedModel abstract base class
+django-model-utils==3.0.0               # Provides TimeStampedModel abstract base class
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
-edx-django-oauth2-provider==1.1.4       # edx Django OAuth2 provider
-edx-drf-extensions==2.0.0               # edX extensions to django rest framework
-edx-opaque-keys==0.4.0                  # edX plugins for handling course keys
+edx-django-oauth2-provider==1.3.5       # edx Django OAuth2 provider
+edx-drf-extensions==2.0.1               # edX extensions to django rest framework
+edx-opaque-keys==0.4.4                  # edX plugins for handling course keys
 unicodecsv==0.14.1                      # Allows exporting CSV with unicode support (a drop-in replacement for built-in csv module)
-Pillow==3.4                             # Image manipulation module, required to use ImageField
-django-simple-history==1.9.0            # History for Django models
-edx-rest-api-client==1.7.1              # For accessing the Enrollment API (and possibly other edX APIs)
-django-config-models==0.1.8
-requests==2.9.1                         # Required for SAPSuccessFactorsAPIClient
+Pillow==5.4.1                           # Image manipulation module, required to use ImageField
+django-simple-history==2.7.0            # History for Django models
+edx-rest-api-client==1.9.2              # For accessing the Enrollment API (and possibly other edX APIs)
+django-config-models==0.2.2
+requests==2.21.0                        # Required for SAPSuccessFactorsAPIClient
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
-edx-opaque-keys==0.4.0                  # Helpers for parsing course run IDs
 testfixtures                            # Mock objects for unit tests and doc tests
 jsonfield==2.0.2                        # Provides a Django model field which serializes/deserializes JSON objects
-flaky==3.3.0                            # Rerun flaky tests automatically if they fail, up to a limit
+flaky==3.5.3                            # Rerun flaky tests automatically if they fail, up to a limit
 
 # These are packages that edx-enterprise uses that are pinned to previous versions in edx-platform.
 # We pin them here to make sure our tests are installing the same requirements
@@ -36,3 +35,7 @@ diff-cover==0.9.8
 path.py==8.2.1
 python-dateutil==2.4.0
 pytz==2016.10
+
+# other
+
+code-annotations==0.2.1
