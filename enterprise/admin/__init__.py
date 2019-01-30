@@ -121,8 +121,6 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
     model = EnterpriseCustomerCatalog
     extra = 0
     can_delete = False
-    fields = ('title', 'uuid', 'content_filter', 'enabled_course_modes', 'publish_audit_enrollment_urls')
-    readonly_fields = ('uuid')
 
     def get_formset(self, request, obj=None, **kwargs):
         formset = super(EnterpriseCustomerCatalogInline, self).get_formset(request, obj, **kwargs)

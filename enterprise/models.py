@@ -1222,8 +1222,10 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         return (
             "<EnterpriseCustomerCatalog '{title}' "
+            "with UUID {uuid} "
             "for EnterpriseCustomer {enterprise_customer_name}>".format(
                 title=self.title,
+                uuid=self.uuid,
                 enterprise_customer_name=self.enterprise_customer.name
             )
         )
