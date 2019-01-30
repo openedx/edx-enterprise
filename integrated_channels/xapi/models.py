@@ -20,6 +20,8 @@ from enterprise.models import EnterpriseCustomer
 class XAPILRSConfiguration(TimeStampedModel):
     """
     xAPI LRS configurations.
+
+    .. no_pii::
     """
 
     enterprise_customer = models.OneToOneField(

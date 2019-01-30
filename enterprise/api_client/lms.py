@@ -248,7 +248,7 @@ class EnrollmentApiClient(LmsApiClient):
                 'course_details': {'course_id': course_id},
                 'is_active': False,
                 'mode': enrollment['mode']
-                })
+            })
             return not response['is_active']
 
         return False

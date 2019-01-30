@@ -613,7 +613,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
     """
 
     @staticmethod
-    def _make_file_mock(name="logo.png", size=240*1024):
+    def _make_file_mock(name="logo.png", size=240 * 1024):
         """
         Build file mock.
         """

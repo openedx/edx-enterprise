@@ -114,6 +114,13 @@ test-all: clean jshint static ## run tests on every supported Python/Django comb
 validate: test ## run tests and quality checks
 	tox -e quality
 
+pii_check: pii_clean
+	tox -e pii-annotations
+
+pii_clean:
+	rm -rf pii_report
+	mkdir -p pii_report
+
 isort: ## call isort on packages/files that are checked in quality tests
 	isort --recursive tests test_utils enterprise consent integrated_channels manage.py setup.py
 

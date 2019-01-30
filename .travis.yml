@@ -34,6 +34,8 @@ matrix:
     - python: 2.7
       env:
         - RUNJSHINT=true
+    - python: 3.5
+      env: TOXENV=pii-annotations
 
 cache:
   - pip

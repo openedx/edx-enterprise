@@ -50,19 +50,19 @@ class TestIntegratedChannelsUtils(unittest.TestCase):
             '18d 07h 19m 26s',
         ),
         (
-            18*24*60*60 + 7*60*60 + 19*60 + 26,  # seconds in 18d 7h 19m 26s
+            18 * 24 * 60 * 60 + 7 * 60 * 60 + 19 * 60 + 26,  # seconds in 18d 7h 19m 26s
             '{D:02}d {H:02}h {M:02}m {S:02}s',
             'seconds',
             '18d 07h 19m 26s',
         ),
         (
-            18*24*60 + 7*60 + 19,  # minutes in 18d 7h 19m
+            18 * 24 * 60 + 7 * 60 + 19,  # minutes in 18d 7h 19m
             '{D:02}d {H:02}h {M:02}m',
             'minutes',
             '18d 07h 19m',
         ),
         (
-            18*24 + 7,  # hours in 18d 7h
+            18 * 24 + 7,  # hours in 18d 7h
             '{D:02}d {H:02}h',
             'hours',
             '18d 07h',

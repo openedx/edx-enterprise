@@ -145,7 +145,7 @@ def get_idp_choices():
         LOGGER.warning(exception)
         Registry = None  # pylint: disable=redefined-outer-name
 
-    first = [("", "-"*7)]
+    first = [("", "-" * 7)]
     if Registry:
         return first + [(idp.provider_id, idp.name) for idp in Registry.enabled()]
     return None

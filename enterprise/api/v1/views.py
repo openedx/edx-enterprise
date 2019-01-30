@@ -618,12 +618,14 @@ class CouponCodesView(APIView):
             )
             return Response(data, status=HTTP_200_OK)
         except SMTPException:
-            error_message = _('[Enterprise API] Failure in sending e-mail to {token_cs_email} for {token_email}'
-                              ' from {token_enterprise_name}').format(
-                                  token_cs_email=cs_email,
-                                  token_email=email,
-                                  token_enterprise_name=enterprise_name
-                              )
+            error_message = _(
+                '[Enterprise API] Failure in sending e-mail to {token_cs_email} for {token_email}'
+                ' from {token_enterprise_name}'
+            ).format(
+                token_cs_email=cs_email,
+                token_email=email,
+                token_enterprise_name=enterprise_name
+            )
             LOGGER.error(error_message)
             return Response(
                 {'error': str('Request codes email could not be sent')},
