@@ -21,7 +21,7 @@ class XAPILRSConfiguration(TimeStampedModel):
     """
     xAPI LRS configurations.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     enterprise_customer = models.OneToOneField(

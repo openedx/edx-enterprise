@@ -226,9 +226,9 @@ class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-m
     The model is used to store a persistent, historical consent state for users granting, not granting, or revoking
     data sharing consent to an Enterprise for a course.
 
-    .. pii:: The username field inherited from Consent contains PII.
-    .. pii_types:: username
-    .. pii_retirement:: consumer_api
+    .. pii: The username field inherited from Consent contains PII.
+    .. pii_types: username
+    .. pii_retirement: consumer_api
     """
 
     class Meta(Consent.Meta):
@@ -256,7 +256,7 @@ class DataSharingConsentTextOverrides(TimeStampedModel):
     """
     Stores texts overrides for data sharing consent page.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     class Meta(object):

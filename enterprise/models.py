@@ -86,7 +86,7 @@ class EnterpriseCustomerType(TimeStampedModel):
     """
     Enterprise Customer Types are used to differentiate Enterprise learners.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     class Meta:
@@ -143,7 +143,7 @@ class EnterpriseCustomer(TimeStampedModel):
         active (:class:`django.db.models.BooleanField`): used to mark inactive Enterprise Customers - implements
             "soft delete" pattern.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     class Meta:
@@ -596,7 +596,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_id (:class:`django.db.models.IntegerField`): user identifier
 
-    .. no_pii::
+    .. no_pii:
     """
 
     enterprise_customer = models.ForeignKey(
@@ -809,9 +809,9 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         enterprise_customer (ForeignKey[:class:`.EnterpriseCustomer`]): enterprise customer
         user_email (:class:`django.db.models.EmailField`): user email
 
-    .. pii:: The user_email field contains PII, but locally deleted via enterprise.signals.handle_user_post_save when the learner registers a new account.  As an additional safety measure, we also delete this row (if found) during user retirement.
-    .. pii_types:: email_address
-    .. pii_retirement:: local_api, consumer_api
+    .. pii: The user_email field contains PII, but locally deleted via enterprise.signals.handle_user_post_save when the learner registers a new account.  As an additional safety measure, we also delete this row (if found) during user retirement.
+    .. pii_types: email_address
+    .. pii_retirement: local_api, consumer_api
     """  # pylint: enable=line-too-long
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False)
@@ -847,7 +847,7 @@ class PendingEnrollment(TimeStampedModel):
     when the PendingEnterpriseCustomerUser is converted to a full EnterpriseCustomerUser, API
     calls will be made to enroll the newly-created user in whatever courses have been added.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     user = models.ForeignKey(
@@ -916,7 +916,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         enterprise_customer (ForeignKey[EnterpriseCustomer]): enterprise customer
         logo (ImageField): enterprise customer image
 
-    .. no_pii::
+    .. no_pii:
     """
 
     enterprise_customer = models.OneToOneField(
@@ -982,7 +982,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         enterprise_customer (ForeignKey[EnterpriseCustomer]): enterprise customer
         provider_id (:class:`django.db.models.SlugField`): The provider_id string of the identity provider.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     enterprise_customer = models.OneToOneField(
@@ -1034,7 +1034,7 @@ class EnterpriseCustomerEntitlement(TimeStampedModel):
     Users associated with an Enterprise Customer could be eligible for these entitlements resulting in partial or full
     discounts while taking paid courses on the edX platform.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     class Meta(object):
@@ -1079,7 +1079,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     has been enrolled in a course, and is the repository for any other
     relevant metadata about such an enrollment.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     class Meta(object):
@@ -1164,7 +1164,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
     information about catalogs, courses, programs, and possibly more in the
     future, as the course discovery service evolves.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     uuid = models.UUIDField(
@@ -1444,7 +1444,7 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     """
     Store optional templates to use when emailing users about course enrollment events.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     class Meta(object):
@@ -1530,7 +1530,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     """
     The Enterprise's configuration for sending automated data reports securely via email to the Enterprise Admin.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     FREQUENCY_TYPE_DAILY = 'daily'
