@@ -852,8 +852,9 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             title=title,
             enterprise_customer=factories.EnterpriseCustomerFactory(name=name)
         )
-        expected_str = "<EnterpriseCustomerCatalog '{title}' for EnterpriseCustomer {name}>".format(
+        expected_str = "<EnterpriseCustomerCatalog '{title}' with UUID '{uuid}' for EnterpriseCustomer {name}>".format(
             title=title,
+            uuid=enterprise_catalog.uuid,
             name=name
         )
         self.assertEqual(method(enterprise_catalog), expected_str)

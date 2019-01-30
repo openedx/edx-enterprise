@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.2.10] - 2019-01-30
+---------------------
+
+* Include Enterprise Catalog UUID in Enterprise Customer django admin inline.
+
 [1.2.9] - 2019-01-23
 --------------------
 
