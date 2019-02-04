@@ -33,7 +33,7 @@ class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
     """
     The global configuration for integrating with SuccessFactors.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     completion_status_api_path = models.CharField(max_length=255)
@@ -63,7 +63,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
     """
     The Enterprise-specific configuration we need for integrating with SuccessFactors.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     USER_TYPE_USER = 'user'
@@ -206,7 +206,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     """
     The payload we sent to SuccessFactors at a given point in time for an enterprise course enrollment.
 
-    .. no_pii::
+    .. no_pii:
     """
 
     sapsf_user_id = models.CharField(max_length=255, blank=False, null=False)
