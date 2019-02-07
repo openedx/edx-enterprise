@@ -56,18 +56,6 @@ class DataSharingConsentAdmin(SimpleHistoryAdmin):
         'course_id',
     )
 
-    def has_add_permission(self, request):
-        """
-        Disable add permission for DataSharingConsent.
-        """
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """
-        Disable deletion permission for DataSharingConsent.
-        """
-        return False
-
 
 @admin.register(DataSharingConsentTextOverrides)
 class DataSharingConsentTextOverridesAdmin(DjangoObjectActions, SimpleHistoryAdmin):
