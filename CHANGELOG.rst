@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[1.2.11] - 2019-02-07
+---------------------
+
+* Allow admins with enterprise permissions to edit Data Sharing Consent Records
+
 
 [1.2.10] - 2019-01-30
 ---------------------
