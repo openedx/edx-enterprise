@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+[1.2.12] - 2019-02-15
+---------------------
+
+* Updating enterprise views with new logging
+* Updating enterprise views to render new error page in a number of circumstances
+
 [1.2.11] - 2019-02-07
 ---------------------
 

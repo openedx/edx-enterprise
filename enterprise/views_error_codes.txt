@@ -1,0 +1,23 @@
+# Below are a list of error codes in the views for edx-enterprise, along with their description.
+# Please update this and any other references to error codes in your personal documentation
+# if you ever make changes to the views file
+
+ENTGDS000 - The course or program with a given id does not exist
+ENTGDS001 - The code was unable to get consent data for the user
+ENTGDS002 - There is no consent record, or consent is not required
+ENTGDS003 - Required request values missing for action to be carried out
+ENTGDS004 - Course catalog api configuration error
+ENTGDS005 - Required request values missing for action to be carried out
+ENTGDS006 - The course or program with a given id does not exist
+ENTGDS007 - There is no consent record, or consent is not required
+
+ENTHCE000 - No course modes for the goven course id
+
+ENTPEV000 - Course catalog api configuration error
+ENTPEV001 - No course details or course run details available
+ENTPEV002 - Course catalog api configuration error
+ENTPEV003 - No program details available
+ENTPEV004 - No program type available
+
+ENTRV000 - No course_run_id available
+ENTRV001 - No course_run_id available, or course catalog configuration error 

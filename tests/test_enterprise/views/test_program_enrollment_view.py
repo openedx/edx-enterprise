@@ -16,11 +16,10 @@ from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import Http404
+from django.http import HttpResponse
 from django.test import Client, TestCase
 
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise.views import ProgramEnrollmentView
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -62,6 +61,15 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         Log the user in.
         """
         assert self.client.login(username=self.user.username, password="QWERTY")
+
+    def _assert_get_returns_404_with_mock(self, url):
+        """
+        Mock the render method, run a GET, and assert it returns 404.
+        """
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()
+            self.client.get(url)
+            assert mock_render.call_args_list[0][1]['status'] == 404
 
     def _setup_course_catalog_client(self, client_mock):
         """
@@ -728,8 +736,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
 
         self._login()
-        response = self.client.get(program_enrollment_page_url)
-        assert response.status_code == 404
+        self._assert_get_returns_404_with_mock(program_enrollment_page_url)
 
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.views.ProgramDataExtender')
@@ -752,8 +759,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
 
         self._login()
-        response = self.client.get(program_enrollment_page_url)
-        assert response.status_code == 404
+        self._assert_get_returns_404_with_mock(program_enrollment_page_url)
 
     def test_get_program_enrollment_page_for_invalid_ec_uuid(self):
         """
@@ -874,8 +880,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         )
 
         self._login()
-        response = self.client.get(program_enrollment_page_url)
-        assert response.status_code == 404
+        self._assert_get_returns_404_with_mock(program_enrollment_page_url)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
@@ -984,26 +989,6 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
             'http://localhost:18130/basket/add/?sku=sku1&sku=sku2&bundle=52ad909b-c57d-4ff1-bab3-999813a2479b',
             fetch_redirect_response=False
         )
-
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    def test_extend_course_discovery_error(self, course_catalog_api_client_mock):
-        """
-        We raise a 404 when there are Discovery API-related errors in the ``extend_course`` function.
-        """
-        course_catalog_api_client_mock.side_effect = ImproperlyConfigured
-        with self.assertRaises(Http404):
-            ProgramEnrollmentView.extend_course({}, EnterpriseCustomerFactory())
-
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    def test_extend_course_no_course_details_returned_from_discovery(self, course_catalog_api_client_mock):
-        """
-        We raise a 404 when the Discovery API returns no course details in ``extend_course``.
-        """
-        course_catalog_api_client_mock.return_value.get_course_and_course_run.return_value = None, None
-        with self.assertRaises(Http404):
-            ProgramEnrollmentView.extend_course(
-                {'course_runs': [{'key': 'edX+DemoX+2017'}]},
-                EnterpriseCustomerFactory())
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')

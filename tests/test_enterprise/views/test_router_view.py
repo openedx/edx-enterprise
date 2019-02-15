@@ -11,7 +11,7 @@ from pytest import mark
 
 from django.core.exceptions import ImproperlyConfigured
 from django.core.urlresolvers import reverse
-from django.http import Http404
+from django.http import HttpResponse
 from django.test import TestCase
 
 from enterprise import views
@@ -178,24 +178,30 @@ class TestRouterView(TestCase):
         router_view_mock.get(self.request, **kwargs)
         router_view_mock.redirect.assert_called_once()
 
+    @mock.patch('enterprise.views.get_global_context')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    def test_get_raises_404_with_bad_catalog_client(self, catalog_api_mock):
+    def test_get_raises_404_with_bad_catalog_client(self, catalog_api_mock, mock_global_context):
         """
-        ``get`` raises a 404 when the catalog client is not properly configured.
+        ``get`` responds with a 404 when the catalog client is not properly configured.
         """
+        mock_global_context.return_value = {}
         catalog_api_mock.return_value.get_course_details.side_effect = ImproperlyConfigured()
         kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
             'course_key': 'fake_course_key'
         }
-        with self.assertRaises(Http404):
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()  # Must return response to keep view happy
             views.RouterView().get(self.request, **kwargs)
+            assert mock_render.call_args_list[0][1]['status'] == 404
 
+    @mock.patch('enterprise.views.get_global_context')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    def test_get_raises_404_with_bad_course_key(self, catalog_api_mock):
+    def test_get_raises_404_with_bad_course_key(self, catalog_api_mock, mock_global_context):
         """
-        ``get`` raises a 404 when a course run cannot be found given the provided course key.
+        ``get`` responds with a 404 when a course run cannot be found given the provided course key.
         """
+        mock_global_context.return_value = {}
         fake_catalog_api.setup_course_catalog_api_client_mock(
             catalog_api_mock,
             course_overrides={'course_runs': []}
@@ -204,8 +210,10 @@ class TestRouterView(TestCase):
             'enterprise_uuid': str(self.enterprise_customer.uuid),
             'course_key': 'fake_course_key'
         }
-        with self.assertRaises(Http404):
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()  # Must return response to keep view happy
             views.RouterView().get(self.request, **kwargs)
+            assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.track_enrollment')
     @mock.patch('enterprise.models.EnrollmentApiClient')

@@ -12,6 +12,7 @@ from pytest import mark
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.test import Client, TestCase
 
 from enterprise.models import EnterpriseCourseEnrollment
@@ -136,8 +137,10 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
                 params=urlencode({'course_mode': 'professional'})
             )
         )
-        response = self.client.get(handle_consent_enrollment_url)
-        assert response.status_code == 404
+        with mock.patch('enterprise.views.render') as mock_render:
+            mock_render.return_value = HttpResponse()  # Must return response to keep view happy
+            self.client.get(handle_consent_enrollment_url)
+            assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.get_enterprise_customer_user')
