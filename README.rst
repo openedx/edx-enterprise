@@ -14,7 +14,7 @@ enterprise
     :alt: Codecov
 
 .. image:: http://edx-enterprise.readthedocs.io/en/latest/?badge=latest
-    :target: http://edx-enterprise.readthedocs.io/en/latest/
+    :target: http://open-edx-enterprise-service-documentation.readthedocs.io/en/latest/
     :alt: Documentation
 
 .. image:: https://img.shields.io/pypi/pyversions/edx-enterprise.svg
