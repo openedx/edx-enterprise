@@ -7,3 +7,4 @@ jsondiff==1.1.1                         # Used to detect content metadata change
 django-countries==4.6.1
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 django-simple-history==2.7.0
+edx-rbac==0.1.3

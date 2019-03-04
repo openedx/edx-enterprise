@@ -90,6 +90,9 @@ ENTERPRISE_PERMISSION_GROUPS = [
     'enterprise_data_api_access',
 ]
 
+ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
+ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
+
 
 def json_serialized_course_modes():
     """
