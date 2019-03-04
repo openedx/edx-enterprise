@@ -6,4 +6,4 @@ django-multi-email-field==0.5.1         # Multi email input field in Django admi
 jsondiff==1.1.1                         # Used to detect content metadata changes
 django-countries==4.6.1
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
-django-simple-history
+django-simple-history==2.7.0

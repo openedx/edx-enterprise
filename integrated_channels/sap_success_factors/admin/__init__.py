@@ -4,14 +4,16 @@ Django admin integration for configuring sap_success_factors app to communicate 
 """
 from __future__ import absolute_import, unicode_literals
 
-from django.contrib import admin
 from config_models.admin import ConfigurationModelAdmin
 from requests import RequestException
 
-from integrated_channels.sap_success_factors.models import (
-    SAPSuccessFactorsEnterpriseCustomerConfiguration, SAPSuccessFactorsGlobalConfiguration
-)
+from django.contrib import admin
+
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
+from integrated_channels.sap_success_factors.models import (
+    SAPSuccessFactorsEnterpriseCustomerConfiguration,
+    SAPSuccessFactorsGlobalConfiguration,
+)
 
 
 @admin.register(SAPSuccessFactorsGlobalConfiguration)

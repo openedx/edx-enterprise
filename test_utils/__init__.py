@@ -13,23 +13,23 @@ import json
 import logging
 import uuid
 
-from django.conf import settings
-from django.core.urlresolvers import reverse
-
 import mock
 import six
 from pytest import mark
-from rest_framework.test import APITestCase, APIClient
+from rest_framework.test import APIClient, APITestCase
 from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
     parse_qs,
-    urlparse,
     urljoin,
-    urlsplit
+    urlparse,
+    urlsplit,
 )
+
+from django.conf import settings
+from django.core.urlresolvers import reverse
 from django.shortcuts import render
 
-from test_utils import factories
 from enterprise import utils
+from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
 TEST_USERNAME = 'api_worker'
