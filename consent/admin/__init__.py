@@ -5,13 +5,14 @@ Django admin integration for the Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
+from django_object_actions import DjangoObjectActions
+from simple_history.admin import SimpleHistoryAdmin
+
 from django.contrib import admin
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
-from django_object_actions import DjangoObjectActions
-from simple_history.admin import SimpleHistoryAdmin
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 

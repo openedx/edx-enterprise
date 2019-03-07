@@ -5,18 +5,21 @@ Django admin integration for enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 import json
-from django.db.models import Q
+
+from django_object_actions import DjangoObjectActions
+from simple_history.admin import SimpleHistoryAdmin
+from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import settings
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
-from django_object_actions import DjangoObjectActions
-from simple_history.admin import SimpleHistoryAdmin
 
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
 from enterprise.admin.forms import (
@@ -33,24 +36,19 @@ from enterprise.admin.views import (
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    EnterpriseCourseEnrollment,
     EnterpriseCustomer,
+    EnterpriseCustomerBrandingConfiguration,
+    EnterpriseCustomerCatalog,
+    EnterpriseCustomerEntitlement,
+    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerType,
     EnterpriseCustomerUser,
-    EnterpriseCustomerBrandingConfiguration,
-    EnterpriseCustomerIdentityProvider,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
-    EnterpriseCustomerEntitlement,
-    EnterpriseCustomerReportingConfiguration,
-    EnterpriseCourseEnrollment,
-    EnterpriseCustomerCatalog,
 )
-from enterprise.utils import (
-    get_all_field_names,
-    get_default_catalog_content_filter,
-    NotConnectedToOpenEdX,
-)
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
+from enterprise.utils import NotConnectedToOpenEdX, get_all_field_names, get_default_catalog_content_filter
 
 try:
     from openedx.core.djangoapps.catalog.models import CatalogIntegration

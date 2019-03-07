@@ -4,8 +4,9 @@ Django admin integration for configuring degreed app to communicate with Degreed
 """
 from __future__ import absolute_import, unicode_literals
 
-from django.contrib import admin
 from config_models.admin import ConfigurationModelAdmin
+
+from django.contrib import admin
 
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration, DegreedGlobalConfiguration
 
