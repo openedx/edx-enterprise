@@ -26,6 +26,7 @@ from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
+    UserRoleAssignmentAdminForm,
 )
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import (
@@ -47,6 +48,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import NotConnectedToOpenEdX, get_all_field_names, get_default_catalog_content_filter
 
@@ -642,3 +644,22 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
             return [f for f in fields if f not in {'decrypted_password', 'decrypted_sftp_password'}]
 
         return fields
+
+
+@admin.register(SystemWideEnterpriseUserRoleAssignment)
+class SystemWideEnterpriseUserRoleAssignment(admin.ModelAdmin):
+    """
+    Django admin model for SystemWideEnterpriseUserRoleAssignment.
+    """
+
+    list_display = (
+        'user', 'role'
+    )
+
+    list_filter = ('role',)
+    search_fields = ('user__email', 'role__name')
+    fields = ('user', 'role',)
+    form = UserRoleAssignmentAdminForm
+
+    class Meta(object):
+        model = SystemWideEnterpriseUserRoleAssignment
