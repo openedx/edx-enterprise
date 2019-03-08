@@ -312,7 +312,10 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
 
         if 'error' in sap_inactive_learners:
             LOGGER.warning(
-                'SAP searchStudent API returned response with error message "%s" and with error code "%s".',
+                'SAP searchStudent API for customer %s and base url %s returned response with '
+                'error message "%s" and with error code "%s".',
+                self.enterprise_configuration.enterprise_customer.name,
+                self.enterprise_configuration.sapsf_base_url,
                 sap_inactive_learners['error'].get('message'),
                 sap_inactive_learners['error'].get('code'),
             )
