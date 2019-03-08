@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import six
 from django_countries.fields import CountryField
+from edx_rbac.models import UserRole, UserRoleAssignment
 from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
@@ -22,7 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -1787,3 +1788,75 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
 
         if validation_errors:
             raise ValidationError(validation_errors)
+
+
+@python_2_unicode_compatible
+class SystemWideEnterpriseRole(UserRole):
+    """
+    System wide user role definitions specific to Enterprise.
+
+    .. no_pii:
+    """
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<SystemWideEnterpriseRole {role}>".format(role=self.name)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
+    """
+    Model to map users to a SystemWideEnterpriseRole.
+
+    .. no_pii:
+    """
+
+    role_class = SystemWideEnterpriseRole
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<SystemWideEnterpriseUserRoleAssignment for User {user} assigned to role {role}>".format(
+            user=self.user.id,
+            role=self.role.name
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+    @property
+    def enterprise_customer_uuid(self):
+        """Get the enterprise customer uuid linked to the user."""
+        try:
+            enterprise_user = EnterpriseCustomerUser.objects.get(user_id=self.user.id)
+        except ObjectDoesNotExist:
+            LOGGER.warning(
+                'User {} has a SystemWideEnterpriseRole assignment but is not linked to an enterprise!'.format(
+                    self.user.id
+                ))
+            return None
+        except MultipleObjectsReturned:
+            LOGGER.warning(
+                'User {} is linked to multiple enterprises, which is not yet supported!'.format(self.user.id)
+            )
+            return None
+
+        return enterprise_user.enterprise_customer.uuid
+
+    def get_context(self):
+        """
+        Return the context for this role assignment class.
+        """
+        return self.enterprise_customer_uuid

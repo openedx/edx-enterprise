@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[1.3.0] - 2019-03-07
+--------------------
+
+* Introducing Enterprise System Wide Roles and edx-rbac.
+
 [1.2.12] - 2019-02-15
 ---------------------
 

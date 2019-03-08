@@ -48,6 +48,7 @@ edx-drf-extensions==2.0.1
 edx-i18n-tools==0.4.8
 edx-lint==1.1.1
 edx-opaque-keys==0.4.4
+edx-rbac==0.1.3
 edx-rest-api-client==1.9.2
 enum34==1.1.6             # via astroid, cryptography
 filelock==3.0.10          # via tox
@@ -101,7 +102,7 @@ rest-condition==1.0.3     # via edx-drf-extensions
 semantic-version==2.6.0   # via edx-drf-extensions
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 singledispatch==3.4.0.3   # via astroid, pylint
-six==1.12.0               # via astroid, bleach, cryptography, diff-cover, edx-drf-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, html5lib, packaging, pip-tools, pydocstyle, pyjwkest, pylint, python-dateutil, singledispatch, stevedore, tox
+six==1.12.0               # via astroid, bleach, cryptography, diff-cover, edx-drf-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-rbac, html5lib, packaging, pip-tools, pydocstyle, pyjwkest, pylint, python-dateutil, singledispatch, stevedore, tox
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via pydocstyle
 stevedore==1.30.1         # via code-annotations, edx-opaque-keys
