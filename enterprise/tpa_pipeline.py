@@ -79,17 +79,12 @@ def get_user_from_social_auth(tpa_provider, tpa_username):
     Find the LMS user from the LMS model `UserSocialAuth`.
 
     Arguments:
-        tpa_provider (str): Slug for the third party auth
+        tpa_provider (third_party_auth.provider): third party auth provider object
         tpa_username (str): Username returned by the third party auth
 
     """
-    user_id = '{provider}:{username}'.format(
-        provider=tpa_provider.split('-')[-1],
-        username=tpa_username
-    )
+    user_social_auth = UserSocialAuth.objects.select_related('user').filter(
+        user__username=tpa_username, provider=tpa_provider.backend_name
+    ).first()
 
-    try:
-        user_social_auth = UserSocialAuth.objects.get(uid=user_id)
-        return user_social_auth.user
-    except UserSocialAuth.DoesNotExist:
-        return None
+    return user_social_auth.user if user_social_auth else None

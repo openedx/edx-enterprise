@@ -10,9 +10,9 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
-from enterprise.utils import parse_course_key
+from enterprise.utils import get_identity_provider, parse_course_key
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.utils import parse_datetime_to_epoch_millis
@@ -99,9 +99,9 @@ class SapSuccessFactorsLearnerManger(object):
         """
         sap_inactive_learners = self.client.get_inactive_sap_learners()
         enterprise_customer = self.enterprise_configuration.enterprise_customer
-        try:
-            tpa_provider = enterprise_customer.enterprise_customer_identity_provider.provider_id
-        except EnterpriseCustomer.enterprise_customer_identity_provider.RelatedObjectDoesNotExist:
+        provider_id = enterprise_customer.identity_provider
+        tpa_provider = get_identity_provider(provider_id)
+        if not tpa_provider:
             LOGGER.info(
                 'Enterprise customer {%s} has no associated identity provider',
                 enterprise_customer.name
