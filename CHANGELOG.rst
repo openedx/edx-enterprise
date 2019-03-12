@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.2] - 2019-03-18
+--------------------
+
+* Adding django admin for SystemWideEnterpriseUserRoleAssignments.
+
 [1.3.1] - 2019-03-13
 --------------------
 

@@ -114,6 +114,9 @@ test-all: clean jshint static ## run tests on every supported Python/Django comb
 validate: test ## run tests and quality checks
 	tox -e quality
 
+quality: ## run python quality checks
+	tox -e quality
+
 pii_check: pii_clean
 	tox -e pii-annotations
 

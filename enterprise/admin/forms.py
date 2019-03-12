@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
 from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 
 from django import forms
@@ -578,35 +579,11 @@ class TransmitEnterpriseCoursesForm(forms.Form):
         return channel_worker_username
 
 
-class UserFromEmailField(forms.EmailField):
+class SystemWideEnterpriseUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
     """
-    Custom Form Field class for selecting users by entering an email.
-    Meant to be used for models with foreign keys to the user table.
+    Form for SystemWideEnterpriseUserRoleAssignments.
     """
-
-    def clean(self, value):
-        try:
-            user = User.objects.get(email=value)
-        except User.DoesNotExist:
-            raise ValidationError('User with email {} does not exist'.format(value))
-
-        return user
-
-
-class UserRoleAssignmentAdminForm(forms.ModelForm):
-    user = UserFromEmailField(
-        label=_('User Email'),
-        required=True
-    )
 
     class Meta:
         model = SystemWideEnterpriseUserRoleAssignment
         fields = ['user', 'role']
-
-    def __init__(self, *args, **kwargs):
-        instance = kwargs.get('instance')
-        initial = kwargs.get('initial', {})
-        if instance:
-            initial['user'] = instance.user.email
-            kwargs['initial'] = initial
-        super(UserRoleAssignmentAdminForm, self).__init__(*args, **kwargs)

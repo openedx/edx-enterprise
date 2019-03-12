@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 from django_object_actions import DjangoObjectActions
+from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
@@ -26,7 +27,7 @@ from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
-    UserRoleAssignmentAdminForm,
+    SystemWideEnterpriseUserRoleAssignmentForm,
 )
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import (
@@ -647,19 +648,12 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
 
 
 @admin.register(SystemWideEnterpriseUserRoleAssignment)
-class SystemWideEnterpriseUserRoleAssignment(admin.ModelAdmin):
+class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     """
     Django admin model for SystemWideEnterpriseUserRoleAssignment.
     """
 
-    list_display = (
-        'user', 'role'
-    )
-
-    list_filter = ('role',)
-    search_fields = ('user__email', 'role__name')
-    fields = ('user', 'role',)
-    form = UserRoleAssignmentAdminForm
+    form = SystemWideEnterpriseUserRoleAssignmentForm
 
     class Meta(object):
         model = SystemWideEnterpriseUserRoleAssignment
