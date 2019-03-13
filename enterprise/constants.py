@@ -85,9 +85,10 @@ DEFAULT_CATALOG_CONTENT_FILTER = {
 }
 
 # Django groups specific to granting permission to enterprise admins.
+ENTERPRISE_DATA_API_ACCESS_GROUP = 'enterprise_data_api_access'
 ENTERPRISE_PERMISSION_GROUPS = [
     'enterprise_enrollment_api_access',
-    'enterprise_data_api_access',
+    ENTERPRISE_DATA_API_ACCESS_GROUP,
 ]
 
 ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'

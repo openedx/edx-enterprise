@@ -24,7 +24,14 @@ from django.core.management.base import CommandError
 from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
-from enterprise.models import EnterpriseCustomerIdentityProvider, EnterpriseCustomerUser
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_DATA_API_ACCESS_GROUP, ENTERPRISE_LEARNER_ROLE
+from enterprise.management.commands.assign_enterprise_user_roles import Command as AssignEnterpriseUserRolesCommand
+from enterprise.models import (
+    EnterpriseCustomerIdentityProvider,
+    EnterpriseCustomerUser,
+    SystemWideEnterpriseRole,
+    SystemWideEnterpriseUserRoleAssignment,
+)
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
@@ -1092,3 +1099,158 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             'Enterprise customer {Veridian Dynamics} has no SAPSF inactive learners',
         ]
         self.assert_info_logs_sap_learners_unlink(expected_messages)
+
+
+@ddt.ddt
+@mark.django_db
+class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
+    """
+    Test the assign_enterprise_user_roles management command.
+    """
+
+    def setUp(self):
+        super(TestMigrateEnterpriseUserRolesCommand, self).setUp()
+        self.enterprise_admin_role = SystemWideEnterpriseRole.objects.get(name=ENTERPRISE_ADMIN_ROLE)
+        self.enterprise_learner_role = SystemWideEnterpriseRole.objects.get(name=ENTERPRISE_LEARNER_ROLE)
+
+        self.admin_user = factories.UserFactory(email='enterprise_admin@example.com')
+        self.enterprise_api_access_group = factories.GroupFactory(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
+        self.enterprise_api_access_group.user_set.add(self.admin_user)
+
+        self.learner_user = factories.UserFactory(email='enterprise_learner@example.com')
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            catalog=1,
+            name='Team Titans',
+        )
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        self.command = AssignEnterpriseUserRolesCommand()
+
+    def _assert_role_assignments(self, user, role_name, user_role_assignment_count):
+        """
+        Verify expected role assignment records are created for specific role.
+        """
+        enterprise_role = SystemWideEnterpriseRole.objects.get(name=role_name)
+        user_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=user,
+            role=enterprise_role
+        )
+        self.assertEqual(user_role_assignments.count(), user_role_assignment_count)
+
+    @ddt.data(
+        ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE),
+        ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE)
+    )
+    @ddt.unpack
+    def test_assign_enterprise_user_roles_success(self, user_email, role_name):
+        """
+        Tests `assign_enterprise_user_roles` command runs with expected results.
+        """
+        user = User.objects.get(email=user_email)
+        # Verify that initially there are no enterprise role assignment records.
+        self._assert_role_assignments(user, role_name, 0)
+
+        # Run assign_enterprise_user_roles to assign enterprise roles.
+        call_command('assign_enterprise_user_roles', '--role', role_name, batch_sleep=0)
+
+        # Verify new respective role assignment records are created for the role.
+        self._assert_role_assignments(user, role_name, 1)
+
+    @ddt.data(
+        ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE),
+        ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE)
+    )
+    @ddt.unpack
+    def test_assign_enterprise_user_roles_rerun(self, user_email, role_name):
+        """
+        Tests running `assign_enterprise_user_roles` command again gives expected results.
+        """
+        user = User.objects.get(email=user_email)
+        # Verify that initially there are no enterprise role assignment records.
+        self._assert_role_assignments(user, role_name, 0)
+
+        # Run assign_enterprise_user_roles to assign enterprise roles.
+        call_command('assign_enterprise_user_roles', '--role', role_name, batch_sleep=0)
+
+        # Verify new respective role assignment records are created for the role.
+        self._assert_role_assignments(user, role_name, 1)
+
+        # Run assign_enterprise_user_roles command again.
+        call_command('assign_enterprise_user_roles', '--role', role_name, )
+
+        # Verify no new respective role assignment records are created.
+        self._assert_role_assignments(user, role_name, 1)
+
+    def test_assign_enterprise_user_roles_staff_user(self):
+        """
+        Tests `assign_enterprise_user_roles` command only creates role assignments for non-staff users.
+        """
+        staff_user = factories.UserFactory(email='enterprise_staff@example.com', is_staff=True)
+        self.enterprise_api_access_group.user_set.add(staff_user)
+
+        # Verify that initially there are no enterprise role assignment records.
+        self._assert_role_assignments(staff_user, ENTERPRISE_ADMIN_ROLE, 0)
+
+        # Run assign_enterprise_user_roles to assign enterprise roles.
+        call_command('assign_enterprise_user_roles', '--role', ENTERPRISE_ADMIN_ROLE, batch_sleep=0)
+
+        # Verify no new respective role assignment records are created for the role.
+        self._assert_role_assignments(staff_user, ENTERPRISE_ADMIN_ROLE, 0)
+
+    def test_get_enterprise_customer_users_batch(self):
+        """
+        Test that `_get_enterprise_customer_users_batch` method should return the correct query_set based on start
+        and end inidices provided.
+        """
+        start = 2
+        end = 5
+        expected_query = str(
+            User.objects.filter(pk__in=EnterpriseCustomerUser.objects.values('user_id'))[start:end].query
+        )
+        actual_query = str(
+            self.command._get_enterprise_customer_users_batch(start, end).query     # pylint: disable=protected-access
+        )
+        assert actual_query == expected_query
+
+    def test_get_enterprise_admin_users_batch(self):
+        """
+        Test that `_get_enterprise_admin_users_batch` method should return the correct query_set based on start
+        and end inidices provided.
+        """
+        start = 2
+        end = 5
+        expected_query = str(
+            User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=False)[start:end].query
+        )
+        actual_query = str(
+            self.command._get_enterprise_admin_users_batch(start, end).query    # pylint: disable=protected-access
+        )
+        assert actual_query == expected_query
+
+    def test_assign_enterprise_user_roles_invalid_role(self):
+        """
+        Tests `assign_enterprise_user_roles` command throws error when given invalid role name.
+        """
+        invalid_role_name = 'enterprise_titans'
+        error = 'Please provide a valid role name. Supported roles are {admin} and {learner}'.format(
+            admin=ENTERPRISE_ADMIN_ROLE,
+            learner=ENTERPRISE_LEARNER_ROLE
+        )
+        with raises(CommandError) as excinfo:
+            call_command('assign_enterprise_user_roles', '--role', invalid_role_name)
+        assert str(excinfo.value) == error
+
+    def test_assign_enterprise_user_roles_no_role(self):
+        """
+        Tests `assign_enterprise_user_roles` command throws error when no role is provided.
+        """
+        error = 'Please provide a valid role name. Supported roles are {admin} and {learner}'.format(
+            admin=ENTERPRISE_ADMIN_ROLE,
+            learner=ENTERPRISE_LEARNER_ROLE
+        )
+        with raises(CommandError) as excinfo:
+            call_command('assign_enterprise_user_roles')
+        assert str(excinfo.value) == error
