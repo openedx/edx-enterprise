@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.1] - 2019-03-13
+--------------------
+
+* Optimizations around unlinking of SAP Success factor inactive users
+
 [1.3.0] - 2019-03-07
 --------------------
 
