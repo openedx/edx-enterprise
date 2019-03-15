@@ -14,11 +14,14 @@ from pytest import mark
 from django.db import transaction
 from django.test import override_settings
 
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseRole,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.signals import handle_user_post_save
 from test_utils.factories import (
@@ -228,3 +231,228 @@ class TestDefaultContentFilter(unittest.TestCase):
         with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER=default_content_filter):
             enterprise_catalog = EnterpriseCustomerCatalogFactory()
             assert enterprise_catalog.content_filter == expected_content_filter
+
+
+@mark.django_db
+class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
+    """
+    Tests signals associated with EnterpriseCustomerUser.
+    """
+    def setUp(self):
+        """
+        Setup for `TestEnterpriseLearnerRoleSignals` test.
+        """
+        self.enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
+        self.learner_user = UserFactory(id=2, email='user@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            catalog=1,
+            name='Team Titans',
+        )
+        super(TestEnterpriseLearnerRoleSignals, self).setUp()
+
+    def test_assign_enterprise_learner_role_success(self):
+        """
+        Test that when a new `EnterpriseCustomerUser` record is created, `assign_enterprise_learner_role` assigns an
+        enterprise learner role to it.
+        """
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.learner_user.id
+        )
+        self.assertFalse(enterprise_customer_user.exists())
+
+        # Verify that no learner role assignment exists.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())
+
+        # Create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.learner_user.id
+        )
+        self.assertTrue(enterprise_customer_user.exists())
+
+        # Verify that now a new learner role assignment is created.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertTrue(learner_role_assignment.exists())
+
+    def test_assign_enterprise_learner_role_on_update(self):
+        """
+        Test that `assign_enterprise_learner_role` does not do anything on `EnterpriseCustomerUser` update operation.
+        """
+        # Create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.get(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+
+        modified_datetime_at_create = learner_role_assignment.modified
+
+        # Update EnterpriseCustomerUser record.
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+            user_id=self.learner_user.id
+        )
+        enterprise_customer_user.active = False
+        enterprise_customer_user.save()
+
+        # Verify that learner_role_assignment is not modified again
+        # i.e it is still the same time when the object was created.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.get(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertEqual(learner_role_assignment.modified, modified_datetime_at_create)
+
+    def test_assign_enterprise_learner_role_no_user_association(self):
+        """
+        Test that `assign_enterprise_learner_role` does not do anything if no User object is not associated with
+        `EnterpriseCustomerUser` record.
+        """
+        # Verify that no learner role assignment exists.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())
+
+        # Create a new EnterpriseCustomerUser with no user associated.
+        EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # Verify that no learner role assignment exists.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())
+
+    def test_delete_enterprise_learner_role_assignment_success(self):
+        """
+        Test that when `EnterpriseCustomerUser` record is deleted, `delete_enterprise_learner_role_assignment` also
+        deletes the enterprise learner role assignment associated with it.
+        """
+        # Create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.learner_user.id
+        )
+        self.assertTrue(enterprise_customer_user.exists())
+
+        # Verify that now a new learner role assignment is created.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertTrue(learner_role_assignment.exists())
+
+        # Delete EnterpriseCustomerUser record.
+        enterprise_customer_user.delete()
+
+        # Verify that enterprise_customer_user is deleted
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.learner_user.id
+        )
+        self.assertFalse(enterprise_customer_user.exists())
+
+        # Also verify that learner role assignment is deleted as well.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())
+
+    def test_delete_enterprise_learner_role_assignment_no_role_assignment(self):
+        """
+        Test that when if no role assignment is associated with a deleted `EnterpriseCustomerUser` record,
+        `delete_enterprise_learner_role_assignment` does nothing.
+        """
+        # Create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.learner_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.learner_user.id
+        )
+        self.assertTrue(enterprise_customer_user.exists())
+
+        # Delete the role assignment record for tesing purposes.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        learner_role_assignment.delete()
+
+        # Delete EnterpriseCustomerUser record.
+        enterprise_customer_user.delete()
+
+        # Verify that enterprise_customer_user is deleted
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.learner_user.id
+        )
+        self.assertFalse(enterprise_customer_user.exists())
+
+        # Also verify that no new learner role assignment is created hence won't be deleted.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())
+
+    def test_delete_enterprise_learner_role_assignment_no_user_associated(self):
+        """
+        Test that when if no user is associated with a deleted `EnterpriseCustomerUser` record,
+        `delete_enterprise_learner_role_assignment` does nothing.
+        """
+        # Create a new EnterpriseCustomerUser with no user associated.
+        EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=self.enterprise_customer
+        )
+        self.assertTrue(enterprise_customer_user.exists())
+
+        # Verify that no new learner role assignment is created.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())
+
+        # Delete EnterpriseCustomerUser record.
+        enterprise_customer_user.delete()
+
+        # Verify that enterprise_customer_user is deleted
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=self.enterprise_customer
+        )
+        self.assertFalse(enterprise_customer_user.exists())
+
+        # Also verify that no new learner role assignment is created hence won't be deleted.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.learner_user,
+            role=self.enterprise_learner_role
+        )
+        self.assertFalse(learner_role_assignment.exists())

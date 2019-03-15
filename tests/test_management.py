@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import ddt
+import factory
 import mock
 import responses
 from faker import Factory as FakerFactory
@@ -21,6 +22,7 @@ from testfixtures import LogCapture
 from django.contrib.auth.models import User
 from django.core.management import call_command
 from django.core.management.base import CommandError
+from django.db.models import signals
 from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
@@ -1103,6 +1105,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
 @ddt.ddt
 @mark.django_db
+@factory.django.mute_signals(signals.post_save)
 class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
     """
     Test the assign_enterprise_user_roles management command.
