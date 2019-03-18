@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
 from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 
 from django import forms
@@ -33,6 +34,7 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import MultipleProgramMatchError
 
@@ -575,3 +577,13 @@ class TransmitEnterpriseCoursesForm(forms.Form):
             )
 
         return channel_worker_username
+
+
+class SystemWideEnterpriseUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
+    """
+    Form for SystemWideEnterpriseUserRoleAssignments.
+    """
+
+    class Meta:
+        model = SystemWideEnterpriseUserRoleAssignment
+        fields = ['user', 'role']

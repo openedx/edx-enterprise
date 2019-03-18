@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 
 from django_object_actions import DjangoObjectActions
+from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
@@ -26,6 +27,7 @@ from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
+    SystemWideEnterpriseUserRoleAssignmentForm,
 )
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import (
@@ -47,6 +49,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import NotConnectedToOpenEdX, get_all_field_names, get_default_catalog_content_filter
 
@@ -642,3 +645,15 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
             return [f for f in fields if f not in {'decrypted_password', 'decrypted_sftp_password'}]
 
         return fields
+
+
+@admin.register(SystemWideEnterpriseUserRoleAssignment)
+class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
+    """
+    Django admin model for SystemWideEnterpriseUserRoleAssignment.
+    """
+
+    form = SystemWideEnterpriseUserRoleAssignmentForm
+
+    class Meta(object):
+        model = SystemWideEnterpriseUserRoleAssignment

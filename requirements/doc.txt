@@ -7,14 +7,14 @@
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 alabaster==0.7.12         # via sphinx
 amqp==1.4.9               # via kombu
-aniso8601==5.1.0          # via relativetimebuilder
+aniso8601==6.0.0
 anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0        # via cryptography
 babel==2.6.0              # via sphinx
 billiard==3.3.0.23        # via celery
 bleach==1.4
 celery==3.1.25
-certifi==2018.11.29       # via requests
+certifi==2019.3.9         # via requests
 cffi==1.12.2              # via cryptography
 chardet==3.0.4            # via doc8, requests
 click==7.0                # via code-annotations
@@ -24,6 +24,7 @@ defusedxml==0.5.0         # via djangorestframework-xml
 diff-cover==0.9.8
 django-config-models==0.2.2
 django-countries==4.6.1
+django-crum==0.7.3        # via edx-rbac
 django-fernet-fields==0.5
 django-filter==1.0.4
 django-ipware==1.1.0
@@ -43,7 +44,7 @@ edx-django-oauth2-provider==1.3.5
 edx-django-utils==1.0.3   # via edx-drf-extensions
 edx-drf-extensions==2.0.1
 edx-opaque-keys==0.4.4
-edx-rbac==0.1.3
+edx-rbac==0.1.5
 edx-rest-api-client==1.9.2
 edx-sphinx-theme==1.4.0
 enum34==1.1.6             # via cryptography
@@ -76,9 +77,8 @@ pymongo==3.7.2            # via edx-opaque-keys
 pyparsing==2.3.1          # via packaging
 python-dateutil==2.4.0
 pytz==2016.10
-pyyaml==3.13              # via code-annotations
+pyyaml==5.1               # via code-annotations
 readme_renderer==0.7.0
-relativetimebuilder==0.2.0  # via aniso8601
 requests==2.21.0
 rest-condition==1.0.3     # via edx-drf-extensions
 restructuredtext-lint==1.2.2  # via doc8
@@ -87,11 +87,11 @@ shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.12.0               # via bleach, cryptography, diff-cover, doc8, edx-drf-extensions, edx-opaque-keys, edx-rbac, edx-sphinx-theme, html5lib, packaging, pockets, pyjwkest, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
-sphinx==1.8.4
+sphinx==1.8.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.1.0  # via sphinx
 stevedore==1.30.1         # via code-annotations, doc8, edx-opaque-keys
-testfixtures==6.6.0
+testfixtures==6.6.1
 typing==3.6.6             # via sphinx
 unicodecsv==0.14.1
 urllib3==1.24.1           # via requests

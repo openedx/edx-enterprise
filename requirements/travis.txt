@@ -4,10 +4,10 @@
 #
 #    pip-compile --upgrade -o requirements/travis.txt requirements/travis.in
 #
-certifi==2018.11.29       # via requests
+certifi==2019.3.9         # via requests
 chardet==3.0.4            # via requests
 codecov==2.0.15
-coverage==4.5.2           # via codecov
+coverage==4.5.3           # via codecov
 filelock==3.0.10          # via tox
 idna==2.8                 # via requests
 pluggy==0.9.0             # via tox
