@@ -7,10 +7,12 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 
 from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 from enterprise.decorators import disable_for_loaddata
-from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
-from enterprise.utils import track_enrollment
+from enterprise.models import EnterpriseCustomerCatalog, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.utils import get_default_catalog_content_filter, track_enrollment
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -67,3 +69,13 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         transaction.on_commit(_complete_user_enrollment)
     else:
         pending_ecu.delete()
+
+
+@receiver(post_save, sender=EnterpriseCustomerCatalog, dispatch_uid='default_content_filter')
+def default_content_filter(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Set default value for `EnterpriseCustomerCatalog.content_filter` if not already set.
+    """
+    if kwargs['created'] and not instance.content_filter:
+        instance.content_filter = get_default_catalog_content_filter()
+        instance.save()

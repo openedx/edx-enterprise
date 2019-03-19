@@ -28,8 +28,6 @@ from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.template import Context, Template
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
@@ -48,7 +46,6 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     get_configuration_value,
-    get_default_catalog_content_filter,
     parse_course_key,
 )
 from enterprise.validators import validate_image_extension, validate_image_size
@@ -1430,16 +1427,6 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             url = utils.update_query_parameters(url, {'audit': 'true'})
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
-
-
-@receiver(post_save, sender=EnterpriseCustomerCatalog, dispatch_uid='default_content_filter')
-def default_content_filter(sender, instance, **kwargs):     # pylint: disable=unused-argument
-    """
-    Set default value for `EnterpriseCustomerCatalog.content_filter` if not already set.
-    """
-    if kwargs['created'] and not instance.content_filter:
-        instance.content_filter = get_default_catalog_content_filter()
-        instance.save()
 
 
 @python_2_unicode_compatible
