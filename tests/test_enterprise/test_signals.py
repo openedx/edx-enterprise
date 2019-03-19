@@ -12,6 +12,7 @@ import mock
 from pytest import mark
 
 from django.db import transaction
+from django.test import override_settings
 
 from enterprise.models import (
     EnterpriseCourseEnrollment,
@@ -21,6 +22,7 @@ from enterprise.models import (
 )
 from enterprise.signals import handle_user_post_save
 from test_utils.factories import (
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     PendingEnrollmentFactory,
@@ -175,3 +177,54 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Link have been created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1, \
             "Pending link should be kept"
+
+
+@mark.django_db
+@ddt.ddt
+class TestDefaultContentFilter(unittest.TestCase):
+    """
+    Tests for the content_filter field of the EnterpriseCustomerCatalog model.
+    """
+
+    @ddt.data(
+        (
+            {
+                'content_type': 'course',
+                'partner': 'edx'
+            },
+            {
+                'content_type': 'course',
+                'partner': 'edx'
+            }
+        ),
+        (
+            {
+                'content_type': 'course',
+                'level_type': [
+                    'Introductory',
+                    'Intermediate'
+                ]
+            },
+            {
+                'content_type': 'course',
+                'level_type': [
+                    'Introductory',
+                    'Intermediate'
+                ]
+            }
+        ),
+        # if the value is not set is settings, it picks default value from constant.
+        (
+            {},
+            {'content_type': 'course'}
+        )
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.utils.DEFAULT_CATALOG_CONTENT_FILTER', {'content_type': 'course'})
+    def test_default_content_filter(self, default_content_filter, expected_content_filter):
+        """
+        Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
+        """
+        with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER=default_content_filter):
+            enterprise_catalog = EnterpriseCustomerCatalogFactory()
+            assert enterprise_catalog.content_filter == expected_content_filter

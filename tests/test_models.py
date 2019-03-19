@@ -19,7 +19,6 @@ from django.core.files import File
 from django.core.files.storage import Storage
 from django.core.urlresolvers import reverse
 from django.http import QueryDict
-from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 
 from consent.errors import InvalidProxyConsent
@@ -1040,49 +1039,6 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         )
         enterprise_catalog.save()
         assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
-
-    @ddt.data(
-        (
-            {
-                'content_type': 'course',
-                'partner': 'edx'
-            },
-            {
-                'content_type': 'course',
-                'partner': 'edx'
-            }
-        ),
-        (
-            {
-                'content_type': 'course',
-                'level_type': [
-                    'Introductory',
-                    'Intermediate'
-                ]
-            },
-            {
-                'content_type': 'course',
-                'level_type': [
-                    'Introductory',
-                    'Intermediate'
-                ]
-            }
-        ),
-        # if the value is not set is settings, it picks default value from constant.
-        (
-            {},
-            {'content_type': 'course'}
-        )
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.utils.DEFAULT_CATALOG_CONTENT_FILTER', {'content_type': 'course'})
-    def test_default_content_filter(self, default_content_filter, expected_content_filter):
-        """
-        Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
-        """
-        with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER=default_content_filter):
-            enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
-            assert enterprise_catalog.content_filter == expected_content_filter
 
 
 @mark.django_db
