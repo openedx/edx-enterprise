@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.4] - 2019-03-21
+--------------------
+
+* Management command to assign enterprise roles to users.
+
 [1.3.3] - 2019-03-21
 --------------------
 
