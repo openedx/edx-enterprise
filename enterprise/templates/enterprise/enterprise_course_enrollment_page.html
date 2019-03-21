@@ -58,7 +58,9 @@
           {% if course_enrollable %}
             <form method="POST">
               <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
+              {% if cohort %}
               <input type="hidden" name="cohort" value="{{ cohort }}" />
+              {% endif %}
               {% if catalog %}
                 <input type="hidden" name="catalog" value="{{ catalog }}" />
               {% endif %}
