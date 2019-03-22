@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.5] - 2019-03-22
+--------------------
+
+* Assign an enterprise learner role to new EnterpriseCustomerUser.
+
 [1.3.4] - 2019-03-21
 --------------------
 
