@@ -7,11 +7,18 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 
 from django.db import transaction
-from django.db.models.signals import post_save
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
-from enterprise.models import EnterpriseCustomerCatalog, EnterpriseCustomerUser, PendingEnterpriseCustomerUser
+from enterprise.models import (
+    EnterpriseCustomerCatalog,
+    EnterpriseCustomerUser,
+    PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseRole,
+    SystemWideEnterpriseUserRoleAssignment,
+)
 from enterprise.utils import get_default_catalog_content_filter, track_enrollment
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
@@ -79,3 +86,33 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
     if kwargs['created'] and not instance.content_filter:
         instance.content_filter = get_default_catalog_content_filter()
         instance.save()
+
+
+@receiver(post_save, sender=EnterpriseCustomerUser)
+def assign_enterprise_learner_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Assign an enterprise learner role to EnterpriseCustomerUser whenever a new record is created.
+    """
+    if kwargs['created'] and instance.user:
+        enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=instance.user,
+            role=enterprise_learner_role
+        )
+
+
+@receiver(post_delete, sender=EnterpriseCustomerUser)
+def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Delete the associated enterprise learner role assignment record when deleting an EnterpriseCustomerUser record.
+    """
+    if instance.user:
+        enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
+        try:
+            SystemWideEnterpriseUserRoleAssignment.objects.get(
+                user=instance.user,
+                role=enterprise_learner_role
+            ).delete()
+        except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
+            # Do nothing if no role assignment is present for the enterprise customer user.
+            pass

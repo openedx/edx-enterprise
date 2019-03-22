@@ -24,6 +24,7 @@ from django.test.testcases import TransactionTestCase
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -34,6 +35,8 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseRole,
+    SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
 from enterprise.utils import CourseEnrollmentDowngradeError
@@ -221,12 +224,27 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).count() == 0, \
             "Precondition check: no pending link records should exist"
 
+        # Verify that no enterprise role assignment record is present for the user.
+        enterprise_learner_role = SystemWideEnterpriseRole.objects.get(name=ENTERPRISE_LEARNER_ROLE)
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=user,
+            role=enterprise_learner_role
+        )
+        assert not learner_role_assignment.exists()
+
         EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
         actual_records = EnterpriseCustomerUser.objects.filter(
             enterprise_customer=enterprise_customer, user_id=user.id
         )
         assert actual_records.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "No pending links should have been created"
+
+        # Also verify that enterprise role assignment record is created for the user.
+        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=user,
+            role=enterprise_learner_role
+        )
+        assert learner_role_assignment.exists()
 
     @ddt.data("yoda@jeditemple.net", "luke_skywalker@resistance.org", "darth_vader@empire.com")
     def test_link_user_no_user(self, user_email):
