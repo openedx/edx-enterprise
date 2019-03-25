@@ -1777,6 +1777,38 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             raise ValidationError(validation_errors)
 
 
+class EnterpriseRoleAssignmentContextMixin(object):
+    """
+    Mixin for RoleAssignment models related to enterprises.
+    """
+
+    @property
+    def enterprise_customer_uuid(self):
+        """Get the enterprise customer uuid linked to the user."""
+        try:
+            enterprise_user = EnterpriseCustomerUser.objects.get(user_id=self.user.id)
+        except ObjectDoesNotExist:
+            LOGGER.warning(
+                'User {} has a {} assignment but is not linked to an enterprise!'.format(
+                    self.__class__,
+                    self.user.id
+                ))
+            return None
+        except MultipleObjectsReturned:
+            LOGGER.warning(
+                'User {} is linked to multiple enterprises, which is not yet supported!'.format(self.user.id)
+            )
+            return None
+
+        return enterprise_user.enterprise_customer.uuid
+
+    def get_context(self):
+        """
+        Return the context for this role assignment class.
+        """
+        return self.enterprise_customer_uuid
+
+
 @python_2_unicode_compatible
 class SystemWideEnterpriseRole(UserRole):
     """
@@ -1799,7 +1831,7 @@ class SystemWideEnterpriseRole(UserRole):
 
 
 @python_2_unicode_compatible
-class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
+class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
     """
     Model to map users to a SystemWideEnterpriseRole.
 
@@ -1823,27 +1855,49 @@ class SystemWideEnterpriseUserRoleAssignment(UserRoleAssignment):
         """
         return self.__str__()
 
-    @property
-    def enterprise_customer_uuid(self):
-        """Get the enterprise customer uuid linked to the user."""
-        try:
-            enterprise_user = EnterpriseCustomerUser.objects.get(user_id=self.user.id)
-        except ObjectDoesNotExist:
-            LOGGER.warning(
-                'User {} has a SystemWideEnterpriseRole assignment but is not linked to an enterprise!'.format(
-                    self.user.id
-                ))
-            return None
-        except MultipleObjectsReturned:
-            LOGGER.warning(
-                'User {} is linked to multiple enterprises, which is not yet supported!'.format(self.user.id)
-            )
-            return None
 
-        return enterprise_user.enterprise_customer.uuid
+@python_2_unicode_compatible
+class EnterpriseFeatureRole(UserRole):
+    """
+    Enterprise-specific feature role definitions.
 
-    def get_context(self):
+    .. no_pii:
+    """
+
+    def __str__(self):
         """
-        Return the context for this role assignment class.
+        Return human-readable string representation.
         """
-        return self.enterprise_customer_uuid
+        return "<EnterpriseFeatureRole {role}>".format(role=self.name)
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+@python_2_unicode_compatible
+class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
+    """
+    Model to map users to a EnterpriseFeatureRole.
+
+    .. no_pii:
+    """
+
+    role_class = EnterpriseFeatureRole
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<EnterpriseFeatureUserRoleAssignment for User {user} assigned to role {role}>".format(
+            user=self.user.id,
+            role=self.role.name
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()

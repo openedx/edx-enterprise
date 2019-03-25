@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.6] - 2019-03-27
+--------------------
+
+* Introduce rbac models for feature specific roles within edx-enterprise.
+
 [1.3.5] - 2019-03-22
 --------------------
 
