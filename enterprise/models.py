@@ -1800,7 +1800,7 @@ class EnterpriseRoleAssignmentContextMixin(object):
             )
             return None
 
-        return enterprise_user.enterprise_customer.uuid
+        return str(enterprise_user.enterprise_customer.uuid)
 
     def get_context(self):
         """

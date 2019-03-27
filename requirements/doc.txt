@@ -44,7 +44,7 @@ edx-django-oauth2-provider==1.3.5
 edx-django-utils==1.0.3   # via edx-drf-extensions
 edx-drf-extensions==2.0.1
 edx-opaque-keys==0.4.4
-edx-rbac==0.1.5
+edx-rbac==0.1.11
 edx-rest-api-client==1.9.2
 edx-sphinx-theme==1.4.0
 enum34==1.1.6             # via cryptography
@@ -56,12 +56,12 @@ imagesize==1.1.0          # via sphinx
 inflect==2.1.0            # via jinja2-pluralize
 ipaddress==1.0.22         # via cryptography
 jinja2-pluralize==0.3.0   # via diff-cover
-jinja2==2.10              # via diff-cover, jinja2-pluralize, sphinx
+jinja2==2.10.1            # via diff-cover, jinja2-pluralize, sphinx
 jsondiff==1.1.1
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
 markupsafe==1.1.1         # via jinja2
-newrelic==4.14.0.115      # via edx-django-utils
+newrelic==4.16.1.117      # via edx-django-utils
 packaging==19.0           # via sphinx
 path.py==8.2.1
 pbr==5.1.3                # via stevedore
@@ -69,19 +69,20 @@ pillow==5.4.1
 pockets==0.7.2            # via sphinxcontrib-napoleon
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
 pycparser==2.19           # via cffi
-pycryptodomex==3.7.3      # via pyjwkest
+pycryptodomex==3.8.1      # via pyjwkest
 pygments==2.3.1           # via diff-cover, readme-renderer, sphinx
 pyjwkest==1.3.2           # via edx-drf-extensions
 pyjwt==1.7.1              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.7.2            # via edx-opaque-keys
-pyparsing==2.3.1          # via packaging
+pyparsing==2.4.0          # via packaging
 python-dateutil==2.4.0
 pytz==2016.10
 pyyaml==5.1               # via code-annotations
 readme_renderer==0.7.0
 requests==2.21.0
 rest-condition==1.0.3     # via edx-drf-extensions
-restructuredtext-lint==1.2.2  # via doc8
+restructuredtext-lint==1.3.0  # via doc8
+rules==2.0.1
 semantic-version==2.6.0   # via edx-drf-extensions
 shortuuid==0.5.0          # via edx-django-oauth2-provider
 six==1.12.0               # via bleach, cryptography, diff-cover, doc8, edx-drf-extensions, edx-opaque-keys, edx-rbac, edx-sphinx-theme, html5lib, packaging, pockets, pyjwkest, python-dateutil, readme-renderer, sphinx, sphinxcontrib-napoleon, stevedore
@@ -91,7 +92,7 @@ sphinx==1.8.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.1.0  # via sphinx
 stevedore==1.30.1         # via code-annotations, doc8, edx-opaque-keys
-testfixtures==6.6.1
+testfixtures==6.6.2
 typing==3.6.6             # via sphinx
 unicodecsv==0.14.1
 urllib3==1.24.1           # via requests

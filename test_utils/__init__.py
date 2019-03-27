@@ -15,6 +15,9 @@ import uuid
 
 import mock
 import six
+from edx_rbac.utils import get_request_or_stub
+from edx_rest_framework_extensions.auth.jwt.cookies import jwt_cookie_name
+from edx_rest_framework_extensions.auth.jwt.tests.utils import generate_jwt_token, generate_unversioned_payload
 from pytest import mark
 from rest_framework.test import APIClient, APITestCase
 from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
@@ -29,6 +32,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render
 
 from enterprise import utils
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
@@ -280,6 +284,23 @@ class APITest(APITestCase):
         if isinstance(content, bytes):
             content = content.decode('utf-8')
         return json.loads(content)
+
+    def get_request_with_jwt_cookie(self, system_wide_role=None, context=None):
+        """
+        Set jwt token in cookies.
+        """
+        payload = generate_unversioned_payload(self.user)
+        if system_wide_role:
+            payload.update({
+                'roles': [
+                    '{system_wide_role}:{context}'.format(system_wide_role=system_wide_role, context=context)
+                ]
+            })
+        jwt_token = generate_jwt_token(payload)
+
+        request = get_request_or_stub()
+        request.COOKIES[jwt_cookie_name()] = jwt_token
+        return request
 
 
 class MockLoggingHandler(logging.Handler):

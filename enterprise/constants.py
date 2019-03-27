@@ -102,6 +102,8 @@ ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 # context to give access to all resources
 ALL_ACCESS_CONTEXT = '*'
 
+ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH = 'enterprise_role_based_access_control'
+
 
 def json_serialized_course_modes():
     """

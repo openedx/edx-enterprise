@@ -4,7 +4,10 @@
 
 from __future__ import absolute_import, unicode_literals
 
+import waffle
 from rest_framework import permissions
+
+from enterprise.constants import ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH
 
 
 class IsInEnterpriseGroup(permissions.BasePermission):
@@ -16,6 +19,9 @@ class IsInEnterpriseGroup(permissions.BasePermission):
     message = u'User is not allowed to access the view.'
 
     def has_permission(self, request, view):
+        if waffle.switch_is_active(ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH):
+            return True
+
         return (
             super(IsInEnterpriseGroup, self).has_permission(request, view) and (
                 request.user.groups.filter(name__in=self.ALLOWED_API_GROUPS).exists() or
@@ -37,6 +43,9 @@ class IsAdminUserOrInGroup(permissions.IsAdminUser):
         Returns True if the requesting user is either 'staff' or belong to specific group, False otherwise.
         It will also check for group membership against a list of groups in the permissions query parameter.
         """
+        if waffle.switch_is_active(ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH):
+            return True
+
         return (
             super(IsAdminUserOrInGroup, self).has_permission(request, view) or
             request.user.groups.filter(name__in=self.ALLOWED_API_GROUPS).exists() or

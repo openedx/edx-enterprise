@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 from smtplib import SMTPException
 
+from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import filters, permissions, viewsets
@@ -31,6 +32,7 @@ from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.pagination import get_paginated_response
 from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.api.utils import get_enterprise_customer_from_catalog_id
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import (
@@ -117,6 +119,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @detail_route()
+    @permission_required('enterprise.can_view_catalog', fn=lambda request, pk, course_run_ids, program_uuids: pk)
     # pylint: disable=invalid-name,unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
         """
@@ -142,6 +145,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return Response({'contains_content_items': contains_content_items})
 
     @detail_route()
+    @permission_required('enterprise.can_view_catalog', fn=lambda request, pk: pk)
     def courses(self, request, pk=None):  # pylint: disable=invalid-name,unused-argument
         """
         Retrieve the list of courses contained within the catalog linked to this enterprise.
@@ -188,6 +192,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         permissions.IsAuthenticated,
         HasEnterpriseEnrollmentAPIAccess,
     ])
+    @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
     # pylint: disable=invalid-name,unused-argument
     def course_enrollments(self, request, pk):
         """
@@ -216,6 +221,25 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def with_access_to(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
         """
         Returns the list of enterprise customers the user has a specified group permission access to.
+        """
+        self.queryset = self.queryset.order_by('name')
+        enterprise_id = self.request.query_params.get('enterprise_id', None)
+        enterprise_slug = self.request.query_params.get('enterprise_slug', None)
+        enterprise_name = self.request.query_params.get('search', None)
+
+        if enterprise_id is not None:
+            self.queryset = self.queryset.filter(uuid=enterprise_id)
+        elif enterprise_slug is not None:
+            self.queryset = self.queryset.filter(slug=enterprise_slug)
+        elif enterprise_name is not None:
+            self.queryset = self.queryset.filter(name__icontains=enterprise_name)
+        return self.list(request, *args, **kwargs)
+
+    @list_route()
+    @permission_required('enterprise.can_access_admin_dashboard')
+    def dashboard_list(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
+        """
+        Supports listing dashboard enterprises for edx-portal frontend.
         """
         self.queryset = self.queryset.order_by('name')
         enterprise_id = self.request.query_params.get('enterprise_id', None)
@@ -343,6 +367,16 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     ordering_fields = FIELDS
     renderer_classes = (JSONRenderer, XMLRenderer,)
 
+    @permission_required('enterprise.can_view_catalog', fn=lambda request, *args, **kwargs: None)
+    def list(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerCatalogViewSet, self).list(request, *args, **kwargs)
+
+    @permission_required(
+        'enterprise.can_view_catalog',
+        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_catalog_id(kwargs['pk']))
+    def retrieve(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerCatalogViewSet, self).retrieve(request, *args, **kwargs)
+
     def get_serializer_class(self):
         action = getattr(self, 'action', None)
         if action == 'retrieve':
@@ -351,6 +385,9 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @detail_route()
+    @permission_required(
+        'enterprise.can_view_catalog',
+        fn=lambda request, pk, course_run_ids, program_uuids: get_enterprise_customer_from_catalog_id(pk))
     # pylint: disable=invalid-name,unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
         """
@@ -377,6 +414,9 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return Response({'contains_content_items': contains_content_items})
 
     @detail_route(url_path='courses/{}'.format(COURSE_KEY_URL_PATTERN))
+    @permission_required(
+        'enterprise.can_view_catalog',
+        fn=lambda request, pk, course_key: get_enterprise_customer_from_catalog_id(pk))
     def course_detail(self, request, pk, course_key):  # pylint: disable=invalid-name,unused-argument
         """
         Return the metadata for the specified course.
@@ -395,6 +435,9 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @detail_route(url_path='course_runs/{}'.format(settings.COURSE_ID_PATTERN))
+    @permission_required(
+        'enterprise.can_view_catalog',
+        fn=lambda request, pk, course_id: get_enterprise_customer_from_catalog_id(pk))
     def course_run_detail(self, request, pk, course_id):  # pylint: disable=invalid-name,unused-argument
         """
         Return the metadata for the specified course run.
@@ -413,6 +456,9 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @detail_route(url_path='programs/(?P<program_uuid>[^/]+)')
+    @permission_required(
+        'enterprise.can_view_catalog',
+        fn=lambda request, pk, program_uuid: get_enterprise_customer_from_catalog_id(pk))
     def program_detail(self, request, pk, program_uuid):  # pylint: disable=invalid-name,unused-argument
         """
         Return the metadata for the specified program.
@@ -564,6 +610,7 @@ class CouponCodesView(APIView):
         params = ', '.join(name for name, present in parameter_state if not present)
         return self.MISSING_REQUIRED_PARAMS_MSG.format(params)
 
+    @permission_required('enterprise.can_access_admin_dashboard')
     def post(self, request):
         """
         POST /enterprise/api/v1/request_codes
