@@ -34,6 +34,7 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
+    EnterpriseFeatureUserRoleAssignment,
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.utils import MultipleProgramMatchError
@@ -586,4 +587,14 @@ class SystemWideEnterpriseUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
 
     class Meta:
         model = SystemWideEnterpriseUserRoleAssignment
+        fields = ['user', 'role']
+
+
+class EnterpriseFeatureUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
+    """
+    Form for EnterpriseFeatureUserRoleAssignments.
+    """
+
+    class Meta:
+        model = EnterpriseFeatureUserRoleAssignment
         fields = ['user', 'role']

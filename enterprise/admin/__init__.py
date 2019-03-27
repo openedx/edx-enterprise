@@ -27,6 +27,7 @@ from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
+    EnterpriseFeatureUserRoleAssignmentForm,
     SystemWideEnterpriseUserRoleAssignmentForm,
 )
 from enterprise.admin.utils import UrlNames
@@ -47,6 +48,7 @@ from enterprise.models import (
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerType,
     EnterpriseCustomerUser,
+    EnterpriseFeatureUserRoleAssignment,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
@@ -657,3 +659,15 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
     class Meta(object):
         model = SystemWideEnterpriseUserRoleAssignment
+
+
+@admin.register(EnterpriseFeatureUserRoleAssignment)
+class EnterpriseFeatureUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
+    """
+    Django admin model for EnterpriseFeatureUserRoleAssignment.
+    """
+
+    form = EnterpriseFeatureUserRoleAssignmentForm
+
+    class Meta(object):
+        model = EnterpriseFeatureUserRoleAssignment
