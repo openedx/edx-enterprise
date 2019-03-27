@@ -93,6 +93,7 @@ ENTERPRISE_PERMISSION_GROUPS = [
 
 ENTERPRISE_LEARNER_ROLE = 'enterprise_learner'
 ENTERPRISE_ADMIN_ROLE = 'enterprise_admin'
+ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 
 ENTERPRISE_DASHBOARD_ADMIN_ROLE = 'dashboard_admin'
 ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'
