@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.7] - 2019-03-28
+--------------------
+
+* Add data migration for adding edx enterprise operator role.
+
 [1.3.6] - 2019-03-27
 --------------------
 
