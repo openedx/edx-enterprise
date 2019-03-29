@@ -4,6 +4,7 @@ Forms to be used in the enterprise djangoapp.
 """
 from __future__ import absolute_import, unicode_literals
 
+from datetime import datetime
 from logging import getLogger
 
 from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
@@ -30,6 +31,7 @@ from enterprise.admin.utils import (
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
+    EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
@@ -598,3 +600,49 @@ class EnterpriseFeatureUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
     class Meta:
         model = EnterpriseFeatureUserRoleAssignment
         fields = ['user', 'role']
+
+
+class EnterpriseCourseEnrollmentAdminForm(forms.ModelForm):
+    """
+    Alternate form for the EnterpriseCourseEnrollment admin page.
+
+    This form required two condition for successful submission.
+
+    * User should have active enrollment in given course.
+    * Course's enrollment date should have passed.
+    """
+
+    class Meta:
+        model = EnterpriseCourseEnrollment
+        fields = (
+            "enterprise_customer_user",
+            "course_id",
+        )
+
+    def clean(self):
+        """
+        Override of clean method to perform additional validation
+        """
+        cleaned_data = super(EnterpriseCourseEnrollmentAdminForm, self).clean()
+
+        enrollment = EnrollmentApiClient().get_course_enrollment(
+            cleaned_data.get('enterprise_customer_user').username,
+            cleaned_data.get('course_id')
+        )
+        # does user has active enrollment.
+        if not enrollment or not enrollment.get('is_active'):
+            self.add_error(
+                'enterprise_customer_user',
+                ValidationMessages.INVALID_USER_ENROLLMENT
+            )
+        # has enrollment window closed.
+        if enrollment:
+            course_details = enrollment.get('course_details')
+            course_enrollment_end = course_details.get('enrollment_end') if course_details else None
+            if course_enrollment_end:
+                close_enrollment_end_datetime = datetime.strptime(str(course_enrollment_end), '%Y-%m-%dT%H:%M:%SZ')
+                if close_enrollment_end_datetime > datetime.utcnow():
+                    self.add_error(
+                        'course_id',
+                        ValidationMessages.NOT_EXPIRED_ENROLLMENT_DATE
+                    )

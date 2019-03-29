@@ -30,7 +30,7 @@ COURSE_DETAILS = {
             "suggested_prices": "",
         }],
         "enrollment_start": None,
-        "enrollment_end": None,
+        "enrollment_end": "2013-02-05T05:00:00Z",
         "invite_only": False,
     },
     "course-v1:HarvardX+CoolScience+2016": {
@@ -55,7 +55,7 @@ COURSE_DETAILS = {
             "suggested_prices": "",
         }],
         "enrollment_start": None,
-        "enrollment_end": None,
+        "enrollment_end": "2020-02-05T05:00:00Z",
         "invite_only": False,
     },
     "course-v1:EnterpriseX+Training+2017": {
@@ -178,5 +178,25 @@ def enroll_user_in_course(user, course_id, mode):
         "course_details": course_details,
         "is_active": True,
         "mode": mode,
+        "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    }
+
+
+def get_course_enrollment(username, course_id):
+    """
+    Fake implementation of course enrollment.
+    """
+    course_details = {}
+    try:
+        course_details = COURSE_DETAILS[course_id]
+    except KeyError:
+        _raise_client_error(
+            "enrollment", "No course '{}' found for enrollment".format(course_id)
+        )
+    is_active = True if course_id == 'course-v1:edX+DemoX+Demo_Course' else False
+    return {
+        "user": username,
+        "course_details": course_details,
+        "is_active": is_active,
         "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     }

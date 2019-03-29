@@ -24,6 +24,7 @@ from django.utils.translation import ugettext as _
 
 from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
 from enterprise.admin.forms import (
+    EnterpriseCourseEnrollmentAdminForm,
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
@@ -484,23 +485,13 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     class Meta(object):
         model = EnterpriseCourseEnrollment
 
-    readonly_fields = (
-        'enterprise_customer_user',
-        'course_id',
-    )
-
     list_display = (
         'enterprise_customer_user',
         'course_id',
     )
 
     search_fields = ('enterprise_customer_user__user_id', 'course_id',)
-
-    def has_add_permission(self, request):
-        """
-        Disable add permission for EnterpriseCourseEnrollment.
-        """
-        return False
+    form = EnterpriseCourseEnrollmentAdminForm
 
     def has_delete_permission(self, request, obj=None):
         """

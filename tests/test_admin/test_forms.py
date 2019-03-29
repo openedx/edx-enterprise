@@ -18,6 +18,7 @@ from django.core.files import File
 from django.db.models.fields import BLANK_CHOICE_DASH
 
 from enterprise.admin.forms import (
+    EnterpriseCourseEnrollmentAdminForm,
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
@@ -870,3 +871,37 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
             data=self.form_data,
         )
         assert not form.is_valid()
+
+
+@mark.django_db
+@mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+class TestEnterpriseCourseEnrollmentForm(unittest.TestCase):
+    """
+    Tests for EnterpriseCourseEnrollmentAdminForm.
+    """
+
+    def test_valid_form(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        form = EnterpriseCourseEnrollmentAdminForm(
+            data={
+                'enterprise_customer_user': EnterpriseCustomerUserFactory().id,
+                'course_id': course_id
+            }
+        )
+        assert form.is_valid()
+
+    def test_invalid_form(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        form = EnterpriseCourseEnrollmentAdminForm(
+            data={
+                'enterprise_customer_user': EnterpriseCustomerUserFactory().id,
+                'course_id': course_id
+            }
+        )
+        assert not form.is_valid()
+        assert ValidationMessages.INVALID_USER_ENROLLMENT in form.errors['enterprise_customer_user']
+        assert ValidationMessages.NOT_EXPIRED_ENROLLMENT_DATE in form.errors['course_id']

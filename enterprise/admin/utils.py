@@ -87,6 +87,9 @@ class ValidationMessages(object):
     NO_FIELDS_SPECIFIED = _(
         "Either \"Email or Username\" or \"CSV bulk upload\" must be "
         "specified, but neither were.")
+    NOT_EXPIRED_ENROLLMENT_DATE = _(
+        'Course\'s enrollment window has not closed yet'
+    )
     PROGRAM_IS_INACTIVE = _(
         "Enrollment in program {program_id} is closed because it is in "
         "{status} status.")
@@ -95,6 +98,9 @@ class ValidationMessages(object):
         "Customer {ec_name}")
     INVALID_CHANNEL_WORKER = _(
         'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
+    )
+    INVALID_USER_ENROLLMENT = _(
+        'Given Enterprise customer user is not enrolled in given course'
     )
 
 
