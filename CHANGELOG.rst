@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+[1.3.9] - 2019-03-29
+--------------------
+
+* Update role metadata for `edx-openedx-operator` role.
+
+----------
+
 [1.3.8] - 2019-03-29
 --------------------
 
