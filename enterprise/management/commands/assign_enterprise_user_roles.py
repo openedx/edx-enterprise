@@ -9,7 +9,12 @@ from time import sleep
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_DATA_API_ACCESS_GROUP, ENTERPRISE_LEARNER_ROLE
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_DATA_API_ACCESS_GROUP,
+    ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+)
 from enterprise.models import EnterpriseCustomerUser, SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
 
 LOGGER = logging.getLogger(__name__)
@@ -70,6 +75,13 @@ class Command(BaseCommand):
         LOGGER.info('Fetching new batch of enterprise admin users from indexes: %s to %s', start, end)
         return User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=False)[start:end]
 
+    def _get_enterprise_operator_users_batch(self, start, end):
+        """
+        Returns a batched queryset of User objects.
+        """
+        LOGGER.info('Fetching new batch of enterprise operator users from indexes: %s to %s', start, end)
+        return User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=True)[start:end]
+
     def _get_enterprise_customer_users_batch(self, start, end):
         """
         Returns a batched queryset of EnterpriseCustomerUser objects.
@@ -122,6 +134,9 @@ class Command(BaseCommand):
         if role == ENTERPRISE_ADMIN_ROLE:
             # Assign admin role to non-staff users with enterprise data api access.
             self._assign_enterprise_role_to_users(self._get_enterprise_admin_users_batch, options)
+        elif role == ENTERPRISE_OPERATOR_ROLE:
+            # Assign operator role to staff users with enterprise data api access.
+            self._assign_enterprise_role_to_users(self._get_enterprise_operator_users_batch, options)
         elif role == ENTERPRISE_LEARNER_ROLE:
             # Assign enterprise learner role to enterprise customer users.
             self._assign_enterprise_role_to_users(self._get_enterprise_customer_users_batch, options)

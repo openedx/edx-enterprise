@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.8] - 2019-03-29
+--------------------
+
+* Update `assign_enterprise_user_roles` management command to also assign enterprise operator role.
+
 [1.3.7] - 2019-03-28
 --------------------
 
