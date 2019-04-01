@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.10] - 2019-04-03
+---------------------
+
+* Provide ability to add ECE even if course is closed from manage learners admin interface.
+
 [1.3.9] - 2019-03-29
 --------------------
 

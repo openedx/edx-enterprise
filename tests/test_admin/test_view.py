@@ -767,6 +767,120 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enroll_course_when_enrollment_closed(
+            self, forms_client, views_client, course_catalog_client, track_enrollment
+    ):
+        """
+        Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
+        and course enrollment window is closed
+        """
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {}
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
+        )
+        views_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        user = UserFactory(id=2)
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        views_instance.enroll_user_in_course.assert_called_once_with(
+            user.username,
+            course_id,
+            mode,
+        )
+        track_enrollment.assert_called_once_with('admin-enrollment', user.id, course_id)
+        self._assert_django_messages(response, {
+            (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
+        })
+        all_enterprise_enrollments = EnterpriseCourseEnrollment.objects.all()
+        num_enterprise_enrollments = len(all_enterprise_enrollments)
+        assert num_enterprise_enrollments == 1
+        enrollment = all_enterprise_enrollments[0]
+        assert enrollment.enterprise_customer_user.user == user
+        assert enrollment.course_id == course_id
+        num_messages = len(mail.outbox)
+        assert num_messages == 0
+
+    @mock.patch("enterprise.admin.views.track_enrollment")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enroll_course_when_enrollment_closed_mode_changed(
+            self, forms_client, views_client, course_catalog_client, track_enrollment
+    ):
+        """
+        Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
+        with different mode
+        and course enrollment window is closed
+        """
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {}
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
+        )
+        views_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        user = UserFactory(id=2)
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "audit"
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        views_instance.enroll_user_in_course.assert_called_once_with(
+            user.username,
+            course_id,
+            mode,
+        )
+        track_enrollment.assert_not_called()
+        self._assert_django_messages(response, {
+            (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email))
+        })
+
+    @mock.patch("enterprise.admin.views.track_enrollment")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_post_enroll_course_when_enrollment_closed_no_sce_exists(
+            self, forms_client, views_client, course_catalog_client, track_enrollment
+    ):
+        """
+        Tests scenario when user being enrolled has no SCE(student CourseEnrollment) record
+        and course enrollment window is closed
+        """
+        catalog_instance = course_catalog_client.return_value
+        catalog_instance.get_course_run.return_value = {}
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
+        )
+        views_instance.get_course_enrollment.return_value = None
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        user = UserFactory(id=2)
+        course_id = "course-v1:HarvardX+CoolScience+2016"
+        mode = "verified"
+        response = self._enroll_user_request(user, mode, course_id=course_id)
+        views_instance.enroll_user_in_course.assert_called_once_with(
+            user.username,
+            course_id,
+            mode,
+        )
+        track_enrollment.assert_not_called()
+        self._assert_django_messages(response, {
+            (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email))
+        })
+
+    @mock.patch("enterprise.admin.views.track_enrollment")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_with_missing_course_start_date(
             self,
             forms_client,
