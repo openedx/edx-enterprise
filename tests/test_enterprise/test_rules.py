@@ -15,6 +15,7 @@ from enterprise.constants import (
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH,
 )
 from enterprise.models import EnterpriseFeatureRole, EnterpriseFeatureUserRoleAssignment
@@ -53,6 +54,9 @@ class TestEnterpriseRBACPermissions(APITest):
         ('enterprise.can_access_admin_dashboard', ENTERPRISE_DASHBOARD_ADMIN_ROLE),
         ('enterprise.can_view_catalog', ENTERPRISE_CATALOG_ADMIN_ROLE),
         ('enterprise.can_enroll_learners', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE),
+        ('enterprise.can_access_admin_dashboard', ENTERPRISE_OPERATOR_ROLE),
+        ('enterprise.can_view_catalog', ENTERPRISE_OPERATOR_ROLE),
+        ('enterprise.can_enroll_learners', ENTERPRISE_OPERATOR_ROLE),
     )
     @ddt.unpack
     def test_has_explicit_access(self, permission, feature_role, get_request_or_stub_mock):
