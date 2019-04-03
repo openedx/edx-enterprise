@@ -180,3 +180,23 @@ def enroll_user_in_course(user, course_id, mode):
         "mode": mode,
         "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     }
+
+
+def get_course_enrollment(username, course_id):
+    """
+    Fake implementation.
+    """
+    try:
+        course_details = COURSE_DETAILS[course_id]
+    except KeyError:
+        _raise_client_error(
+            "enrollment", "No course '{}' found for enrollment".format(course_id)
+        )
+
+    return {
+        "user": username,
+        "course_details": course_details,
+        "is_active": True,
+        "mode": 'verified',
+        "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
+    }

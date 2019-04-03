@@ -429,17 +429,21 @@ class EnterpriseCustomerManageLearnersView(View):
             try:
                 enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
             except HttpClientError as exc:
-                succeeded = False
-                default_message = 'No error message provided'
-                try:
-                    error_message = json.loads(exc.content.decode()).get('message', default_message)
-                except ValueError:
-                    error_message = default_message
-                logging.error(
-                    'Error while enrolling user %(user)s: %(message)s',
-                    dict(user=user.username, message=error_message)
-                )
-            else:
+                # Check if user is already enrolled then we should ignore exception
+                if cls.is_user_enrolled(user, course_id, course_mode):
+                    succeeded = True
+                else:
+                    succeeded = False
+                    default_message = 'No error message provided'
+                    try:
+                        error_message = json.loads(exc.content.decode()).get('message', default_message)
+                    except ValueError:
+                        error_message = default_message
+                    logging.error(
+                        'Error while enrolling user %(user)s: %(message)s',
+                        dict(user=user.username, message=error_message)
+                    )
+            if succeeded:
                 __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id
@@ -447,6 +451,37 @@ class EnterpriseCustomerManageLearnersView(View):
                 if created:
                     track_enrollment('admin-enrollment', user.id, course_id)
         return succeeded
+
+    @classmethod
+    def is_user_enrolled(cls, user, course_id, course_mode):
+        """
+        Query the enrollment API and determine if a learner is enrolled in a given course run track.
+
+        Args:
+            user: The user whose enrollment needs to be checked
+            course_mode: The mode with which the enrollment should be checked
+            course_id: course id of the course where enrollment should be checked.
+
+        Returns:
+            Boolean: Whether or not enrollment exists
+
+        """
+        enrollment_client = EnrollmentApiClient()
+        try:
+            enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
+            if enrollments and course_mode == enrollments.get('mode'):
+                return True
+        except HttpClientError as exc:
+            logging.error(
+                'Error while checking enrollment status of user %(user)s: %(message)s',
+                dict(user=user.username, message=str(exc))
+            )
+        except KeyError as exc:
+            logging.warning(
+                'Error while parsing enrollment data of user %(user)s: %(message)s',
+                dict(user=user.username, message=str(exc))
+            )
+        return False
 
     @classmethod
     def get_users_by_email(cls, emails):
