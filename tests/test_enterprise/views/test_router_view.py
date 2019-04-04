@@ -15,7 +15,7 @@ from django.http import HttpResponse
 from django.test import TestCase
 
 from enterprise import views
-from test_utils import factories, fake_catalog_api
+from test_utils import factories, fake_catalog_api, fake_enrollment_api
 
 
 @mark.django_db
@@ -162,12 +162,26 @@ class TestRouterView(TestCase):
         router_view_mock.get(self.request, **self.kwargs)
         router_view_mock.redirect.assert_called_once()
 
+    @ddt.data(
+        True, False
+    )
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
-    def test_get_redirects_with_course_key(self, router_view_mock, catalog_api_mock):
+    def test_get_redirects_with_course_key(
+            self,
+            is_user_already_enrolled,
+            router_view_mock,
+            enrollment_api_mock,
+            catalog_api_mock
+    ):
         """
         ``get`` performs a redirect with a course key in the request path.
         """
+        if is_user_already_enrolled:
+            enrollment_api_mock.get_enrolled_courses.return_value = None
+        else:
+            enrollment_api_mock.get_enrolled_courses.side_effect = fake_enrollment_api.get_enrolled_courses
         fake_catalog_api.setup_course_catalog_api_client_mock(catalog_api_mock)
         router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=False)
         router_view_mock.redirect = mock.MagicMock(return_value=None)
@@ -196,8 +210,9 @@ class TestRouterView(TestCase):
             assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.get_global_context')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    def test_get_raises_404_with_bad_course_key(self, catalog_api_mock, mock_global_context):
+    def test_get_raises_404_with_bad_course_key(self, catalog_api_mock, enrollment_api_mock, mock_global_context):
         """
         ``get`` responds with a 404 when a course run cannot be found given the provided course key.
         """
@@ -206,6 +221,7 @@ class TestRouterView(TestCase):
             catalog_api_mock,
             course_overrides={'course_runs': []}
         )
+        enrollment_api_mock.get_enrolled_courses.return_value = None
         kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
             'course_key': 'fake_course_key'

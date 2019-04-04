@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.1] - 2019-04-10
+---------------------
+
+* Update `RouterView` if user is already enrolled in course run of a course then user will land on that course_run.
+
 [1.4.0] - 2019-04-08
 --------------------
 

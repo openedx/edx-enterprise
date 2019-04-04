@@ -1158,6 +1158,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                     fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
                 ],
             },
+            [],
             fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
         ),
         (
@@ -1170,6 +1171,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                     ),
                 ],
             },
+            [],
             fake_catalog_api.create_course_run_dict(),
         ),
         (
@@ -1183,6 +1185,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                     ),
                 ],
             },
+            [],
             fake_catalog_api.create_course_run_dict(
                 start="2014-10-15T13:11:03Z",
                 enrollment_end="2014-10-14T13:11:03Z",
@@ -1198,6 +1201,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                     ),
                 ],
             },
+            [],
             fake_catalog_api.create_course_run_dict(),
         ),
         (
@@ -1211,25 +1215,154 @@ class TestEnterpriseUtils(unittest.TestCase):
                     ),
                 ],
             },
+            [],
             fake_catalog_api.create_course_run_dict(
                 start="2014-10-15T13:11:03Z",
                 upgrade_deadline="2014-10-14T13:11:03Z",
             ),
+        ),
+        (   # It will return the active run
+            {
+                "course_runs": [],
+            },
+            [fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z")],
+            fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
+        ),
+        (   # it will return the closest active run
+            {
+                "course_runs": [],
+            },
+            [
+                fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
+                fake_catalog_api.create_course_run_dict(start="2019-10-15T13:11:03Z"),
+            ],
+            fake_catalog_api.create_course_run_dict(start="2019-10-15T13:11:03Z"),
         ),
         (
             # Test with no course runs.
             {
                 "course_runs": [],
             },
+            [],
             None
         ),
     )
     @ddt.unpack
-    def test_get_current_course_run(self, course, expected_course_run):
+    def test_get_current_course_run(self, course, users_active_course_runs, expected_course_run):
         """
         ``get_current_course_run`` returns the current course run for the given course dictionary.
         """
-        assert utils.get_current_course_run(course) == expected_course_run
+        assert utils.get_current_course_run(course, users_active_course_runs) == expected_course_run
+
+    @ddt.data(
+        (
+            [
+                fake_catalog_api.create_course_run_dict(start="2019-10-15T13:11:03Z"),
+                fake_catalog_api.create_course_run_dict(start="2014-10-15T13:11:03Z"),
+            ],
+            fake_catalog_api.create_course_run_dict(start="2019-10-15T13:11:03Z"),
+        ),
+        (
+            [
+                fake_catalog_api.create_course_run_dict(start="2019-10-15T13:11:03Z"),
+            ],
+            fake_catalog_api.create_course_run_dict(start="2019-10-15T13:11:03Z"),
+        ),
+
+    )
+    @ddt.unpack
+    def test_get_closest_course_run(self, course_runs, expected_course_run):
+        """
+        ``get_closest_course_run`` returns the closest course run.
+        """
+        assert utils.get_closest_course_run(course_runs) == expected_course_run
+
+    @ddt.data(
+        (
+            {
+                "course_runs":
+                    [
+                        {'key': 'fake-key1'},
+                        {'key': 'fake-key2'}
+                    ],
+            },
+            [
+                {
+                    'is_active': True,
+                    'course_details': {'course_id': 'fake-key1'}
+                },
+                {
+                    'is_active': False,
+                    'course_details': {'course_id': 'fake-key2'}
+                }
+            ],
+            [
+                {'key': 'fake-key1'},
+            ],
+        ),
+        (
+            {
+                "course_runs":
+                    [
+                        {'key': 'fake-key1'},
+                        {'key': 'fake-key2'}
+                    ],
+            },
+            [
+                {
+                    'is_active': True,
+                    'course_details': {'course_id': 'fake-key1'}
+                },
+                {
+                    'is_active': True,
+                    'course_details': {'course_id': 'fake-key2'}
+                }
+            ],
+            [
+                {'key': 'fake-key1'},
+                {'key': 'fake-key2'}
+            ],
+        ),
+        (
+            {
+                "course_runs":
+                    [
+                        {'key': 'fake-key1'},
+                        {'key': 'fake-key2'}
+                    ],
+            },
+            [
+                {
+                    'is_active': False,
+                    'course_details': {'course_id': 'fake-key1'}
+                },
+                {
+                    'is_active': False,
+                    'course_details': {'course_id': 'fake-key2'}
+                }
+            ],
+            [],
+        ),
+        (
+            {
+                "course_runs": [],
+            },
+            [
+                {
+                    'is_active': True,
+                    'course_details': {'course_id': 'fake-key1'}
+                }
+            ],
+            [],
+        ),
+
+    )
+    @ddt.unpack
+    def test_get_active_course_runs(self, course, users_all_enrolled_courses, expected_course_run):
+        """
+        ``get_active_course_runs`` returns active course runs of given course's course runs.
+        """
+        assert utils.get_active_course_runs(course, users_all_enrolled_courses) == expected_course_run
 
 
 @mark.django_db

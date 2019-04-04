@@ -749,35 +749,63 @@ def get_course_run_start(course_run, default=None):
     return parse_datetime_handle_invalid(course_run.get('start')) or default
 
 
-def get_current_course_run(course):
+def get_closest_course_run(course_runs):
     """
-    Return the current course run.
+    Return course run with start date closest to now.
+    """
+    if len(course_runs) == 1:
+        return course_runs[0]
 
-    Current is defined as the following:
+    now = datetime.datetime.now(pytz.UTC)
+    # course runs with no start date should be considered last.
+    never = now - datetime.timedelta(days=3650)
+    return min(course_runs, key=lambda x: abs(get_course_run_start(x, never) - now))
+
+
+def get_active_course_runs(course, users_all_enrolled_courses):
+    """
+    Return active course runs (user is enrolled in) of the given course.
+
+    This function will return the course_runs of 'course' which have
+    active enrollment by looking into 'users_all_enrolled_courses'
+    """
+    # User's all course_run ids in which he has enrolled.
+    enrolled_course_run_ids = [
+        enrolled_course_run['course_details']['course_id'] for enrolled_course_run in users_all_enrolled_courses
+        if enrolled_course_run['is_active'] and enrolled_course_run.get('course_details')
+    ]
+    return [course_run for course_run in course['course_runs'] if course_run['key'] in enrolled_course_run_ids]
+
+
+def get_current_course_run(course, users_active_course_runs):
+    """
+    Return the current course run on the following conditions.
+
+    - If user has active course runs (already enrolled) then return course run with closest start date
+    Otherwise it will check the following logic:
     - Course run is enrollable (see is_course_run_enrollable)
     - Course run has a verified seat and the upgrade deadline has not expired.
     - Course run start date is closer to now than any other enrollable/upgradeable course runs.
     - If no enrollable/upgradeable course runs, return course run with most recent start date.
     """
-    now = datetime.datetime.now(pytz.UTC)
-    never = now - datetime.timedelta(days=3650)
-    all_course_runs = course['course_runs']
+    current_course_run = None
     filtered_course_runs = []
+    all_course_runs = course['course_runs']
 
-    for course_run in all_course_runs:
-        if is_course_run_enrollable(course_run) and is_course_run_upgradeable(course_run):
-            filtered_course_runs.append(course_run)
+    if users_active_course_runs:
+        current_course_run = get_closest_course_run(users_active_course_runs)
+    else:
+        for course_run in all_course_runs:
+            if is_course_run_enrollable(course_run) and is_course_run_upgradeable(course_run):
+                filtered_course_runs.append(course_run)
 
-    if not filtered_course_runs:
-        # Consider all runs if there were not any enrollable/upgradeable ones.
-        filtered_course_runs = all_course_runs
+        if not filtered_course_runs:
+            # Consider all runs if there were not any enrollable/upgradeable ones.
+            filtered_course_runs = all_course_runs
 
-    if filtered_course_runs:
-        # Return course run with start date closest to now.
-        # Course runs with a null start date should be considered last.
-        return min(filtered_course_runs, key=lambda x: abs(get_course_run_start(x, never) - now))
-
-    return None
+        if filtered_course_runs:
+            current_course_run = get_closest_course_run(filtered_course_runs)
+    return current_course_run
 
 
 def strip_html_tags(text, allowed_tags=None):
