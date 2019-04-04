@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.3.11] - 2019-04-07
+---------------------
+
+* Update context for `enterprise-openedx-operator` role.
+
 [1.3.10] - 2019-04-03
 ---------------------
 

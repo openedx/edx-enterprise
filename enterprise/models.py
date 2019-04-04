@@ -41,7 +41,7 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
-from enterprise.constants import ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
+from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -1846,7 +1846,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         """
         # do not add enterprise id for `enterprise_openedx_operator` role
         if self.role.name == ENTERPRISE_OPERATOR_ROLE:
-            return None
+            return ALL_ACCESS_CONTEXT
 
         return super(SystemWideEnterpriseUserRoleAssignment, self).get_context()
 
