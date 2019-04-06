@@ -24,7 +24,7 @@ from django.test.testcases import TransactionTestCase
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
-from enterprise.constants import ENTERPRISE_LEARNER_ROLE
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -1653,3 +1653,39 @@ class TestEnterpriseCustomerReportingConfiguration(unittest.TestCase):
             config.clean()
         except ValidationError as validation_error:
             assert sorted(validation_error.messages) == sorted(expected_errors)
+
+
+@mark.django_db
+@ddt.ddt
+class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
+    """
+    Tests SystemWideEnterpriseUserRoleAssignment.
+    """
+
+    @ddt.data(
+        {
+            'role_name': ENTERPRISE_LEARNER_ROLE,
+            'expected_context': '47130371-0b6d-43f5-01de-71942664de2b',
+        },
+        {
+            'role_name': ENTERPRISE_OPERATOR_ROLE,
+            'expected_context': '*',
+        }
+    )
+    @ddt.unpack
+    def test_get_context(self, role_name, expected_context):
+        """
+        Verify that `SystemWideEnterpriseUserRoleAssignment.get_context` method works as expected.
+        """
+        user_email = 'edx@example.com'
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        user = factories.UserFactory(email=user_email)
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
+
+        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
+        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user,
+            role=enterprise_role
+        )
+
+        assert str(enterprise_role_assignment.get_context()) == expected_context
