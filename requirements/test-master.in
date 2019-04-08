@@ -23,6 +23,7 @@ django-waffle==0.12.0                   # Allows ability to add and control flag
 testfixtures                            # Mock objects for unit tests and doc tests
 jsonfield==2.0.2                        # Provides a Django model field which serializes/deserializes JSON objects
 flaky==3.5.3                            # Rerun flaky tests automatically if they fail, up to a limit
+rules==2.0.1                            # For rules based permissions
 
 # These are packages that edx-enterprise uses that are pinned to previous versions in edx-platform.
 # We pin them here to make sure our tests are installing the same requirements

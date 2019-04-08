@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.0] - 2019-04-08
+--------------------
+
+* Add new rbac permission checks to enterprise api endpoints.
+
 [1.3.11] - 2019-04-07
 ---------------------
 

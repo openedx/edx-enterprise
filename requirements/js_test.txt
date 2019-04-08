@@ -13,11 +13,11 @@ glob2==0.6                # via jasmine-core
 jaraco.functools==2.0     # via tempora
 jasmine-core==2.99.1      # via jasmine
 jasmine==2.9.0
-jinja2==2.10              # via jasmine
+jinja2==2.10.1            # via jasmine
 markupsafe==1.1.1         # via jinja2
 more-itertools==5.0.0     # via cheroot, cherrypy, jaraco.functools
 ordereddict==1.1          # via jasmine-core
-portend==2.3              # via cherrypy
+portend==2.4              # via cherrypy
 pytz==2018.9              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.6.0           # via jasmine

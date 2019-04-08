@@ -11,6 +11,13 @@ from os.path import abspath, dirname, join
 
 from celery import Celery
 
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_CATALOG_ADMIN_ROLE,
+    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+    ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+)
+
 
 def here(*args):
     """
@@ -54,17 +61,25 @@ INSTALLED_APPS = (
     "integrated_channels.sap_success_factors",
     "integrated_channels.xapi",
     "edx_rbac",
+    "rules.apps.AutodiscoverRulesConfig",
 )
 
 MIDDLEWARE_CLASSES = [
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    "crum.CurrentRequestUserMiddleware",
+    "waffle.middleware.WaffleMiddleware",
 ]
 
 MIDDLEWARE = MIDDLEWARE_CLASSES  # Django 1.10 compatibility - the setting was renamed
 
-AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
+AUTHENTICATION_BACKENDS = (
+    "rules.permissions.ObjectPermissionBackend",
+    "django.contrib.auth.backends.ModelBackend",
+)
+
+SITE_NAME = 'localhost:18000/'
 
 SESSION_ENGINE = "django.contrib.sessions.backends.file"
 
@@ -174,6 +189,33 @@ ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
     ]
 }
 
+# For testing edx-rbac rules. This is not the actual value of the setting in prod.
+SYSTEM_TO_FEATURE_ROLE_MAPPING = {
+    ENTERPRISE_ADMIN_ROLE: [
+        ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+        ENTERPRISE_CATALOG_ADMIN_ROLE,
+        ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE
+    ],
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        'rules': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
 ################################### TRACKING ###################################
 
 LMS_SEGMENT_KEY = 'SOME_KEY'
@@ -207,3 +249,30 @@ app.config_from_object('django.conf:settings')
 CELERY_ALWAYS_EAGER = True
 
 CLEAR_REQUEST_CACHE_ON_TASK_COMPLETION = False
+
+JWT_AUTH = {
+    'JWT_AUDIENCE': 'test-aud',
+    'JWT_DECODE_HANDLER': 'edx_rest_framework_extensions.auth.jwt.decoder.jwt_decode_handler',
+    'JWT_ISSUER': 'test-iss',
+    'JWT_LEEWAY': 1,
+    'JWT_SECRET_KEY': 'test-key',
+    'JWT_SUPPORTED_VERSION': '1.0.0',
+    'JWT_VERIFY_AUDIENCE': False,
+    'JWT_VERIFY_EXPIRATION': True,
+
+    # JWT_ISSUERS enables token decoding for multiple issuers (Note: This is not a native DRF-JWT field)
+    # We use it to allow different values for the 'ISSUER' field, but keep the same SECRET_KEY and
+    # AUDIENCE values across all issuers.
+    'JWT_ISSUERS': [
+        {
+            'ISSUER': 'test-issuer-1',
+            'SECRET_KEY': 'test-secret-key',
+            'AUDIENCE': 'test-audience',
+        },
+        {
+            'ISSUER': 'test-issuer-2',
+            'SECRET_KEY': 'test-secret-key',
+            'AUDIENCE': 'test-audience',
+        }
+    ],
+}

@@ -11,6 +11,7 @@ from smtplib import SMTPException
 import ddt
 import mock
 from pytest import mark
+from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
 from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-imports
@@ -20,17 +21,25 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
     urlsplit,
     urlunsplit,
 )
+from waffle.models import Switch
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+    ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH,
+)
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
+    EnterpriseFeatureRole,
+    EnterpriseFeatureUserRoleAssignment,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
@@ -2516,3 +2525,49 @@ class TestEnterpriseAPIViews(APITest):
             self.assertIn(expected_email_message, ''.join(call_args))
         else:
             mock_send_mail.assert_not_called()
+
+    @mock.patch('enterprise.rules.get_request_or_stub')
+    @mock.patch('django.core.mail.send_mail', mock.Mock(return_value={'status_code': status.HTTP_200_OK}))
+    @ddt.data(
+        (False, False, status.HTTP_403_FORBIDDEN),
+        (False, True, status.HTTP_200_OK),
+        (True, False, status.HTTP_200_OK),
+    )
+    @ddt.unpack
+    def test_post_request_codes_permissions(self, implicit_perm, explicit_perm, expected_status, request_or_stub_mock):
+        """
+        Test that role base permissions works as expected.
+        """
+        Switch.objects.update_or_create(name=ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, defaults={'active': True})
+
+        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
+        user.set_password('test_password')  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(name=ENTERPRISE_DASHBOARD_ADMIN_ROLE)
+        EnterpriseFeatureUserRoleAssignment.objects.create(user=user, role=feature_role_object)
+
+        if implicit_perm is False:
+            system_wide_role = 'role_with_no_mapped_permissions'
+
+        if explicit_perm is False:
+            EnterpriseFeatureUserRoleAssignment.objects.all().delete()
+
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        post_data = {
+            'email': 'johndoe@unknown.com',
+            'enterprise_name': 'Oracle',
+            'number_of_codes': '50',
+        }
+        response = client.post(
+            settings.TEST_SERVER + reverse('request-codes'),
+            data=json.dumps(post_data),
+            content_type='application/json',
+        )
+
+        assert response.status_code == expected_status
