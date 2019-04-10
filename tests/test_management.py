@@ -29,6 +29,8 @@ from enterprise.api_client import lms as lms_api
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_DATA_API_ACCESS_GROUP,
+    ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP,
+    ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
 )
@@ -36,6 +38,8 @@ from enterprise.management.commands.assign_enterprise_user_roles import Command 
 from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
+    EnterpriseFeatureRole,
+    EnterpriseFeatureUserRoleAssignment,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -1110,22 +1114,25 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
 @ddt.ddt
 @mark.django_db
-@factory.django.mute_signals(signals.post_save)
 class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
     """
     Test the assign_enterprise_user_roles management command.
     """
-
+    @factory.django.mute_signals(signals.post_save)
     def setUp(self):
         super(TestMigrateEnterpriseUserRolesCommand, self).setUp()
 
-        enterprise_api_access_group = factories.GroupFactory(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
+        data_api_access_group = factories.GroupFactory(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
+        enrollment_api_access_group = factories.GroupFactory(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
 
-        operator_user = factories.UserFactory(email='enterprise_operator@example.com', staff=True)
-        enterprise_api_access_group.user_set.add(operator_user)
+        operator_user = factories.UserFactory(email='enterprise_operator@example.com', is_staff=True)
+        data_api_access_group.user_set.add(operator_user)
 
         admin_user = factories.UserFactory(email='enterprise_admin@example.com')
-        enterprise_api_access_group.user_set.add(admin_user)
+        data_api_access_group.user_set.add(admin_user)
+
+        enrollment_api_admin_user = factories.UserFactory(email='enterprise_enrollment_api_admin@example.com')
+        enrollment_api_access_group.user_set.add(enrollment_api_admin_user)
 
         learner_user = factories.UserFactory(email='enterprise_learner@example.com')
         enterprise_customer = factories.EnterpriseCustomerFactory(
@@ -1139,105 +1146,102 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
 
         self.command = AssignEnterpriseUserRolesCommand()
 
-    def _assert_role_assignments(self, user, role_name, user_role_assignment_count):
+    def _assert_role_assignments(self, user, role_name, user_role_assignment_count, is_feature_role=False):
         """
         Verify expected role assignment records are created for specific role.
         """
-        enterprise_role = SystemWideEnterpriseRole.objects.get(name=role_name)
-        user_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+        role_class = SystemWideEnterpriseRole
+        role_assignment_class = SystemWideEnterpriseUserRoleAssignment
+
+        if is_feature_role:
+            role_class = EnterpriseFeatureRole
+            role_assignment_class = EnterpriseFeatureUserRoleAssignment
+
+        enterprise_role = role_class.objects.get(name=role_name)
+        user_role_assignments = role_assignment_class.objects.filter(
             user=user,
             role=enterprise_role
         )
         self.assertEqual(user_role_assignments.count(), user_role_assignment_count)
 
     @ddt.data(
-        ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE),
-        ('enterprise_operator@example.com', ENTERPRISE_OPERATOR_ROLE),
-        ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE)
+        ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE, False),
+        ('enterprise_operator@example.com', ENTERPRISE_OPERATOR_ROLE, False),
+        ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE, False),
+        ('enterprise_enrollment_api_admin@example.com', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE, True)
     )
     @ddt.unpack
-    def test_assign_enterprise_user_roles_success(self, user_email, role_name):
+    def test_assign_enterprise_user_roles_success(self, user_email, role_name, is_feature_role):
         """
         Tests `assign_enterprise_user_roles` command runs with expected results.
         """
         user = User.objects.get(email=user_email)
         # Verify that initially there are no enterprise role assignment records.
-        self._assert_role_assignments(user, role_name, 0)
+        self._assert_role_assignments(user, role_name, 0, is_feature_role)
 
         # Run assign_enterprise_user_roles to assign enterprise roles.
         call_command('assign_enterprise_user_roles', '--role', role_name, batch_sleep=0)
 
         # Verify new respective role assignment records are created for the role.
-        self._assert_role_assignments(user, role_name, 1)
+        self._assert_role_assignments(user, role_name, 1, is_feature_role)
 
     @ddt.data(
-        ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE),
-        ('enterprise_operator@example.com', ENTERPRISE_OPERATOR_ROLE),
-        ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE)
+        ('enterprise_admin@example.com', ENTERPRISE_ADMIN_ROLE, False),
+        ('enterprise_operator@example.com', ENTERPRISE_OPERATOR_ROLE, False),
+        ('enterprise_learner@example.com', ENTERPRISE_LEARNER_ROLE, False),
+        ('enterprise_enrollment_api_admin@example.com', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE, True)
     )
     @ddt.unpack
-    def test_assign_enterprise_user_roles_rerun(self, user_email, role_name):
+    def test_assign_enterprise_user_roles_rerun(self, user_email, role_name, is_feature_role):
         """
         Tests running `assign_enterprise_user_roles` command again gives expected results.
         """
         user = User.objects.get(email=user_email)
         # Verify that initially there are no enterprise role assignment records.
-        self._assert_role_assignments(user, role_name, 0)
+        self._assert_role_assignments(user, role_name, 0, is_feature_role)
 
         # Run assign_enterprise_user_roles to assign enterprise roles.
         call_command('assign_enterprise_user_roles', '--role', role_name, batch_sleep=0)
 
         # Verify new respective role assignment records are created for the role.
-        self._assert_role_assignments(user, role_name, 1)
+        self._assert_role_assignments(user, role_name, 1, is_feature_role)
 
         # Run assign_enterprise_user_roles command again.
         call_command('assign_enterprise_user_roles', '--role', role_name, )
 
         # Verify no new respective role assignment records are created.
-        self._assert_role_assignments(user, role_name, 1)
+        self._assert_role_assignments(user, role_name, 1, is_feature_role)
 
-    def test_get_enterprise_customer_users_batch(self):
+    @ddt.data(
+        (
+            '_get_enterprise_customer_users_batch',
+            User.objects.filter(pk__in=EnterpriseCustomerUser.objects.values('user_id'))
+        ),
+        (
+            '_get_enterprise_admin_users_batch',
+            User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=False)
+        ),
+        (
+            '_get_enterprise_operator_users_batch',
+            User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=True)
+        ),
+        (
+            '_get_enterprise_enrollment_api_admin_users_batch',
+            User.objects.filter(groups__name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP, is_staff=False)
+        )
+    )
+    @ddt.unpack
+    def test_get_users_batch(self, get_batch_method, batch_query):
         """
-        Test that `_get_enterprise_customer_users_batch` method should return the correct query_set based on start
-        and end inidices provided.
+        Test that batch methods should return the correct query_set based on start and end inidices provided.
         """
         start = 2
         end = 5
         expected_query = str(
-            User.objects.filter(pk__in=EnterpriseCustomerUser.objects.values('user_id'))[start:end].query
+            batch_query[start:end].query
         )
         actual_query = str(
-            self.command._get_enterprise_customer_users_batch(start, end).query     # pylint: disable=protected-access
-        )
-        assert actual_query == expected_query
-
-    def test_get_enterprise_admin_users_batch(self):
-        """
-        Test that `_get_enterprise_admin_users_batch` method should return the correct query_set based on start
-        and end inidices provided.
-        """
-        start = 2
-        end = 5
-        expected_query = str(
-            User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=False)[start:end].query
-        )
-        actual_query = str(
-            self.command._get_enterprise_admin_users_batch(start, end).query    # pylint: disable=protected-access
-        )
-        assert actual_query == expected_query
-
-    def test_get_enterprise_operator_users_batch(self):
-        """
-        Test that `_get_enterprise_operator_users_batch` method should return the correct query_set based on start
-        and end inidices provided.
-        """
-        start = 2
-        end = 5
-        expected_query = str(
-            User.objects.filter(groups__name=ENTERPRISE_DATA_API_ACCESS_GROUP, is_staff=True)[start:end].query
-        )
-        actual_query = str(
-            self.command._get_enterprise_admin_users_batch(start, end).query    # pylint: disable=protected-access
+            getattr(self.command, get_batch_method)(start, end).query
         )
         assert actual_query == expected_query
 

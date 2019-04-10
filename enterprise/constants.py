@@ -86,8 +86,9 @@ DEFAULT_CATALOG_CONTENT_FILTER = {
 
 # Django groups specific to granting permission to enterprise admins.
 ENTERPRISE_DATA_API_ACCESS_GROUP = 'enterprise_data_api_access'
+ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP = 'enterprise_enrollment_api_access'
 ENTERPRISE_PERMISSION_GROUPS = [
-    'enterprise_enrollment_api_access',
+    ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP,
     ENTERPRISE_DATA_API_ACCESS_GROUP,
 ]
 
@@ -103,6 +104,10 @@ ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 ALL_ACCESS_CONTEXT = '*'
 
 ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH = 'enterprise_role_based_access_control'
+
+OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
+
+EDX_ORG_NAME = 'edX, Inc'
 
 
 def json_serialized_course_modes():
