@@ -200,3 +200,13 @@ def get_course_enrollment(username, course_id):
         "mode": 'verified',
         "created": datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
     }
+
+
+def get_enrolled_courses(username):
+    """
+    Fake implementation.
+    """
+    return [
+        get_course_enrollment(username, 'course-v1:edX+DemoX+Demo_Course'),
+        get_course_enrollment(username, 'course-v1:HarvardX+CoolScience+2016')
+    ]

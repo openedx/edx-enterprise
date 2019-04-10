@@ -44,6 +44,7 @@ from enterprise.utils import (
     clean_html_for_template_rendering,
     filter_audit_course_modes,
     format_price,
+    get_active_course_runs,
     get_configuration_value,
     get_current_course_run,
     get_enterprise_customer_or_404,
@@ -1646,10 +1647,11 @@ class RouterView(NonAtomicView):
         return enterprise_customer_uuid, course_run_id, course_key, program_uuid
 
     @staticmethod
-    def get_course_run_id(enterprise_customer, course_key):
+    def get_course_run_id(user, enterprise_customer, course_key):
         """
         User is requesting a course, we need to translate that into the current course run.
 
+        :param user:
         :param enterprise_customer:
         :param course_key:
         :return: course_run_id
@@ -1659,7 +1661,12 @@ class RouterView(NonAtomicView):
         except ImproperlyConfigured:
             raise Http404
 
-        course_run = get_current_course_run(course)
+        users_all_enrolled_courses = EnrollmentApiClient().get_enrolled_courses(user.username)
+        users_active_course_runs = get_active_course_runs(
+            course,
+            users_all_enrolled_courses
+        ) if users_all_enrolled_courses else []
+        course_run = get_current_course_run(course, users_active_course_runs)
         if course_run:
             course_run_id = course_run['key']
             return course_run_id
@@ -1715,7 +1722,7 @@ class RouterView(NonAtomicView):
         enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
         if course_key:
             try:
-                course_run_id = RouterView.get_course_run_id(enterprise_customer, course_key)
+                course_run_id = RouterView.get_course_run_id(request.user, enterprise_customer, course_key)
             except Http404:
                 context_data = get_global_context(request, enterprise_customer)
                 error_code = 'ENTRV000'
@@ -1769,7 +1776,7 @@ class RouterView(NonAtomicView):
         if course_key:
             context_data = get_global_context(request, enterprise_customer)
             try:
-                kwargs['course_id'] = RouterView.get_course_run_id(enterprise_customer, course_key)
+                kwargs['course_id'] = RouterView.get_course_run_id(request.user, enterprise_customer, course_key)
             except Http404:
                 error_code = 'ENTRV001'
                 log_message = (
