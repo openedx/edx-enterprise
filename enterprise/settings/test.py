@@ -186,6 +186,11 @@ ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
         'Introductory',
         'Intermediate',
         'Advanced'
+    ],
+    'availability': [
+        'Current',
+        'Starting Soon',
+        'Upcoming'
     ]
 }
 
