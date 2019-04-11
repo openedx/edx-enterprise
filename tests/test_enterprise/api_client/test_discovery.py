@@ -466,28 +466,44 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
     @ddt.data(
         (
             "course-v1:JediAcademy+AppliedTelekinesis+T1",
-            {"course_runs": [{"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}]},
+            {
+                "course": "JediAcademy+AppliedTelekinesis"
+            },
+            {
+                "course_runs": [{"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}]
+            },
             "JediAcademy+AppliedTelekinesis",
             {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
         ),
         (
             "course-v1:JediAcademy+AppliedTelekinesis+T1",
             {},
-            "JediAcademy+AppliedTelekinesis",
+            {},
+            None,
             None
         ),
         (
             "course-v1:JediAcademy+AppliedTelekinesis+T1",
-            {"course_runs": [
-                {"key": "course-v1:JediAcademy+AppliedTelekinesis+T222"},
-                {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
-            ]},
+            {
+                "course": "JediAcademy+AppliedTelekinesis"
+            },
+            {
+                "course_runs": [
+                    {"key": "course-v1:JediAcademy+AppliedTelekinesis+T222"},
+                    {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
+                ]
+            },
             "JediAcademy+AppliedTelekinesis",
             {"key": "course-v1:JediAcademy+AppliedTelekinesis+T1"}
         ),
         (
             "course-v1:JediAcademy+AppliedTelekinesis+T1",
-            {"course_runs": []},
+            {
+                "course": "JediAcademy+AppliedTelekinesis"
+            },
+            {
+                "course_runs": []
+            },
             "JediAcademy+AppliedTelekinesis",
             None
         )
@@ -496,19 +512,20 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
     def test_get_course_and_course_run(
             self,
             course_run_id,
-            response_dict,
+            course_runs_endpoint_response,
+            course_endpoint_response,
             expected_resource_id,
             expected_course_run
     ):
         """
         Verify get_course_and_course_run of CourseCatalogApiClient works as expected.
         """
-        self.get_data_mock.return_value = response_dict
-        expected_result = response_dict, expected_course_run
+        self.get_data_mock.side_effect = [course_runs_endpoint_response, course_endpoint_response]
+        expected_result = course_endpoint_response, expected_course_run
 
         actual_result = self.api.get_course_and_course_run(course_run_id)
 
-        assert self.get_data_mock.call_count == 1
+        assert self.get_data_mock.call_count == 2
         resource, resource_id = self._get_important_parameters(self.get_data_mock)
 
         assert resource == CourseCatalogApiClient.COURSES_ENDPOINT

@@ -1215,6 +1215,7 @@ def setup_course_catalog_api_client_mock(
     fake_course_run = FAKE_COURSE_RUN.copy()
     fake_program = FAKE_PROGRAM_RESPONSE3.copy()
     fake_program_type = FAKE_PROGRAM_TYPE.copy()
+    fake_search_all_course_result = FAKE_SEARCH_ALL_COURSE_RESULT.copy()
 
     # Apply overrides to default fake course catalog metadata.
     if course_overrides:
@@ -1229,10 +1230,12 @@ def setup_course_catalog_api_client_mock(
     # Mock course catalog api functions.
     client.get_course_details.return_value = fake_course
     client.get_course_run.return_value = fake_course_run
+    client.get_course_id.return_value = fake_course['key']
     client.get_course_and_course_run.return_value = (fake_course, fake_course_run)
     client.get_program_course_keys.return_value = [course['key'] for course in fake_program['courses']]
     client.get_program_by_uuid.return_value = fake_program
     client.get_program_type_by_slug.return_value = fake_program_type
+    client.get_catalog_results.return_value = {'results': [fake_search_all_course_result]}
 
 
 def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:01Z",

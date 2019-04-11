@@ -10,9 +10,10 @@ from logging import getLogger
 
 from django.apps import apps
 
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
-from enterprise.utils import get_identity_provider, parse_course_key
+from enterprise.utils import get_identity_provider
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.utils import parse_datetime_to_epoch_millis
@@ -48,11 +49,14 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             )
             # We return two records here, one with the course key and one with the course run id, to account for
             # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
+            course_catalog_client = get_course_catalog_api_service_client(
+                site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
+            )
             return [
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     sapsf_user_id=sapsf_user_id,
-                    course_id=parse_course_key(enterprise_enrollment.course_id),
+                    course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                     course_completed=course_completed,
                     completed_timestamp=completed_timestamp,
                     grade=grade,
