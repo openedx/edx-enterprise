@@ -81,6 +81,11 @@ DEFAULT_CATALOG_CONTENT_FILTER = {
         'Introductory',
         'Intermediate',
         'Advanced'
+    ],
+    'availability': [
+        'Current',
+        'Starting Soon',
+        'Upcoming'
     ]
 }
 

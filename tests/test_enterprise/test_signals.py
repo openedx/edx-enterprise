@@ -206,6 +206,11 @@ class TestDefaultContentFilter(unittest.TestCase):
                 'level_type': [
                     'Introductory',
                     'Intermediate'
+                ],
+                'availability': [
+                    'Current',
+                    'Starting Soon',
+                    'Upcoming'
                 ]
             },
             {
@@ -213,6 +218,11 @@ class TestDefaultContentFilter(unittest.TestCase):
                 'level_type': [
                     'Introductory',
                     'Intermediate'
+                ],
+                'availability': [
+                    'Current',
+                    'Starting Soon',
+                    'Upcoming'
                 ]
             }
         ),

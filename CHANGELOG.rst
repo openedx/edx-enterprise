@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.3] - 2019-04-11
+--------------------
+
+* Added `availability` key to default content filter for ECC.
+
 [1.4.2] - 2019-04-11
 --------------------
 
