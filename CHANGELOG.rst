@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.2] - 2019-04-11
+--------------------
+
+* Update `assign_enterprise_user_roles` management command to also assign catalog and enrollment api admin roles.
+
 [1.4.1] - 2019-04-10
 ---------------------
 
