@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.4] - 2019-04-11
+--------------------
+
+* Revise course load exception message in CourseEnrollmentView.
+
 [1.4.3] - 2019-04-11
 --------------------
 
