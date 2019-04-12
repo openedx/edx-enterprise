@@ -846,17 +846,25 @@ class CourseEnrollmentView(NonAtomicView):
                 return enterprise_customer, course, course_run, course_modes
 
         if not course or not course_run:
+            course_id = course['key'] if course else "Not Found"
+            course_title = course['title'] if course else "Not Found"
+            course_run_title = course_run['title'] if course_run else "Not Found"
+            enterprise_catalog_title = enterprise_catalog['title'] if enterprise_catalog else "Not Found"
             # The specified course either does not exist in the specified
             # EnterpriseCustomerCatalog, or does not exist at all in the
             # discovery service.
             LOGGER.warning(
-                'Failed to fetch course [{course}] or course run [{course_run}] details for '
-                'course run [{course_run_id}] enterprise [{enterprise_uuid}] '
-                'catalog [{enterprise_catalog_uuid}]'.format(
-                    course=course,
-                    course_run=course_run,
+                'Failed to fetch details for course "{course_title}" [{course_id}] '
+                'or course run "{course_run_title}" [{course_run_id}] '
+                'for enterprise "{enterprise_name}" [{enterprise_uuid}] '
+                'with catalog "{enterprise_catalog_title}" [{enterprise_catalog_uuid}]'.format(
+                    course_title=course_title,
+                    course_id=course_id,
+                    course_run_title=course_run_title,
                     course_run_id=course_run_id,
+                    enterprise_name=enterprise_customer.name,
                     enterprise_uuid=enterprise_customer.uuid,
+                    enterprise_catalog_title=enterprise_catalog_title,
                     enterprise_catalog_uuid=enterprise_catalog_uuid,
                 )
             )
