@@ -56,7 +56,6 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'enterprise_customer_name',
         'active',
         'sapsf_base_url',
-        'has_access_token',
         'modified',
     )
     ordering = ('enterprise_customer__name',)
