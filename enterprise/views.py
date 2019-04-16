@@ -794,7 +794,9 @@ class CourseEnrollmentView(NonAtomicView):
             modes.sort(key=lambda course_mode: enterprise_catalog.enabled_course_modes.index(course_mode['slug']))
             if not modes:
                 LOGGER.warning(
-                    'No course modes found for EnterpriseCustomerCatalog [{enterprise_catalog_uuid}]'.format(
+                    'No matching course modes found for course run {course_run_id} in '
+                    'EnterpriseCustomerCatalog [{enterprise_catalog_uuid}]'.format(
+                        course_run_id=course_run_id,
                         enterprise_catalog_uuid=enterprise_catalog,
                     )
                 )

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.5] - 2019-04-12
+--------------------
+
+* Revise course mode match exception message in CourseEnrollmentView.
+
 [1.4.4] - 2019-04-11
 --------------------
 
