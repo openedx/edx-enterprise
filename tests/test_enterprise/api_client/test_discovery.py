@@ -619,15 +619,14 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         logger = logging.getLogger('enterprise.api_client.discovery')
         handler = MockLoggingHandler(level="ERROR")
         logger.addHandler(handler)
-        assert self.api.get_catalog_results(
-            content_filter_query='query',
-            query_params={'page': 2}
-        ) == {
-            'next': None,
-            'previous': None,
-            'results': [],
-        }
-        expected_message = 'Failed to retrieve data from the catalog API. content -- [boom]'
+        with self.assertRaises(HttpClientError):
+            self.api.get_catalog_results(
+                content_filter_query='query',
+                query_params={u'page': 2}
+            )
+        expected_message = ('Attempted to call course-discovery search/all/ endpoint with the following parameters: '
+                            'content_filter_query: query, query_params: {}, traverse_pagination: False. '
+                            'Failed to retrieve data from the catalog API. content -- [boom]').format({u'page': 2})
         assert handler.messages['error'][0] == expected_message
 
 

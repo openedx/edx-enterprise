@@ -385,9 +385,6 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @detail_route()
-    @permission_required(
-        'enterprise.can_view_catalog',
-        fn=lambda request, pk, course_run_ids, program_uuids: get_enterprise_customer_from_catalog_id(pk))
     # pylint: disable=invalid-name,unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
         """
