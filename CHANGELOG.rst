@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.7] - 2019-04-17
+--------------------
+
+* Fix invalid object attribute references in exception message
+
 [1.4.6] - 2019-04-17
 --------------------
 

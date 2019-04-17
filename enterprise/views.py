@@ -851,7 +851,7 @@ class CourseEnrollmentView(NonAtomicView):
             course_id = course['key'] if course else "Not Found"
             course_title = course['title'] if course else "Not Found"
             course_run_title = course_run['title'] if course_run else "Not Found"
-            enterprise_catalog_title = enterprise_catalog['title'] if enterprise_catalog else "Not Found"
+            enterprise_catalog_title = enterprise_catalog.title if enterprise_catalog else "Not Found"
             # The specified course either does not exist in the specified
             # EnterpriseCustomerCatalog, or does not exist at all in the
             # discovery service.
