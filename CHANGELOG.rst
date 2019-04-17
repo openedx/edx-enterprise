@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.6] - 2019-04-17
+--------------------
+
+* Stop masking discovery call failures from the client for enterprise catalog endpoint calls.
+
 [1.4.5] - 2019-04-12
 --------------------
 
