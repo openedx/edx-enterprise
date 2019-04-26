@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.4.8] - 2019-04-26
+--------------------
+
+* Reduce course mode match exception log level
+
 [1.4.7] - 2019-04-17
 --------------------
 
