@@ -17,6 +17,7 @@ from enterprise.admin.utils import (
     email_or_username__to__email,
     get_course_runs_from_program,
     get_earliest_start_date_from_program,
+    get_idiff_list,
     parse_csv,
     validate_email_to_link,
 )
@@ -106,6 +107,36 @@ class TestEmailConversion(unittest.TestCase):
         email_or_username = FAKER.email()  # pylint: disable=no-member
 
         assert email_or_username__to__email(email_or_username) == email_or_username
+
+
+@mark.django_db
+@ddt.ddt
+class TestGetDifferenceList(unittest.TestCase):
+    """
+    Tests for :method:`get_idiff_list`.
+    """
+
+    @ddt.unpack
+    @ddt.data(
+        (
+            [],
+            [],
+            []
+        ),
+        (
+            ['DUMMY1@example.com', 'dummy2@example.com', 'dummy3@example.com'],
+            ['dummy1@example.com', 'DUMMY3@EXAMPLE.COM'],
+            ['dummy2@example.com']
+        ),
+        (
+            ['dummy1@example.com', 'dummy2@example.com', 'dummy3@example.com'],
+            [],
+            ['dummy1@example.com', 'dummy2@example.com', 'dummy3@example.com'],
+        )
+    )
+    def test_get_idiff_list_method(self, all_emails, registered_emails, unregistered_emails):
+        emails = get_idiff_list(all_emails, registered_emails)
+        self.assertEqual(sorted(emails), sorted(unregistered_emails))
 
 
 @mark.django_db

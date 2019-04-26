@@ -138,6 +138,22 @@ def email_or_username__to__email(email_or_username):
         return email_or_username
 
 
+def get_idiff_list(list_a, list_b):
+    """
+    Returns a list containing lower case difference of list_b and list_a after case insensitive comparison.
+
+    Args:
+        list_a: list of strings
+        list_b: list of string
+
+    Returns:
+        List of unique lower case strings computed by subtracting list_b from list_a.
+    """
+    lower_list_a = [element.lower() for element in list_a]
+    lower_list_b = [element.lower() for element in list_b]
+    return list(set(lower_list_a) - set(lower_list_b))
+
+
 def validate_email_to_link(email, raw_email=None, message_template=None, ignore_existing=False):
     """
     Validate email to be linked to Enterprise Customer.

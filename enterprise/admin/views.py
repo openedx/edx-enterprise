@@ -33,6 +33,7 @@ from enterprise.admin.utils import (
     email_or_username__to__email,
     get_course_runs_from_program,
     get_earliest_start_date_from_program,
+    get_idiff_list,
     paginated_list,
     parse_csv,
     split_usernames_and_emails,
@@ -493,12 +494,12 @@ class EnterpriseCustomerManageLearnersView(View):
 
         Returns:
             users: Queryset of users who exist in the OpenEdX platform and who were in the list of email addresses
-            missing_emails: List of unique emails which were in the original list, but do not yet exist as users
+            unregistered_emails: List of unique emails which were in the original list, but do not yet exist as users
         """
         users = User.objects.filter(email__in=emails)
         present_emails = users.values_list('email', flat=True)
-        missing_emails = list(set(emails) - set(present_emails))
-        return users, missing_emails
+        unregistered_emails = get_idiff_list(emails, present_emails)
+        return users, unregistered_emails
 
     @classmethod
     def enroll_users_in_program(cls, enterprise_customer, program_details, course_mode, emails, cohort=None):
