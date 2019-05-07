@@ -15,6 +15,7 @@ from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -655,10 +656,50 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
     Django admin model for SystemWideEnterpriseUserRoleAssignment.
     """
 
+    list_display = ('user', 'role', 'enterprise_customer')
+    search_fields = ('user__email', 'role__name')
+
     form = SystemWideEnterpriseUserRoleAssignmentForm
 
     class Meta(object):
         model = SystemWideEnterpriseUserRoleAssignment
+
+    def enterprise_customer(self, instance):
+        """
+        Return the name of enterprise customer attached to the user.
+
+        Arguments:
+            instance (SystemWideEnterpriseUserRoleAssignment): model instance
+        """
+        try:
+            enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=instance.user.id)
+        except (ObjectDoesNotExist, MultipleObjectsReturned):
+            return None
+
+        return enterprise_customer_user.enterprise_customer.name
+
+    def get_search_results(self, request, queryset, search_term):
+        """
+        Filters the data displayed that match the given search_term. If no search_term
+        is provided than return all results.
+        """
+        queryset, use_distinct = super(SystemWideEnterpriseUserRoleAssignmentAdmin, self).get_search_results(
+            request,
+            queryset,
+            search_term
+        )
+
+        users = EnterpriseCustomerUser.objects.filter(
+            enterprise_customer__name__icontains=search_term
+        ).values_list('user_id', flat=True)
+
+        if not queryset:
+            queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(user__id__in=users)
+        else:
+            queryset |= queryset.filter(user__id__in=users)
+            use_distinct = True
+
+        return queryset, use_distinct
 
 
 @admin.register(EnterpriseFeatureUserRoleAssignment)
