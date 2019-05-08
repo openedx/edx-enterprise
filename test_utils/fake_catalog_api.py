@@ -1119,6 +1119,35 @@ FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION_1 = {
     ]
 }
 
+FAKE_SEARCH_ALL_COURSE_RESULT_3 = {
+    "content_type": "course",
+    "full_description": "This is full description of course",
+    "aggregation_key": "course:edX+DemoX",
+    "key": "edX+DemoX",
+    "short_description": "This is short description of course",
+    "title": "edX Demonstration Course",
+    "card_image_url": "http://local:18000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg",
+    "subjects": [],
+    "organizations": [
+        "edX: "
+    ],
+    "uuid": "4424529e-23aa-489b-b25a-800f52e05b66",
+    "languages": [],
+    "course_runs": [
+        {
+            "enrollment_end": None,
+            "enrollment_mode": "verified",
+            "key": "course-v1:edX+DemoX+Demo_Course",
+            "enrollment_start": None,
+            "pacing_type": "instructor_paced",
+            "end": None,
+            "start": "2013-02-05T05:00:00Z",
+            "go_live_date": None,
+            "availability": "Current"
+        }
+    ],
+}
+
 
 def get_catalog_courses(catalog_id):
     """

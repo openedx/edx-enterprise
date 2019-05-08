@@ -54,4 +54,9 @@ urlpatterns += [
         include('consent.urls'),
         name='consent'
     ),
+    url(
+        r'^cornerstone/',
+        include('integrated_channels.cornerstone.urls'),
+        name='cornerstone'
+    ),
 ]
