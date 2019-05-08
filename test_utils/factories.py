@@ -27,6 +27,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
+from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import (
     DegreedEnterpriseCustomerConfiguration,
     DegreedGlobalConfiguration,
@@ -495,6 +496,25 @@ class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFacto
     course_completed = True
     completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     status = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class CornerstoneEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``CornerstoneEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``CornerstoneEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``CornerstoneEnterpriseCustomerConfiguration``.
+        """
+
+        model = CornerstoneEnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    cornerstone_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
 
 
 class XAPILRSConfigurationFactory(factory.django.DjangoModelFactory):
