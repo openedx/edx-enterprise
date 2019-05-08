@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.4.10] - 2019-05-08
+---------------------
+
+* Add enterprise customer column in the list_display admin interface for `SystemWideEnterpriseUserRoleAssignment`
+* Update `SystemWideEnterpriseUserRoleAssignment` admin interface search to support search by enterprise customer
+
 [1.4.9] - 2019-05-02
 --------------------
 
