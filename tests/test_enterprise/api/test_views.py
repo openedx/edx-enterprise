@@ -2530,7 +2530,7 @@ class TestEnterpriseAPIViews(APITest):
         else:
             mock_send_mail.assert_not_called()
 
-    @mock.patch('enterprise.rules.get_request_or_stub')
+    @mock.patch('enterprise.rules.crum.get_current_request')
     @mock.patch('django.core.mail.send_mail', mock.Mock(return_value={'status_code': status.HTTP_200_OK}))
     @ddt.data(
         (False, False, status.HTTP_403_FORBIDDEN),

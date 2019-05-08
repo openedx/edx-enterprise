@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.2] - 2019-05-15
+--------------------
+
+* Remove usages of get_decoded_jwt_from_request from rbac in favor of get_decoded_jwt from edx-drf-extensions
+
 [1.5.1] - 2019-05-09
 --------------------
 

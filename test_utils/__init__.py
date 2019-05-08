@@ -15,7 +15,6 @@ import uuid
 
 import mock
 import six
-from edx_rbac.utils import get_request_or_stub
 from edx_rest_framework_extensions.auth.jwt.cookies import jwt_cookie_name
 from edx_rest_framework_extensions.auth.jwt.tests.utils import generate_jwt_token, generate_unversioned_payload
 from pytest import mark
@@ -30,6 +29,7 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.shortcuts import render
+from django.test.client import RequestFactory
 
 from enterprise import utils
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE
@@ -298,7 +298,7 @@ class APITest(APITestCase):
             })
         jwt_token = generate_jwt_token(payload)
 
-        request = get_request_or_stub()
+        request = RequestFactory().get('/')
         request.COOKIES[jwt_cookie_name()] = jwt_token
         return request
 
