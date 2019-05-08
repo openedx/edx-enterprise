@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.0] - 2019-05-08
+--------------------
+
+* Add sync_learner_profile_data flag to data returned by enterprise-learner endpoint
+
 [1.4.10] - 2019-05-08
 ---------------------
 
