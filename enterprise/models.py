@@ -267,6 +267,21 @@ class EnterpriseCustomer(TimeStampedModel):
         except ObjectDoesNotExist:
             return None
 
+    @property
+    def sync_learner_profile_data(self):
+        """
+        Return the sync_learner_profile data flag for the identity provider associated with this enterprise customer.
+
+        Returns False if enterprise customer does not have any identity provider.
+        """
+        try:
+            return (
+                self.enterprise_customer_identity_provider and
+                self.enterprise_customer_identity_provider.sync_learner_profile_data
+            )
+        except ObjectDoesNotExist:
+            return False
+
     def __str__(self):
         """
         Return human-readable string representation.
@@ -1016,12 +1031,28 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         return self.__str__()
 
     @property
+    def identity_provider(self):
+        """
+        Associated identity provider instance.
+        """
+        identity_provider = utils.get_identity_provider(self.provider_id)
+        return identity_provider
+
+    @property
     def provider_name(self):
         """
         Readable name for the identity provider.
         """
-        identity_provider = utils.get_identity_provider(self.provider_id)
+        identity_provider = self.identity_provider
         return identity_provider and identity_provider.name
+
+    @property
+    def sync_learner_profile_data(self):
+        """
+        Return bool indicating if data received from the identity provider shoudl be synced to the edX profile.
+        """
+        identity_provider = self.identity_provider
+        return identity_provider is not None and identity_provider.sync_learner_profile_data
 
 
 @python_2_unicode_compatible
