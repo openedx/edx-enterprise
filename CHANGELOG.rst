@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.1] - 2019-05-09
+--------------------
+
+* Updating consent granted view to redirect to dashboard if consent is not required
+
 [1.5.0] - 2019-05-08
 --------------------
 

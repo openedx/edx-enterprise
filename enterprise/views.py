@@ -459,7 +459,8 @@ class GrantDataSharingPermissions(View):
                         course_id=course_id,
                     )
                 )
-                return render_page_with_error_code_message(request, context_data, error_code, log_message)
+                LOGGER.info(log_message)
+                return redirect(LMS_DASHBOARD_URL)
             else:
                 enterprise_customer = consent_record.enterprise_customer
         elif not request.user.is_staff:
