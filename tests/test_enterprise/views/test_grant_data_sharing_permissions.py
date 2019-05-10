@@ -652,13 +652,15 @@ class TestProgramDataSharingPermissions(TestCase):
         self.get_data_sharing_consent.return_value = None
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
-        self._assert_get_returns_404_with_mock(self.url, self.valid_get_params)
+        response = self.client.get(self.url, self.valid_get_params)
+        assert response.status_code == 302
 
     def test_get_program_consent_not_required(self):
         self.get_data_sharing_consent.return_value.consent_required.return_value = False
         self.course_catalog_api_client.return_value.program_exists.return_value = True
         self._login()
-        self._assert_get_returns_404_with_mock(self.url, self.valid_get_params)
+        response = self.client.get(self.url, self.valid_get_params)
+        assert response.status_code == 302
 
     @ddt.data(
         'redirect_url',
