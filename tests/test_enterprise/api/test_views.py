@@ -22,6 +22,7 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
     urlunsplit,
 )
 from waffle.models import Switch
+from waffle.testutils import override_switch
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -29,8 +30,10 @@ from django.test import override_settings
 from django.utils import timezone
 
 from enterprise.constants import (
+    ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH,
 )
 from enterprise.models import (
@@ -122,6 +125,7 @@ def side_effect(url, query_parameters):
 
 @ddt.ddt
 @mark.django_db
+@override_switch(ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, active=True)
 class TestEnterpriseAPIViews(APITest):
     """
     Tests for enterprise api views.
@@ -129,6 +133,10 @@ class TestEnterpriseAPIViews(APITest):
     # Get current datetime, so that all tests can use same datetime.
     now = timezone.now()
     maxDiff = None
+
+    def setUp(self):
+        super(TestEnterpriseAPIViews, self).setUp()
+        self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
@@ -1820,33 +1828,6 @@ class TestEnterpriseAPIViews(APITest):
         assert 'course_run_ids' in message
         assert response.status_code == 400
 
-    def test_enterprise_customer_course_enrollments_no_permissions(self):
-        """
-        Test the Enterprise Customer course enrollments detail route with insufficient permissions.
-        """
-        factories.EnterpriseCustomerFactory(
-            uuid=FAKE_UUIDS[0],
-            name="test_enterprise"
-        )
-
-        # creating a non staff user so verify the insufficient permission conditions.
-        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
-        client = APIClient()
-        client.login(username='test_user', password='test_password')
-        expected_result = {u'detail': u'User is not allowed to access the view.'}
-
-        # Make the call!
-        response = client.post(
-            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
-            data=json.dumps([{}]),
-            content_type='application/json',
-        )
-        response = self.load_json(response.content)
-
-        self.assertDictEqual(response, expected_result)
-
     def test_enterprise_customer_course_enrollments_non_list_request(self):
         """
         Test the Enterprise Customer course enrollments detail route with an invalid expected json format.
@@ -2504,17 +2485,9 @@ class TestEnterpriseAPIViews(APITest):
         """
         Ensure endpoint response data and status codes.
         """
-        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
-        group = factories.GroupFactory(name='enterprise_data_api_access')
-        group.user_set.add(user)
-        client = APIClient()
-        client.login(username='test_user', password='test_password')
-
         endpoint_name = 'request-codes'
         mock_send_mail.side_effect = mock_side_effect
-        response = client.post(
+        response = self.client.post(
             settings.TEST_SERVER + reverse(endpoint_name),
             data=json.dumps(post_data),
             content_type='application/json',

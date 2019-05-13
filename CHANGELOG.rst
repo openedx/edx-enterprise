@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.5] - 2019-05-21
+--------------------
+
+* Clean up rbac authorization related waffle switches and logic
+
 [1.5.4] - 2019-05-20
 --------------------
 
