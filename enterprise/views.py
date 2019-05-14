@@ -930,6 +930,7 @@ class CourseEnrollmentView(NonAtomicView):
         if course and course_run:
             course_enrollable = True
             course_start_date = ''
+            course_duration = ''
             course_in_future = False
             organization_name = ''
             organization_logo = ''
@@ -950,7 +951,18 @@ class CourseEnrollmentView(NonAtomicView):
                 course_start_date = parse(course_run['start']).strftime('%B %d, %Y')
                 now = datetime.datetime.now(pytz.UTC)
                 course_in_future = parse(course_run['start']) > now
-
+            if course_run['start'] and course_run['end'] and course_run['weeks_to_complete']:
+                course_end_date = parse(course_run['end']).strftime('%B %d, %Y')
+                weeks_to_complete = course_run['weeks_to_complete']
+                course_duration = _('{num_weeks}, starting on {start_date} and ending at {end_date}').format(
+                    num_weeks=ungettext(
+                        '{} week',
+                        '{} weeks',
+                        weeks_to_complete
+                    ).format(weeks_to_complete),
+                    start_date=course_start_date,
+                    end_date=course_end_date,
+                )
             course_level_type = course_run.get('level_type', '')
             staff = course_run['staff']
             # Format the course effort string using the min/max effort fields for the course run.
@@ -990,6 +1002,7 @@ class CourseEnrollmentView(NonAtomicView):
                 'course_short_description': course_short_description,
                 'course_pacing': course_pacing,
                 'course_start_date': course_start_date,
+                'course_duration': course_duration,
                 'course_in_future': course_in_future,
                 'course_image_uri': course_image_uri,
                 'course_modes': course_modes,
@@ -1022,6 +1035,7 @@ class CourseEnrollmentView(NonAtomicView):
             'continue_link_text': _('Continue'),
             'level_text': _('Level'),
             'effort_text': _('Effort'),
+            'duration_text': _('Duration'),
             'close_modal_button_text': _('Close'),
             'expected_learning_items_text': _("What you'll learn"),
             'course_full_description_text': _('About This Course'),

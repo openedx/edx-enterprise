@@ -73,6 +73,19 @@
                 </div>
               </li>
             {% endif %}
+            {% if course_duration %}
+              <li>
+                <div class="detail-container">
+                  <div class="detail-title-container">
+                    <span class="icon fa fa-clock-o" aria-hidden="true"></span>
+                    <span class="title">{{ duration_text }}</span>
+                  </div>
+                  <div class="detail-value-container">
+                    <span class="text">{{ course_duration }}</span>
+                  </div>
+                </div>
+              </li>
+            {% endif %}
           </ol>
         </div>
         <div class="overview">

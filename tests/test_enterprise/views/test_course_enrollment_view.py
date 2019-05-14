@@ -644,7 +644,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         The message indicating that the course is currently unopen to new learners is rendered.
         """
         setup_course_catalog_api_client_mock(course_catalog_client_mock, course_run_overrides={
-            'end': None if enrollable else '1000-10-13T13:11:01Z',
+            'end': None if enrollable else '1900-10-13T13:11:01Z',
         })
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
@@ -715,7 +715,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         The course enrollment landing page returns context indicating that the course is unenrollable.
         """
         setup_course_catalog_api_client_mock(course_catalog_client_mock, course_run_overrides={
-            'end': '1000-10-13T13:11:01Z'
+            'end': '1900-10-13T13:11:01Z'
         })
         self._setup_ecommerce_client(ecommerce_api_client_mock)
         self._setup_enrollment_client(enrollment_api_client_mock)
