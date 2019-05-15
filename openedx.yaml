@@ -8,3 +8,4 @@ track-pulls: true
 oeps:
     oep-30:
         state: True
+    oep-7: True     # Python 3

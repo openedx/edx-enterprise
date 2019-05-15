@@ -4,18 +4,18 @@ language: python
 
 python:
   - 2.7
-  - 3.5
+  - 3.6
 
 env:
   - TOXENV=master
 
 matrix:
   include:
-    - python: 3.5
+    - python: 3.6
       env: TOXENV=quality
     - python: 2.7
       env: TOXENV=quality
-    - python: 3.5
+    - python: 3.6
       env: TOXENV=docs
     - python: 2.7
       env:
@@ -34,7 +34,7 @@ matrix:
     - python: 2.7
       env:
         - RUNJSHINT=true
-    - python: 3.5
+    - python: 3.6
       env: TOXENV=pii-annotations
 
 cache:
