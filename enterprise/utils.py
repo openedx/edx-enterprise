@@ -15,7 +15,7 @@ import pytz
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
-# pylint: disable=import-error,wrong-import-order,ungrouped-imports
+# pylint: disable=import-error
 from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlsplit, urlunsplit
 
 from django.apps import apps

@@ -37,27 +37,27 @@ class TestEnterpriseRBACPermissions(APITest):
         Switch.objects.update_or_create(name=ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, defaults={'active': False})
         assert self.user.has_perm(permission, TEST_UUID)
 
-    @mock.patch('enterprise.rules.get_request_or_stub')
+    @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         'enterprise.can_access_admin_dashboard',
         'enterprise.can_view_catalog',
         'enterprise.can_enroll_learners',
     )
-    def test_has_implicit_access(self, permission, get_request_or_stub_mock):
+    def test_has_implicit_access(self, permission, get_current_request_mock):
         Switch.objects.update_or_create(name=ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, defaults={'active': True})
-        get_request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(ENTERPRISE_ADMIN_ROLE, TEST_UUID)
+        get_current_request_mock.return_value = self.get_request_with_jwt_cookie(ENTERPRISE_ADMIN_ROLE, TEST_UUID)
         assert self.user.has_perm(permission, TEST_UUID)
 
-    @mock.patch('enterprise.rules.get_request_or_stub')
+    @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         ('enterprise.can_access_admin_dashboard', ENTERPRISE_DASHBOARD_ADMIN_ROLE),
         ('enterprise.can_view_catalog', ENTERPRISE_CATALOG_ADMIN_ROLE),
         ('enterprise.can_enroll_learners', ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE),
     )
     @ddt.unpack
-    def test_has_explicit_access(self, permission, feature_role, get_request_or_stub_mock):
+    def test_has_explicit_access(self, permission, feature_role, get_current_request_mock):
         Switch.objects.update_or_create(name=ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, defaults={'active': True})
-        get_request_or_stub_mock.return_value = self.get_request_with_jwt_cookie()
+        get_current_request_mock.return_value = self.get_request_with_jwt_cookie()
         feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(name=feature_role)
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=TEST_UUID)
         factories.EnterpriseCustomerUserFactory(
@@ -67,13 +67,13 @@ class TestEnterpriseRBACPermissions(APITest):
         EnterpriseFeatureUserRoleAssignment.objects.create(user=self.user, role=feature_role_object)
         assert self.user.has_perm(permission, TEST_UUID)
 
-    @mock.patch('enterprise.rules.get_request_or_stub')
+    @mock.patch('enterprise.rules.crum.get_current_request')
     @ddt.data(
         'enterprise.can_access_admin_dashboard',
         'enterprise.can_view_catalog',
         'enterprise.can_enroll_learners',
     )
-    def test_access_denied(self, permission, get_request_or_stub_mock):
+    def test_access_denied(self, permission, get_current_request_mock):
         Switch.objects.update_or_create(name=ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, defaults={'active': True})
-        get_request_or_stub_mock.return_value = self.get_request_with_jwt_cookie()
+        get_current_request_mock.return_value = self.get_request_with_jwt_cookie()
         assert not self.user.has_perm(permission, TEST_UUID)
