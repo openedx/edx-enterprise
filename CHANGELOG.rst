@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.4] - 2019-05-20
+--------------------
+
+* Updating test packages to be inline with edx-platform. Specifically Bleach >2.1.3
+
 [1.5.3] - 2019-05-16
 --------------------
 
