@@ -12,13 +12,13 @@ anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0        # via cryptography
 babel==2.6.0              # via sphinx
 billiard==3.3.0.23        # via celery
-bleach==1.4
+bleach==2.1.4
 celery==3.1.25
 certifi==2019.3.9         # via requests
 cffi==1.12.3              # via cryptography
 chardet==3.0.4            # via doc8, requests
 click==7.0                # via code-annotations
-code-annotations==0.2.1
+code-annotations==0.3.1
 cryptography==2.4.2
 defusedxml==0.6.0         # via djangorestframework-xml
 diff-cover==0.9.8
@@ -27,7 +27,7 @@ django-countries==4.6.1
 django-crum==0.7.3        # via edx-rbac
 django-fernet-fields==0.5
 django-filter==1.0.4
-django-ipware==1.1.0
+django-ipware==2.1.0
 django-model-utils==3.0.0
 django-multi-email-field==0.5.1
 django-object-actions==0.10.0
@@ -39,7 +39,7 @@ djangorestframework-oauth==1.1.0
 djangorestframework-xml==1.3.0
 djangorestframework==3.6.3
 doc8==0.8.0
-docutils==0.12
+docutils==0.14
 edx-django-oauth2-provider==1.3.5
 edx-django-utils==1.0.3   # via edx-drf-extensions
 edx-drf-extensions==2.2.1
@@ -50,13 +50,13 @@ edx-sphinx-theme==1.4.0
 enum34==1.1.6             # via cryptography
 flaky==3.5.3
 future==0.17.1            # via pyjwkest
-html5lib==0.999
+html5lib==1.0.1
 idna==2.8                 # via cryptography, requests
 imagesize==1.1.0          # via sphinx
 inflect==2.1.0            # via jinja2-pluralize
 ipaddress==1.0.22         # via cryptography
 jinja2-pluralize==0.3.0   # via diff-cover
-jinja2==2.10.1            # via diff-cover, jinja2-pluralize, sphinx
+jinja2==2.10.1            # via code-annotations, diff-cover, jinja2-pluralize, sphinx
 jsondiff==1.1.1
 jsonfield==2.0.2
 kombu==3.0.37             # via celery
@@ -75,10 +75,11 @@ pyjwkest==1.3.2           # via edx-drf-extensions
 pyjwt==1.7.1              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.8.0            # via edx-opaque-keys
 pyparsing==2.4.0          # via packaging
-python-dateutil==2.4.0
-pytz==2016.10
+python-dateutil==2.8.0
+python-slugify==3.0.2     # via code-annotations
+pytz==2019.1
 pyyaml==5.1               # via code-annotations
-readme_renderer==0.7.0
+readme-renderer==24.0
 requests==2.21.0
 rest-condition==1.0.3     # via edx-drf-extensions
 restructuredtext-lint==1.3.0  # via doc8
@@ -90,9 +91,11 @@ slumber==0.7.1            # via edx-rest-api-client
 snowballstemmer==1.2.1    # via sphinx
 sphinx==1.8.5
 sphinxcontrib-napoleon==0.6.1
-sphinxcontrib-websupport==1.1.0  # via sphinx
+sphinxcontrib-websupport==1.1.2  # via sphinx
 stevedore==1.30.1         # via code-annotations, doc8, edx-opaque-keys
 testfixtures==6.8.2
+text-unidecode==1.2       # via python-slugify
 typing==3.6.6             # via sphinx
 unicodecsv==0.14.1
 urllib3==1.24.3           # via requests
+webencodings==0.5.1       # via html5lib
