@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.3] - 2019-05-16
+--------------------
+
+* Add total number of weeks to view from data consent screen
+
 [1.5.2] - 2019-05-15
 --------------------
 
