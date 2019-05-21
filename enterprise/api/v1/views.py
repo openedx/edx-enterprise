@@ -35,11 +35,7 @@ from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.utils import get_enterprise_customer_from_catalog_id
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import enterprise_customer_required, require_at_least_one_query_parameter
-from enterprise.api.v1.permissions import (
-    HasEnterpriseDataAPIAccess,
-    HasEnterpriseEnrollmentAPIAccess,
-    IsInEnterpriseGroup,
-)
+from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.errors import CodesAPIRequestError
@@ -188,10 +184,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         serializer.update_enterprise_courses(enterprise_customer, catalog_id=enterprise_customer.catalog)
         return get_paginated_response(serializer.data, request)
 
-    @detail_route(methods=['post'], permission_classes=[
-        permissions.IsAuthenticated,
-        HasEnterpriseEnrollmentAPIAccess,
-    ])
+    @detail_route(methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
     # pylint: disable=invalid-name,unused-argument
     def course_enrollments(self, request, pk):
@@ -214,10 +207,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
-    @list_route(permission_classes=[
-        permissions.IsAuthenticated,
-        IsInEnterpriseGroup,
-    ])
+    @list_route(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup])
     def with_access_to(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
         """
         Returns the list of enterprise customers the user has a specified group permission access to.
@@ -570,7 +560,7 @@ class CouponCodesView(APIView):
     """
     API to request coupon codes.
     """
-    permission_classes = (permissions.IsAuthenticated, HasEnterpriseDataAPIAccess)
+    permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
 
