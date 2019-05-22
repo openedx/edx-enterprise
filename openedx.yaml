@@ -1,11 +1,18 @@
 # This file describes this Open edX repo, as described in OEP-2:
 # http://open-edx-proposals.readthedocs.io/en/latest/oeps/oep-0002.html#specification
 
-owner: edx/business-enterprise-team
+owner: georgebabey
+supporting_teams:
+    - edx/business-enterprise-team
 nick: edx-enterprise
-tags: [enterprise, ent]
 track-pulls: true
 oeps:
     oep-30:
         state: True
     oep-7: True     # Python 3
+    oep-18: True
+
+tags:
+    - enterprise
+    - ent
+    - library
