@@ -39,7 +39,6 @@ from enterprise.constants import (
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
-    EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
@@ -62,9 +61,6 @@ from test_utils import (
     update_program_with_enterprise_context,
 )
 
-CATALOGS_LIST_ENDPOINT = reverse('catalogs-list')
-CATALOGS_DETAIL_ENDPOINT = reverse('catalogs-detail', (1, ))
-CATALOGS_COURSES_ENDPOINT = reverse('catalogs-courses', (1, ))
 ENTERPRISE_CATALOGS_LIST_ENDPOINT = reverse('enterprise-catalogs-list')
 ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
     'enterprise-catalogs-detail',
@@ -89,7 +85,6 @@ ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT = reverse(
     kwargs={'pk': FAKE_UUIDS[1], 'program_uuid': FAKE_UUIDS[3]}
 )
 ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollment-list')
-ENTERPRISE_CUSTOMER_COURSES_ENDPOINT = reverse('enterprise-customer-courses', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT = reverse('enterprise-customer-entitlement-list')
 ENTERPRISE_CUSTOMER_BRANDING_LIST_ENDPOINT = reverse('enterprise-customer-branding-list')
 ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT = reverse('enterprise-customer-branding-detail', (TEST_SLUG,))
@@ -242,7 +237,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': 'Test Enterprise Customer',
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -264,7 +259,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': 'Test Enterprise Customer',
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -286,7 +281,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': 'Test Enterprise Customer',
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -308,7 +303,7 @@ class TestEnterpriseAPIViews(APITest):
                 [{
                     'id': 1, 'user_id': 0,
                     'enterprise_customer__uuid': FAKE_UUIDS[0],
-                    'enterprise_customer__name': 'Test Enterprise Customer', 'enterprise_customer__catalog': 1,
+                    'enterprise_customer__name': 'Test Enterprise Customer',
                     'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                     'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                     'enterprise_customer__site__domain': 'example.com',
@@ -330,7 +325,7 @@ class TestEnterpriseAPIViews(APITest):
                 factories.EnterpriseCustomerFactory,
                 [{
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
-                    'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                    'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'site__domain': 'example.com', 'site__name': 'example.com',
                 }]
@@ -484,7 +479,7 @@ class TestEnterpriseAPIViews(APITest):
             factories.EnterpriseCustomerFactory,
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer',
-                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }]
@@ -498,220 +493,18 @@ class TestEnterpriseAPIViews(APITest):
 
     @ddt.data(
         (
-            FAKE_UUIDS[0],
-            1,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            False,
-            False,
-            {},
-            {'detail': 'Not found.'}
-        ),
-        (
-            FAKE_UUIDS[0],
-            None,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            False,
-            True,
-            {},
-            {'detail': (
-                "No catalog is associated with Enterprise Pied Piper from endpoint "
-                "'/enterprise/api/v1/enterprise-customer/" + FAKE_UUIDS[0] + "/courses/'."
-            )}
-        ),
-        (
-            FAKE_UUIDS[0],
-            None,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            True,
-            False,
-            {},
-            {'detail': (
-                "No catalog is associated with Enterprise Pied Piper from endpoint "
-                "'/enterprise/api/v1/enterprise-customer/" + FAKE_UUIDS[0] + "/courses/'."
-            )}
-        ),
-        (
-            FAKE_UUIDS[0],
-            1,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            False,
-            True,
-            {},
-            {'detail': (
-                "Unable to fetch API response for catalog courses for Enterprise Pied Piper from endpoint "
-                "'/enterprise/api/v1/enterprise-customer/" + FAKE_UUIDS[0] + "/courses/'."
-            )},
-        ),
-        (
-            FAKE_UUIDS[0],
-            1,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            True,
-            False,
-            {},
-            {'detail': (
-                "Unable to fetch API response for catalog courses for Enterprise Pied Piper from endpoint "
-                "'/enterprise/api/v1/enterprise-customer/" + FAKE_UUIDS[0] + "/courses/'."
-            )},
-        ),
-        (
-            FAKE_UUIDS[0],
-            1,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            True,
-            False,
-            fake_catalog_api.FAKE_CATALOG_COURSE_PAGINATED_RESPONSE,
-            {
-                'count': 3,
-                'next': ('http://testserver/enterprise/api/v1/enterprise-customer/'
-                         + FAKE_UUIDS[0] + '/courses/?page=3'),
-                'previous': ('http://testserver/enterprise/api/v1/enterprise-customer/'
-                             + FAKE_UUIDS[0] + '/courses/?page=1'),
-                'results': [
-                    {
-                        'owners': [
-                            {
-                                'description': None,
-                                'tags': [],
-                                'name': '',
-                                'homepage_url': None,
-                                'key': 'edX',
-                                'certificate_logo_image_url': None,
-                                'marketing_url': None,
-                                'logo_image_url': None,
-                                'uuid': FAKE_UUIDS[1]
-                            }
-                        ],
-                        'tpa_hint': None,
-                        'catalog_id': 1,
-                        'enterprise_id': FAKE_UUIDS[0],
-                        'uuid': FAKE_UUIDS[2],
-                        'title': 'edX Demonstration Course',
-                        'prerequisites': [],
-                        'image': None,
-                        'expected_learning_items': [],
-                        'sponsors': [],
-                        'modified': '2017-03-03T07:34:19.322916Z',
-                        'full_description': None,
-                        'subjects': [],
-                        'video': None,
-                        'key': 'edX+DemoX',
-                        'short_description': None,
-                        'marketing_url': None,
-                        'level_type': None,
-                        'course_runs': []
-                    }
-                ]
-            }
-        ),
-        (
-            FAKE_UUIDS[0],
-            1,
-            ENTERPRISE_CUSTOMER_COURSES_ENDPOINT,
-            False,
-            True,
-            fake_catalog_api.FAKE_CATALOG_COURSE_PAGINATED_RESPONSE,
-            {
-                'count': 3,
-                'next': ('http://testserver/enterprise/api/v1/enterprise-customer/'
-                         + FAKE_UUIDS[0] + '/courses/?page=3'),
-                'previous': ('http://testserver/enterprise/api/v1/enterprise-customer/'
-                             + FAKE_UUIDS[0] + '/courses/?page=1'),
-                'results': [
-                    {
-                        'owners': [
-                            {
-                                'description': None,
-                                'tags': [],
-                                'name': '',
-                                'homepage_url': None,
-                                'key': 'edX',
-                                'certificate_logo_image_url': None,
-                                'marketing_url': None,
-                                'logo_image_url': None,
-                                'uuid': FAKE_UUIDS[1]
-                            }
-                        ],
-                        'tpa_hint': None,
-                        'catalog_id': 1,
-                        'enterprise_id': FAKE_UUIDS[0],
-                        'uuid': FAKE_UUIDS[2],
-                        'title': 'edX Demonstration Course',
-                        'prerequisites': [],
-                        'image': None,
-                        'expected_learning_items': [],
-                        'sponsors': [],
-                        'modified': '2017-03-03T07:34:19.322916Z',
-                        'full_description': None,
-                        'subjects': [],
-                        'video': None,
-                        'key': 'edX+DemoX',
-                        'short_description': None,
-                        'marketing_url': None,
-                        'level_type': None,
-                        'course_runs': []
-                    }
-                ]
-            }
-        ),
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.api.v1.views.CourseCatalogApiClient')
-    def test_enterprise_customer_courses(
-            self,
-            enterprise_uuid,
-            catalog,
-            url,
-            is_staff,
-            is_linked_to_enterprise,
-            mocked_catalog_courses,
-            expected,
-            mock_catalog_api_client
-    ):
-        """
-        Make sure the enterprise courses view returns correct data.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory(
-            uuid=enterprise_uuid,
-            catalog=catalog,
-            name='Pied Piper',
-        )
-
-        self.user.is_staff = is_staff
-        self.user.save()
-        if is_linked_to_enterprise:
-            factories.EnterpriseCustomerUserFactory(
-                user_id=self.user.id,
-                enterprise_customer=enterprise_customer,
-            )
-
-            EnterpriseCustomerIdentityProvider(
-                enterprise_customer=enterprise_customer,
-                provider_id='saml-testshib',
-            )
-
-        mock_catalog_api_client.return_value = mock.Mock(
-            get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
-        )
-        response = self.client.get(url)
-        response = self.load_json(response.content)
-
-        assert response == expected
-
-    @ddt.data(
-        (
             factories.EnterpriseCustomerFactory,
             ENTERPRISE_CUSTOMER_LIST_ENDPOINT,
             itemgetter('uuid'),
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': None,
@@ -730,7 +523,7 @@ class TestEnterpriseAPIViews(APITest):
                 'id': 1, 'user_id': 0,
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__name': 'Test Enterprise Customer',
-                'enterprise_customer__slug': TEST_SLUG, 'enterprise_customer__catalog': 1,
+                'enterprise_customer__slug': TEST_SLUG,
                 'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                 'enterprise_customer__site__domain': 'example.com',
@@ -741,7 +534,7 @@ class TestEnterpriseAPIViews(APITest):
                 'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                    'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                    'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False, 'identity_provider': None,
@@ -787,7 +580,7 @@ class TestEnterpriseAPIViews(APITest):
                 'provider_id': FAKE_UUIDS[0],
                 'enterprise_customer__uuid': FAKE_UUIDS[1],
                 'enterprise_customer__name': 'Test Enterprise Customer',
-                'enterprise_customer__slug': TEST_SLUG, 'enterprise_customer__catalog': 1,
+                'enterprise_customer__slug': TEST_SLUG,
                 'enterprise_customer__active': True, 'enterprise_customer__enable_data_sharing_consent': True,
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                 'enterprise_customer__site__domain': 'example.com',
@@ -796,7 +589,7 @@ class TestEnterpriseAPIViews(APITest):
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
@@ -934,7 +727,7 @@ class TestEnterpriseAPIViews(APITest):
         """
         enterprise_customer_data = {
             'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-            'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+            'active': True, 'enable_data_sharing_consent': True,
             'enforce_data_sharing_consent': 'at_enrollment', 'enable_portal_code_management_screen': True,
             'site__domain': 'example.com', 'site__name': 'example.com',
         }
@@ -965,7 +758,7 @@ class TestEnterpriseAPIViews(APITest):
         if has_access_to_enterprise:
             assert response['results'][0] == {
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
-                'catalog': 1, 'active': True, 'enable_data_sharing_consent': True,
+                'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': None,
@@ -1548,204 +1341,6 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         assert response == expected_result
-
-    @ddt.data(
-        (
-            CATALOGS_LIST_ENDPOINT,
-            {},
-            {'detail': "Unable to fetch API response from endpoint '{}'.".format(CATALOGS_LIST_ENDPOINT)},
-        ),
-        (
-            CATALOGS_LIST_ENDPOINT,
-            {
-                'count': 3,
-                'next': 'http://testserver/enterprise/api/v1/catalogs/?page=3',
-                'previous': 'http://testserver/enterprise/api/v1/catalogs/?page=1',
-                'results':
-                    [
-                        {
-                            'id': 2,
-                            'name': 'Enterprise All Biology',
-                            'query': 'title:*Biology*',
-                            'courses_count': 3,
-                            'viewers': []
-                        },
-                    ]
-            },
-            {
-                'count': 3,
-                'next': 'http://testserver/enterprise/api/v1/catalogs/?page=3',
-                'previous': 'http://testserver/enterprise/api/v1/catalogs/?page=1',
-                'results':
-                    [
-                        {
-                            'id': 2,
-                            'name': 'Enterprise All Biology',
-                            'query': 'title:*Biology*',
-                            'courses_count': 3,
-                            'viewers': []
-                        },
-                    ]
-            },
-        )
-    )
-    @ddt.unpack
-    def test_enterprise_catalogs_list(self, url, mocked_catalogs, expected_catalogs):
-        """
-        Make sure enterprise catalog view returns correct data.
-        Arguments:
-            mocked_catalogs (dict): A dict containing catalog information as returned by discovery API.
-            expected_catalogs (dict): A dict elements containing expected catalog information.
-        """
-        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
-            mock_catalog_api_client.return_value = mock.Mock(
-                get_paginated_catalogs=mock.Mock(return_value=mocked_catalogs),
-            )
-            response = self.client.get(url)
-            response = self.load_json(response.content)
-
-            assert response == expected_catalogs
-
-    @ddt.data(
-        (
-            CATALOGS_DETAIL_ENDPOINT,
-            {},
-            {'detail': "Unable to fetch API response for given catalog from endpoint '/catalog/1/'. "
-                       "The resource you are looking for does not exist."},
-        ),
-        (
-            CATALOGS_DETAIL_ENDPOINT,
-            {
-                'id': 1,
-                'name': 'Enterprise Dummy Catalog',
-                'query': '*',
-                'courses_count': 22,
-                'viewers': []
-            },
-            {
-                'id': 1,
-                'name': 'Enterprise Dummy Catalog',
-                'query': '*',
-                'courses_count': 22,
-                'viewers': []
-            },
-        ),
-    )
-    @ddt.unpack
-    def test_enterprise_catalog_details(self, url, mocked_catalog, expected):
-        """
-        Make sure enterprise catalog view returns correct data.
-        Arguments:
-            mocked_catalog (dict): This is used to mock catalog returned by catalog api.
-            expected (list): This is the expected catalog from enterprise api.
-        """
-        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
-            mock_catalog_api_client.return_value = mock.Mock(
-                get_catalog=mock.Mock(return_value=mocked_catalog),
-            )
-            response = self.client.get(url)
-            response = self.load_json(response.content)
-
-            assert response == expected
-
-    @ddt.data(
-        (
-            CATALOGS_COURSES_ENDPOINT,
-            'saml-testshib',
-            FAKE_UUIDS[0],
-            {},
-            {'detail': "Unable to fetch API response for catalog courses from endpoint "
-                       "'/enterprise/api/v1/catalogs/1/courses/'. The resource you are looking for does not exist."},
-        ),
-        (
-            CATALOGS_COURSES_ENDPOINT,
-            'saml-testshib',
-            FAKE_UUIDS[0],
-            fake_catalog_api.FAKE_CATALOG_COURSE_PAGINATED_RESPONSE,
-            {
-                'count': 3,
-                'next': 'http://testserver/enterprise/api/v1/catalogs/1/courses/?page=3',
-                'previous': 'http://testserver/enterprise/api/v1/catalogs/1/courses/?page=1',
-                'results': [
-                    {
-                        'owners': [
-                            {
-                                'description': None,
-                                'tags': [],
-                                'name': '',
-                                'homepage_url': None,
-                                'key': 'edX',
-                                'certificate_logo_image_url': None,
-                                'marketing_url': None,
-                                'logo_image_url': None,
-                                'uuid': FAKE_UUIDS[1]
-                            }
-                        ],
-                        'tpa_hint': 'saml-testshib',
-                        'catalog_id': '1',
-                        'enterprise_id': FAKE_UUIDS[0],
-                        'uuid': FAKE_UUIDS[2],
-                        'title': 'edX Demonstration Course',
-                        'prerequisites': [],
-                        'image': None,
-                        'expected_learning_items': [],
-                        'sponsors': [],
-                        'modified': '2017-03-03T07:34:19.322916Z',
-                        'full_description': None,
-                        'subjects': [],
-                        'video': None,
-                        'key': 'edX+DemoX',
-                        'short_description': None,
-                        'marketing_url': None,
-                        'level_type': None,
-                        'course_runs': []
-                    }
-                ]
-            },
-        ),
-    )
-    @ddt.unpack
-    def test_enterprise_catalog_courses(self, url, provider_id, enterprise_customer, mocked_catalog_courses, expected):
-        """
-        Make sure enterprise catalog view returns correct data.
-        Arguments:
-            mocked_catalog_courses: This is used to mock catalog courses returned by catalog api.
-            expected: This is the expected catalog courses from enterprise api.
-        """
-        # Populate database
-        ecu = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer__uuid=enterprise_customer,
-        )
-
-        factories.EnterpriseCustomerIdentityProviderFactory(
-            enterprise_customer=ecu.enterprise_customer,
-            provider_id=provider_id,
-        )
-
-        with mock.patch('enterprise.api.v1.views.CourseCatalogApiClient') as mock_catalog_api_client:
-            mock_catalog_api_client.return_value = mock.Mock(
-                get_paginated_catalog_courses=mock.Mock(return_value=mocked_catalog_courses),
-            )
-            response = self.client.get(url)
-            response = self.load_json(response.content)
-
-            assert response == expected
-
-    def test_enterprise_catalog_courses_unauthorized(self):
-        """
-        Make sure enterprise catalog view returns correct data.
-        Arguments:
-            mocked_catalog_courses: This is used to mock catalog courses returned by catalog api.
-            expected: This is the expected catalog courses from enterprise api.
-        """
-        response = self.client.get(CATALOGS_COURSES_ENDPOINT)
-        response_content = self.load_json(response.content)
-
-        assert response.status_code == 403
-        assert response_content['detail'] == 'User {username} is not associated with an EnterpriseCustomer.'.format(
-            username=self.user.username
-        )
 
     @ddt.data(
         (False, {'course_run_ids': ['fake1', 'fake2']}, {}),

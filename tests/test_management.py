@@ -63,6 +63,14 @@ PAST_TIMESTAMP = NOW_TIMESTAMP - 24 * 60 * 60 * 1000
 PAST_TIMESTAMP_FORMATTED = PAST.strftime('%F')
 FUTURE = NOW + DAY_DELTA
 
+# Silence noisy logs
+LOG_OVERRIDES = [
+    ('stevedore.extension', logging.ERROR),
+]
+
+for log_name, log_level in LOG_OVERRIDES:
+    logging.getLogger(log_name).setLevel(log_level)
+
 
 @ddt.ddt
 class TestIntegratedChannelCommandMixin(unittest.TestCase):
@@ -89,7 +97,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     def setUp(self):
         self.user = factories.UserFactory(username='C-3PO')
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
-            catalog=1,
             name='Veridian Dynamics',
         )
         self.degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
@@ -160,17 +167,28 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         degreed_create_content_metadata_mock.return_value = 200, '{}'
 
+        content_filter = {
+            'key': ['course-v1:edX+DemoX+Demo_Course_1']
+        }
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+            content_filter=content_filter
+        )
+
         # Mock first integrated channel with failure
-        enterprise_uuid_for_failure = str(self.enterprise_customer.uuid)
-        self.mock_ent_courses_api_with_error(enterprise_uuid=enterprise_uuid_for_failure)
+        enterprise_uuid_for_failure = enterprise_catalog.uuid
+        self.mock_enterprise_catalogs_with_error(enterprise_uuid=enterprise_uuid_for_failure)
 
         # Now create a new integrated channel with a new enterprise and mock
         # enterprise courses API to send failure response
-        course_run_id_for_success = 'course-v1:edX+DemoX+Demo_Course_1'
         dummy_enterprise_customer = factories.EnterpriseCustomerFactory(
-            catalog=1,
             name='Dummy Enterprise',
         )
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=dummy_enterprise_customer,
+            content_filter=content_filter
+        )
+        self.mock_enterprise_customer_catalogs(str(enterprise_catalog.uuid))
         dummy_degreed = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=dummy_enterprise_customer,
             key='key',
@@ -185,12 +203,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             key='key',
             secret='secret',
             active=True,
-        )
-
-        enterprise_uuid_for_success = str(dummy_enterprise_customer.uuid)
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=enterprise_uuid_for_success,
-            course_run_ids=[course_run_id_for_success]
         )
 
         # Verify that first integrated channel logs failure but the second
@@ -209,7 +221,11 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit creation of [1] content metadata items with plugin configuration '
+            'Exporting content metadata item with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Exporting content metadata item with plugin configuration '
+            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
@@ -232,7 +248,11 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit creation of [1] content metadata items with plugin configuration '
+            'Exporting content metadata item with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Exporting content metadata item with plugin configuration '
+            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
@@ -267,13 +287,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
         degreed_create_content_metadata_mock.return_value = 200, '{}'
 
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=course_run_ids[:1]
-        )
-
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
@@ -289,9 +302,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit creation of [4] content metadata items with plugin configuration '
+            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
@@ -311,9 +322,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit creation of [4] content metadata items with plugin configuration '
+            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Preparing to transmit update of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
@@ -336,7 +345,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         """
         user = factories.UserFactory(username='john_doe')
         factories.EnterpriseCustomerFactory(
-            catalog=1,
             name='Veridian Dynamics',
         )
 
@@ -358,13 +366,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         integrated_channel_enterprise = self.enterprise_customer
         integrated_channel_enterprise.active = False
         integrated_channel_enterprise.save()
-
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=course_run_ids[:1]
-        )
 
         with LogCapture(level=logging.INFO) as log_capture:
             call_command('transmit_content_metadata', '--catalog_user', self.user.username)
@@ -804,7 +805,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     def setUp(self):
         self.user = factories.UserFactory(username='C-3PO')
         self.enterprise_customer = factories.EnterpriseCustomerFactory(
-            catalog=1,
             name='Veridian Dynamics',
         )
         factories.EnterpriseCustomerIdentityProviderFactory(
@@ -915,11 +915,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-        uuid = str(self.enterprise_customer.uuid)
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=[self.course_run_id]
-        )
+
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
@@ -988,12 +984,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=[course_run_id]
-        )
 
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
@@ -1024,12 +1014,6 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow() + DAY_DELTA
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=[course_run_id]
-        )
 
         # Delete the identity providers
         EnterpriseCustomerIdentityProvider.objects.all().delete()
@@ -1076,12 +1060,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         """
         sapsf_get_oauth_access_token_mock.return_value = "token", datetime.utcnow()
         sapsf_update_content_metadata_mock.return_value = 200, '{}'
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=[course_run_id]
-        )
+
         factories.EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
@@ -1136,7 +1115,6 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
 
         learner_user = factories.UserFactory(email='enterprise_learner@example.com')
         enterprise_customer = factories.EnterpriseCustomerFactory(
-            catalog=1,
             name='Team Titans',
         )
         factories.EnterpriseCustomerUserFactory(

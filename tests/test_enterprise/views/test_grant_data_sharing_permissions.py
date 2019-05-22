@@ -21,6 +21,7 @@ from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
     DataSharingConsentTextOverridesFactory,
+    EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     UserFactory,
@@ -108,6 +109,11 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     ):  # pylint: disable=unused-argument,invalid-name
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         course_catalog_api_client_model_mock.return_value.course_in_catalog.return_value = True
+        content_filter = {
+            'key': [
+                course_id,
+            ]
+        }
         course_run_details = {
             'start': course_start_date,
             'title': 'Demo Course'
@@ -124,6 +130,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer, content_filter=content_filter)
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -218,6 +225,12 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        content_filter = {
+            'key': [
+                course_id,
+            ]
+        }
+        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer, content_filter=content_filter)
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer

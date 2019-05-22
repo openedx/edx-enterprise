@@ -23,7 +23,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
+from enterprise.admin.actions import export_as_csv_action
 from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
@@ -164,7 +164,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         'has_logo',
         'enable_dsc',
         'has_identity_provider',
-        'has_enterprise_catalog',
         'has_ecommerce_coupons',
         'uuid',
     )
@@ -179,11 +178,10 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         EnterpriseCustomerCatalogInline,
     ]
 
-    EXPORT_AS_CSV_FIELDS = ['name', 'active', 'site', 'uuid', 'identity_provider', 'catalog']
+    EXPORT_AS_CSV_FIELDS = ['name', 'active', 'site', 'uuid', 'identity_provider']
 
     actions = [
         export_as_csv_action('CSV Export', fields=EXPORT_AS_CSV_FIELDS),
-        get_clear_catalog_id_action()
     ]
 
     change_actions = ('manage_learners', 'transmit_courses_metadata')
@@ -253,18 +251,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     has_identity_provider.boolean = True
     has_identity_provider.short_description = u'Identity provider'
-
-    def has_enterprise_catalog(self, instance):
-        """
-        Return True if EnterpriseCustomer has catalog id with a link to catalog details page.
-
-        Arguments:
-            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
-        """
-        return instance.catalog is not None
-
-    has_enterprise_catalog.boolean = True
-    has_enterprise_catalog.short_description = u'Enterprise catalog'
 
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """

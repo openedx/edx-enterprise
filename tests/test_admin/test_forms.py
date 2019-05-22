@@ -4,7 +4,6 @@ Tests for the `edx-enterprise` admin forms module.
 """
 from __future__ import absolute_import, unicode_literals
 
-import random
 import unittest
 
 import ddt
@@ -13,12 +12,9 @@ from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 from faker import Factory as FakerFactory
 from pytest import mark
 
-from django import forms
 from django.core.files import File
-from django.db.models.fields import BLANK_CHOICE_DASH
 
 from enterprise.admin.forms import (
-    EnterpriseCustomerAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
     ManageLearnersForm,
@@ -82,9 +78,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             mock_file.read.return_value = "fake file contents"
             file_data = {ManageLearnersForm.Fields.BULK_UPLOAD: mock_file}
 
-        customer = EnterpriseCustomerFactory(
-            catalog=99,
-        )
+        customer = EnterpriseCustomerFactory()
         return ManageLearnersForm(form_data, file_data, enterprise_customer=customer)
 
     @ddt.data(
@@ -386,235 +380,6 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         assert form.errors == {
             "__all__": [ValidationMessages.COURSE_AND_PROGRAM_ERROR]
         }
-
-
-@mark.django_db
-class TestEnterpriseCustomerAdminForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
-    """
-    Tests for EnterpriseCustomerAdminForm.
-    """
-
-    def setUp(self):
-        """
-        Test set up.
-        """
-        super(TestEnterpriseCustomerAdminForm, self).setUp()
-        self.catalog_id = random.randint(2, 1000000)
-        self.patch_enterprise_customer_user()
-        self.addCleanup(self.unpatch_enterprise_customer_user)
-
-    @staticmethod
-    def _make_bound_form(identity_provider):
-        """
-        Builds bound EnterpriseCustomerAdminForm.
-        """
-        form_data = {
-            "name": "New EnterpriseCustomer",
-            "identity_provider": identity_provider,
-            "catalog": 1,
-            "site": 1,
-            "enforce_data_sharing_consent": "optional",
-        }
-        return EnterpriseCustomerAdminForm(form_data)
-
-    @staticmethod
-    def patch_enterprise_customer_user():
-        """
-        Set the class-level form user to None.
-        """
-        EnterpriseCustomerAdminForm.user = None
-
-    @staticmethod
-    def unpatch_enterprise_customer_user():
-        """
-        Set the form to its original state.
-        """
-        delattr(EnterpriseCustomerAdminForm, 'user')  # pylint: disable=literal-used-as-attribute
-
-    def test_interface_displays_selected_option(self):
-        self.catalog_api.get_all_catalogs.return_value = [
-            {
-                "id": self.catalog_id,
-                "name": "My Catalog"
-            },
-            {
-                "id": 1,
-                "name": "Other catalog!"
-            }
-        ]
-
-        customer = EnterpriseCustomerFactory(
-            catalog=99,
-        )
-        form = EnterpriseCustomerAdminForm(
-            {
-                'catalog': '',
-                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
-                'site': customer.site.id,
-                'name': customer.name,
-                'active': customer.active
-            },
-            instance=customer,
-        )
-        assert isinstance(form.fields['catalog'], forms.ChoiceField)
-        assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
-            (self.catalog_id, 'My Catalog'),
-            (1, 'Other catalog!'),
-        ]
-
-    def test_new_enterprise_customer(self):
-        """
-        Test that a new blank form can be created and is not valid.
-        """
-        self.catalog_api.get_all_catalogs.return_value = [
-            {
-                "id": self.catalog_id,
-                "name": "My Catalog"
-            },
-            {
-                "id": 1,
-                "name": "Other catalog!"
-            }
-        ]
-
-        form = EnterpriseCustomerAdminForm()
-        assert isinstance(form.fields['catalog'], forms.ChoiceField)
-        assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
-            (self.catalog_id, 'My Catalog'),
-            (1, 'Other catalog!'),
-        ]
-        assert not form.is_valid()
-
-    def test_with_mocked_get_edx_data(self):
-        self.catalog_api.get_all_catalogs.return_value = [
-            {
-                "id": self.catalog_id,
-                "name": "My Catalog"
-            },
-            {
-                "id": 1,
-                "name": "Other catalog!"
-            }
-        ]
-
-        customer = EnterpriseCustomerFactory(
-            catalog=99,
-        )
-        form = EnterpriseCustomerAdminForm(
-            {
-                'catalog': '',
-                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
-                'site': customer.site.id,
-                'name': customer.name,
-                'active': customer.active
-            },
-            instance=customer,
-        )
-        assert isinstance(form.fields['catalog'], forms.ChoiceField)
-        assert form.fields['catalog'].choices == BLANK_CHOICE_DASH + [
-            (self.catalog_id, 'My Catalog'),
-            (1, 'Other catalog!'),
-        ]
-
-    def test_empty_catalog_value(self):
-        """
-        Test that when we pass an empty string to the form, it gets saved to the database
-        as a null value, rather than being ignored or raising an error.
-        """
-        self.catalog_api.get_all_catalogs.return_value = [
-            {
-                "id": 99,
-                "name": "My Catalog"
-            },
-            {
-                "id": 1,
-                "name": "Other catalog!"
-            }
-        ]
-        customer = EnterpriseCustomerFactory(
-            catalog=99,
-        )
-        form = EnterpriseCustomerAdminForm(
-            {
-                'catalog': '',
-                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
-                'site': customer.site.id,
-                'name': customer.name,
-                'active': customer.active,
-                'slug': customer.slug,
-                'country': customer.country,
-                'customer_type': customer.customer_type_id,
-            },
-            instance=customer,
-        )
-        assert form.is_valid()
-        form.save()
-        assert customer.catalog is None
-
-    def test_real_catalog_value(self):
-        """
-        Test that when we pass an empty string to the form, it gets saved to the database
-        as a null value, rather than being ignored or raising an error.
-        """
-        self.catalog_api.get_all_catalogs.return_value = [
-            {
-                "id": 99,
-                "name": "My Catalog"
-            },
-            {
-                "id": 1,
-                "name": "Other catalog!"
-            }
-        ]
-        customer = EnterpriseCustomerFactory(
-            catalog=99,
-        )
-        form = EnterpriseCustomerAdminForm(
-            {
-                'catalog': 1,
-                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
-                'site': customer.site.id,
-                'name': customer.name,
-                'active': customer.active,
-                'slug': customer.slug,
-                'country': customer.country,
-                'customer_type': customer.customer_type_id,
-            },
-            instance=customer,
-        )
-        assert form.is_valid()
-        form.save()
-        assert customer.catalog == 1
-
-    def test_invalid_catalog_value(self):
-        """
-        Test that when we pass an empty string to the form, it gets saved to the database
-        as a null value, rather than being ignored or raising an error.
-        """
-        self.catalog_api.get_all_catalogs.return_value = [
-            {
-                "id": 99,
-                "name": "My Catalog"
-            },
-            {
-                "id": 1,
-                "name": "Other catalog!"
-            }
-        ]
-        customer = EnterpriseCustomerFactory(
-            catalog=99,
-        )
-        form = EnterpriseCustomerAdminForm(
-            {
-                'catalog': 5,
-                'enforce_data_sharing_consent': customer.enforce_data_sharing_consent,
-                'site': customer.site.id,
-                'name': customer.name,
-                'active': customer.active
-            },
-            instance=customer,
-        )
-        assert not form.is_valid()
 
 
 @mark.django_db

@@ -255,7 +255,6 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
         self.enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
         self.learner_user = UserFactory(id=2, email='user@example.com')
         self.enterprise_customer = EnterpriseCustomerFactory(
-            catalog=1,
             name='Team Titans',
         )
         super(TestEnterpriseLearnerRoleSignals, self).setUp()

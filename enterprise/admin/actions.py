@@ -10,7 +10,6 @@ import unicodecsv
 from six import string_types
 
 from django.http import HttpResponse
-from django.utils.translation import ugettext_lazy as _
 
 
 def export_as_csv_action(description="Export selected objects as CSV file", fields=None, header=True):
@@ -61,18 +60,3 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 
     export_as_csv.short_description = description
     return export_as_csv
-
-
-def get_clear_catalog_id_action(description=None):
-    """
-    Return the action method to clear the catalog ID for a EnterpriseCustomer.
-    """
-    description = description or _("Unlink selected objects from existing course catalogs")
-
-    def clear_catalog_id(modeladmin, request, queryset):  # pylint: disable=unused-argument
-        """
-        Clear the catalog ID for a selected EnterpriseCustomer.
-        """
-        queryset.update(catalog=None)
-    clear_catalog_id.short_description = description
-    return clear_catalog_id

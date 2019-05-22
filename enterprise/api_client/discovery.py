@@ -8,8 +8,6 @@ from logging import getLogger
 
 from edx_rest_api_client.client import EdxRestApiClient
 from edx_rest_api_client.exceptions import SlumberBaseException
-from opaque_keys import InvalidKeyError
-from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.conf import settings
@@ -62,7 +60,6 @@ class CourseCatalogApiClient(object):
     """
 
     SEARCH_ALL_ENDPOINT = 'search/all/'
-    CATALOGS_ENDPOINT = 'catalogs'
     CATALOGS_COURSES_ENDPOINT = 'catalogs/{}/courses/'
     COURSES_ENDPOINT = 'courses'
     COURSE_RUNS_ENDPOINT = 'course_runs'
@@ -157,81 +154,6 @@ class CourseCatalogApiClient(object):
             raise ex
 
         return response
-
-    def get_all_catalogs(self):
-        """
-        Return a list of all course catalogs, including name and ID.
-
-        Returns:
-            list: List of catalogs available for the user.
-
-        """
-        return self._load_data(
-            self.CATALOGS_ENDPOINT,
-            default=[]
-        )
-
-    def get_catalog(self, catalog_id):
-        """
-        Return specified course catalog.
-
-        Returns:
-            dict: catalog details if it is available for the user.
-
-        """
-        return self._load_data(
-            self.CATALOGS_ENDPOINT,
-            default=[],
-            resource_id=catalog_id
-        )
-
-    def get_paginated_catalog_courses(self, catalog_id, querystring=None):
-        """
-        Return paginated response for all catalog courses.
-
-        Returns:
-            dict: API response with links to next and previous pages.
-
-        """
-        return self._load_data(
-            self.CATALOGS_COURSES_ENDPOINT.format(catalog_id),
-            default=[],
-            querystring=querystring,
-            traverse_pagination=False,
-            many=False,
-        )
-
-    def get_paginated_catalogs(self, querystring=None):
-        """
-        Return a paginated list of course catalogs, including name and ID.
-
-        Returns:
-            dict: Paginated response containing catalogs available for the user.
-
-        """
-        return self._load_data(
-            self.CATALOGS_ENDPOINT,
-            default=[],
-            querystring=querystring,
-            traverse_pagination=False,
-            many=False
-        )
-
-    def get_catalog_courses(self, catalog_id):
-        """
-        Return the courses included in a single course catalog by ID.
-
-        Args:
-            catalog_id (int): The catalog ID we want to retrieve.
-
-        Returns:
-            list: Courses of the catalog in question
-
-        """
-        return self._load_data(
-            self.CATALOGS_COURSES_ENDPOINT.format(catalog_id),
-            default=[]
-        )
 
     def get_course_and_course_run(self, course_run_id):
         """
@@ -414,32 +336,6 @@ class CourseCatalogApiClient(object):
                 return available_course_modes
 
         return available_course_modes
-
-    def is_course_in_catalog(self, catalog_id, course_id):
-        """
-        Determine if the given course or course run ID is contained in the catalog with the given ID.
-
-        Args:
-            catalog_id (int): The ID of the catalog
-            course_id (str): The ID of the course or course run
-
-        Returns:
-            bool: Whether the course or course run is contained in the given catalog
-        """
-        try:
-            # Determine if we have a course run ID, rather than a plain course ID
-            course_run_id = str(CourseKey.from_string(course_id))
-        except InvalidKeyError:
-            course_run_id = None
-
-        endpoint = self.client.catalogs(catalog_id).contains
-
-        if course_run_id:
-            resp = endpoint.get(course_run_id=course_run_id)
-        else:
-            resp = endpoint.get(course_id=course_id)
-
-        return resp.get('courses', {}).get(course_id, False)
 
     def _load_data(self, resource, default=DEFAULT_VALUE_SAFEGUARD, **kwargs):
         """

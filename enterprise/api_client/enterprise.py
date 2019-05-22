@@ -42,19 +42,6 @@ class EnterpriseApiClient(JwtLmsApiClient):
         """
         content_metadata = OrderedDict()
 
-        # TODO: This if block can be removed when we get rid of discovery service-based catalogs.
-        if enterprise_customer.catalog:
-            response = self._load_data(
-                self.ENTERPRISE_CUSTOMER_ENDPOINT,
-                detail_resource='courses',
-                resource_id=str(enterprise_customer.uuid),
-                traverse_pagination=True,
-            )
-            for course in response['results']:
-                for course_run in course['course_runs']:
-                    course_run['content_type'] = 'courserun'  # Make this look like a search endpoint result.
-                    content_metadata[course_run['key']] = course_run
-
         for enterprise_customer_catalog in enterprise_customer.enterprise_customer_catalogs.all():
             response = self._load_data(
                 self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
