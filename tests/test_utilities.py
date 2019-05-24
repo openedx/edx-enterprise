@@ -9,6 +9,7 @@ import unittest
 
 import ddt
 import mock
+import pytz
 from faker import Factory as FakerFactory
 from pytest import mark, raises
 
@@ -32,6 +33,8 @@ from test_utils.factories import (
     SiteFactory,
     UserFactory,
 )
+
+DATETIME_NOW = datetime.datetime.utcnow()
 
 
 def mock_get_available_idps(idps):
@@ -1046,6 +1049,7 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         ("2014-10-13T13:11:03Z", utils.parse_datetime("2014-10-13T13:11:03Z")),
+        (datetime.datetime(2020, 5, 17), datetime.datetime(2020, 5, 17).replace(tzinfo=pytz.UTC)),
         (None, None)
     )
     @ddt.unpack
@@ -1151,6 +1155,29 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         (
+            fake_catalog_api.create_course_run_dict(
+                end=DATETIME_NOW + datetime.timedelta(days=20),
+                weeks_to_complete=5
+            ),
+            True,
+        ),
+        (
+            fake_catalog_api.create_course_run_dict(
+                end=DATETIME_NOW + datetime.timedelta(days=20),
+                weeks_to_complete=2
+            ),
+            False,
+        ),
+    )
+    @ddt.unpack
+    def test_is_course_run_about_to_end(self, course_run, expected_boolean):
+        """
+        ``is_course_run_about_to_end`` returns the boolean is course_run about to end.
+        """
+        assert utils.is_course_run_about_to_end(course_run) == expected_boolean
+
+    @ddt.data(
+        (
             # Test with two enrollable/upgradeable course runs.
             {
                 "course_runs": [
@@ -1220,6 +1247,38 @@ class TestEnterpriseUtils(unittest.TestCase):
                 start="2014-10-15T13:11:03Z",
                 upgrade_deadline="2014-10-14T13:11:03Z",
             ),
+        ),
+        (
+            # Test with current availability.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(
+                        end=DATETIME_NOW + datetime.timedelta(days=20),
+                        availability='Current'
+                    ),
+                    fake_catalog_api.create_course_run_dict(end="2099-01-14T13:11:03Z")
+                ],
+            },
+            [],
+            fake_catalog_api.create_course_run_dict(
+                end=DATETIME_NOW + datetime.timedelta(days=20),
+                availability='Current'
+            ),
+        ),
+        (
+            # Test with current availability.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(
+                        end=DATETIME_NOW + datetime.timedelta(days=20),
+                        weeks_to_complete=4,
+                        availability='Current',
+                    ),
+                    fake_catalog_api.create_course_run_dict(end="2021-10-14T13:11:03Z")
+                ],
+            },
+            [],
+            fake_catalog_api.create_course_run_dict(end="2021-10-14T13:11:03Z"),
         ),
         (   # It will return the active run
             {
