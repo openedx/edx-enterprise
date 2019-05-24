@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.8] - 2019-05-24
+--------------------
+
+* Bumping version to 1.5.8. 1.5.7 was tagged and released without actually bumping the version
+
 [1.5.7] - 2019-05-24
 --------------------
 
