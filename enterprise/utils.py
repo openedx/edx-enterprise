@@ -12,11 +12,9 @@ from uuid import UUID
 
 import bleach
 import pytz
-from opaque_keys import InvalidKeyError
-from opaque_keys.edx.keys import CourseKey
 from six import iteritems  # pylint: disable=ungrouped-imports
-# pylint: disable=import-error
-from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, urlsplit, urlunsplit
+# pylint: disable=import-error,wrong-import-order,ungrouped-imports
+from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
 from django.apps import apps
 from django.conf import settings
@@ -823,19 +821,6 @@ def strip_html_tags(text, allowed_tags=None):
     if allowed_tags is None:
         allowed_tags = ALLOWED_TAGS
     return bleach.clean(text, tags=allowed_tags, attributes=['id', 'class', 'style', 'href', 'title'], strip=True)
-
-
-def parse_course_key(course_identifier):
-    """
-    Return the serialized course key given either a course run ID or course key.
-    """
-    try:
-        course_run_key = CourseKey.from_string(course_identifier)
-    except InvalidKeyError:
-        # Assume we already have a course key.
-        return course_identifier
-
-    return quote_plus(' '.join([course_run_key.org, course_run_key.course]))
 
 
 def get_content_metadata_item_id(content_metadata_item):

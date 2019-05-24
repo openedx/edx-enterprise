@@ -32,9 +32,9 @@ from django.views.generic import View
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from enterprise import constants, messages
-from enterprise.api_client.discovery import CourseCatalogApiServiceClient
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
 from enterprise.utils import (
@@ -184,9 +184,13 @@ class GrantDataSharingPermissions(View):
         """
         Return whether the input course or program exist.
         """
-        course_exists = course_id and CourseApiClient().get_course_details(course_id)
-        program_exists = program_uuid and CourseCatalogApiServiceClient().program_exists(program_uuid)
-        return course_exists or program_exists
+        try:
+            catalog_client = get_course_catalog_api_service_client()
+            course_exists = course_id and catalog_client.get_course_details(course_id)
+            program_exists = program_uuid and catalog_client.program_exists(program_uuid)
+            return course_exists or program_exists
+        except ImproperlyConfigured:
+            return False
 
     def get_default_context(self, enterprise_customer, platform_name):
         """
@@ -355,7 +359,7 @@ class GrantDataSharingPermissions(View):
             context_data.update({'course_id': course_id, 'course_specific': True})
             if not self.preview_mode:
                 try:
-                    catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+                    catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
                 except ImproperlyConfigured:
                     raise Http404
 
@@ -583,7 +587,6 @@ class GrantDataSharingPermissions(View):
                 )
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
-
         if not self.course_or_program_exist(course_id, program_uuid):
             error_code = 'ENTGDS006'
             log_message = (
@@ -840,7 +843,7 @@ class CourseEnrollmentView(NonAtomicView):
             course, course_run = enterprise_catalog.get_course_and_course_run(course_run_id)
         else:
             try:
-                course, course_run = CourseCatalogApiServiceClient(
+                course, course_run = get_course_catalog_api_service_client(
                     enterprise_customer.site
                 ).get_course_and_course_run(course_run_id)
             except ImproperlyConfigured:
@@ -1270,7 +1273,7 @@ class ProgramEnrollmentView(NonAtomicView):
         """
         course_run_id = course['course_runs'][0]['key']
         try:
-            catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+            catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
         except ImproperlyConfigured:
             error_code = 'ENTPEV000'
             LOGGER.error(
@@ -1340,7 +1343,7 @@ class ProgramEnrollmentView(NonAtomicView):
         * Determine whether the learner is certificate eligible for the program.
         """
         try:
-            course_catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+            course_catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
         except ImproperlyConfigured:
             error_code = 'ENTPEV002'
             LOGGER.error(
@@ -1682,7 +1685,7 @@ class RouterView(NonAtomicView):
         :return: course_run_id
         """
         try:
-            course = CourseCatalogApiServiceClient(enterprise_customer.site).get_course_details(course_key)
+            course = get_course_catalog_api_service_client(enterprise_customer.site).get_course_details(course_key)
         except ImproperlyConfigured:
             raise Http404
 
