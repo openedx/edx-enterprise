@@ -1289,7 +1289,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
                 results.append(content)
 
         response = {
-            'count': len(results),
+            'count': search_results['count'],
             'next': search_results['next'],
             'previous': search_results['previous'],
             'results': results,

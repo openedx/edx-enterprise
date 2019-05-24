@@ -1107,7 +1107,7 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_3['is_program_eligible_for_one_click_purchase'] =
 FAKE_SEARCH_ALL_PROGRAM_RESULT_3['uuid'] = FAKE_UUIDS[1]
 
 FAKE_SEARCH_ALL_RESULTS_WITH_PAGINATION_1 = {
-    "count": 4,
+    "count": 5,
     "next": "https://fake.server/api/v1/?page=1",
     "previous": "https://fake.server/api/v1/?page=4",
     "results": [

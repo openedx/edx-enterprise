@@ -230,7 +230,8 @@ class EnterpriseMockMixin(object):
 def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], title=u'All Content',
                                          enterprise_customer_uuid=FAKE_UUIDS[0], previous_url=None, next_url=None,
                                          paginated_content=fake_catalog_api.FAKE_SEARCH_ALL_RESULTS,
-                                         include_enterprise_context=False, add_utm_info=True):
+                                         include_enterprise_context=False, add_utm_info=True,
+                                         count=None):
     """
     Return fake EnterpriseCustomerCatalog detail API result.
     """
@@ -238,7 +239,7 @@ def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], 
         paginated_content = update_search_with_enterprise_context(paginated_content, add_utm_info)
 
     return {
-        'count': paginated_content['count'],
+        'count': count,
         'previous': previous_url,
         'next': next_url,
         'uuid': enterprise_catalog_uuid,
