@@ -38,7 +38,6 @@ matrix:
       env: TOXENV=pii-annotations
 
 cache:
-  - pip
   - directories:
     - node_modules
 

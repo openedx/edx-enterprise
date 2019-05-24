@@ -1058,6 +1058,35 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_catalog.save()
         assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
 
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_get_paginated_content_uses_total_count_from_response(self, mock_catalog_api_class):
+        """
+        Test EnterpriseCustomerCatalog.get_paginated_content should use the count value
+        provided by the discovery service API response, and not just count the length
+        of the results of the current page
+        """
+        mock_catalog_api = mock_catalog_api_class.return_value
+        mock_catalog_api.is_course_in_catalog.return_value = False
+        mock_catalog_api.get_catalog_results.return_value = {
+            'results': [fake_catalog_api.FAKE_COURSE_RUN],
+            'next': 'some_next_url',
+            'count': 129381,
+            'previous': None,
+        }
+
+        faker = FakerFactory.create()
+        uuid = faker.uuid4()  # pylint: disable=no-member
+        title = faker.text(max_nb_chars=255)  # pylint: disable=no-member
+        enterprise_catalog = EnterpriseCustomerCatalog(
+            uuid=uuid,
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            title=title
+        )
+        enterprise_catalog.save()
+
+        response = enterprise_catalog.get_paginated_content(QueryDict())
+        assert response['count'] == 129381  # Previously this would have been 1
+
 
 @mark.django_db
 @ddt.ddt

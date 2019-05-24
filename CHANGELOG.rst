@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.7] - 2019-05-24
+--------------------
+
+* Updating get_paginated_content ent catalog method to use count value given from discovery service
+
 [1.5.6] - 2019-05-24
 --------------------
 
