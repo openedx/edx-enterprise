@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.5.6] - 2019-05-24
+--------------------
+
+* Fix the way a course identifier is found for a given course run.
+
 [1.5.5] - 2019-05-21
 --------------------
 
