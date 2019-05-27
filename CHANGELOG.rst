@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.1] - 2019-05-30
+--------------------
+
+* Fallback to request.auth if JWT cookies are not found.
+
 [1.6.0] - 2019-05-29
 --------------------
 
