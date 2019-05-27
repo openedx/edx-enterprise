@@ -1097,7 +1097,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
     def test_enterprise_customer_catalogs_detail(
             self,
@@ -1141,7 +1141,7 @@ class TestEnterpriseAPIViews(APITest):
 
         self.assertDictEqual(response, expected_result)
 
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
     def test_enterprise_customer_catalogs_detail_pagination(self, mock_catalog_api_client):
         """
@@ -1180,7 +1180,7 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response == expected_result
 
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     @mock.patch("enterprise.utils.update_query_parameters", mock.MagicMock(side_effect=side_effect))
     def test_enterprise_customer_catalogs_detail_pagination_filtering(self, mock_catalog_api_client):
         """
@@ -1252,7 +1252,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_contains_content_items_with_search(self, contains_content_items, query_params,
                                                                    search_results, mock_catalog_api_client):
         """
@@ -1298,7 +1298,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_contains_content_items_without_search(self, contains_content_items, query_params,
                                                                       mock_catalog_api_client):
         """
@@ -1380,7 +1380,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_course_run_detail(self, is_staff, is_linked_to_enterprise, is_course_run_in_catalog,
                                                   mocked_course_run, expected_result, mock_catalog_api_client):
         """
@@ -1444,7 +1444,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_course_detail(self, is_staff, is_linked_to_enterprise, is_course_in_catalog,
                                               mocked_course, expected_result, mock_catalog_api_client):
         """
@@ -1510,7 +1510,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_catalog_program_detail(self, is_staff, is_linked_to_enterprise, has_existing_catalog,
                                                is_program_in_catalog, mocked_program, expected_result,
                                                mock_catalog_api_client):
@@ -1782,7 +1782,7 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_enterprise_customer_contains_content_items(self, contains_content_items, query_params, search_results,
                                                         mock_catalog_api_client):
         """
