@@ -19,8 +19,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from consent.models import DataSharingConsent
-from enterprise.api_client.discovery import get_course_catalog_api_service_client
-from enterprise.api_client.lms import CertificatesApiClient, GradesApiClient
+from enterprise.api_client.lms import CertificatesApiClient, CourseApiClient, GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
 from integrated_channels.utils import parse_datetime_to_epoch_millis
@@ -107,7 +106,7 @@ class LearnerExporter(Exporter):
             # pylint: disable=unsubscriptable-object
             if course_details is None or course_details['course_id'] != course_id:
                 if self.course_api is None:
-                    self.course_api = get_course_catalog_api_service_client(site=self.enterprise_customer.site)
+                    self.course_api = CourseApiClient()
                 course_details = self.course_api.get_course_details(course_id)
 
             if course_details is None:

@@ -162,7 +162,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         ('course_also_exists', True)
     )
     @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_catalog_contains_course(self, course_id, expected_result, mock_catalog_api_class):
         """
         Test catalog_contains_course method on the EnterpriseCustomer.
@@ -185,7 +185,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         catalogless_customer = factories.EnterpriseCustomerFactory(catalog=None)
         assert catalogless_customer.catalog_contains_course(course_id) is False
 
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_catalog_contains_course_with_enterprise_customer_catalog(self, mock_catalog_api_class):
         """
         Test EnterpriseCustomer.catalog_contains_course with a related EnterpriseCustomerCatalog.

@@ -165,7 +165,7 @@ class TestRouterView(TestCase):
     @ddt.data(
         True, False
     )
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
     def test_get_redirects_with_course_key(
@@ -193,7 +193,7 @@ class TestRouterView(TestCase):
         router_view_mock.redirect.assert_called_once()
 
     @mock.patch('enterprise.views.get_global_context')
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     def test_get_raises_404_with_bad_catalog_client(self, catalog_api_mock, mock_global_context):
         """
         ``get`` responds with a 404 when the catalog client is not properly configured.
@@ -211,7 +211,7 @@ class TestRouterView(TestCase):
 
     @mock.patch('enterprise.views.get_global_context')
     @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
     def test_get_raises_404_with_bad_course_key(self, catalog_api_mock, enrollment_api_mock, mock_global_context):
         """
         ``get`` responds with a 404 when a course run cannot be found given the provided course key.

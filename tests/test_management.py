@@ -51,7 +51,7 @@ from integrated_channels.integrated_channel.management.commands import (
 )
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import factories
-from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin, setup_course_catalog_api_client_mock
+from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
@@ -108,9 +108,6 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
         self.sapsf_global_configuration = factories.SAPSuccessFactorsGlobalConfigurationFactory()
         self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
-        self.catalog_api_client_mock = self._make_patch(
-            self._make_catalog_api_location("CourseCatalogApiServiceClient")
-        )
         super(TestTransmitCourseMetadataManagementCommand, self).setUp()
 
     def test_enterprise_customer_not_found(self):
@@ -750,11 +747,6 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
         self.addCleanup(sapsf_create_course_completion.stop)
         # pylint: enable=invalid-name
 
-        # Course Catalog API Client
-        course_catalog_api_client_mock = mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-        self.course_catalog_client = course_catalog_api_client_mock.start()
-        self.addCleanup(course_catalog_api_client_mock.stop)
-
     @responses.activate
     @ddt.data(
         # Certificate marks course completion
@@ -794,25 +786,12 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
         Test the log output from a successful run of the transmit_learner_data management command,
         using all the ways we can invoke it.
         """
-
-        setup_course_catalog_api_client_mock(
-            self.course_catalog_client,
-            course_overrides={
-                'course_id': COURSE_ID,
-                'end': end_date.isoformat() if end_date else None,
-                'pacing': 'self' if self_paced else 'instructor'
-            }
-        )
         with transmit_learner_data_context(command_kwargs, certificate, self_paced, end_date, passed) as (args, kwargs):
             with LogCapture(level=logging.DEBUG) as log_capture:
                 expected_output = get_expected_output(**expected_completion)
                 call_command('transmit_learner_data', *args, **kwargs)
-                # get the list of logs just in this repo
-                enterprise_log_messages = [
-                    record.getMessage() for record in log_capture.records if 'edx-enterprise' in record.pathname
-                ]
                 for index, message in enumerate(expected_output):
-                    assert message in enterprise_log_messages[index]
+                    assert message in log_capture.records[index].getMessage()
 
 
 @mark.django_db

@@ -15,7 +15,6 @@ from consent.api.v1.views import DataSharingConsentView as DSCView
 from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
-    TEST_COURSE_KEY,
     TEST_PASSWORD,
     TEST_USER_ID,
     TEST_USERNAME,
@@ -37,7 +36,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     path = settings.TEST_SERVER + reverse(endpoint_name)
 
     def setUp(self):
-        discovery_client_class = mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+        discovery_client_class = mock.patch('enterprise.models.CourseCatalogApiServiceClient')
         self.discovery_client = discovery_client_class.start().return_value
         self.discovery_client.is_course_in_catalog.return_value = True
         self.addCleanup(discovery_client_class.stop)
@@ -313,7 +312,6 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.unpack
     def test_consent_api_get_endpoint(self, factory, items, request_body, expected_response_body, expected_status_code):
         """Test an expectation against an action on any Consent API endpoint."""
-        self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         if factory:
             create_items(factory, items)
         response = self.client.get(self.path, request_body)
@@ -397,6 +395,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     def test_consent_api_get_program(
             self,
             factory,
@@ -405,9 +404,11 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             expected_response_body,
             expected_status_code,
             program_courses,
+            catalog_client_class,
     ):
         """Test the expected behavior of the program consent GET endpoint."""
-        self.discovery_client.get_program_course_keys.return_value = program_courses
+        api_catalog_client = catalog_client_class.return_value
+        api_catalog_client.get_program_course_keys.return_value = program_courses
         enterprise_customer = factories.EnterpriseCustomerFactory(
             uuid=TEST_UUID,
             enforce_data_sharing_consent='at_enrollment'
@@ -418,7 +419,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             create_items(factory, items)
 
         response = self.client.get(self.path, request_body)
-        self.discovery_client.get_program_course_keys.assert_called_once_with(request_body['program_uuid'])
+        api_catalog_client.get_program_course_keys.assert_called_once_with(request_body['program_uuid'])
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
     @ddt.data(
@@ -480,6 +481,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     def test_consent_api_post_program_endpoint(
             self,
             enterprise_kwargs,
@@ -490,10 +492,11 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             followup_checks,
             expected_status_code,
             program_courses,
+            catalog_client_class,
     ):
         """Test the expected behavior of the program consent POST endpoint."""
-        self.discovery_client.get_program_course_keys.return_value = program_courses
-        self.discovery_client.get_course_id.side_effect = program_courses
+        api_catalog_client = catalog_client_class.return_value
+        api_catalog_client.get_program_course_keys.return_value = program_courses
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
         for item in items:
             item.update(enterprise_customer=enterprise_customer)
@@ -568,6 +571,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
+    @mock.patch('consent.helpers.CourseCatalogApiServiceClient')
     def test_consent_api_delete_program_endpoint(
             self,
             enterprise_kwargs,
@@ -578,10 +582,11 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             followup_checks,
             expected_status_code,
             program_courses,
+            catalog_client_class,
     ):
         """Test the expected behavior of the program consent DELETE endpoint."""
-        self.discovery_client.get_program_course_keys.return_value = program_courses
-        self.discovery_client.get_course_id.side_effect = program_courses
+        api_catalog_client = catalog_client_class.return_value
+        api_catalog_client.get_program_course_keys.return_value = program_courses
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
         for item in items:
             item.update(enterprise_customer=enterprise_customer)
@@ -630,7 +635,6 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             expected_status_code
     ):
         self.discovery_client.is_course_in_catalog.return_value = False
-        self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         create_items(factory, items)
         response = self.client.get(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
@@ -983,15 +987,8 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
-    def test_consent_api_post_endpoint(
-            self,
-            factory,
-            items,
-            request_body,
-            expected_response_body,
-            expected_status_code
-    ):
-        self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
+    def test_consent_api_post_endpoint(self, factory, items, request_body,
+                                       expected_response_body, expected_status_code):
         if factory:
             create_items(factory, items)
         response = self.client.post(self.path, request_body)
@@ -1031,7 +1028,6 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             expected_status_code
     ):
         self.discovery_client.is_course_in_catalog.return_value = False
-        self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         create_items(factory, items)
         response = self.client.post(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
@@ -1385,7 +1381,6 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.unpack
     def test_consent_api_delete_endpoint(self, factory, items, request_body,
                                          expected_response_body, expected_status_code):
-        self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         if factory:
             create_items(factory, items)
         response = self.client.delete(self.path, request_body)

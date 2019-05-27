@@ -16,7 +16,12 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_configuration_value_for_site
+from enterprise.utils import (
+    MultipleProgramMatchError,
+    NotConnectedToOpenEdX,
+    get_configuration_value_for_site,
+    parse_course_key,
+)
 
 try:
     from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder
@@ -228,22 +233,6 @@ class CourseCatalogApiClient(object):
             default=[]
         )
 
-    def get_course_id(self, course_run_id):
-        """
-        Return the course id for the given course run id
-
-        Arguments:
-            course_run_id (str): The course run ID.
-
-        Returns:
-            course_id (str): The course ID.
-        """
-        course_run_data = self.get_course_run(course_run_id)
-        if 'course' in course_run_data:
-            return course_run_data['course']
-
-        return None
-
     def get_course_and_course_run(self, course_run_id):
         """
         Return the course and course run metadata for the given course run ID.
@@ -254,7 +243,8 @@ class CourseCatalogApiClient(object):
         Returns:
             tuple: The course metadata and the course run metadata.
         """
-        course_id = self.get_course_id(course_run_id)
+        # Parse the course ID from the course run ID.
+        course_id = parse_course_key(course_run_id)
         # Retrieve the course metadata from the catalog service.
         course = self.get_course_details(course_id)
 
@@ -298,8 +288,7 @@ class CourseCatalogApiClient(object):
         """
         return self._load_data(
             self.COURSE_RUNS_ENDPOINT,
-            resource_id=course_run_id,
-            long_term_cache=True
+            resource_id=course_run_id
         )
 
     def get_program_by_title(self, program_title):
@@ -478,19 +467,6 @@ class CourseCatalogApiClient(object):
                 resource, kwargs, str(exc)
             )
             return default_val
-
-
-def get_course_catalog_api_service_client(site=None):
-    """
-    Returns an instance of the CourseCatalogApiServiceClient
-
-    Args:
-        site: (Site)
-
-    Returns:
-        (CourseCatalogServiceClient)
-    """
-    return CourseCatalogApiServiceClient(site=site)
 
 
 class CourseCatalogApiServiceClient(CourseCatalogApiClient):

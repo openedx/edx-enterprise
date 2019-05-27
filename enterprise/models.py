@@ -39,10 +39,15 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise import utils
-from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
+from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
-from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, get_configuration_value
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    CourseEnrollmentPermissionError,
+    get_configuration_value,
+    parse_course_key,
+)
 from enterprise.validators import validate_image_extension, validate_image_size
 
 try:
@@ -396,7 +401,7 @@ class EnterpriseCustomer(TimeStampedModel):
             bool: Whether the enterprise catalog includes the given course run.
         """
         if self.catalog:
-            client = get_course_catalog_api_service_client(self.site)
+            client = CourseCatalogApiServiceClient(self.site)
             if client.is_course_in_catalog(self.catalog, course_run_id):
                 return True
 
@@ -1278,7 +1283,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         results = []
         content_filter_query = self.content_filter.copy()
-        catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
+        catalog_client = CourseCatalogApiServiceClient(self.enterprise_customer.site)
         search_results = catalog_client.get_catalog_results(content_filter_query, query_parameters.dict())
         for content in search_results['results']:
             if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
@@ -1314,10 +1319,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         updated_content_filter = self.content_filter.copy()
         updated_content_filter[content_id_field_name] = content_id_values
-        response = get_course_catalog_api_service_client().get_catalog_results(
-            updated_content_filter,
-            traverse_pagination=True
-        )
+        response = CourseCatalogApiServiceClient().get_catalog_results(updated_content_filter, traverse_pagination=True)
         results = response.get('results', [])
         return {x[content_id_field_name] for x in results}
 
@@ -1329,8 +1331,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         and/or course run ids.
         """
         # Translate any provided course run IDs to course keys.
-        catalog_client = get_course_catalog_api_service_client()
-        course_keys = {catalog_client.get_course_id(k) for k in content_ids}
+        course_keys = {parse_course_key(k) for k in content_ids}
 
         content_ids_in_catalog = self.content_filter_ids
         if not content_ids_in_catalog:
@@ -1360,7 +1361,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         if not self.contains_courses([course_key]):
             return None
-        return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_details(course_key)
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_details(course_key)
 
     def get_course_run(self, course_run_id):
         """
@@ -1375,7 +1376,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         if not self.contains_courses([course_run_id]):
             return None
 
-        return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_run(course_run_id)
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_run(course_run_id)
 
     def get_course_and_course_run(self, course_run_id):
         """
@@ -1394,9 +1395,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         if not self.contains_courses([course_run_id]):
             return None, None
 
-        return get_course_catalog_api_service_client(
-            self.enterprise_customer.site
-        ).get_course_and_course_run(course_run_id)
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_course_and_course_run(course_run_id)
 
     def get_program(self, program_uuid):
         """
@@ -1410,7 +1409,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         if not self.contains_programs([program_uuid]):
             return None
-        return get_course_catalog_api_service_client(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
+        return CourseCatalogApiServiceClient(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
 
     def get_course_enrollment_url(self, course_key):
         """
