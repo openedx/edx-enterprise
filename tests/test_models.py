@@ -1058,7 +1058,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_catalog.save()
         assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
 
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
     def test_get_paginated_content_uses_total_count_from_response(self, mock_catalog_api_class):
         """
         Test EnterpriseCustomerCatalog.get_paginated_content should use the count value
