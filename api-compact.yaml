@@ -7,9 +7,6 @@
 #
 #
 # Available service endpoints -- note that alternate endpoints may be presented at the API Gateway tier
-#   /enterprise/api/v1/catalogs/
-#   /enterprise/api/v1/catalogs/{id}/
-#   /enterprise/api/v1/catalogs/{id}/courses/
 #   /enterprise/api/v1/enterprise_catalogs/
 #   /enterprise/api/v1/enterprise_catalogs/{uuid}/
 #   /enterprise/api/v1/enterprise_catalogs/{uuid}/course_runs/{course_run_id}/
@@ -303,52 +300,6 @@ x-amazon-apigateway-integration-with-enterprise-customer-catalog-uuid-and-course
 endpoints:
   v1:
 
-    # /v1/catalogs/
-    enterpriseCatalogs:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *limit_qs_parameter
-            - *offset_qs_parameter
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_catalogs"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_id
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/"
-
-    # /v1/catalogs/{id}/
-    enterpriseCatalogById:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *id_parameter
-          operationId: "get_enterprise_catalog_by_id"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_id_parameter
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/"
-
-    # /v1/catalogs/{id}/courses/
-    enterpriseCatalogCourses:
-        get:
-          produces: *produces
-          parameters:
-            - *auth_header
-            - *id_parameter
-            - *limit_qs_parameter
-            - *offset_qs_parameter
-            - *page_qs_parameter
-            - *page_size_qs_parameter
-          operationId: "get_enterprise_catalog_courses"
-          responses: *responses
-          x-amazon-apigateway-integration:
-            <<: *apigateway_integration_with_id_and_querystring_parameters
-            uri: "https://${stageVariables.enterprise_host}/enterprise/api/v1/catalogs/{id}/courses/"
-
     # /v1/enterprise_catalogs/
     enterpriseCustomerCatalogs:
         get:
@@ -464,7 +415,7 @@ endpoints:
                       description: "The enrollment mode."
                       type: "string"
                       required: true
-                    email_students: 
+                    email_students:
                       description: "Email user to notify of enrollment. Defaults to false."
                       type: "boolean"
           responses: *responses
