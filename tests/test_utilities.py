@@ -85,6 +85,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer_consent",
                 "data_sharing_consent_page",
                 "contentmetadataitemtransmission",
+                "cornerstoneenterprisecustomerconfiguration",
                 "degreedenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "xapilrsconfiguration",

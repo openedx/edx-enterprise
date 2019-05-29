@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.0] - 2019-05-29
+--------------------
+
+* Added new integrated channel `cornerstone` with course-list API.
+
 [1.5.9] - 2019-05-27
 --------------------
 

@@ -20,6 +20,7 @@ from six.moves.urllib.parse import parse_qs, quote_plus, urlencode, urlparse, ur
 
 from django.apps import apps
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.urlresolvers import reverse
@@ -852,3 +853,13 @@ def get_default_catalog_content_filter():
     Return default enterprise customer catalog content filter.
     """
     return settings.ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER or DEFAULT_CATALOG_CONTENT_FILTER
+
+
+def get_enterprise_worker_user():
+    """
+    Return the user object of enterprise worker user.
+    """
+    try:
+        return User.objects.get(username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME)
+    except User.DoesNotExist:
+        return None

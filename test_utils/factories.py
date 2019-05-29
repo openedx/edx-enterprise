@@ -27,6 +27,10 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
+from integrated_channels.cornerstone.models import (
+    CornerstoneEnterpriseCustomerConfiguration,
+    CornerstoneGlobalConfiguration,
+)
 from integrated_channels.degreed.models import (
     DegreedEnterpriseCustomerConfiguration,
     DegreedGlobalConfiguration,
@@ -495,6 +499,49 @@ class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFacto
     course_completed = True
     completed_timestamp = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     status = factory.LazyAttribute(lambda x: FAKER.word())
+
+
+class CornerstoneEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``CornerstoneEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``CornerstoneEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``CornerstoneEnterpriseCustomerConfiguration``.
+        """
+
+        model = CornerstoneEnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    cornerstone_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
+
+
+class CornerstoneGlobalConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``CornerstoneGlobalConfiguration`` factory.
+
+    Creates an instance of ``CornerstoneGlobalConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``CornerstoneGlobalConfiguration``.
+        """
+
+        model = CornerstoneGlobalConfiguration
+
+    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
+    completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    subject_mapping = {
+        "Technology": ["Computer Science"],
+        "Business Skills": ["Communication"],
+        "Creative": ["Music", "Design"]
+    }
 
 
 class XAPILRSConfigurationFactory(factory.django.DjangoModelFactory):
