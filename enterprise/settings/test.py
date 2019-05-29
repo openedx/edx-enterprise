@@ -57,6 +57,7 @@ INSTALLED_APPS = (
     "enterprise",
     "consent",
     "integrated_channels.integrated_channel",
+    "integrated_channels.cornerstone",
     "integrated_channels.degreed",
     "integrated_channels.sap_success_factors",
     "integrated_channels.xapi",
