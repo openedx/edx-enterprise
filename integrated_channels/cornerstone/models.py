@@ -9,6 +9,7 @@ import json
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
+from jsonfield import JSONField
 from simple_history.models import HistoricalRecords
 
 from django.contrib.auth.models import User
@@ -45,6 +46,10 @@ class CornerstoneGlobalConfiguration(ConfigurationModel):
             "The API path for making OAuth-related POST requests to Cornerstone. "
             "This will be used to gain the OAuth access token which is required for other API calls."
         )
+    )
+    subject_mapping = JSONField(
+        default={},
+        help_text="Key/value mapping cornerstone subjects to edX subjects list",
     )
 
     class Meta:

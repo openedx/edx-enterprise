@@ -11,6 +11,8 @@ from logging import getLogger
 
 import pytz
 
+from django.apps import apps
+
 from enterprise.utils import get_closest_course_run
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
@@ -22,7 +24,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     Cornerstone implementation of ContentMetadataExporter.
     """
     LONG_STRING_LIMIT = 10000
-
+    DEFAULT_SUBJECT = "Industry Specific"
     DATA_TRANSFORM_MAPPING = {
         'ID': 'key',
         'Title': 'title',
@@ -107,3 +109,20 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         if 0 < len(full_description) <= self.LONG_STRING_LIMIT:  # pylint: disable=len-as-condition
             return full_description
         return content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''
+
+    def transform_subjects(self, content_metadata_item):
+        """
+        Return the transformed version of the course subject list.
+        """
+        subjects = []
+        course_subjects = content_metadata_item.get('subjects', [])
+        CornerstoneGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
+            'cornerstone',
+            'CornerstoneGlobalConfiguration'
+        )
+        subjects_mapping_dict = CornerstoneGlobalConfiguration.current().subject_mapping or {}
+        for subject in course_subjects:
+            for cornerstone_subject, edx_subjects in subjects_mapping_dict.items():
+                if subject.lower() in [edx_subject.lower() for edx_subject in edx_subjects]:
+                    subjects.append(cornerstone_subject)
+        return list(set(subjects)) or [self.DEFAULT_SUBJECT] if course_subjects else []

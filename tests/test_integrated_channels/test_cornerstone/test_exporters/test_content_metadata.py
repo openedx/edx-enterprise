@@ -45,6 +45,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         self.config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
+        self.global_config = factories.CornerstoneGlobalConfigurationFactory()
 
         # Mocks
         self.mock_ent_courses_api_with_pagination(
@@ -479,3 +480,33 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_organizations)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_organizations(item_content_metadata) == expected_organizations
+
+    @ddt.data(
+        (
+            {
+                'subjects': ["Computer Science", "Communication", "Music", "Design"]
+            },
+            ["Technology", "Business Skills", "Creative"]
+        ),
+        (
+            {
+                'subjects': ["Some New Subject"]
+            },
+            ["Industry Specific"]
+        ),
+        (
+            {
+                'subjects': []
+            },
+            []
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_subjects(self, item_subjects, expected_subjects):
+        """
+        Transforming subjects gives back the a list of cornerstone's subjects.
+        """
+        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_subjects)
+        exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
+        assert sorted(exporter.transform_subjects(item_content_metadata)) == sorted(expected_subjects)
