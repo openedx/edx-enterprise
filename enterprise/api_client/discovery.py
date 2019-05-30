@@ -235,30 +235,29 @@ class CourseCatalogApiClient(object):
 
     def get_course_id(self, course_identifier):
         """
-        Return the course key for the given course identifier.  The `course_identifier` may be a course key or a course
-        run id; in either case the course key will be returned.
+        Return the course id for the given course identifier.  The `course_identifier` may be a course id or a course
+        run id; in either case the course id will be returned.
 
-        The 'course key' is the identifier for a course (ex. edX+DemoX)
+        The 'course id' is the identifier for a course (ex. edX+DemoX)
         The 'course run id' is the identifier for a run of a course (ex. edX+DemoX+demo_run)
 
         Arguments:
-            course_identifier (str): The course key or course run id
+            course_identifier (str): The course id or course run id
 
         Returns:
-            (str): course key
+            (str): course id
         """
-        # TODO: go through comments and make sure this all makes sense
         try:
             CourseKey.from_string(course_identifier)
         except InvalidKeyError:
-            # An `InvalidKeyError` is thrown if `course_identifier` is not in the proper format for a course run id
-            # `course_identifier` cannot be a course run id. Assume `course_identifier` is the  course key (course id).
+            # An `InvalidKeyError` is thrown if `course_identifier` is not in the proper format for a course run id.
+            # Since `course_identifier` is not a course run id we assume `course_identifier` is the  course id.
             return course_identifier
 
-        # `course_identifier` must be a course run id.  We cannot use `CourseKey.from_string` to find the course key
-        # because that method assumes the course key is always a substring of the course run id and this is not always
-        # the case.  The only reliable way to determine which courses are associated with a given course run id is by
-        # by calling the discovery service.
+        # If here, `course_identifier` must be a course run id.
+        # We cannot use `CourseKey.from_string` to find the course id because that method assumes the course id is
+        # always a substring of the course run id and this is not always the case.  The only reliable way to determine
+        # which courses are associated with a given course run id is by by calling the discovery service.
         course_run_data = self.get_course_run(course_identifier)
         if 'course' in course_run_data:
             return course_run_data['course']
