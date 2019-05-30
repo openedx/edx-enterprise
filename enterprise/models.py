@@ -1331,7 +1331,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         and/or course run ids.
         """
         # Translate any provided course run IDs to course keys.
-        course_keys = {parse_course_key(k) for k in content_ids}
+        catalog_client = get_course_catalog_api_service_client()
+        course_keys = {catalog_client.get_course_id(k) for k in content_ids}
 
         content_ids_in_catalog = self.content_filter_ids
         if not content_ids_in_catalog:
