@@ -5,10 +5,10 @@ Client for connecting to Cornerstone.
 
 from __future__ import absolute_import, unicode_literals
 
-import datetime
+import base64
+import json
 
 import requests
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
@@ -20,11 +20,8 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
     Client for connecting to Cornerstone.
 
     Specifically, this class supports obtaining access tokens
-    and posting user's proogres to completion status endpoints.
+    and posting user's course completion status to progress endpoints.
     """
-
-    COMPLETION_PROVIDER_SCOPE = 'provider_completion'
-    SESSION_TIMEOUT = 60
 
     def __init__(self, enterprise_configuration):
         """
@@ -74,43 +71,33 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Raises:
             HTTPError: if we received a failure response code from Cornerstone
         """
-        return self._post(
-            urljoin(
-                self.enterprise_configuration.cornerstone_base_url,
-                self.global_cornerstone_config.completion_status_api_path
-            ),
-            payload,
-            self.COMPLETION_PROVIDER_SCOPE
+        json_payload = json.loads(payload)
+        callback_url = json_payload['data'].pop('callbackUrl')
+        session_token = json_payload['data'].pop('sessionToken')
+        url = '{base_url}{callback_url}{completion_path}?sessionToken={session_token}'.format(
+            base_url=self.enterprise_configuration.cornerstone_base_url,
+            callback_url=callback_url,
+            completion_path=self.global_cornerstone_config.completion_status_api_path,
+            session_token=session_token,
         )
 
-    def _post(self, url, data, scope):
-        """
-        Make a POST request using the session object to a Cornerstone endpoint.
-
-        Args:
-            url (str): The url to send a POST request to.
-            data (str): The json encoded payload to POST.
-            scope (str): Must be one of the scopes Cornerstone expects:
-                        - `COMPLETION_PROVIDER_SCOPE`
-        """
-        self._create_session(scope)
-        response = self.session.post(url, data=data)
+        response = requests.post(
+            url,
+            json=[json_payload['data']],
+            headers={
+                'Authorization': self.authorization_header,
+                'Content-Type': 'application/json'
+            }
+        )
         return response.status_code, response.text
 
-    def _create_session(self, scope):   # pylint: disable=unused-argument
+    @property
+    def authorization_header(self):
         """
-        Instantiate a new session object for use in connecting with Cornerstone
+        Authorization header for authenticating requests to cornerstone progress API.
         """
-        now = datetime.datetime.utcnow()
-        if self.session is None or self.expires_at is None or now >= self.expires_at:
-            # Create a new session with a valid token
-            if self.session:
-                self.session.close()
-            # TODO: logic to get oauth access token needs to be implemented here
-            oauth_access_token, expires_at = None, None
-            session = requests.Session()
-            session.timeout = self.SESSION_TIMEOUT
-            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-            session.headers['content-type'] = 'application/json'
-            self.session = session
-            self.expires_at = expires_at
+        return 'Basic {}'.format(
+            base64.b64encode(u'{key}:{secret}'.format(
+                key=self.global_cornerstone_config.key, secret=self.global_cornerstone_config.secret
+            ).encode('utf-8')).decode()
+        )

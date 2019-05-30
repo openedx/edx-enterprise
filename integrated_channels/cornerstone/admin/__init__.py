@@ -22,7 +22,8 @@ class CornerstoneGlobalConfigurationAdmin(ConfigurationModelAdmin):
 
     list_display = (
         "completion_status_api_path",
-        "oauth_api_path",
+        "key",
+        "secret",
     )
 
     class Meta(object):

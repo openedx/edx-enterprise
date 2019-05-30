@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.7.2] - 2019-07-18
+--------------------
+
+* Added ability to send user's progress to cornerstone
+
+
 [1.7.1] - 2019-07-15
 --------------------
 

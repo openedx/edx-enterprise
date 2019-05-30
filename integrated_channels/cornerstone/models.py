@@ -15,11 +15,14 @@ from simple_history.models import HistoricalRecords
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
+from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
+from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
 from integrated_channels.cornerstone.transmitters.content_metadata import CornerstoneContentMetadataTransmitter
+from integrated_channels.cornerstone.transmitters.learner_data import CornerstoneLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
@@ -37,20 +40,34 @@ class CornerstoneGlobalConfiguration(ConfigurationModel):
     completion_status_api_path = models.CharField(
         max_length=255,
         verbose_name="Completion Status API Path",
-        help_text="The API path for making completion POST requests to Cornerstone."
+        help_text=_("The API path for making completion POST requests to Cornerstone.")
     )
 
     oauth_api_path = models.CharField(
         max_length=255,
         verbose_name="OAuth API Path",
-        help_text=(
+        help_text=_(
             "The API path for making OAuth-related POST requests to Cornerstone. "
             "This will be used to gain the OAuth access token which is required for other API calls."
         )
     )
+
+    key = models.CharField(
+        max_length=255,
+        default='key',
+        verbose_name="Basic Auth username",
+        help_text=_('Basic auth username for sending user completion status to cornerstone.')
+    )
+    secret = models.CharField(
+        max_length=255,
+        default='secret',
+        verbose_name="Basic Auth password",
+        help_text=_('Basic auth password for sending user completion status to cornerstone.')
+    )
+
     subject_mapping = JSONField(
         default={},
-        help_text="Key/value mapping cornerstone subjects to edX subjects list",
+        help_text=_("Key/value mapping cornerstone subjects to edX subjects list"),
     )
 
     class Meta:
@@ -80,7 +97,7 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         max_length=255,
         blank=True,
         verbose_name="Cornerstone Base URL",
-        help_text="The base URL used for API requests to Cornerstone, i.e. https://portalName.csod.com"
+        help_text=_("The base URL used for API requests to Cornerstone, i.e. https://portalName.csod.com")
     )
 
     history = HistoricalRecords()
@@ -121,6 +138,18 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         """
         return CornerstoneContentMetadataExporter(user, self)
 
+    def get_learner_data_transmitter(self):
+        """
+        Return a ``CornerstoneLearnerTransmitter`` instance.
+        """
+        return CornerstoneLearnerTransmitter(self)
+
+    def get_learner_data_exporter(self, user):
+        """
+        Return a ``CornerstoneLearnerExporter`` instance.
+        """
+        return CornerstoneLearnerExporter(user, self)
+
 
 @python_2_unicode_compatible
 class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
@@ -144,14 +173,15 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
 
     enterprise_course_enrollment_id = models.PositiveIntegerField(
         blank=True,
-        null=True
+        null=True,
+        db_index=True,
     )
 
     course_id = models.CharField(
         max_length=255,
         blank=False,
         null=False,
-        help_text="The course run's key which is used to uniquely identify the course for Cornerstone."
+        help_text=_("The course run's key which is used to uniquely identify the course for Cornerstone.")
     )
 
     session_token = models.CharField(max_length=255, null=False, blank=False)
@@ -160,17 +190,17 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
 
     course_completed = models.BooleanField(
         default=False,
-        help_text="The learner's course completion status transmitted to Cornerstone."
+        help_text=_("The learner's course completion status transmitted to Cornerstone.")
     )
 
     completed_timestamp = models.DateTimeField(
         null=True,
         blank=True,
-        help_text=(
+        help_text=_(
             'Date time when user completed course'
         )
     )
-
+    grade = models.CharField(max_length=255, null=True, blank=True)
     # Request-related information.
     status = models.CharField(max_length=100, blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
@@ -205,5 +235,20 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
 
         Sort the keys so the result is consistent and testable.
         """
-        # TODO: serialize data to be sent to cornerstone
-        return json.dumps({"data": "data"}, sort_keys=True)
+        data = {
+            'courseId': self.course_id,
+            'userGuid': self.user_guid,
+            'callbackUrl': self.callback_url,
+            'sessionToken': self.session_token,
+            'status': 'Completed' if self.grade in ['Pass', 'Fail'] else 'In Progress',
+            'completionDate':
+                self.completed_timestamp.replace(microsecond=0).isoformat() if self.completed_timestamp else None,
+        }
+        if self.grade != 'In Progress':
+            data['successStatus'] = self.grade
+        return json.dumps(
+            {
+                "data": data
+            },
+            sort_keys=True
+        )

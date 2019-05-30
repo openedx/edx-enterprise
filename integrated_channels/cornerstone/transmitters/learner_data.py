@@ -33,5 +33,5 @@ class CornerstoneLearnerTransmitter(LearnerTransmitter):
         """
         kwargs['app_label'] = 'cornerstone'
         kwargs['model_name'] = 'CornerstoneLearnerDataTransmissionAudit'
-        kwargs['remote_user_id'] = 'cornerstone_user_email'
+        kwargs['remote_user_id'] = 'user_guid'
         super(CornerstoneLearnerTransmitter, self).transmit(payload, **kwargs)
