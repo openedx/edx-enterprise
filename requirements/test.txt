@@ -19,6 +19,8 @@ cffi==1.12.3              # via cryptography
 chardet==3.0.4            # via requests
 click==7.0                # via code-annotations
 code-annotations==0.3.1
+configparser==3.7.4       # via importlib-metadata
+contextlib2==0.5.5        # via importlib-metadata
 cookies==2.2.1            # via responses
 coverage==4.5.3           # via pytest-cov
 cryptography==2.4.2
@@ -43,9 +45,9 @@ djangorestframework-xml==1.3.0
 djangorestframework==3.6.3
 edx-django-oauth2-provider==1.3.5
 edx-django-utils==1.0.3   # via edx-drf-extensions
-edx-drf-extensions==2.2.1
+edx-drf-extensions==2.3.0
 edx-opaque-keys==0.4.4
-edx-rbac==0.2.1
+edx-rbac==1.0.1
 edx-rest-api-client==1.9.2
 enum34==1.1.6             # via cryptography
 factory-boy==2.12.0
@@ -56,6 +58,7 @@ funcsigs==1.0.2           # via mock, pytest
 future==0.17.1            # via pyjwkest
 html5lib==1.0.1
 idna==2.8                 # via cryptography, requests
+importlib-metadata==0.15  # via pluggy
 inflect==2.1.0            # via jinja2-pluralize
 ipaddress==1.0.22         # via cryptography, faker
 jinja2-pluralize==0.3.0   # via diff-cover
@@ -66,17 +69,17 @@ kombu==3.0.37             # via celery
 markupsafe==1.1.1         # via jinja2
 mock==3.0.5
 more-itertools==5.0.0     # via pytest
-newrelic==4.18.0.118      # via edx-django-utils
+newrelic==4.20.0.120      # via edx-django-utils
 path.py==8.2.1
-pathlib2==2.3.3           # via pytest, pytest-django
+pathlib2==2.3.3           # via importlib-metadata, pytest, pytest-django
 pbr==5.2.0                # via stevedore
 pillow==5.4.1
-pluggy==0.11.0            # via pytest
+pluggy==0.12.0            # via pytest
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
 py==1.8.0                 # via pytest, pytest-catchlog
 pycparser==2.19           # via cffi
 pycryptodomex==3.8.1      # via pyjwkest
-pygments==2.4.0           # via diff-cover
+pygments==2.4.2           # via diff-cover
 pyjwkest==1.3.2           # via edx-drf-extensions
 pyjwt==1.7.1              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.8.0            # via edx-opaque-keys
@@ -104,3 +107,4 @@ unicodecsv==0.14.1
 urllib3==1.24.3           # via requests
 wcwidth==0.1.7            # via pytest
 webencodings==0.5.1       # via html5lib
+zipp==0.5.1               # via importlib-metadata
