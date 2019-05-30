@@ -85,8 +85,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     @ddt.data(
         (False, True, None),
@@ -103,22 +102,23 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             existing_course_enrollment,
             course_start_date,
             course_api_client_mock,
-            course_catalog_api_client_model_mock,
-            course_catalog_api_client_view_mock,
+            course_catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         course_id = 'course-v1:edX+DemoX+Demo_Course'
-        course_catalog_api_client_model_mock.return_value.course_in_catalog.return_value = True
+        course_key = 'edX+DemoX'
+        course_catalog_api_client_mock.return_value.course_in_catalog.return_value = True
         content_filter = {
             'key': [
                 course_id,
             ]
         }
+        course_catalog_api_client_mock.return_value.get_course_id.return_value = course_key
         course_run_details = {
             'start': course_start_date,
             'title': 'Demo Course'
         }
-        course_catalog_api_client_view_mock.return_value.get_course_run.return_value = course_run_details
+        course_catalog_api_client_mock.return_value.get_course_run.return_value = course_run_details
 
         client = course_api_client_mock.return_value
         client.get_course_details.return_value = {
@@ -142,7 +142,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
         params = {
             'enterprise_customer_uuid': str(enterprise_customer.uuid),
-            'course_id': 'course-v1:edX+DemoX+Demo_Course',
+            'course_id': course_id,
             'next': 'https://google.com',
             'failure_url': 'https://facebook.com',
         }
@@ -201,20 +201,17 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         }.items():
             assert response.context[key] == value  # pylint:disable=no-member
 
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_improperly_configured_course_catalog(
             self,
             course_api_client_mock,
-            course_catalog_api_client_model_mock,
-            course_catalog_api_client_view_mock,
+            course_catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         course_id = 'course-v1:edX+DemoX+Demo_Course'
 
-        course_catalog_api_client_model_mock.return_value.course_in_catalog.return_value = True
-        course_catalog_api_client_view_mock.side_effect = ImproperlyConfigured("There is no active CatalogIntegration.")
+        course_catalog_api_client_mock.side_effect = ImproperlyConfigured("There is no active CatalogIntegration.")
         client = course_api_client_mock.return_value
         client.get_course_details.return_value = {
             'name': 'edX Demo Course',
@@ -368,7 +365,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
         assert response.status_code == 404
 
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     def test_get_course_specific_consent_not_needed(
             self,
@@ -409,8 +406,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.CourseApiClient')
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
         (True, True, '/successful_enrollment'),
@@ -425,8 +421,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             consent_provided,
             expected_redirect_url,
             reverse_mock,
-            course_catalog_api_client_mock_1,
-            course_catalog_api_client_mock_2,
+            course_catalog_api_client_mock,
             course_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
@@ -451,8 +446,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
             granted=consent_provided
         )
-        course_catalog_api_client_mock_1.return_value.program_exists.return_value = True
-        course_catalog_api_client_mock_2.return_value.is_course_in_catalog = True
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_catalog_api_client_mock.return_value.is_course_in_catalog.return_value = True
         course_api_client_mock.return_value.get_course_details.return_value = {'name': 'edX Demo Course'}
         reverse_mock.return_value = '/dashboard'
         post_data = {
@@ -585,7 +580,7 @@ class TestProgramDataSharingPermissions(TestCase):
         get_dsc = mock.patch('enterprise.views.get_data_sharing_consent')
         self.get_data_sharing_consent = get_dsc.start()
         self.addCleanup(get_dsc.stop)
-        course_catalog_api_client = mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+        course_catalog_api_client = mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
         self.course_catalog_api_client = course_catalog_api_client.start()
         self.addCleanup(course_catalog_api_client.stop)
         self.enterprise_customer = EnterpriseCustomerFactory(
@@ -914,7 +909,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
         return left_sidebar_text, top_paragraph, agreement_text, confirmation_modal_text
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.CourseApiClient')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @ddt.data(

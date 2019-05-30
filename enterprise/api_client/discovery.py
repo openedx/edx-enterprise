@@ -8,18 +8,15 @@ from logging import getLogger
 
 from edx_rest_api_client.client import EdxRestApiClient
 from edx_rest_api_client.exceptions import SlumberBaseException
+from opaque_keys import InvalidKeyError
+from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
-from enterprise.utils import (
-    MultipleProgramMatchError,
-    NotConnectedToOpenEdX,
-    get_configuration_value_for_site,
-    parse_course_key,
-)
+from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_configuration_value_for_site
 
 try:
     from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder
@@ -155,6 +152,38 @@ class CourseCatalogApiClient(object):
 
         return response
 
+    def get_course_id(self, course_identifier):
+        """
+        Return the course id for the given course identifier.  The `course_identifier` may be a course id or a course
+        run id; in either case the course id will be returned.
+
+        The 'course id' is the identifier for a course (ex. edX+DemoX)
+        The 'course run id' is the identifier for a run of a course (ex. edX+DemoX+demo_run)
+
+        Arguments:
+            course_identifier (str): The course id or course run id
+
+        Returns:
+            (str): course id
+        """
+
+        try:
+            CourseKey.from_string(course_identifier)
+        except InvalidKeyError:
+            # An `InvalidKeyError` is thrown if `course_identifier` is not in the proper format for a course run id.
+            # Since `course_identifier` is not a course run id we assume `course_identifier` is the  course id.
+            return course_identifier
+
+        # If here, `course_identifier` must be a course run id.
+        # We cannot use `CourseKey.from_string` to find the course id because that method assumes the course id is
+        # always a substring of the course run id and this is not always the case.  The only reliable way to determine
+        # which courses are associated with a given course run id is by by calling the discovery service.
+        course_run_data = self.get_course_run(course_identifier)
+        if 'course' in course_run_data:
+            return course_run_data['course']
+
+        return None
+
     def get_course_and_course_run(self, course_run_id):
         """
         Return the course and course run metadata for the given course run ID.
@@ -165,8 +194,7 @@ class CourseCatalogApiClient(object):
         Returns:
             tuple: The course metadata and the course run metadata.
         """
-        # Parse the course ID from the course run ID.
-        course_id = parse_course_key(course_run_id)
+        course_id = self.get_course_id(course_run_id)
         # Retrieve the course metadata from the catalog service.
         course = self.get_course_details(course_id)
 
@@ -210,7 +238,8 @@ class CourseCatalogApiClient(object):
         """
         return self._load_data(
             self.COURSE_RUNS_ENDPOINT,
-            resource_id=course_run_id
+            resource_id=course_run_id,
+            long_term_cache=True
         )
 
     def get_program_by_title(self, program_title):
@@ -363,6 +392,19 @@ class CourseCatalogApiClient(object):
                 resource, kwargs, str(exc)
             )
             return default_val
+
+
+def get_course_catalog_api_service_client(site=None):
+    """
+    Returns an instance of the CourseCatalogApiServiceClient
+
+    Args:
+        site: (Site)
+
+    Returns:
+        (CourseCatalogServiceClient)
+    """
+    return CourseCatalogApiServiceClient(site=site)
 
 
 class CourseCatalogApiServiceClient(CourseCatalogApiClient):

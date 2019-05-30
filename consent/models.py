@@ -5,11 +5,14 @@ Models for edX Enterprise's Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
 import six
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from simple_history.models import HistoricalRecords
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.functional import lazy
@@ -20,10 +23,11 @@ from model_utils.models import TimeStampedModel
 
 from consent.errors import InvalidProxyConsent
 from consent.mixins import ConsentModelMixin
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomer
-from enterprise.utils import parse_course_key
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
+LOGGER = logging.getLogger(__name__)
 
 
 class DataSharingConsentQuerySet(models.query.QuerySet):
@@ -58,7 +62,18 @@ class DataSharingConsentQuerySet(models.query.QuerySet):
                 except DataSharingConsent.DoesNotExist:
                     # A record for the course run didn't exist, so modify the query
                     # parameters to look for just a course record on the second pass.
-                    kwargs['course_id'] = parse_course_key(course_run_key)
+
+                    site = None
+                    if 'enterprise_customer' in kwargs:
+                        site = kwargs['enterprise_customer'].site
+
+                    try:
+                        course_id = get_course_catalog_api_service_client(site=site).get_course_id(
+                            course_identifier=course_run_key
+                        )
+                        kwargs['course_id'] = course_id
+                    except ImproperlyConfigured:
+                        LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
 
         try:
             return self.get(*args, **kwargs)
