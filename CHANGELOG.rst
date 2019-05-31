@@ -14,6 +14,8 @@ Change Log
 Unreleased
 ----------
 
+* Remove unused packages (twine and sphinx-napoleon)
+
 [1.6.1] - 2019-05-30
 --------------------
 
