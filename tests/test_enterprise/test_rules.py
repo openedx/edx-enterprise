@@ -8,14 +8,12 @@ from __future__ import absolute_import, unicode_literals, with_statement
 import ddt
 import mock
 from pytest import mark
-from waffle.testutils import override_switch
 
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
-    ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH,
 )
 from enterprise.models import EnterpriseFeatureRole, EnterpriseFeatureUserRoleAssignment
 from test_utils import TEST_UUID, APITest, factories
@@ -23,7 +21,6 @@ from test_utils import TEST_UUID, APITest, factories
 
 @mark.django_db()
 @ddt.ddt
-@override_switch(ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, active=True)
 class TestEnterpriseRBACPermissions(APITest):
     """
     Test defined django rules for authorization checks.
