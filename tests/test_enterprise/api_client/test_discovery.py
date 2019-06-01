@@ -77,54 +77,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
 
     _make_run = _make_course_run.__func__  # unwrapping to use within class definition
 
-    def test_get_all_catalogs(self):
-        """
-        Verify get_all_catalogs of CourseCatalogApiClient works as expected.
-        """
-        response_dict = {"very": "complex", "json": {"with": " nested object"}}
-        self.get_data_mock.return_value = response_dict
-
-        actual_result = self.api.get_all_catalogs()
-
-        assert self.get_data_mock.call_count == 1
-        resource, resource_id = self._get_important_parameters(self.get_data_mock)
-
-        assert resource == CourseCatalogApiClient.CATALOGS_ENDPOINT
-        assert resource_id is None
-        assert actual_result == response_dict
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_all_catalogs_empty_response(self, response):
-        """
-        Verify get_all_catalogs of CourseCatalogApiClient works as expected for empty responses.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_all_catalogs() == []
-
-    def test_get_catalog_courses(self):
-        """
-        Verify get_catalog_courses of CourseCatalogApiClient works as expected.
-        """
-        catalog_id = 123
-        expected_result = ['item1', 'item2', 'item3']
-        self.get_data_mock.return_value = expected_result
-
-        actual_result = self.api.get_catalog_courses(catalog_id)
-
-        assert self.get_data_mock.call_count == 1
-        resource, _ = self._get_important_parameters(self.get_data_mock)
-
-        assert resource == CourseCatalogApiClient.CATALOGS_COURSES_ENDPOINT.format(catalog_id)
-        assert actual_result == expected_result
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_catalog_courses_empty_response(self, response):
-        """
-        Verify get_catalog_courses of CourseCatalogApiClient works as expected for empty responses.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_catalog_courses(catalog_id=1) == []
-
     def test_get_course_details(self):
         """
         Verify get_course_details of CourseCatalogApiClient works as expected.
@@ -149,78 +101,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         self.get_data_mock.return_value = response
         assert self.api.get_course_details(course_id='edX+DemoX') == {}
-
-    def test_get_catalog(self):
-        """
-        Verify get_catalog of CourseCatalogApiClient works as expected.
-        """
-        response_dict = {"very": "complex", "json": {"with": " nested object"}}
-        self.get_data_mock.return_value = response_dict
-
-        actual_result = self.api.get_catalog(catalog_id=1)
-
-        assert self.get_data_mock.call_count == 1
-        resource, resource_id = self._get_important_parameters(self.get_data_mock)
-
-        assert resource == CourseCatalogApiClient.CATALOGS_ENDPOINT
-        assert resource_id is 1
-        assert actual_result == response_dict
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_catalog_empty_response(self, response):
-        """
-        Verify get_catalog of CourseCatalogApiClient works as expected.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_catalog(catalog_id=1) == []
-
-    def test_get_paginated_catalog_courses(self):
-        """
-        Verify get_paginated_catalog_courses of CourseCatalogApiClient works as expected.
-        """
-        catalog_id = 1
-        response_dict = {"very": "complex", "json": {"with": " nested object"}}
-        self.get_data_mock.return_value = response_dict
-
-        actual_result = self.api.get_paginated_catalog_courses(catalog_id=catalog_id)
-
-        assert self.get_data_mock.call_count == 1
-        resource, resource_id = self._get_important_parameters(self.get_data_mock)
-
-        assert resource == CourseCatalogApiClient.CATALOGS_COURSES_ENDPOINT.format(catalog_id)
-        assert resource_id is None
-        assert actual_result == response_dict
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_paginated_catalog_courses_empty_response(self, response):
-        """
-        Verify get_paginated_catalog_courses of CourseCatalogApiClient works as expected.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_paginated_catalog_courses(catalog_id=1) == []
-
-    def test_get_paginated_catalogs(self):
-        """
-        Verify get_paginated_catalogs of CourseCatalogApiClient works as expected.
-        """
-        response_dict = {'very': 'complex', 'json': {'with': 'nested object'}}
-        self.get_data_mock.return_value = response_dict
-
-        actual_result = self.api.get_paginated_catalogs()
-
-        resource, resource_id = self._get_important_parameters(self.get_data_mock)
-
-        assert resource == CourseCatalogApiClient.CATALOGS_ENDPOINT
-        assert resource_id is None
-        assert actual_result == response_dict
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_paginated_catalogs_empty_response(self, response):
-        """
-        Verify get_paginated_catalogs of CourseCatalogApiClient works as expected for an empty response.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_paginated_catalog_courses(catalog_id=1) == []
 
     @ddt.data(
         "course-v1:JediAcademy+AppliedTelekinesis+T1",
@@ -377,69 +257,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
 
         actual_result = self.api.get_common_course_modes(course_runs)
         assert actual_result == expected_result
-
-    @ddt.data(
-        (23, 'course-v1:org+course+basic_course', {'courses': {}}, False, True),
-        (
-            45,
-            'course-v1:org+course+fancy_course',
-            {
-                'courses': {
-                    'course-v1:org+course+fancy_course': True
-                }
-            },
-            True,
-            True
-        ),
-        (
-            93,
-            'course-v1:org+course+my_course',
-            {
-                'courses': {
-                    'course-v1:org+course+my_course': False
-                }
-            },
-            False,
-            True
-        ),
-        (23, 'basic_course', {'courses': {}}, False, False),
-        (
-            45,
-            'fancy_course',
-            {
-                'courses': {
-                    'fancy_course': True
-                }
-            },
-            True,
-            False
-        ),
-        (93, 'my_course', {'courses': {'my_course': False}}, False, False)
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.api_client.discovery.course_discovery_api_client')
-    def test_is_course_in_catalog(
-            self,
-            catalog_id,
-            course_id,
-            api_resp,
-            expected,
-            is_a_course_run,
-            mock_discovery_client_factory
-    ):
-        """
-        Test the API client that checks to determine if a given course ID is present
-        in the given catalog.
-        """
-        discovery_client = mock_discovery_client_factory.return_value
-        discovery_client.catalogs.return_value.contains.get.return_value = api_resp
-        self.api = CourseCatalogApiClient(self.user_mock)
-        assert self.api.is_course_in_catalog(catalog_id, course_id) == expected
-        discovery_client.catalogs.assert_called_once_with(catalog_id)
-        if is_a_course_run:
-            discovery_client.catalogs.return_value.contains.get.assert_called_once_with(course_run_id=course_id)
-        else:
-            discovery_client.catalogs.return_value.contains.get.assert_called_once_with(course_id=course_id)
 
     @ddt.data(
         (None, []),

@@ -15,7 +15,6 @@ from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
-from enterprise.api.v1.mixins import EnterpriseCourseContextSerializerMixin
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
@@ -114,7 +113,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomer
         fields = (
-            'uuid', 'name', 'slug', 'catalog', 'active', 'site', 'enable_data_sharing_consent',
+            'uuid', 'name', 'slug', 'active', 'site', 'enable_data_sharing_consent',
             'enforce_data_sharing_consent', 'branding_configuration', 'enterprise_customer_entitlements',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data',
@@ -344,31 +343,6 @@ class EnterpriseCustomerUserEntitlementSerializer(ImmutableStateSerializer):
 
     user = UserSerializer(read_only=True)
     enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
-
-
-class CourseCatalogApiResponseReadOnlySerializer(ImmutableStateSerializer):
-    """
-    Serializer for enterprise customer catalog.
-    """
-
-    # pylint: disable=invalid-name
-    id = serializers.IntegerField(read_only=True, help_text=_('Enterprise course catalog primary key.'))
-    name = serializers.CharField(help_text=_('Catalog name'))
-    query = serializers.CharField(help_text=_('Query to retrieve catalog contents'))
-    courses_count = serializers.IntegerField(read_only=True, help_text=_('Number of courses contained in this catalog'))
-    viewers = serializers.ListField(
-        allow_null=True, allow_empty=True, required=False,
-        help_text=_('Usernames of users with explicit access to view this catalog'),
-        style={'base_template': 'input.html'},
-        child=serializers.CharField(),
-    )
-
-
-class EnterpriseCatalogCoursesReadOnlySerializer(ResponsePaginationSerializer, EnterpriseCourseContextSerializerMixin):
-    """
-    Serializer for enterprise customer catalog courses.
-    """
-    pass
 
 
 class CourseDetailSerializer(ImmutableStateSerializer):

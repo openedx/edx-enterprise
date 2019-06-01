@@ -13,8 +13,7 @@ from pytest import mark
 from six import BytesIO
 
 from enterprise.admin import EnterpriseCustomerAdmin
-from enterprise.admin.actions import export_as_csv_action, get_clear_catalog_id_action
-from enterprise.models import EnterpriseCustomer
+from enterprise.admin.actions import export_as_csv_action
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory
 
 
@@ -45,60 +44,6 @@ class DummyFactory(factory.Factory):
     code = 1
     name = "dummy 1"
     description = "description"
-
-
-@mark.django_db
-class TestClearCatalogAction(unittest.TestCase):
-    """
-    Tests for clear_catalog_id action.
-    """
-    def setUp(self):
-        """
-        Provide the necessary moving parts for the tests.
-        """
-        self.action = get_clear_catalog_id_action()
-        self.model_admin_mock = mock.Mock()
-        self.model_admin_mock.model._meta.fields = [
-            self._make_field("code"), self._make_field("name"), self._make_field("description"),
-        ]
-        super(TestClearCatalogAction, self).setUp()
-
-    def test_existing_value_removed(self):
-        """
-        Test that catalog IDs are cleared appropriately.
-        """
-        for _ in range(5):
-            EnterpriseCustomerFactory()
-        query_set = EnterpriseCustomer.objects.all()  # pylint: disable=no-member
-        for customer in query_set:
-            assert customer.catalog is not None
-        self.action(self.model_admin_mock, mock.Mock(), query_set)
-        for customer in query_set:
-            assert customer.catalog is None
-
-    def test_leave_existing_missing_value(self):
-        """
-        Test that already-clear catalog IDs are left alone.
-        """
-        for _ in range(5):
-            EnterpriseCustomerFactory()
-        query_set = EnterpriseCustomer.objects.all()  # pylint: disable=no-member
-        for customer in query_set:
-            assert customer.catalog is not None
-            customer.catalog = None
-            customer.save()
-            assert customer.catalog is None
-        self.action(self.model_admin_mock, mock.Mock(), query_set)
-        for customer in query_set:
-            assert customer.catalog is None
-
-    def _make_field(self, name):
-        """
-        Mock django field.
-        """
-        field = mock.Mock()
-        field.name = name
-        return field
 
 
 @mark.django_db

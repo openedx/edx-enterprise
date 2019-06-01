@@ -94,7 +94,6 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "uuid",
                 "name",
                 "slug",
-                "catalog",
                 "active",
                 "country",
                 "hide_course_original_price",
@@ -143,7 +142,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         ),
     )
     def test_get_all_field_names(self, model, expected_fields):
-        actual_field_names = utils.get_all_field_names(model)
+        actual_field_names = utils.get_all_field_names(model, excluded=['catalog'])
         assert actual_field_names == expected_fields
 
     @ddt.data(

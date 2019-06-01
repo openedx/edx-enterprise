@@ -313,8 +313,6 @@ class ManageLearnersForm(forms.Form):
 class EnterpriseCustomerAdminForm(forms.ModelForm):
     """
     Alternate form for the EnterpriseCustomer admin page.
-
-    This form fetches catalog names and IDs from the course catalog API.
     """
     class Meta:
         model = EnterpriseCustomer
@@ -325,7 +323,6 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "active",
             "customer_type",
             "site",
-            "catalog",
             "enable_data_sharing_consent",
             "enforce_data_sharing_consent",
             "enable_audit_enrollment",
@@ -334,68 +331,6 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "hide_course_original_price",
             "enable_portal_code_management_screen",
         )
-
-    class Media:
-        js = ('enterprise/admin/enterprise_customer.js', )
-
-    def __init__(self, *args, **kwargs):
-        """
-        Initialize the form.
-
-        Substitute a ChoiceField in for the catalog field that would
-        normally be set up as a plain number entry field.
-        """
-        super(EnterpriseCustomerAdminForm, self).__init__(*args, **kwargs)
-
-        self.fields['catalog'] = forms.ChoiceField(
-            choices=self.get_catalog_options(),
-            required=False,
-            # pylint: disable=bad-continuation
-            help_text='<a id="catalog-details-link" href="#" target="_blank" '
-                      'data-url-template="{catalog_admin_change_url}"> View catalog details.</a>'
-                      ' <p style="margin-top:-4px;"><a href="{catalog_admin_add_url}"'
-                      ' target="_blank">Create a new catalog</a></p>'.format(
-                catalog_admin_change_url=utils.get_catalog_admin_url_template(mode='change'),
-                catalog_admin_add_url=utils.get_catalog_admin_url_template(mode='add'))
-        )
-
-    def get_catalog_options(self):
-        """
-        Retrieve a list of catalog ID and name pairs.
-
-        Once retrieved, these name pairs can be used directly as a value
-        for the `choices` argument to a ChoiceField.
-        """
-        # TODO: We will remove the discovery service catalog implementation
-        # once we have fully migrated customer's to EnterpriseCustomerCatalogs.
-        # For now, this code will prevent an admin from creating a new
-        # EnterpriseCustomer with a discovery service catalog. They will have to first
-        # save the EnterpriseCustomer admin form and then edit the EnterpriseCustomer
-        # to add a discovery service catalog.
-        if hasattr(self.instance, 'site'):
-            catalog_api = CourseCatalogApiClient(self.user, self.instance.site)
-        else:
-            catalog_api = CourseCatalogApiClient(self.user)
-        catalogs = catalog_api.get_all_catalogs()
-        # order catalogs by name.
-        catalogs = sorted(catalogs, key=lambda catalog: catalog.get('name', '').lower())
-
-        return BLANK_CHOICE_DASH + [
-            (catalog['id'], catalog['name'],)
-            for catalog in catalogs
-        ]
-
-    def clean(self):
-        """
-        Clean form fields prior to database entry.
-
-        In this case, the major cleaning operation is substituting a None value for a blank
-        value in the Catalog field.
-        """
-        cleaned_data = super(EnterpriseCustomerAdminForm, self).clean()
-        if 'catalog' in cleaned_data and not cleaned_data['catalog']:
-            cleaned_data['catalog'] = None
-        return cleaned_data
 
 
 class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):

@@ -152,9 +152,9 @@ def get_idp_choices():
     return None
 
 
-def get_all_field_names(model):
+def get_all_field_names(model, excluded=None):
     """
-    Return all fields' names from a model.
+    Return all fields' names from a model. Filter out the field names present in `excluded`.
 
     According to `Django documentation`_, ``get_all_field_names`` should become some monstrosity with chained
     iterable ternary nested in a list comprehension. For now, a simpler version of iterating over fields and
@@ -162,7 +162,8 @@ def get_all_field_names(model):
 
     .. _Django documentation: https://docs.djangoproject.com/en/1.8/ref/models/meta/
     """
-    return [f.name for f in model._meta.get_fields()]
+    excluded_fields = excluded or []
+    return [f.name for f in model._meta.get_fields() if f.name not in excluded_fields]
 
 
 def get_catalog_admin_url(catalog_id):

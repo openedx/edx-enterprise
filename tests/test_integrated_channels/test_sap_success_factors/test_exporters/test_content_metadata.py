@@ -32,10 +32,6 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         )
 
         # Mocks
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=str(self.enterprise_customer.uuid),
-            course_run_ids=['course-v1:edX+DemoX+Demo_Course_1']
-        )
         jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
         self.jwt_builder = jwt_builder.start()
         self.addCleanup(jwt_builder.stop)

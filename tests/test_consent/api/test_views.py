@@ -12,6 +12,7 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 
 from consent.api.v1.views import DataSharingConsentView as DSCView
+from enterprise.models import EnterpriseCustomer
 from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
@@ -312,8 +313,18 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.unpack
     def test_consent_api_get_endpoint(self, factory, items, request_body, expected_response_body, expected_status_code):
         """Test an expectation against an action on any Consent API endpoint."""
+        content_filter = {
+            'key': [TEST_COURSE]
+        }
         if factory:
             create_items(factory, items)
+        uuid = items[0].get('enterprise_customer__uuid')
+        if uuid:
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+            factories.EnterpriseCustomerCatalogFactory(
+                enterprise_customer=enterprise_customer,
+                content_filter=content_filter
+            )
         response = self.client.get(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
@@ -413,6 +424,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             uuid=TEST_UUID,
             enforce_data_sharing_consent='at_enrollment'
         )
+        content_filter = {
+            'key': program_courses
+        }
+        factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         for item in items:
             item.update(enterprise_customer=enterprise_customer)
         if factory:
@@ -495,9 +513,16 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             catalog_client_class,
     ):
         """Test the expected behavior of the program consent POST endpoint."""
+        content_filter = {
+            'key': program_courses
+        }
         api_catalog_client = catalog_client_class.return_value
         api_catalog_client.get_program_course_keys.return_value = program_courses
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
+        factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         for item in items:
             item.update(enterprise_customer=enterprise_customer)
         if factory:
@@ -588,6 +613,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         api_catalog_client = catalog_client_class.return_value
         api_catalog_client.get_program_course_keys.return_value = program_courses
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
+        content_filter = {
+            'key': program_courses
+        }
+        factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         for item in items:
             item.update(enterprise_customer=enterprise_customer)
         if factory:
@@ -989,8 +1021,18 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.unpack
     def test_consent_api_post_endpoint(self, factory, items, request_body,
                                        expected_response_body, expected_status_code):
+        content_filter = {
+            'key': [TEST_COURSE]
+        }
         if factory:
             create_items(factory, items)
+        uuid = items[0].get('enterprise_customer__uuid')
+        if uuid:
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+            factories.EnterpriseCustomerCatalogFactory(
+                enterprise_customer=enterprise_customer,
+                content_filter=content_filter
+            )
         response = self.client.post(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
@@ -1381,8 +1423,19 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     @ddt.unpack
     def test_consent_api_delete_endpoint(self, factory, items, request_body,
                                          expected_response_body, expected_status_code):
+        content_filter = {
+            'key': [TEST_COURSE]
+        }
         if factory:
             create_items(factory, items)
+
+        uuid = items[0].get('enterprise_customer__uuid')
+        if uuid:
+            enterprise_customer = EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
+            factories.EnterpriseCustomerCatalogFactory(
+                enterprise_customer=enterprise_customer,
+                content_filter=content_filter
+            )
         response = self.client.delete(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
         # Assert that an enterprise course enrollment exists without consent provided.

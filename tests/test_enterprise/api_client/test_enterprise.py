@@ -32,7 +32,6 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         DRY method for TestEnterpriseApiClient.
         """
         self.enterprise_customer = EnterpriseCustomerFactory(
-            catalog=1,
             name='Veridian Dynamics',
         )
         super(TestEnterpriseApiClient, self).setUp()
@@ -69,24 +68,27 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         """
         Response doesn't get cached when empty.
         """
-        uuid = str(self.enterprise_customer.uuid)
-        api_resource_name = 'enterprise-customer'
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer,
+        )
+        enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
+
+        api_resource_name = 'enterprise_catalogs'
         cache_key = get_cache_key(
             resource=api_resource_name,
             querystring={},
             traverse_pagination=False,
-            resource_id=uuid,
+            resource_id=enterprise_catalog_uuid,
         )
 
         cached_enterprise_api_response = cache.get(cache_key)
         assert cached_enterprise_api_response is None
 
-        self.mock_empty_response('enterprise-customer-courses', uuid)
+        self.mock_empty_response('enterprise-catalogs-detail', enterprise_catalog_uuid)
         client = enterprise_api.EnterpriseApiClient(self.user)
         response = client._load_data(  # pylint: disable=protected-access
             resource=api_resource_name,
-            detail_resource='courses',
-            resource_id=uuid,
+            resource_id=enterprise_catalog_uuid,
         )
         assert not response
 
@@ -113,42 +115,6 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
-    @mock.patch('enterprise.api_client.discovery.get_edx_api_data', mock.Mock())
-    @mock.patch('enterprise.api_client.discovery.JwtBuilder', mock.Mock())
-    def test_get_content_metadata(self):
-        """
-        Verify that the client method `get_content_metadata` works as expected.
-        """
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=course_run_ids
-        )
-
-        api_resource_name = 'enterprise-customer'
-        cache_key = get_cache_key(
-            resource=api_resource_name,
-            querystring={},
-            resource_id=uuid,
-            traverse_pagination=False,
-        )
-        cached_enterprise_api_response = cache.get(cache_key)
-        self.assertIsNone(cached_enterprise_api_response)
-
-        # Verify that by default enterprise client fetches all the course runs associated with the catalog.
-        client = enterprise_api.EnterpriseApiClient(self.user)
-        api_response = client.get_content_metadata(self.enterprise_customer)
-        self._assert_enterprise_courses_api_response(
-            ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2'],
-            api_response,
-            expected_count=2
-        )
-        # Verify the enterprise API was hit twice
-        self._assert_num_requests(2)
-
-    @responses.activate
-    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     def test_get_content_metadata_with_enterprise_catalogs(self):
         """
         Verify that the client method `get_content_metadata` works as expected.
@@ -157,12 +123,6 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
             enterprise_customer=self.enterprise_customer,
         )
         uuid = str(self.enterprise_customer.uuid)
-        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
-
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=course_run_ids
-        )
 
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
@@ -180,7 +140,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         # Verify that by default enterprise client fetches all the course runs associated with the catalog.
         client = enterprise_api.EnterpriseApiClient(self.user)
         course_runs = client.get_content_metadata(self.enterprise_customer)
-        assert len(course_runs) == 5
+        assert len(course_runs) == 3
 
     @responses.activate
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
@@ -189,18 +149,8 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         Verify that the client method `get_content_metadata` returns courses from
         associated EnterpriseCustomerCatalog objects only if EnterpriseCustomer.catalog is set to None.
         """
-        # Remove EnterpriseCustomer.catalog
-        self.enterprise_customer.catalog = None
-        self.enterprise_customer.save()
-
         EnterpriseCustomerCatalogFactory(
             enterprise_customer=self.enterprise_customer,
-        )
-        uuid = str(self.enterprise_customer.uuid)
-        course_run_ids = ['course-v1:edX+DemoX+Demo_Course_1', 'course-v1:edX+DemoX+Demo_Course_2']
-        self.mock_ent_courses_api_with_pagination(
-            enterprise_uuid=uuid,
-            course_run_ids=course_run_ids
         )
 
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
@@ -210,7 +160,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         cache_key = get_cache_key(
             resource=api_resource_name,
             querystring={},
-            resource_id=uuid,
+            resource_id=str(self.enterprise_customer.uuid),
             traverse_pagination=False,
         )
         cached_enterprise_api_response = cache.get(cache_key)

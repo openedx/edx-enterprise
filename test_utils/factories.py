@@ -86,7 +86,6 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     slug = factory.LazyAttribute(lambda x: FAKER.slug())
     active = True
     site = factory.SubFactory(SiteFactory)
-    catalog = factory.LazyAttribute(lambda x: FAKER.random_int(min=0, max=1000000))
     enable_data_sharing_consent = True
     enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
     hide_course_original_price = False

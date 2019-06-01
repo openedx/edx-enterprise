@@ -8,7 +8,6 @@ from hashlib import md5
 
 import responses
 from faker import Factory as FakerFactory
-from opaque_keys.edx.keys import CourseKey
 from rest_framework.reverse import reverse
 from six import text_type
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error,ungrouped-imports
@@ -112,80 +111,6 @@ class EnterpriseMockMixin(object):
         sku = digest.upper()
         return sku
 
-    def mock_ent_courses_api_with_pagination(self, enterprise_uuid, course_run_ids):
-        """
-        DRY function to register enterprise courses API with pagination.
-        """
-        for course_index, course_run_id in enumerate(course_run_ids):
-            offset = course_index + 1
-            course_run_key = CourseKey.from_string(course_run_id)
-            mocked_course_data = {
-                'enterprise_id': enterprise_uuid,
-                'catalog_id': 1,
-                'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
-                'tpa_hint': 'testshib',
-                'key': '{org}+{course}'.format(org=course_run_key.org, course=course_run_key.course),
-                'aggregation_key': 'courserun:{org}+{course}'.format(
-                    org=course_run_key.org, course=course_run_key.course
-                ),
-                'content_type': 'courserun',
-                'title': 'edX Demonstration Course',
-                'short_description': None,
-                'full_description': None,
-                'image': None,
-                'video': None,
-                'marketing_url': None,
-                'subjects': [],
-                'prerequisites': [],
-                'expected_learning_items': [],
-                'sponsors': [],
-                'level_type': None,
-                'owners': [
-                    {
-                        'uuid': FakerFactory.create().uuid4(),  # pylint: disable=no-member
-                        'description': None,
-                        'tags': [],
-                        'name': '',
-                        'homepage_url': None,
-                        'key': 'edX',
-                        'certificate_logo_image_url': None,
-                        'marketing_url': None,
-                        'logo_image_url': None,
-                    }
-                ],
-                'course_runs': [
-                    self.build_fake_enterprise_course_detail(enterprise_uuid, course_run_key)
-                ],
-            }
-
-            next_page_url = None
-            if offset < len(course_run_ids):
-                # Not a last page so there will be more courses for another page
-                next_page_url = self.build_enterprise_api_url(
-                    'enterprise-customer-courses', enterprise_uuid, limit=1, offset=offset
-                )
-
-            previous_page_url = None
-            if course_index != 0:
-                # Not a first page so there will always be courses on previous page
-                previous_page_url = self.build_enterprise_api_url(
-                    'enterprise-customer-courses', enterprise_uuid, limit=1, offset=course_index
-                )
-
-            paginated_api_response = {
-                'count': len(course_run_ids),
-                'next': next_page_url,
-                'previous': previous_page_url,
-                'results': [mocked_course_data]
-            }
-            responses.add(
-                responses.GET,
-                url=self.build_enterprise_api_url('enterprise-customer-courses', enterprise_uuid),
-                json=paginated_api_response,
-                status=200,
-                content_type='application/json',
-            )
-
     def mock_enterprise_customer_catalogs(self, enterprise_catalog_uuid):
         """
         DRY function to register enterprise customer catalog API.
@@ -201,13 +126,13 @@ class EnterpriseMockMixin(object):
             content_type='application/json',
         )
 
-    def mock_ent_courses_api_with_error(self, enterprise_uuid):
+    def mock_enterprise_catalogs_with_error(self, enterprise_uuid):
         """
-        DRY function to register enterprise courses API to return error response.
+        DRY function to register enterprise catalogs API to return error response.
         """
         responses.add(
             responses.GET,
-            url=self.build_enterprise_api_url('enterprise-customer-courses', enterprise_uuid),
+            url=self.build_enterprise_api_url('enterprise-catalogs-detail', enterprise_uuid),
             json={},
             status=500,
             content_type='application/json',

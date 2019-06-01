@@ -25,7 +25,6 @@ router.register(
     views.EnterpriseCustomerEntitlementViewSet,
     'enterprise-customer-entitlement',
 )
-router.register("catalogs", views.EnterpriseCourseCatalogViewSet, 'catalogs')
 router.register(
     "enterprise_customer_reporting",
     views.EnterpriseCustomerReportingConfigurationViewSet,

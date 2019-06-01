@@ -33,10 +33,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         )
 
         # Mocks
-        self.mock_ent_courses_api_with_pagination(
-            str(self.enterprise_customer_catalog.enterprise_customer.uuid),
-            ['course-v1:edX+DemoX+Demo_Course']
-        )
         self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))
         jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
         self.jwt_builder = jwt_builder.start()
