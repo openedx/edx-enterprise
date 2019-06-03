@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.7] - 2019-06-11
+--------------------
+
+* added enable_audit_data_reporting in EnterpriseCustomerSerializer
+
 [1.6.6] - 2019-06-10
 --------------------
 

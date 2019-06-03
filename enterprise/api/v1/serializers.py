@@ -116,7 +116,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'uuid', 'name', 'slug', 'active', 'site', 'enable_data_sharing_consent',
             'enforce_data_sharing_consent', 'branding_configuration', 'enterprise_customer_entitlements',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
-            'enable_portal_code_management_screen', 'sync_learner_profile_data',
+            'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting'
         )
 
     site = SiteSerializer()
