@@ -108,6 +108,7 @@ ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
 # context to give access to all resources
 ALL_ACCESS_CONTEXT = '*'
 
+# this constant should not be used anymore as it is marked for removal
 ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH = 'enterprise_role_based_access_control'
 
 OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'

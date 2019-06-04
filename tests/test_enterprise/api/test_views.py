@@ -21,8 +21,6 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
     urlsplit,
     urlunsplit,
 )
-from waffle.models import Switch
-from waffle.testutils import override_switch
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
@@ -34,7 +32,6 @@ from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
-    ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH,
 )
 from enterprise.models import (
     EnterpriseCourseEnrollment,
@@ -120,7 +117,6 @@ def side_effect(url, query_parameters):
 
 @ddt.ddt
 @mark.django_db
-@override_switch(ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, active=True)
 class TestEnterpriseAPIViews(APITest):
     """
     Tests for enterprise api views.
@@ -2119,8 +2115,6 @@ class TestEnterpriseAPIViews(APITest):
         """
         Test that role base permissions works as expected.
         """
-        Switch.objects.update_or_create(name=ENTERPRISE_ROLE_BASED_ACCESS_CONTROL_SWITCH, defaults={'active': True})
-
         user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
         user.set_password('test_password')  # pylint: disable=no-member
         user.save()  # pylint: disable=no-member
