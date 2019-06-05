@@ -28,6 +28,7 @@ from integrated_channels.sap_success_factors.transmitters.learner_data import Sa
 LOGGER = getLogger(__name__)
 
 
+# pylint: disable=feature-toggle-needs-doc
 @python_2_unicode_compatible
 class SAPSuccessFactorsGlobalConfiguration(ConfigurationModel):
     """

@@ -23,6 +23,7 @@ from integrated_channels.integrated_channel.models import EnterpriseCustomerPlug
 LOGGER = getLogger(__name__)
 
 
+# pylint: disable=feature-toggle-needs-doc
 @python_2_unicode_compatible
 class DegreedGlobalConfiguration(ConfigurationModel):
     """

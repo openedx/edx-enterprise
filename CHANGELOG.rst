@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.4] - 2019-06-05
+--------------------
+
+* Upgrade packages to get latest edx-drf-extensions version.
+
 [1.6.3] - 2019-06-04
 --------------------
 
