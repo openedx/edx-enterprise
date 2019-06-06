@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.5] - 2019-06-06
+--------------------
+
+* Use edx-rbac functions and pin edx-rbac so that we can continue to release edx-enterprise.
+
 [1.6.4] - 2019-06-05
 --------------------
 
