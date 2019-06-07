@@ -46,6 +46,7 @@ class DataSharingConsentQuerySet(models.query.QuerySet):
         This customizes the queryset to return an instance of ``ProxyDataSharingConsent`` when
         the searched-for ``DataSharingConsent`` instance does not exist.
         """
+        # TODO: ENT-2010
         original_kwargs = kwargs.copy()
         if 'course_id' in kwargs:
             try:
