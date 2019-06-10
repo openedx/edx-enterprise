@@ -21,7 +21,10 @@ def send_course_enrollment_statement(lrs_configuration, course_enrollment):
          course_enrollment (CourseEnrollment): Course enrollment object.
     """
     user_details = LearnerInfoSerializer(course_enrollment.user)
-    course_details = CourseInfoSerializer(course_enrollment.course)
+    course_details = CourseInfoSerializer(
+        course_enrollment.course,
+        context={'site': lrs_configuration.enterprise_customer.site}
+    )
 
     statement = LearnerCourseEnrollmentStatement(
         course_enrollment.user,
@@ -43,7 +46,10 @@ def send_course_completion_statement(lrs_configuration, user, course_overview, c
          course_grade (CourseGrade): course grade object.
     """
     user_details = LearnerInfoSerializer(user)
-    course_details = CourseInfoSerializer(course_overview)
+    course_details = CourseInfoSerializer(
+        course_overview,
+        context={'site': lrs_configuration.enterprise_customer.site}
+    )
 
     statement = LearnerCourseCompletionStatement(
         user,

@@ -5,11 +5,20 @@ Serializers for xAPI data.
 """
 from __future__ import absolute_import, unicode_literals
 
+from logging import getLogger
+
+from edx_django_utils.cache import TieredCache
 from rest_framework import serializers
 
+from django.core.exceptions import ImproperlyConfigured
+
 from enterprise.api.v1.serializers import ImmutableStateSerializer
+from enterprise.api_client.discovery import CourseCatalogApiServiceClient
 from enterprise.models import EnterpriseCustomerUser
-from integrated_channels.utils import strfdelta
+from enterprise.utils import get_cache_key
+
+LOGGER = getLogger(__name__)
+CACHE_TIMEOUT = 3600
 
 
 class LearnerInfoSerializer(ImmutableStateSerializer):
@@ -83,7 +92,23 @@ class CourseInfoSerializer(ImmutableStateSerializer):
         Returns:
             (timedelta): Duration of a course.
         """
-        duration = obj.end - obj.start if obj.start and obj.end else None
-        if duration:
-            return strfdelta(duration, '{W} weeks {D} days.')
-        return ''
+        course_run = None
+        duration = None
+        site = self.context.get('site')
+        if site:
+            cache_key = get_cache_key(course_id=obj.id, site=site)
+            cached_response = TieredCache.get_cached_response(cache_key)
+            if cached_response.is_found:
+                course_run = cached_response.value
+            else:
+                try:
+                    _, course_run = CourseCatalogApiServiceClient(site).get_course_and_course_run(str(obj.id))
+                    TieredCache.set_all_tiers(cache_key, course_run, CACHE_TIMEOUT)
+                except ImproperlyConfigured:
+                    LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
+        if course_run and course_run.get('max_effort') and course_run.get('weeks_to_complete'):
+            duration = '{effort} hours per week for {weeks} weeks.'.format(
+                effort=course_run['max_effort'],
+                weeks=course_run['weeks_to_complete']
+            )
+        return duration or ''
