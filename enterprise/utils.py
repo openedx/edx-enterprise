@@ -709,7 +709,9 @@ def parse_datetime_handle_invalid(datetime_value):
     Return the parsed version of a datetime string. If the string is invalid, return None.
     """
     try:
-        return parse_datetime(datetime_value).replace(tzinfo=pytz.UTC)
+        if not isinstance(datetime_value, datetime.datetime):
+            datetime_value = parse_datetime(datetime_value)
+        return datetime_value.replace(tzinfo=pytz.UTC)
     except TypeError:
         return None
 
@@ -779,6 +781,19 @@ def get_active_course_runs(course, users_all_enrolled_courses):
     return [course_run for course_run in course['course_runs'] if course_run['key'] in enrolled_course_run_ids]
 
 
+def is_course_run_about_to_end(current_course_run):
+    """
+    Return False if end - now > course run's weeks to complete otherwise True.
+    """
+    about_to_end = True
+    now = datetime.datetime.now(pytz.UTC)
+    if current_course_run:
+        end_date = parse_datetime_handle_invalid(current_course_run.get('end'))
+        if end_date and (end_date - now).days > current_course_run.get('weeks_to_complete', 0) * 7:
+            about_to_end = False
+    return about_to_end
+
+
 def get_current_course_run(course, users_active_course_runs):
     """
     Return the current course run on the following conditions.
@@ -787,8 +802,9 @@ def get_current_course_run(course, users_active_course_runs):
     Otherwise it will check the following logic:
     - Course run is enrollable (see is_course_run_enrollable)
     - Course run has a verified seat and the upgrade deadline has not expired.
-    - Course run start date is closer to now than any other enrollable/upgradeable course runs.
-    - If no enrollable/upgradeable course runs, return course run with most recent start date.
+    - If no enrollable/upgradeable course runs, then select all the course runs.
+    - After filtering the course runs checks whether the filtered course run is about to close or not
+    if yes then return the next course run or the current one.
     """
     current_course_run = None
     filtered_course_runs = []
@@ -806,7 +822,15 @@ def get_current_course_run(course, users_active_course_runs):
             filtered_course_runs = all_course_runs
 
         if filtered_course_runs:
-            current_course_run = get_closest_course_run(filtered_course_runs)
+            current_course_runs = [
+                course_run for course_run in filtered_course_runs if course_run['availability'] == 'Current'
+            ]
+            current_course_run = current_course_runs[0] if current_course_runs else None
+            if is_course_run_about_to_end(current_course_run):
+                starting_soon_course_runs = [
+                    course_run for course_run in filtered_course_runs if course_run['availability'] == 'Starting Soon'
+                ] or filtered_course_runs
+                current_course_run = get_closest_course_run(starting_soon_course_runs)
     return current_course_run
 
 
