@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.6] - 2019-06-10
+--------------------
+
+* Use OAuth2AuthenticationAllowInactiveUser as oauth2 authentication instead of BearerAuthentication for course-list API.
+
 [1.6.5] - 2019-06-06
 --------------------
 
