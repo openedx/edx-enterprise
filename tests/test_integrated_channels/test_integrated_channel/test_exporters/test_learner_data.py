@@ -145,9 +145,12 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_instructor_paced_no_certificate(
-            self, mock_certificate_api, mock_course_api, mock_enrollment_api
+            self, mock_course_catalog_api, mock_certificate_api, mock_course_api, mock_enrollment_api
     ):
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
@@ -209,9 +212,12 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_instructor_paced_with_certificate(
-            self, mock_certificate_api, mock_course_api, mock_enrollment_api
+            self, mock_course_catalog_api, mock_certificate_api, mock_course_api, mock_enrollment_api
     ):
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
@@ -253,16 +259,25 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    def test_learner_data_self_paced_no_grades(self, mock_course_api, mock_grades_api, mock_enrollment_api):
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_learner_data_self_paced_no_grades(
+            self,
+            mock_course_catalog_api,
+            mock_course_api,
+            mock_grades_api,
+            mock_enrollment_api,
+    ):
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
 
-        # Return instructor-paced course details
-        mock_course_api.return_value.get_course_details.return_value = dict(
-            pacing='self',
-        )
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
+        # Return self-paced course details
+        mock_course_api.return_value.get_course_details.return_value = {
+            'pacing': 'self',
+        }
 
         # Mock grades data not found
         mock_grades_api.return_value.get_course_grade.side_effect = HttpNotFoundError(
@@ -303,12 +318,24 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    def test_learner_data_self_paced_course(self, passing, end_date, expected_completion, expected_grade,
-                                            mock_course_api, mock_grades_api, mock_enrollment_api):
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_learner_data_self_paced_course(
+            self,
+            passing,
+            end_date,
+            expected_completion,
+            expected_grade,
+            mock_course_catalog_api,
+            mock_course_api,
+            mock_grades_api,
+            mock_enrollment_api
+    ):
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
+
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
         # Mock self-paced course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -349,9 +376,19 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_multiple_courses(
-            self, pacing, grade, mock_course_api, mock_grades_api, mock_certificate_api, mock_enrollment_api
+            self,
+            pacing,
+            grade,
+            mock_course_catalog_api,
+            mock_course_api,
+            mock_grades_api,
+            mock_certificate_api,
+            mock_enrollment_api
     ):
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
         enrollment1 = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
@@ -468,16 +505,20 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_audit_data_reporting(
             self,
             enable_audit_enrollment,
             enable_reporting,
             mode,
             expected_data_len,
+            mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
             mock_enrollment_api
     ):
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,

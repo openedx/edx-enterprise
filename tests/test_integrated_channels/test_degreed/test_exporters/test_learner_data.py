@@ -17,6 +17,7 @@ from django.utils import timezone
 
 from integrated_channels.degreed.exporters.learner_data import DegreedLearnerExporter
 from test_utils import factories
+from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
 
 
 @mark.django_db
@@ -55,6 +56,11 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         self.tpa_client = tpa_client_mock.start()
         self.tpa_client.return_value.get_remote_id.return_value = 'fake-remote-id'
         self.addCleanup(tpa_client_mock.stop)
+
+        course_catalog_api_client_mock = mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+        self.course_catalog_client = course_catalog_api_client_mock.start()
+        setup_course_catalog_api_client_mock(self.course_catalog_client)
+        self.addCleanup(course_catalog_api_client_mock.stop)
         super(TestDegreedLearnerExporter, self).setUp()
 
     @ddt.data(

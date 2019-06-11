@@ -8,7 +8,7 @@ from __future__ import absolute_import, unicode_literals
 from django.apps import apps
 
 from consent.models import ProxyDataSharingConsent
-from enterprise.api_client.discovery import CourseCatalogApiServiceClient
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.utils import get_enterprise_customer
 
 
@@ -59,7 +59,7 @@ def get_program_data_sharing_consent(username, program_uuid, enterprise_customer
     :return: The data sharing consent object
     """
     enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
-    discovery_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+    discovery_client = get_course_catalog_api_service_client(enterprise_customer.site)
     course_ids = discovery_client.get_program_course_keys(program_uuid)
     child_consents = (
         get_data_sharing_consent(username, enterprise_customer_uuid, course_id=individual_course_id)

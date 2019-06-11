@@ -156,7 +156,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         """
         assert factories.EnterpriseCustomerFactory().identity_provider is None
 
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_catalog_contains_course_with_enterprise_customer_catalog(self, mock_catalog_api_class):
         """
         Test EnterpriseCustomer.catalog_contains_course with a related EnterpriseCustomerCatalog.
@@ -1029,7 +1029,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_catalog.save()
         assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
 
-    @mock.patch('enterprise.models.CourseCatalogApiServiceClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_get_paginated_content_uses_total_count_from_response(self, mock_catalog_api_class):
         """
         Test EnterpriseCustomerCatalog.get_paginated_content should use the count value

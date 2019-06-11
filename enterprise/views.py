@@ -32,7 +32,7 @@ from django.views.generic import View
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from enterprise import constants, messages
-from enterprise.api_client.discovery import CourseCatalogApiServiceClient
+from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
@@ -184,9 +184,12 @@ class GrantDataSharingPermissions(View):
         """
         Return whether the input course or program exist.
         """
-        course_exists = course_id and CourseApiClient().get_course_details(course_id)
-        program_exists = program_uuid and CourseCatalogApiServiceClient().program_exists(program_uuid)
-        return course_exists or program_exists
+        try:
+            course_exists = course_id and CourseApiClient().get_course_details(course_id)
+            program_exists = program_uuid and get_course_catalog_api_service_client().program_exists(program_uuid)
+            return course_exists or program_exists
+        except ImproperlyConfigured:
+            return False
 
     def get_default_context(self, enterprise_customer, platform_name):
         """
@@ -355,7 +358,7 @@ class GrantDataSharingPermissions(View):
             context_data.update({'course_id': course_id, 'course_specific': True})
             if not self.preview_mode:
                 try:
-                    catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+                    catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
                 except ImproperlyConfigured:
                     raise Http404
 
@@ -378,6 +381,60 @@ class GrantDataSharingPermissions(View):
                 'program_uuid': program_uuid,
                 'program_specific': True,
             })
+        return context_data
+
+    def get_page_language_context_data(
+            self,
+            course_id,
+            enterprise_customer,
+            success_url,
+            failure_url,
+            request,
+            platform_name
+    ):
+        """
+        Return a dict of data for the language on the page.
+        """
+        item = 'course' if course_id else 'program'
+        # Translators: bold_start and bold_end are HTML tags for specifying enterprise name in bold text.
+        context_data = {
+            'consent_request_prompt': _(
+                'To access this {item}, you must first consent to share your learning achievements '
+                'with {bold_start}{enterprise_customer_name}{bold_end}.'
+            ).format(
+                enterprise_customer_name=enterprise_customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                item=item,
+            ),
+            'confirmation_alert_prompt': _(
+                'In order to start this {item} and use your discount, {bold_start}you must{bold_end} consent '
+                'to share your {item} data with {enterprise_customer_name}.'
+            ).format(
+                enterprise_customer_name=enterprise_customer.name,
+                bold_start='<b>',
+                bold_end='</b>',
+                item=item,
+            ),
+            'redirect_url': success_url,
+            'failure_url': failure_url,
+            'defer_creation': request.GET.get('defer_creation') is not None,
+            'requested_permissions': [
+                _('your enrollment in this {item}').format(item=item),
+                _('your learning progress'),
+                _('course completion'),
+            ],
+            'policy_link_template': '',
+        }
+        published_only = False if self.preview_mode else True
+        enterprise_consent_page = enterprise_customer.get_data_sharing_consent_text_overrides(
+            published_only=published_only
+        )
+        if enterprise_consent_page:
+            context_data.update(self.get_context_from_db(enterprise_consent_page, platform_name, item, context_data))
+        else:
+            context_data.update(self.get_default_context(enterprise_customer, platform_name))
+
         return context_data
 
     @method_decorator(login_required)
@@ -442,6 +499,20 @@ class GrantDataSharingPermissions(View):
                 consent_required = consent_record.consent_required()
             except AttributeError:
                 consent_required = None
+            except ImproperlyConfigured:
+                error_code = 'ENTGDS004'
+                log_message = (
+                    'CourseCatalogApiServiceClient is improperly configured. '
+                    'Returned error code {error_code} to user {userid} '
+                    'and enterprise_customer {enterprise_customer} '
+                    'for course_id {course_id}'.format(
+                        error_code=error_code,
+                        userid=request.user.id,
+                        enterprise_customer=enterprise_customer.uuid,
+                        course_id=course_id,
+                    )
+                )
+                return render_page_with_error_code_message(request, context_data, error_code, log_message)
 
             if consent_record is None or not consent_required:
                 error_code = 'ENTGDS002'
@@ -509,46 +580,14 @@ class GrantDataSharingPermissions(View):
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
 
-        item = 'course' if course_id else 'program'
-        # Translators: bold_start and bold_end are HTML tags for specifying enterprise name in bold text.
-        context_data.update({
-            'consent_request_prompt': _(
-                'To access this {item}, you must first consent to share your learning achievements '
-                'with {bold_start}{enterprise_customer_name}{bold_end}.'
-            ).format(
-                enterprise_customer_name=enterprise_customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-                item=item,
-            ),
-            'confirmation_alert_prompt': _(
-                'In order to start this {item} and use your discount, {bold_start}you must{bold_end} consent '
-                'to share your {item} data with {enterprise_customer_name}.'
-            ).format(
-                enterprise_customer_name=enterprise_customer.name,
-                bold_start='<b>',
-                bold_end='</b>',
-                item=item,
-            ),
-            'redirect_url': success_url,
-            'failure_url': failure_url,
-            'defer_creation': request.GET.get('defer_creation') is not None,
-            'requested_permissions': [
-                _('your enrollment in this {item}').format(item=item),
-                _('your learning progress'),
-                _('course completion'),
-            ],
-            'policy_link_template': '',
-        })
-        platform_name = context_data['platform_name']
-        published_only = False if self.preview_mode else True
-        enterprise_consent_page = enterprise_customer.get_data_sharing_consent_text_overrides(
-            published_only=published_only
-        )
-        if enterprise_consent_page:
-            context_data.update(self.get_context_from_db(enterprise_consent_page, platform_name, item, context_data))
-        else:
-            context_data.update(self.get_default_context(enterprise_customer, platform_name))
+        context_data.update(self.get_page_language_context_data(
+            course_id=course_id,
+            enterprise_customer=enterprise_customer,
+            success_url=success_url,
+            failure_url=failure_url,
+            request=request,
+            platform_name=context_data['platform_name'],
+        ))
 
         return render(request, 'enterprise/grant_data_sharing_permissions.html', context=context_data)
 
@@ -840,7 +879,7 @@ class CourseEnrollmentView(NonAtomicView):
             course, course_run = enterprise_catalog.get_course_and_course_run(course_run_id)
         else:
             try:
-                course, course_run = CourseCatalogApiServiceClient(
+                course, course_run = get_course_catalog_api_service_client(
                     enterprise_customer.site
                 ).get_course_and_course_run(course_run_id)
             except ImproperlyConfigured:
@@ -1270,7 +1309,7 @@ class ProgramEnrollmentView(NonAtomicView):
         """
         course_run_id = course['course_runs'][0]['key']
         try:
-            catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+            catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
         except ImproperlyConfigured:
             error_code = 'ENTPEV000'
             LOGGER.error(
@@ -1340,7 +1379,7 @@ class ProgramEnrollmentView(NonAtomicView):
         * Determine whether the learner is certificate eligible for the program.
         """
         try:
-            course_catalog_api_client = CourseCatalogApiServiceClient(enterprise_customer.site)
+            course_catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
         except ImproperlyConfigured:
             error_code = 'ENTPEV002'
             LOGGER.error(
@@ -1682,7 +1721,7 @@ class RouterView(NonAtomicView):
         :return: course_run_id
         """
         try:
-            course = CourseCatalogApiServiceClient(enterprise_customer.site).get_course_details(course_key)
+            course = get_course_catalog_api_service_client(enterprise_customer.site).get_course_details(course_key)
         except ImproperlyConfigured:
             raise Http404
 
