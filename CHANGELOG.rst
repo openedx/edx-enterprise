@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.8] - 2019-06-11
+--------------------
+
+* Fix error in enrollment flow caused by the way course keys were parsed.
+
 [1.6.7] - 2019-06-11
 --------------------
 
