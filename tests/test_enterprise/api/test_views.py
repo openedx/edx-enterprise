@@ -495,7 +495,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
-                'enforce_data_sharing_consent': 'at_enrollment',
+                'enforce_data_sharing_consent': 'at_enrollment', 'enable_audit_data_reporting': True,
                 'site__domain': 'example.com', 'site__name': 'example.com',
             }],
             [{
@@ -503,7 +503,7 @@ class TestEnterpriseAPIViews(APITest):
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
-                'enable_audit_enrollment': False, 'identity_provider': None,
+                'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
@@ -535,6 +535,7 @@ class TestEnterpriseAPIViews(APITest):
                     'branding_configuration': None, 'enterprise_customer_entitlements': [],
                     'enable_audit_enrollment': False, 'identity_provider': None,
                     'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
+                    'enable_audit_data_reporting': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
                     },
@@ -590,6 +591,7 @@ class TestEnterpriseAPIViews(APITest):
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
+                'enable_audit_data_reporting': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -757,7 +759,7 @@ class TestEnterpriseAPIViews(APITest):
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
                 'branding_configuration': None, 'enterprise_customer_entitlements': [],
-                'enable_audit_enrollment': False, 'identity_provider': None,
+                'enable_audit_enrollment': False, 'enable_audit_data_reporting': False, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': True,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
