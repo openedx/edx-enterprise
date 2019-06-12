@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 from logging import getLogger
 from smtplib import SMTPException
 
+from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
@@ -75,7 +76,7 @@ class EnterpriseModelViewSet(EnterpriseViewSet):
     Base class for attribute and method definitions common to all view sets.
     """
 
-    filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, UserFilterBackend,)
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend, UserFilterBackend,)
     permission_classes = (permissions.IsAuthenticated, permissions.DjangoModelPermissions,)
     USER_ID_FILTER = 'id'
 
@@ -228,7 +229,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
 
     queryset = models.EnterpriseCustomerUser.objects.all()
-    filter_backends = (filters.OrderingFilter, filters.DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
+    filter_backends = (filters.OrderingFilter, DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
 
     FIELDS = (
         'enterprise_customer', 'user_id',

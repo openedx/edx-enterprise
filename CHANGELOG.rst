@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.9] - 2019-06-12
+--------------------
+
+* Install django-filter so this app is compatible with newer DRF packages.
+
 [1.6.8] - 2019-06-11
 --------------------
 
