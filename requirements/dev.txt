@@ -28,7 +28,7 @@ cryptography==2.4.2
 defusedxml==0.6.0         # via djangorestframework-xml
 diff-cover==0.9.8
 distlib==0.2.9.post0      # via caniusepython3
-django-config-models==0.2.2
+django-config-models==1.0.1
 django-countries==4.6.1
 django-crum==0.7.3        # via edx-rbac
 django-fernet-fields==0.5
