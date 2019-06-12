@@ -1,5 +1,5 @@
 enterprise
-=============================
+==========
 
 .. image:: https://img.shields.io/pypi/v/edx-enterprise.svg
     :target: https://pypi.python.org/pypi/edx-enterprise/
@@ -29,13 +29,6 @@ The ``Open edx Enterprise Service`` app provides enterprise features to the Open
 edX platform.  The majority of these features are structured around the concept
 of an ``Enterprise Customer``, which is an organization or a group of people
 that "consumes" courses published on the Open edX platform.
-
-Overview
---------
-
-The ``README.rst`` file should then provide an overview of the code in this
-repository, including the main components and useful entry points for starting
-to understand the code in more detail.
 
 Documentation
 -------------
