@@ -157,11 +157,6 @@ class EnterpriseCustomer(TimeStampedModel):
             'Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"'
         )
     )
-    catalog = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        help_text=_("Course catalog for the Enterprise Customer.")
-    )
     active = models.BooleanField(default=True)
     country = CountryField(null=True)
     hide_course_original_price = models.BooleanField(
