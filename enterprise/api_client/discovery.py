@@ -11,6 +11,7 @@ from edx_rest_api_client.exceptions import SlumberBaseException
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
+from six.moves.urllib.parse import quote_plus
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
@@ -168,7 +169,7 @@ class CourseCatalogApiClient(object):
         """
 
         try:
-            CourseKey.from_string(course_identifier)
+            course_run_key = CourseKey.from_string(course_identifier)
         except InvalidKeyError:
             # An `InvalidKeyError` is thrown if `course_identifier` is not in the proper format for a course run id.
             # Since `course_identifier` is not a course run id we assume `course_identifier` is the  course id.
@@ -182,7 +183,9 @@ class CourseCatalogApiClient(object):
         if 'course' in course_run_data:
             return course_run_data['course']
 
-        return None
+        # If none of the above methods of deriving the course key work, this will return the course id parsed from the
+        # course identifier (in the above example it would be 'edX+DemoY')
+        return quote_plus(' '.join([course_run_key.org, course_run_key.course]))
 
     def get_course_and_course_run(self, course_run_id):
         """
