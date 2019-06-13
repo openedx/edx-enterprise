@@ -17,7 +17,7 @@ unicodecsv==0.14.1                      # Allows exporting CSV with unicode supp
 Pillow==5.4.1                           # Image manipulation module, required to use ImageField
 django-simple-history==2.7.0            # History for Django models
 edx-rest-api-client==1.9.2              # For accessing the Enrollment API (and possibly other edX APIs)
-django-config-models==0.2.2
+django-config-models==1.0.1
 requests==2.21.0                        # Required for SAPSuccessFactorsAPIClient
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
 testfixtures                            # Mock objects for unit tests and doc tests
