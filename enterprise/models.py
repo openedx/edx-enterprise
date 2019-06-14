@@ -1304,7 +1304,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         updated_content_filter = self.content_filter.copy()
         updated_content_filter[content_id_field_name] = content_id_values
-        response = get_course_catalog_api_service_client().get_catalog_results(
+        response = get_course_catalog_api_service_client(self.enterprise_customer.site).get_catalog_results(
             updated_content_filter,
             traverse_pagination=True
         )
@@ -1319,7 +1319,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         and/or course run ids.
         """
         # Translate any provided course run IDs to course keys.
-        catalog_client = get_course_catalog_api_service_client()
+        catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
         course_keys = {catalog_client.get_course_id(k) for k in content_ids}
 
         content_ids_in_catalog = self.content_filter_ids

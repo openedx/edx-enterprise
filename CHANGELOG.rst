@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[1.6.12] - 2019-06-14
+---------------------
+
+* Updated discovery clients to always call the enterprise customer site if available
+
 [1.6.11] - 2019-06-14
 ---------------------
 
