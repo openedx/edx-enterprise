@@ -947,7 +947,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             return User.objects.filter(username=uname).first()
 
         get_user_from_social_auth_mock.side_effect = mock_get_user_social_auth
-        get_identity_provider_mock.return_value = mock.MagicMock(backend_name='tpa_saml')
+        get_identity_provider_mock.return_value = mock.MagicMock(backend_name='tpa_saml', provider_id='saml-default')
 
         # Now mock SAPSF searchStudent call for learners with pagination
         for response_page, inactive_learner in enumerate(inactive_sap_learners):
@@ -972,14 +972,25 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             )
 
         expected_messages = [
-            'Processing learners to unlink inactive users using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
+            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [0] for '
+            'enterprise customer [{}]'.format(self.enterprise_customer.name),
+            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [500] for '
+            'enterprise customer [{}]'.format(self.enterprise_customer.name),
+            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [1000] for '
+            'enterprise customer [{}]'.format(self.enterprise_customer.name),
+            'Found [{}] SAP inactive learners for enterprise customer [{}]'.format(
+                len(inactive_sap_learners), self.enterprise_customer.name
+            ),
             'Enterprise learner {{{email}}} successfully unlinked from Enterprise '
             'Customer {{Veridian Dynamics}}'.format(email=User.objects.get(username='C-3PO').email),
-            'Learner with email {{{email}}} is not associated with Enterprise '
-            'Customer {{Veridian Dynamics}}'.format(email=User.objects.get(username='Only-Edx-Learner').email),
+            'Learner with email [{}] and SAP student id [Only-Edx-Learner] is not linked with enterprise [{}]'.format(
+                User.objects.get(username='Only-Edx-Learner').email, self.enterprise_customer.name
+            ),
+            'No social auth data found for inactive user with SAP student id [Only-Inactive-Sap-Learner] '
+            'of enterprise customer [{}] with identity provider [saml-default]'.format(self.enterprise_customer.name),
             'Unlink inactive learners task for integrated channel configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>] took [0.0] seconds'
+            '[{}] took [0.0] seconds'.format(self.sapsf)
         ]
         self.assert_info_logs_sap_learners_unlink(expected_messages)
 
@@ -1058,11 +1069,13 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         )
 
         expected_messages = [
-            'Processing learners to unlink inactive users using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Enterprise customer {Veridian Dynamics} has no associated identity provider',
+            'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
+            'SAP SF searchStudent API returned [1] inactive learners of total [1] starting from [0] '
+            'for enterprise customer [{}]'.format(self.enterprise_customer.name),
+            'Found [1] SAP inactive learners for enterprise customer [{}]'.format(self.enterprise_customer.name),
+            'Enterprise customer [{}] has no associated identity provider'.format(self.enterprise_customer.name),
             'Unlink inactive learners task for integrated channel configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>] took [0.0] seconds'
+            '[{}] took [0.0] seconds'.format(self.sapsf)
         ]
         self.assert_info_logs_sap_learners_unlink(expected_messages)
 
@@ -1101,13 +1114,12 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             content_type='application/json',
         )
         expected_messages = [
-            'Processing learners to unlink inactive users using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
             '''SAP searchStudent API for customer Veridian Dynamics '''
             '''and base url http://enterprise.successfactors.com/ returned response with error message '''
             '''"The property 'InvalidProperty', used in '''
             '''a query expression, is not defined in type 'com.sap.lms.odata.Student'." and with error code "None".''',
-            'Enterprise customer {Veridian Dynamics} has no SAPSF inactive learners',
+            'Found [{}] SAP inactive learners for enterprise customer [{}]'.format(0, self.enterprise_customer.name),
         ]
         self.assert_info_logs_sap_learners_unlink(expected_messages)
 

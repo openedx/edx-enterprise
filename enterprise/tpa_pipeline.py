@@ -74,17 +74,21 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     enterprise_customer_user.update_session(request)
 
 
-def get_user_from_social_auth(tpa_provider, tpa_username):
+def get_user_from_social_auth(tpa_provider, user_id):
     """
     Find the LMS user from the LMS model `UserSocialAuth`.
 
     Arguments:
         tpa_provider (third_party_auth.provider): third party auth provider object
-        tpa_username (str): Username returned by the third party auth
+        user_id (str): User id of user in third party LMS
 
     """
+    provider_slug = tpa_provider.provider_id.strip('saml-')
+    social_auth_uid = '{0}:{1}'.format(provider_slug, user_id)
+    # we are filtering by both `provider` and `uid` to make use of provider,uid composite index
+    # filtering only on `uid` makes query extremely slow since we don't have index on `uid`
     user_social_auth = UserSocialAuth.objects.select_related('user').filter(
-        user__username=tpa_username, provider=tpa_provider.backend_name
+        provider=tpa_provider.backend_name, uid=social_auth_uid
     ).first()
 
     return user_social_auth.user if user_social_auth else None
