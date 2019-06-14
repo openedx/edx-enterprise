@@ -14,12 +14,11 @@ instructions.
 1. Open page A
 2. Do thing B
 3. Expect C to happen
-4. If D happend instead - check failed.
+4. If D happened instead - check failed.
 
 **Merge checklist:**
 
-- [ ] Check that the versions of the requirements in the `platform-master.in` file match edx-platform.
-- [ ] New requirements are in the right place (`base.in` if only used in enterprise; in the correct `platform-****.in` files if they're hosted in edx-platform)
+- [ ] New requirements are in the right place (`base.in` if needed in production, even if edx-platform installs it).
 - [ ] Regenerate requirements with `make upgrade && make requirements` (and make sure to fix any errors).
   **DO NOT** just add dependencies to `requirements/*.txt` files.
 - [ ] Called `make static` for webpack bundling if any static content was updated.

@@ -76,15 +76,20 @@ docs: ## generate Sphinx HTML documentation, including API docs
 
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
 PIP_COMPILE = pip-compile --upgrade $(PIP_COMPILE_OPTS)
+CONSTRAINTS = requirements/edx-platform-constraints.txt
 
-upgrade: ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
+upgrade:  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
+	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(CONSTRAINTS)
+	curl -fsSL https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt | grep -v '^-e' >> $(CONSTRAINTS)
 	pip install -q pip-tools
-	$(PIP_COMPILE) -o requirements/dev.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/dev.in requirements/quality.in
-	$(PIP_COMPILE) -o requirements/doc.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/doc.in
-	$(PIP_COMPILE) -o requirements/quality.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/dev.in requirements/quality.in requirements/doc.in requirements/test.in
+	$(PIP_COMPILE) -o requirements/base.txt requirements/base.in
+	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in requirements/quality.in
+	$(PIP_COMPILE) -o requirements/doc.txt requirements/doc.in
+	$(PIP_COMPILE) -o requirements/quality.txt requirements/dev.in requirements/quality.in requirements/doc.in requirements/test.in
 	$(PIP_COMPILE) -o requirements/travis.txt requirements/travis.in
 	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
-	$(PIP_COMPILE) -o requirements/test.txt requirements/base.in requirements/test-$(TARGET_PLATFORM).in requirements/test.in
+	$(PIP_COMPILE) -o requirements/test.txt requirements/test.in
 
 	for platform in $(ALL_PLATFORMS) ; do \
 		$(PIP_COMPILE) -o requirements/test-$$platform.txt requirements/base.in requirements/test-$$platform.in requirements/test.in ; \

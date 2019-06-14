@@ -1,5 +1,7 @@
 # Additional requirements for development of this application
 
+-r base.txt
+
 diff-cover                # Changeset diff test coverage
 edx-lint                  # For updating pylintrc
 edx-i18n-tools            # For i18n_tool dummy

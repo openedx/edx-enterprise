@@ -1,7 +1,9 @@
 # Requirements for code quality checks
 
+-r base.txt
+
 caniusepython3            # Additional Python 3 compatibility pylint checks
-futures==3.1.1            # Used by caniusepython3, locked to allow install on python3
+futures; python_version == "2.7" # Used by caniusepython3, only needed for Python 2
 edx-lint                  # edX pylint rules and plugins
 isort                     # to standardize order of imports
 pycodestyle               # PEP 8 compliance validation
