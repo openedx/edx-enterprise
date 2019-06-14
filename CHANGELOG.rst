@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[1.6.11] - 2019-06-14
+---------------------
+
+* Update the format of course_duration in xAPI payload data.
 
 [1.6.10] - 2019-06-13
 ---------------------

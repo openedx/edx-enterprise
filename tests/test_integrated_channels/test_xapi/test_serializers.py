@@ -6,14 +6,13 @@ Test for xAPI serializers.
 from __future__ import absolute_import, unicode_literals
 
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import ddt
 import mock
 from faker import Factory as FakerFactory
 from pytest import mark
 
-from integrated_channels.utils import strfdelta
 from integrated_channels.xapi.serializers import CourseInfoSerializer, LearnerInfoSerializer
 from test_utils import TEST_COURSE, factories
 
@@ -81,41 +80,23 @@ class TestCourseInfoSerializer(unittest.TestCase):
     """
     Tests for the ``CourseInfoSerializer`` model.
     """
+    def setUp(self):
+        super(TestCourseInfoSerializer, self).setUp()
+        self.x_api_lrs_config = factories.XAPILRSConfigurationFactory()
+
+        discovery_client_class = mock.patch('integrated_channels.xapi.serializers.CourseCatalogApiServiceClient')
+        self.discovery_client = discovery_client_class.start().return_value
+        self.addCleanup(discovery_client_class.stop)
 
     @ddt.data(
         (
-            mock.Mock(
-                **dict(
-                    id=TEST_COURSE,
-                    display_name='Test Course',
-                    short_description=TEST_COURSE_DESCRIPTION,
-                    marketing_url='https://edx.org/edx-test-course',
-                    effort='3-4 weeks',
-                    start=NOW,
-                    end=NOW + timedelta(weeks=3, days=4),
-                )
-            ),
-            dict(
-                course_description=TEST_COURSE_DESCRIPTION,
-                course_title='Test Course',
-                course_duration=strfdelta((NOW + timedelta(weeks=3, days=4)) - NOW, '{W} weeks {D} days.'),
-                course_effort='3-4 weeks',
-                course_details_url='https://edx.org/edx-test-course',
-                course_id=TEST_COURSE,
-            )
-        ),
-        (
-            mock.Mock(
-                **dict(
-                    id=TEST_COURSE,
-                    display_name='Test Course',
-                    short_description=TEST_COURSE_DESCRIPTION,
-                    marketing_url='https://edx.org/edx-test-course',
-                    effort='3-4 weeks',
-                    start=None,
-                    end=None,
-                )
-            ),
+            mock.MagicMock(**dict(
+                id=TEST_COURSE,
+                display_name='Test Course',
+                short_description=TEST_COURSE_DESCRIPTION,
+                marketing_url='https://edx.org/edx-test-course',
+                effort='3-4 weeks',
+            )),
             dict(
                 course_description=TEST_COURSE_DESCRIPTION,
                 course_title='Test Course',
@@ -123,12 +104,50 @@ class TestCourseInfoSerializer(unittest.TestCase):
                 course_effort='3-4 weeks',
                 course_details_url='https://edx.org/edx-test-course',
                 course_id=TEST_COURSE,
+            ),
+            dict()
+        ),
+        (
+            mock.MagicMock(**dict(
+                id=TEST_COURSE,
+                display_name='Test Course',
+                short_description=TEST_COURSE_DESCRIPTION,
+                marketing_url='https://edx.org/edx-test-course',
+                effort='3-4 weeks',
+            )),
+            dict(
+                course_description=TEST_COURSE_DESCRIPTION,
+                course_title='Test Course',
+                course_duration='2 hours per week for 4 weeks.',
+                course_effort='3-4 weeks',
+                course_details_url='https://edx.org/edx-test-course',
+                course_id=TEST_COURSE,
+            ),
+            dict(
+                max_effort=2,
+                weeks_to_complete=4,
             )
         ),
     )
     @ddt.unpack
-    def test_data(self, course_overview, expected_data):
+    @mock.patch('enterprise.api_client.discovery.JwtBuilder')
+    @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
+    @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
+    def test_data(self,
+                  course_overview,
+                  expected_data,
+                  mock_course_run_return,
+                  mock_catalog_integration,
+                  *args):  # pylint: disable=unused-argument
         """
         Verify that serializer data is as expected.
         """
-        assert CourseInfoSerializer(course_overview).data == expected_data
+        mock_integration_config = mock.Mock(enabled=True)
+        mock_catalog_integration.current.return_value = mock_integration_config
+
+        self.discovery_client.get_course_and_course_run.return_value = (course_overview['id'], mock_course_run_return)
+
+        assert CourseInfoSerializer(
+            course_overview,
+            context={'site': self.x_api_lrs_config.enterprise_customer.site}
+        ).data == expected_data
