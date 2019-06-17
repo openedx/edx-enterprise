@@ -182,6 +182,9 @@ class CourseCatalogApiClient(object):
         if 'course' in course_run_data:
             return course_run_data['course']
 
+        LOGGER.info(
+            "Could not find course_key for course identifier [%s].", course_identifier
+        )
         return None
 
     def get_course_and_course_run(self, course_run_id):

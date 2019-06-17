@@ -1322,9 +1322,12 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
         course_keys = {catalog_client.get_course_id(k) for k in content_ids}
 
+        # Remove `None` from set of course_keys if present
+        course_keys = course_keys.difference({None})
+
         content_ids_in_catalog = self.content_filter_ids
         if not content_ids_in_catalog:
-            content_ids_in_catalog = self._filter_members('key', list(course_keys))
+            content_ids_in_catalog = self._filter_members('key', list(course_keys)) if course_keys else set()
 
         return set(content_ids).issubset(content_ids_in_catalog) or course_keys.issubset(content_ids_in_catalog)
 
