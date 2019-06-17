@@ -102,26 +102,33 @@ class SapSuccessFactorsLearnerManger(object):
         integrated channel.
         """
         sap_inactive_learners = self.client.get_inactive_sap_learners()
+        total_sap_inactive_learners = len(sap_inactive_learners) if sap_inactive_learners else 0
         enterprise_customer = self.enterprise_configuration.enterprise_customer
+        LOGGER.info(
+            'Found [%d] SAP inactive learners for enterprise customer [%s]',
+            total_sap_inactive_learners, enterprise_customer.name
+        )
         if not sap_inactive_learners:
-            LOGGER.info(
-                'Enterprise customer {%s} has no SAPSF inactive learners',
-                enterprise_customer.name
-            )
             return
 
         provider_id = enterprise_customer.identity_provider
         tpa_provider = get_identity_provider(provider_id)
         if not tpa_provider:
             LOGGER.info(
-                'Enterprise customer {%s} has no associated identity provider',
+                'Enterprise customer [%s] has no associated identity provider',
                 enterprise_customer.name
             )
             return None
 
         for sap_inactive_learner in sap_inactive_learners:
-            social_auth_user = get_user_from_social_auth(tpa_provider, sap_inactive_learner['studentID'])
+            sap_student_id = sap_inactive_learner['studentID']
+            social_auth_user = get_user_from_social_auth(tpa_provider, sap_student_id)
             if not social_auth_user:
+                LOGGER.info(
+                    'No social auth data found for inactive user with SAP student id [%s] of enterprise '
+                    'customer [%s] with identity provider [%s]',
+                    sap_student_id, enterprise_customer.name, tpa_provider.provider_id
+                )
                 continue
 
             try:
@@ -132,7 +139,8 @@ class SapSuccessFactorsLearnerManger(object):
                 )
             except (EnterpriseCustomerUser.DoesNotExist, PendingEnterpriseCustomerUser.DoesNotExist):
                 LOGGER.info(
-                    'Learner with email {%s} is not associated with Enterprise Customer {%s}',
+                    'Learner with email [%s] and SAP student id [%s] is not linked with enterprise [%s]',
                     social_auth_user.email,
+                    sap_student_id,
                     enterprise_customer.name
                 )

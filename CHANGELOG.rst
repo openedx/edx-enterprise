@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.13] - 2019-06-17
+---------------------
+
+* Improved logging of `unlink_inactive_sap_learners` command and matching social auth user by `uid` field
+
 [1.6.12] - 2019-06-14
 ---------------------
 
