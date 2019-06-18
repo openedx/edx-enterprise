@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.14] - 2019-06-18
+---------------------
+
+* Pass language code instead of language name in languages field of course-list API for cornerstone
+
 [1.6.13] - 2019-06-17
 ---------------------
 

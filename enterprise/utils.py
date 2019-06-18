@@ -878,6 +878,83 @@ def get_default_catalog_content_filter():
     return settings.ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER or DEFAULT_CATALOG_CONTENT_FILTER
 
 
+def get_language_code(language):
+    """
+    Return IETF language tag of given language name.
+
+    - if language is not found in the language map then `en-US` is returned.
+
+    Args:
+        language (str): string language name
+
+    Returns: a language tag (two-letter language code - two letter country code if applicable)
+    """
+    language_map = {
+        "Afrikaans": "af",
+        "Arabic": "ar-SA",
+        "Azeri": "az-AZ",
+        "Belarusian": "be",
+        "Bulgarian": "bg",
+        "Catalan": "ca",
+        "Czech": "cs",
+        "Danish": "da",
+        "German": "de-DE",
+        "Greek": "el",
+        "English": "en-US",
+        "Spanish": "es-ES",
+        "Estonian": "et",
+        "Basque (Basque)": "eu",
+        "Farsi": "fa",
+        "Finnish": "fi",
+        "French": "fr-FR",
+        "Hebrew": "he",
+        "Hindi": "hi",
+        "Croatian": "hr",
+        "Hungarian": "hu",
+        "Indonesian": "id",
+        "Icelandic": "is",
+        "Italian": "it-IT",
+        "Japanese": "ja",
+        "Korean": "ko",
+        "Lithuanian": "lt",
+        "Malay": "ms-MY",
+        "Maltese": "mt",
+        "Dutch": "nl-NL",
+        "Norwegian": "nn-NO",
+        "Polish": "pl",
+        "Portuguese": "pt-BR",
+        "Romanian": "ro",
+        "Russian": "ru",
+        "Sanskrit": "sa",
+        "Sorbian": "sb",
+        "Slovak": "sk",
+        "Slovenian": "sl",
+        "Swedish": "sv-SE",
+        "Swahili": "sw",
+        "Tamil": "ta",
+        "Thai": "th",
+        "Turkish": "tr",
+        "Tsonga": "ts",
+        "Tatar": "tt",
+        "Ukrainian": "uk",
+        "Urdu": "ur",
+        "Uzbek": "uz-UZ",
+        "Vietnamese": "vi",
+        "Xhosa": "xh",
+        "Yiddish": "yi",
+        "Chinese - Mandarin": "zh-CMN",
+        "Chinese - China": "zh-CN",
+        "Chinese - Simplified": "zh-Hans",
+        "Chinese - Traditional": "zh-Hant",
+        "Chinese - Hong Kong SAR": "zh-HK",
+        "Chinese - Macau SAR": "zh-MO",
+        "Chinese - Singapore": "zh-SG",
+        "Chinese - Taiwan": "zh-TW",
+        "Zulu": "zu",
+    }
+    return language_map.get(language, "en-US")
+
+
 def get_enterprise_worker_user():
     """
     Return the user object of enterprise worker user.
