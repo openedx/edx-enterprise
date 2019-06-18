@@ -424,15 +424,15 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     @ddt.data(
         (
             {'languages': ['English']},
-            ['English'],
+            ['en-US'],
         ),
         (
             {'languages': 'undefined'},
-            ['English'],
+            ['en-US'],
         ),
         (
-            {'languages': ['Spanish', 'English']},
-            ['Spanish', 'English'],
+            {'languages': ['Spanish', 'English', 'Japanese']},
+            ['es-ES', 'en-US', 'ja'],
         ),
     )
     @responses.activate

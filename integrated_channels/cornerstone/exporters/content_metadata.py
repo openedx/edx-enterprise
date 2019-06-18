@@ -13,7 +13,7 @@ import pytz
 
 from django.apps import apps
 
-from enterprise.utils import get_closest_course_run
+from enterprise.utils import get_closest_course_run, get_language_code
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
 LOGGER = getLogger(__name__)
@@ -96,7 +96,8 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the languages supported by course or `English` as default if no languages found.
         """
-        return content_metadata_item.get('languages', ['English'])
+        languages = content_metadata_item.get('languages', ['English'])
+        return [get_language_code(language) for language in languages]
 
     def transform_description(self, content_metadata_item):
         """
