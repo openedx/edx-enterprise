@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.15] - 2019-06-18
+---------------------
+
+* Fix error where the search/all/ endpoint in discovery is called with course_key=None
+
 [1.6.14] - 2019-06-18
 ---------------------
 
