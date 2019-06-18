@@ -2,9 +2,6 @@
 
 NODE_BIN := ./node_modules/.bin
 
-ALL_PLATFORMS := master
-TARGET_PLATFORM := master
-
 define BROWSER_PYSCRIPT
 import os, webbrowser, sys
 try:
@@ -90,10 +87,6 @@ upgrade:  ## update the requirements/*.txt files with the latest packages satisf
 	$(PIP_COMPILE) -o requirements/travis.txt requirements/travis.in
 	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
 	$(PIP_COMPILE) -o requirements/test.txt requirements/test.in
-
-	for platform in $(ALL_PLATFORMS) ; do \
-		$(PIP_COMPILE) -o requirements/test-$$platform.txt requirements/base.in requirements/test-$$platform.in requirements/test.in ; \
-	done
 
 requirements.js: ## install JS requirements for local development
 	npm install
