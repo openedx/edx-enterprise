@@ -72,13 +72,16 @@ docs: ## generate Sphinx HTML documentation, including API docs
 	$(BROWSER) docs/_build/html/index.html
 
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
-PIP_COMPILE = pip-compile --upgrade $(PIP_COMPILE_OPTS)
-CONSTRAINTS = requirements/edx-platform-constraints.txt
+PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
+LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
+
+check_pins: ## check that our local copy of edx-platform pins is accurate
+	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
+	curl -fsSL https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt | grep -v '^-e' >> $(LOCAL_EDX_PINS)
+	python requirements/check-pins.py requirements/test-$(TARGET_PLATFORM).in $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
-upgrade:  ## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
-	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(CONSTRAINTS)
-	curl -fsSL https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt | grep -v '^-e' >> $(CONSTRAINTS)
+upgrade: check_pins	## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	pip install -q pip-tools
 	$(PIP_COMPILE) -o requirements/base.txt requirements/base.in
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in requirements/quality.in
