@@ -1,7 +1,5 @@
 # Additional requirements for development of this application
 
--c test-master.in
-
 -r base.txt
 -r doc.txt
 -r test.txt

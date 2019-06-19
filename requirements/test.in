@@ -1,6 +1,5 @@
 # Requirements for test runs.
 
--c test-master.in
 -r base.txt
 
 ddt                       # data-driven tests

@@ -1,6 +1,6 @@
 # Core requirements for using this application that are not provided by edx-platform
 
--c test-master.in
+-r test-master.in
 
 django-object-actions==0.10.0           # Object actions in Django admin
 djangorestframework-xml==1.3.0
