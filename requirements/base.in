@@ -1,46 +1,14 @@
-# Core requirements for using this application.
+# Core requirements for using this application that are not provided by edx-platform
 
--c edx-platform-constraints.txt
+-c test-master.in
 
-django-object-actions               # Object actions in Django admin
-git+https://github.com/edx/django-rest-framework-oauth.git@0a43e8525f1e3048efe4bc70c03de308a277197c#egg=djangorestframework-oauth==1.1.1
-djangorestframework-xml
-django-multi-email-field            # Multi email input field in Django admin
-jsondiff                            # Used to detect content metadata changes
-django-countries
+django-object-actions==0.10.0           # Object actions in Django admin
+djangorestframework-xml==1.3.0
+django-multi-email-field==0.5.1         # Multi email input field in Django admin
+jsondiff==1.1.1                         # Used to detect content metadata changes
+django-countries==4.6.1
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
-django-simple-history
-edx-rbac
+django-simple-history==2.7.0
+edx-rbac==0.2.1
 edx-django-utils
-edx-drf-extensions
-
-celery                                  # run task workers in other locations
-cryptography                            # for random password generation
-django                                  # application server
-djangorestframework                     # rest api extensions for django
-django-fernet-fields                    # fernet symmetric encryption for django model fields, using the cryptography library.
-django-filter                           # http request filters for django and drf
-django-model-utils                      # provides timestampedmodel abstract base class
-django-waffle                           # allows ability to add and control flags and switches for features
-edx-django-oauth2-provider              # edx django oauth2 provider
-edx-drf-extensions                      # edx extensions to django rest framework
-edx-opaque-keys                         # edx plugins for handling course keys
-unicodecsv                              # allows exporting csv with unicode support (a drop-in replacement for built-in csv module)
-pillow                                  # image manipulation module, required to use imagefield
-django-simple-history                   # history for django models
-edx-rest-api-client                     # for accessing the enrollment api (and possibly other edx apis)
-django-config-models
-requests                                # required for sapsuccessfactorsapiclient
-django-waffle                           # allows ability to add and control flags and switches for features
-testfixtures                            # mock objects for unit tests and doc tests
-jsonfield                               # provides a django model field which serializes/deserializes json objects
-rules                                   # for rules based permissions
-
-django-ipware
-bleach
-html5lib
-path.py
-python-dateutil
-pytz
-
-code-annotations
+edx-drf-extensions==2.3.1

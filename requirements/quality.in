@@ -1,6 +1,10 @@
 # Requirements for code quality checks
 
+-c test-master.in
+
 -r base.txt
+-r doc.txt
+-r test.txt
 
 caniusepython3            # Additional Python 3 compatibility pylint checks
 futures; python_version == "2.7" # Used by caniusepython3, only needed for Python 2

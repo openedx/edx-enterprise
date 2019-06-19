@@ -1,5 +1,6 @@
 # Requirements for documentation validation
 
+-c test-master.in
 -r base.txt
 
 doc8                      # reStructuredText style checker
