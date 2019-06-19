@@ -86,7 +86,7 @@ upgrade: check_pins	## update the requirements/*.txt files with the latest packa
 	$(PIP_COMPILE) -o requirements/base.txt requirements/base.in
 	$(PIP_COMPILE) -o requirements/doc.txt requirements/doc.in
 	$(PIP_COMPILE) -o requirements/test.txt requirements/test.in
-	$(PIP_COMPILE) -o requirements/quality.txt requirements/quality.in
+	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
 	$(PIP_COMPILE) -o requirements/travis.txt requirements/travis.in
 	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
 
@@ -94,8 +94,8 @@ requirements.js: ## install JS requirements for local development
 	npm install
 
 requirements: requirements.js ## install development environment requirements
-	pip install -qr requirements/quality.txt --exists-action w
-	pip-sync requirements/base.txt requirements/quality.txt requirements/private.* requirements/test.txt
+	pip install -qr requirements/dev.txt --exists-action w
+	pip-sync requirements/base.txt requirements/dev.txt requirements/private.* requirements/test.txt
 
 jshint: ## run Javascript linting
 	@[ -x ./node_modules/jshint/bin/jshint ] || npm install jshint --save-dev

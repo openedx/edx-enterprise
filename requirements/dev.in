@@ -1,4 +1,4 @@
-# Requirements for code quality checks
+# Additional requirements for development of this application
 
 -c test-master.in
 
@@ -9,7 +9,13 @@
 caniusepython3            # Additional Python 3 compatibility pylint checks
 futures; python_version == "2.7" # Used by caniusepython3, only needed for Python 2
 edx-lint                  # edX pylint rules and plugins
+edx-i18n-tools            # For i18n_tool dummy
 isort                     # to standardize order of imports
+pip-tools                 # Requirements file management
 pycodestyle               # PEP 8 compliance validation
 pydocstyle                # PEP 257 compliance validation
 testfixtures              # Mock objects for unit tests and doc tests
+tox                       # virtualenv management for tests
+tox-battery==0.5.1        # Makes tox aware of requirements file changes (it's experimental, so keep it pinned)
+twine==1.11.0             # Utility for PyPI package uploads
+wheel                     # For generation of wheels for PyPI
