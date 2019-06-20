@@ -1168,6 +1168,13 @@ class TestEnterpriseUtils(unittest.TestCase):
             ),
             False,
         ),
+        (
+            fake_catalog_api.create_course_run_dict(
+                end=DATETIME_NOW + datetime.timedelta(days=20),
+                weeks_to_complete=None
+            ),
+            False,
+        ),
     )
     @ddt.unpack
     def test_is_course_run_about_to_end(self, course_run, expected_boolean):
