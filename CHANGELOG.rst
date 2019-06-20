@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.16] - 2019-06-20
+---------------------
+
+* Capture user attributes sent by cornerstone
+
 [1.6.15] - 2019-06-18
 ---------------------
 

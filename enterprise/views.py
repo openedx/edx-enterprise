@@ -54,6 +54,7 @@ from enterprise.utils import (
     track_enrollment,
     ungettext_min_max,
 )
+from integrated_channels.cornerstone.utils import create_cornerstone_learner_data
 
 try:
     from openedx.core.djangoapps.catalog.utils import get_localized_price_text
@@ -1805,6 +1806,10 @@ class RouterView(NonAtomicView):
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
             kwargs['course_id'] = course_run_id
+
+        # Enrollments through Cornerstone have some params in querystring, need to store those params if exists.
+        if course_key:
+            create_cornerstone_learner_data(request, course_key)
 
         # Ensure that the link is saved to the database prior to making some call in a downstream view
         # which may need to know that the user belongs to an enterprise customer.
