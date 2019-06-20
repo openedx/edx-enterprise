@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.17] - 2019-06-20
+---------------------
+
+* Fixed Server Error on enterprise course enroll url caused by week_to_complete None value
+
 [1.6.16] - 2019-06-20
 ---------------------
 

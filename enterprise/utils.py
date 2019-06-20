@@ -800,7 +800,8 @@ def is_course_run_about_to_end(current_course_run):
     now = datetime.datetime.now(pytz.UTC)
     if current_course_run:
         end_date = parse_datetime_handle_invalid(current_course_run.get('end'))
-        if end_date and (end_date - now).days > current_course_run.get('weeks_to_complete', 0) * 7:
+        weeks_to_complete = current_course_run.get('weeks_to_complete') or 0
+        if end_date and (end_date - now).days > weeks_to_complete * 7:
             about_to_end = False
     return about_to_end
 
