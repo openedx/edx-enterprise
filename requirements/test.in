@@ -1,8 +1,12 @@
 # Requirements for test runs.
 
+-r base.txt
+
 ddt                       # data-driven tests
+diff-cover
 django-model-utils        # Provides TimeStampedModel abstract base class
 factory_boy               # Test factory framework
+flaky                     # rerun flaky tests automatically if they fail, up to a limit
 freezegun                 # Time freezing library
 mock                      # mocking library
 pytest-catchlog           # Show log output for test failures
