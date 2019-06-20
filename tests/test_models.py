@@ -1014,6 +1014,56 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
 
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_contains_courses(self, course_catalog_client_mock):
+        content_ids = [
+            "course-v1:JediAcademy+AppliedTelekinesis+T1",
+            "course-v1:TrantorAcademy+Psychohistory101+T1",
+            "course-v1:StarfleetAcademy+WarpspeedNavigation+T2337",
+            "course-v1:SinhonCompanionAcademy+Calligraphy+TermUnknown",
+            "course-v1:CampArthurCurrie+HeavyWeapons+T2245_5",
+        ]
+        course_catalog_client_mock.return_value.get_course_id.side_effect = content_ids
+        course_catalog_client_mock.return_value.get_catalog_results.return_value = {
+            'results': [{'key': content_id} for content_id in content_ids]
+        }
+
+        enterprise_customer_catalog = EnterpriseCustomerCatalog(
+            uuid=self.faker.uuid4(),  # pylint: disable=no-member
+            enterprise_customer=factories.EnterpriseCustomerFactory()
+        )
+
+        contains_courses = enterprise_customer_catalog.contains_courses(content_ids)
+
+        assert contains_courses is True
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_contains_courses_invalid_content_ids(self, course_catalog_client_mock):
+        """
+        Assert that contains courses returns False if content_ids are invalid.  In this case 'invalid' means that the
+        discovery service cannot find a course for the given course run id.
+        """
+        content_ids = [
+            "course-v1:JediAcademy+AppliedTelekinesis+T1",
+            "course-v1:TrantorAcademy+Psychohistory101+T1",
+            "course-v1:StarfleetAcademy+WarpspeedNavigation+T2337",
+            "course-v1:SinhonCompanionAcademy+Calligraphy+TermUnknown",
+            "course-v1:CampArthurCurrie+HeavyWeapons+T2245_5",
+        ]
+        course_catalog_client_mock.return_value.get_course_id.return_value = None
+        course_catalog_client_mock.return_value.get_catalog_results.return_value = {
+            'results': [{'key': content_id} for content_id in content_ids]
+        }
+
+        enterprise_customer_catalog = EnterpriseCustomerCatalog(
+            uuid=self.faker.uuid4(),  # pylint: disable=no-member
+            enterprise_customer=factories.EnterpriseCustomerFactory()
+        )
+
+        contains_courses = enterprise_customer_catalog.contains_courses(content_ids)
+
+        assert contains_courses is True
+
     def test_title_length(self):
         """
         Test `EnterpriseCustomerCatalog.title` field can take 255 characters.

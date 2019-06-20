@@ -125,6 +125,68 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         assert resource_id is course_run_id
         assert actual_result == response_dict
 
+    def test_get_course_id_from_course_run_id(self):
+        """
+        Verify that get_course_id works when given a valid course_run_id.
+        Here 'valid' means that in the discovery service the course_run_id is associated with a course run
+        and that course run is properly associated with a course.
+        """
+        # Most course_id's are substrings of course_run_id's. Verify this common case.
+        course_id = "JediAcademy+AppliedTelekinesis"
+        course_run_id = "course-v1:JediAcademy+AppliedTelekinesis+T1"
+        self.get_data_mock.return_value = {'course': course_id}
+
+        actual_course_id = self.api.get_course_id(course_run_id)
+
+        assert self.get_data_mock.call_count == 1
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == CourseCatalogApiClient.COURSE_RUNS_ENDPOINT
+        assert resource_id is course_run_id
+        assert actual_course_id == course_id
+
+        # course_id's are not always substrings of course_runs_id's. Verify this edge case.
+        course_id = "JediAcademy+DifferentCourseID"
+        course_run_id = "course-v1:JediAcademy+AppliedTelekinesis+T1"
+        self.get_data_mock.return_value = {'course': course_id}
+
+        actual_course_id = self.api.get_course_id(course_run_id)
+
+        assert self.get_data_mock.call_count == 2
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == CourseCatalogApiClient.COURSE_RUNS_ENDPOINT
+        assert resource_id is course_run_id
+        assert actual_course_id == course_id
+
+    def test_get_course_id_from_invalid_course_run_id(self):
+        """
+        Verify that get_course_id returns None and logs a message when given an invalid course_run_id.
+        Here 'valid' means that in the discovery service the course_run_id is associated with a course run
+        and that course run is properly associated with a course.
+        """
+        course_run_id = "course-v1:JediAcademy+InvalidCourseID+T1"
+        self.get_data_mock.return_value = {}
+
+        actual_course_id = self.api.get_course_id(course_run_id)
+
+        assert self.get_data_mock.call_count == 1
+        resource, resource_id = self._get_important_parameters(self.get_data_mock)
+
+        assert resource == CourseCatalogApiClient.COURSE_RUNS_ENDPOINT
+        assert resource_id is course_run_id
+        assert actual_course_id is None
+
+    def test_get_course_id_from_course_id(self):
+        """
+        Verify that get_course_id returns a course_id when given a course_id.
+        """
+        course_id = "JediAcademy+AppliedTelekinesis"
+
+        actual_course_id = self.api.get_course_id(course_id)
+
+        assert actual_course_id == course_id
+
     @ddt.data(*EMPTY_RESPONSES)
     def test_get_course_run_empty_response(self, response):
         """
