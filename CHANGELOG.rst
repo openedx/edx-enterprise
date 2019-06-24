@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.18] - 2019-06-24
+---------------------
+
+* Changed page size of SAPSF inactive user results from 500 to 1000
+
 [1.6.17] - 2019-06-20
 ---------------------
 
