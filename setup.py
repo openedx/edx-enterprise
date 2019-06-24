@@ -39,6 +39,9 @@ def get_requirements(requirements_file):
             # Skip pure comment lines
             continue
 
+        package, __, __ = package.partition(' #')
+        package = package.strip()
+
         if any(package.startswith(prefix) for prefix in VCS_PREFIXES):
             # VCS reference for dev purposes, expect a trailing comment
             # with the normal requirement
