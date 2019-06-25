@@ -1062,6 +1062,56 @@ class TestEnterpriseUtils(unittest.TestCase):
     @ddt.data(
         (
             {
+                "min_effort": 2,
+                "max_effort": 3,
+                "weeks_to_complete": 3,
+            },
+            '2-3 hours a week for 3 weeks. ',
+        ),
+        (
+            {
+                "min_effort": 0,
+                "max_effort": 3,
+                "weeks_to_complete": 3,
+            },
+            '',
+        ),
+        (
+            {
+                "min_effort": 2,
+                "max_effort": '',
+                "weeks_to_complete": 3,
+            },
+            '',
+        ),
+        (
+            {
+                "min_effort": 2,
+                "max_effort": 2,
+                "weeks_to_complete": None,
+            },
+            '',
+        ),
+        (
+            {
+                "min_effort": '',
+                "max_effort": 0,
+                "weeks_to_complete": None,
+            },
+            '',
+        ),
+
+    )
+    @ddt.unpack
+    def test_get_course_run_duration_info(self, course_run, expected_duration_info):
+        """
+        ``get_course_run_duration_info`` returns the course run duration info
+        """
+        assert utils.get_course_run_duration_info(course_run) == expected_duration_info
+
+    @ddt.data(
+        (
+            {
                 "end": "3000-10-13T13:11:01Z",
                 "enrollment_start": "2014-10-13T13:11:03Z",
                 "enrollment_end": "2999-10-13T13:11:04Z",

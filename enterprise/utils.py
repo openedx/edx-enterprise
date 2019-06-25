@@ -727,6 +727,23 @@ def parse_datetime_handle_invalid(datetime_value):
         return None
 
 
+def get_course_run_duration_info(course_run):
+    """
+    Return course run's duration(str) info.
+    """
+    duration_info = ''
+    min_effort = course_run.get('min_effort')
+    max_effort = course_run.get('max_effort')
+    weeks_to_complete = course_run.get('weeks_to_complete')
+    if min_effort and max_effort and weeks_to_complete:
+        duration_info = "{min_effort}-{max_effort} hours a week for {weeks_to_complete} weeks. ".format(
+            min_effort=str(min_effort),
+            max_effort=str(max_effort),
+            weeks_to_complete=str(weeks_to_complete)
+        )
+    return duration_info
+
+
 def is_course_run_enrollable(course_run):
     """
     Return true if the course run is enrollable, false otherwise.

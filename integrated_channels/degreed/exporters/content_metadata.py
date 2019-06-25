@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from enterprise.utils import get_closest_course_run, get_course_run_duration_info
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
 LOGGER = getLogger(__name__)
@@ -37,10 +38,18 @@ class DegreedContentMetadataExporter(ContentMetadataExporter):  # pylint: disabl
         We choose one value out of the course's full description, short description, and title
         depending on availability and length limits.
         """
+        course_runs = content_metadata_item.get('course_runs')
+        duration_info = get_course_run_duration_info(
+            get_closest_course_run(course_runs)
+        ) if course_runs else ''
         full_description = content_metadata_item.get('full_description') or ''
-        if 0 < len(full_description) <= self.LONG_STRING_LIMIT:  # pylint: disable=len-as-condition
-            return full_description
-        return content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''
+        if full_description and 0 < len(full_description + duration_info) <= self.LONG_STRING_LIMIT:     # pylint: disable=len-as-condition
+            description = full_description
+        else:
+            description = content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''
+        if description:
+            description = "{duration_info}{description}".format(duration_info=duration_info, description=description)
+        return description
 
     def transform_courserun_content_language(self, content_metadata_item):
         """
