@@ -48,26 +48,27 @@ def has_explicit_access_to_dashboard(user, obj):  # pylint: disable=unused-argum
 
 
 @rules.predicate
-def has_implicit_access_to_catalog(user, obj):  # pylint: disable=unused-argument
+def has_implicit_access_to_catalog(user, args):  # pylint: disable=unused-argument
     """
     Check that if request user has implicit access to `ENTERPRISE_CATALOG_ADMIN_ROLE` feature role.
 
     Returns:
         boolean: whether the request user has access or not
     """
-    request = crum.get_current_request()
+    request, obj = args
     decoded_jwt = get_decoded_jwt_from_request(request)
     return request_user_has_implicit_access_via_jwt(decoded_jwt, ENTERPRISE_CATALOG_ADMIN_ROLE, obj)
 
 
 @rules.predicate
-def has_explicit_access_to_catalog(user, obj):
+def has_explicit_access_to_catalog(user, args):
     """
     Check that if request user has explicit access to `ENTERPRISE_CATALOG_ADMIN_ROLE` feature role.
 
     Returns:
         boolean: whether the request user has access or not
     """
+    __, obj = args
     return user_has_access_via_database(
         user,
         ENTERPRISE_CATALOG_ADMIN_ROLE,
