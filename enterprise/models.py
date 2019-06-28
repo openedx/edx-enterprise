@@ -1170,6 +1170,48 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
 
 @python_2_unicode_compatible
+class EnterpriseCatalogQuery(TimeStampedModel):
+    """
+    Stores a re-usable catalog query.
+
+    This stored catalog query used in `EnterpriseCustomerCatalog` objects to build catalog's content_filter field.
+    This is a saved instance of `content_filter` that can be re-used accross different catalogs.
+
+    .. no_pii:
+    """
+
+    title = models.CharField(
+        default='All Content',
+        max_length=255,
+        blank=False,
+        null=False
+    )
+    content_filter = JSONField(
+        default={},
+        blank=True,
+        null=True,
+        load_kwargs={'object_pairs_hook': collections.OrderedDict},
+        help_text=_(
+            "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
+            "specified as a JSON object. An empty JSON object means that all available content items will be "
+            "included in the catalog."
+        )
+    )
+
+    class Meta(object):
+        verbose_name = _("Enterprise Catalog Query")
+        verbose_name_plural = _("Enterprise Catalog Queries")
+        app_label = 'enterprise'
+        ordering = ['created']
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<EnterpriseCatalogQuery '{title}' >".format(title=self.title)
+
+
+@python_2_unicode_compatible
 class EnterpriseCustomerCatalog(TimeStampedModel):
     """
     Store catalog information from course discovery specifically for Enterprises.
@@ -1198,6 +1240,13 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         null=False,
         related_name='enterprise_customer_catalogs',
         on_delete=models.deletion.CASCADE
+    )
+    enterprise_catalog_query = models.ForeignKey(
+        EnterpriseCatalogQuery,
+        blank=True,
+        null=True,
+        related_name='enterprise_customer_catalogs',
+        on_delete=models.deletion.SET_NULL
     )
     content_filter = JSONField(
         default={},

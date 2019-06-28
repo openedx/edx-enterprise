@@ -25,6 +25,7 @@ from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
 from django.utils.dateparse import parse_datetime
+from django.utils.html import format_html
 from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
@@ -35,6 +36,11 @@ try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 except ImportError:
     configuration_helpers = None
+
+try:
+    from openedx.core.djangoapps.catalog.models import CatalogIntegration
+except ImportError:
+    CatalogIntegration = None
 
 try:
     from lms.djangoapps.branding.api import get_url
@@ -981,3 +987,26 @@ def get_enterprise_worker_user():
         return User.objects.get(username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME)
     except User.DoesNotExist:
         return None
+
+
+def discovery_query_url(content_filter):
+    """
+    Return discovery url for preview.
+    """
+    if CatalogIntegration is None:
+        raise NotConnectedToOpenEdX(
+            _(
+                'To get a CatalogIntegration object, this package must be '
+                'installed in an Open edX environment.'
+            )
+        )
+    discovery_root_url = CatalogIntegration.current().get_internal_api_url()
+    disc_url = '{discovery_root_url}{search_all_endpoint}?{query_string}'.format(
+        discovery_root_url=discovery_root_url,
+        search_all_endpoint='search/all/',
+        query_string=urlencode(content_filter, doseq=True)
+    )
+    return format_html(
+        '<a href="{url}" target="_blank">Preview</a>',
+        url=disc_url
+    )
