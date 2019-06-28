@@ -93,6 +93,24 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
         return obj.enterprise_customer.slug
 
 
+class JSONSerializerField(serializers.Field):
+    """ Serializer for JSONField -- required to make field writable"""
+    def to_internal_value(self, data):
+        return data
+    def to_representation(self, value):
+        return value
+
+class EnterpriseCatalogQuerySerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCatalogQuery model.
+    """
+    content_filter = JSONSerializerField()
+
+    class Meta:
+        model = models.EnterpriseCatalogQuery
+        fields = '__all__'
+
+
 class EnterpriseCustomerEntitlementSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomerEntitlement model.

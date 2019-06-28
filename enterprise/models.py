@@ -1170,6 +1170,44 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
 
 @python_2_unicode_compatible
+class EnterpriseCatalogQuery(TimeStampedModel):
+    """
+    Store catalog query.
+
+    .. no_pii:
+    """
+
+    title = models.CharField(
+        default='All Content',
+        max_length=255,
+        blank=False,
+        null=False
+    )
+    content_filter = JSONField(
+        default={},
+        blank=True,
+        null=True,
+        load_kwargs={'object_pairs_hook': collections.OrderedDict},
+        help_text=_(
+            "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
+            "specified as a Json object. An empty Json object means that all available content items will be "
+            "included in the catalog."
+        )
+    )
+
+    class Meta(object):
+        verbose_name = _("Enterprise Catalog Query")
+        verbose_name_plural = _("Enterprise Catalog Queries")
+        app_label = 'enterprise'
+        ordering = ['created']
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<EnterpriseCatalogQuery '{title}' >".format(title=self.title)
+
+@python_2_unicode_compatible
 class EnterpriseCustomerCatalog(TimeStampedModel):
     """
     Store catalog information from course discovery specifically for Enterprises.
@@ -1197,6 +1235,13 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         blank=False,
         null=False,
         related_name='enterprise_customer_catalogs',
+        on_delete=models.deletion.CASCADE
+    )
+    enterprise_catalog_query = models.ForeignKey(
+        EnterpriseCatalogQuery,
+        blank=True,
+        null=True,
+        related_name='enterprise_catalog_queries',
         on_delete=models.deletion.CASCADE
     )
     content_filter = JSONField(

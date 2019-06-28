@@ -39,6 +39,7 @@ from enterprise.admin.views import (
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
@@ -525,6 +526,43 @@ class PendingEnrollmentAdmin(admin.ModelAdmin):
         """
         return False
 
+@admin.register(EnterpriseCatalogQuery)
+class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
+    """
+    Django admin model for EnterpriseCatalogQuery.
+    """
+
+    class Meta(object):
+        model = EnterpriseCatalogQuery
+
+    list_display = (
+        'title',
+        'discovery_query_url'
+    )
+
+    def discovery_query_url(self, obj):
+        """
+        Return discovery url for preview.
+        """
+        if CatalogIntegration is None:
+            raise NotConnectedToOpenEdX(
+                _('To get a CatalogIntegration object, this package must be '
+                  'installed in an Open edX environment.')
+            )
+        discovery_root_url = CatalogIntegration.current().get_internal_api_url()
+        disc_url = '{discovery_root_url}{search_all_endpoint}?{query_string}'.format(
+            discovery_root_url=discovery_root_url,
+            search_all_endpoint='search/all/',
+            query_string=urlencode(obj.content_filter, doseq=True)
+        )
+        return format_html(
+            '<a href="{url}" target="_blank">Preview</a>',
+            url=disc_url
+        )
+    readonly_fields = ('discovery_query_url',)
+    discovery_query_url.allow_tags = True
+    discovery_query_url.short_description = 'Preview Catalog Courses'
+
 
 @admin.register(EnterpriseCustomerCatalog)
 class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
@@ -535,6 +573,9 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
     class Meta(object):
         model = EnterpriseCustomerCatalog
+
+    class Media:
+        js = ('enterprise/admin/enterprise_customer_catalog.js', )
 
     list_display = (
         'uuid_nowrap',
@@ -553,6 +594,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     fields = (
         'title',
         'enterprise_customer',
+        'enterprise_catalog_query',
         'content_filter',
         'enabled_course_modes',
         'publish_audit_enrollment_urls',

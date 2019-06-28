@@ -419,6 +419,15 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
+class EnterpriseCatalogQueryViewSet(EnterpriseReadOnlyModelViewSet):
+    """
+    API views for the ``enterprise-catalog-query`` API endpoint.
+    """
+
+    queryset = models.EnterpriseCatalogQuery.objects.all()
+    serializer_class = serializers.EnterpriseCatalogQuerySerializer
+
+
 class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API views for the ``enterprise-customer-reporting`` API endpoint.

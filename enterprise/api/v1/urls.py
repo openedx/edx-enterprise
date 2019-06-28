@@ -26,6 +26,11 @@ router.register(
     'enterprise-customer-entitlement',
 )
 router.register(
+    "enterprise_catalog_query",
+    views.EnterpriseCatalogQueryViewSet,
+    'enterprise-catalog_query',
+)
+router.register(
     "enterprise_customer_reporting",
     views.EnterpriseCustomerReportingConfigurationViewSet,
     'enterprise-customer-reporting',
