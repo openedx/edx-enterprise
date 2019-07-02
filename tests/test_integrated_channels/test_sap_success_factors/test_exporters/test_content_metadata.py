@@ -38,6 +38,99 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         super(TestSapSuccessFactorsContentMetadataExporter, self).setUp()
 
     @ddt.data(
+        (
+            {
+                "course_runs": [
+                    {
+                        'availability': 'Current',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 100
+                    },
+                    {
+                        'availability': 'Archived',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 50
+                    }
+                ]
+            },
+            100.0,
+            True,
+        ),
+        (
+            {
+                "course_runs": [
+                    {
+                        'availability': 'Archived',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 100
+                    }
+                ]
+            },
+            0.0,
+            True
+        ),
+        (
+            {
+                'course_runs': [
+                    {
+                        'availability': 'Current',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 0.0
+                    }
+                ]
+            },
+            0.0,
+            True
+        ),
+        (
+            {
+                'course_runs': [
+                    {
+                        'availability': 'Current',
+                        'title': 'edX Demonstration Course',
+                        'first_enrollable_paid_seat_price': 100
+                    }
+                ]
+            },
+            0.0,
+            False
+        ),
+        (
+            {
+                'course_runs': [
+                    {
+                        'availability': 'Current',
+                        'title': 'edX Demonstration Course',
+                    }
+                ]
+            },
+            0.0,
+            True
+        ),
+        (
+            {'course_runs': []},
+            0.0,
+            True,
+        ),
+
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_price(self, course_run, expected_price, show_price):
+        """
+        Transforming a price of a current course run.
+        """
+        self.config.show_course_price = show_price
+        self.config.save()
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_price(course_run) == [
+            {
+                'currency': 'USD',
+                'value': expected_price
+            }
+        ]
+
+    @ddt.data(
         {
             'start': '2013-02-05T05:00:00Z',
             'pacing_type': 'instructor_paced',
