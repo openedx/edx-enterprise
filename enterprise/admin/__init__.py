@@ -9,7 +9,6 @@ import json
 from django_object_actions import DjangoObjectActions
 from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
-from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.conf.urls import url
 from django.contrib import admin
@@ -54,12 +53,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import NotConnectedToOpenEdX, get_all_field_names, get_default_catalog_content_filter
-
-try:
-    from openedx.core.djangoapps.catalog.models import CatalogIntegration
-except ImportError:
-    CatalogIntegration = None
+from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -546,7 +540,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'uuid_nowrap',
         'enterprise_customer',
         'title',
-        'discovery_query_url',
+        'catalog_preview_url',
     )
 
     search_fields = (
@@ -564,28 +558,18 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'publish_audit_enrollment_urls',
     )
 
-    def discovery_query_url(self, obj):
+    def catalog_preview_url(self, obj):
         """
-        Return discovery url for preview.
+        Return catalog url for preview.
         """
-        if CatalogIntegration is None:
-            raise NotConnectedToOpenEdX(
-                _('To get a CatalogIntegration object, this package must be '
-                  'installed in an Open edX environment.')
-            )
-        discovery_root_url = CatalogIntegration.current().get_internal_api_url()
-        disc_url = '{discovery_root_url}{search_all_endpoint}?{query_string}'.format(
-            discovery_root_url=discovery_root_url,
-            search_all_endpoint='search/all/',
-            query_string=urlencode(obj.content_filter, doseq=True)
-        )
         return format_html(
             '<a href="{url}" target="_blank">Preview</a>',
-            url=disc_url
+            url=reverse('enterprise-catalogs-detail', kwargs={'pk': obj.uuid})
         )
-    readonly_fields = ('discovery_query_url',)
-    discovery_query_url.allow_tags = True
-    discovery_query_url.short_description = 'Preview Catalog Courses'
+
+    readonly_fields = ('catalog_preview_url',)
+    catalog_preview_url.allow_tags = True
+    catalog_preview_url.short_description = 'Preview Catalog Courses'
 
     def uuid_nowrap(self, obj):
         """
