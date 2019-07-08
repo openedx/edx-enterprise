@@ -5,6 +5,7 @@ Serializers for enterprise api version 1.
 from __future__ import absolute_import, unicode_literals
 
 import copy
+from logging import getLogger
 
 from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
@@ -18,6 +19,8 @@ from enterprise import models, utils
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
+
+LOGGER = getLogger(__name__)
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -159,11 +162,16 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         try:
             user = User.objects.get(username=value)
         except User.DoesNotExist:
+            error_message = ('[Enterprise API] The username for creating an EnterpriseCourseEnrollment'
+                             ' record does not exist. User: {}').format(value)
+            LOGGER.error(error_message)
             raise serializers.ValidationError("User does not exist")
 
         try:
             enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(user_id=user.pk)
         except models.EnterpriseCustomerUser.DoesNotExist:
+            error_message = '[Enterprise API] User has no EnterpriseCustomerUser. User: {}'.format(value)
+            LOGGER.error(error_message)
             raise serializers.ValidationError("User has no EnterpriseCustomerUser")
 
         self.enterprise_customer_user = enterprise_customer_user
@@ -312,6 +320,9 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         try:
             self.user = User.objects.get(username=value)
         except User.DoesNotExist:
+            error_message = ('[Enterprise API] Saving to EnterpriseCustomerUser failed'
+                             ' due to non-existing user. User: {}').format(value)
+            LOGGER.error(error_message)
             raise serializers.ValidationError("User does not exist")
 
         return value
@@ -562,6 +573,20 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                 else:
                     enterprise_customer_user.unenroll(course_run_id)
             except (CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, HttpClientError) as exc:
+                error_message = (
+                    '[Enterprise API] An exception occurred while enrolling the user.'
+                    ' EnterpriseCustomer: {enterprise_customer}, LmsUser: {lms_user}, TpaUser: {tpa_user},'
+                    ' UserEmail: {user_email}, CourseRun: {course_run_id}, CourseMode {course_mode}, Message: {exc}.'
+                ).format(
+                    enterprise_customer=enterprise_customer,
+                    lms_user=lms_user,
+                    tpa_user=tpa_user,
+                    user_email=user_email,
+                    course_run_id=course_run_id,
+                    course_mode=course_mode,
+                    exc=str(exc)
+                )
+                LOGGER.error(error_message)
                 validated_data['detail'] = str(exc)
                 return validated_data
 
@@ -655,6 +680,11 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         enterprise_customer = self.context.get('enterprise_customer')
 
         if not enterprise_customer.catalog_contains_course(value):
+            error_message = ('[Enterprise API] The course run id is not in the catalog for the Enterprise Customer.'
+                             ' EnterpriseCustomer: {enterprise_customer}, CourseRun: {course_run_id}').format(
+                                 course_run_id=value,
+                                 enterprise_customer=enterprise_customer.name)
+            LOGGER.error(error_message)
             raise serializers.ValidationError(
                 'The course run id {course_run_id} is not in the catalog '
                 'for Enterprise Customer {enterprise_customer}'.format(
@@ -673,6 +703,12 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         tpa_user_id = data.get('tpa_user_id')
         user_email = data.get('user_email')
         if not lms_user_id and not tpa_user_id and not user_email:
+            error_message = ('[Enterprise API] ID missing for mapping to an EnterpriseCustomerUser.'
+                             ' LmsUser: {lms_user_id}, TpaUser: {tpa_user_id}, UserEmail: {user_email}').format(
+                                 lms_user_id=lms_user_id,
+                                 tpa_user_id=tpa_user_id,
+                                 user_email=user_email)
+            LOGGER.error(error_message)
             raise serializers.ValidationError(
                 'At least one of the following fields must be specified and map to an EnterpriseCustomerUser: '
                 'lms_user_id, tpa_user_id, user_email'
