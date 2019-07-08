@@ -62,6 +62,7 @@ class ContentMetadataExporter(Exporter):
     #
     # TODO: Move this to the EnterpriseCustomerPluginConfiguration model as a JSONField.
     DATA_TRANSFORM_MAPPING = {}
+    SKIP_KEY_IF_NONE = False
 
     def __init__(self, user, enterprise_configuration):
         """
@@ -116,12 +117,12 @@ class ContentMetadataExporter(Exporter):
                 )
             )
             if transformer:
-                transformed_item[integrated_channel_schema_key] = transformer(content_metadata_item)
+                transformed_value = transformer(content_metadata_item)
             else:
                 # The concrete subclass does not define an override for the given field,
                 # so just use the data key to index the content metadata item dictionary.
                 try:
-                    transformed_item[integrated_channel_schema_key] = content_metadata_item[edx_data_schema_key]
+                    transformed_value = content_metadata_item[edx_data_schema_key]
                 except KeyError:
                     # There may be a problem with the DATA_TRANSFORM_MAPPING on
                     # the concrete subclass or the concrete subclass does not implement
@@ -132,6 +133,12 @@ class ContentMetadataExporter(Exporter):
                         self.enterprise_customer.name,
                         content_metadata_item,
                     )
+                    continue
+
+            if transformed_value is None and self.SKIP_KEY_IF_NONE:
+                continue
+            else:
+                transformed_item[integrated_channel_schema_key] = transformed_value
 
         return transformed_item
 

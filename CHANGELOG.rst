@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.19] - 2019-07-09
+---------------------
+
+* Added ability to skip keys if their value is None for content exporter
+
 [1.6.18] - 2019-06-24
 ---------------------
 

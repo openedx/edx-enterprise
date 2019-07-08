@@ -59,6 +59,32 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     @responses.activate
+    def test_course_list_with_skip_key_if_none_false(self):
+        """
+        Test courses list view produces desired json when SKIP_KEY_IF_NONE is set to False
+        """
+        url = '{path}?ciid={customer_uuid}'.format(
+            path=self.course_list_url,
+            customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
+        )
+        with mock.patch(
+            'integrated_channels.cornerstone.models.CornerstoneContentMetadataExporter.SKIP_KEY_IF_NONE',
+            new_callable=mock.PropertyMock
+
+        ) as mock_skip_key_if_none:
+            mock_skip_key_if_none.return_value = False
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(len(response.data), 3)
+            keys = set([key for item in response.data for key in item.keys()])
+            expected_keys = [
+                "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
+                "Thumbnail", "Duration", "Owners", "Languages", "Subjects",
+            ]
+            for key in expected_keys:
+                self.assertIn(key, keys)
+
+    @responses.activate
     def test_course_list(self):
         """
         Test courses list view produces desired json
@@ -73,7 +99,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         keys = set([key for item in response.data for key in item.keys()])
         expected_keys = [
             "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
-            "Thumbnail", "Duration", "Owners", "Languages", "Subjects",
+            "Thumbnail", "Owners", "Languages", "Subjects",
         ]
         for key in expected_keys:
             self.assertIn(key, keys)
