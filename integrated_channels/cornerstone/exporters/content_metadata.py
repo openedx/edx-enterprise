@@ -38,6 +38,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         'Languages': 'languages',
         'Subjects': 'subjects',
     }
+    SKIP_KEY_IF_NONE = True
 
     def transform_organizations(self, content_metadata_item):
         """
