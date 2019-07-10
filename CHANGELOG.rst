@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.20] - 2019-07-10
+---------------------
+
+* Updated catalog preview URL on enterprise customer catalog admin list display
+
 [1.6.19] - 2019-07-09
 ---------------------
 
