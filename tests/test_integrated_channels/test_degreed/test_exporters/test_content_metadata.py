@@ -112,3 +112,84 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
         """
         exporter = DegreedContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_image(content_metadata_item) == expected_thumbnail_url
+
+    @ddt.data(
+        (
+            {
+                'title': 'edX Demonstration Course',
+                'short_description': 'Some short description.',
+                'full_description': 'Detailed description of edx demo course.',
+                'course_runs': [
+                    {
+                        'start': '2018-02-05T05:00:00Z',
+                        'min_effort': 2,
+                        'max_effort': 4,
+                        'weeks_to_complete': 10
+                    },
+                    {
+                        'start': '2017-02-05T05:00:00Z',
+                        'min_effort': 9,
+                        'max_effort': 10,
+                        'weeks_to_complete': 12
+                    }
+                ]
+            },
+            '2-4 hours a week for 10 weeks. Detailed description of edx demo course.',
+        ),
+        (
+            {
+                'title': 'edX Demonstration Course',
+                'short_description': 'Some short description.',
+                'full_description': '',
+                'course_runs': [
+                    {
+                        'start': '2018-02-05T05:00:00Z',
+                        'min_effort': 2,
+                        'max_effort': 4,
+                        'weeks_to_complete': 10
+                    }
+                ]
+            },
+            '2-4 hours a week for 10 weeks. Some short description.',
+        ),
+        (
+            {
+                'title': 'edX Demonstration Course',
+                'short_description': '',
+                'full_description': '',
+                'course_runs': [
+                    {
+                        'start': '2018-02-05T05:00:00Z',
+                        'min_effort': 2,
+                        'max_effort': 4,
+                        'weeks_to_complete': 10
+                    }
+                ]
+            },
+            '2-4 hours a week for 10 weeks. edX Demonstration Course',
+        ),
+        (
+            {
+                'title': '',
+                'short_description': '',
+                'full_description': '',
+                'course_runs': [
+                    {
+                        'start': '2018-02-05T05:00:00Z',
+                        'min_effort': 2,
+                        'max_effort': 4,
+                        'weeks_to_complete': 10
+                    }
+                ]
+            },
+            '',
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_description(self, content_metadata_item, expected_description):
+        """
+        Test the transform of description on multiple use cases.
+        """
+        exporter = DegreedContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_description(content_metadata_item) == expected_description
