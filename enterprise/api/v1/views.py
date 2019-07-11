@@ -369,6 +369,13 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         enterprise_customer_catalog = self.get_object()
         course = enterprise_customer_catalog.get_course(course_key)
         if not course:
+            error_message = _(
+                '[Enterprise API] CourseKey not found in the Catalog. Course: {course_key}, Catalog: {catalog_id}'
+            ).format(
+                course_key=course_key,
+                catalog_id=enterprise_customer_catalog.uuid,
+            )
+            LOGGER.warning(error_message)
             raise Http404
 
         context = self.get_serializer_context()
@@ -390,6 +397,13 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         enterprise_customer_catalog = self.get_object()
         course_run = enterprise_customer_catalog.get_course_run(course_id)
         if not course_run:
+            error_message = _(
+                '[Enterprise API] CourseRun not found in the Catalog. CourseRun: {course_id}, Catalog: {catalog_id}'
+            ).format(
+                course_id=course_id,
+                catalog_id=enterprise_customer_catalog.uuid,
+            )
+            LOGGER.warning(error_message)
             raise Http404
 
         context = self.get_serializer_context()
@@ -411,6 +425,13 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         enterprise_customer_catalog = self.get_object()
         program = enterprise_customer_catalog.get_program(program_uuid)
         if not program:
+            error_message = _(
+                '[Enterprise API] Program not found in the Catalog. Program: {program_uuid}, Catalog: {catalog_id}'
+            ).format(
+                program_uuid=program_uuid,
+                catalog_id=enterprise_customer_catalog.uuid,
+            )
+            LOGGER.warning(error_message)
             raise Http404
 
         context = self.get_serializer_context()
@@ -532,8 +553,8 @@ class CouponCodesView(APIView):
             return Response(data, status=HTTP_200_OK)
         except SMTPException:
             error_message = _(
-                '[Enterprise API] Failure in sending e-mail to {token_cs_email} for {token_email}'
-                ' from {token_enterprise_name}'
+                '[Enterprise API] Failure in sending e-mail to support.'
+                ' SupportEmail: {token_cs_email}, UserEmail: {token_email}, EnterpriseName: {token_enterprise_name}'
             ).format(
                 token_cs_email=cs_email,
                 token_email=email,

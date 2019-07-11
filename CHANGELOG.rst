@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.6.21] - 2019-07-11
+---------------------
+
+* Added additional logging for enterprise api
+
 [1.6.20] - 2019-07-10
 ---------------------
 
