@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.7.0] - 2019-07-15
+--------------------
+
+* Pin certain constraints from edx-platform so that edx-enterprise will install properly there.
+
 [1.6.23] - 2019-07-15
 ---------------------
 
