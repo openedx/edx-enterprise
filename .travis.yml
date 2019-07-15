@@ -38,10 +38,13 @@ matrix:
       env: TOXENV=pii-annotations
 
 cache:
+  - pip
+  - npm
   - directories:
     - node_modules
 
 install:
+  - pip install -U pip
   - pip install -r requirements/travis.txt
   - npm install
 

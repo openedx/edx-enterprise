@@ -83,7 +83,7 @@ check_pins: ## check that our local copy of edx-platform pins is accurate
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
 upgrade: check_pins	## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	pip install -q pip-tools
-	$(PIP_COMPILE) -o requirements/base.txt requirements/base.in
+	$(PIP_COMPILE) -o requirements/base.txt requirements/base.in requirements/test-master.in
 	$(PIP_COMPILE) -o requirements/doc.txt requirements/doc.in
 	$(PIP_COMPILE) -o requirements/test.txt requirements/test.in
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in

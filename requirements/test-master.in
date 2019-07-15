@@ -12,7 +12,6 @@ django-filter==1.0.4                    # HTTP Request filters for Django and DR
 django-model-utils==3.0.0               # Provides TimeStampedModel abstract base class
 django-waffle==0.12.0                   # Allows ability to add and control flags and switches for features
 edx-django-oauth2-provider==1.3.5       # edx Django OAuth2 provider
-edx-drf-extensions                      # edX extensions to django rest framework
 edx-opaque-keys[django]==1.0.1          # edX plugins for handling course keys
 unicodecsv==0.14.1                      # Allows exporting CSV with unicode support (a drop-in replacement for built-in csv module)
 Pillow==5.4.1                           # Image manipulation module, required to use ImageField
