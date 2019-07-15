@@ -36,7 +36,7 @@ git+https://github.com/edx/django-rest-framework-oauth.git@0a43e8525f1e3048efe4b
 djangorestframework-xml==1.3.0
 djangorestframework==3.7.7
 edx-django-oauth2-provider==1.3.5
-edx-django-utils==1.0.5
+edx-django-utils==2.0.0
 edx-drf-extensions==2.3.1
 edx-opaque-keys[django]==1.0.1
 edx-rbac==0.2.1
@@ -53,7 +53,7 @@ kombu==3.0.37             # via celery
 markupsafe==1.1.1         # via jinja2
 newrelic==4.20.1.121      # via edx-django-utils
 path.py==8.2.1
-pbr==5.3.1                # via stevedore
+pbr==5.4.0                # via stevedore
 pillow==5.4.1
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
 pycparser==2.19           # via cffi

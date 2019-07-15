@@ -26,7 +26,7 @@ coverage==4.5.3           # via pytest-cov
 cryptography==2.7
 ddt==1.2.1
 defusedxml==0.6.0
-diff-cover==2.2.0
+diff-cover==2.3.0
 django-config-models==1.0.1
 django-countries==4.6.1
 django-crum==0.7.3
@@ -44,7 +44,7 @@ git+https://github.com/edx/django-rest-framework-oauth.git@0a43e8525f1e3048efe4b
 djangorestframework-xml==1.3.0
 djangorestframework==3.7.7
 edx-django-oauth2-provider==1.3.5
-edx-django-utils==1.0.5
+edx-django-utils==2.0.0
 edx-drf-extensions==2.3.1
 edx-opaque-keys[django]==1.0.1
 edx-rbac==0.2.1
@@ -73,7 +73,7 @@ newrelic==4.20.1.121
 packaging==19.0           # via pytest
 path.py==8.2.1
 pathlib2==2.3.4           # via importlib-metadata, pytest, pytest-django
-pbr==5.3.1
+pbr==5.4.0
 pillow==5.4.1
 pluggy==0.12.0            # via pytest
 psutil==1.2.1
@@ -87,8 +87,8 @@ pymongo==3.8.0
 pyparsing==2.4.0          # via packaging
 pytest-catchlog==1.2.2
 pytest-cov==2.7.1
-pytest-django==3.5.0
-pytest==4.6.3             # via pytest-catchlog, pytest-cov, pytest-django
+pytest-django==3.5.1
+pytest==4.6.4             # via pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.4.0
 python-slugify==3.0.2
 pytz==2019.1
@@ -109,4 +109,4 @@ unicodecsv==0.14.1
 urllib3==1.25.3
 wcwidth==0.1.7            # via pytest
 webencodings==0.5.1
-zipp==0.5.1               # via importlib-metadata
+zipp==0.5.2               # via importlib-metadata

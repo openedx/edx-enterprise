@@ -23,7 +23,7 @@ scandir==1.10.0           # via pathlib2
 six==1.12.0               # via packaging, pathlib2, tox
 toml==0.10.0              # via tox
 tox-battery==0.5.1
-tox==3.13.0
+tox==3.13.2
 urllib3==1.25.3           # via requests
-virtualenv==16.6.1        # via tox
-zipp==0.5.1               # via importlib-metadata
+virtualenv==16.6.2        # via tox
+zipp==0.5.2               # via importlib-metadata
