@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.7.3] - 2019-07-19
+--------------------
+
+* Change the way we declare dependencies so we can avoid breaking make upgrade in edx-platform.
+
 [1.7.2] - 2019-07-18
 --------------------
 
