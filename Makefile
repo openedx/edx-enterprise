@@ -79,6 +79,7 @@ check_pins: ## check that our local copy of edx-platform pins is accurate
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
 	curl -fsSL https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt | grep -v '^-e' >> $(LOCAL_EDX_PINS)
 	python requirements/check_pins.py requirements/test-master.in $(LOCAL_EDX_PINS)
+	python requirements/check_pins.py requirements/base.txt $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
 upgrade: check_pins	## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
