@@ -320,8 +320,15 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'enrolled_courses',
     )
 
-    list_display = ('username', 'user_email')
+    list_display = ('username', 'user_email', 'get_enterprise_customer')
     search_fields = ('user_id',)
+
+    def get_enterprise_customer(self, obj):
+        """
+        Returns the name of enterprise customer linked with the enterprise customer user.
+        """
+        return obj.enterprise_customer.name
+    get_enterprise_customer.short_description = 'Enterprise Customer'
 
     def get_search_results(self, request, queryset, search_term):
         search_term = search_term.strip()
@@ -652,17 +659,19 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
     def enterprise_customer(self, instance):
         """
-        Return the name of enterprise customer attached to the user.
+        Return the comma separated names of all enterprise customers attached to the user.
 
         Arguments:
             instance (SystemWideEnterpriseUserRoleAssignment): model instance
         """
-        try:
-            enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=instance.user.id)
-        except (ObjectDoesNotExist, MultipleObjectsReturned):
-            return None
-
-        return enterprise_customer_user.enterprise_customer.name
+        enterprise_customers = EnterpriseCustomerUser.objects.filter(
+            user_id=instance.user.id
+        ).values_list(
+            'enterprise_customer__name',
+            flat=True
+        )
+        if enterprise_customers.exists():
+            return ', '.join([enterprise_customer for enterprise_customer in enterprise_customers])
 
     def get_search_results(self, request, queryset, search_term):
         """

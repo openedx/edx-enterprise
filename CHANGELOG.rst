@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.8.1] - 2019-07-22
+--------------------
+
+* Show linked enterprise customer on `Enterprise Customer Learners` and `System wide Enterprise User Role Assignments` admin screen
+
 [1.8.0] - 2019-07-22
 --------------------
 
