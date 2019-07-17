@@ -872,7 +872,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         self.search_student_paginated_url = '{sap_search_student_url}&{pagination_criterion}'.format(
             sap_search_student_url=self.sap_search_student_url,
             pagination_criterion='$count=true&$top={page_size}&$skip={start_at}'.format(
-                page_size=1000,
+                page_size=500,
                 start_at=0,
             ),
         )
@@ -954,13 +954,13 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
             search_student_paginated_url = '{sap_search_student_url}&{pagination_criterion}'.format(
                 sap_search_student_url=self.sap_search_student_url,
                 pagination_criterion='$count=true&$top={page_size}&$skip={start_at}'.format(
-                    page_size=1000,
-                    start_at=1000 * response_page,
+                    page_size=500,
+                    start_at=500 * response_page,
                 )
             )
             sapsf_search_student_response = {
                 u'@odata.metadataEtag': u'W/"17090d86-20fa-49c8-8de0-de1d308c8b55"',
-                u"@odata.count": 1000 * len(inactive_sap_learners),
+                u"@odata.count": 500 * len(inactive_sap_learners),
                 u'value': [{'studentID': inactive_learner}]
             }
             responses.add(
@@ -973,11 +973,11 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
 
         expected_messages = [
             'Processing learners to unlink inactive users using configuration: [{}]'.format(self.sapsf),
-            'SAP SF searchStudent API returned [1] inactive learners of total [3000] starting from [0] for '
+            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [0] for '
             'enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'SAP SF searchStudent API returned [1] inactive learners of total [3000] starting from [1000] for '
+            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [500] for '
             'enterprise customer [{}]'.format(self.enterprise_customer.name),
-            'SAP SF searchStudent API returned [1] inactive learners of total [3000] starting from [2000] for '
+            'SAP SF searchStudent API returned [1] inactive learners of total [1500] starting from [1000] for '
             'enterprise customer [{}]'.format(self.enterprise_customer.name),
             'Found [{}] SAP inactive learners for enterprise customer [{}]'.format(
                 len(inactive_sap_learners), self.enterprise_customer.name
