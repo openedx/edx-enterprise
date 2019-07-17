@@ -284,7 +284,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         all_inactive_learners = self._call_search_students_recursively(
             sap_search_student_url,
             all_inactive_learners=[],
-            page_size=1000,
+            page_size=500,
             start_at=0
         )
         return all_inactive_learners
