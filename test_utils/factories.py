@@ -30,6 +30,7 @@ from enterprise.models import (
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
+    CornerstoneLearnerDataTransmissionAudit,
 )
 from integrated_channels.degreed.models import (
     DegreedEnterpriseCustomerConfiguration,
@@ -88,6 +89,8 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     site = factory.SubFactory(SiteFactory)
     enable_data_sharing_consent = True
     enforce_data_sharing_consent = EnterpriseCustomer.AT_ENROLLMENT
+    enable_audit_enrollment = False
+    enable_audit_data_reporting = False
     hide_course_original_price = False
     country = 'US'
 
@@ -500,6 +503,28 @@ class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFacto
     status = factory.LazyAttribute(lambda x: FAKER.word())
 
 
+class CornerstoneLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``CornerstoneLearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of ``CornerstoneLearnerDataTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``CornerstoneLearnerDataTransmissionAuditFactory``.
+        """
+
+        model = CornerstoneLearnerDataTransmissionAudit
+
+    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+    user_guid = factory.LazyAttribute(lambda x: FAKER.slug())
+    session_token = factory.LazyAttribute(lambda x: FAKER.slug())
+    callback_url = factory.LazyAttribute(lambda x: FAKER.slug())
+    subdomain = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
 class CornerstoneEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
     """
     ``CornerstoneEnterpriseCustomerConfiguration`` factory.
@@ -516,7 +541,7 @@ class CornerstoneEnterpriseCustomerConfigurationFactory(factory.django.DjangoMod
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     active = True
-    cornerstone_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
+    cornerstone_base_url = factory.LazyAttribute(lambda x: FAKER.url())
 
 
 class CornerstoneGlobalConfigurationFactory(factory.django.DjangoModelFactory):
@@ -534,7 +559,9 @@ class CornerstoneGlobalConfigurationFactory(factory.django.DjangoModelFactory):
         model = CornerstoneGlobalConfiguration
 
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+    completion_status_api_path = '/progress'
+    key = factory.LazyAttribute(lambda x: FAKER.slug())
+    secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
     oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     subject_mapping = {
         "Technology": ["Computer Science"],
