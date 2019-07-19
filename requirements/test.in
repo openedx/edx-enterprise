@@ -1,6 +1,6 @@
 # Requirements for test runs.
 
--r base.txt
+-r test-master.txt
 
 ddt                       # data-driven tests
 diff-cover

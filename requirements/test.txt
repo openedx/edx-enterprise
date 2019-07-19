@@ -5,9 +5,9 @@
 #    make upgrade
 #
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
-amqp==1.4.9
+amqp==1.4.9               # via kombu
 aniso8601==7.0.0
-anyjson==0.3.3
+anyjson==0.3.3            # via kombu
 asn1crypto==0.24.0
 atomicwrites==1.3.0       # via pytest
 attrs==19.1.0             # via pytest
@@ -40,10 +40,8 @@ django-simple-history==2.7.0
 django-waffle==0.12.0
 django==1.11.22
 djangorestframework-jwt==1.11.0
-git+https://github.com/edx/django-rest-framework-oauth.git@0a43e8525f1e3048efe4bc70c03de308a277197c#egg=djangorestframework-oauth==1.1.1
 djangorestframework-xml==1.3.0
 djangorestframework==3.7.7
-edx-django-oauth2-provider==1.3.5
 edx-django-utils==2.0.0
 edx-drf-extensions==2.3.1
 edx-opaque-keys[django]==1.0.1
@@ -66,7 +64,7 @@ jinja2==2.10.1
 jsondiff==1.1.1
 jsonfield==2.0.2
 kombu==3.0.37
-markupsafe==1.1.1
+markupsafe==1.1.1         # via jinja2
 mock==3.0.5
 more-itertools==5.0.0     # via pytest
 newrelic==4.20.1.121
@@ -78,8 +76,8 @@ pillow==6.1.0
 pluggy==0.12.0            # via pytest
 psutil==1.2.1
 py==1.8.0                 # via pytest, pytest-catchlog
-pycparser==2.19
-pycryptodomex==3.4.7
+pycparser==2.19           # via cffi
+pycryptodomex==3.8.2      # via pyjwkest
 pygments==2.4.2           # via diff-cover
 pyjwkest==1.3.2
 pyjwt==1.5.2
@@ -99,15 +97,14 @@ rest-condition==1.0.3
 rules==2.0.1
 scandir==1.10.0           # via pathlib2
 semantic-version==2.6.0
-shortuuid==0.5.0
 six==1.11.0
 slumber==0.7.1
 stevedore==1.30.1
 testfixtures==6.10.0
 text-unidecode==1.2       # via faker
 unicodecsv==0.14.1
-unidecode==1.1.1
+unidecode==1.1.1          # via python-slugify
 urllib3==1.23
 wcwidth==0.1.7            # via pytest
-webencodings==0.5.1
+webencodings==0.5.1       # via html5lib
 zipp==0.5.2               # via importlib-metadata

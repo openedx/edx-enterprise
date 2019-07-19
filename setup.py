@@ -83,7 +83,7 @@ base_path = os.path.dirname(__file__)
 
 README = open(os.path.join(base_path, "README.rst")).read()
 CHANGELOG = open(os.path.join(base_path, "CHANGELOG.rst")).read()
-REQUIREMENTS, DEPENDENCY_LINKS = get_requirements(os.path.join(base_path, 'requirements', 'base.txt'))
+REQUIREMENTS, DEPENDENCY_LINKS = get_requirements(os.path.join(base_path, 'requirements', 'base.in'))
 
 setup(
     name="edx-enterprise",

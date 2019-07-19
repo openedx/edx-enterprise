@@ -1,6 +1,6 @@
 # Requirements for documentation validation
 
--r base.txt
+-r test-master.txt
 
 doc8                      # reStructuredText style checker
 edx_sphinx_theme          # edX theme for Sphinx output
