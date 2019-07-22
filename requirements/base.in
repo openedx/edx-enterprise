@@ -27,6 +27,7 @@ edx-django-utils
 edx-drf-extensions
 edx-opaque-keys[django]
 edx-rest-api-client
+edx-rbac
 future
 jsondiff
 jsonfield
@@ -43,4 +44,3 @@ testfixtures
 unicodecsv
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.
-edx-rbac==0.2.1

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.8.0] - 2019-07-22
+--------------------
+
+* Replce edx-rbac jwt utils with edx-drf-extensions jwt utils
+
 [1.7.3] - 2019-07-19
 --------------------
 
