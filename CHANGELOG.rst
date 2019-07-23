@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.8.2] - 2019-07-23
+--------------------
+
+* Log success of coupon code request email send.
+
 [1.8.1] - 2019-07-22
 --------------------
 
