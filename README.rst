@@ -1,5 +1,5 @@
 enterprise
-==========
+===========
 
 .. image:: https://img.shields.io/pypi/v/edx-enterprise.svg
     :target: https://pypi.python.org/pypi/edx-enterprise/
