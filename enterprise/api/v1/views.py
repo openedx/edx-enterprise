@@ -543,13 +543,14 @@ class CouponCodesView(APIView):
             self.OPTIONAL_PARAM_NUMBER_OF_CODES: number_of_codes,
         }
         try:
-            mail.send_mail(
+            messages_sent = mail.send_mail(
                 subject_line,
                 msg_with_codes if number_of_codes else msg_without_codes,
                 from_email_address,
                 [cs_email],
                 fail_silently=False
             )
+            LOGGER.info('[Enterprise API] Coupon code request emails sent: %s', messages_sent)
             return Response(data, status=HTTP_200_OK)
         except SMTPException:
             error_message = _(
