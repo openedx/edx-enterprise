@@ -11,6 +11,7 @@ from logging import getLogger
 from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 
+from django.apps import apps
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -138,7 +139,8 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
         help_text="The provider code that Degreed gives to the content provider."
     )
 
-    history = HistoricalRecords()
+    if 'degreed' in apps.app_configs:
+        history = HistoricalRecords()
 
     class Meta(object):
         app_label = 'degreed'

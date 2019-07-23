@@ -12,6 +12,7 @@ from config_models.models import ConfigurationModel
 from jsonfield import JSONField
 from simple_history.models import HistoricalRecords
 
+from django.apps import apps
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -100,7 +101,8 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
         help_text=_("The base URL used for API requests to Cornerstone, i.e. https://portalName.csod.com")
     )
 
-    history = HistoricalRecords()
+    if 'cornerstone' in apps.app_configs:
+        history = HistoricalRecords()
 
     class Meta(object):
         app_label = 'cornerstone'
