@@ -10,6 +10,7 @@ ENTGDS004 - Course catalog api configuration error
 ENTGDS005 - Required request values missing for action to be carried out
 ENTGDS006 - The course or program with a given id does not exist
 ENTGDS007 - There is no consent record, or consent is not required
+ENTGDS008 - No record found for Enterprise customer
 
 ENTHCE000 - No course modes for the goven course id
 
@@ -20,4 +21,4 @@ ENTPEV003 - No program details available
 ENTPEV004 - No program type available
 
 ENTRV000 - No course_run_id available
-ENTRV001 - No course_run_id available, or course catalog configuration error 
+ENTRV001 - No course_run_id available, or course catalog configuration error

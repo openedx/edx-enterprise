@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.8.6] - 2019-07-25
+--------------------
+
+* Add/Update logs for GrantDataSharingPermissions and DataSharingConsentView views to improve monitoring.
+
 [1.8.5] - 2019-07-25
 --------------------
 
