@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.8.4] - 2019-07-24
+--------------------
+
+* Introduce enterprise catalog queries.
+
 [1.8.3] - 2019-07-24
 --------------------
 
