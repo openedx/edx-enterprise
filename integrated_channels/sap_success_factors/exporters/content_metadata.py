@@ -40,6 +40,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         'content': 'launch_points',
         'revisionNumber': 'revision_number',
         'schedule': 'schedule',
+        'price': 'price',
     }
 
     def transform_provider_id(self, content_metadata_item):  # pylint: disable=unused-argument
@@ -128,6 +129,22 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         Return the schedule of the content item.
         """
         return []
+
+    def transform_price(self, content_metadata_item):
+        """
+        Return the current course run's price.
+        """
+        price = 0.0
+        if self.enterprise_configuration.show_course_price:
+            for course_run in content_metadata_item.get('course_runs', []):
+                if course_run['availability'] == 'Current':
+                    price = course_run.get('first_enrollable_paid_seat_price', 0.0) or 0.0
+        return [
+            {
+                "currency": "USD",
+                "value": price
+            }
+        ]
 
     def transform_courserun_title(self, content_metadata_item):
         """
