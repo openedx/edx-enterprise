@@ -189,7 +189,21 @@ class GrantDataSharingPermissions(View):
             course_exists = course_id and CourseApiClient().get_course_details(course_id)
             program_exists = program_uuid and get_course_catalog_api_service_client().program_exists(program_uuid)
             return course_exists or program_exists
-        except ImproperlyConfigured:
+        except ImproperlyConfigured as error:
+            error_code = 'ENTGDS004'
+            log_message = (
+                '[Enterprise DSC API] Course catalog api configuration error. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'ErrorCode: {error_code}, '
+                'Message: {message}'.format(
+                    course_id=course_id,
+                    program_uuid=program_uuid,
+                    error_code=error_code,
+                    message=error,
+                )
+            )
+            LOGGER.error(log_message)
             return False
 
     def get_default_context(self, enterprise_customer, platform_name):
@@ -360,7 +374,23 @@ class GrantDataSharingPermissions(View):
             if not self.preview_mode:
                 try:
                     catalog_api_client = get_course_catalog_api_service_client(enterprise_customer.site)
-                except ImproperlyConfigured:
+                except ImproperlyConfigured as error:
+                    error_code = 'ENTGDS004'
+                    log_message = (
+                        '[Enterprise DSC API] Course catalog api configuration error. '
+                        'Course: {course_id}, '
+                        'Program: {program_uuid}, '
+                        'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                        'ErrorCode: {error_code}, '
+                        'Message: {message}'.format(
+                            course_id=course_id,
+                            program_uuid=program_uuid,
+                            enterprise_customer_uuid=enterprise_customer.uuid,
+                            error_code=error_code,
+                            message=error,
+                        )
+                    )
+                    LOGGER.error(log_message)
                     raise Http404
 
                 course_run_details = catalog_api_client.get_course_run(course_id)
@@ -439,7 +469,7 @@ class GrantDataSharingPermissions(View):
         return context_data
 
     @method_decorator(login_required)
-    def get(self, request):
+    def get(self, request):  # pylint: disable=too-many-statements
         """
         Render a form to collect user input about data sharing consent.
         """
@@ -452,22 +482,44 @@ class GrantDataSharingPermissions(View):
 
         # Get enterprise_customer to start in case we need to render a custom 404 page
         # Then go through other business logic to determine (and potentially overwrite) the enterprise customer
-        enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
+        try:
+            enterprise_customer = get_enterprise_customer_or_404(enterprise_customer_uuid)
+        except Http404:
+            error_code = 'ENTGDS008'
+            log_message = (
+                '[Enterprise DSC API] No record found for Enterprise customer. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}'.format(
+                    course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    user_id=request.user.id,
+                    error_code=error_code,
+                )
+            )
+            LOGGER.error(log_message)
+            raise
+
         context_data = get_global_context(request, enterprise_customer)
 
         if not self.preview_mode:
             if not self.course_or_program_exist(course_id, program_uuid):
                 error_code = 'ENTGDS000'
                 log_message = (
-                    'Neither the course with course_id: {course_id} '
-                    'or program with {program_uuid} exist for '
-                    'enterprise customer {enterprise_customer_uuid}'
-                    'Error code {error_code} presented to user {userid}'.format(
+                    '[Enterprise DSC API] The course or program with a given id does not exist. '
+                    'Course: {course_id}, '
+                    'Program: {program_uuid}, '
+                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                    'User: {user_id}, '
+                    'ErrorCode: {error_code} '.format(
                         course_id=course_id,
                         program_uuid=program_uuid,
-                        error_code=error_code,
-                        userid=request.user.id,
                         enterprise_customer_uuid=enterprise_customer_uuid,
+                        user_id=request.user.id,
+                        error_code=error_code,
                     )
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -479,19 +531,22 @@ class GrantDataSharingPermissions(View):
                     program_uuid=program_uuid,
                     course_id=course_id
                 )
-            except NotConnectedToOpenEdX as error:
-                error_code = 'ENTGDS001'
+            except ImproperlyConfigured as error:
+                error_code = 'ENTGDS004'
                 log_message = (
-                    'The was a problem with getting the consent record of user {userid} with '
-                    'uuid {enterprise_customer_uuid}. get_data_sharing_consent threw '
-                    'the following NotConnectedToOpenEdX error: {error}'
-                    'for course_id {course_id}.'
-                    'Error code {error_code} presented to user'.format(
-                        userid=request.user.id,
-                        enterprise_customer_uuid=enterprise_customer_uuid,
-                        error=error,
-                        error_code=error_code,
+                    '[Enterprise DSC API] Course catalog api configuration error. '
+                    'Course: {course_id}, '
+                    'Program: {program_uuid}, '
+                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                    'User: {user_id}, '
+                    'ErrorCode: {error_code}, '
+                    'Message: {message}'.format(
                         course_id=course_id,
+                        program_uuid=program_uuid,
+                        enterprise_customer_uuid=enterprise_customer_uuid,
+                        user_id=request.user.id,
+                        error_code=error_code,
+                        message=error,
                     )
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -500,17 +555,22 @@ class GrantDataSharingPermissions(View):
                 consent_required = consent_record.consent_required()
             except AttributeError:
                 consent_required = None
-            except ImproperlyConfigured:
+            except ImproperlyConfigured as error:
                 error_code = 'ENTGDS004'
                 log_message = (
-                    'CourseCatalogApiServiceClient is improperly configured. '
-                    'Returned error code {error_code} to user {userid} '
-                    'and enterprise_customer {enterprise_customer} '
-                    'for course_id {course_id}'.format(
-                        error_code=error_code,
-                        userid=request.user.id,
-                        enterprise_customer=enterprise_customer.uuid,
+                    '[Enterprise DSC API] Course catalog api configuration error. '
+                    'Course: {course_id}, '
+                    'Program: {program_uuid}, '
+                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                    'User: {user_id}, '
+                    'ErrorCode: {error_code}, '
+                    'Message: {message}'.format(
                         course_id=course_id,
+                        program_uuid=program_uuid,
+                        enterprise_customer_uuid=enterprise_customer_uuid,
+                        user_id=request.user.id,
+                        error_code=error_code,
+                        message=error,
                     )
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -518,17 +578,22 @@ class GrantDataSharingPermissions(View):
             if consent_record is None or not consent_required:
                 error_code = 'ENTGDS002'
                 log_message = (
-                    'The was a problem with the consent record of user {userid} with '
-                    'enterprise_customer_uuid {enterprise_customer_uuid}. consent_record has a value '
-                    'of {consent_record} and consent_record.consent_required() a '
-                    'value of {consent_required} for course_id {course_id}. '
-                    'Error code {error_code} presented to user'.format(
-                        userid=request.user.id,
-                        enterprise_customer_uuid=enterprise_customer_uuid,
-                        consent_record=consent_record,
-                        consent_required=consent_required,
-                        error_code=error_code,
+                    '[Enterprise DSC API] There is no consent record, or consent is not required. '
+                    'Course: {course_id}, '
+                    'Program: {program_uuid}, '
+                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                    'User: {user_id}, '
+                    'ErrorCode: {error_code}, '
+                    'Context: {context}'.format(
                         course_id=course_id,
+                        program_uuid=program_uuid,
+                        enterprise_customer_uuid=enterprise_customer_uuid,
+                        user_id=request.user.id,
+                        error_code=error_code,
+                        context={
+                            'consent_record': consent_record,
+                            'consent_required': consent_required,
+                        },
                     )
                 )
                 LOGGER.info(log_message)
@@ -541,20 +606,25 @@ class GrantDataSharingPermissions(View):
         # Retrieve context data again now that enterprise_customer logic has been run
         context_data = get_global_context(request, enterprise_customer)
 
-        if not (enterprise_customer_uuid and success_url and failure_url):
+        if not (success_url and failure_url):
             error_code = 'ENTGDS003'
             log_message = (
-                'Error: one or more of the following values was falsy: '
-                'enterprise_customer_uuid: {enterprise_customer_uuid}, '
-                'success_url: {success_url}, '
-                'failure_url: {failure_url} for course id {course_id}'
-                'The following error code was reported to user {userid}: {error_code}'.format(
-                    userid=request.user.id,
-                    enterprise_customer_uuid=enterprise_customer_uuid,
-                    success_url=success_url,
-                    failure_url=failure_url,
-                    error_code=error_code,
+                '[Enterprise DSC API] Required request values missing for action to be carried out. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}, '
+                'Context: {context}'.format(
                     course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    user_id=request.user.id,
+                    error_code=error_code,
+                    context={
+                        'success_url': success_url,
+                        'failure_url': failure_url,
+                    },
                 )
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -569,14 +639,17 @@ class GrantDataSharingPermissions(View):
         except Http404:
             error_code = 'ENTGDS004'
             log_message = (
-                'CourseCatalogApiServiceClient is improperly configured. '
-                'Returned error code {error_code} to user {userid} '
-                'and enterprise_customer {enterprise_customer} '
-                'for course_id {course_id}'.format(
-                    error_code=error_code,
-                    userid=request.user.id,
-                    enterprise_customer=enterprise_customer.uuid,
+                '[Enterprise DSC API] Course catalog api configuration error. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}'.format(
                     course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    user_id=request.user.id,
+                    error_code=error_code,
                 )
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -603,23 +676,48 @@ class GrantDataSharingPermissions(View):
         course_id = request.POST.get('course_id', '')
         program_uuid = request.POST.get('program_uuid', '')
 
-        enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        try:
+            enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        except Http404:
+            error_code = 'ENTGDS008'
+            log_message = (
+                '[Enterprise DSC API] No record found for Enterprise customer. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}'.format(
+                    course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_uuid,
+                    user_id=request.user.id,
+                    error_code=error_code,
+                )
+            )
+            LOGGER.error(log_message)
+            raise
+
         context_data = get_global_context(request, enterprise_customer)
 
-        if not (enterprise_uuid and success_url and failure_url):
+        if not (success_url and failure_url):
             error_code = 'ENTGDS005'
             log_message = (
-                'Error: one or more of the following values was falsy: '
-                'enterprise_uuid: {enterprise_uuid}, '
-                'success_url: {success_url}, '
-                'failure_url: {failure_url} for course_id {course_id}. '
-                'The following error code was reported to the user {userid}: {error_code}'.format(
-                    userid=request.user.id,
-                    enterprise_uuid=enterprise_uuid,
-                    success_url=success_url,
-                    failure_url=failure_url,
-                    error_code=error_code,
+                '[Enterprise DSC API] Required request values missing for action to be carried out. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}, '
+                'Context: {context}'.format(
                     course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_uuid,
+                    user_id=request.user.id,
+                    error_code=error_code,
+                    context={
+                        'success_url': success_url,
+                        'failure_url': failure_url,
+                    },
                 )
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -627,15 +725,17 @@ class GrantDataSharingPermissions(View):
         if not self.course_or_program_exist(course_id, program_uuid):
             error_code = 'ENTGDS006'
             log_message = (
-                'Neither the course with course_id: {course_id} '
-                'or program with {program_uuid} exist for '
-                'enterprise customer {enterprise_uuid}'
-                'Error code {error_code} presented to user {userid}'.format(
+                '[Enterprise DSC API] The course or program with a given id does not exist. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}'.format(
                     course_id=course_id,
                     program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_uuid,
+                    user_id=request.user.id,
                     error_code=error_code,
-                    userid=request.user.id,
-                    enterprise_uuid=enterprise_uuid,
                 )
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
@@ -649,16 +749,17 @@ class GrantDataSharingPermissions(View):
         if consent_record is None:
             error_code = 'ENTGDS007'
             log_message = (
-                'The was a problem with the consent record of user {userid} with '
-                'enterprise_uuid {enterprise_uuid}. consent_record has a value '
-                'of {consent_record} and a '
-                'value for course_id {course_id}. '
-                'Error code {error_code} presented to user'.format(
-                    userid=request.user.id,
-                    enterprise_uuid=enterprise_uuid,
-                    consent_record=consent_record,
-                    error_code=error_code,
+                '[Enterprise DSC API] There is no consent record, or consent is not required. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {user_id}, '
+                'ErrorCode: {error_code}'.format(
                     course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_uuid,
+                    user_id=request.user.id,
+                    error_code=error_code,
                 )
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)

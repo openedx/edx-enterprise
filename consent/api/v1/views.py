@@ -5,6 +5,8 @@ A generic API for edX Enterprise's Consent application.
 
 from __future__ import absolute_import, unicode_literals
 
+from logging import getLogger
+
 from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework.authentication import SessionAuthentication
@@ -17,6 +19,8 @@ from consent.errors import ConsentAPIRequestError
 from consent.helpers import get_data_sharing_consent
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.utils import get_request_value
+
+LOGGER = getLogger(__name__)
 
 
 class DataSharingConsentView(APIView):
@@ -85,12 +89,29 @@ class DataSharingConsentView(APIView):
         Get the consent record relevant to the request at hand.
         """
         username, course_id, program_uuid, enterprise_customer_uuid = self.get_required_query_params(request)
-        return get_data_sharing_consent(
+        dsc = get_data_sharing_consent(
             username,
             enterprise_customer_uuid,
             course_id=course_id,
             program_uuid=program_uuid
         )
+        if not dsc:
+            log_message = (
+                '[Enterprise Consent API] The code was unable to get consent data for the user. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {username}, '
+                'ErrorCode: {error_code}'.format(
+                    course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    username=username,
+                    error_code='ENTGDS001',
+                )
+            )
+            LOGGER.error(log_message)
+        return dsc
 
     def get_required_query_params(self, request):
         """
@@ -105,13 +126,29 @@ class DataSharingConsentView(APIView):
         program_uuid = get_request_value(request, self.REQUIRED_PARAM_PROGRAM_UUID, '')
         enterprise_customer_uuid = get_request_value(request, self.REQUIRED_PARAM_ENTERPRISE_CUSTOMER)
         if not (username and (course_id or program_uuid) and enterprise_customer_uuid):
-            raise ConsentAPIRequestError(
-                self.get_missing_params_message([
-                    ("'username'", bool(username)),
-                    ("'enterprise_customer_uuid'", bool(enterprise_customer_uuid)),
-                    ("one of 'course_id' or 'program_uuid'", bool(course_id or program_uuid)),
-                ])
+            exception_message = self.get_missing_params_message([
+                ("'username'", bool(username)),
+                ("'enterprise_customer_uuid'", bool(enterprise_customer_uuid)),
+                ("one of 'course_id' or 'program_uuid'", bool(course_id or program_uuid)),
+            ])
+            log_message = (
+                '[Enterprise Consent API] Required request values missing for action to be carried out. '
+                'Course: {course_id}, '
+                'Program: {program_uuid}, '
+                'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                'User: {username}, '
+                'ErrorCode: {error_code}, '
+                'Message: {message}'.format(
+                    course_id=course_id,
+                    program_uuid=program_uuid,
+                    enterprise_customer_uuid=enterprise_customer_uuid,
+                    username=username,
+                    error_code='ENTGDS000',
+                    message=exception_message,
+                )
             )
+            LOGGER.error(log_message)
+            raise ConsentAPIRequestError(exception_message)
         return username, course_id, program_uuid, enterprise_customer_uuid
 
     def get_missing_params_message(self, parameter_state):
