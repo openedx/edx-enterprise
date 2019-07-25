@@ -20,6 +20,11 @@ class EnterpriseConfig(AppConfig):
     valid_image_extensions = [".png", ]
     valid_max_image_size = getattr(settings, 'ENTERPRISE_CUSTOMER_LOGO_IMAGE_SIZE', 512)  # Value in KB's
     customer_success_email = getattr(settings, 'ENTERPRISE_CUSTOMER_SUCCESS_EMAIL', 'customersuccess@edx.org')
+    enterprise_integrations_email = getattr(
+        settings,
+        'ENTERPRISE_INTEGRATIONS_EMAIL',
+        'enterprise-integrations@edx.org'
+    )
 
     @property
     def auth_user_model(self):

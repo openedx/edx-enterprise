@@ -556,7 +556,7 @@ class CouponCodesView(APIView):
                                   token_email=email,
                                   token_enterprise_name=enterprise_name)
         app_config = apps.get_app_config("enterprise")
-        from_email_address = app_config.customer_success_email
+        from_email_address = app_config.enterprise_integrations_email
         cs_email = app_config.customer_success_email
         data = {
             self.REQUIRED_PARAM_EMAIL: email,

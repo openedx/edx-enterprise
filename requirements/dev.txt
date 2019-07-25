@@ -51,7 +51,7 @@ djangorestframework-jwt==1.11.0
 djangorestframework-xml==1.4.0
 djangorestframework==3.7.7
 doc8==0.8.0
-docutils==0.15.1
+docutils==0.15.1.post1
 edx-django-utils==2.0.0
 edx-drf-extensions==2.3.7
 edx-i18n-tools==0.4.8
@@ -111,7 +111,7 @@ pylint-django==0.7.2      # via edx-lint
 pylint-plugin-utils==0.5  # via pylint-celery, pylint-django
 pylint==1.7.6             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
 pymongo==2.9.1
-pyparsing==2.4.0
+pyparsing==2.4.1.1
 pytest-catchlog==1.2.2
 pytest-cov==2.7.1
 pytest-django==3.5.1
@@ -148,7 +148,7 @@ typing==3.7.4
 unicodecsv==0.14.1
 unidecode==1.1.1
 urllib3==1.23
-virtualenv==16.7.0        # via tox
+virtualenv==16.7.1        # via tox
 wcwidth==0.1.7
 webencodings==0.5.1
 wheel==0.33.4

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.8.5] - 2019-07-25
+--------------------
+
+* Change coupon code request email from address.
+
 [1.8.4] - 2019-07-24
 --------------------
 
