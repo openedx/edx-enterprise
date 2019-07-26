@@ -814,6 +814,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False)
     user_email = models.EmailField(null=False, blank=False, unique=True)
+    history = HistoricalRecords()
 
     class Meta(object):
         app_label = 'enterprise'
@@ -866,6 +867,7 @@ class PendingEnrollment(TimeStampedModel):
         blank=True,
         null=True
     )
+    history = HistoricalRecords()
 
     class Meta(object):
         app_label = 'enterprise'
