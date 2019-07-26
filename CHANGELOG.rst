@@ -13,6 +13,7 @@ Change Log
 
 Unreleased
 ----------
+* Added history models for PendingEnrollment and PendingEnterpriseCustomerUser.
 
 [1.8.6] - 2019-07-25
 --------------------
