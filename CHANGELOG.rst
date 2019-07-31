@@ -13,7 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[1.8.7] - 2019-07-31
+--------------------
+
 * Added history models for PendingEnrollment and PendingEnterpriseCustomerUser.
+* Sending default values for required fields in Cornerstone Course List API
 
 [1.8.6] - 2019-07-25
 --------------------

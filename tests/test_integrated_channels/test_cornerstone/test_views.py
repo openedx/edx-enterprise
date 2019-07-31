@@ -103,3 +103,9 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         ]
         for key in expected_keys:
             self.assertIn(key, keys)
+
+        # required fields should not be empty
+        required_keys = ["Owners", "Languages", "Subjects"]
+        for item in response.data:
+            for key in required_keys:
+                self.assertTrue(item[key])
