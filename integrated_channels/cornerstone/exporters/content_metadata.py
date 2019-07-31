@@ -25,6 +25,9 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     """
     LONG_STRING_LIMIT = 10000
     DEFAULT_SUBJECT = "Industry Specific"
+    DEFAULT_OWNER = {
+        "Name": "edX: edX Inc"
+    }
     DATA_TRANSFORM_MAPPING = {
         'ID': 'key',
         'Title': 'title',
@@ -49,7 +52,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         for org in content_metadata_item.get('organizations', []):
             org_name = org[:500] if org else ''
             owners.append({"Name": org_name})
-        return owners
+        return owners or [self.DEFAULT_OWNER]
 
     def transform_is_active(self, content_metadata_item):
         """
@@ -127,4 +130,4 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
             for cornerstone_subject, edx_subjects in subjects_mapping_dict.items():
                 if subject.lower() in [edx_subject.lower() for edx_subject in edx_subjects]:
                     subjects.append(cornerstone_subject)
-        return list(set(subjects)) or [self.DEFAULT_SUBJECT] if course_subjects else []
+        return list(set(subjects)) or [self.DEFAULT_SUBJECT]

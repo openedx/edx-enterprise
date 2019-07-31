@@ -22,6 +22,9 @@ from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 NOW = datetime.datetime.now(pytz.UTC)
+DEFAULT_OWNER = {
+    "Name": "edX: edX Inc"
+}
 LONG_ORG_NAME = "Very long org name, Very long org name, Very long org name, Very long org name, " \
                 "Very long org name, Very long org name, Very long org name, Very long org name, " \
                 "Very long org name, Very long org name, Very long org name, Very long org name, " \
@@ -448,11 +451,11 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
     @ddt.data(
         (
             {'organizations': []},
-            [],
+            [DEFAULT_OWNER],
         ),
         (
             {'organizations': 'undefined'},
-            [],
+            [DEFAULT_OWNER],
         ),
         (
             None,
@@ -494,7 +497,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             {
                 'subjects': []
             },
-            []
+            ["Industry Specific"]
         ),
     )
     @responses.activate
