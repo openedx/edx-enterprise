@@ -25,6 +25,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     """
     LONG_STRING_LIMIT = 10000
     DEFAULT_SUBJECT = "Industry Specific"
+    DEFAULT_LANGUAGE = "English"
     DEFAULT_OWNER = {
         "Name": "edX: edX Inc"
     }
@@ -47,9 +48,10 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the transformed version of the course organizations
         by converting each organization into cornerstone course owner object.
+        or default Onwer if no owner found
         """
         owners = []
-        for org in content_metadata_item.get('organizations', []):
+        for org in content_metadata_item.get('organizations') or []:
             org_name = org[:500] if org else ''
             owners.append({"Name": org_name})
         return owners or [self.DEFAULT_OWNER]
@@ -100,7 +102,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the languages supported by course or `English` as default if no languages found.
         """
-        languages = content_metadata_item.get('languages', ['English'])
+        languages = content_metadata_item.get('languages') or [self.DEFAULT_LANGUAGE]
         return [get_language_code(language) for language in languages]
 
     def transform_description(self, content_metadata_item):
@@ -117,10 +119,10 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
 
     def transform_subjects(self, content_metadata_item):
         """
-        Return the transformed version of the course subject list.
+        Return the transformed version of the course subject list or default value if no subject found.
         """
         subjects = []
-        course_subjects = content_metadata_item.get('subjects', [])
+        course_subjects = content_metadata_item.get('subjects') or []
         CornerstoneGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
             'cornerstone',
             'CornerstoneGlobalConfiguration'
