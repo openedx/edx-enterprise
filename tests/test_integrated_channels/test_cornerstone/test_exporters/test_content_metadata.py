@@ -430,7 +430,15 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             ['en-US'],
         ),
         (
+            {'languages': []},
+            ['en-US'],
+        ),
+        (
             {'languages': 'undefined'},
+            ['en-US'],
+        ),
+        (
+            {'languages': None},
             ['en-US'],
         ),
         (
@@ -455,6 +463,10 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         ),
         (
             {'organizations': 'undefined'},
+            [DEFAULT_OWNER],
+        ),
+        (
+            {'organizations': None},
             [DEFAULT_OWNER],
         ),
         (
@@ -496,6 +508,12 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         (
             {
                 'subjects': []
+            },
+            ["Industry Specific"]
+        ),
+        (
+            {
+                'subjects': None
             },
             ["Industry Specific"]
         ),
