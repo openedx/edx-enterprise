@@ -14,7 +14,7 @@ from django.core.management.base import BaseCommand, CommandError
 from enterprise.models import EnterpriseCustomer
 from enterprise.utils import NotConnectedToOpenEdX
 from integrated_channels.exceptions import ClientError
-from integrated_channels.xapi.models import XAPILRSConfiguration
+from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
 from integrated_channels.xapi.utils import send_course_completion_statement
 
 try:
@@ -133,18 +133,44 @@ class Command(BaseCommand):
         course_overviews = self.prefetch_courses(persistent_course_grades)
 
         for persistent_course_grade in persistent_course_grades:
+            error_message = None
+            user = users.get(persistent_course_grade.user_id)
+            course_overview = course_overviews.get(persistent_course_grade.course_id)
+            course_grade = CourseGradeFactory().read(user, course_key=persistent_course_grade.course_id)
+            xapi_transmission_queryset = XAPILearnerDataTransmissionAudit.objects.filter(
+                user=user,
+                course_id=persistent_course_grade.course_id
+            )
+            if not xapi_transmission_queryset.exists():
+                LOGGER.warning(
+                    'XAPILearnerDataTransmissionAudit object does not exist for user: {username}, course: '
+                    '{course_id} so skipping the course completion statement to xapi.'
+                )
+                continue
             try:
-                user = users.get(persistent_course_grade.user_id)
-                course_overview = course_overviews.get(persistent_course_grade.course_id)
-                course_grade = CourseGradeFactory().read(user, course_key=persistent_course_grade.course_id)
                 send_course_completion_statement(lrs_configuration, user, course_overview, course_grade)
             except ClientError:
-                LOGGER.exception(
-                    'Client error while sending course completion to xAPI for'
-                    ' enterprise customer {enterprise_customer}.'.format(
-                        enterprise_customer=lrs_configuration.enterprise_customer.name
+                error_message = 'Client error while sending course completion to xAPI for ' \
+                                'enterprise customer: {enterprise_customer}, user: {username} ' \
+                                'and course: {course_id}'.format(
+                                    enterprise_customer=lrs_configuration.enterprise_customer.name,
+                                    username=user.username if user else '',
+                                    course_id=persistent_course_grade.course_id
+                                )
+                LOGGER.exception(error_message)
+                status = 500
+            else:
+                LOGGER.info(
+                    'Successfully sent course completion to xAPI for user: {username} for course: {course_id}'.format(
+                        username=user.username if user else '',
+                        course_id=persistent_course_grade.course_id
                     )
                 )
+                status = 200
+            fields = {'status': status, 'error_message': error_message}
+            if status == 200:
+                fields.update({'grade': course_grade.percent, 'timestamp': course_grade.passed_timestamp})
+            xapi_transmission_queryset.update(**fields)
 
     def get_course_completions(self, enterprise_customer, days):
         """

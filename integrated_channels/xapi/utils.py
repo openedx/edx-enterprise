@@ -6,10 +6,16 @@ Utility functions for xAPI.
 
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
+import six
+
 from integrated_channels.xapi.client import EnterpriseXAPIClient
 from integrated_channels.xapi.serializers import CourseInfoSerializer, LearnerInfoSerializer
 from integrated_channels.xapi.statements.learner_course_completion import LearnerCourseCompletionStatement
 from integrated_channels.xapi.statements.learner_course_enrollment import LearnerCourseEnrollmentStatement
+
+LOGGER = logging.getLogger(__name__)
 
 
 def send_course_enrollment_statement(lrs_configuration, course_enrollment):
@@ -25,7 +31,12 @@ def send_course_enrollment_statement(lrs_configuration, course_enrollment):
         course_enrollment.course,
         context={'site': lrs_configuration.enterprise_customer.site}
     )
-
+    LOGGER.info(
+        'Sending course enrollment to xAPI for user: {username} for course: {course_key}'.format(
+            username=course_enrollment.user.username,
+            course_key=six.text_type(course_enrollment.course.id)
+        )
+    )
     statement = LearnerCourseEnrollmentStatement(
         course_enrollment.user,
         course_enrollment.course,
@@ -50,7 +61,13 @@ def send_course_completion_statement(lrs_configuration, user, course_overview, c
         course_overview,
         context={'site': lrs_configuration.enterprise_customer.site}
     )
-
+    LOGGER.info(
+        'Sending course completion to xAPI for user: {username}, course: {course_key} with {percentage}%'.format(
+            username=user.username if user else '',
+            course_key=six.text_type(course_overview.id),
+            percentage=course_grade.percent * 100
+        )
+    )
     statement = LearnerCourseCompletionStatement(
         user,
         course_overview,

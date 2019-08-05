@@ -1155,6 +1155,31 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
         return course_enrollment and course_enrollment.get('mode') in audit_modes
 
+    @classmethod
+    def get_enterprise_course_enrollment_id(cls, user, course_id, enterprise_customer):
+        """
+        Return the EnterpriseCourseEnrollment object for a given user in given course_id.
+        """
+        enterprise_course_enrollment_id = None
+        try:
+            enterprise_course_enrollment_id = cls.objects.get(
+                enterprise_customer_user=EnterpriseCustomerUser.objects.get(
+                    enterprise_customer=enterprise_customer,
+                    user_id=user.id
+                ),
+                course_id=course_id
+            ).id
+        except ObjectDoesNotExist:
+            LOGGER.info(
+                'EnterpriseCourseEnrollment entry not found for user: {username}, course: {course_id}, '
+                'enterprise_customer: {enterprise_customer_name}'.format(
+                    username=user.username,
+                    course_id=course_id,
+                    enterprise_customer_name=enterprise_customer.name
+                )
+            )
+        return enterprise_course_enrollment_id
+
     def __str__(self):
         """
         Create string representation of the enrollment.

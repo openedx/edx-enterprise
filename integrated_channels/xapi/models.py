@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 
 import base64
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -64,4 +65,46 @@ class XAPILRSConfiguration(TimeStampedModel):
         """
         return 'Basic {}'.format(
             base64.b64encode('{key}:{secret}'.format(key=self.key, secret=self.secret).encode()).decode()
+        )
+
+
+@python_2_unicode_compatible
+class XAPILearnerDataTransmissionAudit(TimeStampedModel):
+    """
+    The payload we sent to XAPI at a given point in time for an enterprise course enrollment.
+
+    .. no_pii:
+    """
+
+    user = models.ForeignKey(
+        User,
+        blank=False,
+        null=False,
+        related_name='xapi_transmission_audit',
+        on_delete=models.CASCADE,
+    )
+    enterprise_course_enrollment_id = models.PositiveIntegerField(db_index=True, blank=True, null=True)
+    course_id = models.CharField(max_length=255, blank=False, null=False, db_index=True)
+    course_completed = models.BooleanField(default=False)
+    completed_timestamp = models.DateTimeField(null=True, blank=True)
+    grade = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=100, blank=False, null=False)
+    error_message = models.TextField(blank=True)
+
+    class Meta:
+        app_label = 'xapi'
+        unique_together = ("user", "course_id")
+
+    def __str__(self):
+        """
+        Return a human-readable string representation of the object.
+        """
+        return (
+            '<XAPILearnerDataTransmissionAudit {transmission_id} for enterprise enrollment '
+            '{enterprise_course_enrollment_id}, XAPI user {user_id}, and course {course_id}>'.format(
+                transmission_id=self.id,
+                enterprise_course_enrollment_id=self.enterprise_course_enrollment_id,
+                user_id=self.user.id,
+                course_id=self.course_id
+            )
         )

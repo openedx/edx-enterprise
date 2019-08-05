@@ -18,6 +18,8 @@ from enterprise.utils import NotConnectedToOpenEdX
 from integrated_channels.exceptions import ClientError
 from test_utils import MockLoggingHandler, factories
 
+MODULE_PATH = 'integrated_channels.xapi.management.commands.send_course_enrollments.'
+
 
 @mark.django_db
 class TestSendCourseEnrollments(unittest.TestCase):
@@ -26,7 +28,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
     """
 
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        MODULE_PATH + 'CourseEnrollment',
         mock.MagicMock()
     )
     def test_parse_arguments(self):
@@ -43,7 +45,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
             call_command('send_course_enrollments', days=1, enterprise_customer_uuid=enterprise_uuid)
 
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        MODULE_PATH + 'CourseEnrollment',
         mock.MagicMock()
     )
     def test_error_for_missing_lrs_configuration(self):
@@ -59,7 +61,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
             call_command('send_course_enrollments', days=1, enterprise_customer_uuid=enterprise_customer.uuid)
 
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.send_course_enrollment_statement',
+        MODULE_PATH + 'send_course_enrollment_statement',
         mock.MagicMock()
     )
     def test_get_course_enrollments(self):
@@ -79,21 +81,29 @@ class TestSendCourseEnrollments(unittest.TestCase):
 
         # Verify that get_course_enrollments returns CourseEnrollment records
         with mock.patch(
-            'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment'
+            MODULE_PATH + 'CourseEnrollment'
         ) as mock_enrollments:
             call_command('send_course_enrollments')
             assert mock_enrollments.objects.filter.called
 
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        MODULE_PATH + 'CourseEnrollment',
         mock.MagicMock()
     )
     # pylint: disable=invalid-name
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.Command.get_course_enrollments',
+        MODULE_PATH + 'Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
-    @mock.patch('integrated_channels.xapi.management.commands.send_course_enrollments.send_course_enrollment_statement')
+    @mock.patch(
+        MODULE_PATH + 'EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        MODULE_PATH + 'XAPILearnerDataTransmissionAudit.objects.get_or_create',
+        mock.MagicMock(return_value=(mock.MagicMock(), True))
+    )
+    @mock.patch(MODULE_PATH + 'send_course_enrollment_statement')
     def test_command(self, mock_send_course_enrollment_statement):
         """
         Make command runs successfully and sends correct data to the LRS.
@@ -104,15 +114,23 @@ class TestSendCourseEnrollments(unittest.TestCase):
         assert mock_send_course_enrollment_statement.called
 
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        MODULE_PATH + 'CourseEnrollment',
         mock.MagicMock()
     )
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.Command.get_course_enrollments',
+        MODULE_PATH + 'XAPILearnerDataTransmissionAudit.objects.get_or_create',
+        mock.MagicMock(return_value=(mock.MagicMock(), True))
+    )
+    @mock.patch(
+        MODULE_PATH + 'Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.send_course_enrollment_statement',
+        MODULE_PATH + 'EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        MODULE_PATH + 'send_course_enrollment_statement',
         mock.Mock(side_effect=ClientError('EnterpriseXAPIClient request failed.'))
     )
     def test_command_client_error(self):
@@ -127,21 +145,29 @@ class TestSendCourseEnrollments(unittest.TestCase):
         call_command('send_course_enrollments', enterprise_customer_uuid=xapi_config.enterprise_customer.uuid)
         expected_message = (
             'Client error while sending course enrollment to xAPI for enterprise '
-            'customer {enterprise_customer}.'.format(enterprise_customer=xapi_config.enterprise_customer.name)
+            'customer: {enterprise_customer}'.format(enterprise_customer=xapi_config.enterprise_customer.name)
         )
 
-        assert handler.messages['error'][0] == expected_message
+        assert expected_message in handler.messages['error'][0]
 
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.CourseEnrollment',
+        MODULE_PATH + 'CourseEnrollment',
         mock.MagicMock()
+    )
+    @mock.patch(
+        MODULE_PATH + 'EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id',
+        mock.MagicMock()
+    )
+    @mock.patch(
+        MODULE_PATH + 'XAPILearnerDataTransmissionAudit.objects.get_or_create',
+        mock.MagicMock(return_value=(mock.MagicMock(), True))
     )
     # pylint: disable=invalid-name
     @mock.patch(
-        'integrated_channels.xapi.management.commands.send_course_enrollments.Command.get_course_enrollments',
+        MODULE_PATH + 'Command.get_course_enrollments',
         mock.MagicMock(return_value=[mock.MagicMock()])
     )
-    @mock.patch('integrated_channels.xapi.management.commands.send_course_enrollments.send_course_enrollment_statement')
+    @mock.patch(MODULE_PATH + 'send_course_enrollment_statement')
     def test_command_once_for_all_customers(self, mock_send_course_enrollment_statement):
         """
         Make command runs successfully and sends correct data to the LRS.
