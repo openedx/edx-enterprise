@@ -102,6 +102,7 @@ setup(
         "integrated_channels.cornerstone",
         "integrated_channels.sap_success_factors",
         "integrated_channels.xapi",
+        "enterprise_learner_portal",
     ],
     include_package_data=True,
     install_requires=REQUIREMENTS,

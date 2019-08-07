@@ -59,4 +59,9 @@ urlpatterns += [
         include('integrated_channels.cornerstone.urls'),
         name='cornerstone'
     ),
+    url(
+        r'^enterprise_learner_portal/',
+        include('enterprise_learner_portal.urls'),
+        name='enterprise_learner_portal_api'
+    ),
 ]

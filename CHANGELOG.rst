@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.0] - 2019-08-12
+--------------------
+
+* Adding enterprise_learner_portal app to support data needs of frontend enterprise learner portal app
+
 [1.8.9] - 2019-08-15
 --------------------
 
