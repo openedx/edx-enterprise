@@ -13,7 +13,7 @@ enterprise
     :target: http://codecov.io/github/edx/edx-enterprise?branch=master
     :alt: Codecov
 
-.. image:: http://edx-enterprise.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/open-edx-enterprise-service-documentation/badge/?version=latest
     :target: http://open-edx-enterprise-service-documentation.readthedocs.io/en/latest/
     :alt: Documentation
 
