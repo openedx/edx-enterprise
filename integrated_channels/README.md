@@ -5,7 +5,7 @@
 An integrated channel is an abstraction meant to represent a third-party system
 which provides an API that can be used to transmit EdX data to the third-party
 system. The most common example of such a third-party system is an enterprise-level
-learning managment system (LMS). LMS users are able to discover content made available
+learning management system (LMS). LMS users are able to discover content made available
 by many different content providers and manage the learning outcomes that are produced
 by interaction with the content providers. In such a scenario, EdX would be the content
 provider while a system like SAP SuccessFactors would be the integrated channel.
@@ -61,7 +61,7 @@ directory, (e.g. [SAPSuccessFactorsGlobalConfiguration](https://github.com/edx/e
 ## Content Metadata Synchronization
 
 The set of content metadata transmitted for a given integrated channel instance is defined by the
-EnterpriseCustomerCatalogs configured for the associated EnterpriseCustomer. In order to ensure that the content metadata transmitted to an integrated channel is synchronized with the content made available by the EnterpriseCustomer's catalogs, each content metadata item transmission is persisted using the [ContentMetadataItemTransmission](https://github.com/edx/edx-enterprise/blob/master/integrated_channels/integrated_channel/models.py) model. ContentMetadataItemTransmission records are created, updated, and deleted as EnterpriseCustomerCatalogs are modifed and modified sets of content metadata are exported and transmitted to the integrated channel.
+EnterpriseCustomerCatalogs configured for the associated EnterpriseCustomer. In order to ensure that the content metadata transmitted to an integrated channel is synchronized with the content made available by the EnterpriseCustomer's catalogs, each content metadata item transmission is persisted using the [ContentMetadataItemTransmission](https://github.com/edx/edx-enterprise/blob/master/integrated_channels/integrated_channel/models.py) model. ContentMetadataItemTransmission records are created, updated, and deleted as EnterpriseCustomerCatalogs are modified and modified sets of content metadata are exported and transmitted to the integrated channel.
 
 ## Implementing a new Integrated Channel
 

@@ -173,7 +173,7 @@ class TestCSVExportAction(unittest.TestCase):
         """
         Test export_as_csv - test special case handling.
 
-        Special cases are None and empty srtring values - they are substituted by [markers] for slightly better
+        Special cases are None and empty string values - they are substituted by [markers] for slightly better
         appearance.
         """
         fields = ["code", "name"]

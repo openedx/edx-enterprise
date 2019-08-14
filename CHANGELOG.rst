@@ -13,6 +13,7 @@ Change Log
 
 Unreleased
 ----------
+* Minor fixes to typos and an image link
 
 [1.8.9] - 2019-08-15
 --------------------

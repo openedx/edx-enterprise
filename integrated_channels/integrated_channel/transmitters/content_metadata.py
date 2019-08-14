@@ -98,7 +98,7 @@ class ContentMetadataTransmitter(Transmitter):
     def _prepare_items_for_transmission(self, channel_metadata_items):
         """
         Perform any necessary modifications to content metadata item
-        data structure before transmission. This can be overidden by
+        data structure before transmission. This can be overridden by
         subclasses to add any data structure wrappers expected by the
         integrated channel.
         """
@@ -172,7 +172,7 @@ class ContentMetadataTransmitter(Transmitter):
 
     def _get_transmissions(self):
         """
-        Return the ContentMetadataItemTransmision models for previously
+        Return the ContentMetadataItemTransmission models for previously
         transmitted content metadata items.
         """
         # pylint: disable=invalid-name
@@ -187,7 +187,7 @@ class ContentMetadataTransmitter(Transmitter):
 
     def _create_transmissions(self, content_metadata_item_map):
         """
-        Create ContentMetadataItemTransmision models for the given content metadata items.
+        Create ContentMetadataItemTransmission models for the given content metadata items.
         """
         # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(
@@ -208,7 +208,7 @@ class ContentMetadataTransmitter(Transmitter):
 
     def _update_transmissions(self, content_metadata_item_map, transmission_map):
         """
-        Update ContentMetadataItemTransmision models for the given content metadata items.
+        Update ContentMetadataItemTransmission models for the given content metadata items.
         """
         for content_id, channel_metadata in content_metadata_item_map.items():
             transmission = transmission_map[content_id]
@@ -217,7 +217,7 @@ class ContentMetadataTransmitter(Transmitter):
 
     def _delete_transmissions(self, content_metadata_item_ids):
         """
-        Delete ContentMetadataItemTransmision models associated with the given content metadata items.
+        Delete ContentMetadataItemTransmission models associated with the given content metadata items.
         """
         # pylint: disable=invalid-name
         ContentMetadataItemTransmission = apps.get_model(

@@ -48,7 +48,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the transformed version of the course organizations
         by converting each organization into cornerstone course owner object.
-        or default Onwer if no owner found
+        or default Owner if no owner found
         """
         owners = []
         for org in content_metadata_item.get('organizations') or []:
