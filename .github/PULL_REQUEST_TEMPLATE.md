@@ -31,7 +31,6 @@ instructions.
 - [ ] Documentation updated (not only docstrings)
 - [ ] Commits are (reasonably) squashed
 - [ ] Translations are updated
-- [ ] PR author is listed in AUTHORS
 
 **Post merge:**
 - [ ] Create a tag

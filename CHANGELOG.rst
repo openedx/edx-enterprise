@@ -19,12 +19,10 @@ Unreleased
 
 * Remove tincan from src directory
 
-
 [1.8.8] - 2019-08-01
 --------------------
 
 * For CornerstoneCourseListAPI handled corner cases for default values.
-
 
 [1.8.7] - 2019-07-31
 --------------------
