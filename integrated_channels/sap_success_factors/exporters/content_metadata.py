@@ -103,7 +103,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         """
         Return the content metadata item launch points.
 
-        SAPSF allows you to transmit an arry of content launch points which
+        SAPSF allows you to transmit an array of content launch points which
         are meant to represent sections of a content item which a learner can
         launch into from SAPSF. Currently, we only provide a single launch
         point for a content item.
@@ -196,7 +196,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
 
     def transform_courserun_schedule(self, content_metadata_item):
         """
-        Return the schedule of the courseun content item.
+        Return the schedule of the courserun content item.
         """
         start = content_metadata_item.get('start') or UNIX_MIN_DATE_STRING
         end = content_metadata_item.get('end') or UNIX_MAX_DATE_STRING

@@ -126,7 +126,7 @@ class ContentMetadataExporter(Exporter):
                 except KeyError:
                     # There may be a problem with the DATA_TRANSFORM_MAPPING on
                     # the concrete subclass or the concrete subclass does not implement
-                    # the appropriate field tranformer function.
+                    # the appropriate field transformer function.
                     LOGGER.exception(
                         'Failed to transform content metadata item field [%s] for [%s]: [%s]',
                         edx_data_schema_key,

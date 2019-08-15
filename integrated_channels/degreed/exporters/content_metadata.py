@@ -53,7 +53,7 @@ class DegreedContentMetadataExporter(ContentMetadataExporter):  # pylint: disabl
 
     def transform_courserun_content_language(self, content_metadata_item):
         """
-        Return the ISO 639-1 language code that Degreed expects for coureseruns.
+        Return the ISO 639-1 language code that Degreed expects for course runs.
 
         Example:
             en-us -> en

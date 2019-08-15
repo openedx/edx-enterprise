@@ -211,11 +211,11 @@ def assert_url(first, second):
         Assertion error if both urls do not match.
 
     """
-    # Convert query paramters to a dictionary, so that they can be compared correctly
+    # Convert query parameters to a dictionary, so that they can be compared correctly
     scheme, netloc, path, query_string, fragment = urlsplit(first)
     first = (scheme, netloc, path, parse_qs(query_string), fragment)
 
-    # Convert query paramters to a dictionary, so that they can be compared correctly
+    # Convert query parameters to a dictionary, so that they can be compared correctly
     scheme, netloc, path, query_string, fragment = urlsplit(second)
     second = (scheme, netloc, path, parse_qs(query_string), fragment)
 

@@ -688,7 +688,7 @@ class TestEnterpriseAPIViews(APITest):
         # multiple groups to check.
         (False, True, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access', 'enterprise_data_api_access']}, True, None),
-        # Staff user with group permission filtering on non existent enteprise id.
+        # Staff user with group permission filtering on non existent enterprise id.
         (True, False, ['enterprise_enrollment_api_access'],
          {'permissions': ['enterprise_enrollment_api_access'], 'enterprise_id': FAKE_UUIDS[1]}, False,
          {'count': 0, 'next': None, 'previous': None, 'results': []}),
