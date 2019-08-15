@@ -326,3 +326,100 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         assert launch_points[0]['launchType'] == 3
         assert launch_points[0]['mobileEnabled'] is True
         assert launch_points[0]['mobileLaunchURL'] == content_metadata_item['enrollment_url']
+
+    @ddt.data(
+        (
+            {
+                'title': 'Hippity Hop',
+                'course_runs': [
+                    {
+                        'start': '2014-02-05T05:00:00Z',
+                        'end': '2050-12-31T18:00:00Z',
+                        'pacing_type': 'instructor_paced',
+                        'availability': 'Current',
+                    }
+                ],
+                'short_description': 'Watch the rabbits roam.',
+                'full_description': 'Rabbits explore their new garden home.',
+            },
+            'Pacing: Instructor-Paced. Starts: February 2014, Ends: December 2050. Rabbits explore their new '
+            'garden home.',
+        ),
+        (
+            {
+                'title': 'Happy Bunny Course',
+                'course_runs': [
+                    {
+                        'start': '2115-02-05T05:00:00Z',
+                        'end': '2151-12-31T18:00:00Z',
+                        'pacing_type': 'self_paced',
+                        'availability': 'Archived',
+                    }
+                ],
+                'short_description': 'The bunnies are delighted.',
+            },
+            'Pacing: Self-Paced. Starts: February 2115, Ends: December 2151. Enrollment is closed. The bunnies are '
+            'delighted.',
+        ),
+        (
+            {
+                'title': 'Rabbit Care',
+                'course_runs': [
+                    {
+                        'pacing_type': 'instructor_paced',
+                        'availability': 'Archived',
+                    }
+                ],
+                'full_description': 'In depth discussion of rabbit care and feeding.',
+            },
+            'Pacing: Instructor-Paced. Enrollment is closed. In depth discussion of rabbit care and feeding.',
+        ),
+        (
+            {
+                'title': 'Acres of Carrots',
+                'course_runs': [
+                    {
+                        'start': '2216-02-05T05:00:00Z',
+                        'pacing_type': 'instructor_paced',
+                        'availability': 'Current',
+                    }
+                ],
+                'short_description': 'Learn to grow this colorful veggie.',
+                'full_description': 'Carrots are great. Rabbits love them. Come learn about growing carrots.',
+            },
+            'Pacing: Instructor-Paced. Starts: February 2216. Carrots are great. Rabbits love them. Come learn about '
+            'growing carrots.',
+        ),
+        (
+            {
+                'title': 'Bunnies are cute',
+                'course_runs': [
+                    {
+                        'end': '2317-02-05T05:00:00Z',
+                        'pacing_type': 'instructor_paced',
+                        'availability': 'Current',
+                    }
+                ],
+                'short_description': 'Yep.',
+            },
+            'Pacing: Instructor-Paced. Ends: February 2317. Yep.',
+        ),
+        (
+            {
+            },
+            '',
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_course_description(self, course, expected_description):
+        """
+        Transforming a course description includes the pacing and start date.
+        """
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_description(course) == [
+            {
+                'locale': 'English',
+                'value': expected_description
+            }
+        ]
