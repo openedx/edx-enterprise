@@ -2,7 +2,7 @@ Change Log
 ==========
 
 ..
-   All enhancements and patches to edx-enteprise will be documented
+   All enhancements and patches to edx-enterprise will be documented
    in this file.  It adheres to the structure of http://keepachangelog.com/ ,
    but in reStructuredText instead of Markdown (for ease of incorporation into
    Sphinx documentation and the PyPI description).
@@ -14,11 +14,15 @@ Change Log
 Unreleased
 ----------
 
+[1.8.9] - 2019-08-15
+--------------------
+
+* Remove tincan from src directory
+
 [1.8.8] - 2019-08-01
 --------------------
 
 * For CornerstoneCourseListAPI handled corner cases for default values.
-
 
 [1.8.7] - 2019-07-31
 --------------------
@@ -59,7 +63,7 @@ Unreleased
 [1.8.0] - 2019-07-22
 --------------------
 
-* Replce edx-rbac jwt utils with edx-drf-extensions jwt utils
+* Replace edx-rbac jwt utils with edx-drf-extensions jwt utils
 
 [1.7.3] - 2019-07-19
 --------------------
@@ -418,7 +422,7 @@ Unreleased
 [1.2.3] - 2019-01-10
 ---------------------
 
-* Add managemenet command "unlink_inactive_sap_learners" to unlink inactive SAP learners from the related enterprises
+* Add management command "unlink_inactive_sap_learners" to unlink inactive SAP learners from the related enterprises
 
 [1.2.2] - 2019-01-09
 ---------------------
@@ -1027,7 +1031,7 @@ Unreleased
 [0.53.11] - 2017-11-06
 ----------------------
 
-* Removing SAP_USE_ENTERPRISE_ENROLLMENT_PAGE switch via django waffle and use landing page URL instead of track slection page.
+* Removing SAP_USE_ENTERPRISE_ENROLLMENT_PAGE switch via django waffle and use landing page URL instead of track selection page.
 
 [0.53.10] - 2017-11-02
 ----------------------
@@ -1175,7 +1179,7 @@ Unreleased
 ---------------------
 
 * Improved robustness for `force_fresh_session` decorator in conjunction with `enterprise_login_required`
-* Conciously avoid attempting to sync back details for SAPSF users who aren't linked via SSO
+* Consciously avoid attempting to sync back details for SAPSF users who aren't linked via SSO
 
 [0.50.0] - 2017-10-03
 ---------------------
