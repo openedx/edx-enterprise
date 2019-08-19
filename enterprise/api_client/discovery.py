@@ -13,9 +13,11 @@ from opaque_keys.edx.keys import CourseKey
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
+from enterprise import utils
 from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_configuration_value_for_site
 
 try:
@@ -116,10 +118,20 @@ class CourseCatalogApiClient(object):
 
         return results
 
+    def get_catalog_results_from_discovery(self, content_filter_query, query_params=None, traverse_pagination=False):
+        """
+            Return results from the discovery service's search/all endpoint."""
+
+        endpoint = getattr(self.client, self.SEARCH_ALL_ENDPOINT)
+        response = endpoint().post(data=content_filter_query, **query_params)
+        if traverse_pagination:
+            response['results'] = self.traverse_pagination(response, endpoint, content_filter_query, query_params)
+            response['next'] = response['previous'] = None
+        return response
+
     def get_catalog_results(self, content_filter_query, query_params=None, traverse_pagination=False):
         """
-        Return results from the discovery service's search/all endpoint.
-
+            Return results from the cache or discovery service's search/all endpoint.
         Arguments:
             content_filter_query (dict): query parameters used to filter catalog results.
             query_params (dict): query parameters used to paginate results.
@@ -132,11 +144,22 @@ class CourseCatalogApiClient(object):
         query_params = query_params or {}
 
         try:
-            endpoint = getattr(self.client, self.SEARCH_ALL_ENDPOINT)
-            response = endpoint().post(data=content_filter_query, **query_params)
-            if traverse_pagination:
-                response['results'] = self.traverse_pagination(response, endpoint, content_filter_query, query_params)
-                response['next'] = response['previous'] = None
+            cache_key = utils.get_cache_key(
+                service='discovery',
+                endpoint=self.SEARCH_ALL_ENDPOINT,
+                query=content_filter_query,
+                traverse_pagination=traverse_pagination,
+                **query_params
+            )
+            response = cache.get(cache_key)
+            if not response:
+                # Response is not cached, so make a call.
+                response = self.get_catalog_results_from_discovery(
+                    content_filter_query,
+                    query_params,
+                    traverse_pagination
+                )
+                cache.set(cache_key, response, settings.ENTERPRISE_API_CACHE_TIMEOUT)
         except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(
                 'Attempted to call course-discovery search/all/ endpoint with the following parameters: '

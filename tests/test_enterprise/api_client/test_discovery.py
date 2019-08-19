@@ -388,6 +388,25 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         assert actual_result == response_dict
 
     @responses.activate
+    @mock.patch.object(CourseCatalogApiClient, 'get_catalog_results_from_discovery', return_value={'result': 'dummy'})
+    def test_get_catalog_results_cache(self, mocked_get_catalog_results_from_discovery):  # pylint: disable=invalid-name
+        """
+        Verify `get_catalog_results` of CourseCatalogApiClient works as expected.
+        """
+        content_filter_query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        self.api.get_catalog_results(content_filter_query=content_filter_query)
+        assert mocked_get_catalog_results_from_discovery.call_count == 1
+
+        # searching same query should not hit discovery service again
+        self.api.get_catalog_results(content_filter_query=content_filter_query)
+        assert mocked_get_catalog_results_from_discovery.call_count == 1
+
+        # getting catalog with different params should hit discovery
+        content_filter_query.update({'partner': 'edx'})
+        self.api.get_catalog_results(content_filter_query=content_filter_query)
+        assert mocked_get_catalog_results_from_discovery.call_count == 2
+
+    @responses.activate
     def test_get_catalog_results_with_traverse_pagination(self):
         """
         Verify `get_catalog_results` of CourseCatalogApiClient works as expected with traverse_pagination=True.
