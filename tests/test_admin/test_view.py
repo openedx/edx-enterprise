@@ -27,6 +27,7 @@ from enterprise.admin import (
 )
 from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
+from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.django_compatibility import reverse
 from enterprise.models import (
@@ -170,6 +171,31 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         )
         self.client = Client()
         self.context_parameters = EnterpriseCustomerManageLearnersView.ContextParameters
+
+        self.ecommerce_service_user = UserFactory(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
+
+        patcher = mock.patch.multiple(
+            'enterprise.admin.views',
+            CourseEnrollment=mock.DEFAULT,
+            CourseEnrollmentAttribute=mock.DEFAULT
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _mock_ecommerce_api_client(self, client_mock, return_value=None):
+        """
+        Mock E-Commerce API client
+        """
+        if return_value is None:
+            return_value = {'order_number': 'EDX-100100'}
+
+        mocked_attributes = {
+            'manual_course_enrollment_order.post': mock.MagicMock(return_value=return_value),
+        }
+
+        api_mock = mock.MagicMock(**mocked_attributes)
+
+        client_mock.return_value = api_mock
 
     def _test_common_context(self, actual_context, context_overrides=None):
         """
@@ -587,6 +613,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         })
         return response
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -599,7 +626,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             views_client,
             course_catalog_client,
             track_enrollment,
+            mock_ecommerce_api_client
     ):
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
             "title": "Cool Science",
@@ -709,31 +739,44 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             num_messages = len(mail.outbox)
             assert num_messages == enrollment_count
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_multi_enroll_user(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_multi_enroll_user(
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client
+    ):
         """
         Test that an existing learner can be enrolled in multiple courses.
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
         self._post_multi_enroll(forms_client, views_client, course_catalog_client, track_enrollment, True)
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_multi_enroll_pending_user(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_multi_enroll_pending_user(
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client
+    ):
         """
         Test that a pending learner can be enrolled in multiple courses.
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
         self._post_multi_enroll(forms_client, views_client, course_catalog_client, track_enrollment, False)
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enroll_no_course_detail(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_enroll_no_course_detail(
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client
+    ):
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -763,17 +806,20 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed(
-            self, forms_client, views_client, course_catalog_client, track_enrollment
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client,
     ):
         """
         Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
         and course enrollment window is closed
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -806,18 +852,21 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed_mode_changed(
-            self, forms_client, views_client, course_catalog_client, track_enrollment
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client
     ):
         """
         Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
         with different mode
         and course enrollment window is closed
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -842,17 +891,20 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email))
         })
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed_no_sce_exists(
-            self, forms_client, views_client, course_catalog_client, track_enrollment
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client
     ):
         """
         Tests scenario when user being enrolled has no SCE(student CourseEnrollment) record
         and course enrollment window is closed
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -877,6 +929,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email))
         })
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -887,6 +940,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             views_client,
             course_catalog_client,
             track_enrollment,
+            mock_ecommerce_api_client
     ):
         """
         Test that learner is added successfully if course does not have a start date.
@@ -895,6 +949,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         learner should be enrolled successfully without any errors and learner should receive an email
         about the enrollment.
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
             "title": "Cool Science",
@@ -927,11 +983,16 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 1
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enrollment_error(self, forms_client, views_client, course_catalog_client, reverse_mock):
+    def test_post_enrollment_error(
+            self, forms_client, views_client, course_catalog_client, reverse_mock, mock_ecommerce_api_client
+    ):
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
@@ -952,6 +1013,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             (messages.ERROR, "The following learners could not be enrolled in {}: {}".format(course_id, user.email)),
         ]))
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch('enterprise.admin.views.logging.error')
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
@@ -963,8 +1025,11 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             views_client,
             course_catalog_client,
             reverse_mock,
-            logging_mock
+            logging_mock,
+            mock_ecommerce_api_client
     ):
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
@@ -1067,6 +1132,57 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._assert_django_messages(response, set([
             (messages.ERROR, "The following learners could not be enrolled in Program2: {}".format(user.email)),
         ]))
+
+    @ddt.unpack
+    @ddt.data(
+        {'ecomm_response': {u'order_number': u'EDX-100100'}, 'view_util_response': True},
+        {'ecomm_response': {}, 'view_util_response': False},
+    )
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
+    def test_create_order_data_for_learner_enrollment(
+            self, mock_ecommerce_api_client, ecomm_response, view_util_response
+    ):
+        """
+        Tests that `create_order_data_for_learner_enrollment` works as expected.
+        """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client, return_value=ecomm_response)
+        result = EnterpriseCustomerManageLearnersView().create_order_data_for_learner_enrollment(
+            EcommerceApiClient(), self.user, 'course-v1:TestX+Test100+2019_T1'
+        )
+
+        assert result == view_util_response
+
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_order_failure_message(
+            self, forms_client, views_client, ecommerce_api_client, *args  # pylint: disable=unused-argument
+    ):
+        """
+        Tests that expected order failure message is present.
+        """
+        self._mock_ecommerce_api_client(client_mock=ecommerce_api_client, return_value={})
+
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+
+        user = UserFactory(id=2)
+        course_id = 'course-v1:HarvardX+CoolScience+2016'
+
+        response = self._enroll_user_request(user, 'verified', course_id=course_id)
+
+        enroll_message = '1 learner was enrolled in {course_id}.'.format(course_id=course_id)
+        order_message = 'Learner {emails} is enrolled in {course_id} but ecommerce order creation failed'.format(
+            emails=user.email,
+            course_id=course_id
+        )
+
+        self._assert_django_messages(
+            response, set([(messages.SUCCESS, enroll_message), (messages.ERROR, order_message)])
+        )
 
 
 @ddt.ddt
@@ -1271,14 +1387,19 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
         ]))
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_link_and_enroll(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_link_and_enroll(
+            self, forms_client, views_client, course_catalog_client, track_enrollment, mock_ecommerce_api_client
+    ):
         """
         Test bulk upload with linking and enrolling
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         course_catalog_instance = course_catalog_client.return_value
         course_catalog_instance.get_course_run.return_value = {
             "name": "Enterprise Training",
@@ -1319,6 +1440,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 2
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -1329,10 +1451,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             views_client,
             course_catalog_client,
             track_enrollment,
+            mock_ecommerce_api_client
     ):
         """
         Test bulk upload with linking and enrolling
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         course_catalog_instance = course_catalog_client.return_value
         course_catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -1370,6 +1495,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 0
 
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
@@ -1382,10 +1508,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             views_client,
             views_catalog_client,
             track_enrollment,
+            mock_ecommerce_api_client
     ):
         """
         Test bulk upload with linking and enrolling
         """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client)
+
         views_catalog_instance = views_catalog_client.return_value
         views_catalog_instance.get_program_by_uuid.return_value = fake_catalog_api.get_program_by_uuid
         catalog_api_instance = catalog_client.return_value
@@ -1478,6 +1607,44 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         ])
 
         self._assert_django_messages(response, expected_messages)
+
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_order_failure_message_bulk(
+            self, forms_client, views_client, mock_ecommerce_api_client, *args  # pylint: disable=unused-argument
+    ):
+        """
+        Tests that expected order failure message is present in case of bulk enrollment.
+        """
+        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client, return_value={})
+
+        views_instance = views_client.return_value
+        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        forms_instance = forms_client.return_value
+        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        self._login()
+
+        user1 = UserFactory(id=2)
+        user2 = UserFactory(id=3)
+
+        columns = [ManageLearnersForm.CsvColumns.EMAIL]
+        data = [(user1.email,), (user2.email,)]
+        course_id = 'course-v1:HarvardX+CoolScience+2016'
+        course_mode = 'verified'
+
+        response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
+
+        order_message = 'The following learners are enrolled in {} but ecommerce order creation failed : {}'.format(
+            course_id,
+            ', '.join([user1.email, user2.email])
+        )
+        self._assert_django_messages(response, set([
+            (messages.SUCCESS, '2 new learners were added to {}.'.format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "2 learners were enrolled in {}.".format(course_id)),
+            (messages.ERROR, order_message)
+        ]))
 
 
 @mark.django_db

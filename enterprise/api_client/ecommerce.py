@@ -9,6 +9,8 @@ import logging
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import SlumberBaseException
 
+from django.conf import settings
+from django.contrib.auth.models import User
 from django.utils.translation import ugettext as _
 
 from enterprise.utils import NotConnectedToOpenEdX, format_price
@@ -27,7 +29,7 @@ class EcommerceApiClient(object):
     Object builds an API client to make calls to the E-Commerce API.
     """
 
-    def __init__(self, user):
+    def __init__(self, user=None):
         """
         Create an E-Commerce API client, authenticated with the API token from Django settings.
 
@@ -40,6 +42,9 @@ class EcommerceApiClient(object):
                 _('To get a ecommerce_api_client, this package must be '
                   'installed in an Open edX environment.')
             )
+
+        if user is None:
+            user = User.objects.get(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
 
         self.user = user
         self.client = ecommerce_api_client(user)
@@ -65,3 +70,31 @@ class EcommerceApiClient(object):
         if price != mode['min_price']:
             return format_price(price, currency)
         return mode['original_price']
+
+    def create_ecommerce_order_for_manual_course_enrollment(  # pylint: disable=invalid-name
+            self,
+            enrolled_learner_lms_user_id,
+            enrolled_learner_username,
+            enrolled_learner_email,
+            enrolled_course_run_key,
+    ):
+        """
+        Create an ecommerce order record for manually enrolled learner.
+        """
+        try:
+            return self.client.manual_course_enrollment_order.post({
+                'lms_user_id': enrolled_learner_lms_user_id,
+                'username': enrolled_learner_username,
+                'email': enrolled_learner_email,
+                'course_run_key': enrolled_course_run_key,
+            })
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                '[Enterprise Manual Course Enrollment] Failed to create ecommerce order. LMSUserId: %s, User: %s, '
+                'Email: %s, Course: %s, Message: %s',
+                enrolled_learner_lms_user_id,
+                enrolled_learner_username,
+                enrolled_learner_email,
+                enrolled_course_run_key,
+                exc
+            )

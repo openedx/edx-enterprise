@@ -39,6 +39,7 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
+from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
@@ -49,6 +50,12 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
 )
 from enterprise.utils import get_configuration_value_for_site, send_email_notification_message, track_enrollment
+
+try:
+    from student.models import CourseEnrollment, CourseEnrollmentAttribute
+except ImportError:
+    CourseEnrollment = None
+    CourseEnrollmentAttribute = None
 
 
 class TemplatePreviewView(View):
@@ -565,10 +572,19 @@ class EnterpriseCustomerManageLearnersView(View):
         successes = []
         pending = []
         failures = []
+        order_failures = []
+
+        ecommerce_client = EcommerceApiClient()
 
         for user in existing_users:
             succeeded = cls.enroll_user(enterprise_customer, user, course_mode, course_id)
+
             if succeeded:
+                # if learner enrollment is successfull then create an order record in ecommerce
+                order_created = cls.create_order_data_for_learner_enrollment(ecommerce_client, user, course_id)
+                if not order_created:
+                    order_failures.append(user)
+
                 successes.append(user)
             else:
                 failures.append(user)
@@ -581,7 +597,43 @@ class EnterpriseCustomerManageLearnersView(View):
             )
             pending.append(pending_user)
 
-        return successes, pending, failures
+        return successes, pending, failures, order_failures
+
+    @classmethod
+    def create_order_data_for_learner_enrollment(cls, ecommerce_client, user, course_id):
+        """
+        Create ecommerce order data for learner and also create `CourseEnrollmentAttribute` for the learner enrollment.
+        """
+        response = ecommerce_client.create_ecommerce_order_for_manual_course_enrollment(
+            user.id,
+            user.username,
+            user.email,
+            course_id,
+        )
+
+        if response and 'order_number' in response:
+            enrollment = CourseEnrollment.get_enrollment(user, course_id)
+            CourseEnrollmentAttribute.add_enrollment_attr(
+                enrollment=enrollment,
+                data_list=[{
+                    'namespace': 'order',
+                    'name': 'order_number',
+                    'value': response['order_number']
+                }]
+            )
+            return True
+
+        logging.warning(
+            '[Enterprise Manual Course Enrollment] Failed to create ecommerce order. LMSUserId: %s, User: %s, '
+            'Email: %s, Course: %s, Response: %s',
+            user.id,
+            user.username,
+            user.email,
+            course_id,
+            response
+        )
+
+        return False
 
     @classmethod
     def send_messages(cls, http_request, message_requests):
@@ -724,6 +776,32 @@ class EnterpriseCustomerManageLearnersView(View):
         )
 
     @classmethod
+    def get_failed_ecommerce_order_message(cls, users, course_id):
+        """
+        Create message for the users who were enrolled in a course but ecommerce order was not created successfully.
+
+        Args:
+            users: An iterable of users who were not successfully enrolled
+            course_id (str): A string identifier for the course
+
+        Returns:
+            tuple: A 2-tuple containing a message type and message text
+        """
+        failed_emails = [user.email for user in users]
+
+        return (
+            'error',
+            ungettext(
+                'Learner {emails} is enrolled in {course_id} but ecommerce order creation failed',
+                'The following learners are enrolled in {course_id} but ecommerce order creation failed : {emails}',
+                len(failed_emails)
+            ).format(
+                course_id=course_id,
+                emails=', '.join(failed_emails),
+            )
+        )
+
+    @classmethod
     def _enroll_users(
             cls,
             request,
@@ -750,7 +828,7 @@ class EnterpriseCustomerManageLearnersView(View):
         pending_messages = []
 
         if course_id:
-            succeeded, pending, failed = cls.enroll_users_in_course(
+            succeeded, pending, failed, order_failures = cls.enroll_users_in_course(
                 enterprise_customer=enterprise_customer,
                 course_id=course_id,
                 course_mode=mode,
@@ -769,6 +847,8 @@ class EnterpriseCustomerManageLearnersView(View):
                 pending_messages.append(cls.get_failed_enrollment_message(failed, course_id))
             if pending:
                 pending_messages.append(cls.get_pending_enrollment_message(pending, course_id))
+            if order_failures:
+                pending_messages.append(cls.get_failed_ecommerce_order_message(order_failures, course_id))
 
         if program_details:
             succeeded, pending, failed = cls.enroll_users_in_program(
