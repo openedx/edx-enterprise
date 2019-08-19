@@ -129,6 +129,13 @@ class TestEnterpriseAPIViews(APITest):
     def setUp(self):
         super(TestEnterpriseAPIViews, self).setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
+        patcher = mock.patch.multiple(
+            'enterprise.utils',
+            CourseEnrollment=mock.DEFAULT,
+            CourseEnrollmentAttribute=mock.DEFAULT
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
@@ -144,6 +151,23 @@ class TestEnterpriseAPIViews(APITest):
         """
         for item in items:
             factory.create(**item)
+
+    def _mock_ecommerce_api_client(self, client_mock, return_value=None):
+        """
+        Mock E-Commerce API client
+        """
+        if return_value is None:
+            return_value = {'order_number': 'EDX-100100'}
+
+        create_manual_order_mock = mock.Mock(
+            return_value={'order_number': return_value}
+        )
+
+        client_mock.return_value = mock.Mock(
+            create_order_for_manual_course_enrollment=create_manual_order_mock
+        )
+
+        return create_manual_order_mock
 
     @ddt.data(
         (
@@ -1778,6 +1802,7 @@ class TestEnterpriseAPIViews(APITest):
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.models.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
@@ -1788,6 +1813,7 @@ class TestEnterpriseAPIViews(APITest):
             post_data,
             mock_notify_learners,
             mock_enrollment_client,
+            mock_ecommerce_client,  # pylint: disable=unused-argument
             mock_tpa_client,
             mock_catalog_contains_course,
     ):
@@ -1806,6 +1832,11 @@ class TestEnterpriseAPIViews(APITest):
             mock_catalog_contains_course,
             True,
             enable_autocohorting=True
+        )
+
+        # Set up ecommerce client responses
+        mock_ecommerce_client.return_value = mock.Mock(
+            create_order_for_manual_course_enrollment=mock.Mock(return_value={'order_number': 'EDX-100100'})
         )
 
         # Make the call!
@@ -1874,9 +1905,11 @@ class TestEnterpriseAPIViews(APITest):
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
     @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.get_ecommerce_api_client')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
     def test_enterprise_customer_course_enrollments_detail_multiple(
             self,
+            mock_ecommerce_client,
             mock_enrollment_client,
             mock_tpa_client,
             mock_catalog_contains_course,
@@ -1994,6 +2027,9 @@ class TestEnterpriseAPIViews(APITest):
         # Set up catalog_contains_course response.
         mock_catalog_contains_course.return_value = True
 
+        # Set up ecommerce client responses
+        create_manual_order_mock = self._mock_ecommerce_api_client(mock_ecommerce_client)
+
         # Make the call!
         response = self.client.post(
             settings.TEST_SERVER + ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT,
@@ -2006,6 +2042,14 @@ class TestEnterpriseAPIViews(APITest):
         self.assertFalse(PendingEnrollment.objects.filter(
             user__user_email=pending_email,
             course_id=course_run_id).exists())
+
+        self.assertTrue(mock_ecommerce_client.called)
+        create_manual_order_mock.assert_called_once_with(
+            tpa_user.id,
+            tpa_user.username,
+            tpa_user.email,
+            course_run_id,
+        )
 
     def test_enterprise_customer_catalogs_response_formats(self):
         """

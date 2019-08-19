@@ -40,6 +40,18 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
     """
     Test User post_save signal handler.
     """
+    def setUp(self):
+        """
+        setUp for TestUserPostSaveSignalHandler.
+        """
+        super(TestUserPostSaveSignalHandler, self).setUp()
+        patcher = mock.patch.multiple(
+            'enterprise.utils',
+            CourseEnrollment=mock.DEFAULT,
+            CourseEnrollmentAttribute=mock.DEFAULT
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_handle_user_post_save_no_user_instance_nothing_happens(self):
         # precondition checks
@@ -103,13 +115,20 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
 
     @mock.patch('enterprise.utils.track_event')
     @mock.patch('enterprise.signals.track_enrollment')
+    @mock.patch('enterprise.models.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     def test_handle_user_post_save_with_pending_course_enrollment(
             self,
             mock_course_enrollment,
+            mock_ecommerce_client,
             mock_track_enrollment,
             mock_track_event  # pylint: disable=unused-argument
     ):
+        # Set up ecommerce client responses
+        mock_ecommerce_client.return_value = mock.Mock(
+            create_order_for_manual_course_enrollment=mock.Mock(return_value={'order_number': 'EDX-100100'})
+        )
+
         mock_course_enrollment.enroll.return_value = None
         email = "fake_email@edx.org"
         user = UserFactory(id=1, email=email)
