@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+
+[1.9.1] - 2019-08-19
+--------------------
+
+* Added enterprise_learner_portal to MANIFEST.in file to recursively grab files app on build
 * Minor fixes to typos and an image link
 
 [1.9.0] - 2019-08-12
