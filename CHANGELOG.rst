@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.9.3] - 2019-08-20
+--------------------
+
+* Fix for include course run dates and pacing type in the course description sent to SAP. Prior release (1.9.2) did
+not include bumping the version in __init__.py.
+
 [1.9.2] - 2019-08-20
 --------------------
 
