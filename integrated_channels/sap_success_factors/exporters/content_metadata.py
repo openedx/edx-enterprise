@@ -10,6 +10,8 @@ from logging import getLogger
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise.api_client.lms import parse_lms_api_datetime
+from enterprise.utils import get_closest_course_run
+from enterprise.views import CourseEnrollmentView
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.sap_success_factors.exporters.utils import (
     course_available_for_enrollment,
@@ -71,18 +73,37 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
 
     def transform_description(self, content_metadata_item):
         """
-        Return the description of the content item.
+        Return the description of the content item. Also include the course pacing, and start and end dates.
         """
         description_with_locales = []
+
+        description = (
+            content_metadata_item.get('full_description') or
+            content_metadata_item.get('short_description') or
+            content_metadata_item.get('title', '')
+        )
+
+        course_runs = content_metadata_item.get('course_runs')
+        if course_runs:
+            closest_course_run = get_closest_course_run(course_runs)
+
+            # Include the course run start and end dates
+            date_str = self._get_course_run_start_end_str(closest_course_run)
+            if date_str:
+                description = date_str + description
+
+            # Include the course pacing
+            course_pacing = CourseEnrollmentView.PACING_FORMAT.get(closest_course_run['pacing_type'], '')
+            if course_pacing:
+                pacing_desc = 'Pacing: {pacing_type}. '.format(
+                    pacing_type=course_pacing
+                )
+                description = pacing_desc + description
 
         for locale in self.enterprise_configuration.get_locales():
             description_with_locales.append({
                 'locale': locale,
-                'value': (
-                    content_metadata_item.get('full_description') or
-                    content_metadata_item.get('short_description') or
-                    content_metadata_item.get('title', '')
-                )
+                'value': description
             })
 
         return description_with_locales
@@ -174,6 +195,37 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
             })
 
         return title_with_locales
+
+    def _get_course_run_start_end_str(self, course_run):
+        """
+        Get the course run start and end as a descriptive string. Also include a note if enrollment is closed.
+        """
+        course_run_start = course_run.get('start')
+        course_run_end = course_run.get('end')
+        date_str = ''
+
+        if course_run_start:
+            date_str += '{starts}: {:%B %Y}'.format(
+                parse_lms_api_datetime(course_run_start),
+                starts=_('Starts')
+            )
+
+        if course_run_end:
+            if date_str:
+                date_str += ', '
+
+            date_str += '{ends}: {:%B %Y}. '.format(
+                parse_lms_api_datetime(course_run_end),
+                ends=_('Ends')
+            )
+        else:
+            if date_str:
+                date_str += '. '
+
+        if not course_available_for_enrollment(course_run):
+            date_str += 'Enrollment is closed. '
+
+        return date_str
 
     def transform_courserun_description(self, content_metadata_item):
         """

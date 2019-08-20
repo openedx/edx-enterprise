@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.2] - 2019-08-20
+--------------------
+
+* Include course run dates and pacing type in the course description sent to SAP.
+
 [1.9.1] - 2019-08-19
 --------------------
 
