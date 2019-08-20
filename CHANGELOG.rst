@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.9.4] - 2019-08-20
+--------------------
+
+* Adding type check to enterprise_learner_portal serializer.
+* Adding enterprise_learner_portal to quality check commands.
+
 [1.9.3] - 2019-08-20
 --------------------
 
