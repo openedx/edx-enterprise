@@ -4,9 +4,12 @@ enterprise_learner_portal serializer
 """
 from __future__ import absolute_import, unicode_literals
 
+from rest_framework import serializers
+
 from django.utils.translation import ugettext as _
 
-from rest_framework import serializers
+from enterprise.utils import NotConnectedToOpenEdX
+from enterprise_learner_portal.utils import get_course_run_status
 
 try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
@@ -21,11 +24,8 @@ except ImportError:
     get_course_run_url = None
     get_emails_enabled = None
 
-from enterprise.utils import NotConnectedToOpenEdX
-from enterprise_learner_portal.utils import get_course_run_status
 
-
-class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):
+class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     A serializer for course enrollment information for a given course
     and enterprise customer user.
@@ -50,7 +50,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):
             user.username,
             instance['id']
         )
-        representation['certificate_download_url'] = certificate_info.get('download_url')
+        if isinstance(certificate_info, dict):
+            representation['certificate_download_url'] = certificate_info.get('download_url')
 
         # Email enabled
         emails_enabled = get_emails_enabled(user, instance['id'])

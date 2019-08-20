@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-enterprise_learner_portal utils
+enterprise_learner_portal utils.
 """
 from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime, timedelta
+
 from pytz import UTC
 
 
@@ -12,6 +13,7 @@ class CourseRunProgressStatuses(object):
     """
     Class to group statuses that a course run can be in with respect to user progress.
     """
+
     IN_PROGRESS = 'in_progress'
     UPCOMING = 'upcoming'
     COMPLETED = 'completed'
@@ -46,8 +48,7 @@ def get_course_run_status(course_overview, certificate_info):
             return CourseRunProgressStatuses.COMPLETED
         elif course_overview['has_started']:
             return CourseRunProgressStatuses.IN_PROGRESS
-        else:
-            return CourseRunProgressStatuses.UPCOMING
+        return CourseRunProgressStatuses.UPCOMING
     elif course_overview['pacing'] == 'self':
         thirty_days_ago = datetime.now(UTC) - timedelta(30)
         certificate_completed = is_certificate_passing and (certificate_creation_date <= thirty_days_ago)
@@ -55,6 +56,5 @@ def get_course_run_status(course_overview, certificate_info):
             return CourseRunProgressStatuses.COMPLETED
         elif course_overview['has_started']:
             return CourseRunProgressStatuses.IN_PROGRESS
-        else:
-            return CourseRunProgressStatuses.UPCOMING
+        return CourseRunProgressStatuses.UPCOMING
     return None

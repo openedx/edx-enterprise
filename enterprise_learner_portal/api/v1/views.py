@@ -1,19 +1,18 @@
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
+"""
+Views for enterprise_learner_portal app.
+"""
+from __future__ import absolute_import, unicode_literals
 
-
-from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404
-from django.utils.translation import ugettext as _
-
+from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
+from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import permissions
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
-from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
+from django.shortcuts import get_object_or_404
+from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
@@ -24,14 +23,18 @@ try:
 except ImportError:
     get_course_overviews = None
 
-User = get_user_model()
-
 
 class EnterpriseCourseEnrollmentView(APIView):
+    """
+    View for returning information around a user's enterprise course enrollments.
+    """
     permission_classes = (permissions.IsAuthenticated,)
     authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
 
     def get(self, request):
+        """
+        Get method for the view.
+        """
         if get_course_overviews is None:
             raise NotConnectedToOpenEdX(
                 _('To use this endpoint, this package must be '
