@@ -46,12 +46,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         user = request.user
 
         # Certificate
-        certificate_info = get_certificate_for_user(
-            user.username,
-            instance['id']
-        )
-        if isinstance(certificate_info, dict):
-            representation['certificate_download_url'] = certificate_info.get('download_url')
+        certificate_info = get_certificate_for_user(user.username, instance['id']) or {}
+        representation['certificate_download_url'] = certificate_info.get('download_url')
 
         # Email enabled
         emails_enabled = get_emails_enabled(user, instance['id'])
