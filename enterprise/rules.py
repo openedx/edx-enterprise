@@ -13,6 +13,7 @@ from enterprise.constants import (
     ENTERPRISE_CATALOG_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
 )
 from enterprise.models import EnterpriseFeatureUserRoleAssignment
 
@@ -103,6 +104,35 @@ def has_explicit_access_to_enrollment_api(user, obj):
     )
 
 
+@rules.predicate
+def has_implicit_access_to_reporting_api(user, obj):  # pylint: disable=unused-argument
+    """
+    Check that if request user has implicit access to `ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE` feature role.
+
+    Returns:
+        boolean: whether the request user has access or not
+    """
+    request = crum.get_current_request()
+    decoded_jwt = get_decoded_jwt(request) or get_decoded_jwt_from_auth(request)
+    return request_user_has_implicit_access_via_jwt(decoded_jwt, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE, obj)
+
+
+@rules.predicate
+def has_explicit_access_to_reporting_api(user, obj):
+    """
+    Check that if request user has explicit access to `ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE` feature role.
+
+    Returns:
+        boolean: whether the request user has access or not
+    """
+    return user_has_access_via_database(
+        user,
+        ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+        EnterpriseFeatureUserRoleAssignment,
+        obj
+    )
+
+
 rules.add_perm('enterprise.can_access_admin_dashboard',
                has_implicit_access_to_dashboard | has_explicit_access_to_dashboard)
 
@@ -111,3 +141,6 @@ rules.add_perm('enterprise.can_view_catalog',
 
 rules.add_perm('enterprise.can_enroll_learners',
                has_implicit_access_to_enrollment_api | has_explicit_access_to_enrollment_api)
+
+rules.add_perm('enterprise.can_manage_reporting_config',
+               has_implicit_access_to_reporting_api | has_explicit_access_to_reporting_api)

@@ -452,14 +452,19 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
     class Meta:
         model = models.EnterpriseCustomerReportingConfiguration
         fields = (
-            'enterprise_customer', 'active', 'delivery_method', 'email', 'frequency', 'day_of_month', 'day_of_week',
-            'hour_of_day', 'encrypted_password', 'sftp_hostname', 'sftp_port', 'sftp_username',
-            'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type', 'pgp_encryption_key',
-            'enterprise_customer_catalogs',
+            'enterprise_customer', 'enterprise_customer_id', 'active', 'delivery_method', 'email', 'frequency',
+            'day_of_month', 'day_of_week', 'hour_of_day', 'encrypted_password', 'sftp_hostname', 'sftp_port',
+            'sftp_username', 'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type',
+            'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid'
         )
 
-    enterprise_customer = EnterpriseCustomerSerializer()
-    enterprise_customer_catalogs = EnterpriseCustomerCatalogSerializer(many=True)
+    enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
+    enterprise_customer_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.EnterpriseCustomer.objects.all(),  # pylint: disable=no-member
+        source='enterprise_customer',
+        write_only=True
+    )
+    enterprise_customer_catalogs = EnterpriseCustomerCatalogSerializer(many=True, read_only=True)
     email = serializers.ListField(
         child=serializers.EmailField()
     )
