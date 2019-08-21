@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.5] - 2019-08-21
+--------------------
+
+* Preventing another error in enterprise_learner_portal serializer when certificate info is None.
+
 [1.9.4] - 2019-08-20
 --------------------
 
