@@ -52,6 +52,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         )
         if isinstance(certificate_info, dict):
             representation['certificate_download_url'] = certificate_info.get('download_url')
+        else:
+            certificate_info = {}
 
         # Email enabled
         emails_enabled = get_emails_enabled(user, instance['id'])
