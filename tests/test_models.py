@@ -95,6 +95,17 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
         )
         assert expected_str == method(self.enrollment)
 
+    def test_get_enterprise_course_enrollment_id(self):
+        """
+        Test the get_enterprise_course_enrollment_id function.
+        """
+        course_enrollment = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
+            self.user,
+            self.course_id,
+            self.enterprise_customer_user.enterprise_customer
+        )
+        assert course_enrollment == self.enrollment.id
+
 
 @mark.django_db
 class TestEnterpriseCustomerManager(unittest.TestCase):

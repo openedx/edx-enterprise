@@ -43,3 +43,30 @@ class TestXAPILRSConfiguration(unittest.TestCase):
             ).encode()).decode()
         )
         assert expected_header == self.x_api_lrs_config.authorization_header
+
+
+@mark.django_db
+class TestXAPILearnerDataTransmissionAudit(unittest.TestCase):
+    """
+    Tests for the ``XAPILearnerDataTransmissionAudit`` model.
+    """
+
+    def setUp(self):
+        super(TestXAPILearnerDataTransmissionAudit, self).setUp()
+        self.xapi_learner_transmission = factories.XAPILearnerDataTransmissionAuditFactory(
+            user_id=factories.UserFactory().id,
+            course_id='dummy'
+        )
+
+    def test_string_representation(self):
+        """
+        Test the string representation of the model.
+        """
+        expected_string = '<XAPILearnerDataTransmissionAudit {id} for enterprise enrollment {ece_id}, XAPI user ' \
+                          '{user_id}, and course {course_id}>'.format(
+                              id=self.xapi_learner_transmission.id,
+                              ece_id=self.xapi_learner_transmission.enterprise_course_enrollment_id,
+                              user_id=self.xapi_learner_transmission.user_id,
+                              course_id=self.xapi_learner_transmission.course_id
+                          )
+        assert expected_string == str(self.xapi_learner_transmission)

@@ -8,12 +8,14 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 from logging import getLogger
 
+import six
+
 from django.core.management.base import BaseCommand, CommandError
 
-from enterprise.models import EnterpriseCustomer
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer
 from enterprise.utils import NotConnectedToOpenEdX
 from integrated_channels.exceptions import ClientError
-from integrated_channels.xapi.models import XAPILRSConfiguration
+from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
 from integrated_channels.xapi.utils import send_course_enrollment_statement
 
 try:
@@ -118,13 +120,49 @@ class Command(BaseCommand):
             days (int): Include course enrollment of this number of days.
         """
         for course_enrollment in self.get_course_enrollments(lrs_configuration.enterprise_customer, days):
+            error_message = None
+            course_id = six.text_type(course_enrollment.course.id)
             try:
                 send_course_enrollment_statement(lrs_configuration, course_enrollment)
             except ClientError:
-                LOGGER.exception(
-                    'Client error while sending course enrollment to xAPI for'
-                    ' enterprise customer {enterprise_customer}.'.format(
-                        enterprise_customer=lrs_configuration.enterprise_customer.name
+                error_message = 'Client error while sending course enrollment to xAPI for ' \
+                                'enterprise customer: {enterprise_customer}, user: {username} ' \
+                                'and course: {course_id}'.format(
+                                    enterprise_customer=lrs_configuration.enterprise_customer.name,
+                                    username=course_enrollment.user.username,
+                                    course_id=course_id
+                                )
+                LOGGER.exception(error_message)
+                status = 500
+            else:
+                LOGGER.info(
+                    'Successfully send the course enrollment to xAPI for user: {username} for course: '
+                    "{course_id}".format(
+                        username=course_enrollment.user.username,
+                        course_id=course_id
+                    )
+                )
+                status = 200
+            xapi_transmission, created = XAPILearnerDataTransmissionAudit.objects.get_or_create(
+                user=course_enrollment.user,
+                course_id=course_id,
+                defaults={
+                    'enterprise_course_enrollment_id': EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
+                        course_enrollment.user,
+                        course_id,
+                        lrs_configuration.enterprise_customer
+                    ),
+                    'status': status,
+                    'error_message': error_message
+                }
+            )
+            if created:
+                LOGGER.info(
+                    "Successfully created the XAPILearnerDataTransmissionAudit object with id: {id}, user: {username}"
+                    " and course: {course_id}".format(
+                        id=xapi_transmission.id,
+                        username=xapi_transmission.user.username,
+                        course_id=xapi_transmission.course_id
                     )
                 )
 

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.6] - 2019-08-23
+--------------------
+
+* Added XAPILearnerDataTransmissionAudit model for xapi integrated channel.
+
 [1.9.5] - 2019-08-21
 --------------------
 

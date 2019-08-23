@@ -43,7 +43,7 @@ from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsGlobalConfiguration,
     SapSuccessFactorsLearnerDataTransmissionAudit,
 )
-from integrated_channels.xapi.models import XAPILRSConfiguration
+from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
 
 FAKER = FakerFactory.create()
 
@@ -590,3 +590,21 @@ class XAPILRSConfigurationFactory(factory.django.DjangoModelFactory):
     key = factory.LazyAttribute(lambda x: FAKER.slug())
     secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
     active = True
+
+
+class XAPILearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
+    """
+    ``XAPILearnerDataTransmissionAudit`` factory.
+
+    Creates an instance of ``XAPILearnerDataTransmissionAudit`` with minimal boilerplate.
+    """
+
+    class Meta(object):
+        """
+        Meta for ``XAPILearnerDataTransmissionAuditFactory``.
+        """
+
+        model = XAPILearnerDataTransmissionAudit
+
+    user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
+    course_id = factory.LazyAttribute(lambda x: FAKER.slug())
