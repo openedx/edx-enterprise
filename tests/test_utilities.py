@@ -12,7 +12,9 @@ import mock
 import pytz
 from faker import Factory as FakerFactory
 from pytest import mark, raises
+from requests.exceptions import Timeout  # pylint: disable=redefined-builtin
 
+from django.conf import settings
 from django.core import mail
 from django.test import override_settings
 
@@ -23,6 +25,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
 )
+from enterprise.utils import CourseEnrollmentOrderCreationError
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 from test_utils import TEST_UUID, create_items, fake_catalog_api
 from test_utils.factories import (
@@ -71,6 +74,15 @@ class TestEnterpriseUtils(unittest.TestCase):
         self.uuid = faker.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
+        self.ecommerce_service_user = UserFactory(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
+
+        patcher = mock.patch.multiple(
+            'enterprise.utils',
+            CourseEnrollment=mock.DEFAULT,
+            CourseEnrollmentAttribute=mock.DEFAULT
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     @ddt.unpack
     @ddt.data(
@@ -1479,6 +1491,52 @@ class TestEnterpriseUtils(unittest.TestCase):
         ``get_active_course_runs`` returns active course runs of given course's course runs.
         """
         assert utils.get_active_course_runs(course, users_all_enrolled_courses) == expected_course_run
+
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
+    def test_create_order_data_for_learner_enrollment_success(
+            self,
+            ecom_api_client,
+            *args  # pylint: disable=unused-argument
+    ):
+        """
+        Tests that `create_order_data_for_learner_enrollment` works as expected.
+        """
+        learner = UserFactory()
+
+        client_instance = ecom_api_client.return_value
+        client_instance.create_order_for_manual_course_enrollment.side_effect = [{'order_number': 'EDX-100100'}]
+
+        response = utils.create_order_data_for_learner_enrollment(
+            client_instance,
+            learner,
+            'course-v1:HarvardX+CoolScience+2016'
+        )
+        assert response
+
+    @ddt.data(Timeout(), {})
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.api_client.ecommerce.get_ecommerce_api_client')
+    def test_create_order_data_for_learner_enrollment_exception(
+            self,
+            side_effect,
+            ecom_api_client,
+            *args  # pylint: disable=unused-argument
+    ):
+        """
+        Tests that `create_order_data_for_learner_enrollment` raises correct exception.
+        """
+        learner = UserFactory()
+
+        client_instance = ecom_api_client.return_value
+        client_instance.create_order_for_manual_course_enrollment.side_effect = [side_effect]
+
+        with self.assertRaises(CourseEnrollmentOrderCreationError):
+            utils.create_order_data_for_learner_enrollment(
+                client_instance,
+                learner,
+                'course-v1:HarvardX+CoolScience+2016'
+            )
 
 
 @mark.django_db

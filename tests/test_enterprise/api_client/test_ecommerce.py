@@ -15,7 +15,7 @@ from requests.exceptions import Timeout
 from django.conf import settings
 from django.contrib.auth.models import User
 
-from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.ecommerce import EcommerceApiClient, get_ecommerce_api_client
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import factories
 
@@ -73,7 +73,7 @@ class TestEcommerceApiClient(unittest.TestCase):
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     def test_create_ecommerce_order_for_manual_course_enrollment_post_success(self, ecommerce_api_client_mock):
         """
-        Test that `create_ecommerce_order_for_manual_course_enrollment` returns expected response in case of success.
+        Test that `create_order_for_manual_course_enrollment` returns expected response in case of success.
         """
         return_value = {'order_number': 'EDX-100100'}
         self._setup_ecommerce_api_client(
@@ -81,22 +81,23 @@ class TestEcommerceApiClient(unittest.TestCase):
             method_name='manual_course_enrollment_order.post',
             return_value=return_value
         )
-        assert EcommerceApiClient().create_ecommerce_order_for_manual_course_enrollment(1, '', '', '') == return_value
+        assert get_ecommerce_api_client().create_order_for_manual_course_enrollment(1, '', '', '') == return_value
 
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
-    def test_create_ecommerce_order_for_manual_course_enrollment_post_fail(self, ecommerce_api_client_mock):
+    def test_create_order_for_manual_course_enrollment_post_fail(self, ecom_api_client_mock):
         """
-        Test that `create_ecommerce_order_for_manual_course_enrollment` returns expected response in case of exception.
+        Test that `create_order_for_manual_course_enrollment` returns expected response in case of exception.
         """
         self._setup_ecommerce_api_client(
-            client_mock=ecommerce_api_client_mock,
+            client_mock=ecom_api_client_mock,
             method_name='manual_course_enrollment_order.post',
-            return_value={},
+            return_value={'order_number': 'EDX-100100'},
             side_effect=Timeout()
         )
 
         with mock.patch('enterprise.api_client.ecommerce.LOGGER.exception') as mock_logger:
-            assert EcommerceApiClient().create_ecommerce_order_for_manual_course_enrollment(
-                1, 'bat', 'bat@example.com', 'course-v1:HarvardX+CoolScience+2016'
-            ) is None
-            assert mock_logger.called
+            with self.assertRaises(Timeout):
+                get_ecommerce_api_client().create_order_for_manual_course_enrollment(
+                    1, 'bat', 'bat@example.com', 'course-v1:HarvardX+CoolScience+2016'
+                )
+                assert mock_logger.called

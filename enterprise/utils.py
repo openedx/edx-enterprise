@@ -12,9 +12,11 @@ from uuid import UUID
 
 import bleach
 import pytz
+from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from six import iteritems  # pylint: disable=ungrouped-imports
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
+from slumber.exceptions import SlumberBaseException
 
 from django.apps import apps
 from django.conf import settings
@@ -62,6 +64,12 @@ except ImportError as exception:
     LOGGER.warning("Could not import segment from common.djangoapps.track")
     LOGGER.warning(exception)
     segment = None
+
+try:
+    from student.models import CourseEnrollment, CourseEnrollmentAttribute
+except ImportError:
+    CourseEnrollment = None
+    CourseEnrollmentAttribute = None
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -113,6 +121,12 @@ class CourseEnrollmentDowngradeError(Exception):
 class CourseEnrollmentPermissionError(Exception):
     """
     Exception to raise when an enterprise attempts to use enrollment features it's not configured to use.
+    """
+
+
+class CourseEnrollmentOrderCreationError(Exception):
+    """
+    Exception to raise when an ecommerce order creation failed for a learner's course enrollment.
     """
 
 
@@ -1010,3 +1024,58 @@ def discovery_query_url(content_filter):
         '<a href="{url}" target="_blank">Preview</a>',
         url=disc_url
     )
+
+
+def create_order_data_for_learner_enrollment(ecommerce_client, user, course_id):
+    """
+    Create ecommerce order data for learner and also create `CourseEnrollmentAttribute` for the learner enrollment.
+    """
+    try:
+        response = ecommerce_client.create_order_for_manual_course_enrollment(
+            user.id,
+            user.username,
+            user.email,
+            course_id,
+        )
+    except (SlumberBaseException, ConnectionError, Timeout):
+        raise CourseEnrollmentOrderCreationError(
+            'Failed to create ecommerce order. Exception occurred: UserId: {}, User: {}, Email: {}, Course: {}'.format(
+                user.id,
+                user.username,
+                user.email,
+                course_id,
+            )
+        )
+
+    if not response or 'order_number' not in response:
+        LOGGER.warning(
+            '[Enterprise Manual Course Enrollment] Failed to create ecommerce order. Incorrect response received: '
+            'UserId: %s, User: %s, Email: %s, Course: %s, Response: %s',
+            user.id,
+            user.username,
+            user.email,
+            course_id,
+            response
+        )
+        raise CourseEnrollmentOrderCreationError(
+            'Failed to create ecommerce order. Incorrect response received: UserId: {}, User: {}, Email: {}, '
+            'Course: {}, Response: {}'.format(
+                user.id,
+                user.username,
+                user.email,
+                course_id,
+                response
+            )
+        )
+
+    enrollment = CourseEnrollment.get_enrollment(user, course_id)
+    CourseEnrollmentAttribute.add_enrollment_attr(
+        enrollment=enrollment,
+        data_list=[{
+            'namespace': 'order',
+            'name': 'order_number',
+            'value': response['order_number']
+        }]
+    )
+
+    return True

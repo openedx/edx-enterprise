@@ -39,7 +39,7 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
-from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.ecommerce import get_ecommerce_api_client
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
@@ -49,13 +49,13 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import get_configuration_value_for_site, send_email_notification_message, track_enrollment
-
-try:
-    from student.models import CourseEnrollment, CourseEnrollmentAttribute
-except ImportError:
-    CourseEnrollment = None
-    CourseEnrollmentAttribute = None
+from enterprise.utils import (
+    CourseEnrollmentOrderCreationError,
+    create_order_data_for_learner_enrollment,
+    get_configuration_value_for_site,
+    send_email_notification_message,
+    track_enrollment,
+)
 
 
 class TemplatePreviewView(View):
@@ -574,15 +574,16 @@ class EnterpriseCustomerManageLearnersView(View):
         failures = []
         order_failures = []
 
-        ecommerce_client = EcommerceApiClient()
+        ecommerce_client = get_ecommerce_api_client()
 
         for user in existing_users:
             succeeded = cls.enroll_user(enterprise_customer, user, course_mode, course_id)
 
             if succeeded:
-                # if learner enrollment is successfull then create an order record in ecommerce
-                order_created = cls.create_order_data_for_learner_enrollment(ecommerce_client, user, course_id)
-                if not order_created:
+                try:
+                    # if learner enrollment is successfull then create an order record in ecommerce
+                    create_order_data_for_learner_enrollment(ecommerce_client, user, course_id)
+                except CourseEnrollmentOrderCreationError:
                     order_failures.append(user)
 
                 successes.append(user)
@@ -598,42 +599,6 @@ class EnterpriseCustomerManageLearnersView(View):
             pending.append(pending_user)
 
         return successes, pending, failures, order_failures
-
-    @classmethod
-    def create_order_data_for_learner_enrollment(cls, ecommerce_client, user, course_id):
-        """
-        Create ecommerce order data for learner and also create `CourseEnrollmentAttribute` for the learner enrollment.
-        """
-        response = ecommerce_client.create_ecommerce_order_for_manual_course_enrollment(
-            user.id,
-            user.username,
-            user.email,
-            course_id,
-        )
-
-        if response and 'order_number' in response:
-            enrollment = CourseEnrollment.get_enrollment(user, course_id)
-            CourseEnrollmentAttribute.add_enrollment_attr(
-                enrollment=enrollment,
-                data_list=[{
-                    'namespace': 'order',
-                    'name': 'order_number',
-                    'value': response['order_number']
-                }]
-            )
-            return True
-
-        logging.warning(
-            '[Enterprise Manual Course Enrollment] Failed to create ecommerce order. LMSUserId: %s, User: %s, '
-            'Email: %s, Course: %s, Response: %s',
-            user.id,
-            user.username,
-            user.email,
-            course_id,
-            response
-        )
-
-        return False
 
     @classmethod
     def send_messages(cls, http_request, message_requests):

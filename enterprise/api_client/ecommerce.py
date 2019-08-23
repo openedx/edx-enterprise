@@ -24,12 +24,20 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 
+def get_ecommerce_api_client():
+    """
+    Create an ecommerce api client for `ecommerce_worker` user.
+    """
+    user = User.objects.get(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
+    return EcommerceApiClient(user)
+
+
 class EcommerceApiClient(object):
     """
     Object builds an API client to make calls to the E-Commerce API.
     """
 
-    def __init__(self, user=None):
+    def __init__(self, user):
         """
         Create an E-Commerce API client, authenticated with the API token from Django settings.
 
@@ -42,9 +50,6 @@ class EcommerceApiClient(object):
                 _('To get a ecommerce_api_client, this package must be '
                   'installed in an Open edX environment.')
             )
-
-        if user is None:
-            user = User.objects.get(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
 
         self.user = user
         self.client = ecommerce_api_client(user)
@@ -71,7 +76,7 @@ class EcommerceApiClient(object):
             return format_price(price, currency)
         return mode['original_price']
 
-    def create_ecommerce_order_for_manual_course_enrollment(  # pylint: disable=invalid-name
+    def create_order_for_manual_course_enrollment(
             self,
             enrolled_learner_lms_user_id,
             enrolled_learner_username,
@@ -90,11 +95,12 @@ class EcommerceApiClient(object):
             })
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
-                '[Enterprise Manual Course Enrollment] Failed to create ecommerce order. LMSUserId: %s, User: %s, '
-                'Email: %s, Course: %s, Message: %s',
+                '[Enterprise Manual Course Enrollment] Failed to create ecommerce order. Exception occurred: '
+                'UserId: %s, User: %s, Email: %s, Course: %s, Exception: %s',
                 enrolled_learner_lms_user_id,
                 enrolled_learner_username,
                 enrolled_learner_email,
                 enrolled_course_run_key,
                 exc
             )
+            raise exc

@@ -27,7 +27,6 @@ from enterprise.admin import (
 )
 from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
-from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.django_compatibility import reverse
 from enterprise.models import (
@@ -175,7 +174,7 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         self.ecommerce_service_user = UserFactory(username=settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
 
         patcher = mock.patch.multiple(
-            'enterprise.admin.views',
+            'enterprise.utils',
             CourseEnrollment=mock.DEFAULT,
             CourseEnrollmentAttribute=mock.DEFAULT
         )
@@ -1132,25 +1131,6 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._assert_django_messages(response, set([
             (messages.ERROR, "The following learners could not be enrolled in Program2: {}".format(user.email)),
         ]))
-
-    @ddt.unpack
-    @ddt.data(
-        {'ecomm_response': {u'order_number': u'EDX-100100'}, 'view_util_response': True},
-        {'ecomm_response': {}, 'view_util_response': False},
-    )
-    @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
-    def test_create_order_data_for_learner_enrollment(
-            self, mock_ecommerce_api_client, ecomm_response, view_util_response
-    ):
-        """
-        Tests that `create_order_data_for_learner_enrollment` works as expected.
-        """
-        self._mock_ecommerce_api_client(client_mock=mock_ecommerce_api_client, return_value=ecomm_response)
-        result = EnterpriseCustomerManageLearnersView().create_order_data_for_learner_enrollment(
-            EcommerceApiClient(), self.user, 'course-v1:TestX+Test100+2019_T1'
-        )
-
-        assert result == view_util_response
 
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client")
