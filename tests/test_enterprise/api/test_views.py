@@ -1658,6 +1658,7 @@ class TestEnterpriseAPIViews(APITest):
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.api.v1.serializers.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
     def test_enterprise_customer_course_enrollments_detail_errors(
@@ -1668,6 +1669,7 @@ class TestEnterpriseAPIViews(APITest):
             post_data,
             expected_result,
             mock_enrollment_client,
+            mock_ecommerce_client,
             mock_tpa_client,
             mock_catalog_contains_course,
     ):
@@ -1686,6 +1688,9 @@ class TestEnterpriseAPIViews(APITest):
             mock_catalog_contains_course,
             course_in_catalog
         )
+
+        # Set up ecommerce client response
+        self._mock_ecommerce_api_client(mock_ecommerce_client)
 
         # Make the call!
         response = self.client.post(
@@ -1802,7 +1807,7 @@ class TestEnterpriseAPIViews(APITest):
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
-    @mock.patch('enterprise.models.get_ecommerce_api_client')
+    @mock.patch('enterprise.api.v1.serializers.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
@@ -1813,7 +1818,7 @@ class TestEnterpriseAPIViews(APITest):
             post_data,
             mock_notify_learners,
             mock_enrollment_client,
-            mock_ecommerce_client,  # pylint: disable=unused-argument
+            mock_ecommerce_client,
             mock_tpa_client,
             mock_catalog_contains_course,
     ):
@@ -1834,10 +1839,8 @@ class TestEnterpriseAPIViews(APITest):
             enable_autocohorting=True
         )
 
-        # Set up ecommerce client responses
-        mock_ecommerce_client.return_value = mock.Mock(
-            create_order_for_manual_course_enrollment=mock.Mock(return_value={'order_number': 'EDX-100100'})
-        )
+        # Set up ecommerce client response
+        create_manual_order_mock = self._mock_ecommerce_api_client(mock_ecommerce_client)
 
         # Make the call!
         response = self.client.post(
@@ -1876,6 +1879,13 @@ class TestEnterpriseAPIViews(APITest):
                     payload.get('course_mode'),
                     cohort=payload.get('cohort'),
                 )
+                self.assertTrue(mock_ecommerce_client.called)
+                create_manual_order_mock.assert_called_once_with(
+                    user.id,
+                    user.username,
+                    user.email,
+                    payload.get('course_run_id')
+                )
         elif 'user_email' in post_data:
             # If a new user given via for user_email, check that the appropriate objects were created.
             pending_ecu = PendingEnterpriseCustomerUser.objects.get(
@@ -1905,7 +1915,7 @@ class TestEnterpriseAPIViews(APITest):
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    @mock.patch('enterprise.models.get_ecommerce_api_client')
+    @mock.patch('enterprise.api.v1.serializers.get_ecommerce_api_client')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
     def test_enterprise_customer_course_enrollments_detail_multiple(
             self,
@@ -2027,7 +2037,7 @@ class TestEnterpriseAPIViews(APITest):
         # Set up catalog_contains_course response.
         mock_catalog_contains_course.return_value = True
 
-        # Set up ecommerce client responses
+        # Set up ecommerce client response
         create_manual_order_mock = self._mock_ecommerce_api_client(mock_ecommerce_client)
 
         # Make the call!
@@ -2044,12 +2054,8 @@ class TestEnterpriseAPIViews(APITest):
             course_id=course_run_id).exists())
 
         self.assertTrue(mock_ecommerce_client.called)
-        create_manual_order_mock.assert_called_once_with(
-            tpa_user.id,
-            tpa_user.username,
-            tpa_user.email,
-            course_run_id,
-        )
+        self.assertTrue(create_manual_order_mock.called)
+        self.assertEqual(create_manual_order_mock.call_count, 2)
 
     def test_enterprise_customer_catalogs_response_formats(self):
         """

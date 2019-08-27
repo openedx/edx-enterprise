@@ -16,6 +16,7 @@ from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
+from enterprise.api_client.ecommerce import get_ecommerce_api_client
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
@@ -569,6 +570,13 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             validated_data['enterprise_customer_user'] = enterprise_customer_user
             try:
                 if is_active:
+                    # Create manual order data first, then enrollment.
+                    ecommerce_client = get_ecommerce_api_client()
+                    utils.create_order_data_for_learner_enrollment(
+                        ecommerce_client,
+                        enterprise_customer_user.user,
+                        course_run_id
+                    )
                     enterprise_customer_user.enroll(course_run_id, course_mode, cohort=cohort)
                 else:
                     enterprise_customer_user.unenroll(course_run_id)

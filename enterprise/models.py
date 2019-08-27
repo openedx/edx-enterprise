@@ -40,7 +40,6 @@ from model_utils.models import TimeStampedModel
 
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
-from enterprise.api_client.ecommerce import get_ecommerce_api_client
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
 from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, get_configuration_value
@@ -772,9 +771,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 enterprise_customer_user=self,
                 course_id=course_run_id
             )
-            # Create manual order data
-            ecommerce_client = get_ecommerce_api_client()
-            utils.create_order_data_for_learner_enrollment(ecommerce_client, self.user, course_run_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(
