@@ -51,7 +51,9 @@ from enterprise.models import (
 )
 from enterprise.utils import (
     CourseEnrollmentOrderCreationError,
+    CourseEnrollmentOrderUpdateError,
     create_order_data_for_learner_enrollment,
+    fail_order_data_for_learner_enrollment,
     get_configuration_value_for_site,
     send_email_notification_message,
     track_enrollment,
@@ -414,7 +416,7 @@ class EnterpriseCustomerManageLearnersView(View):
         return all_processable_emails
 
     @classmethod
-    def enroll_user(cls, enterprise_customer, user, course_mode, *course_ids):
+    def enroll_user(cls, enterprise_customer, user, course_mode, *course_ids, enrollment_attrs=None):
         """
         Enroll a single user in any number of courses using a particular course mode.
 
@@ -423,6 +425,7 @@ class EnterpriseCustomerManageLearnersView(View):
             user: The user who needs to be enrolled in the course
             course_mode: The mode with which the enrollment should be created
             *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
+            enrollment_attrs: List that contains enrollment attributes for course enrollment
 
         Returns:
             Boolean: Whether or not enrollment succeeded for all courses specified
@@ -435,7 +438,12 @@ class EnterpriseCustomerManageLearnersView(View):
         succeeded = True
         for course_id in course_ids:
             try:
-                enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
+                enrollment_client.enroll_user_in_course(
+                    user.username,
+                    course_id,
+                    course_mode,
+                    enrollment_attrs=enrollment_attrs
+                )
             except HttpClientError as exc:
                 # Check if user is already enrolled then we should ignore exception
                 if cls.is_user_enrolled(user, course_id, course_mode):
@@ -577,17 +585,30 @@ class EnterpriseCustomerManageLearnersView(View):
         ecommerce_client = get_ecommerce_api_client()
 
         for user in existing_users:
-            succeeded = cls.enroll_user(enterprise_customer, user, course_mode, course_id)
+            try:
+                order_id, enrollment_attrs = create_order_data_for_learner_enrollment(ecommerce_client, user, course_id)
+            except CourseEnrollmentOrderCreationError:
+                order_id = enrollment_attrs = None
+                order_failures.append(user)
+
+            succeeded = cls.enroll_user(
+                enterprise_customer,
+                user,
+                course_mode,
+                course_id,
+                enrollment_attrs=enrollment_attrs
+            )
 
             if succeeded:
-                try:
-                    # if learner enrollment is successfull then create an order record in ecommerce
-                    create_order_data_for_learner_enrollment(ecommerce_client, user, course_id)
-                except CourseEnrollmentOrderCreationError:
-                    order_failures.append(user)
-
                 successes.append(user)
             else:
+                if order_id:
+                    try:
+                        fail_order_data_for_learner_enrollment(ecommerce_client, order_id)
+                    except CourseEnrollmentOrderUpdateError:
+                        # TODO: Not sure what is the best course of action here?
+                        pass
+
                 failures.append(user)
 
         for email in unregistered_emails:

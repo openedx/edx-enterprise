@@ -5,6 +5,7 @@ Client for communicating with the E-Commerce API.
 from __future__ import absolute_import, unicode_literals
 
 import logging
+from functools import reduce  # pylint: disable=redefined-builtin
 
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import SlumberBaseException
@@ -102,5 +103,24 @@ class EcommerceApiClient(object):
                 enrolled_learner_email,
                 enrolled_course_run_key,
                 exc
+            )
+            raise exc
+
+    def fail_order_for_manual_course_enrollment(self, order_id):
+        """
+        Fail an existing completed ecommerce order.
+        """
+        resource = 'manual_course_enrollment_order'
+        path = [resource, str(order_id)]
+        order = reduce(getattr, path, self.client)
+
+        try:
+            return order.fail.put({
+                'reason': "Learner's manual course enrollment failed"
+            })
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                '[Enterprise Manual Course Enrollment] Failed to update ecommerce order. Exception occurred: '
+                'OrderId: %s, Exception: %s', order_id, exc
             )
             raise exc

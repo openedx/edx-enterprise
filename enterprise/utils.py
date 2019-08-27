@@ -65,11 +65,11 @@ except ImportError as exception:
     LOGGER.warning(exception)
     segment = None
 
-try:
-    from student.models import CourseEnrollment, CourseEnrollmentAttribute
-except ImportError:
-    CourseEnrollment = None
-    CourseEnrollmentAttribute = None
+# try:
+#     from student.models import CourseEnrollment, CourseEnrollmentAttribute
+# except ImportError:
+#     CourseEnrollment = None
+#     CourseEnrollmentAttribute = None
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -127,6 +127,12 @@ class CourseEnrollmentPermissionError(Exception):
 class CourseEnrollmentOrderCreationError(Exception):
     """
     Exception to raise when an ecommerce order creation failed for a learner's course enrollment.
+    """
+
+
+class CourseEnrollmentOrderUpdateError(Exception):
+    """
+    Exception to raise when an ecommerce order update failed.
     """
 
 
@@ -1068,14 +1074,22 @@ def create_order_data_for_learner_enrollment(ecommerce_client, user, course_id):
             )
         )
 
-    enrollment = CourseEnrollment.get_enrollment(user, course_id)
-    CourseEnrollmentAttribute.add_enrollment_attr(
-        enrollment=enrollment,
-        data_list=[{
-            'namespace': 'order',
-            'name': 'order_number',
-            'value': response['order_number']
-        }]
-    )
+    return response['id'], [{
+        'namespace': 'order',
+        'name': 'order_number',
+        'value': response['order_number']
+    }]
+
+
+def fail_order_data_for_learner_enrollment(ecommerce_client=None, order_id=None):
+    """
+    Fail an existing completed ecommerce order.
+    """
+    try:
+        response = ecommerce_client.fail_order_for_manual_course_enrollment(order_id)
+    except (SlumberBaseException, ConnectionError, Timeout):
+        raise CourseEnrollmentOrderUpdateError(
+            'Failed to update ecommerce order. Exception occurred: OrderId: {}'.format(order_id)
+        )
 
     return True

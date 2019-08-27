@@ -209,7 +209,33 @@ class EnrollmentApiClient(LmsApiClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
-    def enroll_user_in_course(self, username, course_id, mode, cohort=None):
+    def enroll_user_in_course(self, username, course_id, mode, cohort=None, enrollment_attributes=None):
+        """
+        Call the enrollment API to enroll the user in the course specified by course_id.
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdX platform
+            course_id (str): The string value of the course's unique identifier
+            mode (str): The enrollment mode which should be used for the enrollment
+            cohort (str): Add the user to this named cohort
+            enrollment_attrs: List that contains enrollment attributes for course enrollment
+
+        Returns:
+            dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+
+        """
+        data = {
+            'user': username,
+            'course_details': {'course_id': course_id},
+            'mode': mode,
+            'cohort': cohort,
+        }
+        if enrollment_attributes:
+            data['enrollment_attributes'] = enrollment_attributes
+
+        return self.client.enrollment.post(data)
+
+    def update_course_enrollment(self, username, course_id, mode, attrs):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
 
@@ -228,7 +254,7 @@ class EnrollmentApiClient(LmsApiClient):
                 'user': username,
                 'course_details': {'course_id': course_id},
                 'mode': mode,
-                'cohort': cohort,
+                'enrollment_attributes': attrs,
             }
         )
 
