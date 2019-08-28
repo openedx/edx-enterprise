@@ -22,6 +22,7 @@ from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentOrderCreationError,
+    CourseEnrollmentOrderUpdateError,
     CourseEnrollmentPermissionError,
     track_enrollment
 )
@@ -621,6 +622,13 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                     exc=str(exc)
                 )
                 LOGGER.error(error_message)
+                # Now that enrollment is failed, mark order as failed too.
+                if order_id:
+                    try:
+                        utils.fail_order_data_for_learner_enrollment(ecommerce_client, order_id)
+                    except CourseEnrollmentOrderUpdateError:
+                        # TODO: Not sure what is the best course of action here?
+                        pass
                 validated_data['detail'] = str(exc)
                 return validated_data
 

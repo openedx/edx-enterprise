@@ -416,7 +416,7 @@ class EnterpriseCustomerManageLearnersView(View):
         return all_processable_emails
 
     @classmethod
-    def enroll_user(cls, enterprise_customer, user, course_mode, *course_ids, enrollment_attrs=None):
+    def enroll_user(cls, enterprise_customer, user, course_mode, *course_ids, **kwargs):
         """
         Enroll a single user in any number of courses using a particular course mode.
 
@@ -430,6 +430,7 @@ class EnterpriseCustomerManageLearnersView(View):
         Returns:
             Boolean: Whether or not enrollment succeeded for all courses specified
         """
+        enrollment_attrs = kwargs.get('enrollment_attrs')
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             enterprise_customer=enterprise_customer,
             user_id=user.id

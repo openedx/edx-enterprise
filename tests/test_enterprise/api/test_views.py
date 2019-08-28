@@ -129,13 +129,6 @@ class TestEnterpriseAPIViews(APITest):
     def setUp(self):
         super(TestEnterpriseAPIViews, self).setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
-        patcher = mock.patch.multiple(
-            'enterprise.utils',
-            CourseEnrollment=mock.DEFAULT,
-            CourseEnrollmentAttribute=mock.DEFAULT
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
@@ -157,10 +150,10 @@ class TestEnterpriseAPIViews(APITest):
         Mock E-Commerce API client
         """
         if return_value is None:
-            return_value = {'order_number': 'EDX-100100'}
+            return_value = {'id': 1, 'order_number': return_value}
 
         create_manual_order_mock = mock.Mock(
-            return_value={'order_number': return_value}
+            return_value=return_value
         )
 
         client_mock.return_value = mock.Mock(
