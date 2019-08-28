@@ -19,7 +19,12 @@ from enterprise import models, utils
 from enterprise.api_client.ecommerce import get_ecommerce_api_client
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
-from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    CourseEnrollmentOrderCreationError,
+    CourseEnrollmentPermissionError,
+    track_enrollment
+)
 
 LOGGER = getLogger(__name__)
 
@@ -570,13 +575,34 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             validated_data['enterprise_customer_user'] = enterprise_customer_user
             try:
                 if is_active:
-                    # Create manual order data first, then enrollment.
-                    ecommerce_client = get_ecommerce_api_client()
-                    utils.create_order_data_for_learner_enrollment(
-                        ecommerce_client,
-                        enterprise_customer_user.user,
-                        course_run_id
-                    )
+                    try:
+                        # Create manual order data first, then enrollment.
+                        ecommerce_client = get_ecommerce_api_client()
+                        order_id, enrollment_attrs = utils.create_order_data_for_learner_enrollment(
+                            ecommerce_client,
+                            enterprise_customer_user.user,
+                            course_run_id
+                        )
+                    except CourseEnrollmentOrderCreationError as exc:
+                        order_id = None
+                        enrollment_attrs = None
+                        error_message = (
+                            '[Enterprise API] An exception occurred while creating manual order for the user.'
+                            ' EnterpriseCustomer: {enterprise_customer}, LmsUser: {lms_user}, TpaUser: {tpa_user},'
+                            ' UserEmail: {user_email}, CourseRun: {course_run_id}, CourseMode {course_mode},'
+                            ' Message: {exc}.'
+                        ).format(
+                            enterprise_customer=enterprise_customer,
+                            lms_user=lms_user,
+                            tpa_user=tpa_user,
+                            user_email=user_email,
+                            course_run_id=course_run_id,
+                            course_mode=course_mode,
+                            exc=str(exc)
+                        )
+                        LOGGER.error(error_message)
+                        validated_data['detail'] = str(exc)
+
                     enterprise_customer_user.enroll(course_run_id, course_mode, cohort=cohort)
                 else:
                     enterprise_customer_user.unenroll(course_run_id)

@@ -45,8 +45,7 @@ class TestRouterView(TestCase):
             'enterprise_course_run_enrollment_page',
             args=[self.enterprise_customer.uuid, self.course_run_id]
         ))
-        user = factories.UserFactory()
-        self.request.user.id = user.id
+        self.request.user.id = 1
         self.kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,
@@ -58,14 +57,6 @@ class TestRouterView(TestCase):
         analytics = mock.patch('enterprise.utils.segment')
         self.analytics = analytics.start()
         self.addCleanup(analytics.stop)
-
-        patcher = mock.patch.multiple(
-            'enterprise.utils',
-            CourseEnrollment=mock.DEFAULT,
-            CourseEnrollmentAttribute=mock.DEFAULT
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
     @ddt.data(
         (
@@ -241,24 +232,12 @@ class TestRouterView(TestCase):
             assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.track_enrollment')
-    @mock.patch('enterprise.models.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
-    def test_get_direct_audit_enrollment(
-            self,
-            router_view_mock,
-            enrollment_api_client_mock,
-            mock_ecommerce_client,
-            track_enrollment_mock
-    ):
+    def test_get_direct_audit_enrollment(self, router_view_mock, enrollment_api_client_mock, track_enrollment_mock):
         """
         ``get`` redirects to the LMS courseware when the request is fully eligible for direct audit enrollment.
         """
-        # Set up ecommerce client responses
-        mock_ecommerce_client.return_value = mock.Mock(
-            create_order_for_manual_course_enrollment=mock.Mock(return_value={'order_number': 'EDX-100100'})
-        )
-
         self.request.GET.get = mock.MagicMock(return_value={})
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=True)

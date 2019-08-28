@@ -317,16 +317,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     Tests of the EnterpriseCustomerUser model.
     """
 
-    def setUp(self):
-        super(TestEnterpriseCustomerUser, self).setUp()
-        patcher = mock.patch.multiple(
-            'enterprise.utils',
-            CourseEnrollment=mock.DEFAULT,
-            CourseEnrollmentAttribute=mock.DEFAULT
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
@@ -525,20 +515,12 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             sorted(expected_entitlements, key=itemgetter('entitlement_id'))
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    # pylint: disable=unused-argument
-    def test_enroll_learner(self, enrollment_api_client_mock, ecommerce_api_client_mock, analytics_mock, *args):
+    def test_enroll_learner(self, enrollment_api_client_mock, analytics_mock, *args):  # pylint: disable=unused-argument
         """
         ``enroll_learner`` enrolls the learner and redirects to the LMS courseware.
         """
-        # Set up ecommerce client responses
-        ecommerce_api_client_mock.return_value = mock.Mock(
-            create_order_for_manual_course_enrollment=mock.Mock(return_value={'order_number': 'EDX-100100'})
-        )
-
-        user = factories.UserFactory()
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
@@ -558,22 +540,13 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.get_ecommerce_api_client')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     # pylint: disable=unused-argument
-    def test_enroll_learner_upgrade_mode(
-            self, enrollment_api_client_mock, ecommerce_api_client_mock, analytics_mock, *args
-    ):
+    def test_enroll_learner_upgrade_mode(self, enrollment_api_client_mock, analytics_mock, *args):
         """
         ``enroll_learner`` enrolls the learner to a paid mode from previously being enrolled in audit.
         """
-        # Set up ecommerce client responses
-        ecommerce_api_client_mock.return_value = mock.Mock(
-            create_order_for_manual_course_enrollment=mock.Mock(return_value={'order_number': 'EDX-100100'})
-        )
-
-        user = factories.UserFactory()
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = {
             'is_active': True,
             'mode': 'audit'
