@@ -11,6 +11,7 @@ ENTGDS005 - Required request values missing for action to be carried out
 ENTGDS006 - The course or program with a given id does not exist
 ENTGDS007 - There is no consent record, or consent is not required
 ENTGDS008 - No record found for Enterprise customer
+ENTGDS009 - IntegrityError while creating EnterpriseCourseEnrollment. Record already exists
 
 ENTHCE000 - No course modes for the goven course id
 
