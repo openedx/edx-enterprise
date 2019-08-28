@@ -11,7 +11,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from rest_framework import filters, permissions, viewsets
+from rest_framework import filters, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import NotFound
@@ -32,7 +32,11 @@ from django.utils.translation import ugettext as _
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.throttles import ServiceUserThrottle
-from enterprise.api.utils import get_enterprise_customer_from_catalog_id
+from enterprise.api.utils import (
+    get_ent_cust_from_report_config_uuid,
+    get_enterprise_customer_from_catalog_id,
+    get_enterprise_customer_from_user_id,
+)
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
@@ -440,13 +444,15 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):
+class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-customer-reporting`` API endpoint.
     """
 
     queryset = models.EnterpriseCustomerReportingConfiguration.objects.all()
     serializer_class = serializers.EnterpriseCustomerReportingConfigurationSerializer
+    lookup_field = 'uuid'
+    permission_classes = [permissions.IsAuthenticated]
 
     USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
     FIELDS = (
@@ -454,6 +460,42 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadOnlyModelVie
     )
     filter_fields = FIELDS
     ordering_fields = FIELDS
+
+    @permission_required(
+        'enterprise.can_manage_reporting_config',
+        fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
+    def retrieve(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerReportingConfigurationViewSet, self).retrieve(request, *args, **kwargs)
+
+    @permission_required(
+        'enterprise.can_manage_reporting_config',
+        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id))
+    def list(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerReportingConfigurationViewSet, self).list(request, *args, **kwargs)
+
+    @permission_required(
+        'enterprise.can_manage_reporting_config',
+        fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id))
+    def create(self, request, *args, **kwargs):
+        config_data = request.data.copy()
+        config_data['enterprise_customer_id'] = get_enterprise_customer_from_user_id(request.user.id)
+        serializer = self.get_serializer(data=config_data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @permission_required(
+        'enterprise.can_manage_reporting_config',
+        fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
+    def update(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerReportingConfigurationViewSet, self).update(request, *args, **kwargs)
+
+    @permission_required(
+        'enterprise.can_manage_reporting_config',
+        fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
+    def partial_update(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerReportingConfigurationViewSet, self).partial_update(request, *args, **kwargs)
 
 
 class CatalogQueryView(APIView):

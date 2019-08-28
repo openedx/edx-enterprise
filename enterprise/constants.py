@@ -104,6 +104,7 @@ ENTERPRISE_OPERATOR_ROLE = 'enterprise_openedx_operator'
 ENTERPRISE_DASHBOARD_ADMIN_ROLE = 'dashboard_admin'
 ENTERPRISE_CATALOG_ADMIN_ROLE = 'catalog_admin'
 ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE = 'enrollment_api_admin'
+ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE = 'reporting_config_admin'
 
 # context to give access to all resources
 ALL_ACCESS_CONTEXT = '*'

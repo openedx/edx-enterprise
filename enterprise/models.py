@@ -1665,7 +1665,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         (5, 'Saturday'),
         (6, 'Sunday'),
     )
-
+    uuid = models.UUIDField(default=uuid4, unique=True)
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
         related_name="reporting_configurations",

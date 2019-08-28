@@ -32,6 +32,7 @@ from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
+    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
 )
 from enterprise.models import (
     EnterpriseCatalogQuery,
@@ -624,44 +625,6 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
-
-    def test_enterprise_customer_reporting_list(self):
-        """
-        ``enterprise_customer_reporting``'s list endpoint should serialize the ``EnterpriseCustomerReportingConfig``.
-        """
-        factory = factories.EnterpriseCustomerReportingConfigFactory
-        model_item = {
-            'enterprise_customer__uuid': FAKE_UUIDS[0],
-            'email': 'test@test.com\nfoo@test.com',
-            'decrypted_password': 'test_password',
-            'decrypted_sftp_password': 'test_password',
-        }
-        expected_item = {
-            'enterprise_customer': {
-                'uuid': FAKE_UUIDS[0],
-            },
-            'active': True,
-            'delivery_method': 'email',
-            'frequency': 'monthly',
-            'email': ['test@test.com', 'foo@test.com'],
-            'day_of_month': 1,
-            'day_of_week': None,
-            'hour_of_day': 1,
-            'report_type': 'csv',
-            'data_type': 'progress',
-        }
-        self.create_items(factory, [model_item])
-        response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT)
-        response = self.load_json(response.content)
-        result_item = response['results'][0]
-        for key in expected_item:
-            if key == 'enterprise_customer':
-                assert expected_item[key]['uuid'] == result_item[key]['uuid']
-            else:
-                assert expected_item[key] == result_item[key]
-
-        assert result_item['encrypted_password'] is not None
-        assert result_item['encrypted_sftp_password'] is not None
 
     @ddt.data(
         # Request missing required permissions query param.
@@ -2221,3 +2184,366 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         assert response.status_code == expected_status
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseReportingConfigAPIViews(APITest):
+    """
+    Test Reporting Configuration Views
+    """
+    def _create_user_and_enterprise_customer(self, username, password):
+        """
+        Helper method to create the User and Enterprise Customer used in tests.
+        """
+        user = factories.UserFactory(username=username, is_active=True, is_staff=False)
+        user.set_password(password)  # pylint: disable=no-member
+        user.save()  # pylint: disable=no-member
+
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+
+        return user, enterprise_customer
+
+    def _add_feature_role(self, user, feature_role):
+        """
+        Helper method to create a feature_role and connect it to the User
+        """
+        feature_role_object, __ = EnterpriseFeatureRole.objects.get_or_create(
+            name=feature_role
+        )
+        EnterpriseFeatureUserRoleAssignment.objects.create(user=user, role=feature_role_object)
+
+    def _assert_config_response(self, expected_data, response_content):
+        """
+        Helper method to test the response data against the expected JSON data.
+        """
+        response_content.pop('enterprise_customer')
+        for key, value in expected_data.items():
+            assert response_content[key] == value
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        (False, status.HTTP_403_FORBIDDEN),
+        (True, status.HTTP_200_OK),
+    )
+    @ddt.unpack
+    def test_reporting_config_retrieve_permissions(self, has_feature_role, expected_status, request_or_stub_mock):
+        """
+        Tests that the retrieve endpoint respects the Feature Role permissions assigned.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'active': True,
+            'delivery_method': 'email',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        expected_data = {
+            'active': True,
+            'delivery_method': 'email',
+            'frequency': 'monthly',
+            'email': ['test@test.com', 'foo@test.com'],
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.get(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(test_config.uuid)}
+                ),
+            )
+        )
+
+        assert response.status_code == expected_status
+        if has_feature_role:
+            response_content = self.load_json(response.content)
+            assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
+            self._assert_config_response(expected_data, response_content)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        (False, status.HTTP_403_FORBIDDEN),
+        (True, status.HTTP_200_OK),
+    )
+    @ddt.unpack
+    def test_reporting_config_list_permissions(self, has_feature_role, expected_status, request_or_stub_mock):
+        """
+        Tests that the retrieve endpoint respects the Feature Role permissions assigned.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'active': True,
+            'delivery_method': 'email',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        expected_data = {
+            'active': True,
+            'delivery_method': 'email',
+            'frequency': 'monthly',
+            'email': ['test@test.com', 'foo@test.com'],
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        factories.EnterpriseCustomerReportingConfigFactory.create_batch(5, **model_item)
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.get(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            )
+        )
+
+        assert response.status_code == expected_status
+        if has_feature_role:
+            results = self.load_json(response.content)['results']
+            assert len(results) == 5
+            response_content = results[0]
+            assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
+            self._assert_config_response(expected_data, response_content)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        (False, status.HTTP_403_FORBIDDEN),
+        (True, status.HTTP_201_CREATED),
+    )
+    @ddt.unpack
+    def test_reporting_config_post_permissions(self, has_feature_role, expected_status, request_or_stub_mock):
+        """
+        Tests that the POST endpoint respects the Feature Role permissions assigned.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        post_data = {
+            'active': 'true',
+            'delivery_method': 'email',
+            'email': ['test@test.com', 'foo@test.com'],
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'encrypted_sftp_password': 'null',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'pgp_encryption_key': ''
+        }
+        expected_data = post_data.copy()
+        expected_data.update({
+            'active': True,
+            'encrypted_sftp_password': None,
+        })
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.post(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            ),
+            data=post_data,
+            format='json',
+        )
+
+        assert response.status_code == expected_status
+        if has_feature_role:
+            response_content = self.load_json(response.content)
+            assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
+            self._assert_config_response(expected_data, response_content)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        (False, status.HTTP_403_FORBIDDEN),
+        (True, status.HTTP_200_OK),
+    )
+    @ddt.unpack
+    def test_reporting_config_put_permissions(self, has_feature_role, expected_status, request_or_stub_mock):
+        """
+        Tests that the PUT endpoint respects the Feature Role permissions assigned.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'active': True,
+            'delivery_method': 'email',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'frequency': 'monthly',
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        put_data = {
+            'enterprise_customer_id': str(enterprise_customer.uuid),
+            'active': 'true',
+            'delivery_method': 'email',
+            'email': ['test@test.com', 'foo@test.com'],
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'json',
+            'pgp_encryption_key': ''
+        }
+        expected_data = put_data.copy()
+        expected_data.update({
+            'active': True,
+        })
+        expected_data.pop('enterprise_customer_id')
+        test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.put(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(test_config.uuid)}
+                ),
+            ),
+            data=put_data,
+            format='json',
+        )
+
+        assert response.status_code == expected_status
+        if has_feature_role:
+            response_content = self.load_json(response.content)
+            assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
+            response_content.pop('enterprise_customer')
+            for key, value in expected_data.items():
+                assert response_content[key] == value
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @ddt.data(
+        (False, status.HTTP_403_FORBIDDEN),
+        (True, status.HTTP_200_OK),
+    )
+    @ddt.unpack
+    def test_reporting_config_patch_permissions(self, has_feature_role, expected_status, request_or_stub_mock):
+        """
+        Tests that the PATCH endpoint respects the Feature Role permissions assigned.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'active': True,
+            'delivery_method': 'email',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'frequency': 'monthly',
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        patch_data = {
+            'enterprise_customer_id': str(enterprise_customer.uuid),
+            'day_of_month': 4,
+            'day_of_week': 1,
+            'hour_of_day': 12,
+        }
+        expected_data = patch_data.copy()
+        expected_data.pop('enterprise_customer_id')
+        test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        if has_feature_role:
+            self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        system_wide_role = ENTERPRISE_ADMIN_ROLE
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=system_wide_role)
+
+        response = client.patch(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(test_config.uuid)}
+                ),
+            ),
+            data=patch_data,
+            format='json',
+        )
+
+        assert response.status_code == expected_status
+        if has_feature_role:
+            response_content = self.load_json(response.content)
+            assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
+            self._assert_config_response(expected_data, response_content)

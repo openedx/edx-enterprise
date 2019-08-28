@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.7] - 2019-08-28
+--------------------
+
+* Added API endpoints for EnterpriseCustomerReportingConfigurations and updated permissions to use Feature role based auth.
+
 [1.9.6] - 2019-08-23
 --------------------
 
