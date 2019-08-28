@@ -740,7 +740,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 
-    def enroll(self, course_run_id, mode, cohort=None):
+    def enroll(self, course_run_id, mode, cohort=None, enrollment_attributes=None):
         """
         Enroll a user into a course track, and register an enterprise course enrollment.
         """
@@ -757,7 +757,13 @@ class EnterpriseCustomerUser(TimeStampedModel):
             if cohort and not self.enterprise_customer.enable_autocohorting:
                 raise CourseEnrollmentPermissionError("Auto-cohorting is not enabled for this enterprise")
             # Directly enroll into the specified track.
-            enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
+            enrollment_api_client.enroll_user_in_course(
+                self.username,
+                course_run_id,
+                mode,
+                cohort=cohort,
+                enrollment_attributes=enrollment_attributes
+            )
             utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
                 'category': 'enterprise',
                 'label': course_run_id,

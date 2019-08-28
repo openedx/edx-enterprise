@@ -579,14 +579,14 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                     try:
                         # Create manual order data first, then enrollment.
                         ecommerce_client = get_ecommerce_api_client()
-                        order_id, enrollment_attrs = utils.create_order_data_for_learner_enrollment(
+                        order_id, enrollment_attributes = utils.create_order_data_for_learner_enrollment(
                             ecommerce_client,
                             enterprise_customer_user.user,
                             course_run_id
                         )
                     except CourseEnrollmentOrderCreationError as exc:
                         order_id = None
-                        enrollment_attrs = None
+                        enrollment_attributes = None
                         error_message = (
                             '[Enterprise API] An exception occurred while creating manual order for the user.'
                             ' EnterpriseCustomer: {enterprise_customer}, LmsUser: {lms_user}, TpaUser: {tpa_user},'
@@ -604,7 +604,12 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                         LOGGER.error(error_message)
                         validated_data['detail'] = str(exc)
 
-                    enterprise_customer_user.enroll(course_run_id, course_mode, cohort=cohort)
+                    enterprise_customer_user.enroll(
+                        course_run_id,
+                        course_mode,
+                        cohort=cohort,
+                        enrollment_attributes=enrollment_attributes
+                    )
                 else:
                     enterprise_customer_user.unenroll(course_run_id)
             except (CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, HttpClientError) as exc:
