@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.8] - 2019-08-29
+--------------------
+
+* Corrected missing db migration data for the EnterpriseCustomerReportingConfigurations model
+
 [1.9.7] - 2019-08-28
 --------------------
 
