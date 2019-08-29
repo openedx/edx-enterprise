@@ -30,6 +30,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='enterprisecustomerreportingconfiguration',
             name='uuid',
-            field=models.UUIDField(unique=True)
-        )
+            field=models.UUIDField(default=uuid.uuid4, unique=True)
+        ),
     ]
