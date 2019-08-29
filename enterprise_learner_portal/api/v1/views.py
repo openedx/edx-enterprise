@@ -9,6 +9,7 @@ from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthenticat
 from rest_framework import permissions
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework.views import APIView
 
 from django.shortcuts import get_object_or_404
@@ -42,9 +43,17 @@ class EnterpriseCourseEnrollmentView(APIView):
             )
 
         user = request.user
+        enterprise_customer_id = request.query_params.get('enterprise_id', None)
+        if not enterprise_customer_id:
+            return Response(
+                {'error': 'enterprise_id must be provided as a query parameter'},
+                status=HTTP_400_BAD_REQUEST
+            )
+
         enterprise_customer_user = get_object_or_404(
             EnterpriseCustomerUser,
-            user_id=user.id
+            user_id=user.id,
+            enterprise_customer__uuid=enterprise_customer_id,
         )
         course_ids_for_ent_enrollments = EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user=enterprise_customer_user

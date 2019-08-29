@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.9] - 2019-08-29
+--------------------
+
+* Updated learner portal enrollments endpoint to require an enterprise id.
+
 [1.9.8] - 2019-08-29
 --------------------
 
