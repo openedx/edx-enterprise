@@ -49,6 +49,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
 )
 from enterprise.utils import get_configuration_value_for_site, send_email_notification_message, track_enrollment
+from enterprise.views import NonAtomicView
 
 
 class TemplatePreviewView(View):
@@ -184,7 +185,7 @@ class EnterpriseCustomerTransmitCoursesView(View):
         return render(request, self.template, context)
 
 
-class EnterpriseCustomerManageLearnersView(View):
+class EnterpriseCustomerManageLearnersView(NonAtomicView):
     """
     Manage Learners view.
 
