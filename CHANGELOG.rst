@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.10] - 2019-09-04
+---------------------
+
+* Improved enterprise enrollment workflow logging.
+
 [1.9.9] - 2019-08-29
 --------------------
 
