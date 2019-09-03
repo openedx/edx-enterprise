@@ -19,7 +19,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.urlresolvers import reverse
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
@@ -468,6 +468,21 @@ class GrantDataSharingPermissions(View):
 
         return context_data
 
+    @staticmethod
+    def create_enterprise_course_enrollment(request, consent_record, course_id):
+        """Create EnterpriseCustomerUser and EnterpriseCourseEnrollment record if not already exists."""
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=consent_record.enterprise_customer,
+            user_id=request.user.id
+        )
+        enterprise_customer_user.update_session(request)
+        __, created = EnterpriseCourseEnrollment.objects.get_or_create(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+        )
+        if created:
+            track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
+
     @method_decorator(login_required)
     def get(self, request):  # pylint: disable=too-many-statements
         """
@@ -768,18 +783,25 @@ class GrantDataSharingPermissions(View):
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required():
             if course_id:
-                enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-                    enterprise_customer=consent_record.enterprise_customer,
-                    user_id=request.user.id
-                )
-                enterprise_customer_user.update_session(request)
-                __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-                    enterprise_customer_user=enterprise_customer_user,
-                    course_id=course_id,
-                )
-                if created:
-                    track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
-
+                try:
+                    self.create_enterprise_course_enrollment(request, consent_record, course_id)
+                except IntegrityError:
+                    error_code = 'ENTGDS009'
+                    log_message = (
+                        '[Enterprise DSC API] IntegrityError while creating EnterpriseCourseEnrollment.'
+                        'Course: {course_id}, '
+                        'Program: {program_uuid}, '
+                        'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                        'User: {user_id}, '
+                        'ErrorCode: {error_code}'.format(
+                            course_id=course_id,
+                            program_uuid=program_uuid,
+                            enterprise_customer_uuid=enterprise_uuid,
+                            user_id=request.user.id,
+                            error_code=error_code,
+                        )
+                    )
+                    LOGGER.exception(log_message)
             consent_record.granted = consent_provided
             consent_record.save()
 
