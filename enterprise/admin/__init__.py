@@ -482,11 +482,13 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     readonly_fields = (
         'enterprise_customer_user',
         'course_id',
+        'marked_done',
     )
 
     list_display = (
         'enterprise_customer_user',
         'course_id',
+        'marked_done',
     )
 
     search_fields = ('enterprise_customer_user__user_id', 'course_id',)
