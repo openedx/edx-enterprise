@@ -848,10 +848,11 @@ class HandleConsentEnrollment(View):
             context_data = get_global_context(request, enterprise_customer)
             error_code = 'ENTHCE000'
             log_message = (
-                'No course_modes for course_id {course_id} for enterprise_catalog_uuid '
-                '{enterprise_catalog_uuid}.'
-                'The following error was presented to '
-                'user {userid}: {error_code}'.format(
+                '[Enterprise Enrollment] Course_modes for course not found. '
+                'Course: {course_id}, '
+                'EnterpriseCatalog: {enterprise_catalog_uuid}, '
+                'ErrorCode: {error_code}, '
+                'User: {userid}'.format(
                     userid=request.user.id,
                     enterprise_catalog_uuid=enterprise_catalog_uuid,
                     course_id=course_id,
@@ -947,9 +948,8 @@ class CourseEnrollmentView(NonAtomicView):
         """
         modes = EnrollmentApiClient().get_course_modes(course_run_id)
         if not modes:
-            LOGGER.warning('Unable to get course modes for course run id {course_run_id}.'.format(
-                course_run_id=course_run_id
-            ))
+            LOGGER.warning('[Enterprise Enrollment] Unable to get course modes. '
+                           'CourseRun: {course_run_id}'.format(course_run_id=course_run_id))
             messages.add_generic_info_message_for_error(request)
 
         if enterprise_catalog:
@@ -958,8 +958,9 @@ class CourseEnrollmentView(NonAtomicView):
             modes.sort(key=lambda course_mode: enterprise_catalog.enabled_course_modes.index(course_mode['slug']))
             if not modes:
                 LOGGER.info(
-                    'No matching course modes found for course run {course_run_id} in '
-                    'EnterpriseCustomerCatalog [{enterprise_catalog_uuid}]'.format(
+                    '[Enterprise Enrollment] Matching course modes were not found in EnterpriseCustomerCatalog. '
+                    'CourseRun: {course_run_id}, '
+                    'EnterpriseCatalog: {enterprise_catalog_uuid}'.format(
                         course_run_id=course_run_id,
                         enterprise_catalog_uuid=enterprise_catalog,
                     )
@@ -990,7 +991,8 @@ class CourseEnrollmentView(NonAtomicView):
                 )
             except (ValueError, EnterpriseCustomerCatalog.DoesNotExist):
                 LOGGER.warning(
-                    'EnterpriseCustomerCatalog [{enterprise_catalog_uuid}] does not exist'.format(
+                    '[Enterprise Enrollment] EnterpriseCustomerCatalog does not exist. '
+                    'EnterpriseCatalog: {enterprise_catalog_uuid}'.format(
                         enterprise_catalog_uuid=enterprise_catalog_uuid,
                     )
                 )
@@ -1007,7 +1009,9 @@ class CourseEnrollmentView(NonAtomicView):
                     enterprise_customer.site
                 ).get_course_and_course_run(course_run_id)
             except ImproperlyConfigured:
-                LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
+                LOGGER.warning('[Enterprise Enrollment] CourseCatalogApiServiceClient is improperly configured. '
+                               'Site: {enterprise_customer_site}'.format(
+                                   enterprise_customer_site=enterprise_customer.site.domain))
                 messages.add_generic_info_message_for_error(request)
                 return enterprise_customer, course, course_run, course_modes
 
@@ -1020,10 +1024,15 @@ class CourseEnrollmentView(NonAtomicView):
             # EnterpriseCustomerCatalog, or does not exist at all in the
             # discovery service.
             LOGGER.warning(
-                'Failed to fetch details for course "{course_title}" [{course_id}] '
-                'or course run "{course_run_title}" [{course_run_id}] '
-                'for enterprise "{enterprise_name}" [{enterprise_uuid}] '
-                'with catalog "{enterprise_catalog_title}" [{enterprise_catalog_uuid}]'.format(
+                '[Enterprise Enrollment] Failed to fetch details for course or course run. '
+                'Course: {course_id}, '
+                'CourseRun: {course_run_id}, '
+                'CourseRunTitle: {course_run_title}, '
+                'CourseTitle: {course_title}, '
+                'EnterpriseCatalog: {enterprise_catalog_uuid}, '
+                'EnterpriseCatalogTitle: {enterprise_catalog_title}, '
+                'EnterpriseCustomer: {enterprise_uuid}, '
+                'EnterpriseName: {enterprise_name}'.format(
                     course_title=course_title,
                     course_id=course_id,
                     course_run_title=course_run_title,
@@ -1437,10 +1446,11 @@ class ProgramEnrollmentView(NonAtomicView):
         except ImproperlyConfigured:
             error_code = 'ENTPEV000'
             LOGGER.error(
-                'CourseCatalogApiServiceClient is improperly configured. '
-                'Returned error code {error_code} to user {userid} '
-                'and enterprise_customer {enterprise_customer} '
-                'for course_run_id {course_run_id}'.format(
+                '[Enterprise Enrollment] CourseCatalogApiServiceClient is improperly configured. '
+                'CourseRun: {course_run_id}, '
+                'EnterpriseCustomer: {enterprise_customer}, '
+                'ErrorCode: {error_code}, '
+                'User: {userid}'.format(
                     error_code=error_code,
                     userid=request.user.id,
                     enterprise_customer=enterprise_customer.uuid,
@@ -1454,10 +1464,11 @@ class ProgramEnrollmentView(NonAtomicView):
         if not course_details or not course_run_details:
             error_code = 'ENTPEV001'
             LOGGER.error(
-                'User {userid} of enterprise customer {enterprise_customer} encountered an error.'
-                'No course_details or course_run_details found for '
-                'course_run_id {course_run_id}. '
-                'The following error code reported to the user: {error_code}'.format(
+                '[Enterprise Enrollment] Course_details or course_run_details not found. '
+                'CourseRun: {course_run_id}, '
+                'EnterpriseCustomer: {enterprise_customer}, '
+                'ErrorCode: {error_code}, '
+                'User: {userid}'.format(
                     userid=request.user.id,
                     enterprise_customer=enterprise_customer.uuid,
                     course_run_id=course_run_id,
@@ -1507,10 +1518,11 @@ class ProgramEnrollmentView(NonAtomicView):
         except ImproperlyConfigured:
             error_code = 'ENTPEV002'
             LOGGER.error(
-                'CourseCatalogApiServiceClient is improperly configured. '
-                'Returned error code {error_code} to user {userid} '
-                'and enterprise_customer {enterprise_customer} '
-                'for program {program_uuid}'.format(
+                '[Enterprise Enrollment] CourseCatalogApiServiceClient is improperly configured. '
+                'EnterpriseCustomer: {enterprise_customer}, '
+                'ErrorCode: {error_code}, '
+                'Program: {program_uuid}, '
+                'User: {userid}'.format(
                     error_code=error_code,
                     userid=request.user.id,
                     enterprise_customer=enterprise_customer.uuid,
@@ -1524,9 +1536,11 @@ class ProgramEnrollmentView(NonAtomicView):
         if program_details is None:
             error_code = 'ENTPEV003'
             LOGGER.error(
-                'User {userid} of enterprise customer {enterprise_customer} encountered an error. '
-                'program_details is None for program_uuid {program_uuid}. '
-                'Returned error code {error_code} to user'.format(
+                '[Enterprise Enrollment] Program_details is None for program. '
+                'EnterpriseCustomer: {enterprise_customer}, '
+                'ErrorCode: {error_code}, '
+                'Program: {program_uuid}, '
+                'User: {userid}'.format(
                     userid=request.user.id,
                     enterprise_customer=enterprise_customer.uuid,
                     program_uuid=program_uuid,
@@ -1540,9 +1554,11 @@ class ProgramEnrollmentView(NonAtomicView):
         if program_type is None:
             error_code = 'ENTPEV004'
             LOGGER.error(
-                'User {userid} of enterprise customer {enterprise_customer} encountered an error. '
-                'program_type is None for program_details of program_uuid {program_uuid}. '
-                'Returned error code {error_code} to user'.format(
+                '[Enterprise Enrollment] Program_type is None for program_details. '
+                'EnterpriseCustomer: {enterprise_customer}, '
+                'ErrorCode: {error_code}, '
+                'Program: {program_uuid}, '
+                'User: {userid}'.format(
                     userid=request.user.id,
                     enterprise_customer=enterprise_customer.uuid,
                     program_uuid=program_uuid,
