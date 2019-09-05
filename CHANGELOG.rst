@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.12] - 2019-09-06
+---------------------
+
+* Implement "move to completed" functionality for Enterprise Enrollments.
+
 [1.9.11] - 2019-09-05
 ---------------------
 

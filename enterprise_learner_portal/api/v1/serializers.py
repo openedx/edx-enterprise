@@ -43,28 +43,43 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation = super(EnterpriseCourseEnrollmentSerializer, self).to_representation(instance)
 
         request = self.context['request']
+        course_run_id = instance.course_id
         user = request.user
 
+        # Course Overview
+        course_overview = self._get_course_overview(course_run_id)
+
         # Certificate
-        certificate_info = get_certificate_for_user(user.username, instance['id']) or {}
+        certificate_info = get_certificate_for_user(user.username, course_run_id) or {}
         representation['certificate_download_url'] = certificate_info.get('download_url')
 
         # Email enabled
-        emails_enabled = get_emails_enabled(user, instance['id'])
+        emails_enabled = get_emails_enabled(user, course_run_id)
         if emails_enabled is not None:
             representation['emails_enabled'] = emails_enabled
 
-        representation['course_run_id'] = instance['id']
+        representation['course_run_id'] = course_run_id
         representation['course_run_status'] = get_course_run_status(
-            instance,
+            course_overview,
             certificate_info,
+            instance
         )
-        representation['start_date'] = instance['start']
-        representation['end_date'] = instance['end']
-        representation['display_name'] = instance['display_name_with_default']
-        representation['course_run_url'] = get_course_run_url(request, instance['id'])
-        representation['due_dates'] = get_due_dates(request, instance['id'], user)
-        representation['pacing'] = instance['pacing']
-        representation['org_name'] = instance['display_org_with_default']
+        representation['start_date'] = course_overview['start']
+        representation['end_date'] = course_overview['end']
+        representation['display_name'] = course_overview['display_name_with_default']
+        representation['course_run_url'] = get_course_run_url(request, course_run_id)
+        representation['due_dates'] = get_due_dates(request, course_run_id, user)
+        representation['pacing'] = course_overview['pacing']
+        representation['org_name'] = course_overview['display_org_with_default']
 
         return representation
+
+    def _get_course_overview(self, course_run_id):
+        """
+        Get the appropriate course overview from the context.
+        """
+        for overview in self.context['course_overviews']:
+            if overview['id'] == course_run_id:
+                return overview
+
+        return None
