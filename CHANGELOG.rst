@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.9.11] - 2019-09-05
+---------------------
+
+* Add new field 'marked_done' to EnterpriseCourseEnrollment.
+
 [1.9.10] - 2019-09-04
 ---------------------
 
