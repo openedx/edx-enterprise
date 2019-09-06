@@ -19,7 +19,7 @@ class CourseRunProgressStatuses(object):
     COMPLETED = 'completed'
 
 
-def get_course_run_status(course_overview, certificate_info):
+def get_course_run_status(course_overview, certificate_info, enterprise_enrollment):
     """
     Get the progress status of a course run, given the state of a user's certificate in the course.
 
@@ -43,7 +43,9 @@ def get_course_run_status(course_overview, certificate_info):
     is_certificate_passing = certificate_info.get('is_passing', False)
     certificate_creation_date = certificate_info.get('created', datetime.max)
 
-    if course_overview['pacing'] == 'instructor':
+    if enterprise_enrollment and enterprise_enrollment.marked_done:
+        return CourseRunProgressStatuses.COMPLETED
+    elif course_overview['pacing'] == 'instructor':
         if course_overview['has_ended']:
             return CourseRunProgressStatuses.COMPLETED
         elif course_overview['has_started']:

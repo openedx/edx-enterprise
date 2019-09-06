@@ -7,13 +7,16 @@ from __future__ import absolute_import, unicode_literals
 from datetime import datetime
 
 import ddt
+from pytest import mark
 from pytz import UTC
 
 from django.test import TestCase
 
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
+from test_utils import factories
 
 
+@mark.django_db
 @ddt.ddt
 class TestUtils(TestCase):
     """
@@ -32,6 +35,7 @@ class TestUtils(TestCase):
                 'is_passing': True,
                 'created': NOW,
             },
+            False,
             CourseRunProgressStatuses.COMPLETED,
         ),
         (
@@ -44,6 +48,7 @@ class TestUtils(TestCase):
                 'is_passing': True,
                 'created': NOW,
             },
+            False,
             CourseRunProgressStatuses.IN_PROGRESS,
         ),
         (
@@ -56,6 +61,7 @@ class TestUtils(TestCase):
                 'is_passing': True,
                 'created': NOW,
             },
+            False,
             CourseRunProgressStatuses.UPCOMING,
         ),
         (
@@ -68,6 +74,7 @@ class TestUtils(TestCase):
                 'is_passing': True,
                 'created': NOW,
             },
+            False,
             CourseRunProgressStatuses.COMPLETED,
         ),
         (
@@ -80,6 +87,7 @@ class TestUtils(TestCase):
                 'is_passing': False,
                 'created': NOW,
             },
+            False,
             CourseRunProgressStatuses.IN_PROGRESS,
         ),
         (
@@ -92,7 +100,21 @@ class TestUtils(TestCase):
                 'is_passing': False,
                 'created': NOW,
             },
+            False,
             CourseRunProgressStatuses.UPCOMING,
+        ),
+        (
+            {
+                'pacing': 'instructor',
+                'has_ended': False,
+                'has_started': True,
+            },
+            {
+                'is_passing': False,
+                'created': NOW,
+            },
+            True,
+            CourseRunProgressStatuses.COMPLETED,
         ),
     )
     @ddt.unpack
@@ -100,14 +122,17 @@ class TestUtils(TestCase):
             self,
             course_overview,
             certificate_info,
+            marked_done,
             expected,
     ):
         """
         get_course_run_status should return the proper results
         based on input parameters
         """
+        enterprise_enrollment = factories.EnterpriseCourseEnrollmentFactory.create(marked_done=marked_done)
         actual = get_course_run_status(
             course_overview,
             certificate_info,
+            enterprise_enrollment
         )
         assert actual == expected
