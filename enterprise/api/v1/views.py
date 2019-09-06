@@ -188,7 +188,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     @permission_required('enterprise.can_access_admin_dashboard')
     def dashboard_list(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
         """
-        Supports listing dashboard enterprises for edx-portal frontend.
+        Supports listing dashboard enterprises for frontend-app-admin-portal.
         """
         self.queryset = self.queryset.order_by('name')
         enterprise_id = self.request.query_params.get('enterprise_id', None)
