@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` api module.
 from __future__ import absolute_import, unicode_literals
 
 import json
+import uuid
 from operator import itemgetter
 from smtplib import SMTPException
 
@@ -59,6 +60,7 @@ from test_utils import (
     update_course_with_enterprise_context,
     update_program_with_enterprise_context,
 )
+from test_utils.factories import FAKER
 
 ENTERPRISE_CATALOGS_LIST_ENDPOINT = reverse('enterprise-catalogs-list')
 ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
@@ -88,6 +90,7 @@ ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT = reverse('enterprise-customer-ent
 ENTERPRISE_CUSTOMER_BRANDING_LIST_ENDPOINT = reverse('enterprise-customer-branding-list')
 ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT = reverse('enterprise-customer-branding-detail', (TEST_SLUG,))
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
+ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT = reverse('enterprise-customer-basic-list')
 ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     'enterprise-customer-contains-content-items',
     kwargs={'pk': FAKE_UUIDS[0]}
@@ -634,6 +637,24 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
         assert sorted(expected_json, key=sorting_key) == sorted(response['results'], key=sorting_key)
+
+    def test_enterprise_customer_basic_list(self):
+        """
+            Test basic list endpoint of enterprise_customers
+        """
+        enterprise_customers = [
+            {
+                'name': FAKER.company(),  # pylint: disable=no-member
+                'uuid': str(uuid.uuid4())
+            }
+            for _ in range(15)
+        ]
+        self.create_items(factories.EnterpriseCustomerFactory, enterprise_customers)
+        response = self.client.get(urljoin(settings.TEST_SERVER, ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT))
+        response = self.load_json(response.content)
+        for enterprise_customer in enterprise_customers:
+            enterprise_customer['id'] = enterprise_customer.pop("uuid")
+        assert sorted(enterprise_customers, key=itemgetter('name')) == response
 
     @ddt.data(
         # Request missing required permissions query param.
