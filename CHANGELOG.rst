@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.10.0] - 2019-09-16
+---------------------
+
+* Add learner portal configuration fields to EnterpriseCustomer model.
+
 [1.9.12] - 2019-09-06
 ---------------------
 
