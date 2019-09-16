@@ -7,7 +7,7 @@
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 alabaster==0.7.12
 amqp==1.4.9
-aniso8601==7.0.0
+aniso8601==8.0.0
 anyjson==0.3.3
 argparse==1.4.0           # via caniusepython3
 asn1crypto==0.24.0
@@ -20,13 +20,13 @@ billiard==3.3.0.23
 bleach==2.1.4
 caniusepython3==7.1.0
 celery==3.1.25
-certifi==2019.6.16
+certifi==2019.9.11
 cffi==1.12.3
 chardet==3.0.4
 click-log==0.3.2          # via edx-lint
 click==7.0
 code-annotations==0.3.2
-configparser==3.8.1
+configparser==4.0.2
 contextlib2==0.5.5
 cookies==2.2.1
 coverage==4.5.4
@@ -46,7 +46,7 @@ django-multi-email-field==0.5.1
 django-object-actions==1.1.0
 django-simple-history==2.7.3
 django-waffle==0.12.0
-django==1.11.23
+django==1.11.24
 djangorestframework-jwt==1.11.0
 djangorestframework-xml==1.4.0
 djangorestframework==3.7.7
@@ -56,8 +56,8 @@ edx-django-utils==2.0.0
 edx-drf-extensions==2.4.0
 edx-i18n-tools==0.4.8
 edx-lint==1.3.0
-edx-opaque-keys==1.0.1
-edx-rbac==1.0.2
+edx-opaque-keys[django]==2.0.0
+edx-rbac==1.0.3
 edx-rest-api-client==1.9.2
 edx-sphinx-theme==1.5.0
 enum34==1.1.6
@@ -72,7 +72,7 @@ futures==3.3.0 ; python_version == "2.7"
 html5lib==1.0.1
 idna==2.8
 imagesize==1.1.0
-importlib-metadata==0.19
+importlib-metadata==0.23
 inflect==2.1.0
 ipaddress==1.0.22
 isort==4.3.21
@@ -90,11 +90,11 @@ newrelic==5.0.2.126
 packaging==19.1
 path.py==8.2.1
 pathlib2==2.3.4
-pbr==5.4.2
+pbr==5.4.3
 pillow==6.1.0
 pip-tools==4.1.0
 pkginfo==1.5.0.1          # via twine
-pluggy==0.12.0
+pluggy==0.13.0
 pockets==0.7.2
 polib==1.1.0              # via edx-i18n-tools
 psutil==1.2.1
@@ -128,26 +128,26 @@ rest-condition==1.0.3
 restructuredtext-lint==1.3.0
 rules==2.1
 scandir==1.10.0
-semantic-version==2.6.0
+semantic-version==2.8.2
 singledispatch==3.4.0.3   # via astroid, pylint
 six==1.12.0
 slumber==0.7.1
-snowballstemmer==1.9.0
+snowballstemmer==1.9.1
 sphinx==1.8.5
 sphinxcontrib-napoleon==0.6.1
 sphinxcontrib-websupport==1.1.2
-stevedore==1.30.1
+stevedore==1.31.0
 testfixtures==6.10.0
 text-unidecode==1.2
 toml==0.10.0              # via tox
 tox-battery==0.5.1
-tox==3.13.2
+tox==3.14.0
 tqdm==4.35.0              # via twine
 twine==1.11.0
 typing==3.7.4.1
 unicodecsv==0.14.1
 urllib3==1.25.3
-virtualenv==16.7.4        # via tox
+virtualenv==16.7.5        # via tox
 wcwidth==0.1.7
 webencodings==0.5.1
 wheel==0.33.6

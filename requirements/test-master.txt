@@ -5,12 +5,12 @@
 #    make upgrade
 #
 -e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
-aniso8601==7.0.0
+aniso8601==8.0.0
 asn1crypto==0.24.0        # via cryptography
 billiard==3.3.0.23        # via celery
 bleach==2.1.4
 celery==3.1.25
-certifi==2019.6.16        # via requests
+certifi==2019.9.11        # via requests
 cffi==1.12.3              # via cryptography
 chardet==3.0.4            # via requests
 click==7.0                # via code-annotations
@@ -28,14 +28,14 @@ django-multi-email-field==0.5.1
 django-object-actions==1.1.0
 django-simple-history==2.7.3
 django-waffle==0.12.0
-django==1.11.23
+django==1.11.24
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-xml==1.4.0
 djangorestframework==3.7.7
 edx-django-utils==2.0.0
 edx-drf-extensions==2.4.0
-edx-opaque-keys==1.0.1
-edx-rbac==1.0.2
+edx-opaque-keys[django]==2.0.0
+edx-rbac==1.0.3
 edx-rest-api-client==1.9.2
 enum34==1.1.6             # via cryptography
 future==0.17.1
@@ -48,7 +48,7 @@ jsonfield==2.0.2
 kombu==3.0.37             # via celery
 newrelic==5.0.2.126       # via edx-django-utils
 path.py==8.2.1
-pbr==5.4.2                # via stevedore
+pbr==5.4.3                # via stevedore
 pillow==6.1.0
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
 pyjwkest==1.3.2           # via edx-drf-extensions
@@ -61,10 +61,10 @@ pyyaml==5.1.2             # via code-annotations
 requests==2.22.0
 rest-condition==1.0.3     # via edx-drf-extensions
 rules==2.1
-semantic-version==2.6.0   # via edx-drf-extensions
+semantic-version==2.8.2   # via edx-drf-extensions
 six==1.12.0
 slumber==0.7.1
-stevedore==1.30.1
+stevedore==1.31.0
 testfixtures==6.10.0
 unicodecsv==0.14.1
 urllib3==1.25.3           # via requests
