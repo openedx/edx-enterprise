@@ -511,6 +511,8 @@ class TestEnterpriseAPIViews(APITest):
                     'domain': 'example.com', 'name': 'example.com'
                 },
                 'sync_learner_profile_data': False,
+                'enable_learner_portal': False,
+                'learner_portal_hostname': '',
             }],
         ),
         (
@@ -542,6 +544,8 @@ class TestEnterpriseAPIViews(APITest):
                         'domain': 'example.com', 'name': 'example.com'
                     },
                     'sync_learner_profile_data': False,
+                    'enable_learner_portal': False,
+                    'learner_portal_hostname': '',
                 }
             }],
         ),
@@ -598,6 +602,8 @@ class TestEnterpriseAPIViews(APITest):
                     'domain': 'example.com', 'name': 'example.com'
                 },
                 'sync_learner_profile_data': False,
+                'enable_learner_portal': False,
+                'learner_portal_hostname': '',
             }],
         ),
         (
@@ -729,6 +735,8 @@ class TestEnterpriseAPIViews(APITest):
                     'domain': 'example.com', 'name': 'example.com'
                 },
                 'sync_learner_profile_data': False,
+                'enable_learner_portal': False,
+                'learner_portal_hostname': '',
             }
         else:
             assert response == expected_error

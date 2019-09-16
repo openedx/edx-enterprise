@@ -330,6 +330,8 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "replace_sensitive_sso_username",
             "hide_course_original_price",
             "enable_portal_code_management_screen",
+            "enable_learner_portal",
+            "learner_portal_hostname",
         )
 
 

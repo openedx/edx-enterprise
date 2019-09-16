@@ -245,6 +245,18 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether to allow access to the code management screen in the admin portal.")
     )
 
+    enable_learner_portal = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
+    )
+
+    learner_portal_hostname = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        help_text=_("Hostname of the enterprise learner portal, e.g. bestrun.edx.org.")
+    )
+
     @property
     def identity_provider(self):
         """
