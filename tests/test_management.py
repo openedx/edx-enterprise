@@ -809,9 +809,11 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
                 expected_output = get_expected_output(**expected_completion)
                 call_command('transmit_learner_data', *args, **kwargs)
                 # get the list of logs just in this repo
-                enterprise_log_messages = [
-                    record.getMessage() for record in log_capture.records if 'edx-enterprise' in record.pathname
-                ]
+                enterprise_log_messages = []
+                for record in log_capture.records:
+                    pathname = record.pathname
+                    if 'edx-enterprise' in pathname and 'site-packages' not in pathname:
+                        enterprise_log_messages.append(record.getMessage())
                 for index, message in enumerate(expected_output):
                     assert message in enterprise_log_messages[index]
 
