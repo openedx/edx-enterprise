@@ -109,6 +109,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
         """
 
         model = EnterpriseCustomerUser
+        django_get_or_create = ('enterprise_customer', 'user_id',)
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
@@ -517,6 +518,7 @@ class CornerstoneLearnerDataTransmissionAuditFactory(factory.django.DjangoModelF
         """
 
         model = CornerstoneLearnerDataTransmissionAudit
+        django_get_or_create = ('user_id', 'course_id', )
 
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())

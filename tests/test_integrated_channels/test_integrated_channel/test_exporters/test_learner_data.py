@@ -17,6 +17,7 @@ from slumber.exceptions import HttpNotFoundError
 from django.utils import timezone
 
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
+from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
 from test_utils import factories
 
 
@@ -558,3 +559,26 @@ class TestLearnerExporter(unittest.TestCase):
                 assert report.enterprise_course_enrollment_id == enrollment.id
                 assert report.course_completed
                 assert report.grade == LearnerExporter.GRADE_PASSING
+
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    def test_learner_exporter_with_skip_transmitted(self, mock_course_api, mock_grades_api, mock_enrollment_api):
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        transmission_audit = LearnerDataTransmissionAudit(
+            enterprise_course_enrollment_id=enterprise_course_enrollment.id,
+            course_id=self.course_id,
+            course_completed=True,
+            completed_timestamp=1568877047181,
+            grade='Pass',
+        )
+        transmission_audit.save()
+        learner_data = list(self.exporter.export(TransmissionAudit=LearnerDataTransmissionAudit))
+
+        assert not learner_data
+        assert mock_enrollment_api.call_count == 0
+        assert mock_course_api.call_count == 0
+        assert mock_grades_api.call_count == 0

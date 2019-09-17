@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.10.7] - 2019-09-25
+---------------------
+
+* Added support to transmit single learner data.
+
 [1.10.6] - 2019-09-25
 ---------------------
 

@@ -28,7 +28,7 @@ class Exporter(object):
         self.enterprise_configuration = enterprise_configuration
         self.enterprise_customer = enterprise_configuration.enterprise_customer
 
-    def export(self):
+    def export(self, **kwargs):
         """
         Export (read: serialize) data to be used by a transmitter to transmit to an integrated channel.
         """

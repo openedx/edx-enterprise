@@ -20,6 +20,8 @@ from django.utils import timezone
 
 from enterprise.api_client import lms as lms_api
 from integrated_channels.cornerstone.exporters.learner_data import CornerstoneLearnerExporter
+from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit
+from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from test_utils import factories
 from test_utils.fake_catalog_api import setup_course_catalog_api_client_mock
 
@@ -47,39 +49,49 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             enable_audit_enrollment=True,
             enable_audit_data_reporting=True,
         )
-        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-        self.data_sharing_consent = factories.DataSharingConsentFactory(
-            username=self.user.username,
-            course_id=self.course_id,
-            enterprise_customer=self.enterprise_customer,
-            granted=True,
-        )
         self.config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
             active=True,
         )
         self.global_config = factories.CornerstoneGlobalConfigurationFactory(key='test_key', secret='test_secret')
-        self.csod_transmission_audit = factories.CornerstoneLearnerDataTransmissionAuditFactory(
-            user_id=self.user.id,
-            session_token=self.session_token,
-            callback_url=self.callback_url,
-            subdomain=self.subdomain,
-            course_id=self.course_key,
-            user_guid=self.user_guid
+        self.enterprise_course_enrollment = self._setup_enterprise_enrollment(
+            self.user,
+            self.course_id,
+            self.course_key
         )
-        self.enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=self.enterprise_customer_user,
-            course_id=self.course_id,
-        )
-
         course_catalog_api_client_mock = mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
         course_catalog_client = course_catalog_api_client_mock.start()
         setup_course_catalog_api_client_mock(course_catalog_client)
         self.addCleanup(course_catalog_api_client_mock.stop)
         super(TestCornerstoneLearnerExporter, self).setUp()
+
+    def _setup_enterprise_enrollment(self, user, course_id, course_key):
+        """
+        Create enterprise enrollment for user in given course
+        """
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        factories.DataSharingConsentFactory(
+            username=user.username,
+            course_id=course_id,
+            enterprise_customer=self.enterprise_customer,
+            granted=True,
+        )
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+        )
+        factories.CornerstoneLearnerDataTransmissionAuditFactory(
+            user_id=user.id,
+            session_token=self.session_token,
+            callback_url=self.callback_url,
+            subdomain=self.subdomain,
+            course_id=course_key,
+            user_guid=self.user_guid
+        )
+        return enterprise_course_enrollment
 
     @ddt.data(NOW, None)
     @freeze_time(NOW)
@@ -175,3 +187,33 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         self.assertEqual(actual_url, expected_url)
         assert sorted(expected_payload.items()) == sorted(actual_payload.items())
         assert sorted(expected_headers.items()) == sorted(actual_headers.items())
+
+    @responses.activate
+    def test_transmit_single_learner_data_performs_only_one_transmission(self):
+        """
+        Test sending single user's data sould only update one `CornerstoneLearnerDataTransmissionAudit` entry
+        """
+        course_id = 'course-v1:edX+NmX+Demo_Course_2'
+        course_key = 'edX+NmX'
+        self._setup_enterprise_enrollment(self.user, course_id, course_key)
+
+        # Course API course_details response
+        responses.add(
+            responses.GET,
+            urljoin(
+                lms_api.CourseApiClient.API_BASE_URL,
+                "courses/{course}/".format(course=course_id)
+            ),
+            json={
+                "course_id": course_key,
+                "pacing": "instructor",
+                "end": "2038-06-21T12:58:17.428373Z",
+            }
+        )
+
+        transmissions = CornerstoneLearnerDataTransmissionAudit.objects.filter(user=self.user, course_completed=False)
+        # assert we have two uncompleted data transmission
+        self.assertEqual(transmissions.count(), 2)
+        transmit_single_learner_data(self.user.username, course_id)
+        # assert we have now one uncompleted data transmission
+        self.assertEqual(transmissions.count(), 1)

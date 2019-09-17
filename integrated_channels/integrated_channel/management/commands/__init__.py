@@ -110,3 +110,10 @@ class IntegratedChannelCommandMixin(object):
             channel_classes = INTEGRATED_CHANNEL_CHOICES.values()
 
         return channel_classes
+
+
+class IntegratedChannelCommandUtils(IntegratedChannelCommandMixin):
+    """
+    This is a wrapper class to avoid using mixin in methods
+    """
+    pass
