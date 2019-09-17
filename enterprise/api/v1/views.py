@@ -497,6 +497,12 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
     def partial_update(self, request, *args, **kwargs):
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).partial_update(request, *args, **kwargs)
 
+    @permission_required(
+        'enterprise.can_manage_reporting_config',
+        fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
+    def destroy(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerReportingConfigurationViewSet, self).destroy(request, *args, **kwargs)
+
 
 class CatalogQueryView(APIView):
     """

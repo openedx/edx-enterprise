@@ -2374,6 +2374,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'active': 'true',
             'delivery_method': 'email',
             'email': ['test@test.com', 'foo@test.com'],
+            'encrypted_password': 'testPassword',
             'frequency': 'monthly',
             'day_of_month': 1,
             'day_of_week': 3,
@@ -2381,7 +2382,6 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'sftp_hostname': 'null',
             'sftp_port': 22,
             'sftp_username': 'test@test.com',
-            'encrypted_sftp_password': 'null',
             'sftp_file_path': 'null',
             'data_type': 'progress',
             'report_type': 'csv',
@@ -2392,7 +2392,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'active': True,
             'encrypted_sftp_password': None,
         })
-
+        expected_data.pop('encrypted_password')
         client = APIClient()
         client.login(username='test_user', password='test_password')
 
@@ -2416,6 +2416,8 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         if has_feature_role:
             response_content = self.load_json(response.content)
             assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
+            assert response_content['encrypted_password'] != post_data['encrypted_password']
+            response_content.pop('encrypted_password')
             self._assert_config_response(expected_data, response_content)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
@@ -2448,6 +2450,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'active': 'true',
             'delivery_method': 'email',
             'email': ['test@test.com', 'foo@test.com'],
+            'encrypted_password': 'passwordUpdate',
             'frequency': 'monthly',
             'day_of_month': 1,
             'day_of_week': 3,
@@ -2461,6 +2464,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             'pgp_encryption_key': ''
         }
         expected_data = put_data.copy()
+        expected_data.pop('encrypted_password')
         expected_data.update({
             'active': True,
         })
@@ -2492,6 +2496,8 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             response_content = self.load_json(response.content)
             assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
             response_content.pop('enterprise_customer')
+            assert response_content['encrypted_password'] is not None
+            response_content.pop('encrypted_password')
             for key, value in expected_data.items():
                 assert response_content[key] == value
 
@@ -2528,6 +2534,9 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
         }
         expected_data = patch_data.copy()
         expected_data.pop('enterprise_customer_id')
+        patch_data['encrypted_password'] = 'newPassword'
+        patch_data['encrypted_sftp_password'] = 'newSFTPPassword'
+
         test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
 
         client = APIClient()

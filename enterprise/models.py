@@ -1814,6 +1814,9 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     def encrypted_password(self):
         """
         Return encrypted password as a string.
+
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_password field. This method will encrypt the password again before sending.
         """
         if self.decrypted_password:
             return force_text(
@@ -1823,10 +1826,20 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             )
         return self.decrypted_password
 
+    @encrypted_password.setter
+    def encrypted_password(self, value):
+        """
+        Set the encrypted password.
+        """
+        self.decrypted_password = value
+
     @property
     def encrypted_sftp_password(self):
         """
         Return encrypted SFTP password as a string.
+
+        The data is encrypted in the DB at rest, but is unencrypted in the app when retrieved through the
+        decrypted_password field. This method will encrypt the password again before sending.
         """
         if self.decrypted_sftp_password:
             return force_text(
@@ -1835,6 +1848,13 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
                 )
             )
         return self.decrypted_sftp_password
+
+    @encrypted_sftp_password.setter
+    def encrypted_sftp_password(self, value):
+        """
+        Set the encrypted SFTP password.
+        """
+        self.decrypted_sftp_password = value
 
     def __str__(self):
         """

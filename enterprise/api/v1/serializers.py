@@ -449,7 +449,6 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
     """
     Serializer for EnterpriseCustomerReportingConfiguration model.
     """
-
     class Meta:
         model = models.EnterpriseCustomerReportingConfiguration
         fields = (
@@ -459,6 +458,8 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
             'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid'
         )
 
+    encrypted_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
+    encrypted_sftp_password = serializers.CharField(required=False, allow_blank=False, read_only=False)
     enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
     enterprise_customer_id = serializers.PrimaryKeyRelatedField(
         queryset=models.EnterpriseCustomer.objects.all(),  # pylint: disable=no-member
