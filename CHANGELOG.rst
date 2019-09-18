@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ----------
 
+[1.10.1] - 2019-09-18
+---------------------
+* Added ability to set password on reporting configuration.
+
 [1.10.1] - 2019-09-16
 ---------------------
 
