@@ -245,7 +245,7 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether to allow access to the code management screen in the admin portal.")
     )
 
-    enable_portal_reporting_config_screen = models.BooleanField(
+    enable_portal_reporting_config_screen = models.BooleanField(  # pylint: disable=invalid-name
         default=False,
         help_text=_("Specifies whether to allow access to the reporting configurations screen in the admin portal.")
     )
