@@ -443,7 +443,15 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         ),
         (
             {'languages': ['Spanish', 'English', 'Japanese']},
-            ['es-ES', 'en-US', 'ja'],
+            ['es-ES', 'en-US', 'ja-JP'],
+        ),
+        (
+            {'languages': ['Afrikaans', 'Catalan', 'Zulu']},
+            ['en-US'],
+        ),
+        (
+            {'languages': ['Spanish', 'English', 'Chinese - Simplified', 'Chinese - China']},
+            ['es-ES', 'en-US', 'zh-CN'],
         ),
     )
     @responses.activate
@@ -454,7 +462,8 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_languages)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
-        assert exporter.transform_languages(item_content_metadata) == expected_languages
+        transformed_languages = exporter.transform_languages(item_content_metadata)
+        assert sorted(transformed_languages) == sorted(expected_languages)
 
     @ddt.data(
         (
