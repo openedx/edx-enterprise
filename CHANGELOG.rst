@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.10.3] - 2019-09-19
+---------------------
+* Add enable_portal_reoprting_config_screen field to EnterpriseCustomer model.
+* Add enable_portal_reporting_config_screen to EnterpriseCustomerSerializer.
+
+
 [1.10.2] - 2019-09-18
 ---------------------
 * Added ability to set password on reporting configuration.
