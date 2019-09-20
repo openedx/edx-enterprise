@@ -116,6 +116,21 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     filter_fields = FIELDS
     ordering_fields = FIELDS
 
+    def get_serializer_class(self):
+        if self.action == 'basic_list':
+            return serializers.EnterpriseCustomerBasicSerializer
+        return self.serializer_class
+
+    @list_route()
+    # pylint: disable=invalid-name,unused-argument
+    def basic_list(self, request, *arg, **kwargs):
+        """
+            Enterprise Customer's Basic data list without pagination
+        """
+        queryset = self.get_queryset().order_by('name')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
     @detail_route()
     @permission_required('enterprise.can_view_catalog', fn=lambda request, pk, course_run_ids, program_uuids: pk)

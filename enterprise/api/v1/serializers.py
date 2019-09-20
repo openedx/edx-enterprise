@@ -130,6 +130,18 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     )
 
 
+class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
+    """
+    Serializer for EnterpriseCustomer model only for name and id fields.
+    """
+
+    class Meta:
+        model = models.EnterpriseCustomer
+        fields = ('id', 'name')
+
+    id = serializers.CharField(source='uuid')  # pylint: disable=invalid-name
+
+
 class EnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCourseEnrollment model.

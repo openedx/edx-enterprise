@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.10.4] - 2019-09-05
+---------------------
+
+* Added new endpoint basic_list to EnterpriseEnrollment.
+
 [1.10.3] - 2019-09-19
 ---------------------
 * Add enable_portal_reoprting_config_screen field to EnterpriseCustomer model.
