@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[1.10.5] - 2019-09-23
+---------------------
+
+* Updating enterprise_learner_portal LMS API calls to refer to new function locations in the LMS.
+
+
 [1.10.4] - 2019-09-05
 ---------------------
 

@@ -12,11 +12,11 @@ from enterprise.utils import NotConnectedToOpenEdX
 from enterprise_learner_portal.utils import get_course_run_status
 
 try:
+    from lms.djangoapps.bulk_email.api import get_emails_enabled
     from lms.djangoapps.certificates.api import get_certificate_for_user
-    from lms.djangoapps.program_enrollments.api.api import (
+    from lms.djangoapps.course_api.api import (
         get_due_dates,
         get_course_run_url,
-        get_emails_enabled,
     )
 except ImportError:
     get_certificate_for_user = None
