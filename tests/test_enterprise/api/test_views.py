@@ -642,6 +642,7 @@ class TestEnterpriseAPIViews(APITest):
         """
             Test basic list endpoint of enterprise_customers
         """
+        url = urljoin(settings.TEST_SERVER, ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT)
         enterprise_customers = [
             {
                 'name': FAKER.company(),  # pylint: disable=no-member
@@ -650,11 +651,21 @@ class TestEnterpriseAPIViews(APITest):
             for _ in range(15)
         ]
         self.create_items(factories.EnterpriseCustomerFactory, enterprise_customers)
-        response = self.client.get(urljoin(settings.TEST_SERVER, ENTERPRISE_CUSTOMER_BASIC_LIST_ENDPOINT))
-        response = self.load_json(response.content)
+        # now replace 'uuid' key with 'id'  to match with response.
         for enterprise_customer in enterprise_customers:
             enterprise_customer['id'] = enterprise_customer.pop("uuid")
-        assert sorted(enterprise_customers, key=itemgetter('name')) == response
+        sorted_enterprise_customers = sorted(enterprise_customers, key=itemgetter('name'))
+
+        response = self.client.get(url)
+        assert sorted_enterprise_customers == self.load_json(response.content)
+
+        # test startswith param
+        startswith = 'a'
+        startswith_enterprise_customers = [
+            customer for customer in sorted_enterprise_customers if customer['name'].lower().startswith(startswith)
+        ]
+        response = self.client.get(url, {'startswith': startswith})
+        assert startswith_enterprise_customers == self.load_json(response.content)
 
     @ddt.data(
         # Request missing required permissions query param.

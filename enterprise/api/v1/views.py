@@ -127,7 +127,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
             Enterprise Customer's Basic data list without pagination
         """
+        startswith = request.GET.get('startswith')
         queryset = self.get_queryset().order_by('name')
+        if startswith:
+            queryset = queryset.filter(name__istartswith=startswith)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
