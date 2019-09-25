@@ -70,6 +70,11 @@ class CornerstoneGlobalConfiguration(ConfigurationModel):
         help_text=_("Key/value mapping cornerstone subjects to edX subjects list"),
     )
 
+    languages = JSONField(
+        default={},
+        help_text=_("List of IETF language tags supported by cornerstone"),
+    )
+
     class Meta:
         app_label = 'cornerstone'
 

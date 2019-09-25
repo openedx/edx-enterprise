@@ -569,6 +569,7 @@ class CornerstoneGlobalConfigurationFactory(factory.django.DjangoModelFactory):
         "Business Skills": ["Communication"],
         "Creative": ["Music", "Design"]
     }
+    languages = {"Languages": ["es-ES", "en-US", "ja-JP", "zh-CN"]}
 
 
 class XAPILRSConfigurationFactory(factory.django.DjangoModelFactory):

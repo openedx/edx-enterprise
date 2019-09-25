@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.10.6] - 2019-09-25
+---------------------
+
+* Added ability set supported languages in Cornerstone Global Config.
+
 [1.10.5] - 2019-09-23
 ---------------------
 

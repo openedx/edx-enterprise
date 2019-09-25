@@ -102,8 +102,16 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the languages supported by course or `English` as default if no languages found.
         """
+        CornerstoneGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
+            'cornerstone',
+            'CornerstoneGlobalConfiguration'
+        )
+        languages_json = CornerstoneGlobalConfiguration.current().languages or {'Languages': []}
+
         languages = content_metadata_item.get('languages') or [self.DEFAULT_LANGUAGE]
-        return [get_language_code(language) for language in languages]
+        course_languages = [get_language_code(language) for language in languages]
+        languages = set(languages_json['Languages']).intersection(set(course_languages))
+        return list(languages) if languages else ['en-US']
 
     def transform_description(self, content_metadata_item):
         """
