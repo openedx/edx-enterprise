@@ -1411,6 +1411,21 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         results = response.get('results', [])
         return {x[content_id_field_name] for x in results}
 
+    def get_all_courserun_ids_in_catalog(self):
+        """
+        Return set of courserun ids for the catalog.
+        """
+        client = get_course_catalog_api_service_client(self.enterprise_customer.site)
+        response = client.get_catalog_results(
+            self.content_filter,
+            traverse_pagination=True,
+        )
+        return {
+            item['key']
+            for item in response['results']
+            if item['content_type'] == 'courserun'
+        }
+
     def contains_courses(self, content_ids):
         """
         Return true if this catalog contains the given courses.

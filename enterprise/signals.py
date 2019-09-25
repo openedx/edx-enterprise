@@ -13,15 +13,26 @@ from django.dispatch import receiver
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import get_default_catalog_content_filter, track_enrollment
+from enterprise.utils import (
+    get_default_catalog_content_filter,
+    NotConnectedToOpenEdX,
+    track_enrollment,
+)
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+
+try:
+    from lms.djangoapps.enrollments.api import get_enrollments
+except ImportError:
+    get_enrollments = None
 
 
 @disable_for_loaddata
@@ -116,3 +127,50 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
         except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
+
+# TODO: take the main logic here and put it into an async task
+# if kwargs['created'] and instance.user, spin off task to do
+# the enterpriseCourseEnrollment creation and move on
+@receiver(post_save, sender=EnterpriseCustomerUser)
+def create_enterprise_course_enrollments(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Whenever a new EnterpriseCustomerUser record is created, create new EnterpriseCourseEnrollments
+    for each enrollment a User has that is included in the EnterpriseCustomerCatalog associated
+    with the EnterpriseCustomer.
+    """
+    if get_enrollments is None:
+        raise NotConnectedToOpenEdX(
+                _('To use this EnterpriseCourseEnrollmentSerializer, this package must be '
+                  'installed in an Open edX environment.')
+            )
+
+    if kwargs['created'] and instance.user:
+        # Get set of enrollments for user
+        course_ids_from_enrollments = {
+            enrollment['course_details']['course_id']
+            for enrollment in get_enrollments(instance.user.username)
+        }
+
+        ent_enrollments_to_create = set()
+
+        # For each catalog associated with the enterprise customer
+        for catalog in EnterpriseCustomerCatalog.objects.filter(enterprise_customer=instance.enterprise_customer):
+            # Get set of courses from discovery
+            # ToDo: we need to make this
+            course_ids_in_catalog = catalog.get_all_courserun_ids_in_catalog()
+
+            # Get the overlap of courses user is enrolled in and courses offered in catalog
+            intersection = course_ids_from_enrollments.intersection(course_ids_in_catalog)
+            # Update our orignal set to include all overlaps we found
+            ent_enrollments_to_create = ent_enrollments_to_create.union(intersection)
+            # If the set of IDs we want to make enterprise enrollments for is the same as the
+            # original set of course ids we found from their LMS enrollments, stop looping
+            # over catalogues, as we have 100% coverage
+            if ent_enrollments_to_create == course_ids_from_enrollments:
+                break
+
+        for course_id in ent_enrollments_to_create:
+            EnterpriseCourseEnrollment.objects.create(
+                enterprise_customer_user=instance,
+                course_id=course_id,
+            )

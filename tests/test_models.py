@@ -581,6 +581,28 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
 
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
 
+    def test_enterprise_customer_leaner_post_save_enrollment_creation(self):
+        """
+        EnterpriseCourseEnrollment should be created for each enroll
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer
+        )
+        user = factories.UserFactory(email='cache_us@clay.box')
+        assert not EnterpriseCustomerUser.objects.filter(id=user.id).exists()
+
+        # mocks here determine what overlap there is between a learner's courses and
+        # the courses included in the enterprise customer catalog of the enterprise
+        # they just joined.
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer,
+            user_id=user.id
+        )
+        assert EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user=enterprise_customer_user,
+        ).count() == 3
+
 
 @mark.django_db
 @ddt.ddt
