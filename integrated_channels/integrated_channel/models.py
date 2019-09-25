@@ -10,6 +10,7 @@ import logging
 
 from jsonfield.fields import JSONField
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -54,8 +55,23 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         help_text=_("The maximum number of data items to transmit to the integrated channel with each request.")
     )
 
+    channel_worker_username = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text=_("Enterprise channel worker username to get JWT tokens for authenticating LMS APIs."),
+    )
+
     class Meta:
         abstract = True
+
+    @property
+    def channel_worker_user(self):
+        """
+        default worker username for channel
+        """
+        worker_username = self.channel_worker_username if self.channel_worker_username else 'enterprise_channel_worker'
+        return User.objects.filter(username=worker_username).first()
 
     @staticmethod
     def channel_code():
@@ -97,6 +113,14 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter = self.get_learner_data_transmitter()
         transmitter.transmit(exporter)
 
+    def transmit_single_learner_data(self, **kwargs):
+        """
+        Iterate over single learner data record and transmit it to the integrated channel.
+        """
+        exporter = self.get_learner_data_exporter(self.channel_worker_user)
+        transmitter = self.get_learner_data_transmitter()
+        transmitter.transmit(exporter, **kwargs)
+
     def transmit_content_metadata(self, user):
         """
         Transmit content metadata to integrated channel.
@@ -114,7 +138,7 @@ class LearnerDataTransmissionAudit(models.Model):
     .. no_pii:
     """
 
-    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False)
+    enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
     course_completed = models.BooleanField(default=True)
     completed_timestamp = models.BigIntegerField()

@@ -75,7 +75,7 @@ class LearnerExporter(Exporter):
         """
         return self.GRADE_INCOMPLETE
 
-    def export(self):
+    def export(self, **kwargs):
         """
         Collect learner data for the ``EnterpriseCustomer`` where data sharing consent is granted.
 
@@ -87,6 +87,13 @@ class LearnerExporter(Exporter):
           for self-paced courses, when the course end date is passed, or when the learner achieves a passing grade.
         * ``grade``: string grade recorded for the learner in the course.
         """
+        learner_to_transmit = kwargs.get('learner_to_transmit', None)
+        course_run_id = kwargs.get('course_run_id', None)
+        completed_date = kwargs.get('completed_date', None)
+        is_passing = kwargs.get('is_passing', False)
+        grade = kwargs.get('grade', None)
+        skip_transmitted = kwargs.get('skip_transmitted', True)
+        TransmissionAudit = kwargs.get('TransmissionAudit', None)  # pylint: disable=invalid-name
         # Fetch the consenting enrollment data, including the enterprise_customer_user.
         # Order by the course_id, to avoid fetching course API data more than we have to.
         enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
@@ -94,11 +101,27 @@ class LearnerExporter(Exporter):
         ).filter(
             enterprise_customer_user__enterprise_customer=self.enterprise_customer,
             enterprise_customer_user__active=True,
-        ).order_by('course_id')
+        )
+        if learner_to_transmit and course_run_id:
+            enrollment_queryset = enrollment_queryset.filter(
+                course_id=course_run_id,
+                enterprise_customer_user__user_id=learner_to_transmit.id,
+            )
+        enrollment_queryset = enrollment_queryset.order_by('course_id')
 
         # Fetch course details from the Course API, and cache between calls.
         course_details = None
         for enterprise_enrollment in enrollment_queryset:
+
+            if TransmissionAudit and skip_transmitted:
+                already_transmitted = TransmissionAudit.objects.filter(
+                    enterprise_course_enrollment_id=enterprise_enrollment.id,
+                    error_message=''
+                )
+                if already_transmitted.exists():
+                    # We've already sent a completion status call for this enrollment
+                    LOGGER.info("Skipping previously sent enterprise enrollment [%s]", enterprise_enrollment.id)
+                    continue
 
             course_id = enterprise_enrollment.course_id
 
@@ -124,13 +147,14 @@ class LearnerExporter(Exporter):
             if not consent.granted or enterprise_enrollment.audit_reporting_disabled:
                 continue
 
-            # For instructor-paced courses, let the certificate determine course completion
-            if course_details.get('pacing') == 'instructor':
-                completed_date, grade, is_passing = self._collect_certificate_data(enterprise_enrollment)
+            if not is_passing and not completed_date:
+                # For instructor-paced courses, let the certificate determine course completion
+                if course_details.get('pacing') == 'instructor':
+                    completed_date, grade, is_passing = self._collect_certificate_data(enterprise_enrollment)
 
-            # For self-paced courses, check the Grades API
-            else:
-                completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
+                # For self-paced courses, check the Grades API
+                else:
+                    completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
 
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,
@@ -138,6 +162,7 @@ class LearnerExporter(Exporter):
                 grade=grade,
                 is_passing=is_passing,
             )
+
             if records:
                 # There are some cases where we won't receive a record from the above
                 # method; right now, that should only happen if we have an Enterprise-linked

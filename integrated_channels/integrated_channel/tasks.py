@@ -10,8 +10,12 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 
 from django.contrib.auth.models import User
+from django.utils import timezone
 
-from integrated_channels.integrated_channel.management.commands import INTEGRATED_CHANNEL_CHOICES
+from integrated_channels.integrated_channel.management.commands import (
+    INTEGRATED_CHANNEL_CHOICES,
+    IntegratedChannelCommandUtils,
+)
 
 LOGGER = get_task_logger(__name__)
 
@@ -70,6 +74,42 @@ def transmit_learner_data(username, channel_code, channel_pk):
     LOGGER.info(
         'Learner data transmission task for integrated channel configuration [%s] took [%s] seconds',
         integrated_channel,
+        duration
+    )
+
+
+@shared_task
+def transmit_single_learner_data(username, course_run_id):
+    """
+    Task to send single learner data to each linked integrated channel.
+
+    Arguments:
+        username (str): The username of the learner whose data it should send.
+        course_run_id (str): The course run id of the course it should send data for.
+    """
+    start = time.time()
+    user = User.objects.get(username=username)
+    LOGGER.info('Started transmitting single learner data for user: [%s] and course [%s]', username, course_run_id)
+    channel_utils = IntegratedChannelCommandUtils()
+    # Transmit the learner data to each integrated channel
+    for channel in channel_utils.get_integrated_channels({'channel': None}):
+        integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
+        LOGGER.info(
+            'Processing learner [%s] for integrated channel using configuration: [%s]', user.id, integrated_channel
+        )
+        integrated_channel.transmit_single_learner_data(
+            learner_to_transmit=user,
+            course_run_id=course_run_id,
+            completed_date=timezone.now(),
+            grade='Pass',
+            is_passing=True
+        )
+
+    duration = time.time() - start
+    LOGGER.info(
+        'Learner data transmission task for user: [%s] and course [%s] took [%s] seconds',
+        username,
+        course_run_id,
         duration
     )
 

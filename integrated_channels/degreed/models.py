@@ -207,7 +207,8 @@ class DegreedLearnerDataTransmissionAudit(models.Model):
 
     enterprise_course_enrollment_id = models.PositiveIntegerField(
         blank=False,
-        null=False
+        null=False,
+        db_index=True
     )
 
     course_id = models.CharField(

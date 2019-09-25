@@ -71,7 +71,7 @@ class ContentMetadataExporter(Exporter):
         super(ContentMetadataExporter, self).__init__(user, enterprise_configuration)
         self.enterprise_api = EnterpriseApiClient(self.user)
 
-    def export(self):
+    def export(self, **kwargs):
         """
         Return the exported and transformed content metadata as a dictionary.
         """
