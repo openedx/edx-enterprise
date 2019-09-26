@@ -7,13 +7,12 @@ from __future__ import absolute_import, unicode_literals, with_statement
 
 import datetime
 import json
-import time
 import unittest
 
 import ddt
 import requests
 import responses
-from flaky import flaky
+from freezegun import freeze_time
 from pytest import mark, raises
 
 from integrated_channels.exceptions import ClientError
@@ -22,6 +21,8 @@ from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
 )
+
+NOW = datetime.datetime(2017, 1, 2, 3, 4, 5)
 
 
 @ddt.ddt
@@ -75,10 +76,10 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             secret=self.client_secret
         )
 
-    @flaky(max_runs=3)
     @responses.activate
+    @freeze_time(NOW)
     def test_get_oauth_access_token(self):
-        expected_response = (self.access_token, datetime.datetime.utcfromtimestamp(self.expires_in + int(time.time())))
+        expected_response = (self.access_token, NOW + datetime.timedelta(seconds=self.expires_in))
 
         responses.add(
             responses.POST,
