@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
-from test_utils.factories import EnterpriseCustomerFactory, UserFactory
+from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
 
 NOW = timezone.now()
 
@@ -60,3 +60,25 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         ) as mock_transmitter:
             transmit_single_learner_data(self.user.username, self.demo_course_run_id)
             mock_transmitter.return_value.transmit.assert_called_once_with('mock_learner_exporter', **kwargs)
+
+    def test_customer_catalogs_to_transmit(self):
+        """
+        Test the customer_catalogs_to_transmit property.
+        """
+        # catalogs_to_transmit is empty so customer_catalogs_to_transmit will empty list
+        assert self.config.customer_catalogs_to_transmit == []
+
+        # catalogs_to_transmit has list of valid uuids so customer_catalogs_to_transmit
+        # will return list of EnterpriseCustomerCatalog objects
+        enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        self.config.catalogs_to_transmit = str([str(enterprise_customer_catalog.uuid)])
+        self.config.save()
+        assert len(self.config.customer_catalogs_to_transmit) == 1
+        assert self.config.customer_catalogs_to_transmit[0] == enterprise_customer_catalog
+
+        # catalogs_to_transmit has list of invalid uuids so
+        # customer_catalogs_to_transmit will return empty list.
+        enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        self.config.catalogs_to_transmit = str(["fake-uuid"])
+        self.config.save()
+        assert self.config.customer_catalogs_to_transmit == []

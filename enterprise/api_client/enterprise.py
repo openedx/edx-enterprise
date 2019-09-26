@@ -30,19 +30,20 @@ class EnterpriseApiClient(JwtLmsApiClient):
 
     DEFAULT_VALUE_SAFEGUARD = object()
 
-    def get_content_metadata(self, enterprise_customer):
+    def get_content_metadata(self, enterprise_customer, catalogs_to_transmit=None):
         """
         Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
 
         Arguments:
             enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer to return content metadata for.
+            catalogs_to_transmit (EnterpriseCustomerCatalog): Optional list of EnterpriseCustomerCatalog objects
 
         Returns:
             list: List of dicts containing content metadata.
         """
         content_metadata = OrderedDict()
-
-        for enterprise_customer_catalog in enterprise_customer.enterprise_customer_catalogs.all():
+        enterprise_customer_catalogs = catalogs_to_transmit or enterprise_customer.enterprise_customer_catalogs.all()
+        for enterprise_customer_catalog in enterprise_customer_catalogs:
             response = self._load_data(
                 self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
                 resource_id=str(enterprise_customer_catalog.uuid),

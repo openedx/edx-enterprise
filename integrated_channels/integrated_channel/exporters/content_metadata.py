@@ -76,7 +76,10 @@ class ContentMetadataExporter(Exporter):
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        content_metadata_items = self.enterprise_api.get_content_metadata(self.enterprise_customer)
+        content_metadata_items = self.enterprise_api.get_content_metadata(
+            self.enterprise_customer,
+            catalogs_to_transmit=self.enterprise_configuration.customer_catalogs_to_transmit
+        )
         LOGGER.info('Retrieved content metadata for enterprise [%s]', self.enterprise_customer.name)
         for item in content_metadata_items:
             transformed = self._transform_item(item)
