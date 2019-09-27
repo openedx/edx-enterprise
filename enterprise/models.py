@@ -1699,6 +1699,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("Enterprise Customer")
     )
     active = models.BooleanField(blank=False, null=False, verbose_name=_("Active"))
+    include_date = models.BooleanField(blank=False, default=True, null=False, verbose_name=_("Include Date"),
+                                       help_text=_('Include date in the report file name'))
     delivery_method = models.CharField(
         max_length=20,
         choices=DELIVERY_METHOD_CHOICES,
