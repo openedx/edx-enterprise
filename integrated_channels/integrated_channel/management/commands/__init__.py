@@ -64,6 +64,7 @@ class IntegratedChannelCommandMixin(object):
         channel_classes = self.get_channel_classes(options.get('channel'))
         filter_kwargs = {
             'active': True,
+            'real_time_learner_transmission': options.get('real_time_learner_transmission', False),
             'enterprise_customer__active': True,
         }
         enterprise_customer = self.get_enterprise_customer(options.get('enterprise_customer'))

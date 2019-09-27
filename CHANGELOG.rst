@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.10.8] - 2019-09-27
+---------------------
+
+* Added ability to enable/disable real time learner data transmit per enterprise.
+
 [1.10.7] - 2019-09-25
 ---------------------
 

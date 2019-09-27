@@ -62,6 +62,13 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         help_text=_("Enterprise channel worker username to get JWT tokens for authenticating LMS APIs."),
     )
 
+    real_time_learner_transmission = models.BooleanField(
+        blank=False,
+        null=False,
+        default=False,
+        help_text=_("Real time learner transmission enabled for enterprise?"),
+    )
+
     class Meta:
         abstract = True
 

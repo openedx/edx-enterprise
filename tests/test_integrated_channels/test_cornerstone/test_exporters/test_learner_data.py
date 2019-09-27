@@ -195,6 +195,8 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         """
         course_id = 'course-v1:edX+NmX+Demo_Course_2'
         course_key = 'edX+NmX'
+        self.config.real_time_learner_transmission = True
+        self.config.save()
         self._setup_enterprise_enrollment(self.user, course_id, course_key)
 
         # Course API course_details response

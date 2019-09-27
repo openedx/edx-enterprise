@@ -5,11 +5,13 @@ Tests for the `integrated_channels.cornerstone.models` models module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import logging
 import unittest
 
 import mock
 from freezegun import freeze_time
 from pytest import mark
+from testfixtures import LogCapture
 
 from django.utils import timezone
 
@@ -30,7 +32,8 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory()
         self.config = CornerstoneEnterpriseCustomerConfiguration(
             enterprise_customer=self.enterprise_customer,
-            active=True
+            active=True,
+            real_time_learner_transmission=True,
         )
         self.config.save()
         self.user = UserFactory()
@@ -60,3 +63,17 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         ) as mock_transmitter:
             transmit_single_learner_data(self.user.username, self.demo_course_run_id)
             mock_transmitter.return_value.transmit.assert_called_once_with('mock_learner_exporter', **kwargs)
+
+    def test_transmit_single_learner_data_when_real_time_disabled(self):
+        """
+        The transmit_single_learner_data is not called if it is disabled in channel config.
+        """
+        self.config.real_time_learner_transmission = False
+        self.config.save()
+        with LogCapture(level=logging.INFO) as log_capture:
+            transmit_single_learner_data(self.user.username, self.demo_course_run_id)
+            message = u'Processing learner [%s] for integrated channel ' \
+                      'using configuration: [%s]' % (self.user.id, self.config)
+
+            for record in log_capture.records:
+                assert message not in record.getMessage()

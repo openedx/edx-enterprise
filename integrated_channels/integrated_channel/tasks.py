@@ -92,7 +92,11 @@ def transmit_single_learner_data(username, course_run_id):
     LOGGER.info('Started transmitting single learner data for user: [%s] and course [%s]', username, course_run_id)
     channel_utils = IntegratedChannelCommandUtils()
     # Transmit the learner data to each integrated channel
-    for channel in channel_utils.get_integrated_channels({'channel': None}):
+    for channel in channel_utils.get_integrated_channels(
+            {
+                'channel': None,
+                'real_time_learner_transmission': True,
+            }):
         integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
         LOGGER.info(
             'Processing learner [%s] for integrated channel using configuration: [%s]', user.id, integrated_channel
