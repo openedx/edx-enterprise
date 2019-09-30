@@ -9,13 +9,14 @@ import unittest
 
 import mock
 from freezegun import freeze_time
-from pytest import mark
+from pytest import mark, raises
 
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
-from test_utils.factories import EnterpriseCustomerFactory, UserFactory
+from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
 
 NOW = timezone.now()
 
@@ -28,8 +29,12 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
 
     def setUp(self):
         self.enterprise_customer = EnterpriseCustomerFactory()
+        self.enterprise_customer_catalog = EnterpriseCustomerCatalogFactory(
+            enterprise_customer=self.enterprise_customer
+        )
         self.config = CornerstoneEnterpriseCustomerConfiguration(
             enterprise_customer=self.enterprise_customer,
+            catalogs_to_transmit=str(self.enterprise_customer_catalog.uuid),
             active=True
         )
         self.config.save()
@@ -60,3 +65,28 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         ) as mock_transmitter:
             transmit_single_learner_data(self.user.username, self.demo_course_run_id)
             mock_transmitter.return_value.transmit.assert_called_once_with('mock_learner_exporter', **kwargs)
+
+    def test_customer_catalogs_to_transmit(self):
+        """
+        Test the customer_catalogs_to_transmit property.
+        """
+        assert len(self.config.customer_catalogs_to_transmit) == 1
+        assert self.config.customer_catalogs_to_transmit[0] == self.enterprise_customer_catalog
+
+    def test_clean(self):
+        """
+        Test the custom clean method of model.
+        """
+        # with valid catalog uuids in 'catalogs_to_transmit', clean will not raise any exception.
+        self.config.clean()
+
+        # with invalid catalog uuids in 'catalogs_to_transmit', clean will raise 'ValidationError'.
+        self.config.catalogs_to_transmit = "fake-uuid,"
+        self.config.save()
+        with raises(ValidationError):
+            self.config.clean()
+
+        self.config.catalogs_to_transmit = str(EnterpriseCustomerCatalogFactory().uuid)
+        self.config.save()
+        with raises(ValidationError):
+            self.config.clean()

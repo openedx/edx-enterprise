@@ -14,6 +14,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from enterprise.api_client import enterprise as enterprise_api
+from enterprise.models import EnterpriseCustomerCatalog
 from enterprise.utils import get_cache_key, get_content_metadata_item_id
 from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
@@ -170,3 +171,26 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         client = enterprise_api.EnterpriseApiClient(self.user)
         course_runs = client.get_content_metadata(self.enterprise_customer)
         assert len(course_runs) == 3
+
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    @mock.patch('enterprise.api_client.enterprise.EnterpriseApiClient._load_data')
+    def test_get_content_metadata_with_catalogs_to_transmit(self, mock_load_data):
+        """
+        Verify that the client method `get_content_metadata` returns courses
+        from catalogs passed in 'catalogs_to_transmit' parameter.
+        """
+        enterprise_catalog = EnterpriseCustomerCatalogFactory(enterprise_customer=self.enterprise_customer)
+        client = enterprise_api.EnterpriseApiClient(self.user)
+        # get_content_metadata will transmit the 'enterprise_customer' catalogs
+        client.get_content_metadata(self.enterprise_customer)
+        assert mock_load_data.called
+        assert mock_load_data.call_args[1]['resource_id'] == str(enterprise_catalog.uuid)
+
+        other_catalog = EnterpriseCustomerCatalogFactory()
+        # get_content_metadata will transmit the catalogs which are being passed in 'catalogs_to_transmit'
+        client.get_content_metadata(
+            self.enterprise_customer,
+            enterprise_catalogs=EnterpriseCustomerCatalog.objects.filter(uuid=other_catalog.uuid)
+        )
+        assert mock_load_data.called
+        assert mock_load_data.call_args[1]['resource_id'] == str(other_catalog.uuid)
