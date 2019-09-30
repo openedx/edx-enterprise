@@ -24,6 +24,7 @@ from integrated_channels.sap_success_factors.transmitters.content_metadata impor
     SapSuccessFactorsContentMetadataTransmitter,
 )
 from integrated_channels.sap_success_factors.transmitters.learner_data import SapSuccessFactorsLearnerTransmitter
+from integrated_channels.utils import convert_comma_separated_string_to_list
 
 LOGGER = getLogger(__name__)
 
@@ -131,7 +132,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
             locales.append(default_locale)
 
         return set(
-            locales + [locale.strip() for locale in self.additional_locales.split(",") if locale.strip()]
+            locales + convert_comma_separated_string_to_list(self.additional_locales)
         )
 
     class Meta:

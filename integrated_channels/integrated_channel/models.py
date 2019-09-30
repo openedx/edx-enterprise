@@ -11,17 +11,19 @@ import logging
 from jsonfield.fields import JSONField
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
-from enterprise.models import EnterpriseCustomer
+from enterprise.models import EnterpriseCustomer, EnterpriseCustomerCatalog
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
+from integrated_channels.utils import convert_comma_separated_string_to_list
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,9 +63,30 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         null=True,
         help_text=_("Enterprise channel worker username to get JWT tokens for authenticating LMS APIs."),
     )
+    catalogs_to_transmit = models.TextField(
+        blank=True,
+        null=True,
+        help_text=_("A comma-separated list of catalog UUIDs to transmit."),
+    )
 
     class Meta:
         abstract = True
+
+    def clean(self):
+        invalid_uuids = []
+        for uuid in convert_comma_separated_string_to_list(self.catalogs_to_transmit):
+            try:
+                EnterpriseCustomerCatalog.objects.get(uuid=uuid, enterprise_customer=self.enterprise_customer)
+            except (EnterpriseCustomerCatalog.DoesNotExist, ValidationError):
+                invalid_uuids.append(str(uuid))
+        if invalid_uuids:
+            raise ValidationError(
+                {
+                    'catalogs_to_transmit': [
+                        "These are the invalid uuids: {invalid_uuids}".format(invalid_uuids=invalid_uuids)
+                    ]
+                }
+            )
 
     @property
     def channel_worker_user(self):
@@ -72,6 +95,18 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         """
         worker_username = self.channel_worker_username if self.channel_worker_username else 'enterprise_channel_worker'
         return User.objects.filter(username=worker_username).first()
+
+    @property
+    def customer_catalogs_to_transmit(self):
+        """
+        Return the list of EnterpriseCustomerCatalog objects.
+        """
+        catalogs_list = []
+        if self.catalogs_to_transmit:
+            catalogs_list = EnterpriseCustomerCatalog.objects.filter(
+                uuid__in=convert_comma_separated_string_to_list(self.catalogs_to_transmit)
+            )
+        return catalogs_list
 
     @staticmethod
     def channel_code():

@@ -53,6 +53,28 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         ])
 
     @responses.activate
+    @mock.patch("enterprise.api_client.enterprise.EnterpriseApiClient.get_content_metadata")
+    def test_export_with_catalogs_to_transmit(self, mock_get_content_metadata):
+        """
+        ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
+        """
+        exporter = ContentMetadataExporter('fake-user', self.config)
+        exporter.export()
+        assert mock_get_content_metadata.called
+        assert mock_get_content_metadata.call_args[0][0] == self.enterprise_customer_catalog.enterprise_customer
+        # 'catalogs_to_transmit' argument was empty list so all the catalogs will be transmitted.
+        assert mock_get_content_metadata.call_args[1]['enterprise_catalogs'] == []
+
+        self.config.catalogs_to_transmit = str(self.enterprise_customer_catalog.uuid)
+        self.config.save()
+        exporter.export()
+        assert mock_get_content_metadata.called
+        assert mock_get_content_metadata.call_args[0][0] == self.enterprise_customer_catalog.enterprise_customer
+        # 'catalogs_to_transmit' argument has valid uuid so only that catalog will be transmitted.
+        assert mock_get_content_metadata.call_args[1]['enterprise_catalogs'].first().uuid == \
+            self.config.customer_catalogs_to_transmit.first().uuid
+
+    @responses.activate
     def test_content_exporter_bad_data_transform_mapping(self):
         """
         ``ContentMetadataExporter``'s ``export`` raises an exception when DATA_TRANSFORM_MAPPING is invalid.

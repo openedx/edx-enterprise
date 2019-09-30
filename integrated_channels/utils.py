@@ -138,6 +138,13 @@ def strfdelta(tdelta, fmt='{D:02}d {H:02}h {M:02}m {S:02}s', input_type='timedel
     return f.format(fmt, **values)
 
 
+def convert_comma_separated_string_to_list(comma_separated_string):
+    """
+    Convert the comma separated string to a valid list.
+    """
+    return list(set([item.strip() for item in comma_separated_string.split(",") if item.strip()]))
+
+
 def get_image_url(content_metadata_item):
     """
     Return the image URI of the content item.
