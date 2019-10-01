@@ -196,7 +196,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 "original_price": "$100",
                 "min_price": 100,
                 "sku": "sku-professional",
-                "final_price": "$100",
                 "description": "Earn a verified certificate!",
                 "premium": True,
             }
@@ -204,7 +203,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes,
             'course_start_date': future_date.strftime('%B %d, %Y'),
             'course_in_future': True,
         }
@@ -317,7 +315,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'original_price': 'FREE',
                 'min_price': 0,
                 'sku': 'sku-audit',
-                'final_price': 'FREE',
                 'description': 'Not eligible for a certificate.',
                 'premium': False,
             },
@@ -327,7 +324,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'original_price': '$100',
                 'min_price': 100,
                 'sku': 'sku-professional',
-                'final_price': '$100',
                 'description': 'Earn a verified certificate!',
                 'premium': True,
             }
@@ -354,18 +350,9 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         course_modes = [
             all_course_modes[mode] for mode in expected_course_modes if mode in all_course_modes
         ]
-        audit_modes = getattr(
-            settings,
-            'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES',
-            ['audit', 'honor']
-        )
-        premium_course_modes = [
-            course_mode for course_mode in course_modes if course_mode['mode'] not in audit_modes
-        ]
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': premium_course_modes,
         }
         self._login()
         expected_log_messages = []
@@ -428,7 +415,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': [],
-            'premium_modes': [],
         }
         self._login()
 
@@ -511,7 +497,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': [],
-            'premium_modes': [],
         }
         self._login()
 
@@ -766,7 +751,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 "original_price": "$100",
                 "min_price": 100,
                 "sku": "sku-professional",
-                "final_price": "$30.10",
                 "description": "Earn a verified certificate!",
                 "premium": True,
             }
@@ -774,7 +758,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes,
             'course_effort': '1 hour per week',
             'organization_name': 'Test Organization',
             'organization_logo': 'https://fake.org/fake.png'
@@ -829,7 +812,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 "original_price": "$100",
                 "min_price": 100,
                 "sku": "sku-professional",
-                "final_price": "$30.10",
                 "description": "Earn a verified certificate!",
                 "premium": True,
             }
@@ -837,7 +819,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes,
             'course_effort': '',
             'organization_name': '',
             'organization_logo': '',
@@ -890,7 +871,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'original_price': '$100',
                 'min_price': 100,
                 'sku': 'sku-professional',
-                'final_price': '$50',
                 'description': 'Earn a verified certificate!',
                 'premium': True,
             },
@@ -900,7 +880,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'original_price': 'FREE',
                 'min_price': 0,
                 'sku': 'sku-audit',
-                'final_price': 'FREE',
                 'description': 'Not eligible for a certificate.',
                 'premium': False,
             }
@@ -908,7 +887,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes[0:1],
         }
 
         self._login()
@@ -1536,7 +1514,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'original_price': '$100',
                 'min_price': 100,
                 'sku': 'sku-professional',
-                'final_price': '$50',
                 'description': 'Earn a verified certificate!',
                 'premium': True,
             },
@@ -1546,7 +1523,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'original_price': 'FREE',
                 'min_price': 0,
                 'sku': 'sku-audit',
-                'final_price': 'FREE',
                 'description': 'Not eligible for a certificate.',
                 'premium': False,
             }
@@ -1554,7 +1530,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes[0:1],
         }
 
         self._login()
@@ -1664,7 +1639,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 "original_price": "$100",
                 "min_price": 100,
                 "sku": "sku-professional",
-                "final_price": "$100",
                 "description": "Earn a verified certificate!",
                 "premium": True,
             }
@@ -1672,7 +1646,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes,
             'page_title': 'Confirm your course',
         }
 
@@ -1732,7 +1705,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 "original_price": "$100",
                 "min_price": 100,
                 "sku": "sku-professional",
-                "final_price": "$50",
                 "description": "Earn a verified certificate!",
                 "premium": True,
             }
@@ -1740,7 +1712,6 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         expected_context = {
             'enterprise_customer': enterprise_customer,
             'course_modes': course_modes,
-            'premium_modes': course_modes,
         }
 
         self._login()

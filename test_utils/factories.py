@@ -20,7 +20,6 @@ from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
-    EnterpriseCustomerEntitlement,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
@@ -209,26 +208,6 @@ class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
     course_mode = 'audit'
     user = factory.SubFactory(PendingEnterpriseCustomerUserFactory)
     cohort_name = None
-
-
-class EnterpriseCustomerEntitlementFactory(factory.django.DjangoModelFactory):
-    """
-    EnterpriseCustomerEntitlement factory.
-
-    Creates an instance of EnterpriseCustomerEntitlement with minimal boilerplate - uses this class' attributes as
-    default parameters for EnterpriseCustomerEntitlementFactory constructor.
-    """
-
-    class Meta(object):
-        """
-        Meta for EnterpriseCustomerEntitlementFactory.
-        """
-
-        model = EnterpriseCustomerEntitlement
-
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    entitlement_id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
-    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
 
 
 class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelFactory):

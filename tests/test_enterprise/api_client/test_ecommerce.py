@@ -50,19 +50,3 @@ class TestEcommerceApiClient(unittest.TestCase):
         api_mock = mock.MagicMock(**mocked_attributes)
 
         client_mock.return_value = api_mock
-
-    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
-    def test_get_course_final_price(self, ecommerce_api_client_mock):
-        mode = {
-            'sku': 'verified-sku',
-            'min_price': 200,
-            'original_price': 500,
-        }
-        self._setup_ecommerce_api_client(
-            client_mock=ecommerce_api_client_mock,
-            method_name='baskets.calculate.get',
-            return_value={
-                'total_incl_tax': 100,
-            }
-        )
-        assert EcommerceApiClient(self.user).get_course_final_price(mode) == '$100'

@@ -33,7 +33,6 @@ from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from enterprise import constants, messages
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
-from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
@@ -922,22 +921,6 @@ class CourseEnrollmentView(NonAtomicView):
         'self_paced': _('Self-Paced')
     }
 
-    def set_final_prices(self, modes, request):
-        """
-        Set the final discounted price on each premium mode.
-        """
-        result = []
-        for mode in modes:
-            if mode['premium']:
-                mode['final_price'] = EcommerceApiClient(request.user).get_course_final_price(
-                    mode=mode,
-                    enterprise_catalog_uuid=request.GET.get(
-                        'catalog'
-                    ) if request.method == 'GET' else None,
-                )
-            result.append(mode)
-        return result
-
     def get_available_course_modes(self, request, course_run_id, enterprise_catalog):
         """
         Return the available course modes for the course run.
@@ -1074,7 +1057,6 @@ class CourseEnrollmentView(NonAtomicView):
                 'sku': mode['sku'],
                 'title': mode['name'],
                 'original_price': price_text,
-                'final_price': price_text,
                 'description': description,
                 'premium': mode['slug'] not in audit_modes
             })
@@ -1150,10 +1132,6 @@ class CourseEnrollmentView(NonAtomicView):
             course_run_image = course_run['image'] or {}
             course_image_uri = course_run_image.get('src', '')
 
-            # Retrieve the enterprise-discounted price from ecommerce.
-            course_modes = self.set_final_prices(course_modes, request)
-            premium_modes = [mode for mode in course_modes if mode['premium']]
-
             # Filter audit course modes.
             course_modes = filter_audit_course_modes(enterprise_customer, course_modes)
 
@@ -1184,7 +1162,6 @@ class CourseEnrollmentView(NonAtomicView):
                 'organization_logo': organization_logo,
                 'organization_name': organization_name,
                 'course_level_type': course_level_type,
-                'premium_modes': premium_modes,
                 'expected_learning_items': expected_learning_items,
                 'catalog': enterprise_catalog_uuid,
                 'staff': staff,
