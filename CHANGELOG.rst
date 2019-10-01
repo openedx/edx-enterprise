@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.10.8] - 2019-10-01
+---------------------
+
+* Resolved issue with content_metadata image_url.
+
 [1.10.7] - 2019-09-25
 ---------------------
 
