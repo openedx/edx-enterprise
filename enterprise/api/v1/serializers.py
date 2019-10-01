@@ -96,18 +96,6 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
         return obj.enterprise_customer.slug
 
 
-class EnterpriseCustomerEntitlementSerializer(serializers.ModelSerializer):
-    """
-    Serializer for EnterpriseCustomerEntitlement model.
-    """
-
-    class Meta:
-        model = models.EnterpriseCustomerEntitlement
-        fields = (
-            'enterprise_customer', 'entitlement_id'
-        )
-
-
 class EnterpriseCustomerSerializer(serializers.ModelSerializer):
     """
     Serializer for EnterpriseCustomer model.
@@ -117,7 +105,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         model = models.EnterpriseCustomer
         fields = (
             'uuid', 'name', 'slug', 'active', 'site', 'enable_data_sharing_consent',
-            'enforce_data_sharing_consent', 'branding_configuration', 'enterprise_customer_entitlements',
+            'enforce_data_sharing_consent', 'branding_configuration',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
             'enable_learner_portal', 'learner_portal_hostname', 'enable_portal_reporting_config_screen'
@@ -125,9 +113,6 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
 
     site = SiteSerializer()
     branding_configuration = EnterpriseCustomerBrandingConfigurationSerializer()
-    enterprise_customer_entitlements = EnterpriseCustomerEntitlementSerializer(  # pylint: disable=invalid-name
-        many=True,
-    )
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
@@ -351,22 +336,6 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
             enterprise_customer=enterprise_customer,
         )
         ecu.save()
-
-
-class EnterpriseCustomerUserEntitlementSerializer(ImmutableStateSerializer):
-    """
-    Serializer for the entitlements of EnterpriseCustomerUser.
-
-    This Serializer is for read only endpoint of enterprise learner's entitlements
-    It will ignore any state changing requests like POST, PUT and PATCH.
-    """
-
-    entitlements = serializers.ListField(
-        child=serializers.DictField()
-    )
-
-    user = UserSerializer(read_only=True)
-    enterprise_customer = EnterpriseCustomerSerializer(read_only=True)
 
 
 class CourseDetailSerializer(ImmutableStateSerializer):

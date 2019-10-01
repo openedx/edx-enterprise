@@ -21,11 +21,6 @@ router.register(
     'enterprise-customer-branding',
 )
 router.register(
-    "enterprise-customer-entitlement",
-    views.EnterpriseCustomerEntitlementViewSet,
-    'enterprise-customer-entitlement',
-)
-router.register(
     "enterprise_customer_reporting",
     views.EnterpriseCustomerReportingConfigurationViewSet,
     'enterprise-customer-reporting',

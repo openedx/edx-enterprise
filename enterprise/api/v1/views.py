@@ -264,25 +264,6 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
             return serializers.EnterpriseCustomerUserReadOnlySerializer
         return serializers.EnterpriseCustomerUserWriteSerializer
 
-    @detail_route()
-    def entitlements(self, request, pk=None):  # pylint: disable=invalid-name,unused-argument
-        """
-        Retrieve the list of entitlements available to this learner.
-
-        Only those entitlements are returned that satisfy enterprise customer's data sharing setting.
-
-        Arguments:
-            request (HttpRequest): Reference to in-progress request instance.
-            pk (Int): Primary key value of the selected enterprise learner.
-
-        Returns:
-            (HttpResponse): Response object containing a list of learner's entitlements.
-        """
-        enterprise_customer_user = self.get_object()
-        instance = {"entitlements": enterprise_customer_user.entitlements}
-        serializer = serializers.EnterpriseCustomerUserEntitlementSerializer(instance, context={'request': request})
-        return Response(serializer.data)
-
 
 class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):
     """
@@ -299,22 +280,6 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
     filter_fields = FIELDS
     ordering_fields = FIELDS
     lookup_field = 'enterprise_customer__slug'
-
-
-class EnterpriseCustomerEntitlementViewSet(EnterpriseReadOnlyModelViewSet):
-    """
-    API views for the ``enterprise-customer-entitlements`` API endpoint.
-    """
-
-    queryset = models.EnterpriseCustomerEntitlement.objects.all()
-    serializer_class = serializers.EnterpriseCustomerEntitlementSerializer
-
-    USER_ID_FILTER = 'enterprise_customer__enterprise_customer_users__user_id'
-    FIELDS = (
-        'enterprise_customer', 'entitlement_id',
-    )
-    filter_fields = FIELDS
-    ordering_fields = FIELDS
 
 
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):

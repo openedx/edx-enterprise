@@ -6,7 +6,6 @@ Tests for the `edx-enterprise` models module.
 from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
-from operator import itemgetter
 
 import ddt
 import mock
@@ -31,7 +30,6 @@ from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
-    EnterpriseCustomerEntitlement,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
@@ -395,136 +393,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         else:
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
-    @ddt.data(
-        (
-            True,
-            EnterpriseCustomer.AT_ENROLLMENT,
-            True,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            True,
-            EnterpriseCustomer.AT_ENROLLMENT,
-            False,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": True},
-                {"entitlement_id": 2, "requires_consent": True},
-                {"entitlement_id": 3, "requires_consent": True},
-            ],
-        ),
-        (
-            True,
-            EnterpriseCustomer.AT_ENROLLMENT,
-            None,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": True},
-                {"entitlement_id": 2, "requires_consent": True},
-                {"entitlement_id": 3, "requires_consent": True},
-            ],
-        ),
-        (
-            False,
-            EnterpriseCustomer.AT_ENROLLMENT,
-            True,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False,
-            EnterpriseCustomer.AT_ENROLLMENT,
-            False,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (
-            False,
-            EnterpriseCustomer.AT_ENROLLMENT,
-            None,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, True, [], []),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, False, [], []),
-        (True, EnterpriseCustomer.AT_ENROLLMENT, None, [], []),
-        (
-            True,
-            EnterpriseCustomer.EXTERNALLY_MANAGED,
-            True,
-            [1, 2, 3],
-            [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ],
-        ),
-    )
-    @ddt.unpack
-    def test_entitlements(
-            self, enable_data_sharing_consent, enforce_data_sharing_consent,
-            learner_consent_state, entitlements, expected_entitlements,
-    ):
-        """
-        Test that entitlement property on `EnterpriseCustomerUser` returns correct data.
-
-        This test verifies that entitlements returned by entitlement property on `EnterpriseCustomerUser
-        has the expected behavior as listed down.
-            1. Empty entitlements list if enterprise customer requires data sharing consent
-                (this includes enforcing data sharing consent at login and at enrollment) and enterprise learner
-                 does not consent to share data.
-            2. Full list of entitlements for all other cases.
-
-        Arguments:
-            enable_data_sharing_consent (bool): True if enterprise customer enables data sharing consent,
-                False it does not.
-            enforce_data_sharing_consent (str): string for the location at which enterprise customer enforces
-                data sharing consent, possible values are 'at_enrollment' and 'externally_managed'.
-            learner_consent_state (bool): the state of learner consent on data sharing,
-            entitlements (list): A list of integers pointing to voucher ids generated in E-Commerce CAT tool.
-            expected_entitlements (list): A list of integers pointing to voucher ids expected to be
-                returned by the model.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory(
-            enable_data_sharing_consent=enable_data_sharing_consent,
-            enforce_data_sharing_consent=enforce_data_sharing_consent,
-        )
-        user = factories.UserFactory(id=1)
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
-            user_id=user.id,
-            enterprise_customer=enterprise_customer,
-        )
-        factories.DataSharingConsentFactory(
-            username=enterprise_customer_user.username,
-            enterprise_customer=enterprise_customer,
-            granted=learner_consent_state,
-        )
-        for entitlement in entitlements:
-            factories.EnterpriseCustomerEntitlementFactory(
-                enterprise_customer=enterprise_customer,
-                entitlement_id=entitlement,
-            )
-
-        assert sorted(enterprise_customer_user.entitlements, key=itemgetter('entitlement_id')) == \
-            sorted(expected_entitlements, key=itemgetter('entitlement_id'))
-
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     def test_enroll_learner(self, enrollment_api_client_mock, analytics_mock, *args):  # pylint: disable=unused-argument
@@ -795,31 +663,6 @@ class TestEnterpriseCustomerIdentityProvider(unittest.TestCase):
         ec_idp = factories.EnterpriseCustomerIdentityProviderFactory()
 
         assert ec_idp.provider_name == provider_name
-
-
-@mark.django_db
-@ddt.ddt
-class TestEnterpriseCustomerEntitlements(unittest.TestCase):
-    """
-    Tests of the TestEnterpriseCustomerEntitlements model.
-    """
-    @ddt.data(str, repr)
-    def test_string_conversion(self, method):
-        """
-        Test ``TestEnterpriseCustomerEntitlements`` conversion to string.
-        """
-        entitlement_id, enterprise_customer_name = 1234, "TestShib"
-        enterprise_customer = factories.EnterpriseCustomerFactory(name=enterprise_customer_name)
-        ec_entitlements = EnterpriseCustomerEntitlement(
-            enterprise_customer=enterprise_customer,
-            entitlement_id=entitlement_id,
-        )
-
-        expected_to_str = "<EnterpriseCustomerEntitlement {customer}: {id}>".format(
-            customer=enterprise_customer,
-            id=entitlement_id,
-        )
-        self.assertEqual(method(ec_entitlements), expected_to_str)
 
 
 @mark.django_db

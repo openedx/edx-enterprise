@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.0] - 2019-10-02
+---------------------
+
+* Removing EnterpriseCustomerEntitlement code
+
 [1.11.0] - 2019-10-02
 ---------------------
 
