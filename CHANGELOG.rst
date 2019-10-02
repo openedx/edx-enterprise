@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[1.11.0] - 2019-10-02
+---------------------
+
+* Adding post-save receiver to spin off EnterpriseCourseEnrollment creation tasks on CourseEnrollment creation signals
+
 [1.10.8] - 2019-10-01
 ---------------------
 
