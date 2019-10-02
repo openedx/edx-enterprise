@@ -6,12 +6,14 @@ Utilities common to different integrated channels.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
+import re
 from itertools import islice
 from string import Formatter
 
 from six.moves import range
 
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from enterprise.api_client.lms import parse_lms_api_datetime
 
@@ -29,6 +31,20 @@ def parse_datetime_to_epoch(datestamp, magnitude=1.0):
     parsed_datetime = parse_lms_api_datetime(datestamp)
     time_since_epoch = parsed_datetime - UNIX_EPOCH
     return int(time_since_epoch.total_seconds() * magnitude)
+
+
+def strip_html_tags(text, strip_entities=True):
+    """
+    Return (str): Text without any html tags and entities.
+
+    Args:
+        text (str): text having html tags
+        strip_entities (bool): If set to True html entities are also stripped
+    """
+    text = strip_tags(text)
+    if strip_entities:
+        text = re.sub(r'&([a-zA-Z]{4,5}|#[0-9]{2,4});', '', text)
+    return text
 
 
 def parse_datetime_to_epoch_millis(datestamp):
