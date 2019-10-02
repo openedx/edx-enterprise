@@ -23,7 +23,7 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.signals import handle_user_post_save
+from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
@@ -465,3 +465,70 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
             role=self.enterprise_learner_role
         )
         self.assertFalse(learner_role_assignment.exists())
+
+
+@mark.django_db
+class TestCourseEnrollmentSignals(unittest.TestCase):
+    """
+    Tests signals associated with CourseEnrollments (that are found in edx-platform).
+    """
+    def setUp(self):
+        """
+        Setup for `TestCourseEnrollmentSignals` test.
+        """
+        self.user = UserFactory(id=2, email='user@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory(
+            name='Team Titans',
+        )
+        self.enterprise_customer_user = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+        self.non_enterprise_user = UserFactory(id=999, email='user999@example.com')
+        super(TestCourseEnrollmentSignals, self).setUp()
+
+    @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
+    def test_receiver_calls_task_if_ecu_exists(self, mock_task):
+        """
+        Receiver should call a task
+        if user tied to the CourseEnrollment that is handed into the function
+        is an EnterpriseCustomerUser
+        """
+        sender = mock.Mock()  # This would be a CourseEnrollment class
+        instance = mock.Mock()  # This would be a CourseEnrollment instance
+        instance.user = self.user
+        instance.course_id = "fake:course_id"
+        # Signal metadata (note: 'signal' would be an actual object, but we dont need it here)
+        kwargs = {
+            'update_fields': None,
+            'raw': False,
+            'signal': '<django.db.models.signals.ModelSignal object at 0x7fcfc38b5e90>',
+            'using': 'default',
+            'created': True,
+        }
+
+        create_enterprise_enrollment_receiver(sender, instance, **kwargs)
+        mock_task.assert_called_once_with(instance.course_id, self.enterprise_customer_user)
+
+    @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
+    def test_receiver_does_not_call_task_if_ecu_not_exists(self, mock_task):
+        """
+        Receiver should NOT call a task
+        if user tied to the CourseEnrollment that is handed into the function
+        is NOT an EnterpriseCustomerUser
+        """
+        sender = mock.Mock()  # This would be a CourseEnrollment class
+        instance = mock.Mock()  # This would be a CourseEnrollment instance
+        instance.user = self.non_enterprise_user
+        instance.course_id = "fake:course_id"
+        # Signal metadata (note: 'signal' would be an actual object, but we dont need it here)
+        kwargs = {
+            'update_fields': None,
+            'raw': False,
+            'signal': '<django.db.models.signals.ModelSignal object at 0x7fcfc38b5e90>',
+            'using': 'default',
+            'created': True,
+        }
+
+        create_enterprise_enrollment_receiver(sender, instance, **kwargs)
+        mock_task.assert_not_called()
