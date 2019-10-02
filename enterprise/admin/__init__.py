@@ -45,7 +45,6 @@ from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
-    EnterpriseCustomerEntitlement,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerType,
@@ -85,35 +84,6 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
 
     model = EnterpriseCustomerIdentityProvider
     form = EnterpriseCustomerIdentityProviderAdminForm
-
-
-class EnterpriseCustomerEntitlementInline(admin.StackedInline):
-    """
-    Django admin model for EnterpriseCustomerEntitlement.
-    The admin interface has the ability to edit models on the same page as a parent model. These are called inlines.
-    https://docs.djangoproject.com/en/1.8/ref/contrib/admin/#django.contrib.admin.StackedInline
-    """
-
-    model = EnterpriseCustomerEntitlement
-    extra = 0
-    can_delete = True
-    fields = ('enterprise_customer', 'entitlement_id', 'ecommerce_coupon_url',)
-
-    def ecommerce_coupon_url(self, instance):
-        """
-        Instance is EnterpriseCustomer. Return e-commerce coupon urls.
-        """
-        if not instance.entitlement_id:
-            return "N/A"
-
-        return format_html(
-            '<a href="{base_url}/coupons/{id}" target="_blank">View coupon "{id}" details</a>',
-            base_url=settings.ECOMMERCE_PUBLIC_URL_ROOT, id=instance.entitlement_id
-        )
-
-    readonly_fields = ('ecommerce_coupon_url',)
-    ecommerce_coupon_url.allow_tags = True
-    ecommerce_coupon_url.short_description = 'Seat Entitlement URL'
 
 
 class EnterpriseCustomerCatalogInline(admin.TabularInline):
@@ -165,7 +135,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         'has_logo',
         'enable_dsc',
         'has_identity_provider',
-        'has_ecommerce_coupons',
         'uuid',
     )
 
@@ -175,7 +144,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     inlines = [
         EnterpriseCustomerBrandingConfigurationInline,
         EnterpriseCustomerIdentityProviderInline,
-        EnterpriseCustomerEntitlementInline,
         EnterpriseCustomerCatalogInline,
     ]
 
@@ -191,18 +159,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     class Meta(object):
         model = EnterpriseCustomer
-
-    def has_ecommerce_coupons(self, instance):
-        """
-        Return True if provded enterprise customer has ecommerce coupons.
-
-        Arguments:
-            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
-        """
-        return instance.enterprise_customer_entitlements.exists()
-
-    has_ecommerce_coupons.boolean = True
-    has_ecommerce_coupons.short_description = 'Ecommerce coupons'
 
     def get_form(self, request, obj=None, **kwargs):
         """

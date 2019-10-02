@@ -38,7 +38,6 @@ from enterprise.constants import (
 from enterprise.models import (
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
-    EnterpriseCustomer,
     EnterpriseCustomerUser,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
@@ -86,7 +85,6 @@ ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT = reverse(
     kwargs={'pk': FAKE_UUIDS[1], 'program_uuid': FAKE_UUIDS[3]}
 )
 ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollment-list')
-ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT = reverse('enterprise-customer-entitlement-list')
 ENTERPRISE_CUSTOMER_BRANDING_LIST_ENDPOINT = reverse('enterprise-customer-branding-list')
 ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT = reverse('enterprise-customer-branding-detail', (TEST_SLUG,))
 ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
@@ -97,7 +95,6 @@ ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
 )
 ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT = reverse('enterprise-customer-course-enrollments', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
-ENTERPRISE_LEARNER_ENTITLEMENTS_ENDPOINT = reverse('enterprise-learner-entitlements', (1,))
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
 
@@ -148,84 +145,6 @@ class TestEnterpriseAPIViews(APITest):
         """
         for item in items:
             factory.create(**item)
-
-    @ddt.data(
-        (
-            True, EnterpriseCustomer.AT_ENROLLMENT, True,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.AT_ENROLLMENT, False,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": True},
-                {"entitlement_id": 2, "requires_consent": True},
-                {"entitlement_id": 3, "requires_consent": True},
-            ]},
-        ),
-        (
-            False, EnterpriseCustomer.AT_ENROLLMENT, True,
-            [1, 2, 3], {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-        (
-            True, EnterpriseCustomer.AT_ENROLLMENT, None,
-            [], {"entitlements": []},
-        ),
-        (
-            True, EnterpriseCustomer.EXTERNALLY_MANAGED, True,
-            [1, 2, 3],
-            {"entitlements": [
-                {"entitlement_id": 1, "requires_consent": False},
-                {"entitlement_id": 2, "requires_consent": False},
-                {"entitlement_id": 3, "requires_consent": False},
-            ]},
-        ),
-    )
-    @ddt.unpack
-    def test_enterprise_learner_entitlements(
-            self, enable_data_sharing_consent, enforce_data_sharing_consent,
-            learner_consent_state, entitlements, expected_json
-    ):
-        """
-        Test that entitlement details route on enterprise learner returns correct data.
-        This test verifies that entitlements returned by entitlement details route on enterprise learner
-        has the expected behavior as listed down.
-            1. Empty entitlements list if enterprise customer requires data sharing consent
-                (this includes enforcing data sharing consent at login and at enrollment) and enterprise learner
-                 does not consent to share data.
-            2. Full list of entitlements for all other cases.
-        """
-        user_id = self.user.id + 1
-        enterprise_customer = factories.EnterpriseCustomerFactory(
-            enable_data_sharing_consent=enable_data_sharing_consent,
-            enforce_data_sharing_consent=enforce_data_sharing_consent,
-        )
-        user = factories.UserFactory(id=user_id)
-        ecu = factories.EnterpriseCustomerUserFactory(
-            user_id=user.id,
-            enterprise_customer=enterprise_customer,
-        )
-        factories.DataSharingConsentFactory(
-            username=user.username,
-            enterprise_customer=enterprise_customer,
-            granted=learner_consent_state,
-        )
-        for entitlement in entitlements:
-            factories.EnterpriseCustomerEntitlementFactory(
-                enterprise_customer=enterprise_customer,
-                entitlement_id=entitlement,
-            )
-        url = reverse('enterprise-learner-entitlements', (ecu.id, ))
-        response = self.client.get(settings.TEST_SERVER + url)
-        response = self.load_json(response.content)
-        assert sorted(response) == sorted(expected_json)
 
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @mock.patch("enterprise.api.v1.serializers.track_enrollment")
@@ -507,7 +426,7 @@ class TestEnterpriseAPIViews(APITest):
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
-                'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                'branding_configuration': None,
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
@@ -540,7 +459,7 @@ class TestEnterpriseAPIViews(APITest):
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
-                    'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                    'branding_configuration': None,
                     'enable_audit_enrollment': False, 'identity_provider': None,
                     'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                     'enable_portal_reporting_config_screen': False,
@@ -552,19 +471,6 @@ class TestEnterpriseAPIViews(APITest):
                     'enable_learner_portal': False,
                     'learner_portal_hostname': '',
                 }
-            }],
-        ),
-        (
-            factories.EnterpriseCustomerEntitlementFactory,
-            ENTERPRISE_CUSTOMER_ENTITLEMENT_LIST_ENDPOINT,
-            itemgetter('enterprise_customer'),
-            [{
-                'enterprise_customer__uuid': FAKE_UUIDS[0],
-                'entitlement_id': 1
-            }],
-            [{
-                'enterprise_customer': FAKE_UUIDS[0],
-                'entitlement_id': 1
             }],
         ),
         (
@@ -599,7 +505,7 @@ class TestEnterpriseAPIViews(APITest):
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
-                'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                'branding_configuration': None,
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
@@ -764,7 +670,7 @@ class TestEnterpriseAPIViews(APITest):
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
-                'branding_configuration': None, 'enterprise_customer_entitlements': [],
+                'branding_configuration': None,
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': False, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': True,
                 'enable_portal_reporting_config_screen': False,

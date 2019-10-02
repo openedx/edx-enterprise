@@ -665,53 +665,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
         return None
 
     @property
-    def entitlements(self):
-        """
-        Return entitlement ids available to the learner along-with consent data.
-
-        Returns an empty list if enterprise customer requires data sharing consent and learner does not agree.
-
-        Returns:
-            (list): A list of entitlements that learner can avail. Each item in the list is a dict with two
-                key-value pairs,
-                {
-                    "requires_consent": True ,
-                    "entitlement_id": 1
-                }
-                "requires_consent": True if learner must consent to data
-                    sharing in order to get benefits of entitlement.
-                "entitlement_id: id of the entitlements available to the learner.
-
-        """
-        # Check if Enterprise Learner consents to data sharing and store the boolean result
-        DataSharingConsent = apps.get_model('consent', 'DataSharingConsent')  # pylint: disable=invalid-name
-        learner_consent_enabled = DataSharingConsent.objects.filter(
-            enterprise_customer=self.enterprise_customer,
-            username=self.username,
-            granted=True,
-        ).exists()
-
-        entitlements = self.enterprise_customer.enterprise_customer_entitlements
-
-        # If Enterprise Customer requires account course specific consent then we return all entitlements
-        # including whether or not to acquire learner's consent.
-        if self.enterprise_customer.enforces_data_sharing_consent(EnterpriseCustomer.AT_ENROLLMENT):
-            return [
-                {
-                    "entitlement_id": entitlement.entitlement_id,
-                    "requires_consent": not learner_consent_enabled,
-                } for entitlement in entitlements.all()
-            ]
-
-        # for all other cases learner is eligible to all entitlements.
-        return [
-            {
-                "entitlement_id": entitlement.entitlement_id,
-                "requires_consent": False,
-            } for entitlement in entitlements.all()
-        ]
-
-    @property
     def data_sharing_consent_records(self):
         """
         Return the DataSharingConsent records associated with this EnterpriseCustomerUser.
@@ -1057,49 +1010,6 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         """
         identity_provider = self.identity_provider
         return identity_provider is not None and identity_provider.sync_learner_profile_data
-
-
-@python_2_unicode_compatible
-class EnterpriseCustomerEntitlement(TimeStampedModel):
-    """
-    Enterprise Customer Entitlement is a relationship between and Enterprise customer and its entitlements.
-
-    Users associated with an Enterprise Customer could be eligible for these entitlements resulting in partial or full
-    discounts while taking paid courses on the edX platform.
-
-    .. no_pii:
-    """
-
-    class Meta(object):
-        app_label = 'enterprise'
-        verbose_name = _("Enterprise Customer Entitlement")
-        verbose_name_plural = _("Enterprise Customer Entitlements")
-        ordering = ['created']
-
-    enterprise_customer = models.ForeignKey(EnterpriseCustomer, related_name="enterprise_customer_entitlements")
-    entitlement_id = models.PositiveIntegerField(
-        blank=False,
-        null=False,
-        unique=True,
-        help_text=_("Enterprise customer's entitlement id for relationship with e-commerce coupon."),
-        verbose_name=_('Seat Entitlement')
-    )
-    history = HistoricalRecords()
-
-    def __str__(self):
-        """
-        Return human-readable string representation.
-        """
-        return "<EnterpriseCustomerEntitlement {customer}: {id}>".format(
-            customer=self.enterprise_customer,
-            id=self.entitlement_id
-        )
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
 
 
 @python_2_unicode_compatible

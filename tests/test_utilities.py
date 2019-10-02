@@ -81,7 +81,6 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "pendingenterprisecustomeruser",
                 "branding_configuration",
                 "enterprise_customer_identity_provider",
-                "enterprise_customer_entitlements",
                 "enterprise_customer_catalogs",
                 "enterprise_enrollment_template",
                 "reporting_configurations",
