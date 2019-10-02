@@ -184,6 +184,30 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
             },
             '',
         ),
+        (
+            {
+                'title': '',
+                'short_description': '',
+                'full_description': '<p>This course is part of the '
+                                    '<a href=\"../../../../microsoft-professional-program-certficate-data-science\">'
+                                    '<em>&#8804;Professional Program Certificate in Data Science</em></a>'
+                                    '&nbsp;That doesn&rsquo;t<em> '
+                                    'only teach us how to build a cloud data science solution using Microsoft Azure '
+                                    'Machine Learning platform',
+                'course_runs': [
+                    {
+                        'start': '2018-02-05T05:00:00Z',
+                        'min_effort': 2,
+                        'max_effort': 4,
+                        'weeks_to_complete': 10
+                    }
+                ]
+            },
+
+            '2-4 hours a week for 10 weeks. '
+            'This course is part of the Professional Program Certificate in Data ScienceThat doesnt '
+            'only teach us how to build a cloud data science solution using Microsoft Azure Machine Learning platform'
+        ),
     )
     @responses.activate
     @ddt.unpack
