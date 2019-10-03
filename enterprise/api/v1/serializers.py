@@ -465,8 +465,8 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
         model = models.EnterpriseCustomerReportingConfiguration
         fields = (
             'enterprise_customer', 'enterprise_customer_id', 'active', 'delivery_method', 'email', 'frequency',
-            'day_of_month', 'day_of_week', 'hour_of_day', 'include_date', 'encrypted_password', 'sftp_hostname', 'sftp_port',
-            'sftp_username', 'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type',
+            'day_of_month', 'day_of_week', 'hour_of_day', 'include_date', 'encrypted_password', 'sftp_hostname',
+            'sftp_port', 'sftp_username', 'encrypted_sftp_password', 'sftp_file_path', 'data_type', 'report_type',
             'pgp_encryption_key', 'enterprise_customer_catalogs', 'uuid'
         )
 
