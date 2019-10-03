@@ -9,6 +9,7 @@ from logging import getLogger
 
 from enterprise.utils import get_closest_course_run, get_course_run_duration_info
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
+from integrated_channels.utils import strip_html_tags
 
 LOGGER = getLogger(__name__)
 
@@ -49,7 +50,7 @@ class DegreedContentMetadataExporter(ContentMetadataExporter):  # pylint: disabl
             description = content_metadata_item.get('short_description') or content_metadata_item.get('title') or ''
         if description:
             description = "{duration_info}{description}".format(duration_info=duration_info, description=description)
-        return description
+        return strip_html_tags(description)
 
     def transform_courserun_content_language(self, content_metadata_item):
         """
