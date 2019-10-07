@@ -14,6 +14,12 @@ Change Log
 Unreleased
 ----------
 
+[2.0.2] - 2019-10-07
+--------------------
+
+* Updating create_enterprise_course_enrollment task to accept object ids instead of python objects to play nicely with async.
+* Also converts course_id to str before handing it to task to play nicely with async.
+
 [2.0.1] - 2019-10-07
 --------------------
 
