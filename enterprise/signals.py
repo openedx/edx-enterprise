@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from django.core.exceptions import ObjectDoesNotExist
+# from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -20,13 +20,13 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.tasks import create_enterprise_enrollment
+# from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import get_default_catalog_content_filter, track_enrollment
 
-try:
-    from student.models import CourseEnrollment
-except ImportError:
-    CourseEnrollment = None
+# try:
+#     from student.models import CourseEnrollment
+# except ImportError:
+#     CourseEnrollment = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -124,31 +124,32 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
 
+# TODO: investigating error around this receiver. will uncomment when resolved
 
-def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
-    """
-    Watches for post_save signal for creates on the CourseEnrollment table.
+# def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
+#     """
+#     Watches for post_save signal for creates on the CourseEnrollment table.
 
-    Spin off an async task to generate an EnterpriseCourseEnrollment if appropriate.
-    """
-    if kwargs.get('created') and instance.user:
-        user_id = instance.user.id
-        try:
-            ecu = EnterpriseCustomerUser.objects.get(user_id=user_id)
-        except ObjectDoesNotExist:
-            return
-        logger.info((
-            "User %s is an EnterpriseCustomerUser. "
-            "Spinning off task to check if course is within User's "
-            "Enterprise's EnterpriseCustomerCatalog."
-        ), user_id)
+#     Spin off an async task to generate an EnterpriseCourseEnrollment if appropriate.
+#     """
+#     if kwargs.get('created') and instance.user:
+#         user_id = instance.user.id
+#         try:
+#             ecu = EnterpriseCustomerUser.objects.get(user_id=user_id)
+#         except ObjectDoesNotExist:
+#             return
+#         logger.info((
+#             "User %s is an EnterpriseCustomerUser. "
+#             "Spinning off task to check if course is within User's "
+#             "Enterprise's EnterpriseCustomerCatalog."
+#         ), user_id)
 
-        create_enterprise_enrollment.delay(
-            instance.course_id,
-            ecu,
-        )
+#         create_enterprise_enrollment.delay(
+#             instance.course_id,
+#             ecu,
+#         )
 
 
 # Don't connect this receiver if we dont have access to CourseEnrollment model
-if CourseEnrollment is not None:
-    post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
+# if CourseEnrollment is not None:
+#     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
