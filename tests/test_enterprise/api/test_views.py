@@ -2003,12 +2003,15 @@ class TestEnterpriseAPIViews(APITest):
                 'email': 'johndoe@unknown.com',
                 'enterprise_name': 'Oracle',
                 'number_of_codes': '50',
+                'notes': 'Here are helping notes',
             },
-            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': u'50'},
+            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes':  u'50',
+             u'notes': u'Here are helping notes'},
             200,
             None,
             True,
             u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         ),
         (
             # A valid request without codes
@@ -2016,24 +2019,44 @@ class TestEnterpriseAPIViews(APITest):
                 'email': 'johndoe@unknown.com',
                 'enterprise_name': 'Oracle',
                 'number_of_codes': None,
+                'notes': 'Here are helping notes',
             },
-            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': None},
+            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes': None,
+             u'notes': u'Here are helping notes'},
             200,
             None,
             True,
             u'johndoe@unknown.com from Oracle has requested additional codes. Please reach out to them.'
+            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
+        ),
+        (
+            # A valid request without notes
+            {
+                'email': 'johndoe@unknown.com',
+                'enterprise_name': 'Oracle',
+                'number_of_codes': '50',
+                'notes': None,
+            },
+            {u'email': u'johndoe@unknown.com', u'enterprise_name': u'Oracle', u'number_of_codes':  u'50',
+             u'notes': None},
+            200,
+            None,
+            True,
+            u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
         ),
         (
             # A bad request due to a missing field
             {
                 'email': 'johndoe@unknown.com',
                 'number_of_codes': '50',
+                'notes': 'Here are helping notes',
             },
             {u'error': u'Some required parameter(s) missing: enterprise_name'},
             400,
             None,
             False,
             u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         ),
         (
             # Email send issue
@@ -2041,12 +2064,14 @@ class TestEnterpriseAPIViews(APITest):
                 'email': 'johndoe@unknown.com',
                 'enterprise_name': 'Oracle',
                 'number_of_codes': '50',
+                'notes': 'Here are helping notes',
             },
             {u'error': u'Request codes email could not be sent'},
             500,
             SMTPException(),
             True,
             u'johndoe@unknown.com from Oracle has requested 50 additional codes. Please reach out to them.'
+            u'\nAdditional Notes:\nHere are helping notes.'.encode("unicode_escape").decode("utf-8")
         )
     )
     @ddt.unpack
