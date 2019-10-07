@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-#from django.core.exceptions import ObjectDoesNotExist
+# from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -20,7 +20,7 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-#from enterprise.tasks import create_enterprise_enrollment
+# from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import get_default_catalog_content_filter, track_enrollment
 
 # try:
