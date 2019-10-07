@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.1] - 2019-10-07
+--------------------
+
+* Commenting out code while troubleshooting signal issue in the LMS
+
 [2.0.0] - 2019-10-02
 ---------------------
 
