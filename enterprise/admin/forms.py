@@ -4,6 +4,8 @@ Forms to be used in the enterprise djangoapp.
 """
 from __future__ import absolute_import, unicode_literals
 
+import json
+import re
 from logging import getLogger
 
 from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
@@ -27,6 +29,7 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
+from enterprise.admin.widgets import SubmitInput
 from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
@@ -334,6 +337,44 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "learner_portal_hostname",
             "enable_portal_reporting_config_screen",
         )
+
+
+class EnterpriseCustomerCatalogAdminForm(forms.ModelForm):
+    """
+        form for EnterpriseCustomerCatalogAdmin class.
+    """
+    class Meta:
+        model = EnterpriseCustomerCatalog
+        fields = "__all__"
+
+    preview_button = forms.Field(required=False, label='Actions', widget=SubmitInput(attrs={'value': _('Preview')}),
+                                 help_text=_("Hold Ctrl when clicking on button to open Preview in new tab"))
+
+    @staticmethod
+    def get_enterprise_customer_catalog_preview_button(post_data):  # pylint: disable=invalid-name
+        """
+        Return name of the preview button clicked by user from POST data.
+
+        e.g: 'enterprise_customer_catalogs-0-preview_button'
+        """
+        catalog_preview_button = re.compile(r'enterprise_customer_catalogs-\d+-preview_button')
+        for key, _ in post_data.items():
+            if catalog_preview_button.match(key):
+                return key
+
+    @classmethod
+    def get_clicked_preview_content_filter(cls, post_data):
+        """
+        Return content_filter for the EnterpriseCustomerCatalog against preview button clicked.
+        """
+        catalog_preview_button = cls.get_enterprise_customer_catalog_preview_button(post_data)
+        if not catalog_preview_button:
+            return
+        content_filter_key = catalog_preview_button.replace('preview_button', 'content_filter')
+        content_filter = post_data.get(content_filter_key)
+        if not content_filter:
+            return
+        return json.loads(content_filter)
 
 
 class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):

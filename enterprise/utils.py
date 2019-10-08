@@ -988,7 +988,7 @@ def get_enterprise_worker_user():
         return None
 
 
-def discovery_query_url(content_filter):
+def discovery_query_url(content_filter, html_format=True):
     """
     Return discovery url for preview.
     """
@@ -1005,7 +1005,9 @@ def discovery_query_url(content_filter):
         search_all_endpoint='search/all/',
         query_string=urlencode(content_filter, doseq=True)
     )
-    return format_html(
-        '<a href="{url}" target="_blank">Preview</a>',
-        url=disc_url
-    )
+    if html_format:
+        return format_html(
+            '<a href="{url}" target="_blank">Preview</a>',
+            url=disc_url
+        )
+    return disc_url
