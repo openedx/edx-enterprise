@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` admin forms module.
 """
 from __future__ import absolute_import, unicode_literals
 
+import json
 import unittest
 
 import ddt
@@ -15,6 +16,7 @@ from pytest import mark
 from django.core.files import File
 
 from enterprise.admin.forms import (
+    EnterpriseCustomerCatalogAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
     ManageLearnersForm,
@@ -635,3 +637,68 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
             data=self.form_data,
         )
         assert not form.is_valid()
+
+
+@ddt.ddt
+class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
+    """
+    Tests Different type of utilities methods.
+    """
+    dummy_content_filter_data = {
+        'field': 'value'
+    }
+    form = EnterpriseCustomerCatalogAdminForm
+    @ddt.unpack
+    @ddt.data(
+        (
+            {
+                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+            },
+            'enterprise_customer_catalogs-1-preview_button'
+        ),
+        (
+            {
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+            },
+            None
+        ),
+    )
+    def test_get_enterprise_customer_catalog_preview_button(self, post_data, catalog_preview_button):
+        assert self.form.get_enterprise_customer_catalog_preview_button(post_data) == catalog_preview_button
+
+    @ddt.unpack
+    @ddt.data(
+        (
+            {
+                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+            },
+            dummy_content_filter_data
+        ),
+        # not clicked catalog_preview_button
+        (
+            {
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+            },
+            None
+        ),
+        # missing content filter
+        (
+            {
+                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+            },
+            None
+        )
+
+    )
+    def test_get_preview_content_filter(self, post_data, content_filter):
+        assert self.form.get_clicked_preview_content_filter(post_data) == content_filter

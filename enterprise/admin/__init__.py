@@ -26,6 +26,7 @@ from django.utils.translation import ugettext as _
 from enterprise.admin.actions import export_as_csv_action
 from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
+    EnterpriseCustomerCatalogAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
     EnterpriseFeatureUserRoleAssignmentForm,
@@ -94,6 +95,7 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
     """
 
     model = EnterpriseCustomerCatalog
+    form = EnterpriseCustomerCatalogAdminForm
     extra = 0
     can_delete = False
 
@@ -159,6 +161,18 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     class Meta(object):
         model = EnterpriseCustomer
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        preview_content_filter = EnterpriseCustomerCatalogAdminForm.get_clicked_preview_content_filter(request.POST)
+        if preview_content_filter:
+            discovery_url = discovery_query_url(preview_content_filter, html_format=False)
+            return HttpResponseRedirect(discovery_url)
+        return super(EnterpriseCustomerAdmin, self).change_view(
+            request,
+            object_id,
+            form_url,
+            extra_context=extra_context
+        )
 
     def get_form(self, request, obj=None, **kwargs):
         """
