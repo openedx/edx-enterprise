@@ -8,16 +8,19 @@ from logging import getLogger
 
 from celery import shared_task
 
-from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 
 LOGGER = getLogger(__name__)
 
 
 @shared_task
-def create_enterprise_enrollment(course_id, enterprise_customer_user):
+def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
     """
     Create enterprise enrollment for user if course_id part of catalog for the ENT customer.
     """
+    enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+        id=enterprise_customer_user_id
+    )
     # Prevent duplicate records from being created if possible
     # before we need to make a call to discovery
     if EnterpriseCourseEnrollment.objects.filter(

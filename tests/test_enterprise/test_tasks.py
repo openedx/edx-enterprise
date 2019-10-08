@@ -44,7 +44,7 @@ class TestEnterpriseTasks(unittest.TestCase):
         assert EnterpriseCourseEnrollment.objects.count() == 0
         create_enterprise_enrollment(
             'fake:course',
-            self.enterprise_customer_user
+            self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 1
 
@@ -59,7 +59,7 @@ class TestEnterpriseTasks(unittest.TestCase):
         assert EnterpriseCourseEnrollment.objects.count() == 0
         create_enterprise_enrollment(
             'fake:course',
-            self.enterprise_customer_user
+            self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 0
 
@@ -77,6 +77,6 @@ class TestEnterpriseTasks(unittest.TestCase):
         assert EnterpriseCourseEnrollment.objects.count() == 1
         create_enterprise_enrollment(
             'fake:course',
-            self.enterprise_customer_user
+            self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 1
