@@ -5,6 +5,7 @@ Utility functions for the Enterprise API.
 from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
+from django.utils.translation import ugettext as _
 
 from enterprise.models import (
     EnterpriseCustomerCatalog,
@@ -53,3 +54,34 @@ def get_enterprise_customer_from_user_id(user_id):
         return str(EnterpriseCustomerUser.objects.get(user_id=user_id).enterprise_customer.uuid)
     except EnterpriseCustomerUser.DoesNotExist:
         return None
+
+
+def create_message_body(email, enterprise_name, number_of_codes=None, notes=None):
+    """
+    Return the message body with extra information added by user.
+    """
+    if number_of_codes and notes:
+        body_msg = _('{token_email} from {token_enterprise_name} has requested {token_number_codes} additional '
+                     'codes. Please reach out to them.\nAdditional Notes:\n{token_notes}.').format(
+                         token_email=email,
+                         token_enterprise_name=enterprise_name,
+                         token_number_codes=number_of_codes,
+                         token_notes=notes)
+    elif number_of_codes:
+        body_msg = _('{token_email} from {token_enterprise_name} has requested {token_number_codes} additional '
+                     'codes. Please reach out to them.').format(
+                         token_email=email,
+                         token_enterprise_name=enterprise_name,
+                         token_number_codes=number_of_codes)
+    elif notes:
+        body_msg = _('{token_email} from {token_enterprise_name} has requested additional '
+                     'codes. Please reach out to them.\nAdditional Notes:\n{token_notes}.').format(
+                         token_email=email,
+                         token_enterprise_name=enterprise_name,
+                         token_notes=notes)
+    else:
+        body_msg = _('{token_email} from {token_enterprise_name} has requested additional codes.'
+                     ' Please reach out to them.').format(
+                         token_email=email,
+                         token_enterprise_name=enterprise_name)
+    return body_msg
