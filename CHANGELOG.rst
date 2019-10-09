@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[2.0.3] - 2019-10-09
+---------------------
+
+* Add message box to code management page and admin portal
 
 [2.0.2] - 2019-10-07
 --------------------

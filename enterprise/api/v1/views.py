@@ -33,6 +33,7 @@ from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.utils import (
+    create_message_body,
     get_ent_cust_from_report_config_uuid,
     get_enterprise_customer_from_catalog_id,
     get_enterprise_customer_from_user_id,
@@ -516,20 +517,22 @@ class CouponCodesView(APIView):
     REQUIRED_PARAM_EMAIL = 'email'
     REQUIRED_PARAM_ENTERPRISE_NAME = 'enterprise_name'
     OPTIONAL_PARAM_NUMBER_OF_CODES = 'number_of_codes'
+    OPTIONAL_PARAM_NOTES = 'notes'
 
     MISSING_REQUIRED_PARAMS_MSG = "Some required parameter(s) missing: {}"
 
     def get_required_query_params(self, request):
         """
-        Gets ``email``, ``enterprise_name``, and ``number_of_codes``,
+        Gets ``email``, ``enterprise_name``, ``number_of_codes``, and ``notes``,
         which are the relevant parameters for this API endpoint.
 
         :param request: The request to this endpoint.
-        :return: The ``email``, ``enterprise_name``, and ``number_of_codes`` from the request.
+        :return: The ``email``, ``enterprise_name``, ``number_of_codes`` and ``notes`` from the request.
         """
         email = get_request_value(request, self.REQUIRED_PARAM_EMAIL, '')
         enterprise_name = get_request_value(request, self.REQUIRED_PARAM_ENTERPRISE_NAME, '')
         number_of_codes = get_request_value(request, self.OPTIONAL_PARAM_NUMBER_OF_CODES, '')
+        notes = get_request_value(request, self.OPTIONAL_PARAM_NOTES, '')
         if not (email and enterprise_name):
             raise CodesAPIRequestError(
                 self.get_missing_params_message([
@@ -537,7 +540,7 @@ class CouponCodesView(APIView):
                     (self.REQUIRED_PARAM_ENTERPRISE_NAME, bool(enterprise_name)),
                 ])
             )
-        return email, enterprise_name, number_of_codes
+        return email, enterprise_name, number_of_codes, notes
 
     def get_missing_params_message(self, parameter_state):
         """
@@ -555,7 +558,8 @@ class CouponCodesView(APIView):
         >>> {
         >>>     "email": "bob@alice.com",
         >>>     "enterprise_name": "IBM",
-        >>>     "number_of_codes": "50"
+        >>>     "number_of_codes": "50",
+        >>>     "notes": "Help notes for codes request",
         >>> }
 
         Keys:
@@ -565,24 +569,18 @@ class CouponCodesView(APIView):
             The name of the enterprise requesting more codes.
         *number_of_codes*
             The number of codes requested.
+        *notes*
+            Help notes related to codes request.
         """
         try:
-            email, enterprise_name, number_of_codes = self.get_required_query_params(request)
+            email, enterprise_name, number_of_codes, notes = self.get_required_query_params(request)
         except CodesAPIRequestError as invalid_request:
             return Response({'error': str(invalid_request)}, status=HTTP_400_BAD_REQUEST)
 
         subject_line = _('Code Management - Request for Codes by {token_enterprise_name}').format(
             token_enterprise_name=enterprise_name
         )
-        msg_with_codes = _('{token_email} from {token_enterprise_name} has requested {token_number_codes} additional '
-                           'codes. Please reach out to them.').format(
-                               token_email=email,
-                               token_enterprise_name=enterprise_name,
-                               token_number_codes=number_of_codes)
-        msg_without_codes = _('{token_email} from {token_enterprise_name} has requested additional codes.'
-                              ' Please reach out to them.').format(
-                                  token_email=email,
-                                  token_enterprise_name=enterprise_name)
+        body_msg = create_message_body(email, enterprise_name, number_of_codes, notes)
         app_config = apps.get_app_config("enterprise")
         from_email_address = app_config.enterprise_integrations_email
         cs_email = app_config.customer_success_email
@@ -590,11 +588,12 @@ class CouponCodesView(APIView):
             self.REQUIRED_PARAM_EMAIL: email,
             self.REQUIRED_PARAM_ENTERPRISE_NAME: enterprise_name,
             self.OPTIONAL_PARAM_NUMBER_OF_CODES: number_of_codes,
+            self.OPTIONAL_PARAM_NOTES: notes,
         }
         try:
             messages_sent = mail.send_mail(
                 subject_line,
-                msg_with_codes if number_of_codes else msg_without_codes,
+                body_msg,
                 from_email_address,
                 [cs_email],
                 fail_silently=False
