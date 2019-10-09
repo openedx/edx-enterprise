@@ -33,10 +33,10 @@ from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.utils import (
+    create_message_body,
     get_ent_cust_from_report_config_uuid,
     get_enterprise_customer_from_catalog_id,
     get_enterprise_customer_from_user_id,
-    create_message_body,
 )
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter

@@ -13,7 +13,7 @@ Change Log
 
 Unreleased
 ----------
-[2.0.1] - 2019-10-09
+[2.0.3] - 2019-10-09
 ---------------------
 
 * Add message box to Code Mgmt Tool "request more codes" process
