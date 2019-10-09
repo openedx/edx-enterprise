@@ -36,6 +36,7 @@ from enterprise.api.utils import (
     get_ent_cust_from_report_config_uuid,
     get_enterprise_customer_from_catalog_id,
     get_enterprise_customer_from_user_id,
+    create_message_body,
 )
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
@@ -579,30 +580,7 @@ class CouponCodesView(APIView):
         subject_line = _('Code Management - Request for Codes by {token_enterprise_name}').format(
             token_enterprise_name=enterprise_name
         )
-        if number_of_codes and notes:
-            body_msg = _('{token_email} from {token_enterprise_name} has requested {token_number_codes} additional '
-                         'codes. Please reach out to them.\nAdditional Notes:\n{token_notes}.').format(
-                             token_email=email,
-                             token_enterprise_name=enterprise_name,
-                             token_number_codes=number_of_codes,
-                             token_notes=notes)
-        elif number_of_codes:
-            body_msg = _('{token_email} from {token_enterprise_name} has requested {token_number_codes} additional '
-                         'codes. Please reach out to them.').format(
-                             token_email=email,
-                             token_enterprise_name=enterprise_name,
-                             token_number_codes=number_of_codes)
-        elif notes:
-            body_msg = _('{token_email} from {token_enterprise_name} has requested additional '
-                         'codes. Please reach out to them.\nAdditional Notes:\n{token_notes}.').format(
-                             token_email=email,
-                             token_enterprise_name=enterprise_name,
-                             token_notes=notes)
-        else:
-            body_msg = _('{token_email} from {token_enterprise_name} has requested additional codes.'
-                         ' Please reach out to them.').format(
-                             token_email=email,
-                             token_enterprise_name=enterprise_name)
+        body_msg = create_message_body(email, enterprise_name, number_of_codes, notes)
         app_config = apps.get_app_config("enterprise")
         from_email_address = app_config.enterprise_integrations_email
         cs_email = app_config.customer_success_email
