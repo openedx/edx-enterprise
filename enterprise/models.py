@@ -1323,7 +1323,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
     def contains_courses(self, content_ids):
         """
-        Return true if this catalog contains the given courses.
+        Return True if this catalog contains the given courses else False.
 
         The content_ids parameter should be a list containing course keys
         and/or course run ids.
@@ -1339,7 +1339,10 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         if not content_ids_in_catalog:
             content_ids_in_catalog = self._filter_members('key', list(course_keys)) if course_keys else set()
 
-        return set(content_ids).issubset(content_ids_in_catalog) or course_keys.issubset(content_ids_in_catalog)
+        return bool(
+            (content_ids and set(content_ids).issubset(content_ids_in_catalog)) or
+            (course_keys and course_keys.issubset(content_ids_in_catalog))
+        )
 
     def contains_programs(self, program_uuids):
         """
@@ -1349,7 +1352,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         if not content_ids_in_catalog:
             content_ids_in_catalog = self._filter_members('uuid', program_uuids)
 
-        return set(program_uuids).issubset(content_ids_in_catalog)
+        return bool(program_uuids and set(program_uuids).issubset(content_ids_in_catalog))
 
     def get_course(self, course_key):
         """
