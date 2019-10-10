@@ -188,6 +188,11 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api.get_catalog_results.return_value = {}
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
+        # When a key doesn't exist in discovery then get_course_id returns None.
+        mock_catalog_api.get_catalog_results.return_value = {'results': [fake_catalog_api.FAKE_COURSE_RUN]}
+        mock_catalog_api.get_course_id.return_value = None
+        assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
+
 
 @mark.django_db
 @ddt.ddt
@@ -911,6 +916,20 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
         response = enterprise_catalog.get_paginated_content(QueryDict())
         assert response['count'] == 129381  # Previously this would have been 1
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_contains_programs(self, mock_catalog_api_class):
+        """
+        Test EnterpriseCustomerCatalog.contains_programs.
+        """
+        mock_catalog_api = mock_catalog_api_class.return_value
+        mock_catalog_api.get_catalog_results.return_value = {'results': [fake_catalog_api.FAKE_PROGRAM_RESPONSE1]}
+
+        catalog = factories.EnterpriseCustomerCatalogFactory()
+        assert catalog.contains_programs([fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid']]) is True
+
+        mock_catalog_api.get_catalog_results.return_value = {}
+        assert catalog.contains_programs([fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid']]) is False
 
 
 @mark.django_db
