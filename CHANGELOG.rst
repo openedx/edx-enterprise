@@ -13,6 +13,13 @@ Change Log
 
 Unreleased
 ----------
+
+[2.0.4] - 2019-10-10
+--------------------
+
+* Added preview button for EnterpriseCustomerCatalogs in EnterpriseCustomer admin page
+
+
 [2.0.3] - 2019-10-09
 ---------------------
 
