@@ -147,14 +147,13 @@ class LearnerExporter(Exporter):
             if not consent.granted or enterprise_enrollment.audit_reporting_disabled:
                 continue
 
-            if not is_passing and not completed_date:
-                # For instructor-paced courses, let the certificate determine course completion
-                if course_details.get('pacing') == 'instructor':
-                    completed_date, grade, is_passing = self._collect_certificate_data(enterprise_enrollment)
+            # For instructor-paced courses, let the certificate determine course completion
+            if course_details.get('pacing') == 'instructor':
+                completed_date, grade, is_passing = self._collect_certificate_data(enterprise_enrollment)
 
-                # For self-paced courses, check the Grades API
-                else:
-                    completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
+            # For self-paced courses, check the Grades API
+            else:
+                completed_date, grade, is_passing = self._collect_grades_data(enterprise_enrollment, course_details)
 
             records = self.get_learner_data_records(
                 enterprise_enrollment=enterprise_enrollment,

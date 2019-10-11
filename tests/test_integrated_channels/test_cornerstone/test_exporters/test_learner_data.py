@@ -189,6 +189,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         assert sorted(expected_headers.items()) == sorted(actual_headers.items())
 
     @responses.activate
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     def test_transmit_single_learner_data_performs_only_one_transmission(self):
         """
         Test sending single user's data sould only update one `CornerstoneLearnerDataTransmissionAudit` entry
@@ -209,6 +210,16 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
                 "pacing": "instructor",
                 "end": "2038-06-21T12:58:17.428373Z",
             }
+        )
+
+        # Certificates API user's grade response
+        responses.add(
+            responses.GET,
+            urljoin(
+                lms_api.CertificatesApiClient.API_BASE_URL,
+                "certificates/{user}/courses/{course}/".format(course=course_id, user=self.user.username)
+            ),
+            json={"is_passing": "true", "created_date": "2019-06-21T12:58:17.428373Z", "grade": "0.8"},
         )
 
         transmissions = CornerstoneLearnerDataTransmissionAudit.objects.filter(user=self.user, course_completed=False)
