@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.5] - 2019-10-15
+---------------------
+
+* Adding migration file to remove EnterpriseCustomerEntitlement from table schema
+
 [2.0.4] - 2019-10-10
 --------------------
 
