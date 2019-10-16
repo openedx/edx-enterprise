@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.7] - 2019-10-21
+---------------------
+
+* Added certificate and grades api calls for transmitting learner export to integrated channels
+
 [2.0.6] - 2019-10-18
 ---------------------
 
