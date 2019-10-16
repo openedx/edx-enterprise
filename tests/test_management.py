@@ -2,7 +2,7 @@
 """
 Test the Enterprise management commands and related functions.
 """
-from __future__ import absolute_import, unicode_literals, with_statement
+from __future__ import absolute_import, division, unicode_literals, with_statement
 
 import logging
 import unittest
@@ -24,6 +24,7 @@ from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import signals
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 from enterprise.api_client import lms as lms_api
 from enterprise.constants import (
@@ -212,15 +213,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         # integrated channel still successfully transmits courseware data.
         expected_messages = [
             # SAPSF
-            'Transmitting content metadata to integrated channel using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Transmission of content metadata failed for user [C-3PO] and for integrated channel with '
-            'code [SAP] and id [1].',
-            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
-                self.sapsf
-            ),
-            'Transmitting content metadata to integrated channel using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            '[Integrated Channel] Content metadata transmission started. Configuration:'
+            ' <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
+            '[Integrated Channel] Transmission of content metadata failed.'
+            ' ChannelCode: SAP, ChannelId: 1, Username: C-3PO',
+            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
+            ' {configuration},Duration: 0.0'.format(configuration=self.sapsf),
+            '[Integrated Channel] Content metadata transmission started. Configuration:'
+            ' <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>',
             'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
@@ -234,20 +234,18 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
-                dummy_sapsf
-            ),
+            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
+            ' {configuration},Duration: 0.0'.format(configuration=dummy_sapsf),
 
             # Degreed
-            'Transmitting content metadata to integrated channel using configuration: '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Transmission of content metadata failed for user [C-3PO] and for integrated channel with '
-            'code [DEGREED] and id [1].',
-            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
-                self.degreed
-            ),
-            'Transmitting content metadata to integrated channel using configuration: '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
+            '[Integrated Channel] Content metadata transmission started. Configuration:'
+            ' <DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
+            '[Integrated Channel] Transmission of content metadata failed.'
+            ' ChannelCode: DEGREED, ChannelId: 1, Username: C-3PO',
+            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
+            ' {configuration},Duration: 0.0'.format(configuration=self.degreed),
+            '[Integrated Channel] Content metadata transmission started. Configuration:'
+            ' <DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>',
             'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
@@ -261,9 +259,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
             'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
-                dummy_degreed
-            )
+            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
+            ' {configuration},Duration: 0.0'.format(configuration=dummy_degreed)
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
@@ -296,8 +293,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
 
         expected_messages = [
             # SAPSF
-            'Transmitting content metadata to integrated channel using configuration: '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            '[Integrated Channel] Content metadata transmission started. Configuration:'
+            ' <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
             'Retrieved content metadata for enterprise [{}]'.format(self.enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
@@ -311,13 +308,12 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
-                self.sapsf
-            ),
+            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
+            ' {configuration},Duration: 0.0'.format(configuration=self.sapsf),
 
             # Degreed
-            'Transmitting content metadata to integrated channel using configuration: '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
+            '[Integrated Channel] Content metadata transmission started. Configuration:'
+            ' <DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
             'Retrieved content metadata for enterprise [{}]'.format(self.enterprise_customer.name),
             'Exporting content metadata item with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
@@ -331,9 +327,8 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
             'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
             '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Content metadata transmission task for integrated channel configuration [{}] took [0.0] seconds'.format(
-                self.degreed
-            )
+            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
+            ' {configuration},Duration: 0.0'.format(configuration=self.degreed)
         ]
 
         with LogCapture(level=logging.INFO) as log_capture:
@@ -526,7 +521,10 @@ def transmit_learner_data_context(command_kwargs=None, certificate=None, self_pa
     command_args = ('--api_user', testcase.api_user.username)
     if 'enterprise_customer' in command_kwargs:
         command_kwargs['enterprise_customer'] = testcase.enterprise_customer.uuid
-
+    if 'enterprise_customer_slug' in command_kwargs:
+        command_kwargs['enterprise_customer_slug'] = testcase.enterprise_customer.slug
+    command_kwargs['user1'] = testcase.user1
+    command_kwargs['user2'] = testcase.user2
     # Mock the JWT authentication for LMS API calls
     with mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock()):
 
@@ -613,7 +611,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
             )
 
 
-def get_expected_output(**expected_completion):
+def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_completion):
     """
     Returns the expected JSON record logged by the ``transmit_learner_data`` command.
     """
@@ -648,72 +646,367 @@ def get_expected_output(**expected_completion):
         '"userID": "{user_id}"'
         '}}'
     )
+    if certificate:
+        expected_output = [
+            # SAPSF
+            "[Integrated Channel] Batch processing learners for integrated channel. Configuration:"
+            " <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
+            "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
+            " IsPassing: False, User: None",
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime(certificate.get('created_date')),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=certificate.get('is_passing'),
+                user_id=cmd_kwargs.get('user1').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_KEY,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 2".format(action),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_ID,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime(certificate.get('created_date')),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=certificate.get('is_passing'),
+                user_id=cmd_kwargs.get('user2').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_KEY,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 3".format(action),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_ID,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 3".format(action2),
+            "[Integrated Channel] Batch learner data transmission task finished."
+            " Configuration: <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>, "
+            "Duration: 0.0",
 
-    expected_output = [
-        # SAPSF
-        "Processing learners for integrated channel using configuration: "
-        "[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>]",
-        "Attempting to transmit serialized payload: " + sapsf_output_template.format(
-            user_id='remote-user-id',
-            course_id=COURSE_KEY,
-            provider_id="SAP",
-            **expected_completion
-        ),
-        "{} enterprise enrollment 2".format(action),
-        "Attempting to transmit serialized payload: " + sapsf_output_template.format(
-            user_id='remote-user-id',
-            course_id=COURSE_ID,
-            provider_id="SAP",
-            **expected_completion
-        ),
-        "{} enterprise enrollment 2".format(action2),
-        "Attempting to transmit serialized payload: " + sapsf_output_template.format(
-            user_id='remote-user-id',
-            course_id=COURSE_KEY,
-            provider_id="SAP",
-            **expected_completion
-        ),
-        "{} enterprise enrollment 3".format(action),
-        "Attempting to transmit serialized payload: " + sapsf_output_template.format(
-            user_id='remote-user-id',
-            course_id=COURSE_ID,
-            provider_id="SAP",
-            **expected_completion
-        ),
-        "{} enterprise enrollment 3".format(action2),
-        "Learner data transmission task for integrated channel configuration "
-        "[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>] took [0.0] seconds",
+            # Degreed
+            "[Integrated Channel] Batch processing learners for integrated channel."
+            " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
+            "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
+            " IsPassing: False, User: None",
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime(certificate.get('created_date')),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=certificate.get('is_passing'),
+                user_id=cmd_kwargs.get('user1').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example@email.com',
+                course_id=COURSE_KEY,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 2".format(action),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example@email.com',
+                course_id=COURSE_ID,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime(certificate.get('created_date')),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=certificate.get('is_passing'),
+                user_id=cmd_kwargs.get('user2').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example2@email.com',
+                course_id=COURSE_KEY,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 3".format(action),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example2@email.com',
+                course_id=COURSE_ID,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 3".format(action2),
+            "[Integrated Channel] Batch learner data transmission task finished."
+            " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>,"
+            " Duration: 0.0"
+        ]
+    elif not self_paced:
+        expected_output = [
+            # SAPSF
+            "[Integrated Channel] Batch processing learners for integrated channel. Configuration:"
+            " <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
+            "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
+            " IsPassing: False, User: None",
+            "[Integrated Channel] Certificate data not found."
+            " Course: {course_id}, EnterpriseEnrollment: 2, Username: {username}".format(
+                course_id=COURSE_ID,
+                username=cmd_kwargs.get('user1')
+            ),
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime('19-10-10'),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user1').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_KEY,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 2".format(action),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_ID,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channel] Certificate data not found."
+            " Course: {course_id}, EnterpriseEnrollment: 3, Username: {username}".format(
+                course_id=COURSE_ID,
+                username=cmd_kwargs.get('user2')
+            ),
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime('19-10-10'),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user2').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_KEY,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 3".format(action),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_ID,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 3".format(action2),
+            "[Integrated Channel] Batch learner data transmission task finished."
+            " Configuration: <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>, "
+            "Duration: 0.0",
 
-        # Degreed
-        "Processing learners for integrated channel using configuration: "
-        "[<DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>]",
-        "Attempting to transmit serialized payload: " + degreed_output_template.format(
-            user_email='example@email.com',
-            course_id=COURSE_KEY,
-            timestamp=degreed_timestamp
-        ),
-        "{} enterprise enrollment 2".format(action),
-        "Attempting to transmit serialized payload: " + degreed_output_template.format(
-            user_email='example@email.com',
-            course_id=COURSE_ID,
-            timestamp=degreed_timestamp
-        ),
-        "{} enterprise enrollment 2".format(action2),
-        "Attempting to transmit serialized payload: " + degreed_output_template.format(
-            user_email='example2@email.com',
-            course_id=COURSE_KEY,
-            timestamp=degreed_timestamp
-        ),
-        "{} enterprise enrollment 3".format(action),
-        "Attempting to transmit serialized payload: " + degreed_output_template.format(
-            user_email='example2@email.com',
-            course_id=COURSE_ID,
-            timestamp=degreed_timestamp
-        ),
-        "{} enterprise enrollment 3".format(action2),
-        "Learner data transmission task for integrated channel configuration "
-        "[<DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>] took [0.0] seconds"
-    ]
+            # Degreed
+            "[Integrated Channel] Batch processing learners for integrated channel."
+            " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
+            "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
+            " IsPassing: False, User: None",
+            "[Integrated Channel] Certificate data not found."
+            " Course: {course_id}, EnterpriseEnrollment: 2, Username: {username}".format(
+                course_id=COURSE_ID,
+                username=cmd_kwargs.get('user1')
+            ),
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime('19-10-10'),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user1').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example@email.com',
+                course_id=COURSE_KEY,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 2".format(action),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example@email.com',
+                course_id=COURSE_ID,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channel] Certificate data not found."
+            " Course: {course_id}, EnterpriseEnrollment: 3, Username: {username}".format(
+                course_id=COURSE_ID,
+                username=cmd_kwargs.get('user2')
+            ),
+            "[Integrated Channel] Received data from certificate api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=parse_datetime('19-10-10'),
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user2').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example2@email.com',
+                course_id=COURSE_KEY,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 3".format(action),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example2@email.com',
+                course_id=COURSE_ID,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 3".format(action2),
+            "[Integrated Channel] Batch learner data transmission task finished."
+            " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>,"
+            " Duration: 0.0"
+        ]
+    else:
+        if expected_completion.get('timestamp') != u'null':
+            timestamp = expected_completion.get('timestamp') / 1000
+            completed_date = str(datetime.utcfromtimestamp(timestamp)) + '+00:00'
+        else:
+            completed_date = None
+        expected_output = [
+            # SAPSF
+            "[Integrated Channel] Batch processing learners for integrated channel. Configuration:"
+            " <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
+            "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
+            " IsPassing: False, User: None",
+            "[Integrated Channel] Received data from grades api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=completed_date,
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user1').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_KEY,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 2".format(action),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_ID,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channel] Received data from grades api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=completed_date,
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user2').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_KEY,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 3".format(action),
+            "Attempting to transmit serialized payload: " + sapsf_output_template.format(
+                user_id='remote-user-id',
+                course_id=COURSE_ID,
+                provider_id="SAP",
+                **expected_completion
+            ),
+            "{} enterprise enrollment 3".format(action2),
+            "[Integrated Channel] Batch learner data transmission task finished."
+            " Configuration: <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>, "
+            "Duration: 0.0",
+
+            # Degreed
+            "[Integrated Channel] Batch processing learners for integrated channel."
+            " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
+            "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
+            " IsPassing: False, User: None",
+            "[Integrated Channel] Received data from grades api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=completed_date,
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user1').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example@email.com',
+                course_id=COURSE_KEY,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 2".format(action),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example@email.com',
+                course_id=COURSE_ID,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channel] Received data from grades api.  CompletedDate:"
+            " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
+            " IsPassing: {is_passing}, User: {user_id}".format(
+                completed_date=completed_date,
+                course_id=COURSE_ID,
+                enterprise_slug=cmd_kwargs.get('enterprise_customer_slug'),
+                is_passing=passed,
+                user_id=cmd_kwargs.get('user2').id,
+                **expected_completion
+            ),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example2@email.com',
+                course_id=COURSE_KEY,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 3".format(action),
+            "Attempting to transmit serialized payload: " + degreed_output_template.format(
+                user_email='example2@email.com',
+                course_id=COURSE_ID,
+                timestamp=degreed_timestamp
+            ),
+            "{} enterprise enrollment 3".format(action2),
+            "[Integrated Channel] Batch learner data transmission task finished."
+            " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>,"
+            " Duration: 0.0"
+        ]
     return expected_output
 
 
@@ -759,27 +1052,38 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
     @responses.activate
     @ddt.data(
         # Certificate marks course completion
-        (dict(), MOCK_PASSING_CERTIFICATE, False, None, False, CERTIFICATE_PASSING_COMPLETION),
-        (dict(), MOCK_FAILING_CERTIFICATE, False, None, False, CERTIFICATE_FAILING_COMPLETION),
+        (dict(enterprise_customer_slug=None), MOCK_PASSING_CERTIFICATE, False, None, False,
+         CERTIFICATE_PASSING_COMPLETION),
+        (dict(enterprise_customer_slug=None), MOCK_FAILING_CERTIFICATE, False, None, False,
+         CERTIFICATE_FAILING_COMPLETION),
 
         # enterprise_customer UUID gets filled in below
-        (dict(enterprise_customer=None), MOCK_PASSING_CERTIFICATE, False, None, False, CERTIFICATE_PASSING_COMPLETION),
-        (dict(enterprise_customer=None), MOCK_FAILING_CERTIFICATE, False, None, False, CERTIFICATE_FAILING_COMPLETION),
+        (dict(enterprise_customer=None, enterprise_customer_slug=None), MOCK_PASSING_CERTIFICATE, False, None, False,
+         CERTIFICATE_PASSING_COMPLETION),
+        (dict(enterprise_customer=None, enterprise_customer_slug=None), MOCK_FAILING_CERTIFICATE, False, None, False,
+         CERTIFICATE_FAILING_COMPLETION),
 
         # Instructor-paced course with no certificates issued yet results in incomplete course data
-        (dict(), None, False, None, False, dict(completed='false', timestamp='null', grade='In Progress')),
+        (dict(enterprise_customer_slug=None), None, False, None, False,
+         dict(completed='false', timestamp='null', grade='In Progress')),
 
         # Self-paced course with no end date send grade=Pass, or grade=In Progress, depending on current grade.
-        (dict(), None, True, None, False, dict(completed='false', timestamp='null', grade='In Progress')),
-        (dict(), None, True, None, True, dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
+        (dict(enterprise_customer_slug=None), None, True, None, False,
+         dict(completed='false', timestamp='null', grade='In Progress')),
+        (dict(enterprise_customer_slug=None), None, True, None, True,
+         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
 
         # Self-paced course with future end date sends grade=Pass, or grade=In Progress, depending on current grade.
-        (dict(), None, True, FUTURE, False, dict(completed='false', timestamp='null', grade='In Progress')),
-        (dict(), None, True, FUTURE, True, dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
+        (dict(enterprise_customer_slug=None), None, True, FUTURE, False,
+         dict(completed='false', timestamp='null', grade='In Progress')),
+        (dict(enterprise_customer_slug=None), None, True, FUTURE, True,
+         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
 
         # Self-paced course with past end date sends grade=Pass, or grade=Fail, depending on current grade.
-        (dict(), None, True, PAST, False, dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail')),
-        (dict(), None, True, PAST, True, dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass')),
+        (dict(enterprise_customer_slug=None), None, True, PAST, False,
+         dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail')),
+        (dict(enterprise_customer_slug=None), None, True, PAST, True,
+         dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass')),
     )
     @ddt.unpack
     def test_transmit_learner_data(
@@ -806,7 +1110,8 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
         )
         with transmit_learner_data_context(command_kwargs, certificate, self_paced, end_date, passed) as (args, kwargs):
             with LogCapture(level=logging.DEBUG) as log_capture:
-                expected_output = get_expected_output(**expected_completion)
+                expected_output = get_expected_output(
+                    command_kwargs, certificate, self_paced, passed, **expected_completion)
                 call_command('transmit_learner_data', *args, **kwargs)
                 # get the list of logs just in this repo
                 enterprise_log_messages = []
