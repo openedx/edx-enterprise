@@ -1269,17 +1269,20 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
     def get_paginated_content(self, query_parameters):
         """
-        Return paginated discovery service search results.
+        Return paginated discovery service search results withoutexpired course runs.
 
         Arguments:
             query_parameters (dict): Additional query parameters to add to the search API call, e.g. page.
         Returns:
             dict: The paginated discovery service search results.
         """
+        query_params = query_parameters.copy()
+        # exclude_expire_course_run query_param is added to remove the expired course run
+        query_params["exclude_expire_course_run"] = True
         results = []
         content_filter_query = self.content_filter.copy()
         catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
-        search_results = catalog_client.get_catalog_results(content_filter_query, query_parameters.dict())
+        search_results = catalog_client.get_catalog_results(content_filter_query, query_params.dict())
         for content in search_results['results']:
             if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
                 results.append(content)
