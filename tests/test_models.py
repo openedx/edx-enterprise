@@ -918,6 +918,21 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         assert response['count'] == 129381  # Previously this would have been 1
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_exclude_expired_course_run_in_api_query_param(self, mock_catalog_api_class):
+        """
+        Test EnterpriseCustomerCatalog.get_paginated_content should pass the exclude_expired_course_runs query param to
+        the discovery service API
+        """
+        mock_catalog_api = mock_catalog_api_class.return_value
+        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_catalog.get_paginated_content(QueryDict())
+        mock_catalog_api.get_catalog_results.assert_called_with({
+            u'partner': u'edx',
+            u'level_type': [u'Introductory', u'Intermediate', u'Advanced'],
+            u'availability': [u'Current', u'Starting Soon', u'Upcoming'],
+            u'content_type': u'course'}, {"exclude_expired_course_run": True})
+
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_contains_programs(self, mock_catalog_api_class):
         """
         Test EnterpriseCustomerCatalog.contains_programs.

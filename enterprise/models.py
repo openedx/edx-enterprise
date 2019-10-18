@@ -1269,7 +1269,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
     def get_paginated_content(self, query_parameters):
         """
-        Return paginated discovery service search results withoutexpired course runs.
+        Return paginated discovery service search results without expired course runs.
 
         Arguments:
             query_parameters (dict): Additional query parameters to add to the search API call, e.g. page.
@@ -1277,8 +1277,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             dict: The paginated discovery service search results.
         """
         query_params = query_parameters.copy()
-        # exclude_expire_course_run query_param is added to remove the expired course run
-        query_params["exclude_expire_course_run"] = True
+        # exclude_expired_course_run query_param is added to remove the expired course run
+        query_params["exclude_expired_course_run"] = True
         results = []
         content_filter_query = self.content_filter.copy()
         catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
