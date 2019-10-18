@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[2.0.6] - 2019-10-18
+---------------------
+
+* Add query_param to remove expired course runs from /enterprise/api/v1/enterprise_catalogs/UUID/ endpoint
 
 [2.0.5] - 2019-10-15
 ---------------------
