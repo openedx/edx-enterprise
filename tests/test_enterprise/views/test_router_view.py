@@ -45,7 +45,7 @@ class TestRouterView(TestCase):
             'enterprise_course_run_enrollment_page',
             args=[self.enterprise_customer.uuid, self.course_run_id]
         ))
-        self.request.user.id = 1   # pylint: disable=invalid-name
+        self.request.user.id = 1  # pylint: disable=invalid-name
         self.kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,
