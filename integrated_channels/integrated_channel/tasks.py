@@ -34,20 +34,25 @@ def transmit_content_metadata(username, channel_code, channel_pk):
     start = time.time()
     api_user = User.objects.get(username=username)
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
-    LOGGER.info('Transmitting content metadata to integrated channel using configuration: [%s]', integrated_channel)
+    LOGGER.info('[Integrated Channel] Content metadata transmission started.'
+                ' Configuration: {configuration}'.format(configuration=integrated_channel))
     try:
         integrated_channel.transmit_content_metadata(api_user)
     except Exception:  # pylint: disable=broad-except
         LOGGER.exception(
-            'Transmission of content metadata failed for user [%s] and for integrated '
-            'channel with code [%s] and id [%s].', username, channel_code, channel_pk
-        )
+            '[Integrated Channel] Transmission of content metadata failed.'
+            ' ChannelCode: {channel_code}, ChannelId: {channel_id}, Username: {user}'.format(
+                user=username,
+                channel_code=channel_code,
+                channel_id=channel_pk
+            ))
     duration = time.time() - start
     LOGGER.info(
-        'Content metadata transmission task for integrated channel configuration [%s] took [%s] seconds',
-        integrated_channel,
-        duration
-    )
+        '[Integrated Channel] Content metadata transmission task finished. Configuration: {configuration},'
+        'Duration: {duration}'.format(
+            configuration=integrated_channel,
+            duration=duration
+        ))
 
 
 @shared_task
@@ -64,7 +69,8 @@ def transmit_learner_data(username, channel_code, channel_pk):
     start = time.time()
     api_user = User.objects.get(username=username)
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
-    LOGGER.info('Processing learners for integrated channel using configuration: [%s]', integrated_channel)
+    LOGGER.info('[Integrated Channel] Batch processing learners for integrated channel.'
+                ' Configuration: {configuration}'.format(configuration=integrated_channel))
 
     # Note: learner data transmission code paths don't raise any uncaught exception, so we don't need a broad
     # try-except block here.
@@ -72,10 +78,11 @@ def transmit_learner_data(username, channel_code, channel_pk):
 
     duration = time.time() - start
     LOGGER.info(
-        'Learner data transmission task for integrated channel configuration [%s] took [%s] seconds',
-        integrated_channel,
-        duration
-    )
+        '[Integrated Channel] Batch learner data transmission task finished. Configuration: {configuration},'
+        ' Duration: {duration}'.format(
+            configuration=integrated_channel,
+            duration=duration
+        ))
 
 
 @shared_task
@@ -89,14 +96,19 @@ def transmit_single_learner_data(username, course_run_id):
     """
     start = time.time()
     user = User.objects.get(username=username)
-    LOGGER.info('Started transmitting single learner data for user: [%s] and course [%s]', username, course_run_id)
+    LOGGER.info('[Integrated Channel] Single learner data transmission started.'
+                ' Course: {course_run}, Username: {username}'.format(
+                    course_run=course_run_id,
+                    username=username))
     channel_utils = IntegratedChannelCommandUtils()
     # Transmit the learner data to each integrated channel
     for channel in channel_utils.get_integrated_channels({'channel': None}):
         integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
         LOGGER.info(
-            'Processing learner [%s] for integrated channel using configuration: [%s]', user.id, integrated_channel
-        )
+            '[Integrated Channel] Processing learner for transmission. Configuration: {configuration},'
+            ' User: {user_id}'.format(
+                configuration=integrated_channel,
+                user_id=user.id))
         integrated_channel.transmit_single_learner_data(
             learner_to_transmit=user,
             course_run_id=course_run_id,
@@ -107,11 +119,11 @@ def transmit_single_learner_data(username, course_run_id):
 
     duration = time.time() - start
     LOGGER.info(
-        'Learner data transmission task for user: [%s] and course [%s] took [%s] seconds',
-        username,
-        course_run_id,
-        duration
-    )
+        '[Integrated Channel] Single learner data transmission task finished.'
+        ' Course: {course_run}, Duration: {duration}, Username: {username}'.format(
+            username=username,
+            course_run=course_run_id,
+            duration=duration))
 
 
 @shared_task
