@@ -153,6 +153,12 @@ class CourseCatalogApiClient(object):
             )
             response = cache.get(cache_key)
             if not response:
+                LOGGER.info(
+                    'ENT-2390-1 | Calling discovery service for search/all/ '
+                    'data with content_filter_query %s and query_params %s',
+                    content_filter_query,
+                    query_params,
+                )
                 # Response is not cached, so make a call.
                 response = self.get_catalog_results_from_discovery(
                     content_filter_query,
@@ -160,6 +166,13 @@ class CourseCatalogApiClient(object):
                     traverse_pagination
                 )
                 cache.set(cache_key, response, settings.ENTERPRISE_API_CACHE_TIMEOUT)
+            else:
+                LOGGER.info(
+                    'ENT-2390-2 | Got search/all/ data from the cache with '
+                    'content_filter_query %s and query_params %s',
+                    content_filter_query,
+                    query_params,
+                )
         except Exception as ex:  # pylint: disable=broad-except
             LOGGER.exception(
                 'Attempted to call course-discovery search/all/ endpoint with the following parameters: '
