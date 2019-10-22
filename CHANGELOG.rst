@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.8] - 2019-10-22
+---------------------
+
+* Adding logging to search/all/ endpoint in discovery api client
+
 [2.0.7] - 2019-10-21
 ---------------------
 
