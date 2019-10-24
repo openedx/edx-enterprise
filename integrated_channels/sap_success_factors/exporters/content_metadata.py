@@ -21,6 +21,7 @@ from integrated_channels.utils import (
     UNIX_MAX_DATE_STRING,
     UNIX_MIN_DATE_STRING,
     current_time_is_in_interval,
+    get_image_url,
     parse_datetime_to_epoch_millis,
 )
 
@@ -112,13 +113,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         """
         Return the image URI of the content item.
         """
-        image_url = ''
-        if content_metadata_item['content_type'] == 'program':
-            image_url = content_metadata_item.get('card_image_url')
-        elif content_metadata_item['content_type'] in ['course', 'courserun']:
-            image_url = content_metadata_item.get('image_url')
-
-        return image_url
+        return get_image_url(content_metadata_item)
 
     def transform_launch_points(self, content_metadata_item):
         """

@@ -15,6 +15,7 @@ from django.apps import apps
 
 from enterprise.utils import get_closest_course_run, get_language_code
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
+from integrated_channels.utils import get_image_url
 
 LOGGER = getLogger(__name__)
 
@@ -33,7 +34,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         'ID': 'key',
         'Title': 'title',
         'Description': 'description',
-        'Thumbnail': 'card_image_url',
+        'Thumbnail': 'image',
         'URL': 'enrollment_url',
         'IsActive': 'is_active',
         'LastModifiedUTC': 'modified',
@@ -97,6 +98,12 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
                 duration = "{hours}:{minutes}:00".format(hours=hours, minutes=minutes)
 
         return duration
+
+    def transform_image(self, content_metadata_item):
+        """
+        Return the image URI of the content item.
+        """
+        return get_image_url(content_metadata_item)
 
     def transform_languages(self, content_metadata_item):
         """
