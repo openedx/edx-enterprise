@@ -536,3 +536,64 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_subjects)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert sorted(exporter.transform_subjects(item_content_metadata)) == sorted(expected_subjects)
+
+    @ddt.data(
+        (
+            {
+                'aggregation_key': 'course:edX+DemoX',
+                'title': 'edX Demonstration Course',
+                'key': 'edX+DemoX',
+                'content_type': 'course',
+                'image_url': 'https://edx.devstack.lms:18000/'
+                             'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
+                'short_description': 'Some short description.',
+                'full_description': 'Detailed description of edx demo course.',
+            },
+            'https://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg'
+        ),
+        (
+            {
+                'number': 'DemoX',
+                'org': 'edX',
+                'seat_types': ['verified', 'audit'],
+                'key': 'course-v1:edX+DemoX+Demo_Course',
+                'availability': 'Current',
+                'title': 'edX Demonstration Course',
+                'content_type': 'courserun',
+                'image_url': 'https://edx.devstack.lms:18000/'
+                             'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
+            },
+            'https://edx.devstack.lms:18000/asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg'
+        ),
+        (
+            {
+
+                'uuid': '5742ec8d-25ce-43b7-a158-6dad82034ca2',
+                'title': 'edX Demonstration program',
+                'published': True,
+                'language': [],
+                'type': 'Verified Certificate',
+                'status': 'active',
+                'content_type': 'program',
+                'card_image_url': 'https://edx.devstack.discovery/'
+                                  'media/programs/banner_images/5742ec8d-25ce-43b7-a158-6dad82034ca2.jpg',
+            },
+            'https://edx.devstack.discovery/media/programs/banner_images/5742ec8d-25ce-43b7-a158-6dad82034ca2.jpg',
+        ),
+        (
+            {
+                'title': 'INVALID COURSE',
+                'content_type': 'INVALID-CONTENT_TYPE',
+            },
+            '',
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_image(self, content_metadata_item, expected_thumbnail_url):
+        """
+        Transforming a image gives back the thumbnail URI by checking the
+        content type of the provided `content_metadata_item`.
+        """
+        exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_image(content_metadata_item) == expected_thumbnail_url

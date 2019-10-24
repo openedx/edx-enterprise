@@ -9,7 +9,7 @@ from logging import getLogger
 
 from enterprise.utils import get_closest_course_run, get_course_run_duration_info
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.utils import strip_html_tags
+from integrated_channels.utils import get_image_url, strip_html_tags
 
 LOGGER = getLogger(__name__)
 
@@ -78,13 +78,7 @@ class DegreedContentMetadataExporter(ContentMetadataExporter):  # pylint: disabl
         """
         Return the image URI of the content item.
         """
-        image_url = ''
-        if content_metadata_item['content_type'] in ['course', 'program']:
-            image_url = content_metadata_item.get('card_image_url')
-        elif content_metadata_item['content_type'] == 'courserun':
-            image_url = content_metadata_item.get('image_url')
-
-        return image_url
+        return get_image_url(content_metadata_item)
 
     def transform_program_key(self, content_metadata_item):
         """

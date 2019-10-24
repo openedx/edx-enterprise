@@ -136,3 +136,16 @@ def strfdelta(tdelta, fmt='{D:02}d {H:02}h {M:02}m {S:02}s', input_type='timedel
             values[field], remainder = divmod(remainder, constants[field])
 
     return f.format(fmt, **values)
+
+
+def get_image_url(content_metadata_item):
+    """
+    Return the image URI of the content item.
+    """
+    image_url = ''
+    if content_metadata_item['content_type'] == 'program':
+        image_url = content_metadata_item.get('card_image_url')
+    elif content_metadata_item['content_type'] in ['course', 'courserun']:
+        image_url = content_metadata_item.get('image_url')
+
+    return image_url

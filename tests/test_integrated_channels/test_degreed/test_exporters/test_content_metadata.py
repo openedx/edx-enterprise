@@ -59,8 +59,8 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
                 'title': 'edX Demonstration Course',
                 'key': 'edX+DemoX',
                 'content_type': 'course',
-                'card_image_url': 'https://edx.devstack.lms:18000/'
-                                  'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
+                'image_url': 'https://edx.devstack.lms:18000/'
+                             'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
                 'short_description': 'Some short description.',
                 'full_description': 'Detailed description of edx demo course.',
             },
