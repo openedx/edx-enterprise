@@ -268,7 +268,7 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'id', 'enterprise_customer', 'user_id', 'user', 'data_sharing_consent_records', 'groups'
+            'id', 'enterprise_customer', 'active', 'user_id', 'user', 'data_sharing_consent_records', 'groups'
         )
 
     user = UserSerializer()
@@ -305,10 +305,11 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'enterprise_customer', 'username'
+            'enterprise_customer', 'username', 'active'
         )
 
     username = serializers.CharField(max_length=30)
+    active = serializers.BooleanField(required=False, default=True)
     user = None
 
     def validate_username(self, value):
@@ -330,12 +331,19 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         Save the EnterpriseCustomerUser.
         """
         enterprise_customer = self.validated_data['enterprise_customer']
+        active = self.validated_data.get('active', True)
+        defaults = {'active': active}
 
-        ecu = models.EnterpriseCustomerUser(
+        __, created = models.EnterpriseCustomerUser.objects.update_or_create(
             user_id=self.user.pk,
             enterprise_customer=enterprise_customer,
+            defaults=defaults,
         )
-        ecu.save()
+        if not created and active:
+            # if learner has activated enterprise we need to de-activate other enterprises learner is linked to
+            models.EnterpriseCustomerUser.objects.filter(
+                user_id=self.user.pk
+            ).exclude(enterprise_customer=enterprise_customer).update(active=False)
 
 
 class CourseDetailSerializer(ImmutableStateSerializer):
