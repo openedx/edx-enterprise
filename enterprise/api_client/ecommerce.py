@@ -65,3 +65,41 @@ class EcommerceApiClient(object):
         if price != mode['min_price']:
             return format_price(price, currency)
         return mode['original_price']
+
+    def create_manual_enrollment_orders(self, enrollments):
+        """
+        Calls ecommerce to create orders for the manual enrollments passed in.
+
+        `enrollments` should be a list of enrollments with the following format:
+        {
+            "lms_user_id": <int>,
+            "username": <str>,
+            "email": <str>,
+            "course_run_key": <str>
+        }
+
+        Since `student.CourseEnrollment` lives in LMS, we're just passing around dicts of the relevant information.
+        """
+        try:
+            order_repsonse = self.client.manual_course_enrollment_order.post(
+                {
+                    "enrollments": enrollments
+                }
+            )
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                "Failed to create order for manual enrollments for the following enrollments: %s. Reason: %s",
+                enrollments,
+                str(exc)
+            )
+        order_creations = order_repsonse["orders"]
+        successful_creations = [order for order in order_creations if order["status"] == "success"]
+        failed_creations = [order for order in order_creations if order["status"] == "failure"]
+        LOGGER.info(
+            "Successfully created orders for the following manual enrollments. %s",
+            successful_creations
+        )
+        LOGGER.error(
+            "Failed to created orders for the following manual enrollments. %s",
+            failed_creations
+        )
