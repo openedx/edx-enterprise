@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.9] - 2019-10-28
+---------------------
+
+* Updated image url field in content metadata export for cornerstone and degreed
+
 [2.0.8] - 2019-10-22
 ---------------------
 
