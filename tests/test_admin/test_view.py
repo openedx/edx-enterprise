@@ -249,13 +249,21 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
         """
         Test view GET response for common parts.
         """
+        if linked_learners:
+            learner_ids = [learner.user_id for learner in linked_learners]
+            # get sorted list of learners to match it with API results
+            sorted_linked_learners = list(EnterpriseCustomerUser.objects.filter(
+                user_id__in=learner_ids
+            ))
+        else:
+            sorted_linked_learners = linked_learners
         assert response.status_code == 200
         self._test_common_context(response.context)
-        assert list(response.context[self.context_parameters.LEARNERS]) == linked_learners
+        assert list(response.context[self.context_parameters.LEARNERS]) == sorted_linked_learners
         assert list(response.context[self.context_parameters.PENDING_LEARNERS]) == pending_linked_learners
         assert response.context[self.context_parameters.ENTERPRISE_CUSTOMER] == self.enterprise_customer
         assert not response.context[self.context_parameters.MANAGE_LEARNERS_FORM].is_bound
-        self._verify_pagination(response.context[self.context_parameters.LEARNERS], linked_learners)
+        self._verify_pagination(response.context[self.context_parameters.LEARNERS], sorted_linked_learners)
 
     def test_get_not_logged_in(self):
         assert settings.SESSION_COOKIE_NAME not in self.client.cookies  # precondition check - no session cookie
@@ -387,15 +395,19 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                     id=i + 10,  # Just to make sure we don't get IntegrityError.
                 ).id
             )
-            linked_learners.append(learner)
+            linked_learners.append(learner.user_id)
 
+        # get sorted list of learners to match it with API results
+        sorted_linked_learners = list(EnterpriseCustomerUser.objects.filter(
+            user_id__in=linked_learners
+        ))
         # Verify we get the paginated result for correct page.
         response = self.client.get('{view_url}?page={page_number}'.format(
             view_url=self.view_url, page_number=current_page_number
         ))
         self._verify_pagination(
             response.context[self.context_parameters.LEARNERS],
-            linked_learners,
+            sorted_linked_learners,
             page_number=expected_page_number,
             page_start=page_start,
             page_end=page_end
