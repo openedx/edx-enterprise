@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[2.0.10] - 2019-10-29
+---------------------
+
+* Add method to Ecommerce API client to call the manual enrollment order API
+
 [2.0.9] - 2019-10-28
 ---------------------
 
