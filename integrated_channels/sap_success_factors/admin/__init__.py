@@ -50,6 +50,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
         'has_access_token',
         'transmission_chunk_size',
         'additional_locales',
+        'catalogs_to_transmit',
     )
 
     list_display = (
