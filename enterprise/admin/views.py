@@ -47,6 +47,7 @@ from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerUser,
+    EnterpriseEnrollmentSource,
     PendingEnterpriseCustomerUser,
 )
 from enterprise.utils import (
@@ -453,7 +454,10 @@ class EnterpriseCustomerManageLearnersView(View):
             if succeeded:
                 __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
-                    course_id=course_id
+                    course_id=course_id,
+                    defaults={
+                        'source': EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
+                    }
                 )
                 if created:
                     track_enrollment('admin-enrollment', user.id, course_id)
@@ -543,7 +547,8 @@ class EnterpriseCustomerManageLearnersView(View):
                 email,
                 course_mode,
                 *course_ids,
-                cohort=cohort
+                cohort=cohort,
+                enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
             )
             pending.append(pending_user)
 
@@ -583,7 +588,8 @@ class EnterpriseCustomerManageLearnersView(View):
             pending_user = enterprise_customer.enroll_user_pending_registration(
                 email,
                 course_mode,
-                course_id
+                course_id,
+                enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
             )
             pending.append(pending_user)
 

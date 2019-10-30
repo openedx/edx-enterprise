@@ -442,7 +442,8 @@ class EnterpriseCustomer(TimeStampedModel):
                 course_id=course_id,
                 defaults={
                     'course_mode': course_mode,
-                    'cohort_name': kwargs.get('cohort', None)
+                    'cohort_name': kwargs.get('cohort', None),
+                    'source': kwargs.get('enrollment_source', None)
                 }
             )
         return pending_ecu
@@ -859,6 +860,40 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
 
 
 @python_2_unicode_compatible
+class EnterpriseEnrollmentSource(TimeStampedModel):
+    """
+    Define a Name and Source for all Enterprise Enrollment Sources.
+
+    .. no_pii:
+    """
+
+    MANUAL = 'manual'
+    API = 'enterprise_api'
+    ENROLLMENT_URL = 'enrollment_url'
+    OFFER_REDEMPTION = 'offer_redemption'
+    B2C_SITE = 'b2c_site'
+
+    name = models.CharField(max_length=64)
+    slug = models.SlugField(max_length=30, unique=True)
+
+    @classmethod
+    def get_source(cls, source_slug):
+        """
+        Retrieve the source based on the Slug provided.
+        """
+        try:
+            return cls.objects.get(slug=source_slug)
+        except EnterpriseEnrollmentSource.DoesNotExist:
+            return None
+
+    def __str__(self):
+        """
+        Create string representation of the source.
+        """
+        return "Enrollment Source: {name}, Slug: {slug}".format(name=self.name, slug=self.slug)
+
+
+@python_2_unicode_compatible
 class PendingEnrollment(TimeStampedModel):
     """
     Track future enrollments for PendingEnterpriseCustomerUser.
@@ -889,6 +924,12 @@ class PendingEnrollment(TimeStampedModel):
         null=True
     )
     history = HistoricalRecords()
+    source = models.ForeignKey(
+        EnterpriseEnrollmentSource,
+        blank=False,
+        null=True,
+        on_delete=models.SET_NULL
+    )
 
     class Meta(object):
         app_label = 'enterprise'
@@ -1106,6 +1147,12 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         )
     )
     history = HistoricalRecords()
+    source = models.ForeignKey(
+        EnterpriseEnrollmentSource,
+        blank=False,
+        null=True,
+        on_delete=models.SET_NULL
+    )
 
     @property
     def audit_reporting_disabled(self):
