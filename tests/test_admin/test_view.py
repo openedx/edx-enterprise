@@ -33,6 +33,7 @@ from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerUser,
+    EnterpriseEnrollmentSource,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
@@ -653,6 +654,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         enrollment = all_enterprise_enrollments[0]
         assert enrollment.enterprise_customer_user.user == user
         assert enrollment.course_id == course_id
+        if not enrollment_exists:
+            assert enrollment.source is not None
+            assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
         num_messages = len(mail.outbox)
         assert num_messages == 1
 
@@ -718,6 +722,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             if user:
                 assert enrollment.enterprise_customer_user.user == user
             assert enrollment.course_id == course_id
+            assert enrollment.source is not None
+            assert enrollment.source.slug == EnterpriseEnrollmentSource.MANUAL
             num_messages = len(mail.outbox)
             assert num_messages == enrollment_count
 

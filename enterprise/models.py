@@ -435,7 +435,8 @@ class EnterpriseCustomer(TimeStampedModel):
                 course_id=course_id,
                 defaults={
                     'course_mode': course_mode,
-                    'cohort_name': kwargs.get('cohort', None)
+                    'cohort_name': kwargs.get('cohort', None),
+                    'source': kwargs.get('enrollment_source', None)
                 }
             )
         return pending_ecu
@@ -823,6 +824,16 @@ class EnterpriseEnrollmentSource(TimeStampedModel):
 
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=30, unique=True)
+
+    @classmethod
+    def get_source(cls, source_slug):
+        """
+        Retrieve the source based on the Slug provided.
+        """
+        try:
+            return cls.objects.get(slug=source_slug)
+        except EnterpriseEnrollmentSource.DoesNotExist:
+            return None
 
     def __str__(self):
         """
