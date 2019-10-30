@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` models module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import logging
 import unittest
 
 import ddt
@@ -12,6 +13,7 @@ import mock
 from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
+from testfixtures import LogCapture
 
 from django.core.exceptions import ValidationError
 from django.core.files import File
@@ -453,6 +455,69 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
 
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
+
+    @mock.patch('enterprise.models.get_ecommerce_worker_user')
+    @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
+    @mock.patch('enterprise.api_client.ecommerce.EcommerceApiClient.create_manual_enrollment_orders')
+    def test_create_order_for_enrollment(self, utils_mock, ecommerce_api_client_init_mock,  # pylint: disable=unused-argument
+                                         ecommerce_api_client_call_mock):  # pylint: disable=unused-argument
+        """
+        Test that expected logs appear when we try to create an order for a course while enrolling an enterprise user.
+        """
+        user = factories.UserFactory()
+        utils_mock.return_value = user
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+
+        expected_msg = 'Creating order for enterprise learner with id [{}] for enrollment in course with id: [{}]'\
+            .format(enterprise_customer_user.user_id, course_run_id)
+
+        with LogCapture(level=logging.DEBUG) as log_capture:
+            enterprise_customer_user.create_order_for_enrollment(course_run_id)
+            assert expected_msg in log_capture.records[0].getMessage()
+
+    @mock.patch('enterprise.models.get_ecommerce_worker_user')
+    def test_create_order_error_cannot_retrieve_service_worker(self, utils_mock):
+        utils_mock.return_value = None
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+
+        expected_messages = [
+            'Creating order for enterprise learner with id [{}] for enrollment in course with id: [{}]'.format
+            (enterprise_customer_user.user_id,
+             course_run_id),
+            'Could not create order for enterprise learner with id [{}] for enrollment in course with id [{}]. Reason: '
+            '[{}]'.format(
+                enterprise_customer_user.user_id,
+                course_run_id,
+                'Failed to retrieve a valid ecommerce worker.')
+        ]
+
+        with LogCapture(level=logging.DEBUG) as log_capture:
+            enterprise_customer_user.create_order_for_enrollment(course_run_id)
+            for index, message in enumerate(expected_messages):
+                assert message in log_capture.records[index].getMessage()
+
+    @mock.patch('enterprise.models.get_ecommerce_worker_user')
+    def test_create_order_error_cannot_create_ecommerce_api_client(self, utils_mock):
+        user = factories.UserFactory()
+        utils_mock.return_value = user
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
+        course_run_id = 'course-v1:edX+DemoX+Demo_Course'
+
+        expected_messages = [
+            'Creating order for enterprise learner with id [{}] for enrollment in course with id: [{}]'.format(
+                enterprise_customer_user.user_id, course_run_id),
+            'edx-enterprise unexpectedly failed as if not installed in an OpenEdX platform',
+            'Could not create order for enterprise learner with id [{}] for enrollment in course with id [{}]'.format(
+                enterprise_customer_user.user_id,
+                course_run_id),
+        ]
+
+        with LogCapture(level=logging.DEBUG) as log_capture:
+            enterprise_customer_user.create_order_for_enrollment(course_run_id)
+            for index, message in enumerate(expected_messages):
+                assert message in log_capture.records[index].getMessage()
 
 
 @mark.django_db

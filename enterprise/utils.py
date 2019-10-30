@@ -982,8 +982,22 @@ def get_enterprise_worker_user():
     """
     Return the user object of enterprise worker user.
     """
+    return _get_service_worker(settings.ENTERPRISE_SERVICE_WORKER_USERNAME)
+
+
+def get_ecommerce_worker_user():
+    """
+    Return the user object of ecommerce worker user.
+    """
+    return _get_service_worker(settings.ECOMMERCE_SERVICE_WORKER_USERNAME)
+
+
+def _get_service_worker(service_worker_username):
+    """
+    Retrieve the specified service worker object. If user cannot be found then returns None.
+    """
     try:
-        return User.objects.get(username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME)
+        return User.objects.get(username=service_worker_username)
     except User.DoesNotExist:
         return None
 

@@ -40,9 +40,16 @@ from model_utils.models import TimeStampedModel
 
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
+from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
-from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, get_configuration_value
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    CourseEnrollmentPermissionError,
+    NotConnectedToOpenEdX,
+    get_configuration_value,
+    get_ecommerce_worker_user,
+)
 from enterprise.validators import validate_image_extension, validate_image_size
 
 try:
@@ -741,6 +748,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 enterprise_customer_user=self,
                 course_id=course_run_id
             )
+            # create an ecommerce order for the course enrollment
+            self.create_order_for_enrollment(course_run_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(
@@ -763,8 +772,38 @@ class EnterpriseCustomerUser(TimeStampedModel):
         return False
 
     def update_session(self, request):
-        """Update the session of a request for this learner."""
+        """
+        Update the session of a request for this learner.
+        """
         request.session['enterprise_customer'] = self.enterprise_customer.serialized
+
+    def create_order_for_enrollment(self, course_run_id):
+        """
+        Create an order on the Ecommerce side for tracking the course enrollment of a enterprise customer user.
+        """
+        LOGGER.info("Creating order for enterprise learner with id [%s] for enrollment in course with id: [%s]",
+                    self.user_id,
+                    course_run_id)
+        # get instance of the EcommerceApiClient and attempt to create order
+        ecommerce_service_worker = get_ecommerce_worker_user()
+        failure_log_msg = 'Could not create order for enterprise learner with id [%s] for enrollment in course with ' \
+                          'id [%s]. Reason: [%s]'
+        if ecommerce_service_worker is not None:
+            try:
+                ecommerce_api_client = EcommerceApiClient(ecommerce_service_worker)
+            except NotConnectedToOpenEdX as exc:
+                LOGGER.exception(failure_log_msg, self.user_id, course_run_id, str(exc))
+            else:
+                # pull data needed for creating the order
+                course_enrollments = [{
+                    'lms_user_id': self.user_id,
+                    'username': self.username,
+                    'email': self.user_email,
+                    'course_run_key': course_run_id,
+                }]
+                ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
+        else:
+            LOGGER.warning(failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.')
 
 
 @python_2_unicode_compatible
