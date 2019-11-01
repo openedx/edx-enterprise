@@ -1,0 +1,41 @@
+<main>
+    <div class="enterprise-container">
+        <div class="select-enterprise-container">
+
+            <h2 class="select-enterprise-title">Select an organization</h2>
+            <div class="select-enterprise-message">
+                <p>You have access to multiple organizations. Select the organization that you will use to sign up for courses. If you want to change organizations, sign out and sign back in.</p>
+            </div>
+
+            <form action="" method="POST" id="select-enterprise-form">
+
+                <div
+                    role="alert"
+                    aria-live="assertive"
+                    class="select-enterprise errorlist is-hidden"
+                    id="select-enterprise-form-error">
+                </div>
+
+                <div>
+                    <label for="id_enterprise">Organization:</label>
+                    <select name="enterprise" id="id_enterprise">
+                        <option value="6ae013d4-c5c4-474d-8da9-0e559b2448e2">batman</option>
+                        <option value="885f4d97-5a21-4e8a-8723-a434bc527e74">riddler</option>
+                    </select>
+                </div>
+
+                <div>
+                    <input type="hidden" name="success_url" value="/dashboard" id="id_success_url">
+                </div>
+
+                <button type="submit" class="background-input select-enterprise-submit-button"
+                    id="select-enterprise-submit">
+                    Continue
+                </button>
+                <span id="activate-progress-icon" class="icon fa fa-spinner fa-spin is-hidden"
+                    aria-hidden="true"></span>
+            </form>
+
+        </div>
+    </div>
+</main>

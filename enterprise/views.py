@@ -20,7 +20,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError, transaction
-from django.http import Http404
+from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils.decorators import method_decorator
 from django.utils.text import slugify
@@ -28,14 +28,17 @@ from django.utils.translation import get_language_from_request
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
+from django.views.generic.edit import FormView
 
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent
 from enterprise import constants, messages
+from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
+from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -91,13 +94,13 @@ def verify_edx_resources():
             )
 
 
-def get_global_context(request, enterprise_customer):
+def get_global_context(request, enterprise_customer=None):
     """
     Get the set of variables that are needed by default across views.
     """
     platform_name = get_configuration_value("PLATFORM_NAME", settings.PLATFORM_NAME)
     # pylint: disable=no-member
-    return {
+    context = {
         'enterprise_customer': enterprise_customer,
         'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
         'LANGUAGE_CODE': get_language_from_request(request),
@@ -110,18 +113,24 @@ def get_global_context(request, enterprise_customer):
         'platform_name': platform_name,
         'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
         'welcome_text': constants.WELCOME_TEXT.format(platform_name=platform_name),
-        'enterprise_welcome_text': constants.ENTERPRISE_WELCOME_TEXT.format(
-            enterprise_customer_name=enterprise_customer.name,
-            platform_name=platform_name,
-            strong_start='<strong>',
-            strong_end='</strong>',
-            line_break='<br/>',
-            privacy_policy_link_start="<a href='{pp_url}' target='_blank'>".format(
-                pp_url=get_configuration_value('PRIVACY', 'https://www.edx.org/edx-privacy-policy', type='url'),
-            ),
-            privacy_policy_link_end="</a>",
-        ),
     }
+
+    if enterprise_customer is not None:
+        context.update({
+            'enterprise_welcome_text': constants.ENTERPRISE_WELCOME_TEXT.format(
+                enterprise_customer_name=enterprise_customer.name,
+                platform_name=platform_name,
+                strong_start='<strong>',
+                strong_end='</strong>',
+                line_break='<br/>',
+                privacy_policy_link_start="<a href='{pp_url}' target='_blank'>".format(
+                    pp_url=get_configuration_value('PRIVACY', 'https://www.edx.org/edx-privacy-policy', type='url'),
+                ),
+                privacy_policy_link_end="</a>",
+            ),
+        })
+
+    return context
 
 
 def get_price_text(price, request):
@@ -806,6 +815,69 @@ class GrantDataSharingPermissions(View):
             consent_record.save()
 
         return redirect(success_url if consent_provided else failure_url)
+
+
+@method_decorator(login_required, name='dispatch')
+class EnterpriseSelectionView(FormView):
+    """
+    Allow an enterprise learner to activate one of learner's linked enterprises.
+    """
+
+    form_class = EnterpriseSelectionForm
+    template_name = 'enterprise/enterprise_customer_select_form.html'
+
+    def get_initial(self):
+        """Return the initial data to use for forms on this view."""
+        initial = super(EnterpriseSelectionView, self).get_initial()
+        enterprises = EnterpriseCustomerUser.objects.filter(
+            user_id=self.request.user.id
+        ).values_list(
+            'enterprise_customer__uuid', 'enterprise_customer__name'
+        )
+        initial.update({
+            'enterprises': [(str(uuid), name) for uuid, name in enterprises],
+            'success_url': self.request.GET.get('success_url'),
+            'user_id': self.request.user.id
+        })
+        return initial
+
+    def get_context_data(self, **kwargs):
+        """Return the context data needed to render the view."""
+        context_data = super(EnterpriseSelectionView, self).get_context_data(**kwargs)
+        context_data.update({
+            'page_title': _(u'Select Organization'),
+            'select_enterprise_message_title': _(u'Select an organization'),
+            'select_enterprise_message_subtitle': ENTERPRISE_SELECT_SUBTITLE,
+        })
+        context_data.update(get_global_context(self.request, None))
+        return context_data
+
+    def form_invalid(self, form):
+        """
+        If the form is invalid then return the errors.
+        """
+        # flatten the list of lists
+        errors = [item for sublist in form.errors.values() for item in sublist]
+        return JsonResponse({'errors': errors}, status=400)
+
+    def form_valid(self, form):
+        """
+        If the form is valid, activate the selected enterprise and return `success_url`.
+        """
+        enterprise_customer = form.cleaned_data['enterprise']
+        serializer = EnterpriseCustomerUserWriteSerializer(data={
+            'enterprise_customer': enterprise_customer,
+            'username': self.request.user.username,
+            'active': True
+        })
+        if serializer.is_valid():
+            serializer.save()
+            LOGGER.info(
+                '[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
+                enterprise_customer,
+                self.request.user.username
+            )
+            return JsonResponse({'success_url': form.cleaned_data['success_url']})
 
 
 class HandleConsentEnrollment(View):
