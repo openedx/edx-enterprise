@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.14] - 2019-11-07
+---------------------
+
+* Add Enterprise selection page to allow a learner to select one of linked enterprises
+
 [2.0.13] - 2019-11-07
 ---------------------
 
