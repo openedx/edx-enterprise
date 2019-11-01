@@ -5,13 +5,14 @@ Tests for the `edx-enterprise` serializer module.
 
 from __future__ import absolute_import, unicode_literals
 
+import json
+
 import ddt
 from pytest import mark
 from rest_framework.reverse import reverse
 
 from django.conf import settings
 from django.contrib.auth.models import Permission
-from django.test import override_settings
 
 from enterprise.api.v1.serializers import ImmutableStateSerializer
 from test_utils import FAKE_UUIDS, TEST_USERNAME, APITest, factories
@@ -63,28 +64,85 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
     Tests for the ``EnterpriseCustomerUserWriteSerializer``.
     """
 
+    @classmethod
+    def setUpClass(cls):
+        """
+        Perform operations common for all tests once.
+        """
+        super(TestEnterpriseCustomerUserWriteSerializer, cls).setUpClass()
+        cls.ent_user_link_url = settings.TEST_SERVER + reverse('enterprise-learner-list')
+        cls.permission = Permission.objects.get(name='Can add Enterprise Customer Learner')
+        cls.enterprise_uuids = FAKE_UUIDS[:4]
+        for enterprise_uuid in cls.enterprise_uuids:
+            factories.EnterpriseCustomerFactory(uuid=enterprise_uuid)
+
+    def setUp(self):
+        """
+        Perform operations common to all tests.
+        """
+        super(TestEnterpriseCustomerUserWriteSerializer, self).setUp()
+        self.user.is_staff = True
+        self.user.save()
+        self.user.user_permissions.add(self.permission)
+
+    def _link_learner_to_enterprise(self, data, expected_data=None, expected_status_code=201):
+        """
+        links learner to enterprise and asserts api response has expected status code and data
+        """
+        response = self.client.post(self.ent_user_link_url, data=data)
+        assert response.status_code == expected_status_code
+        response = self.load_json(response.content)
+        expected_data = expected_data if expected_data else data
+        if expected_status_code == 201:
+            self.assertDictEqual(expected_data, response)
+
     @ddt.data(
         (TEST_USERNAME, 201),
         ('non-existing-username', 400),
     )
     @ddt.unpack
-    @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     def test_validate_username(self, username, expected_status_code):
         """
         Success for POSTing with users (determined by username) depends on whether the user exists.
         """
-        self.user.is_staff = True
-        self.user.save()
-        permission = Permission.objects.get(name='Can add Enterprise Customer Learner')
-        self.user.user_permissions.add(permission)
-        factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
         data = {
-            'enterprise_customer': FAKE_UUIDS[0],
+            'enterprise_customer': self.enterprise_uuids[0],
             'username': username,
         }
+        self._link_learner_to_enterprise(data, data.update({'active': True}), expected_status_code)
 
-        response = self.client.post(settings.TEST_SERVER + reverse('enterprise-learner-list'), data=data)
-        assert response.status_code == expected_status_code
-        response = self.load_json(response.content)
-        if expected_status_code == 201:
-            self.assertDictEqual(data, response)
+    def test_active_inactive_enterprise_customers(self):
+        """
+        Tests activating and de-activating enterprise customer for learner.
+        """
+
+        # Link learner with 4 different enterprises
+        for enterprise_uuid in self.enterprise_uuids:
+            data = {
+                'enterprise_customer': enterprise_uuid,
+                'username': TEST_USERNAME,
+                'active': True,
+            }
+            self._link_learner_to_enterprise(data)
+
+        # activating one of the existing enterprise should de-activate reset of enterprise
+        active_enterprise = self.enterprise_uuids[0]
+        expected_inactive_enterprises = list(set(self.enterprise_uuids) - set([active_enterprise]))
+        data['enterprise_customer'] = active_enterprise
+        self._link_learner_to_enterprise(data)
+
+        response = self.client.get(self.ent_user_link_url)
+        response_json = json.loads(response.content)
+
+        active_enterprises, inactive_enterprises = [], []
+        for result in response_json['results']:
+            enterprise_uuid = result['enterprise_customer']['uuid']
+            if not result['active']:
+                inactive_enterprises.append(enterprise_uuid)
+            else:
+                active_enterprises.append(enterprise_uuid)
+
+        self.assertEqual(len(active_enterprises), 1)
+        self.assertEqual(active_enterprises[0], active_enterprise)
+        # assert all other enterprises learner is linked to are inactive
+        self.assertEqual(sorted(inactive_enterprises), sorted(expected_inactive_enterprises))

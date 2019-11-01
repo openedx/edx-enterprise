@@ -388,6 +388,7 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         if status_code == 201:
+            data.update({'active': True})
             self.assertDictEqual(data, response)
 
     def test_post_enterprise_customer_user_logged_out(self):
@@ -454,7 +455,7 @@ class TestEnterpriseAPIViews(APITest):
 
             }],
             [{
-                'id': 1, 'user_id': 0, 'user': None, 'data_sharing_consent_records': [], 'groups': [],
+                'id': 1, 'user_id': 0, 'user': None, 'active': True, 'data_sharing_consent_records': [], 'groups': [],
                 'enterprise_customer': {
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'active': True, 'enable_data_sharing_consent': True,
