@@ -45,7 +45,10 @@ class Command(BaseCommand):
     Example usage:
         $ ./manage.py lms seed_enterprise_devstack_data
     """
-    help = 'Seeds an enterprise customer, users of various roles and permissions initial data in devstack for related Enterprise models'
+    help = '''
+    Seeds an enterprise customer, users of various roles and permissions initial 
+    data in devstack for related Enterprise models.
+    '''
 
     def _get_default_site(self):
         """ TODO """
@@ -222,11 +225,13 @@ class Command(BaseCommand):
         enterprise = self._create_enterprise(enterprise_users=enterprise_users)
         LOGGER.info(
             '\nSuccessfully created a new enterprise with the following data:' +
-            '\n|    Enterprise Customer: %s' +
-            '\n|    Enterprise Catalog: %s' +
+            '\n|    Enterprise Customer: %s (%s)' +
+            '\n|    Enterprise Catalog: %s (%s)' +
             '\n|    Enterprise Users (%d): %s',
-            enterprise['enterprise_customer'],
-            enterprise['enterprise_catalog'],
+            enterprise['enterprise_customer'].name,
+            enterprise['enterprise_customer'].uuid,
+            enterprise['enterprise_catalog'].title,
+            enterprise['enterprise_catalog'].uuid,
             len(enterprise['enterprise_linked_users']),
             enterprise['enterprise_linked_users'],
         )
