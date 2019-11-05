@@ -58,7 +58,7 @@ class Command(BaseCommand):
     def _create_enterprise_customer(self, site):
         """ TODO """
         customer_name = 'Test Enterprise'
-        enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(
+        enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
             name=customer_name,
             site_id=site.id,
             country='US',
