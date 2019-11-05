@@ -14,11 +14,6 @@ Change Log
 Unreleased
 ----------
 
-[2.0.11] - 2019-11-5
----------------------
-
-* Added EnterpriseEnrollment and Pending Enrollment Source Table and columns to the existing Enrollment tables to support tracking the Source of Enrollment.
-
 [2.0.10] - 2019-10-29
 ---------------------
 
