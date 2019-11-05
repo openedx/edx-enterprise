@@ -43,7 +43,7 @@ class Command(BaseCommand):
     Management command for populating Devstack with initial data for enterprise.
 
     Example usage:
-        $ ./manage.py lms create_enterprise_devstack_data
+        $ ./manage.py lms seed_enterprise_devstack_data
     """
     help = 'Seeds an enterprise customer, users of various roles and permissions initial data in devstack for related Enterprise models'
 
