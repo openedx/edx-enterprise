@@ -51,12 +51,12 @@ class Command(BaseCommand):
     '''
 
     def _get_default_site(self):
-        """ TODO """
+        """ Gets or creates the default devstack site example.com """
         site = Site.objects.get_or_create(name='example.com')
         return site
 
     def _create_enterprise_customer(self, site):
-        """ TODO """
+        """ Gets or creates an EnterpriseCustomer """
         customer_name = 'Test Enterprise'
         enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
             name=customer_name,
@@ -70,7 +70,7 @@ class Command(BaseCommand):
         return enterprise_customer
 
     def _create_catalog_for_enterprise(self, enterprise_customer):
-        """ TODO """
+        """ Gets or creates a catalog for an EnterpriseCustomer """
         catalog, __ = EnterpriseCustomerCatalog.objects.get_or_create(
             title='All Course Runs',
             enterprise_customer=enterprise_customer,
@@ -79,15 +79,20 @@ class Command(BaseCommand):
         return catalog
 
     def _create_enterprise_data_api_group(self):
-        """ TODO """
+        """ Ensures the `ENTERPRISE_DATA_API_ACCESS_GROUP` is created """
         Group.objects.get_or_create(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
 
     def _create_enterprise_enrollment_api_group(self):
-        """ TODO """
+        """ Ensures the `ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP` is created """
         Group.objects.get_or_create(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
 
     def _create_enterprise_user(self, username, role):
-        """ TODO """
+        """ 
+        Creates a new user with the specified `username` and `role` (e.g., 
+        'enterprise_learner'). The newly created user is added to the 
+        appropriate Django groups (e.g., data api access) and creates 
+        system-wide and feature role assignments.
+        """
         valid_roles = [
             ENTERPRISE_LEARNER_ROLE,
             ENTERPRISE_ADMIN_ROLE,
@@ -119,7 +124,7 @@ class Command(BaseCommand):
         return None
 
     def _add_user_to_groups(self, user, role):
-        """ TODO """
+        """ Adds a user with a given role to the appropriate groups """
         if role != ENTERPRISE_LEARNER_ROLE:
             data_api_group = Group.objects.get(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
             data_api_group.user_set.add(user)
@@ -127,7 +132,9 @@ class Command(BaseCommand):
             enrollment_api_group.user_set.add(user)
 
     def _create_system_wide_role_assignment(self, user, role):
-        """ TODO """
+        """ 
+        Gets or creates a system-wide role assignment for the specified user and role 
+        """
         system_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role)
         SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
             user=user,
@@ -135,7 +142,9 @@ class Command(BaseCommand):
         )
 
     def _create_feature_role_assignments(self, user, role):
-        """ TODO """
+        """ 
+        Gets or creates a feature role assignment for the specified user and role 
+        """
         if role != ENTERPRISE_LEARNER_ROLE:
             feature_roles = [
                 ENTERPRISE_CATALOG_ADMIN_ROLE,
@@ -151,7 +160,9 @@ class Command(BaseCommand):
                 )
 
     def _create_enterprise_customer_user(self, username, enterprise_customer):
-        """ TODO """
+        """
+        Gets or creates a EnterpriseCustomerUser associated with an EnterpriseCustomer 
+        """
         user, __ = User.objects.get_or_create(username=username)
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             user_id=user.pk,
@@ -160,7 +171,11 @@ class Command(BaseCommand):
         return enterprise_customer_user
 
     def _create_enterprise(self, enterprise_users):
-        """ TODO """
+        """
+        Creates a enterprise and its associated data, including the 
+        EnterpriseCustomer, an enterprise catalog, and initial users of 
+        varying roles.
+        """
         site, __ = self._get_default_site()
         enterprise_customer = self._create_enterprise_customer(site=site)
         enterprise_catalog = self._create_catalog_for_enterprise(
