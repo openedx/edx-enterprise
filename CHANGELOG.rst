@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.11] - 2019-11-06
+---------------------
+
+* Add management command to populate sample enterprise data in the LMS within devstack
+
 [2.0.10] - 2019-10-29
 ---------------------
 
