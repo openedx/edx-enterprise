@@ -38,6 +38,7 @@ CATALOG_CONTENT_FILTER = {
     'content_type': 'courserun',
 }
 
+
 class Command(BaseCommand):
     """
     Management command for populating Devstack with initial data for enterprise.
@@ -46,7 +47,7 @@ class Command(BaseCommand):
         $ ./manage.py lms seed_enterprise_devstack_data
     """
     help = '''
-    Seeds an enterprise customer, users of various roles and permissions initial 
+    Seeds an enterprise customer, users of various roles and permissions initial
     data in devstack for related Enterprise models.
     '''
 
@@ -233,7 +234,7 @@ class Command(BaseCommand):
             enterprise_users.append(self._create_enterprise_user(
                 username='{role}_{index}'.format(
                     role=ENTERPRISE_LEARNER_ROLE,
-                    index=i+1,
+                    index=i + 1,
                 ),
                 role=ENTERPRISE_LEARNER_ROLE
             ))
