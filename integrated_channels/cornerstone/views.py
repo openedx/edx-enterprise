@@ -17,7 +17,7 @@ class CornerstoneCoursesListView(generics.ListAPIView):
     """
         **Use Cases**
 
-            Get a list of courses to share on cornerstone filtered by a enterprise customer.
+            Get a list of courses to share on cornerstone filtered by an enterprise customer.
 
         **Example Requests**
 

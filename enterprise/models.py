@@ -1951,7 +1951,7 @@ class EnterpriseFeatureRole(UserRole):
 @python_2_unicode_compatible
 class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, UserRoleAssignment):
     """
-    Model to map users to a EnterpriseFeatureRole.
+    Model to map users to an EnterpriseFeatureRole.
 
     .. no_pii:
     """

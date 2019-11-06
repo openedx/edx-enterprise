@@ -125,11 +125,12 @@ class Command(BaseCommand):
 
     def _add_user_to_groups(self, user, role):
         """ Adds a user with a given role to the appropriate groups """
-        if role != ENTERPRISE_LEARNER_ROLE:
-            data_api_group = Group.objects.get(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
-            data_api_group.user_set.add(user)
-            enrollment_api_group = Group.objects.get(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
-            enrollment_api_group.user_set.add(user)
+        if role == ENTERPRISE_LEARNER_ROLE:
+            return
+        data_api_group = Group.objects.get(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
+        data_api_group.user_set.add(user)
+        enrollment_api_group = Group.objects.get(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
+        enrollment_api_group.user_set.add(user)
 
     def _create_system_wide_role_assignment(self, user, role):
         """
@@ -145,23 +146,24 @@ class Command(BaseCommand):
         """
         Gets or creates a feature role assignment for the specified user and role
         """
-        if role != ENTERPRISE_LEARNER_ROLE:
-            feature_roles = [
-                ENTERPRISE_CATALOG_ADMIN_ROLE,
-                ENTERPRISE_DASHBOARD_ADMIN_ROLE,
-                ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
-                ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
-            ]
-            for feature_role in feature_roles:
-                feature_role_obj, __ = EnterpriseFeatureRole.objects.get_or_create(name=feature_role)
-                EnterpriseFeatureUserRoleAssignment.objects.get_or_create(
-                    user=user,
-                    role=feature_role_obj,
-                )
+        if role == ENTERPRISE_LEARNER_ROLE:
+            return
+        feature_roles = [
+            ENTERPRISE_CATALOG_ADMIN_ROLE,
+            ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+            ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+            ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+        ]
+        for feature_role in feature_roles:
+            feature_role_obj, __ = EnterpriseFeatureRole.objects.get_or_create(name=feature_role)
+            EnterpriseFeatureUserRoleAssignment.objects.get_or_create(
+                user=user,
+                role=feature_role_obj,
+            )
 
     def _create_enterprise_customer_user(self, username, enterprise_customer):
         """
-        Gets or creates a EnterpriseCustomerUser associated with an EnterpriseCustomer
+        Gets or creates an EnterpriseCustomerUser associated with an EnterpriseCustomer
         """
         user, __ = User.objects.get_or_create(username=username)
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
@@ -172,7 +174,7 @@ class Command(BaseCommand):
 
     def _create_enterprise(self, enterprise_users):
         """
-        Creates a enterprise and its associated data, including the
+        Creates an enterprise and its associated data, including the
         EnterpriseCustomer, an enterprise catalog, and initial users of
         varying roles.
         """

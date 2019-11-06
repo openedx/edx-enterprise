@@ -500,7 +500,7 @@ class CatalogQueryView(APIView):
 
     def get(self, request, catalog_query_id):
         """
-        API endpoint for fetching a enterprise catalog query.
+        API endpoint for fetching an enterprise catalog query.
         """
         try:
             catalog_query = models.EnterpriseCatalogQuery.objects.get(pk=catalog_query_id)
