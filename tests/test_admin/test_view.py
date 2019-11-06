@@ -590,13 +590,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             # Allow us to send forms involving pending users
             email_or_username = getattr(user, 'username', getattr(user, 'user_email', None))
 
-        response = self.client.post(self.view_url, data={
-            ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email_or_username,
-            ManageLearnersForm.Fields.COURSE_MODE: mode,
-            ManageLearnersForm.Fields.COURSE: course_id,
-            ManageLearnersForm.Fields.PROGRAM: program_id,
-            ManageLearnersForm.Fields.NOTIFY: notify
-        })
+        with mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client"):
+            response = self.client.post(self.view_url, data={
+                ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email_or_username,
+                ManageLearnersForm.Fields.COURSE_MODE: mode,
+                ManageLearnersForm.Fields.COURSE: course_id,
+                ManageLearnersForm.Fields.PROGRAM: program_id,
+                ManageLearnersForm.Fields.NOTIFY: notify
+            })
         return response
 
     @mock.patch("enterprise.admin.views.track_enrollment")
@@ -725,7 +726,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_multi_enroll_user(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_multi_enroll_user(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         """
         Test that an existing learner can be enrolled in multiple courses.
         """
@@ -735,7 +742,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_multi_enroll_pending_user(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_multi_enroll_pending_user(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         """
         Test that a pending learner can be enrolled in multiple courses.
         """
@@ -745,7 +758,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enroll_no_course_detail(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_enroll_no_course_detail(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
         views_instance = views_client.return_value
@@ -780,7 +799,11 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed(
-            self, forms_client, views_client, course_catalog_client, track_enrollment
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
     ):
         """
         Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
@@ -943,7 +966,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_enrollment_error(self, forms_client, views_client, course_catalog_client, reverse_mock):
+    def test_post_enrollment_error(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            reverse_mock,
+    ):
         reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
@@ -975,7 +1004,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             views_client,
             course_catalog_client,
             reverse_mock,
-            logging_mock
+            logging_mock,
     ):
         reverse_mock.return_value = '/courses/course-v1:HarvardX+CoolScience+2016'
         catalog_instance = course_catalog_client.return_value
@@ -1059,7 +1088,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             self,
             catalog_client,
             views_client,
-            views_catalog_client
+            views_catalog_client,
     ):
         views_catalog_instance = views_catalog_client.return_value
         views_catalog_instance.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
@@ -1140,7 +1169,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
                 post_data[ManageLearnersForm.Fields.COURSE_MODE] = course_mode
             post_data[ManageLearnersForm.Fields.NOTIFY] = 'by_email' if notify else 'do_not_notify'
             post_data['enterprise_customer'] = self.enterprise_customer
-            response = self.client.post(self.view_url, data=post_data)
+            with mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client"):
+                response = self.client.post(self.view_url, data=post_data)
         return response
 
     def test_post_not_logged_in(self):
@@ -1287,7 +1317,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_post_link_and_enroll(self, forms_client, views_client, course_catalog_client, track_enrollment):
+    def test_post_link_and_enroll(
+            self,
+            forms_client,
+            views_client,
+            course_catalog_client,
+            track_enrollment,
+    ):
         """
         Test bulk upload with linking and enrolling
         """

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.13] - 2019-11-07
+---------------------
+
+* Add manual order creation to enterprise manual enrollment admin form
+
 [2.0.12] - 2019-11-06
 ---------------------
 
