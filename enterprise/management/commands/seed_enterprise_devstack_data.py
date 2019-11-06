@@ -87,10 +87,10 @@ class Command(BaseCommand):
         Group.objects.get_or_create(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)
 
     def _create_enterprise_user(self, username, role):
-        """ 
-        Creates a new user with the specified `username` and `role` (e.g., 
-        'enterprise_learner'). The newly created user is added to the 
-        appropriate Django groups (e.g., data api access) and creates 
+        """
+        Creates a new user with the specified `username` and `role` (e.g.,
+        'enterprise_learner'). The newly created user is added to the
+        appropriate Django groups (e.g., data api access) and creates
         system-wide and feature role assignments.
         """
         valid_roles = [
@@ -132,8 +132,8 @@ class Command(BaseCommand):
             enrollment_api_group.user_set.add(user)
 
     def _create_system_wide_role_assignment(self, user, role):
-        """ 
-        Gets or creates a system-wide role assignment for the specified user and role 
+        """
+        Gets or creates a system-wide role assignment for the specified user and role
         """
         system_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role)
         SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
@@ -142,8 +142,8 @@ class Command(BaseCommand):
         )
 
     def _create_feature_role_assignments(self, user, role):
-        """ 
-        Gets or creates a feature role assignment for the specified user and role 
+        """
+        Gets or creates a feature role assignment for the specified user and role
         """
         if role != ENTERPRISE_LEARNER_ROLE:
             feature_roles = [
@@ -161,7 +161,7 @@ class Command(BaseCommand):
 
     def _create_enterprise_customer_user(self, username, enterprise_customer):
         """
-        Gets or creates a EnterpriseCustomerUser associated with an EnterpriseCustomer 
+        Gets or creates a EnterpriseCustomerUser associated with an EnterpriseCustomer
         """
         user, __ = User.objects.get_or_create(username=username)
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
@@ -172,8 +172,8 @@ class Command(BaseCommand):
 
     def _create_enterprise(self, enterprise_users):
         """
-        Creates a enterprise and its associated data, including the 
-        EnterpriseCustomer, an enterprise catalog, and initial users of 
+        Creates a enterprise and its associated data, including the
+        EnterpriseCustomer, an enterprise catalog, and initial users of
         varying roles.
         """
         site, __ = self._get_default_site()
