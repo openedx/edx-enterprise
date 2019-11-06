@@ -39,6 +39,7 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
     validate_email_to_link,
 )
+from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
@@ -48,7 +49,12 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import get_configuration_value_for_site, send_email_notification_message, track_enrollment
+from enterprise.utils import (
+    get_configuration_value_for_site,
+    get_ecommerce_worker_user,
+    send_email_notification_message,
+    track_enrollment,
+)
 
 
 class TemplatePreviewView(View):
@@ -792,6 +798,14 @@ class EnterpriseCustomerManageLearnersView(View):
             if pending:
                 pending_messages.append(cls.get_pending_enrollment_message(pending, program_identifier))
 
+        enrollments = [{
+            "lms_user_id": success.id,
+            "email": success.email,
+            "username": success.username,
+            "course_run_key": course_id,
+        } for success in succeeded]
+        # Create an order to track the manual enrollments of non-pending accounts
+        EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
         cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
