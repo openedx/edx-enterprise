@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.12] - 2019-11-06
+---------------------
+
+* Update 'EnterpriseCustomerUser' model. Add 'create_order_for_enrollment'. Called during 'enroll'. Will create an ecommerce order for pending course enrollments.
+
 [2.0.11] - 2019-11-06
 ---------------------
 
