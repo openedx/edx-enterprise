@@ -6,10 +6,10 @@ from __future__ import absolute_import, unicode_literals
 import logging
 
 from django.contrib.auth.models import User, Group
-from django.core.management.base import BaseCommand
 from django.contrib.sites.models import Site
-from django.utils.text import slugify
+from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
+from django.utils.text import slugify
 
 from enterprise.constants import (
     ENTERPRISE_DATA_API_ACCESS_GROUP,
