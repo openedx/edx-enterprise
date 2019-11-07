@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.16] - 2019-11-07
+---------------------
+
+* Address defect ENT-2463. Add protection within EnterpriseCustomerUser model in enroll method during coure enrollments.
+
 [2.0.15] - 2019-11-07
 ---------------------
 
