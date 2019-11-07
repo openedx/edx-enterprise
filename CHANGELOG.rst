@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.15] - 2019-11-07
+---------------------
+
+* Added missing migration for EnterpriseCustomerUser
+
 [2.0.14] - 2019-11-07
 ---------------------
 
