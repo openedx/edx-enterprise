@@ -27,7 +27,7 @@ from django.core.exceptions import NON_FIELD_ERRORS, MultipleObjectsReturned, Ob
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import models
+from django.db import IntegrityError, models
 from django.template import Context, Template
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
@@ -744,10 +744,22 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 'cohort': cohort,
                 'is_upgrading': is_upgrading,
             })
-            EnterpriseCourseEnrollment.objects.get_or_create(
-                enterprise_customer_user=self,
-                course_id=course_run_id
-            )
+            try:
+                EnterpriseCourseEnrollment.objects.get_or_create(
+                    enterprise_customer_user=self,
+                    course_id=course_run_id
+                )
+            except IntegrityError:
+                # Added to try and fix ENT-2463. This can happen if the user is already a part of the enterprise because
+                # of the following:
+                # 1. (non-enterprise) CourseEnrollment data is created
+                # 2. An async task to is signaled to run after CourseEnrollment creation
+                #    (create_enterprise_enrollment_receiver)
+                # 3. Both async task and the code in the try block run `get_or_create` on `EnterpriseCourseEnrollment`
+                # 4. A race condition happens and it tries to create the same data twice
+                # Catching will allow us to continue and ensure we can still create an order for this enrollment.
+                LOGGER.exception("IntegrityError on attempt at EnterpriseCourseEnrollment for user with id [%s] and "
+                                 "course id [%s]", self.user_id, course_run_id)
             # create an ecommerce order for the course enrollment
             self.create_order_for_enrollment(course_run_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
