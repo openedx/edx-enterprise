@@ -106,6 +106,8 @@ TEMPLATES = [
     },
 ]
 
+REPO_ROOT = root('enterprise')
+
 STATIC_ROOT = root('enterprise/assets')
 
 STATIC_URL = '/enterprise/static/'
