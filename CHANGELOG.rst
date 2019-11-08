@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.17] - 2019-11-08
+---------------------
+
+* Added in models to track enterprise enrollment source and updated the Enterprise Course Enrollments and PendingEnrollments to track that source.
+
 [2.0.16] - 2019-11-07
 ---------------------
 
