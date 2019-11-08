@@ -31,7 +31,7 @@ from django.utils.translation import ugettext as _
 
 from enterprise import models
 from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
-from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.api.throttles import EnterpriseCustomerUserThrottle, ServiceUserThrottle
 from enterprise.api.utils import (
     create_message_body,
     get_ent_cust_from_report_config_uuid,
@@ -253,6 +253,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
 
     queryset = models.EnterpriseCustomerUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
+    throttle_classes = [EnterpriseCustomerUserThrottle]
 
     FIELDS = (
         'enterprise_customer', 'user_id', 'active',

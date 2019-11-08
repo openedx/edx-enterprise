@@ -149,6 +149,7 @@ DEFAULT_FROM_EMAIL = 'course_staff@example.com'
 
 USER_THROTTLE_RATE = '90/minute'
 SERVICE_USER_THROTTLE_RATE = '100/minute'
+ENTERPRISE_LEARNER_USER_THROTTLE_RATE = '120/minute'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
@@ -159,6 +160,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'user': USER_THROTTLE_RATE,
         'service_user': SERVICE_USER_THROTTLE_RATE,
+        'enterprise_learner_user': ENTERPRISE_LEARNER_USER_THROTTLE_RATE,
     },
     'DATETIME_FORMAT': '%Y-%m-%dT%H:%M:%SZ',
 }

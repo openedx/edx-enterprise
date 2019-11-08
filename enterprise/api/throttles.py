@@ -9,6 +9,7 @@ from rest_framework.throttling import UserRateThrottle
 from enterprise.api.utils import get_service_usernames
 
 SERVICE_USER_SCOPE = 'service_user'
+ENTERPRISE_LEARNER_USER_SCOPE = 'enterprise_learner_user'
 
 
 class ServiceUserThrottle(UserRateThrottle):
@@ -52,3 +53,22 @@ class ServiceUserThrottle(UserRateThrottle):
         self.scope = SERVICE_USER_SCOPE
         self.rate = self.get_rate()
         self.num_requests, self.duration = self.parse_rate(self.rate)
+
+
+class EnterpriseCustomerUserThrottle(UserRateThrottle):
+    """
+    Throttle to override rate limiting for `/enterprise/api/v1/enterprise-learner/` endpoint.
+    """
+
+    def allow_request(self, request, view):
+        """
+        Modify throttling limit for non service users.
+        """
+        service_users = get_service_usernames()
+
+        if request.user.username not in service_users:
+            self.scope = ENTERPRISE_LEARNER_USER_SCOPE
+            self.rate = self.get_rate()
+            self.num_requests, self.duration = self.parse_rate(self.rate)
+
+        return super(EnterpriseCustomerUserThrottle, self).allow_request(request, view)
