@@ -70,10 +70,10 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         )
 
         response.raise_for_status()
-        data = response.json()
         try:
+            data = response.json()
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
-        except KeyError:
+        except (KeyError, ValueError):
             raise requests.RequestException(response=response)
 
     def __init__(self, enterprise_configuration):
@@ -86,28 +86,33 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         """
         super(SAPSuccessFactorsAPIClient, self).__init__(enterprise_configuration)
         self.global_sap_config = apps.get_model('sap_success_factors', 'SAPSuccessFactorsGlobalConfiguration').current()
-        self._create_session()
+        self.session = None
+        self.expires_at = None
 
     def _create_session(self):
         """
         Instantiate a new session object for use in connecting with SAP SuccessFactors
         """
-        session = requests.Session()
-        session.timeout = self.SESSION_TIMEOUT
+        now = datetime.datetime.utcnow()
+        if self.session is None or self.expires_at is None or now >= self.expires_at:
+            # Create a new session with a valid token
+            if self.session:
+                self.session.close()
 
-        oauth_access_token, expires_at = SAPSuccessFactorsAPIClient.get_oauth_access_token(
-            self.enterprise_configuration.sapsf_base_url,
-            self.enterprise_configuration.key,
-            self.enterprise_configuration.secret,
-            self.enterprise_configuration.sapsf_company_id,
-            self.enterprise_configuration.sapsf_user_id,
-            self.enterprise_configuration.user_type
-        )
-
-        session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-        session.headers['content-type'] = 'application/json'
-        self.session = session
-        self.expires_at = expires_at
+            oauth_access_token, expires_at = SAPSuccessFactorsAPIClient.get_oauth_access_token(
+                self.enterprise_configuration.sapsf_base_url,
+                self.enterprise_configuration.key,
+                self.enterprise_configuration.secret,
+                self.enterprise_configuration.sapsf_company_id,
+                self.enterprise_configuration.sapsf_user_id,
+                self.enterprise_configuration.user_type
+            )
+            session = requests.Session()
+            session.timeout = self.SESSION_TIMEOUT
+            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
+            session.headers['content-type'] = 'application/json'
+            self.session = session
+            self.expires_at = expires_at
 
     def create_course_completion(self, user_id, payload):
         """
@@ -232,11 +237,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             url (str): The url to post to.
             payload (str): The json encoded payload to post.
         """
-        now = datetime.datetime.utcnow()
-        if now >= self.expires_at:
-            # Create a new session with a valid token
-            self.session.close()
-            self._create_session()
+        self._create_session()
         response = self.session.post(url, data=payload)
         return response.status_code, response.text
 
@@ -270,12 +271,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             }
         ]
         """
-        now = datetime.datetime.utcnow()
-        if now >= self.expires_at:
-            # Create a new session with a valid token
-            self.session.close()
-            self._create_session()
-
+        self._create_session()
         sap_search_student_url = '{sapsf_base_url}/{search_students_path}?$filter={search_filter}'.format(
             sapsf_base_url=self.enterprise_configuration.sapsf_base_url.rstrip('/'),
             search_students_path=self.global_sap_config.search_student_api_path.rstrip('/'),
@@ -303,6 +299,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         try:
             response = self.session.get(search_student_paginated_url)
             sap_inactive_learners = response.json()
+        except ValueError:
+            raise requests.RequestException(response=response)
         except (ConnectionError, Timeout):
             LOGGER.warning(
                 'Unable to fetch inactive learners from SAP searchStudent API with url '

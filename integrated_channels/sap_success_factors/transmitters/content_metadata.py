@@ -57,9 +57,9 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                         'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
                         len(chunked_items),
                         self.enterprise_configuration.enterprise_customer.name,
-                        self.enterprise_configuration.channel_code,
+                        self.enterprise_configuration.channel_code(),
                     )
-                    LOGGER.error(exc)
+                    LOGGER.exception(exc)
 
                     # Remove the failed items from the create/update/delete dictionaries,
                     # so ContentMetadataItemTransmission objects are not synchronized for

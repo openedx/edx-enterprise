@@ -14,6 +14,7 @@ import requests
 import responses
 from freezegun import freeze_time
 from pytest import mark, raises
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
@@ -119,6 +120,23 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             )
 
     @responses.activate
+    def test_get_oauth_access_token_response_non_json(self):
+        """ Test  get_oauth_access_token with non json type response"""
+        with raises(requests.RequestException):
+            responses.add(
+                responses.POST,
+                urljoin(self.url_base, self.oauth_api_path),
+            )
+            SAPSuccessFactorsAPIClient.get_oauth_access_token(
+                self.url_base,
+                self.client_id,
+                self.client_secret,
+                self.company_id,
+                self.user_id,
+                self.user_type
+            )
+
+    @responses.activate
     def test_send_completion_status(self):
         responses.add(
             responses.POST,
@@ -157,11 +175,10 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
         actual_response = sap_client.create_course_completion(self.user_type, json.dumps(payload))
         assert actual_response == expected_response
-        assert len(responses.calls) == 3
+        assert len(responses.calls) == 2
         assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
-        assert responses.calls[1].request.url == self.url_base + self.oauth_api_path
         expected_url = self.url_base + self.completion_status_api_path
-        assert responses.calls[2].request.url == expected_url
+        assert responses.calls[1].request.url == expected_url
 
     @responses.activate
     @ddt.data('create_content_metadata', 'update_content_metadata', 'delete_content_metadata')
@@ -242,6 +259,12 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
     @responses.activate
     def test_expired_access_token(self):
+        """
+           If our token expires after some call, make sure to get it again.
+
+           Make a call, have the token expire after waiting some time (technically no time since time is frozen),
+           and make a call again and notice 2 OAuth calls in total are required.
+        """
         expired_token_response_body = {"expires_in": 0, "access_token": self.access_token}
         responses.add(
             responses.POST,
@@ -249,14 +272,6 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             json=expired_token_response_body,
             status=200
         )
-
-        responses.add(
-            responses.POST,
-            self.url_base + self.oauth_api_path,
-            json=self.expected_token_response_body,
-            status=200
-        )
-
         expected_course_response_body = self.content_payload
         expected_course_response_body["@odata.context"] = "$metadata#OcnCourses/$entity"
 
@@ -269,7 +284,9 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
         sap_client.create_content_metadata(self.content_payload)
-        assert len(responses.calls) == 3
+        sap_client.create_content_metadata(self.content_payload)
+        assert len(responses.calls) == 4
         assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
-        assert responses.calls[1].request.url == self.url_base + self.oauth_api_path
-        assert responses.calls[2].request.url == self.url_base + self.course_api_path
+        assert responses.calls[1].request.url == self.url_base + self.course_api_path
+        assert responses.calls[2].request.url == self.url_base + self.oauth_api_path
+        assert responses.calls[3].request.url == self.url_base + self.course_api_path

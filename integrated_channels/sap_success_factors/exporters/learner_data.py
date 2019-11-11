@@ -8,12 +8,15 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
+from requests import RequestException
+
 from django.apps import apps
 
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
 from enterprise.utils import get_identity_provider
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.utils import parse_datetime_to_epoch_millis
@@ -102,7 +105,15 @@ class SapSuccessFactorsLearnerManger(object):
         from the enterprise if the learner is marked inactive in the related
         integrated channel.
         """
-        sap_inactive_learners = self.client.get_inactive_sap_learners()
+        try:
+            sap_inactive_learners = self.client.get_inactive_sap_learners()
+        except RequestException as exc:
+            raise ClientError(
+                'SAPSuccessFactorsAPIClient request failed: {error} {message}'.format(
+                    error=exc.__class__.__name__,
+                    message=str(exc)
+                )
+            )
         total_sap_inactive_learners = len(sap_inactive_learners) if sap_inactive_learners else 0
         enterprise_customer = self.enterprise_configuration.enterprise_customer
         LOGGER.info(
