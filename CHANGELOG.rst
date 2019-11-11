@@ -14,6 +14,13 @@ Change Log
 Unreleased
 ----------
 
+
+[2.0.18] - 2019-11-13
+---------------------
+
+* Better handling when Integrated Channels return unexpected results
+
+
 [2.0.17] - 2019-11-08
 ---------------------
 

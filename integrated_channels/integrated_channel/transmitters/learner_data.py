@@ -103,7 +103,7 @@ class LearnerTransmitter(Transmitter):
             sys_msg = request_exception.response.content
         except AttributeError:
             sys_msg = 'Not available'
-        LOGGER.error(
+        LOGGER.exception(
             (
                 'Failed to send completion status call for enterprise enrollment %s'
                 'with payload %s'
