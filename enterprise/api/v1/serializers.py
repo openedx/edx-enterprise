@@ -565,7 +565,12 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             validated_data['enterprise_customer_user'] = enterprise_customer_user
             try:
                 if is_active:
-                    enterprise_customer_user.enroll(course_run_id, course_mode, cohort=cohort)
+                    enterprise_customer_user.enroll(
+                        course_run_id,
+                        course_mode,
+                        cohort=cohort,
+                        source_slug=models.EnterpriseEnrollmentSource.API
+                    )
                 else:
                     enterprise_customer_user.unenroll(course_run_id)
             except (CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, HttpClientError) as exc:
@@ -594,7 +599,10 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                     user_email,
                     course_mode,
                     course_run_id,
-                    cohort=cohort
+                    cohort=cohort,
+                    enrollment_source=models.EnterpriseEnrollmentSource.get_source(
+                        models.EnterpriseEnrollmentSource.API
+                    )
                 )
             else:
                 enterprise_customer.clear_pending_registration(user_email, course_run_id)
