@@ -11,7 +11,7 @@ from smtplib import SMTPException
 
 import ddt
 import mock
-from pytest import mark
+from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
 from rest_framework.test import APIClient
@@ -39,6 +39,7 @@ from enterprise.models import (
     EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerUser,
+    EnterpriseEnrollmentSource,
     EnterpriseFeatureRole,
     EnterpriseFeatureUserRoleAssignment,
     PendingEnrollment,
@@ -1750,7 +1751,9 @@ class TestEnterpriseAPIViews(APITest):
                 assert EnterpriseCourseEnrollment.objects.filter(
                     enterprise_customer_user__user_id=user.id,
                     course_id=payload.get('course_run_id'),
+                    source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.API)
                 ).exists()
+
                 mock_enrollment_client.return_value.get_course_enrollment.assert_called_once_with(
                     user.username, payload.get('course_run_id')
                 )
@@ -1760,11 +1763,11 @@ class TestEnterpriseAPIViews(APITest):
                     payload.get('course_mode'),
                     cohort=payload.get('cohort'),
                 )
-        elif 'user_email' in post_data:
+        elif 'user_email' in payload and payload.get('is_active', True):
             # If a new user given via for user_email, check that the appropriate objects were created.
             pending_ecu = PendingEnterpriseCustomerUser.objects.get(
                 enterprise_customer=enterprise_customer,
-                user_email=payload.get('user_email')
+                user_email=payload.get('user_email'),
             )
 
             assert pending_ecu is not None
@@ -1774,12 +1777,20 @@ class TestEnterpriseAPIViews(APITest):
                 course_mode=payload.get('course_mode')
             )
             if payload.get('is_active', True):
-                assert pending_enrollment
-                assert pending_enrollment.cohort_name == payload.get('cohort')
+                assert pending_enrollment[0]
+                assert pending_enrollment[0].cohort_name == payload.get('cohort')
+                assert pending_enrollment[0].source.slug == EnterpriseEnrollmentSource.API
             else:
                 assert not pending_enrollment
             mock_enrollment_client.return_value.get_course_enrollment.assert_not_called()
             mock_enrollment_client.return_value.enroll_user_in_course.assert_not_called()
+        elif 'user_email' in payload and not payload.get('is_active', True):
+            with raises(PendingEnterpriseCustomerUser.DoesNotExist):
+                # No Pending user should have been created in this case.
+                PendingEnterpriseCustomerUser.objects.get(
+                    user_email=payload.get('user_email'),
+                    enterprise_customer=enterprise_customer
+                )
 
         if 'email_students' in payload:
             mock_notify_learners.assert_called_once()
