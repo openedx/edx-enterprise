@@ -71,13 +71,21 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     )
     pending_enrollments = list(pending_ecu.pendingenrollment_set.all())
     if pending_enrollments:
-        def _complete_user_enrollment():  # pylint: disable=missing-docstring
+        def _complete_user_enrollment():
+            """
+            Complete an Enterprise User's enrollment.
+
+            EnterpriseCustomers may enroll users in courses before the users themselves
+            actually exist in the system; in such a case, the enrollment for each such
+            course is finalized when the user registers with the OpenEdX platform.
+            """
             for enrollment in pending_enrollments:
-                # EnterpriseCustomers may enroll users in courses before the users themselves
-                # actually exist in the system; in such a case, the enrollment for each such
-                # course is finalized when the user registers with the OpenEdX platform.
                 enterprise_customer_user.enroll(
-                    enrollment.course_id, enrollment.course_mode, cohort=enrollment.cohort_name)
+                    enrollment.course_id,
+                    enrollment.course_mode,
+                    cohort=enrollment.cohort_name,
+                    source_slug=getattr(enrollment.source, 'slug', None)
+                )
                 track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
             pending_ecu.delete()
         transaction.on_commit(_complete_user_enrollment)
