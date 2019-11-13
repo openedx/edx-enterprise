@@ -89,6 +89,7 @@ class ManageLearnersForm(forms.Form):
             ("honor", _("Honor")),
         ],
     )
+    reason = forms.CharField(label=_("Reason for manual enrollment"), required=True)
 
     class NotificationTypes(object):
         """
@@ -128,6 +129,7 @@ class ManageLearnersForm(forms.Form):
         COURSE_MODE = "course_mode"
         PROGRAM = "program"
         NOTIFY = "notify_on_enrollment"
+        REASON = "reason"
 
     class CsvColumns(object):
         """
