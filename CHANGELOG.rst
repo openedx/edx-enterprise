@@ -19,6 +19,11 @@ Unreleased
 
 * Add manual enrollment audit creation for enrollments created in Manage Learners form.
 
+[2.0.19] - 2019-11-13
+---------------------
+
+* Sorted results of enterprise-learner API by active flag in descending order so active enterprises are on the top
+
 [2.0.18] - 2019-11-13
 ---------------------
 

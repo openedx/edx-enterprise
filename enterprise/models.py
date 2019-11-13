@@ -639,7 +639,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         verbose_name = _("Enterprise Customer Learner")
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
-        ordering = ['active', '-modified']
+        ordering = ['-active', '-modified']
 
     @property
     def user(self):
