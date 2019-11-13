@@ -241,9 +241,9 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         )
 
         response.raise_for_status()
-        data = response.json()
         try:
+            data = response.json()
             expires_at = data['expires_in'] + int(time.time())
             return data['access_token'], datetime.datetime.utcfromtimestamp(expires_at)
-        except KeyError:
+        except (KeyError, ValueError):
             raise requests.RequestException(response=response)

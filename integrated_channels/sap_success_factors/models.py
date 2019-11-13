@@ -14,6 +14,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from integrated_channels.sap_success_factors.exporters.learner_data import (
@@ -201,7 +202,15 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         Unlink inactive SAP learners form their related enterprises
         """
         sap_learner_manager = self.get_learner_manger()
-        sap_learner_manager.unlink_learners()
+        try:
+            sap_learner_manager.unlink_learners()
+        except ClientError as exc:
+            LOGGER.exception(
+                'Failed to unlink learners for integrated channel [%s] [%s] \nError: [%s]',
+                self.enterprise_customer.name,
+                self.channel_code(),
+                str(exc)
+            )
 
 
 @python_2_unicode_compatible

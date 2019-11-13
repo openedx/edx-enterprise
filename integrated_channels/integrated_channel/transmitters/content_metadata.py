@@ -126,9 +126,9 @@ class ContentMetadataTransmitter(Transmitter):
                     'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
                     len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code,
+                    self.enterprise_configuration.channel_code(),
                 )
-                LOGGER.error(exc)
+                LOGGER.exception(exc)
             else:
                 self._create_transmissions(chunk)
 
@@ -145,9 +145,9 @@ class ContentMetadataTransmitter(Transmitter):
                     'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
                     len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code,
+                    self.enterprise_configuration.channel_code(),
                 )
-                LOGGER.error(exc)
+                LOGGER.exception(exc)
             else:
                 self._update_transmissions(chunk, transmission_map)
 
@@ -164,9 +164,9 @@ class ContentMetadataTransmitter(Transmitter):
                     'Failed to delete [%s] content metadata items for integrated channel [%s] [%s]',
                     len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
-                    self.enterprise_configuration.channel_code,
+                    self.enterprise_configuration.channel_code(),
                 )
-                LOGGER.error(exc)
+                LOGGER.exception(exc)
             else:
                 self._delete_transmissions(chunk.keys())
 

@@ -64,6 +64,23 @@ class TestDegreedApiClient(unittest.TestCase):
         )
 
     @responses.activate
+    def test_oauth_with_non_json_response(self):
+        """ Test  _get_oauth_access_token with non json type response"""
+        with pytest.raises(requests.RequestException):
+            responses.add(
+                responses.POST,
+                self.oauth_url,
+            )
+            client = DegreedAPIClient(self.enterprise_config)
+            client._get_oauth_access_token(  # pylint: disable=protected-access
+                self.client_id,
+                self.client_secret,
+                self.user_id,
+                self.user_pass,
+                DegreedAPIClient.COMPLETION_PROVIDER_SCOPE
+            )
+
+    @responses.activate
     def test_create_course_completion(self):
         """
         ``create_course_completion`` should use the appropriate URLs for transmission.
