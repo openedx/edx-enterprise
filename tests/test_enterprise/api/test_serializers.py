@@ -121,7 +121,7 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
             data = {
                 'enterprise_customer': enterprise_uuid,
                 'username': TEST_USERNAME,
-                'active': True,
+                'active': False,
             }
             self._link_learner_to_enterprise(data)
 
@@ -129,10 +129,14 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
         active_enterprise = self.enterprise_uuids[0]
         expected_inactive_enterprises = list(set(self.enterprise_uuids) - set([active_enterprise]))
         data['enterprise_customer'] = active_enterprise
+        data['active'] = True
         self._link_learner_to_enterprise(data)
 
         response = self.client.get(self.ent_user_link_url)
         response_json = json.loads(response.content)
+
+        # assert active enterprise is on the top of results
+        self.assertEqual(response_json['results'][0]['enterprise_customer']['uuid'], active_enterprise)
 
         active_enterprises, inactive_enterprises = [], []
         for result in response_json['results']:
