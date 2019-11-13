@@ -80,6 +80,9 @@ class ValidationMessages(object):
         "Expected a CSV file with [{expected_columns}] columns, but found "
         "[{actual_columns}] columns instead."
     )
+    MISSING_REASON = _(
+        "Reason field is required but was not filled."
+    )
     MULTIPLE_PROGRAM_MATCH = _(
         "Searching programs by title returned {program_count} programs. "
         "Try using program UUID"

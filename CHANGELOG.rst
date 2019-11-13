@@ -14,6 +14,10 @@ Change Log
 Unreleased
 ----------
 
+[2.0.19] - 2019-13-08
+---------------------
+
+* Add manual enrollment audit creation for enrollments created in Manage Learners form.
 
 [2.0.19] - 2019-11-13
 ---------------------

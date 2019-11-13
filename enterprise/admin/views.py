@@ -57,6 +57,18 @@ from enterprise.utils import (
     track_enrollment,
 )
 
+# Only create manual enrollments if running in edx-platform
+try:
+    from student.api import (
+        create_manual_enrollment_audit,
+        UNENROLLED_TO_ENROLLED,
+        UNENROLLED_TO_ALLOWEDTOENROLL,
+    )
+except ImportError:
+    create_manual_enrollment_audit = None
+
+MANUAL_ENROLLMENT_ROLE = "Learner"
+
 
 class TemplatePreviewView(View):
     """
@@ -512,7 +524,16 @@ class EnterpriseCustomerManageLearnersView(View):
         return users, unregistered_emails
 
     @classmethod
-    def enroll_users_in_program(cls, enterprise_customer, program_details, course_mode, emails, cohort=None):
+    def enroll_users_in_program(
+            cls,
+            enterprise_customer,
+            program_details,
+            course_mode,
+            emails,
+            cohort=None,
+            enrollment_requester=None,
+            enrollment_reason=None
+    ):
         """
         Enroll existing users in all courses in a program, and create pending enrollments for nonexisting users.
 
@@ -539,6 +560,16 @@ class EnterpriseCustomerManageLearnersView(View):
             succeeded = cls.enroll_user(enterprise_customer, user, course_mode, *course_ids)
             if succeeded:
                 successes.append(user)
+                if enrollment_requester and enrollment_reason:
+                    for course_id in course_ids:
+                        create_manual_enrollment_audit(
+                            enrollment_requester,
+                            user.email,
+                            UNENROLLED_TO_ENROLLED,
+                            enrollment_reason,
+                            course_id,
+                            role=MANUAL_ENROLLMENT_ROLE,
+                        )
             else:
                 failures.append(user)
 
@@ -551,11 +582,29 @@ class EnterpriseCustomerManageLearnersView(View):
                 enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
             )
             pending.append(pending_user)
+            if enrollment_requester and enrollment_reason:
+                for course_id in course_ids:
+                    create_manual_enrollment_audit(
+                        enrollment_requester,
+                        email,
+                        UNENROLLED_TO_ALLOWEDTOENROLL,
+                        enrollment_reason,
+                        course_id,
+                        role=MANUAL_ENROLLMENT_ROLE,
+                    )
 
         return successes, pending, failures
 
     @classmethod
-    def enroll_users_in_course(cls, enterprise_customer, course_id, course_mode, emails):
+    def enroll_users_in_course(
+            cls,
+            enterprise_customer,
+            course_id,
+            course_mode,
+            emails,
+            enrollment_requester=None,
+            enrollment_reason=None
+    ):
         """
         Enroll existing users in a course, and create a pending enrollment for nonexisting users.
 
@@ -581,6 +630,15 @@ class EnterpriseCustomerManageLearnersView(View):
             succeeded = cls.enroll_user(enterprise_customer, user, course_mode, course_id)
             if succeeded:
                 successes.append(user)
+                if enrollment_requester and enrollment_reason:
+                    create_manual_enrollment_audit(
+                        enrollment_requester,
+                        user.email,
+                        UNENROLLED_TO_ENROLLED,
+                        enrollment_reason,
+                        course_id,
+                        role=MANUAL_ENROLLMENT_ROLE,
+                    )
             else:
                 failures.append(user)
 
@@ -592,6 +650,15 @@ class EnterpriseCustomerManageLearnersView(View):
                 enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
             )
             pending.append(pending_user)
+            if enrollment_requester and enrollment_reason:
+                create_manual_enrollment_audit(
+                    enrollment_requester,
+                    email,
+                    UNENROLLED_TO_ALLOWEDTOENROLL,
+                    enrollment_reason,
+                    course_id,
+                    role=MANUAL_ENROLLMENT_ROLE,
+                )
 
         return successes, pending, failures
 
@@ -744,7 +811,8 @@ class EnterpriseCustomerManageLearnersView(View):
             mode,
             course_id=None,
             program_details=None,
-            notify=True
+            notify=True,
+            enrollment_reason=None
     ):
         """
         Enroll the users with the given email addresses to the courses specified, either specifically or by program.
@@ -767,6 +835,8 @@ class EnterpriseCustomerManageLearnersView(View):
                 course_id=course_id,
                 course_mode=mode,
                 emails=emails,
+                enrollment_requester=request.user,
+                enrollment_reason=enrollment_reason,
             )
             all_successes = succeeded + pending
             if notify:
@@ -788,6 +858,8 @@ class EnterpriseCustomerManageLearnersView(View):
                 program_details=program_details,
                 course_mode=mode,
                 emails=emails,
+                enrollment_requester=request.user,
+                enrollment_reason=enrollment_reason,
             )
             all_successes = succeeded + pending
             if notify:
@@ -878,6 +950,17 @@ class EnterpriseCustomerManageLearnersView(View):
             course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
             program_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.PROGRAM)
 
+            # If we aren't installed in Open edX, blank out enrollment reason so downstream methods don't attempt to
+            # create audit items
+            if create_manual_enrollment_audit is not None:
+                manual_enrollment_reason = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.REASON)
+            else:
+                manual_enrollment_reason = None
+                logging.exception(
+                    "To create enrollment audits for enterprise learners, "
+                    "this package must be installed in an Open edX environment."
+                )
+
             notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
 
@@ -895,6 +978,7 @@ class EnterpriseCustomerManageLearnersView(View):
                     course_id=course_id,
                     program_details=program_details,
                     notify=notify,
+                    enrollment_reason=manual_enrollment_reason,
                 )
 
             # Redirect to GET if everything went smooth.

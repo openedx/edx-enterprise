@@ -171,6 +171,9 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         )
         self.client = Client()
         self.context_parameters = EnterpriseCustomerManageLearnersView.ContextParameters
+        self.required_fields_with_default = {
+            ManageLearnersForm.Fields.REASON: "tests",
+        }
 
     def _test_common_context(self, actual_context, context_overrides=None):
         """
@@ -211,6 +214,12 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
             (m.level, m.message) for m in get_response.context['messages']  # pylint: disable=no-member
         )
         assert response_messages == expected_messages
+
+    def add_required_data(self, data):
+        """
+        Adds required fields to post data
+        """
+        return dict(list(self.required_fields_with_default.items()) + list(data.items()))
 
 
 @ddt.ddt
@@ -438,7 +447,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._login()
         self._assert_no_record(email)  # there're no record with current email
 
-        response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        response = self.client.post(
+            self.view_url,
+            data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        )
 
         self.assertRedirects(response, self.view_url)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
@@ -455,7 +467,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         user = UserFactory(username=username, email=email, id=2)
 
-        response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: username})
+        response = self.client.post(
+            self.view_url,
+            data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: username})
+        )
 
         self.assertRedirects(response, self.view_url)
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
@@ -466,7 +481,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert EnterpriseCustomerUser.objects.count() == 0  # there're no link records
         assert PendingEnterpriseCustomerUser.objects.count() == 0  # there're no pending link records
 
-        response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: "invalid_email"})
+        response = self.client.post(
+            self.view_url,
+            data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: "invalid_email"})
+        )
 
         assert response.status_code == 200
         self._test_common_context(response.context)
@@ -484,7 +502,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         with mock.patch("enterprise.admin.views.ManageLearnersForm.clean_email_or_username") as patched_clean:
             patched_clean.return_value = invalid_email
             response = self.client.post(
-                self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: invalid_email}
+                self.view_url, data=self.add_required_data({
+                    ManageLearnersForm.Fields.EMAIL_OR_USERNAME: invalid_email
+
+                })
             )
 
         assert response.status_code == 200
@@ -513,7 +534,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         user = UserFactory(email=email, id=2)
         EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
-        response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        response = self.client.post(
+            self.view_url,
+            data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        )
         self._test_post_existing_record_response(response)
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
 
@@ -537,9 +561,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.count() == 0
         self.client.post(
             self.view_url,
-            data={
+            data=self.add_required_data({
                 ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email + ', john@smith.com'
-            }
+            })
         )
         assert EnterpriseCustomerUser.objects.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 1
@@ -556,9 +580,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         EnterpriseCustomerUserFactory(user_id=user.id)
         response = self.client.post(
             self.view_url + "?q=bob",
-            data={
+            data=self.add_required_data({
                 ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email + ', john@smith.com'
-            }
+            })
         )
         self.assertRedirects(response, self.view_url + "?q=bob")
         self.assertEqual(response.status_code, 302)
@@ -571,11 +595,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         PendingEnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_email=email)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
-        response = self.client.post(self.view_url, data={ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        response = self.client.post(
+            self.view_url,
+            data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        )
         self._test_post_existing_record_response(response)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
-    def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True):
+    def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True, reason="tests"):
         """
         Perform post request to log in and submit the form to enroll a user.
         """
@@ -597,7 +624,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 ManageLearnersForm.Fields.COURSE_MODE: mode,
                 ManageLearnersForm.Fields.COURSE: course_id,
                 ManageLearnersForm.Fields.PROGRAM: program_id,
-                ManageLearnersForm.Fields.NOTIFY: notify
+                ManageLearnersForm.Fields.NOTIFY: notify,
+                ManageLearnersForm.Fields.REASON: reason,
             })
         return response
 
@@ -1176,7 +1204,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             post_data[ManageLearnersForm.Fields.NOTIFY] = 'by_email' if notify else 'do_not_notify'
             post_data['enterprise_customer'] = self.enterprise_customer
             with mock.patch("enterprise.api_client.ecommerce.ecommerce_api_client"):
-                response = self.client.post(self.view_url, data=post_data)
+                response = self.client.post(self.view_url, data=self.add_required_data(post_data))
         return response
 
     def test_post_not_logged_in(self):
