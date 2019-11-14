@@ -5,7 +5,6 @@ User-facing forms for the Enterprise app.
 from __future__ import absolute_import, unicode_literals
 
 from django import forms
-from django.urls import Resolver404, resolve
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
@@ -49,11 +48,5 @@ class EnterpriseSelectionForm(forms.Form):
         # verify that learner is really a member of selected enterprise
         if not EnterpriseCustomerUser.objects.filter(enterprise_customer=enterprise, user_id=self._user_id).exists():
             raise forms.ValidationError(_("Wrong Enterprise"))
-
-        try:
-            # validate if path is a valid
-            resolve(cleaned_data['success_url'])
-        except Resolver404:
-            raise forms.ValidationError(_("Incorrect success url"))
 
         return cleaned_data

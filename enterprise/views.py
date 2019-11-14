@@ -839,6 +839,10 @@ class EnterpriseSelectionView(FormView):
             'success_url': self.request.GET.get('success_url'),
             'user_id': self.request.user.id
         })
+        LOGGER.info(
+            '[Enterprise Selection Page] Request recieved. SuccessURL: %s',
+            self.request.GET.get('success_url')
+        )
         return initial
 
     def get_context_data(self, **kwargs):
@@ -849,7 +853,6 @@ class EnterpriseSelectionView(FormView):
             'select_enterprise_message_title': _(u'Select an organization'),
             'select_enterprise_message_subtitle': ENTERPRISE_SELECT_SUBTITLE,
         })
-        context_data.update(get_global_context(self.request, None))
         return context_data
 
     def form_invalid(self, form):
@@ -862,7 +865,7 @@ class EnterpriseSelectionView(FormView):
 
     def form_valid(self, form):
         """
-        If the form is valid, activate the selected enterprise and return `success_url`.
+        If the form is valid, activate the selected enterprise.
         """
         enterprise_customer = form.cleaned_data['enterprise']
         serializer = EnterpriseCustomerUserWriteSerializer(data={
@@ -874,10 +877,10 @@ class EnterpriseSelectionView(FormView):
             serializer.save()
             LOGGER.info(
                 '[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
+                self.request.user.username,
                 enterprise_customer,
-                self.request.user.username
             )
-            return JsonResponse({'success_url': form.cleaned_data['success_url']})
+            return JsonResponse({})
 
 
 class HandleConsentEnrollment(View):

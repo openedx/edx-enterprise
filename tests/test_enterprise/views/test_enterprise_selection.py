@@ -113,7 +113,6 @@ class TestEnterpriseSelectionView(TestCase):
         new_enterprise = self.enterprise_choices[2][0]
         post_data = {
             'enterprise': new_enterprise,
-            'success_url': self.success_url
         }
 
         with mock.patch('enterprise.views.LOGGER.info') as mock_logger:
@@ -121,12 +120,11 @@ class TestEnterpriseSelectionView(TestCase):
             assert mock_logger.called
             assert mock_logger.call_args.args == (
                 u'[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
+                self.user.username,
                 new_enterprise,
-                self.user.username
             )
 
         assert response.status_code == 200
-        assert response.json().get('success_url') == self.success_url
 
         # after selection only the selected enterprise should be active for learner
         assert EnterpriseCustomerUser.objects.get(user_id=user_id, enterprise_customer=new_enterprise).active
@@ -135,31 +133,19 @@ class TestEnterpriseSelectionView(TestCase):
         for obj in EnterpriseCustomerUser.objects.filter(user_id=user_id).exclude(enterprise_customer=new_enterprise):
             assert not obj.active
 
-    @ddt.data(
-        {
-            'enterprise': '111',
-            'success_url': '',
-            'errors': [
-                u'Enterprise not found',
-                u'Select a valid choice. 111 is not one of the available choices.'
-            ]
-        },
-        {
-            'enterprise': None,
-            'success_url': '',
-            'errors': [u'Incorrect success url']
-        },
-    )
-    @ddt.unpack
-    def test_post_errors(self, enterprise, success_url, errors):
+    def test_post_errors(self):
         """
         Test errors are raised if incorrect data is POSTed.
         """
+        incorrect_enterprise = '111'
+        errors = [
+            u'Enterprise not found',
+            u'Select a valid choice. 111 is not one of the available choices.'
+        ]
+
         self._login()
-        selected_enterprise = self.enterprise_choices[2][0]
         post_data = {
-            'enterprise': enterprise or selected_enterprise,
-            'success_url': success_url,
+            'enterprise': incorrect_enterprise,
         }
         response = self.client.post(self.url, post_data)
         assert response.status_code == 400

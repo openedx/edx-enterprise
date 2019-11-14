@@ -39,15 +39,12 @@ describe('Enterprise Selection Page', function () {
         });
 
         it('works expected on correct post data', function () {
-            var response = {
-                'success_url': '/dashboard'
-            };
             var redirectSpy = spyOn(window, 'redirectToURL');
 
             jasmine.Ajax
             .stubRequest('/enterprise/select/active')
             .andReturn({
-                responseText: JSON.stringify(response)
+                responseText: JSON.stringify({})
             });
 
             $( '#select-enterprise-submit' ).trigger( 'click' );
@@ -56,14 +53,13 @@ describe('Enterprise Selection Page', function () {
             expect(request.url).toBe('/enterprise/select/active');
             expect(request.method).toBe('POST');
             expect(request.data().enterprise).toEqual(['6ae013d4-c5c4-474d-8da9-0e559b2448e2']);
-            expect(request.data().success_url).toEqual(['/dashboard']);
             expect(redirectSpy.calls.count()).toEqual(1);
             expect(redirectSpy.calls.first().args).toEqual(['/dashboard']);
         });
 
         it('works expected on incorrect post data', function () {
             var response = {
-                'errors': ['Incorrect success url']
+                'errors': ['Enterprise not found']
             };
 
             jasmine.Ajax
@@ -73,16 +69,11 @@ describe('Enterprise Selection Page', function () {
                 responseText: JSON.stringify(response)
             });
 
-            // remove success url value from hidden input
-            $('#id_success_url').removeAttr('value');
-
             $( '#select-enterprise-submit' ).trigger( 'click' );
 
             var request = jasmine.Ajax.requests.mostRecent();
             expect(request.url).toBe('/enterprise/select/active');
             expect(request.method).toBe('POST');
-            expect(request.data().enterprise).toEqual(['6ae013d4-c5c4-474d-8da9-0e559b2448e2']);
-            expect(request.data().success_url).toEqual(['']);
 
             expect($('#select-enterprise-form-error').text().trim()).toEqual(response.errors[0]);
         });
