@@ -14,6 +14,11 @@ Change Log
 Unreleased
 ----------
 
+[2.0.21] - 2019-11-14
+---------------------
+
+* Remove success url validation for select enterprise page.
+
 [2.0.20] - 2019-11-13
 ---------------------
 

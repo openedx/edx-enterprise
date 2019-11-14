@@ -6,7 +6,6 @@ function setupFormSubmit() {
     $('#select-enterprise-form').submit(function(event){
         event.preventDefault();
         var selectedEnterpriseUUID = $("#id_enterprise").val();
-        var successURL = $("#id_success_url").val();
 
         $("#activate-progress-icon").removeClass("is-hidden");
         $("#select-enterprise-submit").attr("disabled", true);
@@ -14,16 +13,17 @@ function setupFormSubmit() {
         $.ajax({
             url : "/enterprise/select/active",
             method : "POST",
+
             beforeSend: function (xhr) {
                 xhr.setRequestHeader("X-CSRFToken", $.cookie("csrftoken"));
             },
+
             data : {
-                enterprise : selectedEnterpriseUUID,
-                success_url: successURL
+                enterprise : selectedEnterpriseUUID
             },
 
-            success: function(xhr) {
-                redirectToURL(xhr.success_url);
+            success: function() {
+                redirectToURL($("#id_success_url").val());
             },
 
             error : function(xhr) {
