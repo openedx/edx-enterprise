@@ -203,6 +203,30 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     Tests EnterpriseCustomerUserManager.
     """
 
+    def test_get_returns_only_one_when_multiple_objects_returned(self):
+        """
+        Test that get on custom model manager returns only the active object when multiple objects found.
+        """
+        enterprise_customer1 = factories.EnterpriseCustomerFactory()
+        enterprise_customer2 = factories.EnterpriseCustomerFactory()
+        user = factories.UserFactory(email='albert.einstein@princeton.edu')
+        first_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer1,
+            user_id=user.id
+        )
+        second_customer_user = factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer2,
+            user_id=user.id,
+            active=False
+        )
+        all_customer_users = [first_customer_user, second_customer_user]
+        fetched_object = EnterpriseCustomerUser.objects.get(user_id=user.id)
+        self.assertIn(fetched_object, all_customer_users)
+        self.assertEqual(fetched_object.active, True)
+        EnterpriseCustomerUser.objects.filter(user_id=user.id).delete()
+        with raises(EnterpriseCustomerUser.DoesNotExist):
+            EnterpriseCustomerUser.objects.get(user_id=user.id)
+
     @ddt.data("albert.einstein@princeton.edu", "richard.feynman@caltech.edu", "leo.susskind@stanford.edu")
     def test_link_user_existing_user(self, user_email):
         enterprise_customer = factories.EnterpriseCustomerFactory()

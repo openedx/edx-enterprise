@@ -532,6 +532,18 @@ class EnterpriseCustomerUserManager(models.Manager):
     This class should contain methods that create, modify or query :class:`.EnterpriseCustomerUser` entities.
     """
 
+    def get(self, **kwargs):
+        """
+        Overridden get method to return the first element in case of learner with multiple enterprises.
+
+        Raises EnterpriseCustomerUser.DoesNotExist if no records are found.
+        """
+        fetched_object = super(EnterpriseCustomerUserManager, self).get_queryset().filter(**kwargs).first()
+        if fetched_object:
+            return fetched_object
+        else:
+            raise EnterpriseCustomerUser.DoesNotExist
+
     def get_link_by_email(self, user_email):
         """
         Return link by email.
