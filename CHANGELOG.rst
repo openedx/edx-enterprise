@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[2.0.22] - 2019-11-18
+---------------------
+
+* Custom get function in EnterpriseCustomerUserManager to enable multiple user enterprises.
 
 [2.0.21] - 2019-11-14
 ---------------------
