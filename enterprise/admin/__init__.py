@@ -324,7 +324,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
     def enterprise_enrollments(self, enterprise_customer_user):
         """
-        Return a string representing the courses a given EnterpriseCustomerUser is enrolled in
+        Return a string representing a given EnterpriseCustomerUser's enterprise course enrollments
 
         Args:
             enterprise_customer_user: The instance of EnterpriseCustomerUser
@@ -336,7 +336,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
     def other_enrollments(self, enterprise_customer_user):
         """
-        Return a string representing the courses a given EnterpriseCustomerUser is enrolled in
+        Return a string representing a given EnterpriseCustomerUser's non-enterprise course enrollments
 
         Args:
             enterprise_customer_user: The instance of EnterpriseCustomerUser
@@ -351,7 +351,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
     def _get_enterprise_course_enrollments(self, enterprise_customer_user):
         """
-        Return a string representing the courses a given EnterpriseCustomerUser is enrolled in
+        Return a list of course ids representing a given EnterpriseCustomerUser's enterprise course enrollments
 
         Args:
             enterprise_customer_user: The instance of EnterpriseCustomerUser
@@ -362,7 +362,8 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
     def _get_all_enrollments(self, enterprise_customer_user):
         """
-        Return a string representing the courses a given EnterpriseCustomerUser is enrolled in
+        Return a list of course ids representing a given EnterpriseCustomerUser's course enrollments,
+        including both enterprise and non-enterprise course enrollments
 
         Args:
             enterprise_customer_user: The instance of EnterpriseCustomerUser
