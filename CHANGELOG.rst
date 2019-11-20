@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.23] - 2019-11-20
+---------------------
+
+* Display enterprise course enrollments separate from non-enterprise course enrollments in the "Enterprise Customer Learner" Django admin form
+
 [2.0.22] - 2019-11-18
 ---------------------
 

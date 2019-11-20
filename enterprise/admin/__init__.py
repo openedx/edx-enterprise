@@ -279,7 +279,8 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'user_email',
         'username',
         'created',
-        'enrolled_courses',
+        'enterprise_enrollments',
+        'other_enrollments',
     )
 
     # Only include fields that are not database-backed; DB-backed fields
@@ -288,7 +289,8 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'user_email',
         'username',
         'created',
-        'enrolled_courses',
+        'enterprise_enrollments',
+        'other_enrollments',
     )
 
     list_display = ('username', 'user_email', 'get_enterprise_customer')
@@ -320,16 +322,56 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
         return queryset, use_distinct
 
-    def enrolled_courses(self, enterprise_customer_user):
+    def enterprise_enrollments(self, enterprise_customer_user):
         """
-        Return a string representing the courses a given EnterpriseCustomerUser is enrolled in
+        Return a string representing a given EnterpriseCustomerUser's enterprise course enrollments
 
         Args:
             enterprise_customer_user: The instance of EnterpriseCustomerUser
                 being rendered with this admin form.
         """
-        courses_string = mark_safe(self.get_enrolled_course_string(enterprise_customer_user))
+        enterprise_course_ids = self._get_enterprise_course_enrollments(enterprise_customer_user)
+        courses_string = mark_safe(self.get_enrolled_course_string(enterprise_course_ids))
         return courses_string or 'None'
+
+    def other_enrollments(self, enterprise_customer_user):
+        """
+        Return a string representing a given EnterpriseCustomerUser's non-enterprise course enrollments
+
+        Args:
+            enterprise_customer_user: The instance of EnterpriseCustomerUser
+                being rendered with this admin form.
+        """
+        all_course_ids = self._get_all_enrollments(enterprise_customer_user)
+        enterprise_course_ids = self._get_enterprise_course_enrollments(enterprise_customer_user)
+        # remove overlapping enterprise enrollments from all enrollments
+        course_ids = set(all_course_ids) - set(enterprise_course_ids)
+        courses_string = mark_safe(self.get_enrolled_course_string(course_ids))
+        return courses_string or 'None'
+
+    def _get_enterprise_course_enrollments(self, enterprise_customer_user):
+        """
+        Return a list of course ids representing a given EnterpriseCustomerUser's enterprise course enrollments
+
+        Args:
+            enterprise_customer_user: The instance of EnterpriseCustomerUser
+                being rendered with this admin form.
+        """
+        enrollments = EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=enterprise_customer_user)
+        return [enrollment.course_id for enrollment in enrollments]
+
+    def _get_all_enrollments(self, enterprise_customer_user):
+        """
+        Return a list of course ids representing a given EnterpriseCustomerUser's course enrollments,
+        including both enterprise and non-enterprise course enrollments
+
+        Args:
+            enterprise_customer_user: The instance of EnterpriseCustomerUser
+                being rendered with this admin form.
+        """
+        enrollment_client = EnrollmentApiClient()
+        enrollments = enrollment_client.get_enrolled_courses(enterprise_customer_user.username)
+        return [enrollment['course_details']['course_id'] for enrollment in enrollments]
 
     def get_readonly_fields(self, request, obj=None):
         """
@@ -340,19 +382,15 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
             return readonly_fields + tuple(get_all_field_names(self.model))
         return readonly_fields
 
-    def get_enrolled_course_string(self, enterprise_customer_user):
+    def get_enrolled_course_string(self, course_ids):
         """
         Get an HTML string representing the courses the user is enrolled in.
         """
-        enrollment_client = EnrollmentApiClient()
-        enrolled_courses = enrollment_client.get_enrolled_courses(enterprise_customer_user.username)
-        course_details = []
         courses_client = CourseApiClient()
-        for course in enrolled_courses:
-            course_id = course['course_details']['course_id']
+        course_details = []
+        for course_id in course_ids:
             name = courses_client.get_course_details(course_id)['name']
             course_details.append({'course_id': course_id, 'course_name': name})
-
         template = '<a href="{url}">{course_name}</a>'
         joiner = '<br/>'
         return joiner.join(
