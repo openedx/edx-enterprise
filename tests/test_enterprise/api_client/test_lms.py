@@ -384,6 +384,7 @@ def test_unenroll_already_unenrolled():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_full_course_details():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     expected_response = {
@@ -394,12 +395,13 @@ def test_get_full_course_details():
         _url("courses", "courses/course-v1:edX+DemoX+Demo_Course/"),
         json=expected_response,
     )
-    client = lms_api.CourseApiClient()
+    client = lms_api.CourseJwtApiClient('enterprise-user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response == expected_response
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_full_course_details_not_found():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
@@ -407,7 +409,7 @@ def test_get_full_course_details_not_found():
         _url("courses", "courses/course-v1:edX+DemoX+Demo_Course/"),
         status=404,
     )
-    client = lms_api.CourseApiClient()
+    client = lms_api.CourseJwtApiClient('enterprise-user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response is None
 
