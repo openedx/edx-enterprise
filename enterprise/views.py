@@ -39,7 +39,12 @@ from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerCatalog, EnterpriseCustomerUser
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomerCatalog,
+    EnterpriseCustomerUser,
+    EnterpriseEnrollmentSource,
+)
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -158,6 +163,26 @@ def render_page_with_error_code_message(request, context_data, error_code, log_m
         context=context_data,
         status=404,
     )
+
+
+def get_create_ent_enrollment(
+        course_id,
+        enterprise_customer_user,
+):
+    """
+    Get or Create the Enterprise Course Enrollment.
+    """
+    source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
+    # Create the Enterprise backend database records for this course
+    # enrollment
+    enterprise_course_enrollment, created = EnterpriseCourseEnrollment.objects.get_or_create(
+        enterprise_customer_user=enterprise_customer_user,
+        course_id=course_id,
+        defaults={
+            'source': source
+        }
+    )
+    return enterprise_course_enrollment, created
 
 
 class NonAtomicView(View):
@@ -485,9 +510,9 @@ class GrantDataSharingPermissions(View):
             user_id=request.user.id
         )
         enterprise_customer_user.update_session(request)
-        __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-            enterprise_customer_user=enterprise_customer_user,
-            course_id=course_id,
+        __, created = get_create_ent_enrollment(
+            course_id,
+            enterprise_customer_user
         )
         if created:
             track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
@@ -947,9 +972,9 @@ class HandleConsentEnrollment(View):
 
         # Create the Enterprise backend database records for this course
         # enrollment
-        __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-            enterprise_customer_user=enterprise_customer_user,
-            course_id=course_id,
+        __, created = get_create_ent_enrollment(
+            course_id,
+            enterprise_customer_user
         )
         if created:
             track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
@@ -1298,6 +1323,9 @@ class CourseEnrollmentView(NonAtomicView):
         enterprise_customer, course, course_run, course_modes = self.get_base_details(
             request, enterprise_uuid, course_id
         )
+        enrollment_source = EnterpriseEnrollmentSource.get_source(
+            EnterpriseEnrollmentSource.ENROLLMENT_URL
+        )
 
         # Create a link between the user and the enterprise customer if it does not already exist.
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
@@ -1318,6 +1346,7 @@ class CourseEnrollmentView(NonAtomicView):
                 enterprise_customer_user__user_id=request.user.id,
                 course_id=course_id
             )
+
         except EnterpriseCourseEnrollment.DoesNotExist:
             enterprise_course_enrollment = None
 
@@ -1353,9 +1382,10 @@ class CourseEnrollmentView(NonAtomicView):
             # client and redirect the learner to LMS courseware page.
             if not enterprise_course_enrollment:
                 # Create the Enterprise backend database records for this course enrollment.
-                enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.create(
+                EnterpriseCourseEnrollment.objects.create(
                     enterprise_customer_user=enterprise_customer_user,
                     course_id=course_id,
+                    source=enrollment_source
                 )
                 track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
 

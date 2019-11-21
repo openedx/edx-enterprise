@@ -24,7 +24,7 @@ from django.http import QueryDict
 from django.test import Client, TestCase
 
 from enterprise.decorators import FRESH_LOGIN_PARAMETER
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
 from test_utils import FAKE_UUIDS, fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -1288,7 +1288,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             EnterpriseCourseEnrollmentFactory(
                 course_id=course_id,
                 enterprise_customer_user__enterprise_customer=enterprise_customer,
-                enterprise_customer_user__user_id=self.user.id
+                enterprise_customer_user__user_id=self.user.id,
             )
         self._setup_registry_mock(registry_mock, self.provider_id)
         EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=enterprise_customer)
@@ -1338,6 +1338,13 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 'audit',
                 cohort=cohort_name
             )
+            # Check EnterpriseCourseEnrollment Source
+            enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
+                enterprise_customer_user__user_id=self.user.id,
+                course_id=course_id,
+            )
+            if not enterprise_enrollment_exists:
+                assert enterprise_course_enrollment.source.slug == EnterpriseEnrollmentSource.ENROLLMENT_URL
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.EnrollmentApiClient')

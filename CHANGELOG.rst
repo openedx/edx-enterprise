@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.24] - 2019-11-21
+---------------------
+
+* Added logic to set the EnterpriseCourseEnrollmentSource for Enterprise Enrollments by URL.
+
 [2.0.23] - 2019-11-20
 ---------------------
 
