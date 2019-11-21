@@ -424,7 +424,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enterprise_customer=enterprise_customer,
             user_id=user.id
         )
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClient(user)
         succeeded = True
         for course_id in course_ids:
             try:
@@ -467,7 +467,7 @@ class EnterpriseCustomerManageLearnersView(View):
             Boolean: Whether or not enrollment exists
 
         """
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClient(user)
         try:
             enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
             if enrollments and course_mode == enrollments.get('mode'):

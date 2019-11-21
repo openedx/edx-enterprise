@@ -374,7 +374,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         """
         Get an HTML string representing the courses the user is enrolled in.
         """
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClient(enterprise_customer_user.user)
         enrolled_courses = enrollment_client.get_enrolled_courses(enterprise_customer_user.username)
         course_details = []
         courses_client = CourseApiClient()
