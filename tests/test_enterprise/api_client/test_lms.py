@@ -46,6 +46,7 @@ def test_enrollment_api_client():
     actual_response = client.client.test.get()
     assert actual_response == expected_response
 
+
 @responses.activate
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_enrollment_course_details():
