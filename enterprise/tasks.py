@@ -8,7 +8,7 @@ from logging import getLogger
 
 from celery import shared_task
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
 
 LOGGER = getLogger(__name__)
 
@@ -39,7 +39,17 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
             "Creating EnterpriseCourseEnrollment for user %s "
             "on course %s for enterprise_customer %s"
         ), enterprise_customer_user.user_id, course_id, enterprise_customer)
+
+        # On Create we set the Source to be ENROLLMENT_TASK here.  This Source
+        # is generalized from being just a B2C Source type because it is possible
+        # to reach this task before the EnterpriseCustomerEnrollment is created
+        # depending on timing.
+        #
+        # We have made changes elsewhere to avoid this issue, but in the mean time
+        # we believe a Source of ENROLLMENT_TASK is more clear.
+
         EnterpriseCourseEnrollment.objects.create(
             course_id=course_id,
             enterprise_customer_user=enterprise_customer_user,
+            source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK)
         )

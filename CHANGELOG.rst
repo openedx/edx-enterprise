@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.25] - 2019-11-22
+---------------------
+
+* Added logic to set the EnterpriseCourseEnrollmentSource for the Enterprise Enrollments background task.
+
 [2.0.24] - 2019-11-21
 ---------------------
 

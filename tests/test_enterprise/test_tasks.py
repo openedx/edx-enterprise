@@ -9,7 +9,7 @@ import unittest
 import mock
 from pytest import mark
 
-from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseEnrollmentSource
 from enterprise.tasks import create_enterprise_enrollment
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
@@ -19,6 +19,8 @@ class TestEnterpriseTasks(unittest.TestCase):
     """
     Tests tasks associated with Enterprise.
     """
+    FAKE_COURSE_ID = 'course-v1:edx+Test+2T2019'
+
     def setUp(self):
         """
         Setup for `TestEnterpriseTasks` test.
@@ -40,13 +42,29 @@ class TestEnterpriseTasks(unittest.TestCase):
         the function is part of the EnterpriseCustomer's catalogs
         """
         mock_contains_course.return_value = True
-
         assert EnterpriseCourseEnrollment.objects.count() == 0
         create_enterprise_enrollment(
-            'fake:course',
+            self.FAKE_COURSE_ID,
             self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 1
+
+    @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
+    def test_create_enrollment_task_source_set(self, mock_contains_course):
+        """
+        Task should create an enterprise enrollment if the course_id handed to
+        the function is part of the EnterpriseCustomer's catalogs
+        """
+        mock_contains_course.return_value = True
+        assert EnterpriseCourseEnrollment.objects.count() == 0
+        create_enterprise_enrollment(
+            self.FAKE_COURSE_ID,
+            self.enterprise_customer_user.id
+        )
+        assert EnterpriseCourseEnrollment.objects.count() == 1
+        assert EnterpriseCourseEnrollment.objects.get(
+            course_id=self.FAKE_COURSE_ID,
+        ).source.slug == EnterpriseEnrollmentSource.ENROLLMENT_TASK
 
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     def test_create_enrollment_task_course_not_in_catalog(self, mock_contains_course):
@@ -58,7 +76,7 @@ class TestEnterpriseTasks(unittest.TestCase):
 
         assert EnterpriseCourseEnrollment.objects.count() == 0
         create_enterprise_enrollment(
-            'fake:course',
+            self.FAKE_COURSE_ID,
             self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 0
@@ -76,7 +94,7 @@ class TestEnterpriseTasks(unittest.TestCase):
 
         assert EnterpriseCourseEnrollment.objects.count() == 1
         create_enterprise_enrollment(
-            'fake:course',
+            self.FAKE_COURSE_ID,
             self.enterprise_customer_user.id
         )
         assert EnterpriseCourseEnrollment.objects.count() == 1
