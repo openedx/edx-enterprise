@@ -33,40 +33,22 @@ class LearnerInfoSerializer(ImmutableStateSerializer):
     user_country_code = serializers.CharField(source='profile.country.code')
     user_account_creation_date = serializers.DateTimeField(source='date_joined')
 
-    enterprise_user_id = serializers.SerializerMethodField()
-    enterprise_sso_uid = serializers.SerializerMethodField()
-
-    def get_enterprise_user_id(self, obj):
-        """
-        Get enterprise user id from user object.
-
-        Arguments:
-            obj (User): Django User object
-
-        Returns:
-            (int): Primary Key identifier for enterprise user object.
-        """
-        # An enterprise learner can not belong to multiple enterprise customer at the same time
-        # but if such scenario occurs we will pick the first.
-        enterprise_learner = EnterpriseCustomerUser.objects.filter(user_id=obj.id).first()
-
-        return enterprise_learner and enterprise_learner.id
-
-    def get_enterprise_sso_uid(self, obj):
-        """
-        Get enterprise SSO UID.
-
-        Arguments:
-            obj (User): Django User object
-
-        Returns:
-            (str): string containing UUID for enterprise customer's Identity Provider.
-        """
-        # An enterprise learner can not belong to multiple enterprise customer at the same time
-        # but if such scenario occurs we will pick the first.
-        enterprise_learner = EnterpriseCustomerUser.objects.filter(user_id=obj.id).first()
-
-        return enterprise_learner and enterprise_learner.get_remote_id()
+    def to_representation(self, instance):
+        representation = super(LearnerInfoSerializer, self).to_representation(instance)
+        data = {
+            'enterprise_user_id': None,
+            'enterprise_sso_uid': None,
+        }
+        enterprise_learner = EnterpriseCustomerUser.objects.filter(
+            user_id=instance.id,
+            enterprise_customer=self.context.get('enterprise_customer')
+        ).first()
+        if enterprise_learner:
+            data = {
+                'enterprise_user_id': enterprise_learner.id,
+                'enterprise_sso_uid': enterprise_learner.get_remote_id(),
+            }
+        return dict(representation, **data)
 
 
 class CourseInfoSerializer(ImmutableStateSerializer):

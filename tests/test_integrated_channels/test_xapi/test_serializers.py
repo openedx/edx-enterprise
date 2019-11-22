@@ -57,7 +57,10 @@ class TestLearnerInfoSerializer(unittest.TestCase):
 
         with mock.patch.object(self.user, 'profile', create=True) as mock_user_profile:
             mock_user_profile.country.code = 'PK'
-            assert LearnerInfoSerializer(self.user).data == self.expected_data
+            assert LearnerInfoSerializer(
+                self.user,
+                context={'enterprise_customer': self.enterprise_customer_user.enterprise_customer}
+            ).data == self.expected_data
 
     def test_data_with_no_enterprise_customer_user(self):
         """
@@ -71,7 +74,27 @@ class TestLearnerInfoSerializer(unittest.TestCase):
 
         with mock.patch.object(self.user, 'profile', create=True) as mock_user_profile:
             mock_user_profile.country.code = 'PK'
-            assert LearnerInfoSerializer(self.user).data == self.expected_data
+            assert LearnerInfoSerializer(
+                self.user,
+                context={'enterprise_customer': self.enterprise_customer_user.enterprise_customer}
+            ).data == self.expected_data
+
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    def test_data_with_multiple_enterprise_customer_user(self, mock_third_party_api):
+        """
+        Verify that serializer data is as expected in case when user has multiple enterprises.
+        """
+        mock_third_party_api.return_value.get_remote_id.return_value = TEST_ENTERPRISE_SSO_UID
+
+        # Create a user with multiple enterprises
+        factories.EnterpriseCustomerUserFactory(user_id=self.user.id)
+
+        with mock.patch.object(self.user, 'profile', create=True) as mock_user_profile:
+            mock_user_profile.country.code = 'PK'
+            assert LearnerInfoSerializer(
+                self.user,
+                context={'enterprise_customer': self.enterprise_customer_user.enterprise_customer}
+            ).data == self.expected_data
 
 
 @ddt.ddt
