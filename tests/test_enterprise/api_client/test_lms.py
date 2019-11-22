@@ -13,8 +13,6 @@ import responses
 from pytest import raises
 from slumber.exceptions import HttpNotFoundError
 
-from django.conf import settings
-
 from enterprise.api_client import lms as lms_api
 from enterprise.utils import NotConnectedToOpenEdX
 
