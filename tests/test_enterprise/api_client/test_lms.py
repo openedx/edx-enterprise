@@ -44,11 +44,9 @@ def test_enrollment_api_client():
     expected_response = {"message": "test"}
     responses.add(responses.GET, _url("enrollment", "test"), json=expected_response)
     client = lms_api.EnrollmentApiClient('user-goes-here')
+    client.connect()
     actual_response = client.client.test.get()
     assert actual_response == expected_response
-    request = responses.calls[0][0]
-    assert request.headers['X-Edx-Api-Key'] == settings.EDX_API_KEY
-
 
 @responses.activate
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
