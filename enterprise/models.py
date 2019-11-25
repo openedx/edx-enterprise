@@ -889,7 +889,7 @@ class EnterpriseEnrollmentSource(TimeStampedModel):
     API = 'enterprise_api'
     ENROLLMENT_URL = 'enrollment_url'
     OFFER_REDEMPTION = 'offer_redemption'
-    B2C_SITE = 'b2c_site'
+    ENROLLMENT_TASK = 'enrollment_task'
 
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=30, unique=True)
