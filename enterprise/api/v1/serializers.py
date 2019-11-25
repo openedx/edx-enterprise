@@ -184,6 +184,11 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         __, created = models.EnterpriseCourseEnrollment.objects.get_or_create(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=course_id,
+            defaults={
+                'source': models.EnterpriseEnrollmentSource.get_source(
+                    models.EnterpriseEnrollmentSource.OFFER_REDEMPTION
+                )
+            }
         )
         if created:
             track_enrollment('rest-api-enrollment', self.enterprise_customer_user.user_id, course_id)

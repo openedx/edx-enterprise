@@ -296,15 +296,23 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         if status_code == 201:
+            enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=self.user.pk)
+            enrollment = EnterpriseCourseEnrollment.objects.get(
+                enterprise_customer_user=enterprise_customer_user,
+                course_id=request_data['course_id'],
+            )
+
             self.assertDictEqual(request_data, response)
             if enrollment_exists:
                 mock_track_enrollment.assert_not_called()
+                assert enrollment.source is None
             else:
                 mock_track_enrollment.assert_called_once_with(
                     'rest-api-enrollment',
                     self.user.id,
                     request_data['course_id'],
                 )
+                assert enrollment.source.slug == EnterpriseEnrollmentSource.OFFER_REDEMPTION
         else:
             mock_track_enrollment.assert_not_called()
 

@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 ----------
+
+[2.0.28] - 2019-12-3
+---------------------
+
+* Added logic to set the EnterpriseCourseEnrollmentSource for the Enterprise Enrollments through offers and management task.
+
 [2.0.27] - 2019-11-26
 ---------------------
 

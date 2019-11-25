@@ -11,7 +11,7 @@ from pytest import mark
 from django.core.management import call_command
 from django.test import TestCase
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer
+from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseEnrollmentSource
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
@@ -70,13 +70,13 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
             kwargs['enterprise_customer_uuid'] = self.enterprise_customer.uuid
 
         call_command(self.command, **kwargs)
-
-        count = EnterpriseCourseEnrollment.objects.filter(
+        course_enrollments = EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_run_id
-        ).count()
+        )
 
-        assert count == 1
+        assert course_enrollments.count() == 1
+        assert course_enrollments[0].source.slug == EnterpriseEnrollmentSource.MANAGEMENT_COMMAND
         logger_mock.info.assert_called_with('Created %s missing EnterpriseCourseEnrollments.', 1)
 
     @mock.patch.object(EnterpriseCustomer, 'catalog_contains_course', mock.Mock(side_effect=lambda x: False))
@@ -115,12 +115,14 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
 
         call_command(self.command)
 
-        count = EnterpriseCourseEnrollment.objects.filter(
+        course_enrollments = EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_run_id
-        ).count()
+        )
 
-        assert count == 1
+        assert course_enrollments.count() == 1
+        assert course_enrollments[0].source is None
+
         logger_mock.warning.assert_called_with(
             'EnterpriseCourseEnrollment exists: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
             self.enterprise_customer.uuid,
