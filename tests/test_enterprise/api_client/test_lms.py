@@ -13,8 +13,6 @@ import responses
 from pytest import raises
 from slumber.exceptions import HttpNotFoundError
 
-from django.conf import settings
-
 from enterprise.api_client import lms as lms_api
 from enterprise.utils import NotConnectedToOpenEdX
 
@@ -39,17 +37,18 @@ def _url(base_name, path):
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_enrollment_api_client():
     expected_response = {"message": "test"}
     responses.add(responses.GET, _url("enrollment", "test"), json=expected_response)
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
+    client.connect()
     actual_response = client.client.test.get()
     assert actual_response == expected_response
-    request = responses.calls[0][0]
-    assert request.headers['X-Edx-Api-Key'] == settings.EDX_API_KEY
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_enrollment_course_details():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     expected_response = {"course_id": course_id}
@@ -61,12 +60,13 @@ def test_get_enrollment_course_details():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response == expected_response
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_enrollment_course_details_with_exception():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
@@ -77,12 +77,13 @@ def test_get_enrollment_course_details_with_exception():
         ),
         status=400
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response == {}
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_enroll_user_in_course():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -98,7 +99,7 @@ def test_enroll_user_in_course():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.enroll_user_in_course(user, course_id, mode, cohort=cohort)
     assert actual_response == expected_response
     request = responses.calls[0][0]
@@ -106,6 +107,7 @@ def test_enroll_user_in_course():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -120,12 +122,13 @@ def test_get_course_enrollment():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response == expected_response
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_is_enrolled():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -141,12 +144,13 @@ def test_is_enrolled():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.is_enrolled(user, course_id)
     assert actual_response is True
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 @mock.patch('enterprise.api_client.lms.EXCLUDED_COURSE_MODES', ['course'])
 def test_get_enrollment_course_modes():
@@ -174,12 +178,13 @@ def test_get_enrollment_course_modes():
         ),
         json=response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_course_modes(course_id)
     assert actual_response == expected_return
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 def test_has_course_modes():
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -200,12 +205,13 @@ def test_has_course_modes():
         ),
         json=response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.has_course_mode(course_id, 'list')
     assert actual_response is True
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 @mock.patch('enterprise.api_client.lms.EXCLUDED_COURSE_MODES', ['course'])
 def test_doesnt_have_course_modes():
@@ -227,12 +233,13 @@ def test_doesnt_have_course_modes():
         ),
         json=response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.has_course_mode(course_id, 'course')
     assert actual_response is False
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment_invalid():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -244,12 +251,13 @@ def test_get_course_enrollment_invalid():
         ),
         status=404,
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment_not_found():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -261,12 +269,13 @@ def test_get_course_enrollment_not_found():
         ),
         body='',
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_is_enrolled_false():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -278,12 +287,13 @@ def test_is_enrolled_false():
         ),
         status=404,
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.is_enrolled(user, course_id)
     assert actual_response is False
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_is_enrolled_but_not_active():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -299,12 +309,13 @@ def test_is_enrolled_but_not_active():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.is_enrolled(user, course_id)
     assert actual_response is False
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_enrolled_courses():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
@@ -321,12 +332,13 @@ def test_get_enrolled_courses():
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     actual_response = client.get_enrolled_courses(user)
     assert actual_response == expected_response
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_unenroll():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
@@ -350,12 +362,13 @@ def test_unenroll():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     unenrolled = client.unenroll_user_from_course(user, course_id)
     assert unenrolled
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_unenroll_already_unenrolled():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
@@ -378,7 +391,7 @@ def test_unenroll_already_unenrolled():
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClient('user-goes-here')
     unenrolled = client.unenroll_user_from_course(user, course_id)
     assert not unenrolled
 

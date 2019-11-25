@@ -132,13 +132,14 @@ class EmbargoApiClient(object):
                 return redirect_url
 
 
-class EnrollmentApiClient(LmsApiClient):
+class EnrollmentApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Enrollment API.
     """
 
     API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
 
+    @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
         """
         Query the Enrollment API for the course details of the given course_id.
@@ -158,6 +159,7 @@ class EnrollmentApiClient(LmsApiClient):
             )
             return {}
 
+    @JwtLmsApiClient.refresh_token
     def _sort_course_modes(self, modes):
         """
         Sort the course mode dictionaries by slug according to the COURSE_MODE_SORT_ORDER constant.
@@ -180,6 +182,7 @@ class EnrollmentApiClient(LmsApiClient):
         # Sort slug weights in descending order
         return sorted(modes, key=slug_weight, reverse=True)
 
+    @JwtLmsApiClient.refresh_token
     def get_course_modes(self, course_id):
         """
         Query the Enrollment API for the specific course modes that are available for the given course_id.
@@ -195,6 +198,7 @@ class EnrollmentApiClient(LmsApiClient):
         modes = details.get('course_modes', [])
         return self._sort_course_modes([mode for mode in modes if mode['slug'] not in EXCLUDED_COURSE_MODES])
 
+    @JwtLmsApiClient.refresh_token
     def has_course_mode(self, course_run_id, mode):
         """
         Query the Enrollment API to see whether a course run has a given course mode available.
@@ -209,6 +213,7 @@ class EnrollmentApiClient(LmsApiClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
+    @JwtLmsApiClient.refresh_token
     def enroll_user_in_course(self, username, course_id, mode, cohort=None):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
@@ -232,6 +237,7 @@ class EnrollmentApiClient(LmsApiClient):
             }
         )
 
+    @JwtLmsApiClient.refresh_token
     def unenroll_user_from_course(self, username, course_id):
         """
         Call the enrollment API to unenroll the user in the course specified by course_id.
@@ -253,6 +259,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         return False
 
+    @JwtLmsApiClient.refresh_token
     def get_course_enrollment(self, username, course_id):
         """
         Query the enrollment API to get information about a single course enrollment.
@@ -287,6 +294,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         return result
 
+    @JwtLmsApiClient.refresh_token
     def is_enrolled(self, username, course_run_id):
         """
         Query the enrollment API and determine if a learner is enrolled in a course run.
@@ -302,6 +310,7 @@ class EnrollmentApiClient(LmsApiClient):
         enrollment = self.get_course_enrollment(username, course_run_id)
         return enrollment is not None and enrollment.get('is_active', False)
 
+    @JwtLmsApiClient.refresh_token
     def get_enrolled_courses(self, username):
         """
         Query the enrollment API to get a list of the courses a user is enrolled in.
