@@ -726,7 +726,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         user = self.user
         identity_provider = self.enterprise_customer.identity_provider
         if user and identity_provider:
-            client = ThirdPartyAuthApiClient()
+            client = ThirdPartyAuthApiClient(user)
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 

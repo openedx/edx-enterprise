@@ -413,6 +413,7 @@ def test_get_full_course_details_not_found():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id_not_found():
     username = "Darth"
     provider_id = "DeathStar"
@@ -424,12 +425,13 @@ def test_get_remote_id_not_found():
         match_querystring=True,
         status=404
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClient('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id_no_results():
     username = "Darth"
     provider_id = "DeathStar"
@@ -450,12 +452,13 @@ def test_get_remote_id_no_results():
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClient('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id():
     username = "Darth"
     provider_id = "DeathStar"
@@ -476,12 +479,13 @@ def test_get_remote_id():
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClient('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response == "LukeIamYrFather"
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_username_from_remote_id_not_found():
     remote_id = "Darth"
     provider_id = "DeathStar"
@@ -493,12 +497,13 @@ def test_get_username_from_remote_id_not_found():
         match_querystring=True,
         status=404
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClient('user-goes-here')
     actual_response = client.get_username_from_remote_id(provider_id, remote_id)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_username_from_remote_id_no_results():
     remote_id = "Darth"
     provider_id = "DeathStar"
@@ -519,12 +524,13 @@ def test_get_username_from_remote_id_no_results():
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClient('user-goes-here')
     actual_response = client.get_username_from_remote_id(provider_id, remote_id)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_username_from_remote_id():
     remote_id = "LukeIamYrFather"
     provider_id = "DeathStar"
@@ -544,7 +550,7 @@ def test_get_username_from_remote_id():
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClient('user-goes-here')
     actual_response = client.get_username_from_remote_id(provider_id, remote_id)
     assert actual_response == "Darth"
 
