@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.26] - 2019-11-26
+---------------------
+
+* Updated xapi exports with an active enterprise setting for users with multiple linked enterprises.
+
 [2.0.25] - 2019-11-22
 ---------------------
 

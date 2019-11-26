@@ -26,7 +26,10 @@ def send_course_enrollment_statement(lrs_configuration, course_enrollment):
          lrs_configuration (XAPILRSConfiguration): XAPILRSConfiguration instance where to send statements.
          course_enrollment (CourseEnrollment): Course enrollment object.
     """
-    user_details = LearnerInfoSerializer(course_enrollment.user)
+    user_details = LearnerInfoSerializer(
+        course_enrollment.user,
+        context={'enterprise_customer': lrs_configuration.enterprise_customer}
+    )
     course_details = CourseInfoSerializer(
         course_enrollment.course,
         context={'site': lrs_configuration.enterprise_customer.site}
@@ -56,7 +59,10 @@ def send_course_completion_statement(lrs_configuration, user, course_overview, c
          course_overview (CourseOverview): Course over view object containing course details.
          course_grade (CourseGrade): course grade object.
     """
-    user_details = LearnerInfoSerializer(user)
+    user_details = LearnerInfoSerializer(
+        user,
+        context={'enterprise_customer': lrs_configuration.enterprise_customer}
+    )
     course_details = CourseInfoSerializer(
         course_overview,
         context={'site': lrs_configuration.enterprise_customer.site}
