@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.27] - 2019-11-26
+---------------------
+
+* Make the SAML enterprise active at login and de-activate other enterprises learner is linked to.
+
 [2.0.26] - 2019-11-26
 ---------------------
 
