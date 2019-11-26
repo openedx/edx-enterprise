@@ -331,7 +331,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
                 being rendered with this admin form.
         """
         enterprise_course_ids = self._get_enterprise_course_enrollments(enterprise_customer_user)
-        courses_string = mark_safe(self.get_enrolled_course_string(enterprise_course_ids))
+        courses_string = mark_safe(self.get_enrolled_course_string(enterprise_course_ids, enterprise_customer_user))
         return courses_string or 'None'
 
     def other_enrollments(self, enterprise_customer_user):
@@ -346,7 +346,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         enterprise_course_ids = self._get_enterprise_course_enrollments(enterprise_customer_user)
         # remove overlapping enterprise enrollments from all enrollments
         course_ids = set(all_course_ids) - set(enterprise_course_ids)
-        courses_string = mark_safe(self.get_enrolled_course_string(course_ids))
+        courses_string = mark_safe(self.get_enrolled_course_string(course_ids, enterprise_customer_user))
         return courses_string or 'None'
 
     def _get_enterprise_course_enrollments(self, enterprise_customer_user):
@@ -382,11 +382,11 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
             return readonly_fields + tuple(get_all_field_names(self.model))
         return readonly_fields
 
-    def get_enrolled_course_string(self, course_ids):
+    def get_enrolled_course_string(self, course_ids, enterprise_customer_user):
         """
         Get an HTML string representing the courses the user is enrolled in.
         """
-        courses_client = CourseApiClient()
+        courses_client = CourseApiClient(enterprise_customer_user.user)
         course_details = []
         for course_id in course_ids:
             name = courses_client.get_course_details(course_id)['name']

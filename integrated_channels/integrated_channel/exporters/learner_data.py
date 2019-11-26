@@ -146,7 +146,7 @@ class LearnerExporter(Exporter):
             # pylint: disable=unsubscriptable-object
             if course_details is None or course_details['course_id'] != course_id:
                 if self.course_api is None:
-                    self.course_api = CourseApiClient()
+                    self.course_api = CourseApiClient(self.user)
                 course_details = self.course_api.get_course_details(course_id)
 
             if course_details is None:

@@ -316,7 +316,7 @@ class EnrollmentApiClient(LmsApiClient):
         return self.client.enrollment.get(user=username)
 
 
-class CourseApiClient(LmsApiClient):
+class CourseApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
     """
@@ -324,6 +324,7 @@ class CourseApiClient(LmsApiClient):
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
     APPEND_SLASH = True
 
+    @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
         """
         Retrieve all available details about a course.
