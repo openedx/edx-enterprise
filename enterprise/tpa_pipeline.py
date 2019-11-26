@@ -69,8 +69,13 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     # proceed with the creation of a link between the user and the enterprise customer, then exit.
     enterprise_customer_user, _ = EnterpriseCustomerUser.objects.update_or_create(
         enterprise_customer=enterprise_customer,
+        active=True,
         user_id=user.id
     )
+    # if learner has activated enterprise we need to de-activate other enterprises learner is linked to
+    EnterpriseCustomerUser.objects.filter(
+        user_id=user.id
+    ).exclude(enterprise_customer=enterprise_customer).update(active=False)
     enterprise_customer_user.update_session(request)
 
 

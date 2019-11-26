@@ -67,7 +67,8 @@ class TestTpaPipeline(unittest.TestCase):
             assert handle_enterprise_logistration(backend, self.user) is None
             assert EnterpriseCustomerUser.objects.filter(
                 enterprise_customer=enterprise_customer,
-                user_id=self.user.id
+                user_id=self.user.id,
+                active=True
             ).count() == 1
 
     def test_handle_enterprise_logistration_not_user_linking(self):
@@ -84,8 +85,42 @@ class TestTpaPipeline(unittest.TestCase):
             assert handle_enterprise_logistration(backend, self.user) is None
             assert EnterpriseCustomerUser.objects.filter(
                 enterprise_customer=enterprise_customer,
-                user_id=self.user.id
+                user_id=self.user.id,
+                active=True
             ).count() == 0
+
+    def test_handle_enterprise_logistration_user_multiple_enterprises_linking(self):
+        """
+        Test that if user has multiple enterprise_customers then active status of latest
+         enterprise_customer with which user is logged in will be marked as True and active
+          status of other enterprise_customers will be marked as False.
+        """
+        backend = self.get_mocked_sso_backend()
+        self.user = UserFactory(is_active=True)
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
+            enterprise_customer = EnterpriseCustomerFactory(
+                enable_data_sharing_consent=False
+            )
+            enterprise_customer_old = EnterpriseCustomerFactory(
+                enable_data_sharing_consent=False
+            )
+            EnterpriseCustomerUser.objects.create(
+                enterprise_customer=enterprise_customer_old,
+                user_id=self.user.id,
+                active=True
+            )
+            fake_get_ec.return_value = enterprise_customer
+            assert handle_enterprise_logistration(backend, self.user) is None
+            assert EnterpriseCustomerUser.objects.filter(
+                enterprise_customer=enterprise_customer,
+                user_id=self.user.id,
+                active=True
+            ).count() == 1
+            assert EnterpriseCustomerUser.objects.filter(
+                enterprise_customer=enterprise_customer_old,
+                user_id=self.user.id,
+                active=False
+            ).count() == 1
 
     def test_get_ec_for_pipeline(self):
         """
