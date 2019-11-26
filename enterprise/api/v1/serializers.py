@@ -642,9 +642,10 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         It first uses the third party auth api to find the associated username to do the lookup.
         """
         enterprise_customer = self.context.get('enterprise_customer')
+        request_user = self.context.get('request_user')
 
         try:
-            tpa_client = ThirdPartyAuthApiClient()
+            tpa_client = ThirdPartyAuthApiClient(request_user)
             username = tpa_client.get_username_from_remote_id(
                 enterprise_customer.identity_provider, value
             )
