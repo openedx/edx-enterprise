@@ -159,7 +159,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
             )
             return {}
 
-    @JwtLmsApiClient.refresh_token
     def _sort_course_modes(self, modes):
         """
         Sort the course mode dictionaries by slug according to the COURSE_MODE_SORT_ORDER constant.
