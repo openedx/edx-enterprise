@@ -376,7 +376,6 @@ class ThirdPartyAuthApiClient(JwtLmsApiClient):
         """
         return self._get_results(identity_provider, 'remote_id', remote_id, 'username')
 
-    @JwtLmsApiClient.refresh_token
     def _get_results(self, identity_provider, param_name, param_value, result_field_name):
         """
         Calls the third party auth api endpoint to get the mapping between usernames and remote ids.
