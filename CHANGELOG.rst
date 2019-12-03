@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 ----------
+[2.0.29] - 2019-12-04
+---------------------
+
+* Update the enterprise customer in the session in case of customer with multiple linked enterprises
 
 [2.0.28] - 2019-12-3
 ---------------------
