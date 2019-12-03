@@ -9,7 +9,12 @@ import logging
 from django.core.management import BaseCommand
 from django.db import connection
 
-from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.models import (
+    EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
+    EnterpriseCustomerUser,
+    EnterpriseEnrollmentSource,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,7 +59,12 @@ class Command(BaseCommand):
                 # pylint: disable=no-member
                 __, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
-                    course_id=course_run_id
+                    course_id=course_run_id,
+                    defaults={
+                        'source': EnterpriseEnrollmentSource.get_source(
+                            EnterpriseEnrollmentSource.MANAGEMENT_COMMAND
+                        )
+                    }
                 )
                 if created:
                     records_created += 1

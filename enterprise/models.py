@@ -890,6 +890,7 @@ class EnterpriseEnrollmentSource(TimeStampedModel):
     ENROLLMENT_URL = 'enrollment_url'
     OFFER_REDEMPTION = 'offer_redemption'
     ENROLLMENT_TASK = 'enrollment_task'
+    MANAGEMENT_COMMAND = 'management_command'
 
     name = models.CharField(max_length=64)
     slug = models.SlugField(max_length=30, unique=True)
