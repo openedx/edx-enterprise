@@ -62,7 +62,16 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
     """
 
     @staticmethod
-    def _make_bound_form(email, file_attached=False, course="", program="", course_mode="", notify="", reason="tests"):
+    def _make_bound_form(
+            email,
+            file_attached=False,
+            course="",
+            program="",
+            course_mode="",
+            notify="",
+            reason="tests",
+            discount=0.0
+    ):
         """
         Builds bound ManageLearnersForm.
         """
@@ -73,6 +82,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             ManageLearnersForm.Fields.COURSE_MODE: course_mode,
             ManageLearnersForm.Fields.NOTIFY: notify,
             ManageLearnersForm.Fields.REASON: reason,
+            ManageLearnersForm.Fields.DISCOUNT: discount,
         }
         file_data = {}
         if file_attached:
@@ -383,6 +393,32 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         assert form.errors == {
             "__all__": [ValidationMessages.COURSE_AND_PROGRAM_ERROR]
         }
+
+    @ddt.unpack
+    @ddt.data(
+        (0.0, True, False),
+        (50.0, True, False),
+        (100.0, True, False),
+        (-10.0, False, False),
+        (101.0, False, False),
+        (101.000001, False, True),
+        (10.9999993, False, True),
+    )
+    def test_clean_discount(self, discount, is_valid, is_decimal_error):
+        """
+        Tests that clean_discount method
+        """
+        form = self._make_bound_form('irrelevant@example.com', discount=discount)
+        if is_valid:
+            assert form.is_valid()
+            cleaned_data = form.clean()
+            assert cleaned_data[ManageLearnersForm.Fields.DISCOUNT] == discount
+        else:
+            assert not form.is_valid()
+            error_message = ValidationMessages.INVALID_DISCOUNT
+            if is_decimal_error:
+                error_message = 'Ensure that there are no more than 5 decimal places.'
+            assert form.errors == {form.Fields.DISCOUNT: [error_message]}
 
 
 @mark.django_db

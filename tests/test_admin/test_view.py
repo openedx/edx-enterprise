@@ -173,6 +173,7 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         self.context_parameters = EnterpriseCustomerManageLearnersView.ContextParameters
         self.required_fields_with_default = {
             ManageLearnersForm.Fields.REASON: "tests",
+            ManageLearnersForm.Fields.DISCOUNT: 0.0,
         }
 
     def _test_common_context(self, actual_context, context_overrides=None):
@@ -602,7 +603,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
-    def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True, reason="tests"):
+    def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True, reason="tests", discount=0.0):
         """
         Perform post request to log in and submit the form to enroll a user.
         """
@@ -626,6 +627,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 ManageLearnersForm.Fields.PROGRAM: program_id,
                 ManageLearnersForm.Fields.NOTIFY: notify,
                 ManageLearnersForm.Fields.REASON: reason,
+                ManageLearnersForm.Fields.DISCOUNT: discount,
             })
         return response
 

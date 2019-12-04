@@ -102,6 +102,9 @@ class ValidationMessages(object):
     INVALID_ENCODING = _(
         "Unable to parse CSV file. Please make sure it is a CSV 'utf-8' encoded file."
     )
+    INVALID_DISCOUNT = _(
+        'Discount percentage should be from 0 to 100.'
+    )
 
 
 def parse_csv(file_stream, expected_columns=None):
