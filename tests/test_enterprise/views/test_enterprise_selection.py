@@ -128,7 +128,8 @@ class TestEnterpriseSelectionView(TestCase):
 
         # after selection only the selected enterprise should be active for learner
         assert EnterpriseCustomerUser.objects.get(user_id=user_id, enterprise_customer=new_enterprise).active
-
+        # selected enterprise is set correctly in the session
+        self.assertEqual(self.client.session['enterprise_customer']['uuid'], new_enterprise)
         # all other enterprises for learner should be non-active
         for obj in EnterpriseCustomerUser.objects.filter(user_id=user_id).exclude(enterprise_customer=new_enterprise):
             assert not obj.active

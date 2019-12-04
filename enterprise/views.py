@@ -900,6 +900,11 @@ class EnterpriseSelectionView(FormView):
         })
         if serializer.is_valid():
             serializer.save()
+            enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+                user_id=self.request.user.id,
+                enterprise_customer=enterprise_customer
+            )
+            enterprise_customer_user.update_session(self.request)
             LOGGER.info(
                 '[Enterprise Selection Page] Learner activated an enterprise. User: %s, EnterpriseCustomer: %s',
                 self.request.user.username,
