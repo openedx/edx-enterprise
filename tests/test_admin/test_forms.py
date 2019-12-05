@@ -82,7 +82,8 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             file_data = {ManageLearnersForm.Fields.BULK_UPLOAD: mock_file}
 
         customer = EnterpriseCustomerFactory()
-        return ManageLearnersForm(form_data, file_data, enterprise_customer=customer)
+        with mock.patch('enterprise.admin.forms.get_configuration_value', return_value=True):
+            return ManageLearnersForm(form_data, file_data, enterprise_customer=customer)
 
     @ddt.data(
         "qwe@asd.com", "email1@example.org", "john.t.kirk@starfleet.gov"

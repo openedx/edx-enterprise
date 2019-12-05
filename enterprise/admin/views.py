@@ -542,6 +542,8 @@ class EnterpriseCustomerManageLearnersView(View):
             program_details: The details of the program in which we're enrolling
             course_mode (str): The mode with which we're enrolling in the program
             emails: An iterable of email addresses which need to be enrolled
+            enrollment_requester (User): The logged-in user who is adding the learner
+            enrollment_reason (str): Reason for manual enrollment.
 
         Returns:
             successes: A list of users who were successfully enrolled in all courses of the program
@@ -613,6 +615,8 @@ class EnterpriseCustomerManageLearnersView(View):
             course_id (str): The unique identifier of the course in which we're enrolling
             course_mode (str): The mode with which we're enrolling in the course
             emails: An iterable of email addresses which need to be enrolled
+            enrollment_requester (User): The logged-in user who is adding the learner
+            enrollment_reason (str): Reason for manual enrollment.
 
         Returns:
             successes: A list of users who were successfully enrolled in the course

@@ -40,12 +40,14 @@ from enterprise.models import (
     EnterpriseFeatureUserRoleAssignment,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import MultipleProgramMatchError
+from enterprise.utils import MultipleProgramMatchError, get_configuration_value
 
 try:
     from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
 except ImportError:
     saml_provider_configuration = None
+
+ENABLE_MANUAL_ENROLLMENT_REASON_FIELD = 'ENABLE_MANUAL_ENROLLMENT_REASON_FIELD'
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -89,7 +91,6 @@ class ManageLearnersForm(forms.Form):
             ("honor", _("Honor")),
         ],
     )
-    reason = forms.CharField(label=_("Reason for manual enrollment"), required=True)
 
     class NotificationTypes(object):
         """
@@ -150,6 +151,8 @@ class ManageLearnersForm(forms.Form):
         self._user = user
         self._enterprise_customer = kwargs.pop('enterprise_customer', None)
         super(ManageLearnersForm, self).__init__(*args, **kwargs)
+        if get_configuration_value(ENABLE_MANUAL_ENROLLMENT_REASON_FIELD, False):
+            self.fields['reason'] = forms.CharField(label=_("Reason for manual enrollment"), required=True)
 
     def clean_email_or_username(self):
         """
