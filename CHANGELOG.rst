@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.33] - 2019-12-23
+---------------------
+
+* Added ability to include or exclude date from the report configuration file name.
+
 [2.0.32] - 2019-12-17
 ---------------------
 

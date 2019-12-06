@@ -492,6 +492,7 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             "day_of_month",
             "day_of_week",
             "hour_of_day",
+            "include_date",
             "email",
             "decrypted_password",
             "sftp_hostname",
