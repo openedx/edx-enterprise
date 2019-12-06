@@ -1651,11 +1651,11 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
     @ddt.data(
         {
             'role_name': ENTERPRISE_LEARNER_ROLE,
-            'expected_context': '47130371-0b6d-43f5-01de-71942664de2b',
+            'expected_context': ['47130371-0b6d-43f5-01de-71942664de2b'],
         },
         {
             'role_name': ENTERPRISE_OPERATOR_ROLE,
-            'expected_context': '*',
+            'expected_context': ['*'],
         }
     )
     @ddt.unpack
@@ -1674,4 +1674,35 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
             role=enterprise_role
         )
 
-        assert str(enterprise_role_assignment.get_context()) == expected_context
+        assert enterprise_role_assignment.get_context() == expected_context
+
+    @ddt.data(
+        {
+            'role_name': ENTERPRISE_LEARNER_ROLE,
+            'expected_context': [u'47130371-0b6d-43f5-01de-71942664de2c', u'47130371-0b6d-43f5-01de-71942664de2b'],
+        },
+        {
+            'role_name': ENTERPRISE_OPERATOR_ROLE,
+            'expected_context': ['*'],
+        }
+    )
+    @ddt.unpack
+    def test_get_context_for_multiple_contexts(self, role_name, expected_context):
+        """
+        Verify that `SystemWideEnterpriseUserRoleAssignment.get_context` method works as expected for user with
+        multiple contexts.
+        """
+        user_email = 'edx@example.com'
+        enterprise_customer_1 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2c')
+        user = factories.UserFactory(email=user_email)
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer_1, user_email)
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer_2, user_email)
+
+        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
+        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user,
+            role=enterprise_role
+        )
+
+        assert enterprise_role_assignment.get_context() == expected_context
