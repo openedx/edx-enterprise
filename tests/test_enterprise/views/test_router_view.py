@@ -41,12 +41,13 @@ class TestRouterView(TestCase):
         super(TestRouterView, self).setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
-        self.request = mock.MagicMock(path=reverse(
-            'enterprise_course_run_enrollment_page',
-            args=[self.enterprise_customer.uuid, self.course_run_id]
-        ))
-        # pylint: disable=invalid-name
-        self.request.user.id = 1
+        self.request = mock.MagicMock(
+            path=reverse(
+                'enterprise_course_run_enrollment_page',
+                args=[self.enterprise_customer.uuid, self.course_run_id]
+            ),
+            user=factories.UserFactory()
+        )
         self.kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,

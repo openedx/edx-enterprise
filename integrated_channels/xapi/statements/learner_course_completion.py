@@ -16,23 +16,21 @@ class LearnerCourseCompletionStatement(EnterpriseStatement):
     xAPI Statement to serialize data related to course completion.
     """
 
-    def __init__(self, user, course_overview, user_details, course_details, course_grade, *args, **kwargs):
+    def __init__(self, user, user_social_auth, course_overview, course_grade, *args, **kwargs):
         """
         Initialize and populate statement with learner info and course info.
 
         Arguments:
             user (User): Auth User object containing information about the learner enrolling in the course.
+            user_social_auth (UserSocialAuth): UserSocialAuth object for learner
             course_overview (CourseOverview): course overview object containing course details.
-            user_details (dict): A dict object containing learner info we want to send in xAPI statement payload.
-            course_details (dict): A dict object containing course info we want to send in xAPI statement payload.
             course_grade (CourseGrade): User grade in the course.
         """
         kwargs.update(
-            actor=self.get_actor(user.username, user.email),
+            actor=self.get_actor(user, user_social_auth),
             verb=self.get_verb(),
-            object=self.get_object(course_overview.display_name, course_overview.short_description),
+            object=self.get_object(course_overview),
             result=self.get_result(course_grade),
-            context=self.get_context(user_details, course_details)
         )
         super(LearnerCourseCompletionStatement, self).__init__(*args, **kwargs)
 
