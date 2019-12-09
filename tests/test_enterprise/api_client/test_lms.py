@@ -20,6 +20,7 @@ from enterprise.utils import NotConnectedToOpenEdX
 
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
+    'enrollment_jwt': lms_api.EnrollmentApiClientJwt,
     'courses': lms_api.CourseApiClient,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
     'course_grades': lms_api.GradesApiClient,
@@ -50,34 +51,36 @@ def test_enrollment_api_client():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_enrollment_course_details():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     expected_response = {"course_id": course_id}
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "course/{}".format(course_id),
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt('user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response == expected_response
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_enrollment_course_details_with_exception():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "course/{}".format(course_id),
         ),
         status=400
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt('user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response == {}
 
