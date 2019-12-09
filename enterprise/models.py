@@ -41,7 +41,7 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClientJwt, parse_lms_api_datetime
+from enterprise.api_client.lms import EnrollmentApiClientJwt, ThirdPartyAuthApiClientJwt, parse_lms_api_datetime
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -734,7 +734,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Enroll a user into a course track, and register an enterprise course enrollment.
         """
-        enrollment_api_client = EnrollmentApiClient()
+        enrollment_api_client = EnrollmentApiClientJwt(self.user)
         # Check to see if the user's already enrolled and we have an enterprise course enrollment to track it.
         course_enrollment = enrollment_api_client.get_course_enrollment(self.username, course_run_id) or {}
         enrolled_in_course = course_enrollment and course_enrollment.get('is_active', False)
@@ -797,7 +797,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Unenroll a user from a course track.
         """
-        enrollment_api_client = EnrollmentApiClient()
+        enrollment_api_client = EnrollmentApiClientJwt(self.user)
         if enrollment_api_client.unenroll_user_from_course(self.username, course_run_id):
             EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=self, course_id=course_run_id).delete()
             return True
@@ -1199,7 +1199,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
         :return: Whether the course enrollment mode is of an audit type.
         """
-        course_enrollment_api = EnrollmentApiClient()
+        course_enrollment_api = EnrollmentApiClientJwt(self.enterprise_customer_user.user)
         course_enrollment = course_enrollment_api.get_course_enrollment(
             self.enterprise_customer_user.username,
             self.course_id

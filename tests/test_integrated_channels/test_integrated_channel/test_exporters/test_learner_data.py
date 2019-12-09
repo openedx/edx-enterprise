@@ -104,7 +104,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert learner_data_record.completed_timestamp == (self.NOW_TIMESTAMP if completed_date is not None else None)
         assert learner_data_record.grade == 'A+'
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     def test_collect_learner_data_without_consent(self, mock_course_api, mock_grades_api, mock_enrollment_api):
@@ -143,7 +143,7 @@ class TestLearnerExporter(unittest.TestCase):
         learner_data = list(self.exporter.export())
         assert not learner_data
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -181,7 +181,7 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.completed_timestamp is None
             assert report.grade == LearnerExporter.GRADE_INCOMPLETE
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     def test_learner_data_instructor_paced_no_certificate_null_sso_id(
@@ -210,7 +210,7 @@ class TestLearnerExporter(unittest.TestCase):
         learner_data = list(self.exporter.export())
         assert not learner_data
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -257,7 +257,7 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.completed_timestamp == self.NOW_TIMESTAMP
             assert report.grade == LearnerExporter.GRADE_PASSING
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -316,7 +316,7 @@ class TestLearnerExporter(unittest.TestCase):
         (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -373,7 +373,7 @@ class TestLearnerExporter(unittest.TestCase):
         ('instructor', LearnerExporter.GRADE_PASSING),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
@@ -503,7 +503,7 @@ class TestLearnerExporter(unittest.TestCase):
         (False, False, 'verified', 2),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -560,7 +560,7 @@ class TestLearnerExporter(unittest.TestCase):
                 assert report.course_completed
                 assert report.grade == LearnerExporter.GRADE_PASSING
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     def test_learner_exporter_with_skip_transmitted(self, mock_course_api, mock_grades_api, mock_enrollment_api):

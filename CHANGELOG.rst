@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.47] - 2020-01-13
+---------------------
+
+* Replaced Edx-Api-Key in the remaining endpoints of EnrollmentApiClient
+
 [2.0.46] - 2020-01-10
 ---------------------
 
