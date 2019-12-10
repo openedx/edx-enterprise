@@ -99,6 +99,9 @@ class ValidationMessages(object):
     INVALID_CHANNEL_WORKER = _(
         'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
     )
+    INVALID_ENCODING = _(
+        "Unable to parse CSV file. Please make sure it is a CSV 'utf-8' encoded file."
+    )
 
 
 def parse_csv(file_stream, expected_columns=None):
@@ -114,9 +117,13 @@ def parse_csv(file_stream, expected_columns=None):
     Yields:
         dict: CSV line parsed into a dictionary.
     """
-    reader = unicodecsv.DictReader(file_stream, encoding="utf-8")
+    try:
+        reader = unicodecsv.DictReader(file_stream, encoding="utf-8")
+        reader_fieldnames = reader.fieldnames
+    except (unicodecsv.Error, UnicodeDecodeError):
+        raise ValidationError(ValidationMessages.INVALID_ENCODING)
 
-    if expected_columns and set(expected_columns) - set(reader.fieldnames):
+    if expected_columns and set(expected_columns) - set(reader_fieldnames):
         raise ValidationError(ValidationMessages.MISSING_EXPECTED_COLUMNS.format(
             expected_columns=", ".join(expected_columns), actual_columns=", ".join(reader.fieldnames)
         ))

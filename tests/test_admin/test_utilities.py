@@ -90,6 +90,19 @@ class TestParseCSV(unittest.TestCase):
             with raises(ValidationError, message=expected_error_message):
                 list(parse_csv(stream, expected_columns={"Name", "Email"}))
 
+    def test_parse_csv_check_with_wrong_encoding(self):
+        header = ("email",)
+        contents = (
+            "honor@example.com",
+            "staff@example.com",
+        )
+
+        with MakeCsvStreamContextManager(header, contents, 'utf-16') as stream:
+            expected_error_message = ValidationMessages.INVALID_ENCODING
+
+            with raises(ValidationError, message=expected_error_message):
+                list(parse_csv(stream, expected_columns={"email"}))
+
 
 @mark.django_db
 class TestEmailConversion(unittest.TestCase):

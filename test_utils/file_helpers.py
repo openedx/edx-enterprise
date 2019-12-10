@@ -14,7 +14,7 @@ class MakeCsvStreamContextManager(object):
     Context manager that creates a temporary csv file.
     """
 
-    def __init__(self, header, contents):
+    def __init__(self, header, contents, encoding='utf-8'):
         """
         Initialize context manager.
 
@@ -24,6 +24,7 @@ class MakeCsvStreamContextManager(object):
         """
         self._header = header
         self._contents = contents
+        self._encoding = encoding
         self._csv_stream = None
 
     def __enter__(self):
@@ -32,8 +33,7 @@ class MakeCsvStreamContextManager(object):
         """
         self._csv_stream = six.BytesIO()
 
-        writer = unicodecsv.writer(self._csv_stream)
-
+        writer = unicodecsv.writer(self._csv_stream, encoding=self._encoding)
         writer.writerow(self._header)
         writer.writerows(self._contents)
 
