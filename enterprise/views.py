@@ -36,7 +36,7 @@ from enterprise import constants, messages
 from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClientJwt, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
 from enterprise.models import (
@@ -215,12 +215,12 @@ class GrantDataSharingPermissions(View):
 
     preview_mode = False
 
-    def course_or_program_exist(self, course_id, program_uuid):
+    def course_or_program_exist(self, request_user, course_id, program_uuid):
         """
         Return whether the input course or program exist.
         """
         try:
-            course_exists = course_id and CourseApiClient().get_course_details(course_id)
+            course_exists = course_id and CourseApiClientJwt(request_user).get_course_details(course_id)
             program_exists = program_uuid and get_course_catalog_api_service_client().program_exists(program_uuid)
             return course_exists or program_exists
         except ImproperlyConfigured as error:
@@ -555,7 +555,8 @@ class GrantDataSharingPermissions(View):
         context_data = get_global_context(request, enterprise_customer)
 
         if not self.preview_mode:
-            if not self.course_or_program_exist(course_id, program_uuid):
+            request_user = request.user
+            if not self.course_or_program_exist(request_user, course_id, program_uuid):
                 error_code = 'ENTGDS000'
                 log_message = (
                     '[Enterprise DSC API] The course or program with a given id does not exist. '
@@ -771,7 +772,8 @@ class GrantDataSharingPermissions(View):
             )
             return render_page_with_error_code_message(request, context_data, error_code, log_message)
 
-        if not self.course_or_program_exist(course_id, program_uuid):
+        request_user = request.user
+        if not self.course_or_program_exist(request_user, course_id, program_uuid):
             error_code = 'ENTGDS006'
             log_message = (
                 '[Enterprise DSC API] The course or program with a given id does not exist. '

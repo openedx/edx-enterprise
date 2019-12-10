@@ -341,6 +341,32 @@ class CourseApiClient(LmsApiClient):
             return None
 
 
+class CourseApiClientJwt(JwtLmsApiClient):
+    """
+    Object builds an API client to make calls to the Course API.
+    """
+
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
+    APPEND_SLASH = True
+
+    @JwtLmsApiClient.refresh_token
+    def get_course_details(self, course_id):
+        """
+        Retrieve all available details about a course.
+
+        Args:
+            course_id (str): The course ID identifying the course for which to retrieve details.
+
+        Returns:
+            dict: Contains keys identifying those course details available from the courses API (e.g., name).
+        """
+        try:
+            return self.client.courses(course_id).get()
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception('Details not found for course [%s] due to: [%s]', course_id, str(exc))
+            return None
+
+
 class ThirdPartyAuthApiClient(LmsApiClient):
     """
     Object builds an API client to make calls to the Third Party Auth API.
