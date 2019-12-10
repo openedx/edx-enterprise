@@ -203,7 +203,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         assert form.is_valid()
         assert form.cleaned_data[form.Fields.COURSE] is None
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClientJwt")
     def test_clean_course_valid(self, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
@@ -215,7 +215,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         assert form.cleaned_data[form.Fields.COURSE] == course_details
 
     @ddt.data("course-v1:does+not+exist", "invalid_course_id")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClientJwt")
     def test_clean_course_invalid(self, course_id, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
@@ -225,7 +225,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             form.Fields.COURSE: [ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)],
         }
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClientJwt")
     def test_clean_valid_course_empty_mode(self, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
@@ -234,7 +234,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         assert not form.is_valid()
         assert form.errors == {"__all__": [ValidationMessages.COURSE_WITHOUT_COURSE_MODE]}
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClientJwt")
     def test_clean_valid_course_invalid_mode(self, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
@@ -365,7 +365,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             )]
         }
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClientJwt")
     def test_clean_both_course_and_program_passed(self, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details

@@ -31,7 +31,7 @@ from enterprise.admin.utils import (
 )
 from enterprise.admin.widgets import SubmitInput
 from enterprise.api_client.discovery import CourseCatalogApiClient
-from enterprise.api_client.lms import EnrollmentApiClient, EnrollmentApiClientJwt
+from enterprise.api_client.lms import EnrollmentApiClientJwt
 from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
