@@ -11,6 +11,13 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.40] - 2020-01-06
+---------------------
+
+* Replaced Edx-Api-Key in the EnrollmentApiClient
+* Changed the client in one endpoint of EnrollmentApiClient
+* Endpoint name: admin-views-EnterpriseCustomerManageLearnersView
+
 [2.0.39] - 2020-01-06
 ---------------------
 

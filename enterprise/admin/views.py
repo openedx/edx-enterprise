@@ -40,7 +40,7 @@ from enterprise.admin.utils import (
     validate_email_to_link,
 )
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import EnrollmentApiClient
+from enterprise.api_client.lms import EnrollmentApiClientJwt
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -443,7 +443,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enterprise_customer=enterprise_customer,
             user_id=user.id
         )
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClientJwt(user)
         succeeded = True
         for course_id in course_ids:
             try:
@@ -489,7 +489,7 @@ class EnterpriseCustomerManageLearnersView(View):
             Boolean: Whether or not enrollment exists
 
         """
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClientJwt(user)
         try:
             enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
             if enrollments and course_mode == enrollments.get('mode'):
