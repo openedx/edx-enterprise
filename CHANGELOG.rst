@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 ----------
+[2.0.31] - 2019-12-11
+---------------------
+
+* Added ADR for Multiple User Enterprises.
+
 [2.0.30] - 2019-12-04
 ---------------------
 
