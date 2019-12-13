@@ -425,7 +425,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     def test_enroll_learner(self, enrollment_api_client_mock, analytics_mock, *args):  # pylint: disable=unused-argument
         """
         ``enroll_learner`` enrolls the learner and redirects to the LMS courseware.
@@ -436,7 +436,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
         analytics_mock.track.assert_called_once()
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     def test_enroll_learner_already_enrolled(self, enrollment_api_client_mock):
         """
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
@@ -450,7 +450,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     # pylint: disable=unused-argument
     def test_enroll_learner_upgrade_mode(self, enrollment_api_client_mock, analytics_mock, *args):
         """
@@ -465,7 +465,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
         analytics_mock.track.assert_called_once()
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     def test_enroll_learner_downgrade_mode(self, enrollment_api_client_mock):
         """
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.

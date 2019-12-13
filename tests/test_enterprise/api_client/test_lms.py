@@ -20,6 +20,7 @@ from enterprise.utils import NotConnectedToOpenEdX
 
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
+    'enrollment_jwt': lms_api.EnrollmentApiClientJwt,
     'courses': lms_api.CourseApiClient,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
     'course_grades': lms_api.GradesApiClient,
@@ -327,6 +328,7 @@ def test_get_enrolled_courses():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_unenroll():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
@@ -345,17 +347,18 @@ def test_unenroll():
     responses.add(
         responses.POST,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment",
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     unenrolled = client.unenroll_user_from_course(user, course_id)
     assert unenrolled
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_unenroll_already_unenrolled():
     user = "some_user"
     course_id = "course-v1:edx+DemoX+Demo_Course"
@@ -364,7 +367,7 @@ def test_unenroll_already_unenrolled():
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         json=expected_response
@@ -373,12 +376,12 @@ def test_unenroll_already_unenrolled():
     responses.add(
         responses.POST,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment",
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     unenrolled = client.unenroll_user_from_course(user, course_id)
     assert not unenrolled
 

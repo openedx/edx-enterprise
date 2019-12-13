@@ -233,7 +233,7 @@ class TestRouterView(TestCase):
             assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.track_enrollment')
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
     def test_get_direct_audit_enrollment(self, router_view_mock, enrollment_api_client_mock, track_enrollment_mock):
         """
@@ -256,7 +256,7 @@ class TestRouterView(TestCase):
             fetch_redirect_response=False,
         )
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
     def test_get_direct_audit_enrollment_user_already_enrolled(self, router_view_mock, enrollment_api_client_mock):
         """
