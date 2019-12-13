@@ -41,7 +41,7 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import EnrollmentApiClient, EnrollmentApiClientJwt, ThirdPartyAuthApiClient, parse_lms_api_datetime
+from enterprise.api_client.lms import EnrollmentApiClientJwt, ThirdPartyAuthApiClient, parse_lms_api_datetime
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
