@@ -154,7 +154,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page(
@@ -216,7 +216,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(True, False)
@@ -259,7 +259,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(
@@ -377,7 +377,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_with_invalid_catalog(
@@ -447,7 +447,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_course_enrollment_page_with_catalog_for_invalid_course_modes(
@@ -530,7 +530,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(True, False)
@@ -606,7 +606,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(True, False)
@@ -679,7 +679,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_course_unenrollable_context(
@@ -724,7 +724,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_edge_case_formatting(
@@ -787,7 +787,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_with_empty_fields(
@@ -851,7 +851,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_specific_enrollment_view_audit_enabled(
@@ -918,7 +918,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_with_no_start_date(
@@ -968,7 +968,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_non_existing_course(
             self,
@@ -1017,7 +1017,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_for_error_in_getting_course(
             self,
@@ -1066,7 +1066,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_specific_enrollment_view_with_course_mode_error(
             self,
@@ -1114,7 +1114,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     def test_get_course_specific_enrollment_view_for_invalid_ec_uuid(
             self,
             enrollment_api_client_mock,
@@ -1182,7 +1182,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_landing_page_for_enrolled_user(
             self,
@@ -1234,7 +1234,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.track_enrollment')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     @ddt.data(
@@ -1347,7 +1347,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
                 assert enterprise_course_enrollment.source.slug == EnterpriseEnrollmentSource.ENROLLMENT_URL
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_consent_needed(
@@ -1418,7 +1418,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         )
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_consent_needed_with_catalog_querystring(
@@ -1505,7 +1505,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_incompatible_mode(
@@ -1570,7 +1570,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @mock.patch('enterprise.utils.Registry')
     def test_post_course_specific_enrollment_view_premium_mode(
@@ -1622,7 +1622,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     @mock.patch('enterprise.utils.Registry')
     def test_get_course_enrollment_page_with_ecommerce_error(
@@ -1690,7 +1690,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.lms.embargo_api')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.ecommerce.ecommerce_api_client')
     def test_get_course_enrollment_page_creates_enterprise_customer_user(
             self,

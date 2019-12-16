@@ -36,7 +36,7 @@ from enterprise import constants, messages
 from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient, EnrollmentApiClientJwt
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
 from enterprise.models import (
@@ -1051,7 +1051,7 @@ class CourseEnrollmentView(NonAtomicView):
         course modes returned using the EnterpriseCustomerCatalog's
         field "enabled_course_modes".
         """
-        modes = EnrollmentApiClient().get_course_modes(course_run_id)
+        modes = EnrollmentApiClientJwt(request.user).get_course_modes(course_run_id)
         if not modes:
             LOGGER.warning('[Enterprise Enrollment] Unable to get course modes. '
                            'CourseRun: {course_run_id}'.format(course_run_id=course_run_id))
@@ -1394,7 +1394,7 @@ class CourseEnrollmentView(NonAtomicView):
                 )
                 track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
 
-            client = EnrollmentApiClient()
+            client = EnrollmentApiClientJwt(request.user)
             client.enroll_user_in_course(
                 request.user.username,
                 course_id,
@@ -1497,7 +1497,7 @@ class CourseEnrollmentView(NonAtomicView):
             enterprise_customer=enterprise_customer
         )
 
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClientJwt(request.user)
         enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
         try:
             enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(

@@ -20,6 +20,7 @@ from enterprise.utils import NotConnectedToOpenEdX
 
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
+    'enrollment_jwt': lms_api.EnrollmentApiClientJwt,
     'courses': lms_api.CourseApiClient,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
     'course_grades': lms_api.GradesApiClient,
@@ -147,6 +148,7 @@ def test_is_enrolled():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 @mock.patch('enterprise.api_client.lms.COURSE_MODE_SORT_ORDER', ['a', 'list', 'containing', 'most', 'of', 'the'])
 @mock.patch('enterprise.api_client.lms.EXCLUDED_COURSE_MODES', ['course'])
 def test_get_enrollment_course_modes():
@@ -169,12 +171,12 @@ def test_get_enrollment_course_modes():
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "course/{}".format(course_id),
         ),
         json=response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt('user-goes-here')
     actual_response = client.get_course_modes(course_id)
     assert actual_response == expected_return
 

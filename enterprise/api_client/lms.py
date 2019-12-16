@@ -316,6 +316,198 @@ class EnrollmentApiClient(LmsApiClient):
         return self.client.enrollment.get(user=username)
 
 
+class EnrollmentApiClientJwt(JwtLmsApiClient):
+    """
+    Object builds an API client to make calls to the Enrollment API.
+    """
+
+    API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
+
+    @JwtLmsApiClient.refresh_token
+    def get_course_details(self, course_id):
+        """
+        Query the Enrollment API for the course details of the given course_id.
+
+        Args:
+            course_id (str): The string value of the course's unique identifier
+
+        Returns:
+            dict: A dictionary containing details about the course, in an enrollment context (allowed modes, etc.)
+        """
+        try:
+            return self.client.course(course_id).get()
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to retrieve course enrollment details for course [%s] due to: [%s]',
+                course_id, str(exc)
+            )
+            return {}
+
+    def _sort_course_modes(self, modes):
+        """
+        Sort the course mode dictionaries by slug according to the COURSE_MODE_SORT_ORDER constant.
+
+        Arguments:
+            modes (list): A list of course mode dictionaries.
+        Returns:
+            list: A list with the course modes dictionaries sorted by slug.
+
+        """
+        def slug_weight(mode):
+            """
+            Assign a weight to the course mode dictionary based on the position of its slug in the sorting list.
+            """
+            sorting_slugs = COURSE_MODE_SORT_ORDER
+            sorting_slugs_size = len(sorting_slugs)
+            if mode['slug'] in sorting_slugs:
+                return sorting_slugs_size - sorting_slugs.index(mode['slug'])
+            return 0
+        # Sort slug weights in descending order
+        return sorted(modes, key=slug_weight, reverse=True)
+
+    @JwtLmsApiClient.refresh_token
+    def get_course_modes(self, course_id):
+        """
+        Query the Enrollment API for the specific course modes that are available for the given course_id.
+
+        Arguments:
+            course_id (str): The string value of the course's unique identifier
+
+        Returns:
+            list: A list of course mode dictionaries.
+
+        """
+        details = self.get_course_details(course_id)
+        modes = details.get('course_modes', [])
+        return self._sort_course_modes([mode for mode in modes if mode['slug'] not in EXCLUDED_COURSE_MODES])
+
+    @JwtLmsApiClient.refresh_token
+    def has_course_mode(self, course_run_id, mode):
+        """
+        Query the Enrollment API to see whether a course run has a given course mode available.
+
+        Arguments:
+            course_run_id (str): The string value of the course run's unique identifier
+
+        Returns:
+            bool: Whether the course run has the given mode avaialble for enrollment.
+
+        """
+        course_modes = self.get_course_modes(course_run_id)
+        return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
+
+    @JwtLmsApiClient.refresh_token
+    def enroll_user_in_course(self, username, course_id, mode, cohort=None):
+        """
+        Call the enrollment API to enroll the user in the course specified by course_id.
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdX platform
+            course_id (str): The string value of the course's unique identifier
+            mode (str): The enrollment mode which should be used for the enrollment
+            cohort (str): Add the user to this named cohort
+
+        Returns:
+            dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+
+        """
+        return self.client.enrollment.post(
+            {
+                'user': username,
+                'course_details': {'course_id': course_id},
+                'mode': mode,
+                'cohort': cohort,
+            }
+        )
+
+    @JwtLmsApiClient.refresh_token
+    def unenroll_user_from_course(self, username, course_id):
+        """
+        Call the enrollment API to unenroll the user in the course specified by course_id.
+        Args:
+            username (str): The username by which the user goes on the OpenEdx platform
+            course_id (str): The string value of the course's unique identifier
+        Returns:
+            bool: Whether the unenrollment succeeded
+        """
+        enrollment = self.get_course_enrollment(username, course_id)
+        if enrollment and enrollment['is_active']:
+            response = self.client.enrollment.post({
+                'user': username,
+                'course_details': {'course_id': course_id},
+                'is_active': False,
+                'mode': enrollment['mode']
+            })
+            return not response['is_active']
+
+        return False
+
+    @JwtLmsApiClient.refresh_token
+    def get_course_enrollment(self, username, course_id):
+        """
+        Query the enrollment API to get information about a single course enrollment.
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdX platform
+            course_id (str): The string value of the course's unique identifier
+
+        Returns:
+            dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+
+        """
+        endpoint = getattr(
+            self.client.enrollment,
+            '{username},{course_id}'.format(username=username, course_id=course_id)
+        )
+        try:
+            result = endpoint.get()
+        except HttpNotFoundError:
+            # This enrollment data endpoint returns a 404 if either the username or course_id specified isn't valid
+            LOGGER.error(
+                'Course enrollment details not found for invalid username or course; username=[%s], course=[%s]',
+                username,
+                course_id
+            )
+            return None
+        # This enrollment data endpoint returns an empty string if the username and course_id is valid, but there's
+        # no matching enrollment found
+        if not result:
+            LOGGER.info('Failed to find course enrollment details for user [%s] and course [%s]', username, course_id)
+            return None
+
+        return result
+
+    @JwtLmsApiClient.refresh_token
+    def is_enrolled(self, username, course_run_id):
+        """
+        Query the enrollment API and determine if a learner is enrolled in a course run.
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdX platform
+            course_run_id (str): The string value of the course's unique identifier
+
+        Returns:
+            bool: Indicating whether the user is enrolled in the course run. Returns False under any errors.
+
+        """
+        enrollment = self.get_course_enrollment(username, course_run_id)
+        return enrollment is not None and enrollment.get('is_active', False)
+
+    @JwtLmsApiClient.refresh_token
+    def get_enrolled_courses(self, username):
+        """
+        Query the enrollment API to get a list of the courses a user is enrolled in.
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdX platform
+
+        Returns:
+            list: A list of course objects, along with relevant user-specific enrollment details.
+
+        """
+        return self.client.enrollment.get(user=username)
+
+
 class CourseApiClient(LmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
