@@ -100,7 +100,7 @@ class TestRouterView(TestCase):
         (True, True, True, True, True),
     )
     @ddt.unpack
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     def test_eligible_for_direct_audit_enrollment(
             self,
             request_has_audit_query_param,
@@ -167,7 +167,7 @@ class TestRouterView(TestCase):
         True, False
     )
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.views.RouterView', new_callable=views.RouterView)
     def test_get_redirects_with_course_key(
             self,
@@ -211,7 +211,7 @@ class TestRouterView(TestCase):
             assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.get_global_context')
-    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_get_raises_404_with_bad_course_key(self, catalog_api_mock, enrollment_api_mock, mock_global_context):
         """

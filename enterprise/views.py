@@ -36,7 +36,7 @@ from enterprise import constants, messages
 from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient, EnrollmentApiClientJwt
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
 from enterprise.models import (
@@ -1975,7 +1975,7 @@ class RouterView(NonAtomicView):
         except ImproperlyConfigured:
             raise Http404
 
-        users_all_enrolled_courses = EnrollmentApiClient().get_enrolled_courses(user.username)
+        users_all_enrolled_courses = EnrollmentApiClientJwt(user).get_enrolled_courses(user.username)
         users_active_course_runs = get_active_course_runs(
             course,
             users_all_enrolled_courses
@@ -2004,7 +2004,7 @@ class RouterView(NonAtomicView):
         return request.GET.get('audit') and \
             request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_identifier) and \
             enterprise_customer.catalog_contains_course(resource_id) and \
-            EnrollmentApiClient().has_course_mode(resource_id, 'audit')
+            EnrollmentApiClientJwt(request.user).has_course_mode(resource_id, 'audit')
 
     def redirect(self, request, *args, **kwargs):
         """
