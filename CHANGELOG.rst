@@ -13,6 +13,9 @@ Change Log
 
 Unreleased
 ----------
+
+* While uploading bulk users in 'manager learners' from django admin, better handling if invalid encoding found.
+
 [2.0.31] - 2019-12-11
 ---------------------
 
