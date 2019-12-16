@@ -36,7 +36,7 @@ from enterprise import constants, messages
 from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient, EnrollmentApiClientJwt
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
 from enterprise.models import (
@@ -941,7 +941,7 @@ class HandleConsentEnrollment(View):
         if not enrollment_course_mode:
             return redirect(LMS_DASHBOARD_URL)
 
-        enrollment_api_client = EnrollmentApiClient()
+        enrollment_api_client = EnrollmentApiClientJwt(request.user)
         course_modes = enrollment_api_client.get_course_modes(course_id)
 
         # Verify that the request user belongs to the enterprise against the
