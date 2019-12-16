@@ -127,6 +127,7 @@ def test_get_course_enrollment():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_is_enrolled():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -137,12 +138,12 @@ def test_is_enrolled():
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.is_enrolled(user, course_id)
     assert actual_response is True
 
@@ -269,23 +270,25 @@ def test_get_course_enrollment_not_found():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_is_enrolled_false():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         status=404,
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.is_enrolled(user, course_id)
     assert actual_response is False
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_is_enrolled_but_not_active():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -296,12 +299,12 @@ def test_is_enrolled_but_not_active():
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.is_enrolled(user, course_id)
     assert actual_response is False
 
