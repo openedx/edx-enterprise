@@ -407,7 +407,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ('fake-identity', 'saml-user-id', True),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClientJwt')
     def test_get_remote_id(self, provider_id, expected_value, called, mock_third_party_api):
         user = factories.UserFactory(username="hi")
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)

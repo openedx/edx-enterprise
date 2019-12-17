@@ -621,6 +621,64 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         return None
 
 
+class ThirdPartyAuthApiClientJwt(JwtLmsApiClient):
+    """
+    Object builds an API client to make calls to the Third Party Auth API.
+    """
+    API_BASE_URL = urljoin(settings.LMS_INTERNAL_ROOT_URL, '/api/third_party_auth/v0/')
+
+    @JwtLmsApiClient.refresh_token
+    def get_remote_id(self, identity_provider, username):
+        """
+        Retrieve the remote identifier for the given username.
+
+        Args:
+        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
+        * ``username`` (str): The username ID identifying the user for which to retrieve the remote name.
+
+        Returns:
+            string or None: the remote name of the given user.  None if not found.
+        """
+        return self._get_results(identity_provider, 'username', username, 'remote_id')
+
+    @JwtLmsApiClient.refresh_token
+    def get_username_from_remote_id(self, identity_provider, remote_id):
+        """
+        Retrieve the remote identifier for the given username.
+
+        Args:
+        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
+        * ``remote_id`` (str): The remote id identifying the user for which to retrieve the usernamename.
+
+        Returns:
+            string or None: the username of the given user.  None if not found.
+        """
+        return self._get_results(identity_provider, 'remote_id', remote_id, 'username')
+
+    def _get_results(self, identity_provider, param_name, param_value, result_field_name):
+        """
+        Calls the third party auth api endpoint to get the mapping between usernames and remote ids.
+        """
+        try:
+            kwargs = {param_name: param_value}
+            returned = self.client.providers(identity_provider).users.get(**kwargs)
+            results = returned.get('results', [])
+        except HttpNotFoundError:
+            LOGGER.error(
+                'username not found for third party provider={provider}, {querystring_param}={id}'.format(
+                    provider=identity_provider,
+                    querystring_param=param_name,
+                    id=param_value
+                )
+            )
+            results = []
+
+        for row in results:
+            if row.get(param_name) == param_value:
+                return row.get(result_field_name)
+        return None
+
+
 class GradesApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the LMS Grades API.
