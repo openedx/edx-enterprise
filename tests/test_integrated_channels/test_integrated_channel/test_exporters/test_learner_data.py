@@ -106,7 +106,7 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     def test_collect_learner_data_without_consent(self, mock_course_api, mock_grades_api, mock_enrollment_api):
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -130,7 +130,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
         assert mock_grades_api.call_count == 0
 
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     def test_collect_learner_data_no_course_details(self, mock_course_api):
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -144,7 +144,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_instructor_paced_no_certificate(
@@ -182,7 +182,7 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.grade == LearnerExporter.GRADE_INCOMPLETE
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     def test_learner_data_instructor_paced_no_certificate_null_sso_id(
             self, mock_certificate_api, mock_course_api, mock_enrollment_api
@@ -211,7 +211,7 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_instructor_paced_with_certificate(
@@ -259,7 +259,7 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_self_paced_no_grades(
             self,
@@ -318,7 +318,7 @@ class TestLearnerExporter(unittest.TestCase):
     @ddt.unpack
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_self_paced_course(
             self,
@@ -376,7 +376,7 @@ class TestLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_multiple_courses(
             self,
@@ -505,7 +505,7 @@ class TestLearnerExporter(unittest.TestCase):
     @ddt.unpack
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_audit_data_reporting(
             self,
@@ -562,7 +562,7 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClientJwt')
     def test_learner_exporter_with_skip_transmitted(self, mock_course_api, mock_grades_api, mock_enrollment_api):
         enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
