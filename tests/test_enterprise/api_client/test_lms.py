@@ -21,6 +21,7 @@ from enterprise.utils import NotConnectedToOpenEdX
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
     'courses': lms_api.CourseApiClient,
+    'courses_jwt': lms_api.CourseApiClientJwt,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
     'course_grades': lms_api.GradesApiClient,
     'certificates': lms_api.CertificatesApiClient,
@@ -384,6 +385,7 @@ def test_unenroll_already_unenrolled():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_full_course_details():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     expected_response = {
@@ -391,23 +393,24 @@ def test_get_full_course_details():
     }
     responses.add(
         responses.GET,
-        _url("courses", "courses/course-v1:edX+DemoX+Demo_Course/"),
+        _url("courses_jwt", "courses/course-v1:edX+DemoX+Demo_Course/"),
         json=expected_response,
     )
-    client = lms_api.CourseApiClient()
+    client = lms_api.CourseApiClientJwt('user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response == expected_response
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_full_course_details_not_found():
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
-        _url("courses", "courses/course-v1:edX+DemoX+Demo_Course/"),
+        _url("courses_jwt", "courses/course-v1:edX+DemoX+Demo_Course/"),
         status=404,
     )
-    client = lms_api.CourseApiClient()
+    client = lms_api.CourseApiClientJwt('user-goes-here')
     actual_response = client.get_course_details(course_id)
     assert actual_response is None
 
