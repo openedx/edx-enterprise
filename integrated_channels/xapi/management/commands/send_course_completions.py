@@ -169,7 +169,7 @@ class Command(BaseCommand):
                 status = 200
             fields = {'status': status, 'error_message': error_message}
             if status == 200:
-                fields.update({'grade': course_grade.percent, 'timestamp': course_grade.passed_timestamp})
+                fields.update({'grade': course_grade.percent})
             xapi_transmission_queryset.update(**fields)
 
     def get_course_completions(self, enterprise_customer, days):

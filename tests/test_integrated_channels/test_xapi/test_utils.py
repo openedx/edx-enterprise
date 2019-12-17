@@ -29,6 +29,7 @@ class TestUtils(unittest.TestCase):
 
         self.user = factories.UserFactory()
         self.user.profile = mock.Mock(country=mock.Mock(code='PK'))
+        self.mock_social_auth = mock.Mock(provider='tpa-saml', uid='default:edxsso')
 
         now = datetime.now()
         # pylint: disable=no-member
@@ -50,28 +51,32 @@ class TestUtils(unittest.TestCase):
         self.x_api_client = EnterpriseXAPIClient(self.x_api_lrs_config)
 
     @mock.patch('integrated_channels.xapi.client.RemoteLRS', mock.MagicMock())
+    @mock.patch('integrated_channels.xapi.utils.get_user_social_auth')
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
-    def test_send_course_enrollment_statement(self, mock_catalog_integration, *args):  # pylint: disable=unused-argument
+    def test_send_course_enrollment_statement(self, mock_get_user_social_auth, mock_catalog_integration, *args):  # pylint: disable=unused-argument
         """
         Verify that send_course_enrollment_statement sends xAPI statement to LRS.
         """
         mock_integration_config = mock.Mock(enabled=True)
+        mock_get_user_social_auth.return_value = self.mock_social_auth
         mock_catalog_integration.current.return_value = mock_integration_config
         send_course_enrollment_statement(self.x_api_lrs_config, self.course_enrollment)
 
         self.x_api_client.lrs.save_statement.assert_called()  # pylint: disable=no-member
 
     @mock.patch('integrated_channels.xapi.client.RemoteLRS', mock.MagicMock())
+    @mock.patch('integrated_channels.xapi.utils.get_user_social_auth')
     @mock.patch('enterprise.api_client.discovery.JwtBuilder')
     @mock.patch('enterprise.api_client.discovery.get_edx_api_data')
     @mock.patch('enterprise.api_client.discovery.CatalogIntegration')
-    def test_send_course_completion_statement(self, mock_catalog_integration, *args):  # pylint: disable=unused-argument
+    def test_send_course_completion_statement(self, mock_get_user_social_auth, mock_catalog_integration, *args):  # pylint: disable=unused-argument
         """
         Verify that send_course_completion_statement sends xAPI statement to LRS.
         """
         mock_integration_config = mock.Mock(enabled=True)
+        mock_get_user_social_auth.return_value = self.mock_social_auth
         mock_catalog_integration.current.return_value = mock_integration_config
         send_course_completion_statement(
             self.x_api_lrs_config,

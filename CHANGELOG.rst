@@ -11,9 +11,10 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
-Unreleased
-----------
+[2.0.32] - 2019-12-17
+---------------------
 
+* Aligned xAPI statement formats with TinCan/Rustici standards
 * While uploading bulk users in 'manager learners' from django admin, better handling if invalid encoding found.
 
 [2.0.31] - 2019-12-11
