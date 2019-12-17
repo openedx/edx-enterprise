@@ -1557,7 +1557,7 @@ class TestEnterpriseAPIViews(APITest):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
-    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClientJwt')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
     def test_enterprise_customer_course_enrollments_detail_errors(
@@ -1701,7 +1701,7 @@ class TestEnterpriseAPIViews(APITest):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
-    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClientJwt')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomer.notify_enrolled_learners')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
@@ -1806,7 +1806,7 @@ class TestEnterpriseAPIViews(APITest):
             mock_notify_learners.assert_not_called()
 
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
-    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.api.v1.serializers.ThirdPartyAuthApiClientJwt')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.utils.track_event', mock.MagicMock())
     def test_enterprise_customer_course_enrollments_detail_multiple(

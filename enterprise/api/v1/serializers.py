@@ -16,7 +16,7 @@ from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
-from enterprise.api_client.lms import ThirdPartyAuthApiClient
+from enterprise.api_client.lms import ThirdPartyAuthApiClientJwt
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
 
@@ -647,9 +647,10 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         It first uses the third party auth api to find the associated username to do the lookup.
         """
         enterprise_customer = self.context.get('enterprise_customer')
+        request_user = self.context.get('request_user')
 
         try:
-            tpa_client = ThirdPartyAuthApiClient()
+            tpa_client = ThirdPartyAuthApiClientJwt(request_user)
             username = tpa_client.get_username_from_remote_id(
                 enterprise_customer.identity_provider, value
             )

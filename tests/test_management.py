@@ -545,7 +545,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
         # Third Party API remote_id response
         responses.add(
             responses.GET,
-            urljoin(lms_api.ThirdPartyAuthApiClient.API_BASE_URL,
+            urljoin(lms_api.ThirdPartyAuthApiClientJwt.API_BASE_URL,
                     "providers/{provider}/users?username={user}".format(provider=testcase.identity_provider,
                                                                         user=user.username)),
             match_querystring=True,
