@@ -85,6 +85,7 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
 
     model = EnterpriseCustomerIdentityProvider
     form = EnterpriseCustomerIdentityProviderAdminForm
+    extra = 0
 
 
 class EnterpriseCustomerCatalogInline(admin.TabularInline):

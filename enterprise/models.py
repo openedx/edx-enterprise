@@ -1066,11 +1066,11 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     .. no_pii:
     """
 
-    enterprise_customer = models.OneToOneField(
+    enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name="enterprise_customer_identity_provider"
+        related_name="enterprise_customer_identity_providers"
     )
     provider_id = models.SlugField(
         null=False,
