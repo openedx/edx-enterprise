@@ -14,7 +14,7 @@ from opaque_keys.edx.keys import CourseKey
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
-from six.moves.urllib.parse import urljoin
+from requests.compat import urljoin
 
 from django.conf import settings
 from django.utils import timezone
