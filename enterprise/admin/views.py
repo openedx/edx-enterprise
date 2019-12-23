@@ -828,6 +828,7 @@ class EnterpriseCustomerManageLearnersView(View):
             notify: Whether to notify (by email) the users that have been enrolled
         """
         pending_messages = []
+        paid_modes = ['verified', 'professional']
 
         if course_id:
             succeeded, pending, failed = cls.enroll_users_in_course(
@@ -882,8 +883,9 @@ class EnterpriseCustomerManageLearnersView(View):
             "username": success.username,
             "course_run_key": course_id,
         } for success in succeeded]
-        # Create an order to track the manual enrollments of non-pending accounts
-        EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
+        if mode in paid_modes:
+            # Create an order to track the manual enrollments of non-pending accounts
+            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
         cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
