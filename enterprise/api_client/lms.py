@@ -13,8 +13,8 @@ from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
 from requests import Session
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
-from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 from requests.compat import urljoin
+from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
 from django.conf import settings
 from django.utils import timezone
