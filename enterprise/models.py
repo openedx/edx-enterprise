@@ -779,8 +779,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 'cohort': cohort,
                 'is_upgrading': is_upgrading,
             })
-            # create an ecommerce order for the course enrollment
-            self.create_order_for_enrollment(course_run_id)
+            if mode in paid_modes:
+                # create an ecommerce order for the course enrollment
+                self.create_order_for_enrollment(course_run_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(

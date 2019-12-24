@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.34] - 2019-12-24
+---------------------
+
+* Disabled the manual enrollment orders for audit mode enterprise learners.
+
 [2.0.33] - 2019-12-23
 ---------------------
 

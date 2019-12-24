@@ -629,18 +629,27 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             })
         return response
 
+    @mock.patch("enterprise.admin.views.EcommerceApiClient")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    @ddt.data(True, False)
+    @ddt.data(
+        (True, True),
+        (False, True),
+        (True, False),
+        (False, False)
+    )
+    @ddt.unpack
     def test_post_enroll_user(
             self,
             enrollment_exists,
+            audit_mode,
             forms_client,
             views_client,
             course_catalog_client,
             track_enrollment,
+            ecommerce_api_client_mock
     ):
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {
@@ -654,7 +663,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         user = UserFactory(id=2)
         course_id = "course-v1:HarvardX+CoolScience+2016"
-        mode = "verified"
+        mode = "audit" if audit_mode else "verified"
         if enrollment_exists:
             enterprise_customer_user = EnterpriseCustomerUser.objects.create(
                 enterprise_customer=self.enterprise_customer,
@@ -665,6 +674,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
                 course_id=course_id,
             )
         response = self._enroll_user_request(user, mode, course_id=course_id)
+        if audit_mode:
+            ecommerce_api_client_mock.assert_not_called()
+        else:
+            ecommerce_api_client_mock.assert_called_once()
         views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
