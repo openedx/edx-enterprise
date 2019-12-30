@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.35] - 2019-12-30
+---------------------
+
+* Version upgrade for edx-rbac
+
 [2.0.34] - 2019-12-24
 ---------------------
 
