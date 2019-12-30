@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.46] - 2020-01-10
+---------------------
+
+* Introduced management command to migrate enterprise catalog data to new service.
+
 [2.0.45] - 2020-01-09
 ---------------------
 
