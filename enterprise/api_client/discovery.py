@@ -165,6 +165,10 @@ class CourseCatalogApiClient(object):
                     query_params,
                     traverse_pagination
                 )
+                LOGGER.info(
+                    'ENT-2489 | Response has size %d',
+                    len(response)
+                )
                 cache.set(cache_key, response, settings.ENTERPRISE_API_CACHE_TIMEOUT)
             else:
                 LOGGER.info(
