@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
--e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 amqp==1.4.9               # via kombu
 aniso8601==8.0.0
 anyjson==0.3.3            # via kombu
@@ -46,6 +45,7 @@ edx-drf-extensions==2.4.5
 edx-opaque-keys[django]==2.0.1
 edx-rbac==1.0.5
 edx-rest-api-client==1.9.2
+edx-tincan-py35==0.0.5
 enum34==1.1.6
 factory-boy==2.12.0
 faker==3.0.0              # via factory-boy

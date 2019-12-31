@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.36] - 2019-12-30
+---------------------
+
+* Use `edx-tincan-py35` PYPI package instead of downloading via git
+
 [2.0.35] - 2019-12-30
 ---------------------
 
