@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
--e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
 alabaster==0.7.12         # via sphinx
 amqp==1.4.9               # via kombu
 aniso8601==8.0.0
@@ -43,6 +42,7 @@ edx-opaque-keys[django]==2.0.1
 edx-rbac==1.0.5
 edx-rest-api-client==1.9.2
 edx-sphinx-theme==1.5.0
+edx-tincan-py35==0.0.5
 enum34==1.1.6
 future==0.18.2
 html5lib==1.0.1

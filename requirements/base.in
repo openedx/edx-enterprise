@@ -1,9 +1,6 @@
 #
 # This file contains the dependencies explicitly needed for this library.
 #
-
--e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
-
 # Packages directly used by this library that we do not need pinned to a specific version.
 bleach
 celery
@@ -27,6 +24,7 @@ edx-django-utils
 edx-drf-extensions
 edx-opaque-keys[django]
 edx-rest-api-client
+edx-tincan-py35
 edx-rbac
 future
 jsondiff
