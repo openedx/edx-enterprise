@@ -166,7 +166,7 @@ class CourseCatalogApiClient(object):
                     traverse_pagination
                 )
                 LOGGER.info(
-                    'ENT-2489 | Response from content_filter_query %s is %d bytes long.'
+                    'ENT-2489 | Response from content_filter_query %s is %d bytes long.',
                     content_filter_query,
                     sys.getsizeof(response)
                 )
