@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.1.0] - 2020-01-16
+--------------------
+
+* Added hooks to sync EnterpriseCustomerCatalog creation, deletion, and model updates in Django Admin to the new enterprise-catalog service
+
 [2.0.50] - 2020-01-16
 ---------------------
 

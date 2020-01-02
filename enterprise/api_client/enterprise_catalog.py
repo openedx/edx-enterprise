@@ -8,6 +8,9 @@ from __future__ import absolute_import, unicode_literals
 import json
 from logging import getLogger
 
+from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
+from slumber.exceptions import HttpNotFoundError, SlumberBaseException
+
 from django.conf import settings
 
 from enterprise.api_client.lms import JwtLmsApiClient
@@ -43,22 +46,56 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             'enabled_course_modes': enabled_course_modes,
             'publish_audit_enrollment_urls': json.dumps(publish_audit_enrollment_urls),
         }
-        return endpoint.post(post_data)
+        try:
+            return endpoint.post(post_data)
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to create EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            return {}
 
     @JwtLmsApiClient.refresh_token
     def get_enterprise_catalog(self, catalog_uuid):
         """Gets an enterprise catalog."""
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
-        return endpoint.get()
+        try:
+            return endpoint.get()
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            return {}
 
     @JwtLmsApiClient.refresh_token
     def update_enterprise_catalog(self, catalog_uuid, **kwargs):
         """Updates an enterprise catalog."""
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
-        return endpoint.put(kwargs)
+        try:
+            return endpoint.put(kwargs)
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to update EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            return {}
 
     @JwtLmsApiClient.refresh_token
     def delete_enterprise_catalog(self, catalog_uuid):
         """Deletes an enterprise catalog."""
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
-        return endpoint.delete()
+        try:
+            return endpoint.delete()
+        except HttpNotFoundError:
+            LOGGER.warning(
+                'Deleted EnterpriseCustomerCatalog [%s] that was not in enterprise-catalog',
+                catalog_uuid
+            )
+            return {}
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to delete EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            return {}
