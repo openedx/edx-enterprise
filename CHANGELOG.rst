@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.37] - 2020-01-02
+---------------------
+
+* Added logging of response size when requests are made to discovery service for data not in cache
+
 [2.0.36] - 2019-12-30
 ---------------------
 
