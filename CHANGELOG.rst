@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.38] - 2020-01-02
+---------------------
+
+* Changed logging of response size from 2.0.37 (ENT-2489) to use size of response in bytes
+
 [2.0.37] - 2020-01-02
 ---------------------
 
