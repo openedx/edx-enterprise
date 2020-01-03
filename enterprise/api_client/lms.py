@@ -12,6 +12,7 @@ from time import time
 from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
 from requests import Session
+from requests.compat import urljoin
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
@@ -345,8 +346,7 @@ class CourseApiClientJwt(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
     """
-
-    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
+    API_BASE_URL = urljoin(settings.LMS_INTERNAL_ROOT_URL, '/api/courses/v1/')
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token
