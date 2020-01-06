@@ -812,7 +812,8 @@ class EnterpriseCustomerManageLearnersView(View):
             course_id=None,
             program_details=None,
             notify=True,
-            enrollment_reason=None
+            enrollment_reason=None,
+            discount=0.0
     ):
         """
         Enroll the users with the given email addresses to the courses specified, either specifically or by program.
@@ -882,6 +883,7 @@ class EnterpriseCustomerManageLearnersView(View):
             "email": success.email,
             "username": success.username,
             "course_run_key": course_id,
+            "discount_percentage": float(discount)
         } for success in succeeded]
         if mode in paid_modes:
             # Create an order to track the manual enrollments of non-pending accounts
@@ -965,6 +967,7 @@ class EnterpriseCustomerManageLearnersView(View):
 
             notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
+            discount = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.DISCOUNT)
 
             course_id = None
             if course_details:
@@ -981,6 +984,7 @@ class EnterpriseCustomerManageLearnersView(View):
                     program_details=program_details,
                     notify=notify,
                     enrollment_reason=manual_enrollment_reason,
+                    discount=discount
                 )
 
             # Redirect to GET if everything went smooth.
