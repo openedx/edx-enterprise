@@ -387,14 +387,12 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         Get an HTML string representing the courses the user is enrolled in.
         """
         courses_client = CourseApiClientJwt(enterprise_customer_user.user)
-        course_details = []
+        courses_details = []
         for course_id in course_ids:
-            name = courses_client.get_course_details(course_id)['name']
-            if name:
-                course_details.append({'course_id': course_id, 'course_name': name})
-            else:
-                course_details.append({'course_id': course_id, 'course_name': 'No course name found for {course_id}'.
-                                                                              format(course_id=course_id)})
+            course_details = courses_client.get_course_details(course_id)
+            if course_details:
+                name = course_details.get('name')
+                courses_details.append({'course_id': course_id, 'course_name': name})
         template = '<a href="{url}">{course_name}</a>'
         joiner = '<br/>'
         return joiner.join(
@@ -402,7 +400,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
                 url=reverse('about_course', args=[course['course_id']]),
                 course_name=course['course_name'],
             )
-            for course in course_details
+            for course in courses_details
         )
 
 
