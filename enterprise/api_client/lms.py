@@ -12,6 +12,7 @@ from time import time
 from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
 from requests import Session
+from requests.compat import urljoin
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
@@ -324,6 +325,36 @@ class CourseApiClient(LmsApiClient):
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/courses/v1/'
     APPEND_SLASH = True
 
+    def get_course_details(self, course_id):
+        """
+        Retrieve all available details about a course.
+
+        Args:
+            course_id (str): The course ID identifying the course for which to retrieve details.
+
+        Returns:
+            dict: Contains keys identifying those course details available from the courses API (e.g., name).
+        """
+        try:
+            return self.client.courses(course_id).get()
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception('Details not found for course [%s] due to: [%s]', course_id, str(exc))
+            return None
+
+
+class CourseApiClientJwt(JwtLmsApiClient):
+    """
+    Object builds an API client to make calls to the Course API.
+
+    The Edx_Api_Key has been deprecated which is why we are shifting to this new client that is based on
+    JwtLmsApiClient. In the future, if anyone wants to use CourseApiClient client, make sure to use this one and
+    not the original one.
+    """
+
+    API_BASE_URL = urljoin(settings.LMS_INTERNAL_ROOT_URL, '/api/courses/v1/')
+    APPEND_SLASH = True
+
+    @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
         """
         Retrieve all available details about a course.
