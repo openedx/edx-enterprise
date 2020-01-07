@@ -11,11 +11,15 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.42] - 2020-01-07
+---------------------
+
+* Updated context for user with multiple linked enterprises
+
 [2.0.41] - 2020-01-06
 ---------------------
 
 * Added enterprise discount percentage in a manual enrollment
-
 
 [2.0.40] - 2020-01-06
 ---------------------

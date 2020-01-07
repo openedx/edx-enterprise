@@ -23,7 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.core.exceptions import NON_FIELD_ERRORS, MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -1964,30 +1964,24 @@ class EnterpriseRoleAssignmentContextMixin(object):
     """
 
     @property
-    def enterprise_customer_uuid(self):
-        """Get the enterprise customer uuid linked to the user."""
-        try:
-            enterprise_user = EnterpriseCustomerUser.objects.get(user_id=self.user.id)
-        except ObjectDoesNotExist:
+    def enterprise_customer_uuids(self):
+        """Get the enterprise customer uuids linked to the user."""
+        enterprise_users = EnterpriseCustomerUser.objects.filter(user_id=self.user.id)
+        if not enterprise_users:
             LOGGER.warning(
                 'User {} has a {} assignment but is not linked to an enterprise!'.format(
                     self.__class__,
                     self.user.id
                 ))
             return None
-        except MultipleObjectsReturned:
-            LOGGER.warning(
-                'User {} is linked to multiple enterprises, which is not yet supported!'.format(self.user.id)
-            )
-            return None
 
-        return str(enterprise_user.enterprise_customer.uuid)
+        return [str(enterprise_user.enterprise_customer.uuid) for enterprise_user in enterprise_users]
 
     def get_context(self):
         """
-        Return the context for this role assignment class.
+        Return the context for this role assignment class. A list is returned in case of user with multiple contexts.
         """
-        return self.enterprise_customer_uuid
+        return self.enterprise_customer_uuids
 
 
 @python_2_unicode_compatible
@@ -2027,7 +2021,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         """
         # do not add enterprise id for `enterprise_openedx_operator` role
         if self.role.name == ENTERPRISE_OPERATOR_ROLE:
-            return ALL_ACCESS_CONTEXT
+            return [ALL_ACCESS_CONTEXT]
 
         return super(SystemWideEnterpriseUserRoleAssignment, self).get_context()
 
