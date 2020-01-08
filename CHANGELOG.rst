@@ -11,6 +11,13 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.43] - 2020-01-08
+---------------------
+
+* Replaced Edx-Api-Key in the ThirdPartyAuthApiClient
+* Changed the client in one endpoint of ThirdPartyAuthApiClient
+* Endpoint name: model-EnterpriseCustomerUser
+
 [2.0.42] - 2020-01-07
 ---------------------
 

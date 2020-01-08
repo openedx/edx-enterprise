@@ -23,6 +23,7 @@ URL_BASE_NAMES = {
     'enrollment_jwt': lms_api.EnrollmentApiClientJwt,
     'courses': lms_api.CourseApiClient,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
+    'third_party_auth_jwt': lms_api.ThirdPartyAuthApiClientJwt,
     'course_grades': lms_api.GradesApiClient,
     'certificates': lms_api.CertificatesApiClient,
 }
@@ -418,23 +419,25 @@ def test_get_full_course_details_not_found():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id_not_found():
     username = "Darth"
     provider_id = "DeathStar"
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+        _url("third_party_auth_jwt", "providers/{provider}/users?username={user}".format(
             provider=provider_id, user=username
         )),
         match_querystring=True,
         status=404
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClientJwt('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id_no_results():
     username = "Darth"
     provider_id = "DeathStar"
@@ -449,18 +452,19 @@ def test_get_remote_id_no_results():
     }
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+        _url("third_party_auth_jwt", "providers/{provider}/users?username={user}".format(
             provider=provider_id, user=username
         )),
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClientJwt('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id():
     username = "Darth"
     provider_id = "DeathStar"
@@ -475,13 +479,13 @@ def test_get_remote_id():
     }
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+        _url("third_party_auth_jwt", "providers/{provider}/users?username={user}".format(
             provider=provider_id, user=username
         )),
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClientJwt('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response == "LukeIamYrFather"
 
