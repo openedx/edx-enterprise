@@ -52,7 +52,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         self.idp = factories.EnterpriseCustomerIdentityProviderFactory(
             enterprise_customer=self.enterprise_customer
         )
-        tpa_client_mock = mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+        tpa_client_mock = mock.patch('enterprise.models.ThirdPartyAuthApiClientJwt')
         self.tpa_client = tpa_client_mock.start()
         self.tpa_client.return_value.get_remote_id.return_value = 'fake-remote-id'
         self.addCleanup(tpa_client_mock.stop)

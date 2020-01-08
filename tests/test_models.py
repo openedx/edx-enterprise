@@ -407,7 +407,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ('fake-identity', 'saml-user-id', True),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.ThirdPartyAuthApiClient')
+    @mock.patch('enterprise.models.ThirdPartyAuthApiClientJwt')
     def test_get_remote_id(self, provider_id, expected_value, called, mock_third_party_api):
         user = factories.UserFactory(username="hi")
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user.id)
@@ -426,18 +426,25 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
 
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    def test_enroll_learner(self, enrollment_api_client_mock, analytics_mock, *args):  # pylint: disable=unused-argument
+    @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
+    @ddt.data('audit', 'verified')
+    def test_enroll_learner(self, course_mode, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
         """
         ``enroll_learner`` enrolls the learner and redirects to the LMS courseware.
         """
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
-        enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
+        enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', course_mode)
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
         analytics_mock.track.assert_called_once()
+        if course_mode == 'verified':
+            enrollment_order_mock.assert_called_once()
+        else:
+            enrollment_order_mock.assert_not_called()
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    def test_enroll_learner_already_enrolled(self, enrollment_api_client_mock):
+    @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
+    def test_enroll_learner_already_enrolled(self, enrollment_order_mock, enrollment_api_client_mock):
         """
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
         """
@@ -448,11 +455,12 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         }
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'audit')
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_not_called()
+        enrollment_order_mock.assert_not_called()
 
     @mock.patch('enterprise.utils.segment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    # pylint: disable=unused-argument
-    def test_enroll_learner_upgrade_mode(self, enrollment_api_client_mock, analytics_mock, *args):
+    @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
+    def test_enroll_learner_upgrade_mode(self, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
         """
         ``enroll_learner`` enrolls the learner to a paid mode from previously being enrolled in audit.
         """
@@ -464,6 +472,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'verified')
         enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
         analytics_mock.track.assert_called_once()
+        enrollment_order_mock.assert_called_once()
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     def test_enroll_learner_downgrade_mode(self, enrollment_api_client_mock):
@@ -1642,11 +1651,11 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
     @ddt.data(
         {
             'role_name': ENTERPRISE_LEARNER_ROLE,
-            'expected_context': '47130371-0b6d-43f5-01de-71942664de2b',
+            'expected_context': ['47130371-0b6d-43f5-01de-71942664de2b'],
         },
         {
             'role_name': ENTERPRISE_OPERATOR_ROLE,
-            'expected_context': '*',
+            'expected_context': ['*'],
         }
     )
     @ddt.unpack
@@ -1665,4 +1674,35 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
             role=enterprise_role
         )
 
-        assert str(enterprise_role_assignment.get_context()) == expected_context
+        assert enterprise_role_assignment.get_context() == expected_context
+
+    @ddt.data(
+        {
+            'role_name': ENTERPRISE_LEARNER_ROLE,
+            'expected_context': [u'47130371-0b6d-43f5-01de-71942664de2c', u'47130371-0b6d-43f5-01de-71942664de2b'],
+        },
+        {
+            'role_name': ENTERPRISE_OPERATOR_ROLE,
+            'expected_context': ['*'],
+        }
+    )
+    @ddt.unpack
+    def test_get_context_for_multiple_contexts(self, role_name, expected_context):
+        """
+        Verify that `SystemWideEnterpriseUserRoleAssignment.get_context` method works as expected for user with
+        multiple contexts.
+        """
+        user_email = 'edx@example.com'
+        enterprise_customer_1 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2c')
+        user = factories.UserFactory(email=user_email)
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer_1, user_email)
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer_2, user_email)
+
+        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
+        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user,
+            role=enterprise_role
+        )
+
+        assert enterprise_role_assignment.get_context() == expected_context

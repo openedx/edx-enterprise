@@ -23,7 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core import mail
-from django.core.exceptions import NON_FIELD_ERRORS, MultipleObjectsReturned, ObjectDoesNotExist, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -41,7 +41,7 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
+from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClientJwt, parse_lms_api_datetime
 from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -726,7 +726,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         user = self.user
         identity_provider = self.enterprise_customer.identity_provider
         if user and identity_provider:
-            client = ThirdPartyAuthApiClient()
+            client = ThirdPartyAuthApiClientJwt(user)
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 
@@ -779,8 +779,9 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 'cohort': cohort,
                 'is_upgrading': is_upgrading,
             })
-            # create an ecommerce order for the course enrollment
-            self.create_order_for_enrollment(course_run_id)
+            if mode in paid_modes:
+                # create an ecommerce order for the course enrollment
+                self.create_order_for_enrollment(course_run_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(
@@ -1732,6 +1733,8 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
         verbose_name=_("Enterprise Customer")
     )
     active = models.BooleanField(blank=False, null=False, verbose_name=_("Active"))
+    include_date = models.BooleanField(blank=False, default=True, null=False, verbose_name=_("Include Date"),
+                                       help_text=_('Include date in the report file name'))
     delivery_method = models.CharField(
         max_length=20,
         choices=DELIVERY_METHOD_CHOICES,
@@ -1961,30 +1964,24 @@ class EnterpriseRoleAssignmentContextMixin(object):
     """
 
     @property
-    def enterprise_customer_uuid(self):
-        """Get the enterprise customer uuid linked to the user."""
-        try:
-            enterprise_user = EnterpriseCustomerUser.objects.get(user_id=self.user.id)
-        except ObjectDoesNotExist:
+    def enterprise_customer_uuids(self):
+        """Get the enterprise customer uuids linked to the user."""
+        enterprise_users = EnterpriseCustomerUser.objects.filter(user_id=self.user.id)
+        if not enterprise_users:
             LOGGER.warning(
                 'User {} has a {} assignment but is not linked to an enterprise!'.format(
                     self.__class__,
                     self.user.id
                 ))
             return None
-        except MultipleObjectsReturned:
-            LOGGER.warning(
-                'User {} is linked to multiple enterprises, which is not yet supported!'.format(self.user.id)
-            )
-            return None
 
-        return str(enterprise_user.enterprise_customer.uuid)
+        return [str(enterprise_user.enterprise_customer.uuid) for enterprise_user in enterprise_users]
 
     def get_context(self):
         """
-        Return the context for this role assignment class.
+        Return the context for this role assignment class. A list is returned in case of user with multiple contexts.
         """
-        return self.enterprise_customer_uuid
+        return self.enterprise_customer_uuids
 
 
 @python_2_unicode_compatible
@@ -2024,7 +2021,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         """
         # do not add enterprise id for `enterprise_openedx_operator` role
         if self.role.name == ENTERPRISE_OPERATOR_ROLE:
-            return ALL_ACCESS_CONTEXT
+            return [ALL_ACCESS_CONTEXT]
 
         return super(SystemWideEnterpriseUserRoleAssignment, self).get_context()
 

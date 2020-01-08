@@ -20,9 +20,11 @@ from enterprise.utils import NotConnectedToOpenEdX
 
 URL_BASE_NAMES = {
     'enrollment': lms_api.EnrollmentApiClient,
+    'enrollment_jwt': lms_api.EnrollmentApiClientJwt,
     'courses': lms_api.CourseApiClient,
     'courses_jwt': lms_api.CourseApiClientJwt,
     'third_party_auth': lms_api.ThirdPartyAuthApiClient,
+    'third_party_auth_jwt': lms_api.ThirdPartyAuthApiClientJwt,
     'course_grades': lms_api.GradesApiClient,
     'certificates': lms_api.CertificatesApiClient,
 }
@@ -84,6 +86,7 @@ def test_get_enrollment_course_details_with_exception():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_enroll_user_in_course():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -94,12 +97,12 @@ def test_enroll_user_in_course():
     responses.add(
         responses.POST,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment",
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.enroll_user_in_course(user, course_id, mode, cohort=cohort)
     assert actual_response == expected_response
     request = responses.calls[0][0]
@@ -107,6 +110,7 @@ def test_enroll_user_in_course():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
@@ -116,12 +120,12 @@ def test_get_course_enrollment():
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         json=expected_response
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response == expected_response
 
@@ -234,35 +238,37 @@ def test_doesnt_have_course_modes():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment_invalid():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         status=404,
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_course_enrollment_not_found():
     user = "some_user"
     course_id = "course-v1:edX+DemoX+Demo_Course"
     responses.add(
         responses.GET,
         _url(
-            "enrollment",
+            "enrollment_jwt",
             "enrollment/{username},{course_id}".format(username=user, course_id=course_id),
         ),
         body='',
     )
-    client = lms_api.EnrollmentApiClient()
+    client = lms_api.EnrollmentApiClientJwt(user)
     actual_response = client.get_course_enrollment(user, course_id)
     assert actual_response is None
 
@@ -416,23 +422,25 @@ def test_get_full_course_details_not_found():
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id_not_found():
     username = "Darth"
     provider_id = "DeathStar"
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+        _url("third_party_auth_jwt", "providers/{provider}/users?username={user}".format(
             provider=provider_id, user=username
         )),
         match_querystring=True,
         status=404
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClientJwt('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id_no_results():
     username = "Darth"
     provider_id = "DeathStar"
@@ -447,18 +455,19 @@ def test_get_remote_id_no_results():
     }
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+        _url("third_party_auth_jwt", "providers/{provider}/users?username={user}".format(
             provider=provider_id, user=username
         )),
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClientJwt('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response is None
 
 
 @responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_get_remote_id():
     username = "Darth"
     provider_id = "DeathStar"
@@ -473,13 +482,13 @@ def test_get_remote_id():
     }
     responses.add(
         responses.GET,
-        _url("third_party_auth", "providers/{provider}/users?username={user}".format(
+        _url("third_party_auth_jwt", "providers/{provider}/users?username={user}".format(
             provider=provider_id, user=username
         )),
         match_querystring=True,
         json=expected_response,
     )
-    client = lms_api.ThirdPartyAuthApiClient()
+    client = lms_api.ThirdPartyAuthApiClientJwt('user-goes-here')
     actual_response = client.get_remote_id(provider_id, username)
     assert actual_response == "LukeIamYrFather"
 

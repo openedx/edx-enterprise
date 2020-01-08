@@ -11,9 +11,71 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
-Unreleased
-----------
+[2.0.43] - 2020-01-08
+---------------------
 
+* Replaced Edx-Api-Key in the ThirdPartyAuthApiClient
+* Changed the client in one endpoint of ThirdPartyAuthApiClient
+* Endpoint name: model-EnterpriseCustomerUser
+
+[2.0.42] - 2020-01-07
+---------------------
+
+* Updated context for user with multiple linked enterprises
+
+[2.0.41] - 2020-01-06
+---------------------
+
+* Added enterprise discount percentage in a manual enrollment
+
+[2.0.40] - 2020-01-06
+---------------------
+
+* Replaced Edx-Api-Key in the EnrollmentApiClient
+* Changed the client in one endpoint of EnrollmentApiClient
+* Endpoint name: admin-views-EnterpriseCustomerManageLearnersView
+
+[2.0.39] - 2020-01-06
+---------------------
+
+* Replaced Edx-Api-Key in the CourseApiClient
+* Changed the client in one endpoint of CourseApiClient
+* Endpoint name: exporters-learnerdata
+
+[2.0.38] - 2020-01-02
+---------------------
+
+* Changed logging of response size from 2.0.37 (ENT-2489) to use size of response in bytes
+
+[2.0.37] - 2020-01-02
+---------------------
+
+* Added logging of response size when requests are made to discovery service for data not in cache
+
+[2.0.36] - 2019-12-30
+---------------------
+
+* Use `edx-tincan-py35` PYPI package instead of downloading via git
+
+[2.0.35] - 2019-12-30
+---------------------
+
+* Version upgrade for edx-rbac
+
+[2.0.34] - 2019-12-24
+---------------------
+
+* Disabled the manual enrollment orders for audit mode enterprise learners.
+
+[2.0.33] - 2019-12-23
+---------------------
+
+* Added ability to include or exclude date from the report configuration file name.
+
+[2.0.32] - 2019-12-17
+---------------------
+
+* Aligned xAPI statement formats with TinCan/Rustici standards
 * While uploading bulk users in 'manager learners' from django admin, better handling if invalid encoding found.
 
 [2.0.31] - 2019-12-11

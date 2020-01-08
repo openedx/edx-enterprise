@@ -90,6 +90,13 @@ class ManageLearnersForm(forms.Form):
         ],
     )
     reason = forms.CharField(label=_("Reason for manual enrollment"), required=True)
+    discount = forms.DecimalField(
+        label=_("Discount percentage for manual enrollment"),
+        help_text=_("Discount percentage should be from 0 to 100"),
+        required=True,
+        decimal_places=5,
+        initial=0.0
+    )
 
     class NotificationTypes(object):
         """
@@ -130,6 +137,7 @@ class ManageLearnersForm(forms.Form):
         PROGRAM = "program"
         NOTIFY = "notify_on_enrollment"
         REASON = "reason"
+        DISCOUNT = "discount"
 
     class CsvColumns(object):
         """
@@ -184,6 +192,16 @@ class ManageLearnersForm(forms.Form):
             )
 
         return email
+
+    def clean_discount(self):
+        """
+        Verify that discount value should be from 0 to 100.
+        """
+        discount = self.cleaned_data[self.Fields.DISCOUNT]
+        if discount < 0.0 or discount > 100.0:
+            raise ValidationError(ValidationMessages.INVALID_DISCOUNT)
+        else:
+            return discount
 
     def clean_course(self):
         """
@@ -492,6 +510,7 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
             "day_of_month",
             "day_of_week",
             "hour_of_day",
+            "include_date",
             "email",
             "decrypted_password",
             "sftp_hostname",

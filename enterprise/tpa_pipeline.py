@@ -4,6 +4,7 @@ Module provides elements to be used in third-party auth pipeline.
 from __future__ import absolute_import, unicode_literals
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.utils import get_identity_provider
 
 try:
     from social_core.pipeline.partial import partial
@@ -98,3 +99,22 @@ def get_user_from_social_auth(tpa_provider, user_id):
     ).first()
 
     return user_social_auth.user if user_social_auth else None
+
+
+def get_user_social_auth(user, enterprise_customer):
+    """
+    Return social auth entry of user for given enterprise.
+
+    Arguments:
+        user (User): user object
+        enterprise_customer (EnterpriseCustomer): User id of user in third party LMS
+
+    """
+    provider_id = enterprise_customer.identity_provider
+    tpa_provider = get_identity_provider(provider_id)
+    user_social_auth = UserSocialAuth.objects.filter(
+        user=user,
+        provider=tpa_provider.backend_name
+    ).first()
+
+    return user_social_auth

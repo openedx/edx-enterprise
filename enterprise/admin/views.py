@@ -40,7 +40,7 @@ from enterprise.admin.utils import (
     validate_email_to_link,
 )
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import EnrollmentApiClient
+from enterprise.api_client.lms import EnrollmentApiClientJwt
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -443,7 +443,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enterprise_customer=enterprise_customer,
             user_id=user.id
         )
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClientJwt(user)
         succeeded = True
         for course_id in course_ids:
             try:
@@ -489,7 +489,7 @@ class EnterpriseCustomerManageLearnersView(View):
             Boolean: Whether or not enrollment exists
 
         """
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClientJwt(user)
         try:
             enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
             if enrollments and course_mode == enrollments.get('mode'):
@@ -812,7 +812,8 @@ class EnterpriseCustomerManageLearnersView(View):
             course_id=None,
             program_details=None,
             notify=True,
-            enrollment_reason=None
+            enrollment_reason=None,
+            discount=0.0
     ):
         """
         Enroll the users with the given email addresses to the courses specified, either specifically or by program.
@@ -828,6 +829,7 @@ class EnterpriseCustomerManageLearnersView(View):
             notify: Whether to notify (by email) the users that have been enrolled
         """
         pending_messages = []
+        paid_modes = ['verified', 'professional']
 
         if course_id:
             succeeded, pending, failed = cls.enroll_users_in_course(
@@ -881,9 +883,11 @@ class EnterpriseCustomerManageLearnersView(View):
             "email": success.email,
             "username": success.username,
             "course_run_key": course_id,
+            "discount_percentage": float(discount)
         } for success in succeeded]
-        # Create an order to track the manual enrollments of non-pending accounts
-        EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
+        if mode in paid_modes:
+            # Create an order to track the manual enrollments of non-pending accounts
+            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
         cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
@@ -963,6 +967,7 @@ class EnterpriseCustomerManageLearnersView(View):
 
             notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
+            discount = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.DISCOUNT)
 
             course_id = None
             if course_details:
@@ -979,6 +984,7 @@ class EnterpriseCustomerManageLearnersView(View):
                     program_details=program_details,
                     notify=notify,
                     enrollment_reason=manual_enrollment_reason,
+                    discount=discount
                 )
 
             # Redirect to GET if everything went smooth.
