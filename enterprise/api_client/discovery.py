@@ -4,9 +4,7 @@ Utilities to get details from the course catalog API.
 """
 from __future__ import absolute_import, unicode_literals
 
-import json
 from logging import getLogger
-from sys import getsizeof
 
 from edx_rest_api_client.client import EdxRestApiClient
 from edx_rest_api_client.exceptions import SlumberBaseException
@@ -21,6 +19,11 @@ from django.utils.translation import ugettext_lazy as _
 
 from enterprise import utils
 from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_configuration_value_for_site
+
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 try:
     from openedx.core.djangoapps.oauth_dispatch import jwt as JwtBuilder
@@ -167,11 +170,11 @@ class CourseCatalogApiClient(object):
                     query_params,
                     traverse_pagination
                 )
-                response_as_json = json.dumps(response)
+                response_as_string = pickle.dumps(response)
                 LOGGER.info(
                     'ENT-2489 | Response from content_filter_query %s is %d bytes long.',
                     content_filter_query,
-                    getsizeof(response_as_json)
+                    len(response_as_string)
                 )
                 cache.set(cache_key, response, settings.ENTERPRISE_API_CACHE_TIMEOUT)
             else:
