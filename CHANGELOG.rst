@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.44] - 2020-01-09
+---------------------
+
+* ENT-2489 | Extracting JSON from discovery service response to calculate size
+
 [2.0.43] - 2020-01-08
 ---------------------
 
