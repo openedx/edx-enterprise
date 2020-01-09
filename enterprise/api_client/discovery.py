@@ -22,7 +22,7 @@ from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, g
 
 try:
     import cPickle as pickle
-except:
+except ImportError:
     import pickle
 
 try:
