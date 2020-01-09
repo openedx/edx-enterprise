@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 from sys import getsizeof
+import json
 
 from edx_rest_api_client.client import EdxRestApiClient
 from edx_rest_api_client.exceptions import SlumberBaseException
@@ -166,10 +167,11 @@ class CourseCatalogApiClient(object):
                     query_params,
                     traverse_pagination
                 )
+                response_as_json = json.dumps(response)
                 LOGGER.info(
                     'ENT-2489 | Response from content_filter_query %s is %d bytes long.',
                     content_filter_query,
-                    getsizeof(response)
+                    getsizeof(response_as_json)
                 )
                 cache.set(cache_key, response, settings.ENTERPRISE_API_CACHE_TIMEOUT)
             else:
