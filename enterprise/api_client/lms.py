@@ -320,6 +320,10 @@ class EnrollmentApiClient(LmsApiClient):
 class EnrollmentApiClientJwt(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Enrollment API.
+
+    The Edx_Api_Key has been deprecated which is why we are shifting to this new client that is based on
+    JwtLmsApiClient. In the future, if anyone wants to use EnrollmentApiClient client, make sure to use this one and
+    not the original one.
     """
 
     API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL

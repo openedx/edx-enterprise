@@ -425,7 +425,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
     @ddt.data('audit', 'verified')
     def test_enroll_learner(self, course_mode, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
@@ -442,7 +442,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         else:
             enrollment_order_mock.assert_not_called()
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
     def test_enroll_learner_already_enrolled(self, enrollment_order_mock, enrollment_api_client_mock):
         """
@@ -458,7 +458,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enrollment_order_mock.assert_not_called()
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
     def test_enroll_learner_upgrade_mode(self, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
         """
@@ -474,7 +474,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         analytics_mock.track.assert_called_once()
         enrollment_order_mock.assert_called_once()
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
     def test_enroll_learner_downgrade_mode(self, enrollment_api_client_mock):
         """
         ``enroll_learner`` does not enroll the user, as they're already enrolled, and redirects to the LMS courseware.
