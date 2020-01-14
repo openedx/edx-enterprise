@@ -42,8 +42,8 @@ def test_create_enterprise_catalog():
         'uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
         'title': 'Test Catalog',
-        'content_filter': '{\"content_type\": \"course\"}',
-        'enabled_course_modes': '[\"verified\"]',
+        'content_filter': {"content_type": "course"},
+        'enabled_course_modes': ["verified"],
         'publish_audit_enrollment_urls': 'false',
     }
     responses.add(
@@ -72,8 +72,8 @@ def test_get_enterprise_catalog():
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
         'title': 'Test Catalog',
-        'content_filter': '{"content_type":"course"}',
-        'enabled_course_modes': '["verified"]',
+        'content_filter': {"content_type": "course"},
+        'enabled_course_modes': ["verified"],
         'publish_audit_enrollment_urls': False,
     }
     responses.add(
@@ -93,8 +93,8 @@ def test_update_enterprise_catalog():
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
         'title': 'Test Catalog',
-        'content_filter': '{"content_type":"course"}',
-        'enabled_course_modes': '["verified"]',
+        'content_filter': {"content_type": "course"},
+        'enabled_course_modes': ["verified"],
         'publish_audit_enrollment_urls': False,
     }
     responses.add(
@@ -105,11 +105,11 @@ def test_update_enterprise_catalog():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.update_enterprise_catalog(
         TEST_ENTERPRISE_CATALOG_UUID,
-        content_filter='{"content_type":"course"}'
+        content_filter={"content_type": "course"}
     )
     assert actual_response == expected_response
     request = responses.calls[0][0]
-    assert json.loads(request.body) == {'content_filter': '{"content_type":"course"}'}
+    assert json.loads(request.body) == {'content_filter': {"content_type": "course"}}
 
 
 @responses.activate
