@@ -39,8 +39,8 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             'uuid': catalog_uuid,
             'title': title,
             'enterprise_customer': enterprise_id,
-            'content_filter': json.dumps(content_filter),
-            'enabled_course_modes': json.dumps(enabled_course_modes),
+            'content_filter': content_filter,
+            'enabled_course_modes': enabled_course_modes,
             'publish_audit_enrollment_urls': json.dumps(publish_audit_enrollment_urls),
         }
         return endpoint.post(post_data)

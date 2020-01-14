@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.48] - 2020-01-14
+---------------------
+
+* Updated enterprise catalog client json formatting.
+
 [2.0.47] - 2020-01-13
 ---------------------
 
