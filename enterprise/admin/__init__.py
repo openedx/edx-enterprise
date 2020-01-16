@@ -38,7 +38,7 @@ from enterprise.admin.views import (
     EnterpriseCustomerTransmitCoursesView,
     TemplatePreviewView,
 )
-from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClientJwt
+from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -369,7 +369,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
             enterprise_customer_user: The instance of EnterpriseCustomerUser
                 being rendered with this admin form.
         """
-        enrollment_client = EnrollmentApiClientJwt(enterprise_customer_user.user)
+        enrollment_client = EnrollmentApiClient(enterprise_customer_user.user)
         enrollments = enrollment_client.get_enrolled_courses(enterprise_customer_user.username)
         return [enrollment['course_details']['course_id'] for enrollment in enrollments]
 

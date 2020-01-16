@@ -583,7 +583,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
         # Enrollment API enrollment response
         responses.add(
             responses.GET,
-            urljoin(lms_api.EnrollmentApiClientJwt.API_BASE_URL,
+            urljoin(lms_api.EnrollmentApiClient.API_BASE_URL,
                     "enrollment/{username},{course_id}".format(username=user.username,
                                                                course_id=testcase.course_id)),
             match_querystring=True,

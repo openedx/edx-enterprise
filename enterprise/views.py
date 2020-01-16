@@ -36,7 +36,7 @@ from enterprise import constants, messages
 from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClientJwt
+from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
 from enterprise.models import (
@@ -941,7 +941,7 @@ class HandleConsentEnrollment(View):
         if not enrollment_course_mode:
             return redirect(LMS_DASHBOARD_URL)
 
-        enrollment_api_client = EnrollmentApiClientJwt(request.user)
+        enrollment_api_client = EnrollmentApiClient(request.user)
         course_modes = enrollment_api_client.get_course_modes(course_id)
 
         # Verify that the request user belongs to the enterprise against the
@@ -1051,7 +1051,7 @@ class CourseEnrollmentView(NonAtomicView):
         course modes returned using the EnterpriseCustomerCatalog's
         field "enabled_course_modes".
         """
-        modes = EnrollmentApiClientJwt(request.user).get_course_modes(course_run_id)
+        modes = EnrollmentApiClient(request.user).get_course_modes(course_run_id)
         if not modes:
             LOGGER.warning('[Enterprise Enrollment] Unable to get course modes. '
                            'CourseRun: {course_run_id}'.format(course_run_id=course_run_id))
@@ -1394,7 +1394,7 @@ class CourseEnrollmentView(NonAtomicView):
                 )
                 track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
 
-            client = EnrollmentApiClientJwt(request.user)
+            client = EnrollmentApiClient(request.user)
             client.enroll_user_in_course(
                 request.user.username,
                 course_id,
@@ -1497,7 +1497,7 @@ class CourseEnrollmentView(NonAtomicView):
             enterprise_customer=enterprise_customer
         )
 
-        enrollment_client = EnrollmentApiClientJwt(request.user)
+        enrollment_client = EnrollmentApiClient(request.user)
         enrolled_course = enrollment_client.get_course_enrollment(request.user.username, course_id)
         try:
             enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
@@ -1975,7 +1975,7 @@ class RouterView(NonAtomicView):
         except ImproperlyConfigured:
             raise Http404
 
-        users_all_enrolled_courses = EnrollmentApiClientJwt(user).get_enrolled_courses(user.username)
+        users_all_enrolled_courses = EnrollmentApiClient(user).get_enrolled_courses(user.username)
         users_active_course_runs = get_active_course_runs(
             course,
             users_all_enrolled_courses
@@ -2004,7 +2004,7 @@ class RouterView(NonAtomicView):
         return request.GET.get('audit') and \
             request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_identifier) and \
             enterprise_customer.catalog_contains_course(resource_id) and \
-            EnrollmentApiClientJwt(request.user).has_course_mode(resource_id, 'audit')
+            EnrollmentApiClient(request.user).has_course_mode(resource_id, 'audit')
 
     def redirect(self, request, *args, **kwargs):
         """

@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.50] - 2020-01-16
+---------------------
+
+* Replaced EnrollmentApiClientJwt name back to original client's name.
+
 [2.0.49] - 2020-01-15
 ---------------------
 

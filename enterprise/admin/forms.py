@@ -31,7 +31,7 @@ from enterprise.admin.utils import (
 )
 from enterprise.admin.widgets import SubmitInput
 from enterprise.api_client.discovery import CourseCatalogApiClient
-from enterprise.api_client.lms import EnrollmentApiClientJwt
+from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
@@ -211,7 +211,7 @@ class ManageLearnersForm(forms.Form):
         if not course_id:
             return None
         try:
-            client = EnrollmentApiClientJwt(self._user)
+            client = EnrollmentApiClient(self._user)
             return client.get_course_details(course_id)
         except (HttpClientError, HttpServerError):
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
