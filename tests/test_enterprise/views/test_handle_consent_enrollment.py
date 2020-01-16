@@ -102,7 +102,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
         self.assertRedirects(response, redirect_url, fetch_redirect_response=False)
 
     @mock.patch('enterprise.views.ProgramDataExtender')
-    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_404(
             self,
@@ -144,7 +144,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.get_enterprise_customer_user')
-    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_invalid_course_mode(
             self,
@@ -191,7 +191,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.track_enrollment')
-    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_audit_course_mode(
             self,
@@ -249,7 +249,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
 
     @mock.patch('enterprise.views.ProgramDataExtender')
     @mock.patch('enterprise.views.track_enrollment')
-    @mock.patch('enterprise.views.EnrollmentApiClientJwt')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.utils.Registry')
     def test_handle_consent_enrollment_with_professional_course_mode(
             self,

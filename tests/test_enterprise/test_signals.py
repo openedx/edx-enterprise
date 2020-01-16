@@ -103,7 +103,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
 
     @mock.patch('enterprise.utils.track_event')
     @mock.patch('enterprise.signals.track_enrollment')
-    @mock.patch('enterprise.models.EnrollmentApiClientJwt')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
     def test_handle_user_post_save_with_pending_course_enrollment(
             self,
             mock_course_enrollment,
