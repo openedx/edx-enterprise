@@ -11,6 +11,36 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.50] - 2020-01-16
+---------------------
+
+* Replaced EnrollmentApiClientJwt name back to original client's name.
+
+[2.0.49] - 2020-01-15
+---------------------
+
+* Added management command to reset SAPSF completion data.
+
+[2.0.48] - 2020-01-14
+---------------------
+
+* Updated enterprise catalog client json formatting.
+
+[2.0.47] - 2020-01-13
+---------------------
+
+* Replaced Edx-Api-Key in the remaining endpoints of EnrollmentApiClient
+
+[2.0.46] - 2020-01-10
+---------------------
+
+* Introduced management command to migrate enterprise catalog data to new service.
+
+[2.0.45] - 2020-01-09
+---------------------
+
+* ENT-2489 | Extracting JSON from discovery service response to calculate size
+
 [2.0.43] - 2020-01-08
 ---------------------
 

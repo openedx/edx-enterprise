@@ -634,7 +634,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.admin.views.EcommerceApiClient")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     @ddt.data(
         (True, True),
@@ -773,7 +773,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_multi_enroll_user(
             self,
@@ -789,7 +789,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_multi_enroll_pending_user(
             self,
@@ -805,7 +805,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_no_course_detail(
             self,
@@ -845,7 +845,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed(
             self,
@@ -892,7 +892,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed_mode_changed(
             self, forms_client, views_client, course_catalog_client, track_enrollment
@@ -928,7 +928,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_course_when_enrollment_closed_no_sce_exists(
             self, forms_client, views_client, course_catalog_client, track_enrollment
@@ -963,7 +963,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enroll_with_missing_course_start_date(
             self,
@@ -1013,7 +1013,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enrollment_error(
             self,
@@ -1045,7 +1045,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch('enterprise.admin.views.logging.error')
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_enrollment_error_bad_error_string(
             self,
@@ -1081,7 +1081,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_enroll_user_into_program(
             self,
@@ -1131,7 +1131,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         assert PendingEnterpriseCustomerUser.objects.count() == 1
 
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_enroll_user_into_program_error(
             self,
@@ -1364,7 +1364,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_link_and_enroll(
             self,
@@ -1418,7 +1418,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     def test_post_link_and_enroll_no_course_details(
             self,
@@ -1469,7 +1469,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_link_and_enroll_no_notification(
@@ -1523,7 +1523,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClientJwt")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
     @mock.patch("enterprise.admin.forms.CourseCatalogApiClient")
     def test_post_link_and_enroll_into_program(
             self,

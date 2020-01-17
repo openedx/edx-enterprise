@@ -369,7 +369,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
             enterprise_customer_user: The instance of EnterpriseCustomerUser
                 being rendered with this admin form.
         """
-        enrollment_client = EnrollmentApiClient()
+        enrollment_client = EnrollmentApiClient(enterprise_customer_user.user)
         enrollments = enrollment_client.get_enrolled_courses(enterprise_customer_user.username)
         return [enrollment['course_details']['course_id'] for enrollment in enrollments]
 
