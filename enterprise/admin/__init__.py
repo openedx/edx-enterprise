@@ -38,6 +38,7 @@ from enterprise.admin.views import (
     EnterpriseCustomerTransmitCoursesView,
     TemplatePreviewView,
 )
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -632,6 +633,59 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, **kwargs)
         form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return form
+
+    def get_actions(self, request):
+        """
+        Disallow the delete selected action as that does not send a DELETE request to enterprise-catalog
+        """
+        actions = super(EnterpriseCustomerCatalogAdmin, self).get_actions(request)
+        if 'delete_selected' in actions:
+            del actions['delete_selected']
+        return actions
+
+    def save_model(self, request, obj, form, change):
+        """
+        On save, creates or updates the corresponding catalog in the enterprise-catalog IDA.
+
+        `change` indicates whether or not the object is being updated (as opposed to created).
+        """
+        catalog_uuid = obj.uuid
+        catalog_client = EnterpriseCatalogApiClient(user=request.user)
+
+        if change:
+            update_fields = {
+                'enterprise_customer': str(obj.enterprise_customer.uuid),
+                'title': obj.title,
+                'content_filter': obj.content_filter,
+                'enabled_course_modes': obj.enabled_course_modes,
+                'publish_audit_enrollment_urls': obj.publish_audit_enrollment_urls,
+            }
+            catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
+        else:
+            catalog_client.create_enterprise_catalog(
+                str(catalog_uuid),
+                str(obj.enterprise_customer.uuid),
+                obj.title,
+                obj.content_filter,
+                obj.enabled_course_modes,
+                obj.publish_audit_enrollment_urls,
+            )
+
+        super(EnterpriseCustomerCatalogAdmin, self).save_model(request, obj, form, change)
+
+    def delete_model(self, request, obj):
+        """
+        Deletes the corresponding catalog in the enterprise-catalog IDA
+
+        From the warning in https://docs.djangoproject.com/en/1.11/ref/contrib/admin/#modeladmin-methods, we don't
+        prevent the deletion of the catalog if the response fails, but periodically check the logs to clean up any
+        catalog that did not get deleted from the new service while we transition.
+        """
+        catalog_uuid = obj.uuid
+        catalog_client = EnterpriseCatalogApiClient(user=request.user)
+        catalog_client.delete_enterprise_catalog(catalog_uuid)
+
+        super(EnterpriseCustomerCatalogAdmin, self).delete_model(request, obj)
 
 
 @admin.register(EnterpriseCustomerReportingConfiguration)
