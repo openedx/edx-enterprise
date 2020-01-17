@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.0.51] - 2020-01-17
+---------------------
+
+* Replaced Edx-Api-Key in the remaining endpoints of CourseApiClient
+
 [2.0.50] - 2020-01-16
 ---------------------
 
