@@ -157,6 +157,9 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         """
         super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
         self.user = UserFactory.create(is_staff=True, is_active=True, id=1)
+        self.worker_user = UserFactory.create(
+            username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
+        )
         self.user.set_password("QWERTY")
         self.user.save()
         self.enterprise_customer = EnterpriseCustomerFactory()
@@ -634,7 +637,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.admin.views.EcommerceApiClient")
     @mock.patch("enterprise.admin.views.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
+    @mock.patch("enterprise.admin.views.EnrollmentApiClient", autospec=True)
     @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
     @ddt.data(
         (True, True),
@@ -680,6 +683,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             ecommerce_api_client_mock.assert_not_called()
         else:
             ecommerce_api_client_mock.assert_called_once()
+        # Assert EnrollmentApiClient is initialized with enterprise worker user since enrollment API raise
+        # error if EnrollmentApiClient is initialized with same user who is going to be enrolled
+        views_client.assert_called_once_with(self.worker_user)
         views_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
