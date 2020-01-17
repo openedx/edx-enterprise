@@ -86,7 +86,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     @ddt.data(
         (False, True, None),
         (False, False, None),
@@ -202,7 +202,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             assert response.context[key] == value  # pylint:disable=no-member
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     def test_get_course_specific_consent_improperly_configured_course_catalog(
             self,
             course_api_client_mock,
@@ -249,7 +249,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             assert mock_render.call_args_list[0][1]['status'] == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     def test_get_course_specific_consent_invalid_get_params(
             self,
             course_api_client_mock,
@@ -289,7 +289,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     def test_get_course_specific_consent_unauthenticated_user(
             self,
             course_api_client_mock,
@@ -332,7 +332,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     def test_get_course_specific_consent_bad_api_response(
             self,
             course_api_client_mock,
@@ -366,7 +366,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     def test_get_course_specific_consent_not_needed(
             self,
             course_api_client_mock,
@@ -405,7 +405,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
@@ -469,7 +469,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             assert dsc.granted is consent_provided
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_no_user(
             self,
@@ -516,7 +516,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     @mock.patch('enterprise.views.reverse')
     def test_post_course_specific_consent_bad_api_response(
             self,
@@ -910,7 +910,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @mock.patch('enterprise.views.CourseApiClient')
+    @mock.patch('enterprise.views.CourseApiClientJwt')
     @mock.patch('enterprise.views.get_data_sharing_consent')
     @ddt.data(
         (False, True, True),
