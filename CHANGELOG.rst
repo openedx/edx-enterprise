@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.1.01] - 2020-01-21
+---------------------
+
+* Initialized EnrollmentApiClient with enterprise service worker user
+
 [2.1.0] - 2020-01-16
 --------------------
 
