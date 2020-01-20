@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.0] - 2020-01-29
+--------------------
+
+* Add soft deletion support for EnterpriseCustomerUser model
+
 [2.2.0] - 2020-01-28
 --------------------
 
