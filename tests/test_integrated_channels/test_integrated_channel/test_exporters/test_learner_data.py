@@ -576,7 +576,12 @@ class TestLearnerExporter(unittest.TestCase):
             grade='Pass',
         )
         transmission_audit.save()
-        learner_data = list(self.exporter.export(TransmissionAudit=LearnerDataTransmissionAudit))
+        learner_data = list(
+            self.exporter.export(
+                grade='Pass',
+                TransmissionAudit=LearnerDataTransmissionAudit
+            )
+        )
 
         assert not learner_data
         assert mock_enrollment_api.call_count == 0

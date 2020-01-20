@@ -13,6 +13,7 @@ from django.apps import apps
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
+from integrated_channels.utils import is_already_transmitted
 
 LOGGER = logging.getLogger(__name__)
 
@@ -45,12 +46,12 @@ class LearnerTransmitter(Transmitter):
                 - model_name: The name of the specific learner data record model to use.
                 - remote_user_id: The remote ID field name of the learner on the audit model.
         """
-        IntegratedChannelLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+        TransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
             app_label=kwargs.get('app_label', 'integrated_channel'),
             model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
         )
         kwargs.update(
-            TransmissionAudit=IntegratedChannelLearnerDataTransmissionAudit,
+            TransmissionAudit=TransmissionAudit,
         )
         # Since we have started sending courses to integrated channels instead of course runs,
         # we need to attempt to send transmissions with course keys and course run ids in order to
@@ -69,12 +70,9 @@ class LearnerTransmitter(Transmitter):
                 LOGGER.info('Skipping in-progress enterprise enrollment {}'.format(enterprise_enrollment_id))
                 continue
 
-            previous_transmissions = IntegratedChannelLearnerDataTransmissionAudit.objects.filter(
-                enterprise_course_enrollment_id=enterprise_enrollment_id,
-                error_message=''
-            )
-            if previous_transmissions.exists():
-                # We've already sent a completion status call for this enrollment
+            grade = getattr(learner_data, 'grade', None)
+            if is_already_transmitted(TransmissionAudit, enterprise_enrollment_id, grade):
+                # We've already sent a completion status for this enrollment
                 LOGGER.info('Skipping previously sent enterprise enrollment {}'.format(enterprise_enrollment_id))
                 continue
 

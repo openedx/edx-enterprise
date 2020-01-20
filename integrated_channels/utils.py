@@ -156,3 +156,25 @@ def get_image_url(content_metadata_item):
         image_url = content_metadata_item.get('image_url')
 
     return image_url
+
+
+def is_already_transmitted(transmission, enterprise_enrollment_id, grade):
+    """
+    Returns: Boolean indicating if completion date for given enrollment is already sent of not.
+
+    Args:
+        transmission: TransmissionAudit model to search enrollment in
+        enterprise_enrollment_id: enrollment id
+        grade: 'Pass' or 'Fail' status
+    """
+    try:
+        already_transmitted = transmission.objects.filter(
+            enterprise_course_enrollment_id=enterprise_enrollment_id,
+            error_message='',
+        ).latest('id')
+        if already_transmitted and getattr(already_transmitted, 'grade', None) == grade:
+            return True
+    except transmission.DoesNotExist:
+        pass
+
+    return False

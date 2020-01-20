@@ -7,6 +7,8 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+import six
+
 from enterprise.models import EnterpriseCustomerUser
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
@@ -44,11 +46,11 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
     def handle_transmission_error(self, learner_data, request_exception):
         """Handle the case where the employee on SAPSF's side is marked as inactive."""
         try:
-            sys_msg = request_exception.response.content
+            sys_msg = six.text_type(request_exception.response.content)
         except AttributeError:
             pass
         else:
-            if 'user account is inactive' in sys_msg:
+            if sys_msg and 'user account is inactive' in sys_msg:
                 ecu = EnterpriseCustomerUser.objects.get(
                     enterprise_enrollments__id=learner_data.enterprise_course_enrollment_id)
                 ecu.active = False
