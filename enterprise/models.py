@@ -49,6 +49,7 @@ from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_configuration_value,
     get_ecommerce_worker_user,
+    get_enterprise_worker_user,
 )
 from enterprise.validators import validate_image_extension, validate_image_size
 
@@ -734,7 +735,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Enroll a user into a course track, and register an enterprise course enrollment.
         """
-        enrollment_api_client = EnrollmentApiClient(self.user)
+        worker_user = get_enterprise_worker_user()
+        enrollment_api_client = EnrollmentApiClient(worker_user)
         # Check to see if the user's already enrolled and we have an enterprise course enrollment to track it.
         course_enrollment = enrollment_api_client.get_course_enrollment(self.username, course_run_id) or {}
         enrolled_in_course = course_enrollment and course_enrollment.get('is_active', False)
@@ -797,7 +799,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         Unenroll a user from a course track.
         """
-        enrollment_api_client = EnrollmentApiClient(self.user)
+        worker_user = get_enterprise_worker_user()
+        enrollment_api_client = EnrollmentApiClient(worker_user)
         if enrollment_api_client.unenroll_user_from_course(self.username, course_run_id):
             EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=self, course_id=course_run_id).delete()
             return True
