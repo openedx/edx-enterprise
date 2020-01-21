@@ -157,7 +157,7 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         """
         super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
         self.user = UserFactory.create(is_staff=True, is_active=True, id=1)
-        self.worker_user = UserFactory.create(
+        self.worker_user = UserFactory(
             username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
         )
         self.user.set_password("QWERTY")
