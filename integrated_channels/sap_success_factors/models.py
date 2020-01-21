@@ -114,6 +114,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         help_text=_("A comma-separated list of additional locales.")
     )
     show_course_price = models.BooleanField(default=False)
+    show_total_hours = models.BooleanField(default=False, verbose_name=_("Show Total Hours"))
 
     def get_locales(self, default_locale=None):
         """

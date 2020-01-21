@@ -6,7 +6,6 @@ Content metadata exporter for Cornerstone.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
-import math
 from logging import getLogger
 
 import pytz
@@ -15,7 +14,7 @@ from django.apps import apps
 
 from enterprise.utils import get_closest_course_run, get_language_code
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.utils import get_image_url
+from integrated_channels.utils import get_duration_from_estimated_hours, get_image_url
 
 LOGGER = getLogger(__name__)
 
@@ -91,11 +90,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         if course_runs:
             closest_course_run = get_closest_course_run(course_runs)
             estimated_hours = closest_course_run.get('estimated_hours')
-            if estimated_hours and isinstance(estimated_hours, (int, float)):
-                fraction, whole_number = math.modf(estimated_hours)
-                hours = "{:02d}".format(int(whole_number))
-                minutes = "{:02d}".format(int(60 * fraction))
-                duration = "{hours}:{minutes}:00".format(hours=hours, minutes=minutes)
+            duration = get_duration_from_estimated_hours(estimated_hours)
 
         return duration
 

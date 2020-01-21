@@ -21,6 +21,7 @@ from integrated_channels.utils import (
     UNIX_MAX_DATE_STRING,
     UNIX_MIN_DATE_STRING,
     current_time_is_in_interval,
+    get_duration_from_estimated_hours,
     get_image_url,
     parse_datetime_to_epoch_millis,
 )
@@ -40,6 +41,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         'title': 'title',
         'description': 'description',
         'thumbnailURI': 'image',
+        'totalHours': 'estimated_hours',
         'content': 'launch_points',
         'revisionNumber': 'revision_number',
         'schedule': 'schedule',
@@ -108,6 +110,19 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
             })
 
         return description_with_locales
+
+    def transform_estimated_hours(self, content_metadata_item):
+        """
+        Return the duration of course in hh:mm:ss format.
+        """
+        duration = 'Not-Available'
+        if self.enterprise_configuration.show_total_hours:
+            course_runs = content_metadata_item.get('course_runs')
+            if course_runs:
+                closest_course_run = get_closest_course_run(course_runs)
+                estimated_hours = closest_course_run.get('estimated_hours')
+                duration = get_duration_from_estimated_hours(estimated_hours)
+        return duration
 
     def transform_image(self, content_metadata_item):
         """

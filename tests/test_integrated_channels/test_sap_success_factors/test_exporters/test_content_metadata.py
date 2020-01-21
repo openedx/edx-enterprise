@@ -15,7 +15,9 @@ from pytest import mark
 from enterprise.api_client.lms import parse_lms_api_datetime
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from test_utils import factories
+from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
+from test_utils.integrated_channels_utils import merge_dicts
 
 
 @mark.django_db
@@ -423,3 +425,91 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'value': expected_description
             }
         ]
+
+    @ddt.data(
+        (
+            {'course_runs': []},
+            'Not-Available',
+            False,
+        ),
+        (
+            {
+                'course_runs': [
+                    {
+                        "enrollment_end": None,
+                        "enrollment_mode": "audit",
+                        "key": "course-v1:edX+DemoX+Demo_Course",
+                        "enrollment_start": None,
+                        "end": "2013-02-05T05:00:00Z",
+                        "start": "2013-02-05T05:00:00Z",
+                        "availability": "Current"
+                    }
+                ]
+            },
+            'Not-Available',
+            False,
+        ),
+        (
+            {
+                'course_runs': [
+                    {
+                        "enrollment_end": None,
+                        "enrollment_mode": "audit",
+                        "key": "course-v1:edX+DemoX+Demo_Course",
+                        "enrollment_start": None,
+                        "pacing_type": "instructor_paced",
+                        "end": "2013-02-05T05:00:00Z",
+                        "start": "2013-02-05T05:00:00Z",
+                        "go_live_date": None,
+                        "estimated_hours": 5.5,
+                        "availability": "Archived"
+                    },
+                    {
+                        "enrollment_end": None,
+                        "enrollment_mode": "verified",
+                        "key": "course-v1:edX+DemoX+Demo_Course",
+                        "enrollment_start": None,
+                        "pacing_type": "instructor_paced",
+                        "end": None,
+                        "start": "2019-02-05T05:00:00Z",
+                        "go_live_date": None,
+                        "estimated_hours": 6.5,
+                        "availability": "Current"
+                    },
+                ]
+            },
+            "06:30:00",
+            True,
+        ),
+        (
+            {
+                'course_runs': [
+                    {
+                        "enrollment_end": None,
+                        "enrollment_mode": "audit",
+                        "key": "course-v1:edX+DemoX+Demo_Course",
+                        "enrollment_start": None,
+                        "pacing_type": "instructor_paced",
+                        "end": "2013-02-05T05:00:00Z",
+                        "start": "2013-02-05T05:00:00Z",
+                        "go_live_date": None,
+                        "estimated_hours": 100,
+                        "availability": "Archived"
+                    },
+                ]
+            },
+            "100:00:00",
+            True,
+        ),
+    )
+    @responses.activate
+    @ddt.unpack
+    def test_transform_estimated_hours(self, item_course_runs, expected_hours, show_total_hours):
+        """
+        Test transformation of estimated_hours into total hours.
+        """
+        self.config.show_total_hours = show_total_hours
+        self.config.save()
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
+        exporter = SapSuccessFactorsContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_estimated_hours(item_content_metadata) == expected_hours
