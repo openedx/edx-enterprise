@@ -44,6 +44,7 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         blank=False,
         null=False,
         help_text=_("Enterprise Customer associated with the configuration."),
+        on_delete=models.deletion.CASCADE
     )
 
     active = models.BooleanField(
@@ -247,7 +248,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     .. no_pii:
     """
 
-    enterprise_customer = models.ForeignKey(EnterpriseCustomer)
+    enterprise_customer = models.ForeignKey(EnterpriseCustomer, on_delete=models.CASCADE)
     integrated_channel_code = models.CharField(max_length=30)
     content_id = models.CharField(max_length=255)
     channel_metadata = JSONField()

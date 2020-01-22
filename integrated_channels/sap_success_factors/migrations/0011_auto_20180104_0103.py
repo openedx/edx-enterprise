@@ -54,7 +54,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='sapsuccessfactorsenterprisecustomerconfiguration',
             name='enterprise_customer',
-            field=models.OneToOneField(help_text='Enterprise Customer associated with the configuration.', to='enterprise.EnterpriseCustomer'),
+            field=models.OneToOneField(help_text='Enterprise Customer associated with the configuration.', to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE),
         ),
         migrations.AlterField(
             model_name='sapsuccessfactorsenterprisecustomerconfiguration',

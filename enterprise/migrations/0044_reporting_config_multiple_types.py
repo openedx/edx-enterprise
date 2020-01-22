@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='enterprisecustomerreportingconfiguration',
             name='enterprise_customer',
-            field=models.ForeignKey(related_name='reporting_configurations', verbose_name='Enterprise Customer', to='enterprise.EnterpriseCustomer'),
+            field=models.ForeignKey(related_name='reporting_configurations', verbose_name='Enterprise Customer', to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE),
         ),
         migrations.AddField(
             model_name='enterprisecustomerreportingconfiguration',

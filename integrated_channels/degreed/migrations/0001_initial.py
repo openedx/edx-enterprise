@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
                 ('key', models.CharField(help_text='The API Client ID provided to edX by the enterprise customer to be used to make API calls to Degreed on behalf of the customer.', max_length=255, verbose_name='API Client ID', blank=True)),
                 ('secret', models.CharField(help_text='The API Client Secret provided to edX by the enterprise customer to be used to make API calls to Degreed on behalf of the customer.', max_length=255, verbose_name='API Client Secret', blank=True)),
                 ('degreed_company_id', models.CharField(help_text='The organization code provided to the enterprise customer by Degreed.', max_length=255, verbose_name='Degreed Organization Code', blank=True)),
-                ('enterprise_customer', models.OneToOneField(to='enterprise.EnterpriseCustomer')),
+                ('enterprise_customer', models.OneToOneField(to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.CreateModel(

@@ -14,6 +14,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='enterprisecustomercatalog',
             name='enterprise_customer',
-            field=models.ForeignKey(related_name='enterprise_customer_catalogs', to='enterprise.EnterpriseCustomer'),
+            field=models.ForeignKey(related_name='enterprise_customer_catalogs', to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE),
         ),
     ]

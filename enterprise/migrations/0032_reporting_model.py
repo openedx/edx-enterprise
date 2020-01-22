@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('hour_of_day', models.SmallIntegerField(help_text='The hour of the day to send the report, in Eastern Standard Time (EST). This is required for all frequency settings.', verbose_name='Hour of Day', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(23)])),
                 ('initialization_vector', models.BinaryField(help_text='This is the initialization vector used to encrypt the password using AESencr', verbose_name='Password Encryption Initialization Vector', max_length=32)),
                 ('password', models.BinaryField(verbose_name='Password', max_length=256)),
-                ('enterprise_customer', models.OneToOneField(verbose_name='Enterprise Customer', to='enterprise.EnterpriseCustomer')),
+                ('enterprise_customer', models.OneToOneField(verbose_name='Enterprise Customer', to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE)),
             ],
         ),
     ]

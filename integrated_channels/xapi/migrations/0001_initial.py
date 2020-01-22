@@ -25,7 +25,7 @@ class Migration(migrations.Migration):
                 ('key', models.CharField(help_text='Key of X-API LRS.', verbose_name='Client ID', max_length=255)),
                 ('secret', models.CharField(help_text='secret of X-API LRS.', verbose_name='Client Secret', max_length=255)),
                 ('active', models.BooleanField(help_text='Is this configuration active?')),
-                ('enterprise_customer', models.OneToOneField(to='enterprise.EnterpriseCustomer', help_text='Enterprise Customer associated with the configuration.')),
+                ('enterprise_customer', models.OneToOneField(to='enterprise.EnterpriseCustomer', help_text='Enterprise Customer associated with the configuration.', on_delete=models.CASCADE)),
             ],
         ),
     ]

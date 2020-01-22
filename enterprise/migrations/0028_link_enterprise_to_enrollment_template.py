@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='enrollmentnotificationemailtemplate',
             name='enterprise_customer',
-            field=models.OneToOneField(related_name='enterprise_enrollment_template', default=None, to='enterprise.EnterpriseCustomer'),
+            field=models.OneToOneField(related_name='enterprise_enrollment_template', default=None, to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -26,6 +26,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='enrollmentnotificationemailtemplate',
             name='site',
-            field=models.OneToOneField(related_name='enterprise_enrollment_template', null=True, blank=True, to='sites.Site'),
+            field=models.OneToOneField(related_name='enterprise_enrollment_template', null=True, blank=True, to='sites.Site', on_delete=models.CASCADE),
         ),
 ]
