@@ -69,8 +69,8 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         }
         mock_learner_exporter.return_value = 'mock_learner_exporter'
         with mock.patch(
-            'integrated_channels.cornerstone.models.CornerstoneEnterpriseCustomerConfiguration'
-            '.get_learner_data_transmitter'
+                'integrated_channels.cornerstone.models.CornerstoneEnterpriseCustomerConfiguration'
+                '.get_learner_data_transmitter'
         ) as mock_transmitter:
             transmit_single_learner_data(self.user.username, self.demo_course_run_id)
             mock_transmitter.return_value.transmit.assert_called_once_with('mock_learner_exporter', **kwargs)

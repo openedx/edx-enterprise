@@ -179,6 +179,7 @@ def update_search_with_enterprise_context(search_result, add_utm_info):
 
     Arguments:
         search_result (dict): The search result to populate with enterprise context.
+        add_utm_info: UTM Info to replace
     """
     search_result = copy.deepcopy(search_result)
     for item in search_result['results']:

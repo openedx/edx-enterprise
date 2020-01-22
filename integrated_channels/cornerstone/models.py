@@ -107,7 +107,7 @@ class CornerstoneEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigu
 
     history = HistoricalRecords()
 
-    class Meta(object):
+    class Meta:
         app_label = 'cornerstone'
 
     def __str__(self):

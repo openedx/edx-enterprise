@@ -21,7 +21,7 @@ PAGES_ON_EACH_SIDE = 3
 PAGES_ON_ENDS = 2
 
 
-class ProgramStatuses(object):
+class ProgramStatuses:
     """
     Namespace class for program statuses.
     """
@@ -31,7 +31,7 @@ class ProgramStatuses(object):
     DELETED = "deleted"
 
 
-class UrlNames(object):
+class UrlNames:
     """
     Collection on URL names used in admin
     """
@@ -41,7 +41,7 @@ class UrlNames(object):
     PREVIEW_EMAIL_TEMPLATE = URL_PREFIX + "preview_email_template"
 
 
-class ValidationMessages(object):
+class ValidationMessages:
     """
     Namespace class for validation messages.
     """

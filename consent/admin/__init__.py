@@ -23,7 +23,7 @@ class DataSharingConsentAdmin(SimpleHistoryAdmin):
     Django admin model for PendingEnrollment
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta class for ``DataSharingConsentAdmin``.
         """
@@ -118,7 +118,7 @@ class DataSharingConsentTextOverridesAdmin(DjangoObjectActions, SimpleHistoryAdm
         "Preview the data sharing consent page rendered in the context of a program enrollment."
     )
 
-    class Meta(object):
+    class Meta:
         """
         Meta class for ``DataSharingConsentTextOverridesAdmin``.
         """

@@ -120,7 +120,7 @@ class ContentMetadataExporter(Exporter):
                 )
             )
             if transformer:
-                transformed_value = transformer(content_metadata_item)
+                transformed_value = transformer(content_metadata_item)  # pylint: disable=not-callable
             else:
                 # The concrete subclass does not define an override for the given field,
                 # so just use the data key to index the content metadata item dictionary.
@@ -140,13 +140,12 @@ class ContentMetadataExporter(Exporter):
 
             if transformed_value is None and self.SKIP_KEY_IF_NONE:
                 continue
-            else:
-                transformed_item[integrated_channel_schema_key] = transformed_value
+            transformed_item[integrated_channel_schema_key] = transformed_value
 
         return transformed_item
 
 
-class ContentMetadataItemExport(object):
+class ContentMetadataItemExport:
     """
     Object representation of a content metadata item export.
     """

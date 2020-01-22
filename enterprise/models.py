@@ -285,6 +285,7 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns `None` if enterprise customer does not have any identity provider.
         """
         try:
+            # pylint: disable=no-member
             return self.enterprise_customer_identity_provider and self.enterprise_customer_identity_provider.provider_id
         except ObjectDoesNotExist:
             return None
@@ -297,6 +298,7 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns False if enterprise customer does not have any identity provider.
         """
         try:
+            # pylint: disable=no-member
             return (
                 self.enterprise_customer_identity_provider and
                 self.enterprise_customer_identity_provider.sync_learner_profile_data
@@ -568,8 +570,7 @@ class EnterpriseCustomerUserManager(models.Manager):
         fetched_object = self.get_queryset().filter(**kwargs).first()
         if fetched_object:
             return fetched_object
-        else:
-            raise EnterpriseCustomerUser.DoesNotExist
+        raise EnterpriseCustomerUser.DoesNotExist
 
     def get_link_by_email(self, user_email):
         """
@@ -676,7 +677,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)
 
-    class Meta(object):
+    class Meta:
         app_label = 'enterprise'
         verbose_name = _("Enterprise Customer Learner")
         verbose_name_plural = _("Enterprise Customer Learners")
@@ -930,7 +931,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     user_email = models.EmailField(null=False, blank=False, unique=True)
     history = HistoricalRecords()
 
-    class Meta(object):
+    class Meta:
         app_label = 'enterprise'
         ordering = ['created']
 
@@ -1024,7 +1025,7 @@ class PendingEnrollment(TimeStampedModel):
         on_delete=models.SET_NULL
     )
 
-    class Meta(object):
+    class Meta:
         app_label = 'enterprise'
         unique_together = (("user", "course_id"),)
         ordering = ['created']
@@ -1165,7 +1166,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         help_text="Slug field containing a unique identifier for the identity provider.",
     )
 
-    class Meta(object):
+    class Meta:
         app_label = 'enterprise'
         ordering = ['created']
 
@@ -1238,7 +1239,7 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
     objects = EnterpriseCourseEnrollmentManager()
 
-    class Meta(object):
+    class Meta:
         unique_together = (('enterprise_customer_user', 'course_id',),)
         app_label = 'enterprise'
         ordering = ['created']
@@ -1378,7 +1379,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         )
     )
 
-    class Meta(object):
+    class Meta:
         verbose_name = _("Enterprise Catalog Query")
         verbose_name_plural = _("Enterprise Catalog Queries")
         app_label = 'enterprise'
@@ -1453,7 +1454,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
     history = HistoricalRecords()
 
-    class Meta(object):
+    class Meta:
         verbose_name = _("Enterprise Customer Catalog")
         verbose_name_plural = _("Enterprise Customer Catalogs")
         app_label = 'enterprise'
@@ -1697,7 +1698,7 @@ class EnrollmentNotificationEmailTemplate(TimeStampedModel):
     .. no_pii:
     """
 
-    class Meta(object):
+    class Meta:
         app_label = 'enterprise'
         ordering = ['created']
 
@@ -2059,7 +2060,7 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
             raise ValidationError(validation_errors)
 
 
-class EnterpriseRoleAssignmentContextMixin(object):
+class EnterpriseRoleAssignmentContextMixin:
     """
     Mixin for RoleAssignment models related to enterprises.
     """
@@ -2121,7 +2122,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         Return the context for this role assignment class.
         """
         # do not add enterprise id for `enterprise_openedx_operator` role
-        if self.role.name == ENTERPRISE_OPERATOR_ROLE:
+        if self.role.name == ENTERPRISE_OPERATOR_ROLE:  # pylint: disable=no-member
             return [ALL_ACCESS_CONTEXT]
 
         return super(SystemWideEnterpriseUserRoleAssignment, self).get_context()
@@ -2132,7 +2133,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         """
         return "<SystemWideEnterpriseUserRoleAssignment for User {user} assigned to role {role}>".format(
             user=self.user.id,
-            role=self.role.name
+            role=self.role.name  # pylint: disable=no-member
         )
 
     def __repr__(self):
@@ -2179,7 +2180,7 @@ class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, 
         """
         return "<EnterpriseFeatureUserRoleAssignment for User {user} assigned to role {role}>".format(
             user=self.user.id,
-            role=self.role.name
+            role=self.role.name  # pylint: disable=no-member
         )
 
     def __repr__(self):

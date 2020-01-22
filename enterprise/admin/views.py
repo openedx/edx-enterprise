@@ -19,7 +19,7 @@ from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.core.urlresolvers import reverse
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
@@ -123,7 +123,7 @@ class EnterpriseCustomerTransmitCoursesView(View):
     """
     template = 'enterprise/admin/transmit_courses_metadata.html'
 
-    class ContextParameters(object):
+    class ContextParameters:
         """
         Namespace-style class for custom context parameters.
         """
@@ -211,7 +211,7 @@ class EnterpriseCustomerManageLearnersView(View):
     """
     template = "enterprise/admin/manage_learners.html"
 
-    class ContextParameters(object):
+    class ContextParameters:
         """
         Namespace-style class for custom context parameters.
         """
@@ -368,7 +368,7 @@ class EnterpriseCustomerManageLearnersView(View):
             )
             for error in errors:
                 manage_learners_form.add_error(ManageLearnersForm.Fields.BULK_UPLOAD, error)
-            return
+            return None
 
         # There were no errors. Now do the actual linking:
         for email in emails:
@@ -1024,9 +1024,7 @@ class EnterpriseCustomerManageLearnersView(View):
             message = _("Email {email} is not associated with Enterprise "
                         "Customer {ec_name}").format(
                             email=email_to_unlink, ec_name=enterprise_customer.name)
+            # pylint: disable=http-response-with-content-type-json
             return HttpResponse(message, content_type="application/json", status=404)
 
-        return HttpResponse(
-            json.dumps({}),
-            content_type="application/json"
-        )
+        return JsonResponse({})

@@ -90,8 +90,6 @@ class DataSharingConsentManager(models.Manager.from_queryset(DataSharingConsentQ
     ``DataSharingConsent`` object does not exist. Otherwise behaves the same as a normal manager.
     """
 
-    pass
-
 
 class ProxyDataSharingConsent(ConsentModelMixin):
     """
@@ -148,8 +146,8 @@ class ProxyDataSharingConsent(ConsentModelMixin):
             return None
         granted = all((child.granted for child in children))
         exists = any((child.exists for child in children))
-        usernames = set([child.username for child in children])
-        enterprises = set([child.enterprise_customer for child in children])
+        usernames = set(child.username for child in children)
+        enterprises = set(child.enterprise_customer for child in children)
         if not len(usernames) == len(enterprises) == 1:
             raise InvalidProxyConsent(
                 'Children used to create a bulk proxy consent object must '
@@ -235,7 +233,7 @@ class Consent(TimeStampedModel):
         return bool(self.pk)
 
 
-class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-missing-unicode
+class DataSharingConsent(ConsentModelMixin, Consent):  # pylint: disable=model-no-explicit-unicode
     """
     An abstract representation of Data Sharing Consent granted to an Enterprise for a course by a User.
 
@@ -275,7 +273,7 @@ class DataSharingConsentTextOverrides(TimeStampedModel):
     .. no_pii:
     """
 
-    class Meta(object):
+    class Meta:
         app_label = 'consent'
         verbose_name_plural = _('Data sharing consent text overrides')
 

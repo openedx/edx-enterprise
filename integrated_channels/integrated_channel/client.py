@@ -6,7 +6,7 @@ Base API client for integrated channels.
 from __future__ import absolute_import, unicode_literals
 
 
-class IntegratedChannelApiClient(object):
+class IntegratedChannelApiClient:
     """
     This is the interface to be implemented by API clients for integrated channels.
     """

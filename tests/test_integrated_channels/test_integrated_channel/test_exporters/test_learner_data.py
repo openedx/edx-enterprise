@@ -441,8 +441,7 @@ class TestLearnerExporter(unittest.TestCase):
                     is_passing=True,
                     grade=grade,
                 )
-            else:
-                raise HttpNotFoundError
+            raise HttpNotFoundError
         mock_certificate_api.return_value.get_course_certificate.side_effect = get_course_certificate
 
         def get_course_grade(course_id, username):

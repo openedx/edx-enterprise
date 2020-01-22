@@ -37,7 +37,7 @@ LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
 
 
-class LmsApiClient(object):
+class LmsApiClient:
     """
     Object builds an API client to make calls to the edxapp LMS API.
 
@@ -58,7 +58,7 @@ class LmsApiClient(object):
         )
 
 
-class JwtLmsApiClient(object):
+class JwtLmsApiClient:
     """
     LMS client authenticates using a JSON Web Token (JWT) for the given user.
     """
@@ -111,7 +111,7 @@ class JwtLmsApiClient(object):
         return inner
 
 
-class EmbargoApiClient(object):
+class EmbargoApiClient:
     """
     Client interface for using the edx-platform embargo API.
     """
@@ -130,6 +130,7 @@ class EmbargoApiClient(object):
             )
             if redirect_url:
                 return redirect_url
+        return None
 
 
 class EnrollmentApiClient(LmsApiClient):

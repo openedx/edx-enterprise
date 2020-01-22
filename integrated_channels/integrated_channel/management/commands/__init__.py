@@ -26,7 +26,7 @@ INTEGRATED_CHANNEL_CHOICES = OrderedDict([
 ])
 
 
-class IntegratedChannelCommandMixin(object):
+class IntegratedChannelCommandMixin:
     """
     Contains common functionality for the IntegratedChannel management commands.
     """
@@ -50,7 +50,7 @@ class IntegratedChannelCommandMixin(object):
             metavar='INTEGRATED_CHANNEL',
             help=_('Transmit data to this IntegrateChannel. '
                    'Omit this option to transmit to all configured, active integrated channels.'),
-            choices=INTEGRATED_CHANNEL_CHOICES.keys(),
+            choices=list(INTEGRATED_CHANNEL_CHOICES.keys()),
         )
 
     def get_integrated_channels(self, options):
@@ -107,7 +107,7 @@ class IntegratedChannelCommandMixin(object):
 
             channel_classes = [INTEGRATED_CHANNEL_CHOICES[channel_code]]
         else:
-            channel_classes = INTEGRATED_CHANNEL_CHOICES.values()
+            channel_classes = list(INTEGRATED_CHANNEL_CHOICES.values())
 
         return channel_classes
 
@@ -116,4 +116,3 @@ class IntegratedChannelCommandUtils(IntegratedChannelCommandMixin):
     """
     This is a wrapper class to avoid using mixin in methods
     """
-    pass

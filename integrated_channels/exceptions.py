@@ -9,5 +9,3 @@ class ClientError(Exception):
     """
     Indicate a problem when interacting with an integrated channel.
     """
-
-    pass

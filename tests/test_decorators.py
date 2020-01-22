@@ -65,11 +65,10 @@ class TestEnterpriseDecorators(unittest.TestCase):
         """
         def func():
             """ Function to be decorated. """
-            pass
         with warnings.catch_warnings(record=True) as warning:
             warnings.simplefilter('always')
             deprecated('Yep!')(func)()
-            assert len(warning) is 1
+            assert len(warning) == 1
             assert issubclass(warning[0].category, DeprecationWarning)
             assert str(warning[0].message) == 'You called the deprecated function `func`. Yep!'
 
@@ -79,12 +78,11 @@ class TestEnterpriseDecorators(unittest.TestCase):
         """
         def func():
             """ Function to be decorated. """
-            pass
         with warnings.catch_warnings(record=True) as warning:
             warnings.simplefilter('always')
             ignore_warning(DeprecationWarning)(func)()
             deprecated('Yep!')(func)()
-            assert len(warning) is 0
+            assert len(warning) == 0
 
     @ddt.data(True, False)
     def test_disable_for_loaddata(self, raw):

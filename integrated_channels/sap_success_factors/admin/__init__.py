@@ -29,7 +29,7 @@ class SAPSuccessFactorsGlobalConfigurationAdmin(ConfigurationModelAdmin):
         "search_student_api_path",
     )
 
-    class Meta(object):
+    class Meta:
         model = SAPSuccessFactorsGlobalConfiguration
 
 
@@ -69,7 +69,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     list_filter = ('active',)
     search_fields = ('enterprise_customer__name',)
 
-    class Meta(object):
+    class Meta:
         model = SAPSuccessFactorsEnterpriseCustomerConfiguration
 
     def enterprise_customer_name(self, obj):

@@ -1,5 +1,6 @@
 # Additional requirements for development of this application
 
+-c constraints.txt
 -r test-master.txt
 -r doc.txt
 -r test.txt

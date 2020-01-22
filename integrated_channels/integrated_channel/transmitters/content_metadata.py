@@ -78,19 +78,19 @@ class ContentMetadataTransmitter(Transmitter):
             'Preparing to transmit creation of [%s] content metadata items with plugin configuration [%s]: [%s]',
             len(items_to_create),
             self.enterprise_configuration,
-            items_to_create.keys(),
+            list(items_to_create.keys()),
         )
         LOGGER.info(
             'Preparing to transmit update of [%s] content metadata items with plugin configuration [%s]: [%s]',
             len(items_to_update),
             self.enterprise_configuration,
-            items_to_update.keys(),
+            list(items_to_update.keys()),
         )
         LOGGER.info(
             'Preparing to transmit deletion of [%s] content metadata items with plugin configuration [%s]: [%s]',
             len(items_to_delete),
             self.enterprise_configuration,
-            items_to_delete.keys(),
+            list(items_to_delete.keys()),
         )
 
         return items_to_create, items_to_update, items_to_delete, transmission_map

@@ -228,8 +228,9 @@ def get_catalog_admin_url_template(mode='change'):
     # Return matched FQDN from catalog api url appended with catalog admin path
     if mode == 'change':
         return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/{catalog_id}/change/"
-    elif mode == 'add':
+    if mode == 'add':
         return match.group("fqdn").rstrip("/") + "/admin/catalogs/catalog/add/"
+    return None
 
 
 def build_notification_message(template_context, template_configuration=None):
@@ -880,7 +881,7 @@ def strip_html_tags(text, allowed_tags=None):
     Returns: a string without html tags
     """
     if text is None:
-        return
+        return None
     if allowed_tags is None:
         allowed_tags = ALLOWED_TAGS
     return bleach.clean(text, tags=allowed_tags, attributes=['id', 'class', 'style', 'href', 'title'], strip=True)

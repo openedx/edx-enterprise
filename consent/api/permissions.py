@@ -16,8 +16,7 @@ class IsUserInRequest(permissions.BasePermission):
     """
 
     def has_permission(self, request, view):
-        if request.user.username == get_request_value(request, 'username', ''):
-            return True
+        return request.user.username == get_request_value(request, 'username', '')
 
 
 class IsStaffOrUserInRequest(IsUserInRequest):

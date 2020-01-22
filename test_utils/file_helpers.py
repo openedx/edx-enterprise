@@ -9,7 +9,7 @@ import unicodecsv
 
 
 # pylint: disable=open-builtin
-class MakeCsvStreamContextManager(object):
+class MakeCsvStreamContextManager:
     """
     Context manager that creates a temporary csv file.
     """
@@ -21,6 +21,7 @@ class MakeCsvStreamContextManager(object):
         Arguments:
             header (Iterable): Column headers.
             contents (Iterable): CSV contents - each item represents a line.
+            encoding (String): Default Encoding.
         """
         self._header = header
         self._contents = contents

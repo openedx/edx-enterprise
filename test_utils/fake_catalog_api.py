@@ -1233,10 +1233,13 @@ def setup_course_catalog_api_client_mock(
     """
     Set up the Course Catalog API client mock.
 
-    Arguments:
+    Args:
+    ----
         client_mock (Mock): The mock course catalog api client.
         course_overrides (dict): Dictionary containing overrides of the fake course metadata values.
         course_run_overrides (dict): Dictionary containing overrides of the fake course run metadata values.
+        program_overrides (dict): Dictionary containing overrides of the fake program metadata values.
+        program_type_overrides (dict): Dictionary containing overrides of the fake program type metadata values.
     """
     client = client_mock.return_value
 
@@ -1287,7 +1290,7 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
     }
 
 
-class CourseDiscoveryApiTestMixin(object):
+class CourseDiscoveryApiTestMixin:
     """
     Mixin for course discovery API test classes.
     """

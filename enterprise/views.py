@@ -491,7 +491,7 @@ class GrantDataSharingPermissions(View):
             ],
             'policy_link_template': '',
         }
-        published_only = False if self.preview_mode else True
+        published_only = not self.preview_mode
         enterprise_consent_page = enterprise_customer.get_data_sharing_consent_text_overrides(
             published_only=published_only
         )
@@ -647,8 +647,7 @@ class GrantDataSharingPermissions(View):
                 )
                 LOGGER.info(log_message)
                 return redirect(LMS_DASHBOARD_URL)
-            else:
-                enterprise_customer = consent_record.enterprise_customer
+            enterprise_customer = consent_record.enterprise_customer
         elif not request.user.is_staff:
             raise PermissionDenied()
 
@@ -911,6 +910,7 @@ class EnterpriseSelectionView(FormView):
                 enterprise_customer,
             )
             return JsonResponse({})
+        return None
 
 
 class HandleConsentEnrollment(View):
@@ -1984,8 +1984,7 @@ class RouterView(NonAtomicView):
         if course_run:
             course_run_id = course_run['key']
             return course_run_id
-        else:
-            raise Http404
+        raise Http404
 
     def eligible_for_direct_audit_enrollment(self, request, enterprise_customer, resource_id, course_key=None):
         """

@@ -473,28 +473,28 @@ class TestTransmitLearnerData(unittest.TestCase):
         super(TestTransmitLearnerData, self).setUp()
 
     def test_api_user_required(self):
-        error = 'Error: argument --api_user is required'
-        with raises(CommandError, message=error):
+        error = 'Error: the following arguments are required: --api_user'
+        with raises(CommandError, match=error):
             call_command('transmit_learner_data')
 
     def test_api_user_must_exist(self):
         error = 'A user with the username bob was not found.'
-        with raises(CommandError, message=error):
+        with raises(CommandError, match=error):
             call_command('transmit_learner_data', '--api_user', 'bob')
 
     def test_enterprise_customer_not_found(self):
         faker = FakerFactory.create()
         invalid_customer_id = faker.uuid4()  # pylint: disable=no-member
         error = 'Enterprise customer {} not found, or not active'.format(invalid_customer_id)
-        with raises(CommandError, message=error):
+        with raises(CommandError, match=error):
             call_command('transmit_learner_data',
                          '--api_user', self.api_user.username,
                          enterprise_customer=invalid_customer_id)
 
     def test_invalid_integrated_channel(self):
-        channel_code = 'abc'
+        channel_code = 'ABC'
         error = 'Invalid integrated channel: {}'.format(channel_code)
-        with raises(CommandError, message=error):
+        with raises(CommandError, match=error):
             call_command('transmit_learner_data',
                          '--api_user', self.api_user.username,
                          enterprise_customer=self.enterprise_customer.uuid,

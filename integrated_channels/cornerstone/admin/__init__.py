@@ -26,7 +26,7 @@ class CornerstoneGlobalConfigurationAdmin(ConfigurationModelAdmin):
         "secret",
     )
 
-    class Meta(object):
+    class Meta:
         model = CornerstoneGlobalConfiguration
 
 
@@ -49,7 +49,7 @@ class CornerstoneEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     list_filter = ("active",)
     search_fields = ("enterprise_customer_name",)
 
-    class Meta(object):
+    class Meta:
         model = CornerstoneEnterpriseCustomerConfiguration
 
     def enterprise_customer_name(self, obj):

@@ -140,7 +140,7 @@ class DegreedEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigurati
 
     history = HistoricalRecords()
 
-    class Meta(object):
+    class Meta:
         app_label = 'degreed'
 
     def __str__(self):

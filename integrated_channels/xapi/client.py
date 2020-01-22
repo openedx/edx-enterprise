@@ -14,7 +14,7 @@ from integrated_channels.exceptions import ClientError
 LOGGER = logging.getLogger(__name__)
 
 
-class EnterpriseXAPIClient(object):
+class EnterpriseXAPIClient:
     """
     xAPI to send payload data and handle responses.
     """

@@ -18,7 +18,7 @@ from django.core.cache import cache
 from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 
-class EnterpriseMockMixin(object):
+class EnterpriseMockMixin:
     """
     Mocks for the Enterprise service response.
     """

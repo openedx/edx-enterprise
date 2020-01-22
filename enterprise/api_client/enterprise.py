@@ -55,7 +55,7 @@ class EnterpriseApiClient(JwtLmsApiClient):
                 content_id = utils.get_content_metadata_item_id(item)
                 content_metadata[content_id] = item
 
-        return content_metadata.values()
+        return list(content_metadata.values())
 
     @JwtLmsApiClient.refresh_token
     def _load_data(

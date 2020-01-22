@@ -68,15 +68,14 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
         )
         with mock.patch(
-            'integrated_channels.cornerstone.models.CornerstoneContentMetadataExporter.SKIP_KEY_IF_NONE',
-            new_callable=mock.PropertyMock
-
+                'integrated_channels.cornerstone.models.CornerstoneContentMetadataExporter.SKIP_KEY_IF_NONE',
+                new_callable=mock.PropertyMock
         ) as mock_skip_key_if_none:
             mock_skip_key_if_none.return_value = False
             response = self.client.get(url)
             self.assertEqual(response.status_code, status.HTTP_200_OK)
             self.assertEqual(len(response.data), 3)
-            keys = set([key for item in response.data for key in item.keys()])
+            keys = {key for item in response.data for key in item.keys()}
             expected_keys = [
                 "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
                 "Thumbnail", "Duration", "Owners", "Languages", "Subjects",
@@ -96,7 +95,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
-        keys = set([key for item in response.data for key in item.keys()])
+        keys = {key for item in response.data for key in item.keys()}
         expected_keys = [
             "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
             "Thumbnail", "Owners", "Languages", "Subjects",

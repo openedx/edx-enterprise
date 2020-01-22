@@ -133,7 +133,7 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
         self._link_learner_to_enterprise(data)
 
         response = self.client.get(self.ent_user_link_url)
-        response_json = json.loads(response.content)
+        response_json = json.loads(response.content.decode())
 
         # assert active enterprise is on the top of results
         self.assertEqual(response_json['results'][0]['enterprise_customer']['uuid'], active_enterprise)
