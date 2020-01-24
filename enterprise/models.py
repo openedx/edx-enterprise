@@ -644,6 +644,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     )
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
     active = models.BooleanField(default=True)
+    linked = models.BooleanField(default=True)
 
     objects = EnterpriseCustomerUserManager()
 

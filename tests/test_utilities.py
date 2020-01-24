@@ -123,6 +123,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer",
                 "user_id",
                 "active",
+                "linked",
             ]
         ),
         (
