@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.1.03] - 2020-01-24
+---------------------
+
+* Code refactor and ability to send learner completion if grade is changed
+
 [2.1.01] - 2020-01-21
 ---------------------
 

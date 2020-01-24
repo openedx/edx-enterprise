@@ -22,7 +22,7 @@ from consent.models import DataSharingConsent
 from enterprise.api_client.lms import CertificatesApiClient, CourseApiClientJwt, GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import parse_datetime_to_epoch_millis
+from integrated_channels.utils import is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
@@ -128,17 +128,13 @@ class LearnerExporter(Exporter):
         course_details = None
         for enterprise_enrollment in enrollment_queryset:
 
-            if TransmissionAudit and skip_transmitted:
-                already_transmitted = TransmissionAudit.objects.filter(
-                    enterprise_course_enrollment_id=enterprise_enrollment.id,
-                    error_message=''
-                )
-                if already_transmitted.exists():
-                    # We've already sent a completion status call for this enrollment
-                    LOGGER.info('[Integrated Channel] Skipping export of previously sent enterprise enrollment.'
-                                '  EnterpriseEnrollment: {enterprise_enrollment_id}'.format(
-                                    enterprise_enrollment_id=enterprise_enrollment.id))
-                    continue
+            if TransmissionAudit and skip_transmitted and \
+                    is_already_transmitted(TransmissionAudit, enterprise_enrollment.id, grade):
+                # We've already sent a completion status for this enrollment
+                LOGGER.info('[Integrated Channel] Skipping export of previously sent enterprise enrollment.'
+                            '  EnterpriseEnrollment: {enterprise_enrollment_id}'.format(
+                                enterprise_enrollment_id=enterprise_enrollment.id))
+                continue
 
             course_id = enterprise_enrollment.course_id
 
@@ -192,19 +188,15 @@ class LearnerExporter(Exporter):
                                 course_id=course_id,
                                 user_id=enterprise_enrollment.enterprise_customer_user.user_id,
                                 enterprise=enterprise_enrollment.enterprise_customer_user.enterprise_customer.slug))
-            if exporting_single_learner and (grade != grade_from_api or is_passing != is_passing_from_api or
-                                             completed_date != completed_date_from_api):
+            if exporting_single_learner and (grade != grade_from_api or is_passing != is_passing_from_api):
                 enterprise_user = enterprise_enrollment.enterprise_customer_user
                 LOGGER.error('[Integrated Channel] Attempt to transmit conflicting data. '
-                             ' CompletedDate: {completed_date}, CompletedDateAPI: {completed_date_api},'
                              ' Course: {course_id}, Enterprise: {enterprise},'
                              ' EnrollmentId: {enrollment_id},'
                              ' Grade: {grade}, GradeAPI: {grade_api}, IsPassing: {is_passing},'
                              ' IsPassingAPI: {is_passing_api}, User: {user_id}'.format(
-                                 completed_date=completed_date,
                                  grade=grade,
                                  is_passing=is_passing,
-                                 completed_date_api=completed_date_from_api,
                                  grade_api=grade_from_api,
                                  is_passing_api=is_passing_from_api,
                                  course_id=course_id,

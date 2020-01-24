@@ -12,6 +12,7 @@ from celery.utils.log import get_task_logger
 from django.contrib.auth.models import User
 from django.utils import timezone
 
+from enterprise.utils import get_enterprise_customer_for_user
 from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandUtils,
@@ -100,9 +101,12 @@ def transmit_single_learner_data(username, course_run_id):
                 ' Course: {course_run}, Username: {username}'.format(
                     course_run=course_run_id,
                     username=username))
+    enterprise_customer = get_enterprise_customer_for_user(user)
     channel_utils = IntegratedChannelCommandUtils()
-    # Transmit the learner data to each integrated channel
-    for channel in channel_utils.get_integrated_channels({'channel': None}):
+    # Transmit the learner data to each integrated channelStarting Export
+    for channel in channel_utils.get_integrated_channels(
+            {'channel': None, 'enterprise_customer': enterprise_customer.uuid}
+    ):
         integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
         LOGGER.info(
             '[Integrated Channel] Processing learner for transmission. Configuration: {configuration},'

@@ -16,7 +16,12 @@ from django.utils import timezone
 
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
-from test_utils.factories import EnterpriseCustomerCatalogFactory, EnterpriseCustomerFactory, UserFactory
+from test_utils.factories import (
+    EnterpriseCustomerCatalogFactory,
+    EnterpriseCustomerFactory,
+    EnterpriseCustomerUserFactory,
+    UserFactory,
+)
 
 NOW = timezone.now()
 
@@ -39,6 +44,10 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         )
         self.config.save()
         self.user = UserFactory()
+        EnterpriseCustomerUserFactory(
+            enterprise_customer=self.enterprise_customer,
+            user_id=self.user.id,
+        )
         self.demo_course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
 
         super(TestCornerstoneEnterpriseCustomerConfiguration, self).setUp()
