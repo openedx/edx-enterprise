@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 
+from crum import get_current_user
 from django_object_actions import DjangoObjectActions
 from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -39,7 +40,7 @@ from enterprise.admin.views import (
     TemplatePreviewView,
 )
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import CourseApiClientJwt, EnrollmentApiClient
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -387,11 +388,13 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         """
         Get an HTML string representing the courses the user is enrolled in.
         """
-        courses_client = CourseApiClient()
-        course_details = []
+        request_user = get_current_user()
+        courses_client = CourseApiClientJwt(request_user)
+        courses_details = []
         for course_id in course_ids:
-            name = courses_client.get_course_details(course_id)['name']
-            course_details.append({'course_id': course_id, 'course_name': name})
+            course_detail = courses_client.get_course_details(course_id)
+            name = course_detail.get('name')
+            courses_details.append({'course_id': course_id, 'course_name': name})
         template = '<a href="{url}">{course_name}</a>'
         joiner = '<br/>'
         return joiner.join(
@@ -399,7 +402,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
                 url=reverse('about_course', args=[course['course_id']]),
                 course_name=course['course_name'],
             )
-            for course in course_details
+            for course in courses_details
         )
 
 
