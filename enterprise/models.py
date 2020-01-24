@@ -245,7 +245,7 @@ class EnterpriseCustomer(TimeStampedModel):
         default=get_default_customer_type,
         help_text=_(
             'Specifies enterprise customer type.'
-        )
+        ), on_delete=models.CASCADE
     )
 
     enable_portal_code_management_screen = models.BooleanField(  # pylint: disable=invalid-name
@@ -856,7 +856,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     .. pii_retirement: local_api, consumer_api
     """  # pylint: enable=line-too-long
 
-    enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False)
+    enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False, on_delete=models.CASCADE)
     user_email = models.EmailField(null=False, blank=False, unique=True)
     history = HistoricalRecords()
 
@@ -1074,7 +1074,7 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name="enterprise_customer_identity_provider"
+        related_name="enterprise_customer_identity_provider", on_delete=models.CASCADE
     )
     provider_id = models.SlugField(
         null=False,

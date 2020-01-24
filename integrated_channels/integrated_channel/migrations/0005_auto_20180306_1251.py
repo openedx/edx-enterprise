@@ -26,7 +26,7 @@ class Migration(migrations.Migration):
                 ('integrated_channel_code', models.CharField(max_length=30)),
                 ('content_id', models.CharField(max_length=255)),
                 ('channel_metadata', jsonfield.fields.JSONField()),
-                ('enterprise_customer', models.ForeignKey(to='enterprise.EnterpriseCustomer')),
+                ('enterprise_customer', models.ForeignKey(to='enterprise.EnterpriseCustomer', on_delete=models.CASCADE)),
             ],
         ),
         migrations.AlterUniqueTogether(

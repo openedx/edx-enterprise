@@ -30,6 +30,7 @@ class XAPILRSConfiguration(TimeStampedModel):
         blank=False,
         null=False,
         help_text=_('Enterprise Customer associated with the configuration.'),
+        on_delete=models.deletion.CASCADE
     )
     version = models.CharField(max_length=16, default='1.0.1', help_text=_('Version of xAPI.'))
     endpoint = models.URLField(help_text=_('URL of the LRS.'))
