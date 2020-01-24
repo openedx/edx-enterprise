@@ -393,8 +393,9 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         courses_details = []
         for course_id in course_ids:
             course_detail = courses_client.get_course_details(course_id)
-            name = course_detail.get('name')
-            courses_details.append({'course_id': course_id, 'course_name': name})
+            if course_detail:
+                name = course_detail.get('name')
+                courses_details.append({'course_id': course_id, 'course_name': name})
         template = '<a href="{url}">{course_name}</a>'
         joiner = '<br/>'
         return joiner.join(
