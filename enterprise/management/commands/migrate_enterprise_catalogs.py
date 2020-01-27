@@ -30,6 +30,12 @@ class Command(BaseCommand):
             metavar='LMS_API_USERNAME',
             help=_('Username of a user authorized to access the Enterprise Catalog API.'),
         )
+        parser.add_argument(
+            '--catalog_uuids',
+            dest='catalog_uuids',
+            metavar='ENT_CATALOG_UUIDS',
+            help=_('Comma separated list of uuids of enterprise catalogs to migrate.'),
+        )
         super(Command, self).add_arguments(parser)
 
     def handle(self, *args, **options):
@@ -40,7 +46,15 @@ class Command(BaseCommand):
             raise CommandError(_('A user with the username {username} was not found.').format(username=api_username))
 
         client = EnterpriseCatalogApiClient(user=user)
-        for enterprise_catalog in EnterpriseCustomerCatalog.objects.all():
+
+        catalog_uuids_string = options.get('catalog_uuids')
+        if catalog_uuids_string:
+            catalog_uuids_list = catalog_uuids_string.split(',')
+            queryset = EnterpriseCustomerCatalog.objects.filter(uuid__in=catalog_uuids_list)
+        else:
+            queryset = EnterpriseCustomerCatalog.objects.all()
+
+        for enterprise_catalog in queryset:
             LOGGER.info('Migrating Enterprise Catalog {}'.format(enterprise_catalog.uuid))
             try:
                 client.create_enterprise_catalog(
