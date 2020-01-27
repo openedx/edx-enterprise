@@ -211,7 +211,7 @@ class ManageLearnersForm(forms.Form):
         if not course_id:
             return None
         try:
-            client = EnrollmentApiClient(self._user)
+            client = EnrollmentApiClient()
             return client.get_course_details(course_id)
         except (HttpClientError, HttpServerError):
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
