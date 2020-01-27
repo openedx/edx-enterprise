@@ -31,10 +31,10 @@ class Command(BaseCommand):
             help=_('Username of a user authorized to access the Enterprise Catalog API.'),
         )
         parser.add_argument(
-            '--catalog_uuid',
-            dest='catalog_uuid',
-            metavar='ENT_CATALOG_UUID',
-            help=_('The specific uuid of an enterprise catalog to migrate.'),
+            '--catalog_uuids',
+            dest='catalog_uuids',
+            metavar='ENT_CATALOG_UUIDS',
+            help=_('Comma separated list of uuids of enterprise catalogs to migrate.'),
         )
         super(Command, self).add_arguments(parser)
 
@@ -47,9 +47,10 @@ class Command(BaseCommand):
 
         client = EnterpriseCatalogApiClient(user=user)
 
-        catalog_uuid = options.get('catalog_uuid')
-        if catalog_uuid:
-            queryset = EnterpriseCustomerCatalog.objects.filter(uuid=catalog_uuid)
+        catalog_uuids_string = options.get('catalog_uuids')
+        if catalog_uuids_string:
+            catalog_uuids_list = catalog_uuids_string.split(',')
+            queryset = EnterpriseCustomerCatalog.objects.filter(uuid__in=catalog_uuids_list)
         else:
             queryset = EnterpriseCustomerCatalog.objects.all()
 
