@@ -11,13 +11,18 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.1.6] - 2020-01-28
+--------------------
+
+* Revert Initialized EnrollmentApiClient with enterprise service worker user
+
 [2.1.5] - 2020-01-27
----------------------
+--------------------
 
 * Added totalHours field for successfactors export
 
 [2.1.4] - 2020-01-24
----------------------
+--------------------
 
 * add boolean field to track linked/unlinked EnterpriseCustomerUser records
 
