@@ -5,7 +5,6 @@ Tests for Cornerstone content metadata exporters.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
-import copy
 import datetime
 import unittest
 
@@ -20,6 +19,7 @@ from integrated_channels.cornerstone.exporters.content_metadata import Cornersto
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
+from test_utils.integrated_channels_utils import merge_dicts
 
 NOW = datetime.datetime.now(pytz.UTC)
 DEFAULT_OWNER = {
@@ -56,21 +56,6 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         self.jwt_builder = jwt_builder.start()
         self.addCleanup(jwt_builder.stop)
         super(TestCornerstoneContentMetadataExporter, self).setUp()
-
-    def _merge_dicts(self, dict1, dict2):
-        """
-        Merges dict1 and dict2 and returns merged dict.
-        If dict2 has a key with value set to `undefined`
-        it removes that key from dict1
-        """
-        merged_dict = copy.deepcopy(dict1)
-        if dict2:
-            for key, val in dict2.items():
-                if val == 'undefined' and key in merged_dict:
-                    del merged_dict[key]
-                else:
-                    merged_dict.update(dict2)
-        return merged_dict
 
     @responses.activate
     def test_content_exporter_export(self):
@@ -120,7 +105,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         course short description or course title should be returned
         content type of the provided `content_metadata_item`.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_description)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_description)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         exporter.LONG_STRING_LIMIT = 100
         assert exporter.transform_description(item_content_metadata) == expected_description
@@ -220,7 +205,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         Test transforms for is_active status of course.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_is_active(item_content_metadata) == expected_is_active
 
@@ -302,7 +287,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         Test transformation of estimated_hours into course duration.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_estimated_hours(item_content_metadata) == expected_duration
 
@@ -420,7 +405,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         Test transformation for LastModifiedUTC field.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_course_runs)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_modified(item_content_metadata) == expected_modified_datetime
 
@@ -460,7 +445,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         Test transforming languages should return a list of languages for course.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_languages)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_languages)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         transformed_languages = exporter.transform_languages(item_content_metadata)
         assert sorted(transformed_languages) == sorted(expected_languages)
@@ -497,7 +482,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         Transforming organizations gives back the a list of dict {"Name": "Org Name"}.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_organizations)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_organizations)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_organizations(item_content_metadata) == expected_organizations
 
@@ -533,7 +518,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         """
         Transforming subjects gives back the a list of cornerstone's subjects.
         """
-        item_content_metadata = self._merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_subjects)
+        item_content_metadata = merge_dicts(FAKE_SEARCH_ALL_COURSE_RESULT_3, item_subjects)
         exporter = CornerstoneContentMetadataExporter('fake-user', self.config)
         assert sorted(exporter.transform_subjects(item_content_metadata)) == sorted(expected_subjects)
 

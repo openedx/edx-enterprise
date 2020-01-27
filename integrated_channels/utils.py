@@ -6,6 +6,7 @@ Utilities common to different integrated channels.
 from __future__ import absolute_import, unicode_literals
 
 import datetime
+import math
 import re
 from itertools import islice
 from string import Formatter
@@ -178,3 +179,17 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade):
         pass
 
     return False
+
+
+def get_duration_from_estimated_hours(estimated_hours):
+    """
+    Return the duration in {hours}:{minutes}:00 corresponding to estimated hours as int or float.
+    """
+    if estimated_hours and isinstance(estimated_hours, (int, float)):
+        fraction, whole_number = math.modf(estimated_hours)
+        hours = "{:02d}".format(int(whole_number))
+        minutes = "{:02d}".format(int(60 * fraction))
+        duration = "{hours}:{minutes}:00".format(hours=hours, minutes=minutes)
+        return duration
+
+    return None
