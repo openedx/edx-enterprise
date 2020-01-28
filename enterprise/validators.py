@@ -21,7 +21,7 @@ def get_app_config():
 
 def validate_hex_color(value):
     """
-    Validates value is suitable for a color hex value.
+    Validate value is suitable for a color hex value.
     """
     pattern = r'^#[a-fA-F0-9]{6}$'
     if not re.match(pattern, value):
