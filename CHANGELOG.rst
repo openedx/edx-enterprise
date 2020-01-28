@@ -11,10 +11,20 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.2.0] - 2020-01-28
+--------------------
+
+* Adding new fields to EnterpriseCustomer and EnterpriseCustomerBrandingConfiguration models
+
 [2.1.7] - 2020-01-28
 --------------------
 
 * Revert Edx-Api-Key-replacement-changes
+
+[2.1.6] - 2020-01-27
+--------------------
+
+* Updating enterprise catalog migration management command
 
 [2.1.5] - 2020-01-27
 --------------------

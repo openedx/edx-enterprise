@@ -92,6 +92,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     enable_audit_data_reporting = False
     hide_course_original_price = False
     country = 'US'
+    contact_email = factory.LazyAttribute(lambda x: FAKER.email())
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
@@ -228,6 +229,8 @@ class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelF
     id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     logo = factory.LazyAttribute(lambda x: FAKER.image_url())
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    banner_border_color = '#ffffff'
+    banner_background_color = '#000000'
 
 
 class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):

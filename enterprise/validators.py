@@ -5,6 +5,7 @@ Database models field validators.
 from __future__ import absolute_import, unicode_literals
 
 import os
+import re
 
 from django.apps import apps
 from django.core.exceptions import ValidationError
@@ -16,6 +17,16 @@ def get_app_config():
     :return Application configuration.
     """
     return apps.get_app_config("enterprise")
+
+
+def validate_hex_color(value):
+    """
+    Validate value is suitable for a color hex value.
+    """
+    pattern = r'^#[a-fA-F0-9]{6}$'
+    if not re.match(pattern, value):
+        message = _('Value entered is not a valid hex color code.')
+        raise ValidationError(message)
 
 
 def validate_image_extension(value):

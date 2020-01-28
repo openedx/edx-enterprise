@@ -729,6 +729,33 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         else:
             branding_configuration.full_clean()  # exception here will fail the test
 
+    @ddt.data(
+        (False, '#00bb2'),
+        (False, '#'),
+        (False, '#00bb22C'),
+        (False, '00bb22C'),
+        (False, '00bb22CD'),
+        (False, '#AABHCC'),
+        (True, '#AABBCC'),
+        (True, '#AaBbCc'),
+        (True, '#0F23C7'),
+    )
+    @ddt.unpack
+    def test_hex_color(self, is_valid_hex_color, hex_string):
+        """
+        Test hex color validator.
+        """
+        branding_configuration = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            banner_border_color=hex_string,
+        )
+
+        if not is_valid_hex_color:
+            with self.assertRaises(ValidationError):
+                branding_configuration.full_clean()
+        else:
+            branding_configuration.full_clean()  # exception here will fail the test
+
 
 @mark.django_db
 @ddt.ddt

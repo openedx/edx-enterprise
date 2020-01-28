@@ -111,6 +111,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_portal_reporting_config_screen",
                 "enable_learner_portal",
                 "learner_portal_hostname",
+                "contact_email",
             ]
         ),
         (
@@ -133,7 +134,9 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "created",
                 "modified",
                 "enterprise_customer",
-                "logo"
+                "logo",
+                "banner_border_color",
+                "banner_background_color",
             ]
         ),
         (

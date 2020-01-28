@@ -50,7 +50,7 @@ from enterprise.utils import (
     get_configuration_value,
     get_ecommerce_worker_user,
 )
-from enterprise.validators import validate_image_extension, validate_image_size
+from enterprise.validators import validate_hex_color, validate_image_extension, validate_image_size
 
 try:
     from lms.djangoapps.email_marketing.tasks import update_user
@@ -267,6 +267,12 @@ class EnterpriseCustomer(TimeStampedModel):
         blank=True,
         default='',
         help_text=_("Hostname of the enterprise learner portal, e.g. bestrun.edx.org.")
+    )
+
+    contact_email = models.EmailField(
+        null=True,
+        blank=True,
+        help_text=_("Email to be displayed as public point of contact for enterprise.")
     )
 
     @property
@@ -1014,6 +1020,18 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         help_text=_(u"Logo images must be in .png format."),
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
+    )
+    banner_border_color = models.CharField(
+        null=True,
+        blank=True,
+        max_length=7,
+        validators=[validate_hex_color],
+    )
+    banner_background_color = models.CharField(
+        null=True,
+        blank=True,
+        max_length=7,
+        validators=[validate_hex_color],
     )
 
     class Meta:

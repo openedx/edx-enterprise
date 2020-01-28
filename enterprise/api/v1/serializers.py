@@ -84,7 +84,11 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
     class Meta:
         model = models.EnterpriseCustomerBrandingConfiguration
         fields = (
-            'enterprise_customer', 'enterprise_slug', 'logo'
+            'enterprise_customer',
+            'enterprise_slug',
+            'logo',
+            'banner_border_color',
+            'banner_background_color',
         )
 
     enterprise_slug = serializers.SerializerMethodField()
@@ -108,7 +112,8 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enforce_data_sharing_consent', 'branding_configuration',
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
-            'enable_learner_portal', 'learner_portal_hostname', 'enable_portal_reporting_config_screen'
+            'enable_learner_portal', 'learner_portal_hostname', 'enable_portal_reporting_config_screen',
+            'contact_email',
         )
 
     site = SiteSerializer()

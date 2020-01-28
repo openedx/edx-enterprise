@@ -431,6 +431,7 @@ class TestEnterpriseAPIViews(APITest):
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment', 'enable_audit_data_reporting': True,
                 'site__domain': 'example.com', 'site__name': 'example.com',
+                'contact_email': 'fake@example.com',
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -446,6 +447,7 @@ class TestEnterpriseAPIViews(APITest):
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
                 'learner_portal_hostname': '',
+                'contact_email': 'fake@example.com',
             }],
         ),
         (
@@ -461,6 +463,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                 'enterprise_customer__site__domain': 'example.com',
                 'enterprise_customer__site__name': 'example.com',
+                'enterprise_customer__contact_email': 'fake@example.com',
 
             }],
             [{
@@ -480,6 +483,7 @@ class TestEnterpriseAPIViews(APITest):
                     'sync_learner_profile_data': False,
                     'enable_learner_portal': False,
                     'learner_portal_hostname': '',
+                    'contact_email': 'fake@example.com',
                 }
             }],
         ),
@@ -509,6 +513,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__enforce_data_sharing_consent': 'at_enrollment',
                 'enterprise_customer__site__domain': 'example.com',
                 'enterprise_customer__site__name': 'example.com',
+                'enterprise_customer__contact_email': 'fake@example.com',
 
             }],
             [{
@@ -526,6 +531,7 @@ class TestEnterpriseAPIViews(APITest):
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
                 'learner_portal_hostname': '',
+                'contact_email': 'fake@example.com',
             }],
         ),
         (
@@ -536,11 +542,15 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__slug': TEST_SLUG,
                 'logo': 'enterprise/branding/1/1_logo.png',
+                'banner_border_color': '#123456',
+                'banner_background_color': '#234567',
             }],
             [{
                 'enterprise_customer': FAKE_UUIDS[0],
                 'enterprise_slug': TEST_SLUG,
                 'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
+                'banner_border_color': '#123456',
+                'banner_background_color': '#234567',
             }],
         ),
     )
@@ -650,6 +660,7 @@ class TestEnterpriseAPIViews(APITest):
             'enforce_data_sharing_consent': 'at_enrollment', 'enable_portal_code_management_screen': True,
             'enable_portal_reporting_config_screen': False,
             'site__domain': 'example.com', 'site__name': 'example.com',
+            'contact_email': 'fake@example.com',
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
 
@@ -690,6 +701,7 @@ class TestEnterpriseAPIViews(APITest):
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
                 'learner_portal_hostname': '',
+                'contact_email': 'fake@example.com',
             }
         else:
             assert response == expected_error
@@ -705,17 +717,23 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__slug': TEST_SLUG,
                 'logo': 'enterprise/branding/1/1_logo.png',
+                'banner_border_color': '#123456',
+                'banner_background_color': '#234567',
             },
             {
                 'enterprise_customer__uuid': FAKE_UUIDS[1],
                 'enterprise_customer__slug': 'another-slug',
                 'logo': 'enterprise/branding/2/2_logo.png',
+                'banner_border_color': '#abcdef',
+                'banner_background_color': '#bcdef0',
             },
         ]
         expected_item = {
             'enterprise_customer': FAKE_UUIDS[0],
             'enterprise_slug': TEST_SLUG,
             'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
+            'banner_border_color': '#123456',
+            'banner_background_color': '#234567',
         }
         self.create_items(factory, model_items)
         response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT)
