@@ -272,7 +272,7 @@ class EnterpriseCustomer(TimeStampedModel):
     contact_email = models.EmailField(
         null=True,
         blank=True,
-        help_text=_("Email for intended use on learner portal Need Help section.")
+        help_text=_("Email to be displayed as public point of contact for enterprise.")
     )
 
     @property
