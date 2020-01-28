@@ -141,7 +141,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         responses.add(
             responses.GET,
             urljoin(
-                lms_api.CourseApiClientJwt.API_BASE_URL,
+                lms_api.CourseApiClient.API_BASE_URL,
                 "courses/{course}/".format(course=self.course_id)
             ),
             json={
@@ -202,7 +202,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         responses.add(
             responses.GET,
             urljoin(
-                lms_api.CourseApiClientJwt.API_BASE_URL,
+                lms_api.CourseApiClient.API_BASE_URL,
                 "courses/{course}/".format(course=course_id)
             ),
             json={

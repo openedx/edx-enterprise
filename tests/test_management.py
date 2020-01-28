@@ -557,7 +557,7 @@ def stub_transmit_learner_data_apis(testcase, certificate, self_paced, end_date,
         # Course API course_details response
         responses.add(
             responses.GET,
-            urljoin(lms_api.CourseApiClientJwt.API_BASE_URL,
+            urljoin(lms_api.CourseApiClient.API_BASE_URL,
                     "courses/{course}/".format(course=testcase.course_id)),
             json=dict(
                 course_id=COURSE_ID,
