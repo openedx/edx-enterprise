@@ -12,7 +12,6 @@ from time import time
 from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
 from requests import Session
-from requests.compat import urljoin
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
@@ -133,14 +132,13 @@ class EmbargoApiClient(object):
                 return redirect_url
 
 
-class EnrollmentApiClient(JwtLmsApiClient):
+class EnrollmentApiClient(LmsApiClient):
     """
     Object builds an API client to make calls to the Enrollment API.
     """
 
     API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
 
-    @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
         """
         Query the Enrollment API for the course details of the given course_id.
@@ -182,7 +180,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         # Sort slug weights in descending order
         return sorted(modes, key=slug_weight, reverse=True)
 
-    @JwtLmsApiClient.refresh_token
     def get_course_modes(self, course_id):
         """
         Query the Enrollment API for the specific course modes that are available for the given course_id.
@@ -198,7 +195,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         modes = details.get('course_modes', [])
         return self._sort_course_modes([mode for mode in modes if mode['slug'] not in EXCLUDED_COURSE_MODES])
 
-    @JwtLmsApiClient.refresh_token
     def has_course_mode(self, course_run_id, mode):
         """
         Query the Enrollment API to see whether a course run has a given course mode available.
@@ -213,7 +209,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
-    @JwtLmsApiClient.refresh_token
     def enroll_user_in_course(self, username, course_id, mode, cohort=None):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
@@ -237,7 +232,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
             }
         )
 
-    @JwtLmsApiClient.refresh_token
     def unenroll_user_from_course(self, username, course_id):
         """
         Call the enrollment API to unenroll the user in the course specified by course_id.
@@ -259,7 +253,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
 
         return False
 
-    @JwtLmsApiClient.refresh_token
     def get_course_enrollment(self, username, course_id):
         """
         Query the enrollment API to get information about a single course enrollment.
@@ -294,7 +287,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
 
         return result
 
-    @JwtLmsApiClient.refresh_token
     def is_enrolled(self, username, course_run_id):
         """
         Query the enrollment API and determine if a learner is enrolled in a course run.
@@ -310,7 +302,6 @@ class EnrollmentApiClient(JwtLmsApiClient):
         enrollment = self.get_course_enrollment(username, course_run_id)
         return enrollment is not None and enrollment.get('is_active', False)
 
-    @JwtLmsApiClient.refresh_token
     def get_enrolled_courses(self, username):
         """
         Query the enrollment API to get a list of the courses a user is enrolled in.
@@ -350,36 +341,6 @@ class CourseApiClient(LmsApiClient):
             return None
 
 
-class CourseApiClientJwt(JwtLmsApiClient):
-    """
-    Object builds an API client to make calls to the Course API.
-
-    The Edx_Api_Key has been deprecated which is why we are shifting to this new client that is based on
-    JwtLmsApiClient. In the future, if anyone wants to use CourseApiClient client, make sure to use this one and
-    not the original one.
-    """
-
-    API_BASE_URL = urljoin(settings.LMS_INTERNAL_ROOT_URL, '/api/courses/v1/')
-    APPEND_SLASH = True
-
-    @JwtLmsApiClient.refresh_token
-    def get_course_details(self, course_id):
-        """
-        Retrieve all available details about a course.
-
-        Args:
-            course_id (str): The course ID identifying the course for which to retrieve details.
-
-        Returns:
-            dict: Contains keys identifying those course details available from the courses API (e.g., name).
-        """
-        try:
-            return self.client.courses(course_id).get()
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception('Details not found for course [%s] due to: [%s]', course_id, str(exc))
-            return None
-
-
 class ThirdPartyAuthApiClient(LmsApiClient):
     """
     Object builds an API client to make calls to the Third Party Auth API.
@@ -400,64 +361,6 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         """
         return self._get_results(identity_provider, 'username', username, 'remote_id')
 
-    def get_username_from_remote_id(self, identity_provider, remote_id):
-        """
-        Retrieve the remote identifier for the given username.
-
-        Args:
-        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
-        * ``remote_id`` (str): The remote id identifying the user for which to retrieve the usernamename.
-
-        Returns:
-            string or None: the username of the given user.  None if not found.
-        """
-        return self._get_results(identity_provider, 'remote_id', remote_id, 'username')
-
-    def _get_results(self, identity_provider, param_name, param_value, result_field_name):
-        """
-        Calls the third party auth api endpoint to get the mapping between usernames and remote ids.
-        """
-        try:
-            kwargs = {param_name: param_value}
-            returned = self.client.providers(identity_provider).users.get(**kwargs)
-            results = returned.get('results', [])
-        except HttpNotFoundError:
-            LOGGER.error(
-                'username not found for third party provider={provider}, {querystring_param}={id}'.format(
-                    provider=identity_provider,
-                    querystring_param=param_name,
-                    id=param_value
-                )
-            )
-            results = []
-
-        for row in results:
-            if row.get(param_name) == param_value:
-                return row.get(result_field_name)
-        return None
-
-
-class ThirdPartyAuthApiClientJwt(JwtLmsApiClient):
-    """
-    Object builds an API client to make calls to the Third Party Auth API.
-    """
-    API_BASE_URL = urljoin(settings.LMS_INTERNAL_ROOT_URL, '/api/third_party_auth/v0/')
-
-    @JwtLmsApiClient.refresh_token
-    def get_remote_id(self, identity_provider, username):
-        """
-        Retrieve the remote identifier for the given username.
-
-        Args:
-        * ``identity_provider`` (str): identifier slug for the third-party authentication service used during SSO.
-        * ``username`` (str): The username ID identifying the user for which to retrieve the remote name.
-
-        Returns:
-            string or None: the remote name of the given user.  None if not found.
-        """
-        return self._get_results(identity_provider, 'username', username, 'remote_id')
-
-    @JwtLmsApiClient.refresh_token
     def get_username_from_remote_id(self, identity_provider, remote_id):
         """
         Retrieve the remote identifier for the given username.

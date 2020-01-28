@@ -53,7 +53,6 @@ from enterprise.models import (
 from enterprise.utils import (
     get_configuration_value_for_site,
     get_ecommerce_worker_user,
-    get_enterprise_worker_user,
     send_email_notification_message,
     track_enrollment,
 )
@@ -444,8 +443,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enterprise_customer=enterprise_customer,
             user_id=user.id
         )
-        worker_user = get_enterprise_worker_user()
-        enrollment_client = EnrollmentApiClient(worker_user)
+        enrollment_client = EnrollmentApiClient()
         succeeded = True
         for course_id in course_ids:
             try:
@@ -491,7 +489,7 @@ class EnterpriseCustomerManageLearnersView(View):
             Boolean: Whether or not enrollment exists
 
         """
-        enrollment_client = EnrollmentApiClient(user)
+        enrollment_client = EnrollmentApiClient()
         try:
             enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
             if enrollments and course_mode == enrollments.get('mode'):
