@@ -50,7 +50,7 @@ from enterprise.utils import (
     get_configuration_value,
     get_ecommerce_worker_user,
 )
-from enterprise.validators import validate_image_extension, validate_image_size, validate_hex_color
+from enterprise.validators import validate_hex_color, validate_image_extension, validate_image_size
 
 try:
     from lms.djangoapps.email_marketing.tasks import update_user
