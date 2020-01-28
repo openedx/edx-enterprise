@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.1] - 2020-01-29
+---------------------
+
+* Updated calls to `manual enrollments api` to include enterprise customer info
+
 [2.3.0] - 2020-01-29
 --------------------
 

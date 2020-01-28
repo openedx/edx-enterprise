@@ -829,6 +829,7 @@ class EnterpriseCustomerManageLearnersView(View):
             notify: Whether to notify (by email) the users that have been enrolled
         """
         pending_messages = []
+        succeeded = []
         paid_modes = ['verified', 'professional']
 
         if course_id:
@@ -883,7 +884,9 @@ class EnterpriseCustomerManageLearnersView(View):
             "email": success.email,
             "username": success.username,
             "course_run_key": course_id,
-            "discount_percentage": float(discount)
+            "discount_percentage": float(discount),
+            "enterprise_customer_name": enterprise_customer.name,
+            "enterprise_customer_uuid": str(enterprise_customer.uuid),
         } for success in succeeded]
         if mode in paid_modes:
             # Create an order to track the manual enrollments of non-pending accounts
