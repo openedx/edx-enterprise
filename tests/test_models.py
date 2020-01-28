@@ -751,7 +751,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         )
 
         if not is_valid_hex_color:
-            with self.assertRaises(ValidationError) as validation_error:
+            with self.assertRaises(ValidationError):
                 branding_configuration.full_clean()
         else:
             branding_configuration.full_clean()  # exception here will fail the test
