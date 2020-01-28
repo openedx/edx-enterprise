@@ -15,7 +15,6 @@ from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
@@ -358,15 +357,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     Tests of the EnterpriseCustomerUser model.
     """
 
-    def setUp(self):
-        """
-        Test set up
-        """
-        super(TestEnterpriseCustomerUser, self).setUp()
-        self.worker_user = factories.UserFactory(
-            username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
-        )
-
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
@@ -435,7 +425,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             assert mock_third_party_api.return_value.get_remote_id.call_count == 0
 
     @mock.patch('enterprise.utils.segment')
-    @mock.patch('enterprise.models.EnrollmentApiClient', autospec=True)
+    @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
     @ddt.data('audit', 'verified')
     def test_enroll_learner(self, course_mode, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
@@ -451,18 +441,6 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             enrollment_order_mock.assert_called_once()
         else:
             enrollment_order_mock.assert_not_called()
-
-        enrollment_api_client_mock.assert_called_once_with(self.worker_user)
-
-    @mock.patch('enterprise.models.EnrollmentApiClient', autospec=True)
-    def test_unenroll_client_user(self, enrollment_api_client_mock):
-        """
-        Verify that `EnrollmentApiClient` is created with correct user in `EnterpriseCustomerUser.unenroll`.
-        """
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
-        enterprise_customer_user.unenroll('course-v1:edX+DemoX+Demo_Course')
-        enrollment_api_client_mock.return_value.unenroll_user_from_course.assert_called_once()
-        enrollment_api_client_mock.assert_called_once_with(self.worker_user)
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
