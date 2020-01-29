@@ -538,13 +538,32 @@ class EnterpriseCustomerUserManager(models.Manager):
     This class should contain methods that create, modify or query :class:`.EnterpriseCustomerUser` entities.
     """
 
+    def __init__(self, *args, **kwargs):
+        """
+        Initialize custom manager.
+
+        kwargs:
+            linked_only (Bool): create a manager with linked learners only if True else all(linked and unlinked) records
+        """
+        self.linked_only = kwargs.pop('linked_only', True)
+        super(EnterpriseCustomerUserManager, self).__init__(*args, **kwargs)
+
+    def get_queryset(self):
+        """
+        Return linked or unlinked learners based on how the manager is created.
+        """
+        if self.linked_only:
+            return super(EnterpriseCustomerUserManager, self).get_queryset().filter(linked=True)
+
+        return super(EnterpriseCustomerUserManager, self).get_queryset()
+
     def get(self, **kwargs):
         """
         Overridden get method to return the first element in case of learner with multiple enterprises.
 
         Raises EnterpriseCustomerUser.DoesNotExist if no records are found.
         """
-        fetched_object = super(EnterpriseCustomerUserManager, self).get_queryset().filter(**kwargs).first()
+        fetched_object = self.get_queryset().filter(**kwargs).first()
         if fetched_object:
             return fetched_object
         else:
@@ -602,7 +621,8 @@ class EnterpriseCustomerUserManager(models.Manager):
             existing_user = User.objects.get(email=user_email)
             # not capturing DoesNotExist intentionally to signal to view that link does not exist
             link_record = self.get(enterprise_customer=enterprise_customer, user_id=existing_user.id)
-            link_record.delete()
+            link_record.linked = False
+            link_record.save()
 
             if update_user:
                 # Remove the SailThru flags for enterprise learner.
@@ -652,6 +672,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     linked = models.BooleanField(default=True)
 
     objects = EnterpriseCustomerUserManager()
+    all_objects = EnterpriseCustomerUserManager(linked_only=False)
 
     class Meta(object):
         app_label = 'enterprise'
@@ -659,6 +680,33 @@ class EnterpriseCustomerUser(TimeStampedModel):
         verbose_name_plural = _("Enterprise Customer Learners")
         unique_together = (("enterprise_customer", "user_id"),)
         ordering = ['-active', '-modified']
+
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        """
+        Override to handle creation of EnterpriseCustomerUser records.
+
+        This is needed because of soft deletion of EnterpriseCustomerUser records.
+        This will handle all of get_or_create/update_or_create/create methods.
+        """
+        if self.pk is None:
+            # We are trying to create a new object but it may be possible that an existing unlinked
+            # record exists, so if an existing record exists then just update that with linked=True
+            try:
+                existing = EnterpriseCustomerUser.all_objects.get(
+                    enterprise_customer=self.enterprise_customer,
+                    user_id=self.user_id,
+                    linked=False
+                )
+                self.linked = True
+                # An existing record has been found so update auto primary key with primay key of existing record
+                self.pk = existing.pk  # pylint: disable=invalid-name
+                # Update the kwargs so that Django will update the existing record instead of creating a new one
+                kwargs = dict(kwargs, **{'force_insert': False, 'force_update': True})
+            except EnterpriseCustomerUser.DoesNotExist:
+                # No existing record found so do nothing and proceed with normal operation
+                pass
+
+        return super(EnterpriseCustomerUser, self).save(*args, **kwargs)
 
     @property
     def user(self):
@@ -1143,6 +1191,20 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         return identity_provider is not None and identity_provider.sync_learner_profile_data
 
 
+class EnterpriseCourseEnrollmentManager(models.Manager):
+    """
+    Model manager for `EnterpriseCourseEnrollment`.
+    """
+
+    def get_queryset(self):
+        """
+        Override to return only those enrollment records for which learner is linked to an enterprise.
+        """
+        return super(
+            EnterpriseCourseEnrollmentManager, self
+        ).get_queryset().select_related('enterprise_customer_user').filter(enterprise_customer_user__linked=True)
+
+
 @python_2_unicode_compatible
 class EnterpriseCourseEnrollment(TimeStampedModel):
     """
@@ -1155,6 +1217,8 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
     .. no_pii:
     """
+
+    objects = EnterpriseCourseEnrollmentManager()
 
     class Meta(object):
         unique_together = (('enterprise_customer_user', 'course_id',),)

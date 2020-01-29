@@ -114,6 +114,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     active = True
+    linked = True
 
 
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):

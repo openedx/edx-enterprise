@@ -15,10 +15,12 @@ from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
 from django.core.urlresolvers import reverse
+from django.db.utils import IntegrityError
 from django.http import QueryDict
 from django.test.testcases import TransactionTestCase
 
@@ -297,10 +299,13 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
             factories.EnterpriseCustomerFactory(),
             factories.EnterpriseCustomerFactory()
         )
-        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
-        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)
-        factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_id=user1.id)
+        ecu1 = factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user1.id)
+        ecu2 = factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user2.id)
+        ecu3 = factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_id=user1.id)
         assert EnterpriseCustomerUser.objects.count() == 3
+        for ecu in (ecu1, ecu2, ecu3):
+            factories.EnterpriseCourseEnrollmentFactory(enterprise_customer_user=ecu)
+        assert EnterpriseCourseEnrollment.objects.count() == 3
 
         query_method = EnterpriseCustomerUser.objects.filter
 
@@ -311,6 +316,18 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         assert query_method(enterprise_customer=enterprise_customer2, user_id=user1.id).count() == 1
         # keeps records of other users
         assert query_method(user_id=user2.id).count() == 1
+
+        # Verify that actual `EnterpriseCustomerUser` still present in database because it was soft deleted
+        soft_deleted_ecu = EnterpriseCustomerUser.all_objects.get(
+            enterprise_customer=enterprise_customer1,
+            user_id=user1.id
+        )
+        # Verify that related `EnterpriseCourseEnrollment` records still present in database
+        soft_deleted_ecu.linked = True
+        soft_deleted_ecu.save()
+        assert EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=soft_deleted_ecu).count() == 1
+        # Verify that all `EnterpriseCourseEnrollment` records are present
+        assert EnterpriseCourseEnrollment.objects.count() == 3
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_pending_link(self, email):
@@ -356,6 +373,16 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     """
     Tests of the EnterpriseCustomerUser model.
     """
+
+    def setUp(self):
+        """
+        Test set up
+        """
+        super(TestEnterpriseCustomerUser, self).setUp()
+        self.worker_user = factories.UserFactory(
+            username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
+        )
+        self.user = factories.UserFactory(username='Batman')
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -551,6 +578,49 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             enterprise_customer_user.create_order_for_enrollment(course_run_id)
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
+
+    @ddt.data('get_or_create', 'update_or_create', 'create')
+    def test_soft_delete(self, method_name):
+        """
+        Verify that `get_or_create/update_or_create/create` works as expected when an `EnterpriseCustomerUser`
+        record is soft deleted.
+        """
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=self.user.id, linked=False)
+        ece = factories.EnterpriseCourseEnrollmentFactory(enterprise_customer_user=enterprise_customer_user)
+
+        # `objects` manager should not return any linked=False record
+        assert not EnterpriseCustomerUser.objects.filter(pk=enterprise_customer_user.pk).exists()
+
+        queryset_method = getattr(EnterpriseCustomerUser.objects, method_name)
+        result = queryset_method(
+            enterprise_customer=enterprise_customer_user.enterprise_customer,
+            user_id=enterprise_customer_user.user_id
+        )
+
+        ecu, created = (result, True) if method_name == 'create' else (result[0], result[1])
+        # `EnterpriseCustomerUser` record should be linked=True and related `EnterpriseCourseEnrollment` should exist
+        assert created
+        assert ecu.linked
+        assert EnterpriseCourseEnrollment.objects.filter(pk=ece.pk).exists()
+
+        # These methods should not raise any exception if called successively
+        if method_name in ('get_or_create', 'update_or_create'):
+            for __ in range(2):
+                ecu, created = queryset_method(
+                    enterprise_customer=enterprise_customer_user.enterprise_customer,
+                    user_id=enterprise_customer_user.user_id
+                )
+
+                assert not created
+                assert ecu.linked
+        elif method_name in ('create',):
+            # create should raise exception if called successively
+            with self.assertRaises(IntegrityError):
+                for __ in range(2):
+                    result = queryset_method(
+                        enterprise_customer=enterprise_customer_user.enterprise_customer,
+                        user_id=enterprise_customer_user.user_id
+                    )
 
 
 @mark.django_db
