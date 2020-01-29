@@ -5,6 +5,7 @@ Database models for enterprise.
 from __future__ import absolute_import, unicode_literals
 
 import collections
+import json
 import os
 from logging import getLogger
 from uuid import uuid4
@@ -12,6 +13,7 @@ from uuid import uuid4
 import six
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
+from edx_rest_api_client.exceptions import HttpClientError
 from fernet_fields import EncryptedCharField
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
@@ -824,19 +826,33 @@ class EnterpriseCustomerUser(TimeStampedModel):
                                  "and course id [%s]", self.user_id, course_run_id)
             # Directly enroll into the specified track.
             # This should happen after we create the EnterpriseCourseEnrollment
-            enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
-            utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
-                'category': 'enterprise',
-                'label': course_run_id,
-                'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
-                'enterprise_customer_name': self.enterprise_customer.name,
-                'mode': mode,
-                'cohort': cohort,
-                'is_upgrading': is_upgrading,
-            })
-            if mode in paid_modes:
-                # create an ecommerce order for the course enrollment
-                self.create_order_for_enrollment(course_run_id)
+            succeeded = True
+            try:
+                enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
+            except HttpClientError as exc:
+                succeeded = False
+                default_message = 'No error message provided'
+                try:
+                    error_message = json.loads(exc.content.decode()).get('message', default_message)
+                except ValueError:
+                    error_message = default_message
+                LOGGER.exception(
+                    'Error while enrolling user %(user)s: %(message)s',
+                    dict(user=self.user_id, message=error_message)
+                )
+            if succeeded:
+                utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
+                    'category': 'enterprise',
+                    'label': course_run_id,
+                    'enterprise_customer_uuid': str(self.enterprise_customer.uuid),
+                    'enterprise_customer_name': self.enterprise_customer.name,
+                    'mode': mode,
+                    'cohort': cohort,
+                    'is_upgrading': is_upgrading,
+                })
+                if mode in paid_modes:
+                    # create an ecommerce order for the course enrollment
+                    self.create_order_for_enrollment(course_run_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(
