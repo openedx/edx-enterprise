@@ -305,7 +305,7 @@ class EnterpriseCustomerManageLearnersView(View):
         return queryset
 
     @classmethod
-    def _handle_singular(cls, enterprise_customer, manage_learners_form):
+    def _handle_singular(cls, request, enterprise_customer, manage_learners_form):
         """
         Link single user by email or username.
 
@@ -316,10 +316,21 @@ class EnterpriseCustomerManageLearnersView(View):
         form_field_value = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME]
         email = email_or_username__to__email(form_field_value)
         try:
-            validate_email_to_link(email, form_field_value, ValidationMessages.INVALID_EMAIL_OR_USERNAME, True)
+            existing_record = validate_email_to_link(email, form_field_value, ValidationMessages.
+                                                     INVALID_EMAIL_OR_USERNAME, True)
         except ValidationError as exc:
             manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc)
         else:
+            if isinstance(existing_record, PendingEnterpriseCustomerUser) and existing_record.enterprise_customer \
+                    != enterprise_customer:
+                messages.warning(
+                    request,
+                    ValidationMessages.PENDING_USER_ALREADY_LINKED.format(
+                        user_email=email,
+                        ec_name=existing_record.enterprise_customer.name
+                    )
+                )
+                return None
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]
 
@@ -946,7 +957,7 @@ class EnterpriseCustomerManageLearnersView(View):
             # The form is valid. Call the appropriate helper depending on the mode:
             mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.MODE]
             if mode == ManageLearnersForm.Modes.MODE_SINGULAR and not is_bulk_entry:
-                linked_learners = self._handle_singular(enterprise_customer, manage_learners_form)
+                linked_learners = self._handle_singular(request, enterprise_customer, manage_learners_form)
             elif mode == ManageLearnersForm.Modes.MODE_SINGULAR:
                 linked_learners = self._handle_bulk_upload(
                     enterprise_customer,
@@ -983,17 +994,18 @@ class EnterpriseCustomerManageLearnersView(View):
 
             if course_id or program_details:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
-                self._enroll_users(
-                    request=request,
-                    enterprise_customer=enterprise_customer,
-                    emails=linked_learners,
-                    mode=course_mode,
-                    course_id=course_id,
-                    program_details=program_details,
-                    notify=notify,
-                    enrollment_reason=manual_enrollment_reason,
-                    discount=discount
-                )
+                if linked_learners:
+                    self._enroll_users(
+                        request=request,
+                        enterprise_customer=enterprise_customer,
+                        emails=linked_learners,
+                        mode=course_mode,
+                        course_id=course_id,
+                        program_details=program_details,
+                        notify=notify,
+                        enrollment_reason=manual_enrollment_reason,
+                        discount=discount
+                    )
 
             # Redirect to GET if everything went smooth.
             manage_learners_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS, args=(customer_uuid,))

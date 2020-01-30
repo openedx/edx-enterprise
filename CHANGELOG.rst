@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.4.0] - 2020-02-25
+--------------------
+
+* Restricted PendingEnterpriseCustomerUser to be linked with only one EnterpriseCustomer at a time
+
 [2.3.9] - 2020-02-17
 --------------------
 

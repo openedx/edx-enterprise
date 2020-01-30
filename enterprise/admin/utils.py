@@ -93,6 +93,10 @@ class ValidationMessages:
     PROGRAM_IS_INACTIVE = _(
         "Enrollment in program {program_id} is closed because it is in "
         "{status} status.")
+    PENDING_USER_ALREADY_LINKED = _(
+        "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
+        "you will be able to add the learner once the user creates account or other enterprise "
+        "deletes the pending user")
     USER_ALREADY_REGISTERED = _(
         "User with email address {email} is already registered with Enterprise "
         "Customer {ec_name}")
