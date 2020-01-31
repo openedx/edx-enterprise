@@ -887,6 +887,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     'username': self.username,
                     'email': self.user_email,
                     'course_run_key': course_run_id,
+                    "enterprise_customer_name": self.enterprise_customer.name,
+                    "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
                 }]
                 ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
         else:
