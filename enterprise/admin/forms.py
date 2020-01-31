@@ -356,6 +356,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_learner_portal",
             "learner_portal_hostname",
             "enable_portal_reporting_config_screen",
+            "contact_email",
         )
 
 

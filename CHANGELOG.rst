@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.2] - 2020-01-31
+--------------------
+
+* Adding contact_email to enterprisecustomer admin form
+
 [2.3.1] - 2020-01-29
 ---------------------
 
