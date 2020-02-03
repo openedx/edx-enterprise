@@ -3,6 +3,8 @@ Module provides elements to be used in third-party auth pipeline.
 """
 from __future__ import absolute_import, unicode_literals
 
+from django.core.urlresolvers import reverse
+
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import get_identity_provider
 
@@ -20,6 +22,11 @@ try:
     from third_party_auth.provider import Registry
 except ImportError:
     Registry = None
+
+try:
+    from openedx.core.djangoapps.user_api.accounts.utils import is_multiple_user_enterprises_feature_enabled
+except ImportError:
+    is_multiple_user_enterprises_feature_enabled = None
 
 
 def get_enterprise_customer_for_running_pipeline(request, pipeline):  # pylint: disable=invalid-name
@@ -65,6 +72,11 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     )
     if enterprise_customer is None:
         # This pipeline element is not being activated as a part of an Enterprise logistration
+
+        # Social user account is new or already binded with edx account
+        new_association = kwargs.get('new_association', True)
+        if is_multiple_user_enterprises_feature_enabled() and not new_association:
+            handle_redirect_after_social_auth_login(backend, user)
         return
 
     # proceed with the creation of a link between the user and the enterprise customer, then exit.
@@ -118,3 +130,26 @@ def get_user_social_auth(user, enterprise_customer):
     ).first()
 
     return user_social_auth
+
+
+def handle_redirect_after_social_auth_login(backend, user):
+    """
+    Change the redirect url if user has more than 1 EnterpriseCustomer associations.
+
+    Arguments:
+        backend (User): social auth backend object
+        user (User): user object
+
+    """
+    enterprise_customers_count = EnterpriseCustomerUser.objects.filter(user_id=user.id).count()
+    if enterprise_customers_count > 1:
+        select_enterprise_page_as_redirect_url(backend.strategy)
+
+
+def select_enterprise_page_as_redirect_url(strategy):  # pylint: disable=invalid-name
+    """
+    Change the redirect url for the user to enterprise selection page.
+    """
+    current_redirect = strategy.session_get('next')
+    select_enterprise_page = reverse('enterprise_select_active') + '?success_url=' + current_redirect
+    strategy.session_set('next', select_enterprise_page)
