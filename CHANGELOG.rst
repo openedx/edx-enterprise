@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.3] - 2020-02-03
+--------------------
+
+* Added exception handling for enrollment api calls during manual enrollment
+
 [2.3.2] - 2020-01-31
 --------------------
 

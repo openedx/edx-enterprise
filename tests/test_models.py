@@ -5,11 +5,13 @@ Tests for the `edx-enterprise` models module.
 
 from __future__ import absolute_import, unicode_literals, with_statement
 
+import json
 import logging
 import unittest
 
 import ddt
 import mock
+from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
@@ -468,6 +470,25 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             enrollment_order_mock.assert_called_once()
         else:
             enrollment_order_mock.assert_not_called()
+
+    @mock.patch('enterprise.utils.segment')
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
+    def test_enroll_failure_with_no_order(self, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
+        """
+        ``enroll_learner`` cannot enroll due to api client error and order in ecommerce is not generated.
+        """
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
+        enrollment_api_client_mock.return_value.enroll_user_in_course.side_effect = HttpClientError(
+            "Client Error", content=json.dumps({"message": "Enrollment error"}).encode()
+        )
+        enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
+        with LogCapture(level=logging.ERROR) as log_capture:
+            enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'verified')
+            enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
+            analytics_mock.track.assert_not_called()
+            enrollment_order_mock.assert_not_called()
+            assert 'Enrollment error' in log_capture.records[0].getMessage()
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
