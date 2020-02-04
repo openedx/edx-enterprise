@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.8] - 2020-02-10
+--------------------
+
+* Added totalHours field for successfactors completion event
+
 [2.3.7] - 2020-02-07
 --------------------
 

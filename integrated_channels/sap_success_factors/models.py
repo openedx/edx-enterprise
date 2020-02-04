@@ -114,7 +114,11 @@ class SAPSuccessFactorsEnterpriseCustomerConfiguration(EnterpriseCustomerPluginC
         help_text=_("A comma-separated list of additional locales.")
     )
     show_course_price = models.BooleanField(default=False)
-    show_total_hours = models.BooleanField(default=False, verbose_name=_("Show Total Hours"))
+    transmit_total_hours = models.BooleanField(
+        default=False,
+        verbose_name=_("Transmit Total Hours"),
+        help_text=_("Include totalHours in the transmitted completion data")
+    )
 
     def get_locales(self, default_locale=None):
         """
@@ -228,6 +232,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     course_completed = models.BooleanField(default=True)
     instructor_name = models.CharField(max_length=255, blank=True)
     grade = models.CharField(max_length=100, blank=False, null=False)
+    total_hours = models.FloatField(null=True, blank=True)
 
     # We send a UNIX timestamp to SAPSF.
     completed_timestamp = models.BigIntegerField()
@@ -289,4 +294,5 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
             courseCompleted="true" if self.course_completed else "false",
             completedTimestamp=self.completed_timestamp,
             grade=self.grade,
+            totalHours=self.total_hours,
         )

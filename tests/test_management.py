@@ -396,6 +396,7 @@ CERTIFICATE_PASSING_COMPLETION = dict(
     completed='true',
     timestamp=NOW_TIMESTAMP,
     grade=LearnerExporter.GRADE_PASSING,
+    total_hours=0.0,
 )
 
 # Expected learner completion data from the mock failing certificate
@@ -403,6 +404,7 @@ CERTIFICATE_FAILING_COMPLETION = dict(
     completed='false',
     timestamp=NOW_TIMESTAMP,
     grade=LearnerExporter.GRADE_FAILING,
+    total_hours=0.0,
 )
 
 
@@ -643,6 +645,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
         '"courseID": "{course_id}", '
         '"grade": "{grade}", '
         '"providerID": "{provider_id}", '
+        '"totalHours": {total_hours}, '
         '"userID": "{user_id}"'
         '}}'
     )
@@ -1065,25 +1068,25 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
 
         # Instructor-paced course with no certificates issued yet results in incomplete course data
         (dict(enterprise_customer_slug=None), None, False, None, False,
-         dict(completed='false', timestamp='null', grade='In Progress')),
+         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
 
         # Self-paced course with no end date send grade=Pass, or grade=In Progress, depending on current grade.
         (dict(enterprise_customer_slug=None), None, True, None, False,
-         dict(completed='false', timestamp='null', grade='In Progress')),
+         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
         (dict(enterprise_customer_slug=None), None, True, None, True,
-         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
+         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass', total_hours=0.0)),
 
         # Self-paced course with future end date sends grade=Pass, or grade=In Progress, depending on current grade.
         (dict(enterprise_customer_slug=None), None, True, FUTURE, False,
-         dict(completed='false', timestamp='null', grade='In Progress')),
+         dict(completed='false', timestamp='null', grade='In Progress', total_hours=0.0)),
         (dict(enterprise_customer_slug=None), None, True, FUTURE, True,
-         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass')),
+         dict(completed='true', timestamp=NOW_TIMESTAMP, grade='Pass', total_hours=0.0)),
 
         # Self-paced course with past end date sends grade=Pass, or grade=Fail, depending on current grade.
         (dict(enterprise_customer_slug=None), None, True, PAST, False,
-         dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail')),
+         dict(completed='false', timestamp=PAST_TIMESTAMP, grade='Fail', total_hours=0.0)),
         (dict(enterprise_customer_slug=None), None, True, PAST, True,
-         dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass')),
+         dict(completed='true', timestamp=PAST_TIMESTAMP, grade='Pass', total_hours=0.0)),
     )
     @ddt.unpack
     def test_transmit_learner_data(
