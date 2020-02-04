@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.4] - 2020-02-04
+--------------------
+
+* Remove totalHours field from content metadata export
+
 [2.3.3] - 2020-02-03
 --------------------
 
