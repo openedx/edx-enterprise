@@ -1569,10 +1569,10 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         expected_messages = {
             (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
             (messages.WARNING, pending_user_message.format(unknown_email))
-        } | set([
+        } | {
             (messages.SUCCESS, "1 learner was enrolled in Program2.")
             for course_id in expected_courses
-        ])
+        }
 
         self._assert_django_messages(response, expected_messages)
 

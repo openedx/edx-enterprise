@@ -46,9 +46,9 @@ class TestSendCourseCompletions(unittest.TestCase):
         enterprise_uuid = str(uuid.uuid4())
         # Make sure CommandError is raised when enterprise customer with given uuid does not exist.
         with raises(
-            CommandError,
-            match='Enterprise customer with uuid "{enterprise_customer_uuid}" '
-                  'does not exist.'.format(enterprise_customer_uuid=enterprise_uuid)
+                CommandError,
+                match='Enterprise customer with uuid "{enterprise_customer_uuid}" '
+                      'does not exist.'.format(enterprise_customer_uuid=enterprise_uuid)
         ):
             call_command('send_course_completions', days=1, enterprise_customer_uuid=enterprise_uuid)
 
@@ -70,9 +70,9 @@ class TestSendCourseCompletions(unittest.TestCase):
         """
         enterprise_customer = factories.EnterpriseCustomerFactory()
         with raises(
-            CommandError,
-            match='No xAPI Configuration found for '
-                  '"{enterprise_customer}"'.format(enterprise_customer=enterprise_customer.name)
+                CommandError,
+                match='No xAPI Configuration found for '
+                      '"{enterprise_customer}"'.format(enterprise_customer=enterprise_customer.name)
         ):
             call_command('send_course_completions', days=1, enterprise_customer_uuid=enterprise_customer.uuid)
 
@@ -94,8 +94,8 @@ class TestSendCourseCompletions(unittest.TestCase):
         """
         xapi_config = factories.XAPILRSConfigurationFactory()
         with raises(
-            NotConnectedToOpenEdX,
-            match='This package must be installed in an OpenEdX environment.'
+                NotConnectedToOpenEdX,
+                match='This package must be installed in an OpenEdX environment.'
         ):
             call_command(
                 'send_course_completions',
@@ -105,7 +105,7 @@ class TestSendCourseCompletions(unittest.TestCase):
 
         # Verify that get_course_completions returns PersistentCourseGrade records
         with mock.patch(
-            MODULE_PATH + 'PersistentCourseGrade'
+                MODULE_PATH + 'PersistentCourseGrade'
         ) as mock_completions:
             call_command('send_course_completions')
             assert mock_completions.objects.filter.called
@@ -184,8 +184,8 @@ class TestSendCourseCompletions(unittest.TestCase):
         # Make sure NotConnectedToOpenEdX is raised if called out side of edx-platform
         xapi_config = factories.XAPILRSConfigurationFactory()
         with raises(
-            NotConnectedToOpenEdX,
-            match='This package must be installed in an OpenEdX environment.'
+                NotConnectedToOpenEdX,
+                match='This package must be installed in an OpenEdX environment.'
         ):
             call_command(
                 'send_course_completions',

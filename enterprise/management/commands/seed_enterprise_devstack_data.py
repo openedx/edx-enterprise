@@ -4,6 +4,7 @@ Management command for assigning enterprise roles to existing enterprise users.
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import textwrap
 
 from django.contrib.auth.models import Group, User
 from django.contrib.sites.models import Site
@@ -100,7 +101,7 @@ class Command(BaseCommand):
             ENTERPRISE_OPERATOR_ROLE,
         ]
         if role in valid_roles:
-            is_staff = True if role == ENTERPRISE_OPERATOR_ROLE else False
+            is_staff = role == ENTERPRISE_OPERATOR_ROLE
             try:
                 user = User.objects.create_user(
                     email='{username}@example.com'.format(username=username),
@@ -242,10 +243,13 @@ class Command(BaseCommand):
         LOGGER.info('\nCreating a new enterprise...')
         enterprise = self._create_enterprise(enterprise_users=enterprise_users)
         LOGGER.info(
-            '\nSuccessfully created a new enterprise with the following data:' +
-            '\n|    Enterprise Customer: %s (%s)' +
-            '\n|    Enterprise Catalog: %s (%s)' +
-            '\n|    Enterprise Users (%d): %s',
+            textwrap.dedent(
+                '''\nSuccessfully created a new enterprise with the following data:
+                \n|    Enterprise Customer: %s (%s)
+                \n|    Enterprise Catalog: %s (%s)
+                \n|    Enterprise Users (%i): %s
+                '''
+            ),
             enterprise['enterprise_customer'].name,
             enterprise['enterprise_customer'].uuid,
             enterprise['enterprise_catalog'].title,

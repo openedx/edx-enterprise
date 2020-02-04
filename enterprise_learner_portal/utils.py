@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pytz import UTC
 
 
-class CourseRunProgressStatuses(object):
+class CourseRunProgressStatuses:
     """
     Class to group statuses that a course run can be in with respect to user progress.
     """
@@ -45,18 +45,18 @@ def get_course_run_status(course_overview, certificate_info, enterprise_enrollme
 
     if enterprise_enrollment and enterprise_enrollment.marked_done:
         return CourseRunProgressStatuses.COMPLETED
-    elif course_overview['pacing'] == 'instructor':
+    if course_overview['pacing'] == 'instructor':
         if course_overview['has_ended']:
             return CourseRunProgressStatuses.COMPLETED
-        elif course_overview['has_started']:
+        if course_overview['has_started']:
             return CourseRunProgressStatuses.IN_PROGRESS
         return CourseRunProgressStatuses.UPCOMING
-    elif course_overview['pacing'] == 'self':
+    if course_overview['pacing'] == 'self':
         thirty_days_ago = datetime.now(UTC) - timedelta(30)
         certificate_completed = is_certificate_passing and (certificate_creation_date <= thirty_days_ago)
         if course_overview['has_ended'] or certificate_completed:
             return CourseRunProgressStatuses.COMPLETED
-        elif course_overview['has_started']:
+        if course_overview['has_started']:
             return CourseRunProgressStatuses.IN_PROGRESS
         return CourseRunProgressStatuses.UPCOMING
     return None

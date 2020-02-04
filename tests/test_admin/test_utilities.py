@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` utility functions.
 """
 from __future__ import absolute_import, unicode_literals
 
+import re
 import unittest
 
 import ddt
@@ -44,7 +45,7 @@ class TestParseCSV(unittest.TestCase):
             list: Expected :method:`parse_csv` output
         """
         return [
-            {key: value for key, value in zip(header, column_values)}
+            dict(zip(header, column_values))
             for column_values in contents
         ]
 
@@ -87,7 +88,7 @@ class TestParseCSV(unittest.TestCase):
                 expected_columns=", ".join(expected_columns), actual_columns=", ".join(header)
             )
 
-            with raises(ValidationError, message=expected_error_message):
+            with raises(ValidationError, match=re.escape(expected_error_message)):
                 list(parse_csv(stream, expected_columns={"Name", "Email"}))
 
     def test_parse_csv_check_with_wrong_encoding(self):
@@ -100,7 +101,7 @@ class TestParseCSV(unittest.TestCase):
         with MakeCsvStreamContextManager(header, contents, 'utf-16') as stream:
             expected_error_message = ValidationMessages.INVALID_ENCODING
 
-            with raises(ValidationError, message=expected_error_message):
+            with raises(ValidationError, match=expected_error_message):
                 list(parse_csv(stream, expected_columns={"email"}))
 
 
@@ -171,7 +172,7 @@ class TestValidateEmailToLink(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
-        ("something", "something", ValidationMessages.INVALID_EMAIL_OR_USERNAME),
+        ("something", "something", ValidationMessages.INVALID_EMAIL),
         ("something_again@", "something_else", ValidationMessages.INVALID_EMAIL)
     )
     def test_validate_email_to_link_invalid_email(self, email, raw_email, msg_template):
@@ -180,7 +181,7 @@ class TestValidateEmailToLink(unittest.TestCase):
 
         expected_message = msg_template.format(argument=raw_email)
 
-        with raises(ValidationError, message=expected_message):
+        with raises(ValidationError, match=expected_message):
             validate_email_to_link(email, raw_email)
 
     @ddt.data(True, False)
@@ -201,7 +202,7 @@ class TestValidateEmailToLink(unittest.TestCase):
                 email=email, ec_name=existing_record.enterprise_customer.name
             )
 
-            with raises(ValidationError, message=expected_message):
+            with raises(ValidationError, match=expected_message):
                 validate_email_to_link(email)
 
     @ddt.data(True, False)
@@ -221,7 +222,7 @@ class TestValidateEmailToLink(unittest.TestCase):
                 email=email, ec_name=existing_record.enterprise_customer.name
             )
 
-            with raises(ValidationError, message=expected_message):
+            with raises(ValidationError, match=expected_message):
                 exists = validate_email_to_link(email)
 
 

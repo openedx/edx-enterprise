@@ -6,7 +6,7 @@ Package for generic data transmitters which send serialized data to integrated c
 from __future__ import absolute_import, unicode_literals
 
 
-class Transmitter(object):
+class Transmitter:
     """
     Interface for transmitting data to an integrated channel.
 

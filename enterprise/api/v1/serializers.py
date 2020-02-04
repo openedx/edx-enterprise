@@ -32,13 +32,11 @@ class ImmutableStateSerializer(serializers.Serializer):
         """
         Do not perform any operations for state changing requests.
         """
-        pass
 
     def update(self, instance, validated_data):
         """
         Do not perform any operations for state changing requests.
         """
-        pass
 
 
 class ResponsePaginationSerializer(ImmutableStateSerializer):
@@ -534,7 +532,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
     This is mainly useful for implementing validation when performing enrollment operations.
     """
 
-    class Meta:  # pylint: disable=old-style-class
+    class Meta:
         list_serializer_class = EnterpriseCustomerCourseEnrollmentsListSerializer
 
     lms_user_id = serializers.CharField(required=False, write_only=True)

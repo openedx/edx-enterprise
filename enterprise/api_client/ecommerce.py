@@ -22,7 +22,7 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 
-class EcommerceApiClient(object):
+class EcommerceApiClient:
     """
     Object builds an API client to make calls to the E-Commerce API.
     """

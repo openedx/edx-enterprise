@@ -11,7 +11,7 @@ from django.contrib import messages
 from enterprise.decorators import FRESH_LOGIN_PARAMETER
 
 
-class MessagesMixin(object):
+class MessagesMixin:
     """
     Mixin for testing expected Django messages.
     """
@@ -44,7 +44,7 @@ class MessagesMixin(object):
         assert response_messages == expected_log_messages
 
 
-class ConsentMixin(object):
+class ConsentMixin:
     """
     Mixin for testing expectations related to consents.
     """
@@ -68,7 +68,7 @@ class ConsentMixin(object):
             self._assert_consent_required(response)
 
 
-class EmbargoAPIMixin(object):
+class EmbargoAPIMixin:
     """
     Mixin for testing with a mocked embargo API.
     """
@@ -82,7 +82,7 @@ class EmbargoAPIMixin(object):
         api_mock.redirect_if_blocked.return_value = redirect_url
 
 
-class EnterpriseViewMixin(object):
+class EnterpriseViewMixin:
     """
     Mixin for testing enterprise views.
     """

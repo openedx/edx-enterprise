@@ -33,7 +33,7 @@ class XAPILRSConfigurationAdmin(admin.ModelAdmin):
     list_filter = ('active', )
     search_fields = ('enterprise_customer__name',)
 
-    class Meta(object):
+    class Meta:
         model = XAPILRSConfiguration
 
     def enterprise_customer_name(self, obj):

@@ -23,7 +23,7 @@ class DegreedGlobalConfigurationAdmin(ConfigurationModelAdmin):
         "oauth_api_path",
     )
 
-    class Meta(object):
+    class Meta:
         model = DegreedGlobalConfiguration
 
 
@@ -52,7 +52,7 @@ class DegreedEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
     list_filter = ("active",)
     search_fields = ("enterprise_customer_name",)
 
-    class Meta(object):
+    class Meta:
         model = DegreedEnterpriseCustomerConfiguration
 
     def enterprise_customer_name(self, obj):

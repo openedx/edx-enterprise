@@ -17,7 +17,7 @@ from enterprise.admin.actions import export_as_csv_action
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory
 
 
-class DummyModel(object):
+class DummyModel:
     """
     Dummy "model" for action testing purposes.
     """
@@ -38,7 +38,7 @@ class DummyFactory(factory.Factory):
     Factoryboy factory for Dummy model.
     """
 
-    class Meta(object):
+    class Meta:
         model = DummyModel
 
     code = 1

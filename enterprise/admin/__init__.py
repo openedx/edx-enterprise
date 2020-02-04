@@ -112,7 +112,7 @@ class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCustomerType.
     """
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCustomerType
 
     fields = (
@@ -160,7 +160,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     form = EnterpriseCustomerAdminForm
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCustomer
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
@@ -271,7 +271,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCustomerUser.
     """
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCustomerUser
 
     fields = (
@@ -409,7 +409,7 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
     Django admin model for PendingEnterpriseCustomerUser
     """
 
-    class Meta(object):
+    class Meta:
         model = PendingEnterpriseCustomerUser
 
     fields = (
@@ -432,7 +432,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
     """
     change_actions = ("preview_as_course", "preview_as_program")
 
-    class Meta(object):
+    class Meta:
         model = EnrollmentNotificationEmailTemplate
 
     def get_urls(self):
@@ -485,7 +485,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCourseEnrollment
     """
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCourseEnrollment
 
     readonly_fields = (
@@ -521,7 +521,7 @@ class PendingEnrollmentAdmin(admin.ModelAdmin):
     Django admin model for PendingEnrollment
     """
 
-    class Meta(object):
+    class Meta:
         model = PendingEnrollment
 
     readonly_fields = (
@@ -557,7 +557,7 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCatalogQuery.
     """
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCatalogQuery
 
     list_display = (
@@ -583,7 +583,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     """
     ordering = ('enterprise_customer__name', 'title')
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCustomerCatalog
 
     class Media:
@@ -709,7 +709,7 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
 
     form = EnterpriseCustomerReportingConfigAdminForm
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseCustomerReportingConfiguration
 
     def get_fields(self, request, obj=None):
@@ -735,7 +735,7 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
     form = SystemWideEnterpriseUserRoleAssignmentForm
 
-    class Meta(object):
+    class Meta:
         model = SystemWideEnterpriseUserRoleAssignment
 
     def enterprise_customer(self, instance):
@@ -752,7 +752,8 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
             flat=True
         )
         if enterprise_customers.exists():
-            return ', '.join([enterprise_customer for enterprise_customer in enterprise_customers])
+            return ', '.join(list(enterprise_customers))
+        return None
 
     def get_search_results(self, request, queryset, search_term):
         """
@@ -786,5 +787,5 @@ class EnterpriseFeatureUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
     form = EnterpriseFeatureUserRoleAssignmentForm
 
-    class Meta(object):
+    class Meta:
         model = EnterpriseFeatureUserRoleAssignment

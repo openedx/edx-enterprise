@@ -13,7 +13,7 @@ from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from test_utils.factories import GroupFactory, UserFactory
 
 
-class PermissionsTestMixin(object):
+class PermissionsTestMixin:
     """
     Permission Test Mixin.
     """

@@ -25,7 +25,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
     EnterpriseCourseEnrollmentView tests.
     """
 
-    class MockSerializer(object):
+    class MockSerializer:
         """ Returns obj with data property. """
 
         @property

@@ -6,7 +6,7 @@ Package for generic data exporters which serialize data to be transmitted to int
 from __future__ import absolute_import, unicode_literals
 
 
-class Exporter(object):
+class Exporter:
     """
     Interface for exporting data to be transmitted to an integrated channel.
 

@@ -48,7 +48,7 @@ from enterprise.utils import get_request_value
 LOGGER = getLogger(__name__)
 
 
-class EnterpriseViewSet(object):
+class EnterpriseViewSet:
     """
     Base class for all Enterprise view sets.
     """
@@ -73,7 +73,6 @@ class EnterpriseWrapperApiViewSet(EnterpriseViewSet, viewsets.ViewSet):
     """
     Base class for attribute and method definitions common to all view sets which wrap external APIs.
     """
-    pass
 
 
 class EnterpriseModelViewSet(EnterpriseViewSet):
@@ -90,7 +89,6 @@ class EnterpriseReadOnlyModelViewSet(EnterpriseModelViewSet, viewsets.ReadOnlyMo
     """
     Base class for all read only Enterprise model view sets.
     """
-    pass
 
 
 class EnterpriseReadWriteModelViewSet(EnterpriseModelViewSet, viewsets.ModelViewSet):
@@ -241,7 +239,7 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
         """
         Use a special serializer for any requests that aren't read-only.
         """
-        if self.request.method in ('GET', ):
+        if self.request.method in ('GET',):
             return serializers.EnterpriseCourseEnrollmentReadOnlySerializer
         return serializers.EnterpriseCourseEnrollmentWriteSerializer
 
@@ -264,7 +262,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
         """
         Use a flat serializer for any requests that aren't read-only.
         """
-        if self.request.method in ('GET', ):
+        if self.request.method in ('GET',):
             return serializers.EnterpriseCustomerUserReadOnlySerializer
         return serializers.EnterpriseCustomerUserWriteSerializer
 
@@ -302,7 +300,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     @permission_required('enterprise.can_view_catalog', fn=lambda request, *args, **kwargs: None)
     def list(self, request, *args, **kwargs):
-        return super(EnterpriseCustomerCatalogViewSet, self).list(request, *args, **kwargs)
+        return super(EnterpriseCustomerCatalogViewSet, self).list(request, *args, **kwargs)  # pylint: disable=no-member
 
     @permission_required(
         'enterprise.can_view_catalog',
@@ -449,12 +447,14 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def retrieve(self, request, *args, **kwargs):
+        # pylint: disable=no-member
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).retrieve(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id))
     def list(self, request, *args, **kwargs):
+        # pylint: disable=no-member
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).list(request, *args, **kwargs)
 
     @permission_required(
@@ -473,18 +473,21 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def update(self, request, *args, **kwargs):
+        # pylint: disable=no-member
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).update(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def partial_update(self, request, *args, **kwargs):
+        # pylint: disable=no-member
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).partial_update(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def destroy(self, request, *args, **kwargs):
+        # pylint: disable=no-member
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).destroy(request, *args, **kwargs)
 
 

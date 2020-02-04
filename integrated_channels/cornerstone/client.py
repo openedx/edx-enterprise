@@ -41,28 +41,24 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         Create content metadata using the Cornerstone course content API.
         Since Cornerstone is following pull content model we don't need to implement this method
         """
-        pass
 
     def update_content_metadata(self, serialized_data):
         """
         Update content metadata using the Cornerstone course content API.
         Since Cornerstone is following pull content model we don't need to implement this method
         """
-        pass
 
     def delete_content_metadata(self, serialized_data):
         """
         Delete content metadata using the Cornerstone course content API.
         Since Cornerstone is following pull content model we don't need to implement this method
         """
-        pass
 
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """
         Delete a completion status previously sent to the Cornerstone Completion Status endpoint
         Cornerstone does not support this.
         """
-        pass
 
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """

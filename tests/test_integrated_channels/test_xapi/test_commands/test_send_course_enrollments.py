@@ -38,9 +38,9 @@ class TestSendCourseEnrollments(unittest.TestCase):
         enterprise_uuid = str(uuid.uuid4())
         # Make sure CommandError is raised when enterprise customer with given uuid does not exist.
         with raises(
-            CommandError,
-            match='Enterprise customer with uuid "{enterprise_customer_uuid}" '
-                  'does not exist.'.format(enterprise_customer_uuid=enterprise_uuid)
+                CommandError,
+                match='Enterprise customer with uuid "{enterprise_customer_uuid}" '
+                      'does not exist.'.format(enterprise_customer_uuid=enterprise_uuid)
         ):
             call_command('send_course_enrollments', days=1, enterprise_customer_uuid=enterprise_uuid)
 
@@ -54,9 +54,9 @@ class TestSendCourseEnrollments(unittest.TestCase):
         """
         enterprise_customer = factories.EnterpriseCustomerFactory()
         with raises(
-            CommandError,
-            match='No xAPI Configuration found for '
-                  '"{enterprise_customer}"'.format(enterprise_customer=enterprise_customer.name)
+                CommandError,
+                match='No xAPI Configuration found for '
+                      '"{enterprise_customer}"'.format(enterprise_customer=enterprise_customer.name)
         ):
             call_command('send_course_enrollments', days=1, enterprise_customer_uuid=enterprise_customer.uuid)
 
@@ -70,8 +70,8 @@ class TestSendCourseEnrollments(unittest.TestCase):
         """
         xapi_config = factories.XAPILRSConfigurationFactory()
         with raises(
-            NotConnectedToOpenEdX,
-            match='This package must be installed in an OpenEdX environment.'
+                NotConnectedToOpenEdX,
+                match='This package must be installed in an OpenEdX environment.'
         ):
             call_command(
                 'send_course_enrollments',
@@ -81,7 +81,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
 
         # Verify that get_course_enrollments returns CourseEnrollment records
         with mock.patch(
-            MODULE_PATH + 'CourseEnrollment'
+                MODULE_PATH + 'CourseEnrollment'
         ) as mock_enrollments:
             call_command('send_course_enrollments')
             assert mock_enrollments.objects.filter.called

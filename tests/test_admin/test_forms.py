@@ -39,7 +39,7 @@ from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE1, FAKE_PROGRAM_RES
 FAKER = FakerFactory.create()
 
 
-class TestWithCourseCatalogApiMixin(object):
+class TestWithCourseCatalogApiMixin:
     """
     Mixin class to provide CourseCatalogApiClient mock.
     """

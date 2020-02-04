@@ -73,15 +73,15 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     grade=grade,
                 ),
             ]
-        else:
-            LOGGER.debug(
-                '[Integrated Channel] No learner data was sent for user [%s] because an SAP SuccessFactors user ID'
-                ' could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
-            )
+        LOGGER.debug(
+            '[Integrated Channel] No learner data was sent for user [%s] because an SAP SuccessFactors user ID'
+            ' could not be found.',
+            enterprise_enrollment.enterprise_customer_user.username
+        )
+        return None
 
 
-class SapSuccessFactorsLearnerManger(object):
+class SapSuccessFactorsLearnerManger:
     """
     Class to manage SAPSF learners data and their relation with enterprise.
     """
@@ -121,7 +121,7 @@ class SapSuccessFactorsLearnerManger(object):
             total_sap_inactive_learners, enterprise_customer.name
         )
         if not sap_inactive_learners:
-            return
+            return None
 
         provider_id = enterprise_customer.identity_provider
         tpa_provider = get_identity_provider(provider_id)
@@ -156,3 +156,4 @@ class SapSuccessFactorsLearnerManger(object):
                     sap_student_id,
                     enterprise_customer.name
                 )
+        return None

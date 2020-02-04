@@ -98,7 +98,7 @@ class ManageLearnersForm(forms.Form):
         initial=0.0
     )
 
-    class NotificationTypes(object):
+    class NotificationTypes:
         """
         Namespace class for notification types
         """
@@ -116,14 +116,14 @@ class ManageLearnersForm(forms.Form):
         required=False,
     )
 
-    class Modes(object):
+    class Modes:
         """
         Namespace class for form modes.
         """
         MODE_SINGULAR = "singular"
         MODE_BULK = "bulk"
 
-    class Fields(object):
+    class Fields:
         """
         Namespace class for field names.
         """
@@ -139,7 +139,7 @@ class ManageLearnersForm(forms.Form):
         REASON = "reason"
         DISCOUNT = "discount"
 
-    class CsvColumns(object):
+    class CsvColumns:
         """
         Namespace class for CSV column names.
         """
@@ -200,8 +200,7 @@ class ManageLearnersForm(forms.Form):
         discount = self.cleaned_data[self.Fields.DISCOUNT]
         if discount < 0.0 or discount > 100.0:
             raise ValidationError(ValidationMessages.INVALID_DISCOUNT)
-        else:
-            return discount
+        return discount
 
     def clean_course(self):
         """
@@ -382,6 +381,7 @@ class EnterpriseCustomerCatalogAdminForm(forms.ModelForm):
         for key, _ in post_data.items():
             if catalog_preview_button.match(key):
                 return key
+        return None
 
     @classmethod
     def get_clicked_preview_content_filter(cls, post_data):
@@ -390,11 +390,11 @@ class EnterpriseCustomerCatalogAdminForm(forms.ModelForm):
         """
         catalog_preview_button = cls.get_enterprise_customer_catalog_preview_button(post_data)
         if not catalog_preview_button:
-            return
+            return None
         content_filter_key = catalog_preview_button.replace('preview_button', 'content_filter')
         content_filter = post_data.get(content_filter_key)
         if not content_filter:
-            return
+            return None
         return json.loads(content_filter)
 
 

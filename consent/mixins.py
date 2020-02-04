@@ -12,7 +12,7 @@ from enterprise.models import EnterpriseCourseEnrollment
 
 
 @python_2_unicode_compatible
-class ConsentModelMixin(object):
+class ConsentModelMixin:
     """
     A mixin for Data Sharing Consent classes that require common, reusable functionality.
     """

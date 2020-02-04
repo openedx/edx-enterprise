@@ -8,7 +8,7 @@ from __future__ import absolute_import, unicode_literals
 from enterprise import utils
 
 
-class EnterpriseCourseContextSerializerMixin(object):
+class EnterpriseCourseContextSerializerMixin:
     """
     Serializer mixin for serializers that require Enterprise context in course data.
     """

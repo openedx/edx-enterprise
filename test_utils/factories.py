@@ -54,7 +54,7 @@ class SiteFactory(factory.django.DjangoModelFactory):
     Factory class for Site model.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``SiteFactory``.
         """
@@ -74,7 +74,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     parameters for EnterpriseCustomer constructor.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for EnterpriseCustomerFactory.
         """
@@ -103,7 +103,7 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     parameters for EnterpriseCustomerUser constructor.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for EnterpriseCustomerFactory.
         """
@@ -125,7 +125,7 @@ class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     parameters for EnterpriseCustomerUser constructor.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for EnterpriseCustomerFactory.
         """
@@ -143,7 +143,7 @@ class GroupFactory(factory.DjangoModelFactory):
     Creates an instance of Group with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         model = Group
         django_get_or_create = ('name', )
 
@@ -158,7 +158,7 @@ class UserFactory(factory.DjangoModelFactory):
     parameters for User constructor.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for UserFactory.
         """
@@ -180,7 +180,7 @@ class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactor
     Factory class for EnterpriseCustomerIdentityProvider model.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``EnterpriseCustomerIdentityProviderFactory``.
         """
@@ -199,7 +199,7 @@ class PendingEnrollmentFactory(factory.django.DjangoModelFactory):
     Create an instance of PendingEnrollment with minimal boilerplate
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``PendingEnrollmentFactory``.
         """
@@ -220,7 +220,7 @@ class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelF
      attributes as default parameters for EnterpriseCustomerBrandingFactory constructor.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for EnterpriseCustomerBrandingConfigurationFactory.
         """
@@ -241,7 +241,7 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
     Creates an instance of EnterpriseCourseEnrollment with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for EnterpriseCourseEnrollmentFactory.
         """
@@ -261,7 +261,7 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
     Creates an instance of EnterpriseCustomerCatalog with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for EnterpriseCustomerCatalog.
         """
@@ -279,7 +279,7 @@ class DataSharingConsentFactory(factory.django.DjangoModelFactory):
     Creates an instance of ``DataSharingConsent`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``DataSharingConsentFactory``.
         """
@@ -299,7 +299,7 @@ class DataSharingConsentTextOverridesFactory(factory.django.DjangoModelFactory):
     Creates an instance of ``DataSharingConsentTextOverrides`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``DataSharingConsentTextOverridesFactory``.
         """
@@ -318,7 +318,7 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
     uses this class' attributes as default parameters for EnterpriseCustomerReportingConfiguration constructor.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``EnterpriseCustomerReportingConfigFactory``.
         """
@@ -340,7 +340,7 @@ class LearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory):
     Creates an instance of ``LearnerDataTransmissionAudit`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``LearnerDataTransmissionAuditFactory``.
         """
@@ -363,7 +363,7 @@ class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFact
     Creates an instance of ``SAPSuccessFactorsGlobalConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``SAPSuccessFactorsGlobalConfigurationFactory``.
         """
@@ -384,7 +384,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(factory.django.Dja
     Creates an instance of ``SAPSuccessFactorsEnterpriseCustomerConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``SAPSuccessFactorsEnterpriseCustomerConfigurationFactory``.
         """
@@ -406,7 +406,7 @@ class SapSuccessFactorsLearnerDataTransmissionAuditFactory(factory.django.Django
     Creates an instance of ``SapSuccessFactorsLearnerDataTransmissionAudit`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``SapSuccessFactorsLearnerDataTransmissionAuditFactory``.
         """
@@ -430,7 +430,7 @@ class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
     Creates an instance of ``DegreedGlobalConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``DegreedGlobalConfigurationFactory``.
         """
@@ -450,7 +450,7 @@ class DegreedEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFa
     Creates an instance of ``DegreedEnterpriseCustomerConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``DegreedEnterpriseCustomerConfigurationFactory``.
         """
@@ -473,7 +473,7 @@ class DegreedLearnerDataTransmissionAuditFactory(factory.django.DjangoModelFacto
     Creates an instance of ``DegreedLearnerDataTransmissionAudit`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``DegreedLearnerDataTransmissionAuditFactory``.
         """
@@ -495,7 +495,7 @@ class CornerstoneLearnerDataTransmissionAuditFactory(factory.django.DjangoModelF
     Creates an instance of ``CornerstoneLearnerDataTransmissionAudit`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``CornerstoneLearnerDataTransmissionAuditFactory``.
         """
@@ -518,7 +518,7 @@ class CornerstoneEnterpriseCustomerConfigurationFactory(factory.django.DjangoMod
     Creates an instance of ``CornerstoneEnterpriseCustomerConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``CornerstoneEnterpriseCustomerConfiguration``.
         """
@@ -537,7 +537,7 @@ class CornerstoneGlobalConfigurationFactory(factory.django.DjangoModelFactory):
     Creates an instance of ``CornerstoneGlobalConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``CornerstoneGlobalConfiguration``.
         """
@@ -564,7 +564,7 @@ class XAPILRSConfigurationFactory(factory.django.DjangoModelFactory):
     Creates an instance of ``XAPILRSConfiguration`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``XAPILRSConfiguration``.
         """
@@ -586,7 +586,7 @@ class XAPILearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory)
     Creates an instance of ``XAPILearnerDataTransmissionAudit`` with minimal boilerplate.
     """
 
-    class Meta(object):
+    class Meta:
         """
         Meta for ``XAPILearnerDataTransmissionAuditFactory``.
         """

@@ -58,7 +58,7 @@ def course_discovery_api_client(user, catalog_url):
     return EdxRestApiClient(catalog_url, jwt=jwt)
 
 
-class CourseCatalogApiClient(object):
+class CourseCatalogApiClient:
     """
     Object builds an API client to make calls to the Catalog API.
     """
@@ -307,10 +307,9 @@ class CourseCatalogApiClient(object):
         matching_programs = [program for program in all_programs if program.get('title') == program_title]
         if len(matching_programs) > 1:
             raise MultipleProgramMatchError(len(matching_programs))
-        elif len(matching_programs) == 1:
+        if len(matching_programs) == 1:
             return matching_programs[0]
-        else:
-            return None
+        return None
 
     def get_program_by_uuid(self, program_uuid):
         """

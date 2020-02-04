@@ -72,7 +72,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
 
         self._create_transmissions(items_to_create)
         self._update_transmissions(items_to_update, transmission_map)
-        self._delete_transmissions(items_to_delete.keys())
+        self._delete_transmissions(list(items_to_delete.keys()))
 
     def _remove_failed_items(self, failed_items, items_to_create, items_to_update, items_to_delete):
         """

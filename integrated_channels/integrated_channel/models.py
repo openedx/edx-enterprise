@@ -253,7 +253,7 @@ class ContentMetadataItemTransmission(TimeStampedModel):
     content_id = models.CharField(max_length=255)
     channel_metadata = JSONField()
 
-    class Meta(object):
+    class Meta:
         unique_together = ('enterprise_customer', 'integrated_channel_code', 'content_id')
 
     def __str__(self):

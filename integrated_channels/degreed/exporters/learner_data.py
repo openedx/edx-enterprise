@@ -64,8 +64,8 @@ class DegreedLearnerExporter(LearnerExporter):
                     completed_timestamp=completed_timestamp,
                 )
             ]
-        else:
-            LOGGER.debug(
-                'No learner data was sent for user [%s] because a Degreed user ID could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
-            )
+        LOGGER.debug(
+            'No learner data was sent for user [%s] because a Degreed user ID could not be found.',
+            enterprise_enrollment.enterprise_customer_user.username
+        )
+        return None
