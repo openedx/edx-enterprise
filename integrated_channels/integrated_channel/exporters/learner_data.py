@@ -9,7 +9,6 @@ enterprise customer.
 
 from __future__ import absolute_import, unicode_literals
 
-import json
 from logging import getLogger
 
 from slumber.exceptions import HttpNotFoundError
@@ -323,8 +322,8 @@ class LearnerExporter(Exporter):
 
         except HttpNotFoundError as error:
             # Grade not found, so we have nothing to report.
-            if hasattr(error, 'content'):
-                response_content = json.loads(error.content)
+            if hasattr(error, 'response'):
+                response_content = error.response.json()  # pylint: disable=no-member
                 if response_content.get('error_code', '') == 'user_not_enrolled':
                     # This means the user has an enterprise enrollment record but is not enrolled in the course yet
                     LOGGER.info(
