@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.6] - 2020-02-06
+--------------------
+
+* Fixed learner data transmission command when grades API return `user_not_enrolled` error
+
 [2.3.4] - 2020-02-04
 --------------------
 
