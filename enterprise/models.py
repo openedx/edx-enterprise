@@ -7,6 +7,7 @@ from __future__ import absolute_import, unicode_literals
 import collections
 import json
 import os
+from decimal import Decimal
 from logging import getLogger
 from uuid import uuid4
 
@@ -453,7 +454,8 @@ class EnterpriseCustomer(TimeStampedModel):
                 defaults={
                     'course_mode': course_mode,
                     'cohort_name': kwargs.get('cohort', None),
-                    'source': kwargs.get('enrollment_source', None)
+                    'source': kwargs.get('enrollment_source', None),
+                    'discount_percentage': Decimal(kwargs.get('discount', 0.0)).quantize(Decimal('0.00001')),
                 }
             )
         return pending_ecu
@@ -788,7 +790,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 
-    def enroll(self, course_run_id, mode, cohort=None, source_slug=None):
+    def enroll(self, course_run_id, mode, cohort=None, source_slug=None, discount_percentage=0.0):
         """
         Enroll a user into a course track, and register an enterprise course enrollment.
         """
@@ -853,7 +855,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 })
                 if mode in paid_modes:
                     # create an ecommerce order for the course enrollment
-                    self.create_order_for_enrollment(course_run_id)
+                    self.create_order_for_enrollment(course_run_id, discount_percentage)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(
@@ -881,13 +883,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         request.session['enterprise_customer'] = self.enterprise_customer.serialized
 
-    def create_order_for_enrollment(self, course_run_id):
+    def create_order_for_enrollment(self, course_run_id, discount_percentage):
         """
         Create an order on the Ecommerce side for tracking the course enrollment of a enterprise customer user.
         """
-        LOGGER.info("Creating order for enterprise learner with id [%s] for enrollment in course with id: [%s]",
+        LOGGER.info("Creating order for enterprise learner with id [%s] for enrollment in course with id: [%s] with "
+                    "[%s] percentage discount",
                     self.user_id,
-                    course_run_id)
+                    course_run_id,
+                    discount_percentage)
         # get instance of the EcommerceApiClient and attempt to create order
         ecommerce_service_worker = get_ecommerce_worker_user()
         failure_log_msg = 'Could not create order for enterprise learner with id [%s] for enrollment in course with ' \
@@ -906,6 +910,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     'course_run_key': course_run_id,
                     "enterprise_customer_name": self.enterprise_customer.name,
                     "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
+                    "discount_percentage": float(discount_percentage),
                 }]
                 ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
         else:
@@ -999,31 +1004,13 @@ class PendingEnrollment(TimeStampedModel):
     .. no_pii:
     """
 
-    user = models.ForeignKey(
-        PendingEnterpriseCustomerUser,
-        null=False,
-        on_delete=models.deletion.CASCADE
-    )
-    course_id = models.CharField(
-        max_length=255,
-        blank=False,
-    )
-    course_mode = models.CharField(
-        max_length=25,
-        blank=False
-    )
-    cohort_name = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True
-    )
+    user = models.ForeignKey(PendingEnterpriseCustomerUser, null=False, on_delete=models.deletion.CASCADE)
+    course_id = models.CharField(max_length=255, blank=False,)
+    course_mode = models.CharField(max_length=25, blank=False)
+    cohort_name = models.CharField(max_length=255, blank=True, null=True)
+    discount_percentage = models.DecimalField(default=0.0, max_digits=8, decimal_places=5)
     history = HistoricalRecords()
-    source = models.ForeignKey(
-        EnterpriseEnrollmentSource,
-        blank=False,
-        null=True,
-        on_delete=models.SET_NULL
-    )
+    source = models.ForeignKey(EnterpriseEnrollmentSource, blank=False, null=True, on_delete=models.SET_NULL)
 
     class Meta:
         app_label = 'enterprise'
