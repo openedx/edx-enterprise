@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.7] - 2020-02-07
+--------------------
+
+* Learner attached to multiple enterprises, logging in via SSO should be taken to Enterprise selection page
+
 [2.3.6] - 2020-02-06
 --------------------
 

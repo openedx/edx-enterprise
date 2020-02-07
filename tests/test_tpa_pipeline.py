@@ -71,12 +71,14 @@ class TestTpaPipeline(unittest.TestCase):
                 active=True
             ).count() == 1
 
-    def test_handle_enterprise_logistration_not_user_linking(self):
+    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
+    def test_handle_enterprise_logistration_not_user_linking(self, multiple_enterprises_feature):
         """
         Test if there is not any enterprise customer then EnterpriseCustomerUser would not be associated with it.
         """
         backend = self.get_mocked_sso_backend()
         self.user = UserFactory()
+        multiple_enterprises_feature.return_value = True
         with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
             enterprise_customer = EnterpriseCustomerFactory(
                 enable_data_sharing_consent=False
@@ -121,6 +123,89 @@ class TestTpaPipeline(unittest.TestCase):
                 user_id=self.user.id,
                 active=False
             ).count() == 1
+
+    @ddt.data(
+        (False, True, 'facebook'),
+        (True, False, 'facebook'),
+        (True, False, 'facebook'),
+        (False, True, 'facebook'),
+        (True, True, 'google-oauth2'),
+        (False, False, 'google-oauth2'),
+        (False, True, 'google-oauth2'),
+        (True, False, 'google-oauth2'),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
+    def test_social_auth_user_login_associated_with_multiple_enterprise(self,
+                                                                        new_association,
+                                                                        multiple_enterprise_switch,
+                                                                        backend_name,
+                                                                        multiple_enterprises_feature):
+        """
+        Test redirect to enterprise selection page, if socialAuth user has LMS attached account
+        and part of multiple enterprises
+        """
+        kwargs = {'new_association': new_association}
+        backend = self.get_mocked_sso_backend()
+        backend.name = backend_name
+        self.user = UserFactory(is_active=True)
+        multiple_enterprises_feature.return_value = multiple_enterprise_switch
+        enterprise_customer = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=False
+        )
+        enterprise_customer_old = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=False
+        )
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=enterprise_customer_old,
+            user_id=self.user.id,
+            active=False
+        )
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=enterprise_customer,
+            user_id=self.user.id,
+            active=True
+        )
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
+            with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
+                fake_get_ec.return_value = None
+                handle_enterprise_logistration(backend, self.user, **kwargs)
+                if new_association or not multiple_enterprise_switch:
+                    ent_page_redirect.assert_not_called()
+                else:
+                    ent_page_redirect.called_once()
+
+    @ddt.data(
+        (False, 'facebook'),
+        (False, 'google-oauth2'),
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.tpa_pipeline.is_multiple_user_enterprises_feature_enabled')
+    def test_social_auth_user_login_associated_with_one_enterprise(self, new_association, backend_name,
+                                                                   multiple_enterprises_feature):
+        """
+        Test that if socialAuth user has edx attached account and is part of one enterprises then redirection url
+        is not changed
+        """
+        kwargs = {'new_association': new_association}
+        backend = self.get_mocked_sso_backend()
+        backend.name = backend_name
+        self.user = UserFactory(is_active=True)
+        multiple_enterprises_feature.return_value = True
+        enterprise_customer = EnterpriseCustomerFactory(
+            enable_data_sharing_consent=False
+        )
+
+        EnterpriseCustomerUser.objects.create(
+            enterprise_customer=enterprise_customer,
+            user_id=self.user.id,
+            active=False
+        )
+        with mock.patch('enterprise.tpa_pipeline.get_enterprise_customer_for_running_pipeline') as fake_get_ec:
+            with mock.patch('enterprise.tpa_pipeline.select_enterprise_page_as_redirect_url') as ent_page_redirect:  # pylint: disable=invalid-name
+                fake_get_ec.return_value = None
+                handle_enterprise_logistration(backend, self.user, **kwargs)
+                ent_page_redirect.assert_not_called()
 
     def test_get_ec_for_pipeline(self):
         """
