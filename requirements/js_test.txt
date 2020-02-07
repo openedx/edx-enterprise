@@ -9,7 +9,7 @@ cheroot==8.2.1            # via cherrypy
 cherrypy==17.3.0
 contextlib2==0.6.0.post1  # via cherrypy
 glob2==0.7                # via jasmine-core
-jaraco.functools==2.0     # via cheroot, tempora
+jaraco.functools==3.0.0   # via cheroot, tempora
 jasmine-core==2.99.1      # via jasmine
 jasmine==2.9.0
 jinja2==2.11.1            # via jasmine
@@ -20,8 +20,8 @@ portend==2.6              # via cherrypy
 pytz==2019.3              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.6.0           # via jasmine
-six==1.14.0               # via cheroot, cherrypy, jasmine, tempora
-tempora==1.14.1           # via portend
+six==1.14.0               # via cheroot, cherrypy, jasmine
+tempora==2.1.0            # via portend
 zc.lockfile==2.0          # via cherrypy
 
 # The following packages are considered to be unsafe in a requirements file:

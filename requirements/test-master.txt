@@ -4,7 +4,9 @@
 #
 #    make upgrade
 #
+amqp==1.4.9               # via kombu
 aniso8601==8.0.0          # via edx-tincan-py35
+anyjson==0.3.3            # via kombu
 billiard==3.3.0.23        # via celery
 bleach==3.1.0
 celery==3.1.25
@@ -22,7 +24,7 @@ django-fernet-fields==0.6
 django-filter==2.2.0
 django-ipware==2.1.0
 django-model-utils==3.0.0
-django-multi-email-field==0.5.1
+django-multi-email-field==0.6.1
 django-object-actions==2.0.0
 django-simple-history==2.8.0
 django-waffle==0.18.0
@@ -31,25 +33,30 @@ djangorestframework-jwt==1.11.0  # via edx-drf-extensions
 djangorestframework-xml==1.4.0
 djangorestframework==3.9.4
 edx-django-utils==2.0.4
-edx-drf-extensions==2.4.5
+edx-drf-extensions==2.4.6
 edx-opaque-keys[django]==2.0.1
 edx-rbac==1.0.5
 edx-rest-api-client==3.0.2
 edx-tincan-py35==0.0.5
 future==0.18.2
 idna==2.8                 # via requests
+importlib-metadata==1.5.0  # via path
 jinja2==2.11.1            # via code-annotations
 jsondiff==1.2.0
 jsonfield2==3.0.3
 kombu==3.0.37             # via celery
-newrelic==5.4.1.134       # via edx-django-utils
+markupsafe==1.1.1         # via jinja2
+more-itertools==8.2.0     # via zipp
+newrelic==5.6.0.135       # via edx-django-utils
 path.py==12.4.0
 path==13.1.0              # via path.py
 pbr==5.4.4                # via stevedore
 pillow==7.0.0
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
+pycparser==2.19           # via cffi
+pycryptodomex==3.9.6      # via pyjwkest
 pyjwkest==1.3.2           # via edx-drf-extensions
-pyjwt==1.5.2              # via edx-rest-api-client
+pyjwt==1.5.2              # via djangorestframework-jwt, edx-rest-api-client
 pymongo==3.9.0            # via edx-opaque-keys
 python-dateutil==2.4.0
 python-slugify==4.0.0     # via code-annotations
@@ -62,7 +69,9 @@ semantic-version==2.8.4   # via edx-drf-extensions
 six==1.14.0
 slumber==0.7.1
 stevedore==1.31.0
-testfixtures==6.11.0
+testfixtures==6.12.0
+text-unidecode==1.3       # via python-slugify
 unicodecsv==0.14.1
 urllib3==1.25.8           # via requests
 webencodings==0.5.1       # via bleach
+zipp==1.0.0               # via importlib-metadata
