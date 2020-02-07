@@ -413,6 +413,7 @@ class TestTransmitLearnerData(unittest.TestCase):
     """
     Test the transmit_learner_data management command.
     """
+    stealth_options = ('enterprise_customer_slug', 'user1', 'user2')
 
     def setUp(self):
         self.api_user = factories.UserFactory(username='staff_user', id=1)
@@ -1019,6 +1020,7 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
     """
     Integration tests for learner data transmission.
     """
+    stealth_options = ('enterprise_customer_slug', 'user1', 'user2')
 
     def setUp(self):
         super(TestLearnerDataTransmitIntegration, self).setUp()

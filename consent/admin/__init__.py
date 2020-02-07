@@ -9,8 +9,8 @@ from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin
 
 from django.contrib import admin
-from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.http import urlencode
 from django.utils.translation import ugettext as _
 

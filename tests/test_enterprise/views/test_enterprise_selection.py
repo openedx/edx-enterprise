@@ -13,8 +13,8 @@ import mock
 from pytest import mark
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
+from django.urls import reverse
 
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE
 from enterprise.models import EnterpriseCustomerUser

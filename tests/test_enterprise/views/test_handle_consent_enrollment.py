@@ -11,9 +11,9 @@ from faker import Factory as FakerFactory
 from pytest import mark
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.test import Client, TestCase
+from django.urls import reverse
 
 from enterprise.models import EnterpriseCourseEnrollment
 from enterprise.views import LMS_COURSEWARE_URL, LMS_DASHBOARD_URL, LMS_START_PREMIUM_COURSE_FLOW_URL

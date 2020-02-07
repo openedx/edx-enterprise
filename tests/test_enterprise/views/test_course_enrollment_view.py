@@ -19,9 +19,9 @@ from slumber.exceptions import HttpClientError
 from django.conf import settings
 from django.contrib.messages import constants as messages
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.http import QueryDict
 from django.test import Client, TestCase
+from django.urls import reverse
 
 from enterprise.decorators import FRESH_LOGIN_PARAMETER
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource

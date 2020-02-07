@@ -27,9 +27,9 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
 )
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.test.client import RequestFactory
+from django.urls import reverse
 
 from enterprise import utils
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE

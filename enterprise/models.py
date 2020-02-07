@@ -27,10 +27,10 @@ from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
-from django.core.urlresolvers import reverse
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models
 from django.template import Context, Template
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlquote
