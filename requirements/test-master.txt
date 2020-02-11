@@ -11,13 +11,13 @@ billiard==3.3.0.23        # via celery
 bleach==3.1.0
 celery==3.1.25
 certifi==2019.11.28       # via requests
-cffi==1.13.2              # via cryptography
+cffi==1.14.0              # via cryptography
 chardet==3.0.4            # via requests
 click==7.0                # via code-annotations
 code-annotations==0.3.3
 cryptography==2.8
 defusedxml==0.5.0         # via djangorestframework-xml
-django-config-models==1.0.4
+django-config-models==2.0.0
 django-countries==5.5
 django-crum==0.7.5
 django-fernet-fields==0.6

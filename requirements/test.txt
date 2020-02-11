@@ -12,7 +12,7 @@ billiard==3.3.0.23
 bleach==3.1.0
 celery==3.1.25
 certifi==2019.11.28
-cffi==1.13.2
+cffi==1.14.0
 chardet==3.0.4
 click==7.0
 code-annotations==0.3.3
@@ -20,8 +20,8 @@ coverage==5.0.3           # via pytest-cov
 cryptography==2.8
 ddt==1.2.2
 defusedxml==0.5.0
-diff-cover==2.5.2
-django-config-models==1.0.4
+diff-cover==2.6.0
+django-config-models==2.0.0
 django-countries==5.5
 django-crum==0.7.5
 django-fernet-fields==0.6
@@ -60,6 +60,7 @@ newrelic==5.6.0.135
 packaging==20.1           # via pytest
 path.py==12.4.0
 path==13.1.0
+pathlib2==2.3.5           # via pytest
 pbr==5.4.4
 pillow==7.0.0
 pluggy==0.13.1            # via diff-cover, pytest

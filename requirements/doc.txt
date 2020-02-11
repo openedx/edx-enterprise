@@ -13,13 +13,13 @@ billiard==3.3.0.23
 bleach==3.1.0
 celery==3.1.25
 certifi==2019.11.28
-cffi==1.13.2
+cffi==1.14.0
 chardet==3.0.4
 click==7.0
 code-annotations==0.3.3
 cryptography==2.8
 defusedxml==0.5.0
-django-config-models==1.0.4
+django-config-models==2.0.0
 django-countries==5.5
 django-crum==0.7.5
 django-fernet-fields==0.6
@@ -81,7 +81,7 @@ semantic-version==2.8.4
 six==1.14.0
 slumber==0.7.1
 snowballstemmer==2.0.0    # via sphinx
-sphinx==2.3.1
+sphinx==2.4.1
 sphinxcontrib-applehelp==1.0.1  # via sphinx
 sphinxcontrib-devhelp==1.0.1  # via sphinx
 sphinxcontrib-htmlhelp==1.0.2  # via sphinx
