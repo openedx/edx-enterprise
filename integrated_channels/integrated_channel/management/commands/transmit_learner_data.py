@@ -23,6 +23,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
     help = _('''
     Transmit Enterprise learner course completion data for the given EnterpriseCustomer.
     ''')
+    stealth_options = ('enterprise_customer_slug', 'user1', 'user2')
 
     def add_arguments(self, parser):
         """
