@@ -11,16 +11,13 @@ env:
   - TOXENV=django20
   - TOXENV=django21
   - TOXENV=django22
+  - TOXENV=quality
 
 services:
     - xvfb
 
 matrix:
   include:
-    - python: 3.6
-      env: TOXENV=quality
-    - python: 3.5
-      env: TOXENV=quality
     - python: 3.6
       env: TOXENV=docs
     - python: 3.5
@@ -40,11 +37,6 @@ matrix:
         - RUNJSHINT=true
     - python: 3.6
       env: TOXENV=pii-annotations
-  allow_failures:
-    - python: 3.5
-      env: TOXENV=django111
-    - python: 3.6
-      env: TOXENV=django111
 
 cache:
   - directories:
