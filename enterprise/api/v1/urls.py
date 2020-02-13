@@ -11,7 +11,8 @@ from django.conf.urls import url
 from enterprise.api.v1 import views
 
 router = DefaultRouter()  # pylint: disable=invalid-name
-router.register("enterprise_catalogs", views.EnterpriseCustomerCatalogViewSet, 'enterprise-catalogs')
+router.register("enterprise_catalogs", views.EnterpriseCustEnterpriseCustomerCatalogViewSetomerCatalogViewSet, 'enterprise-catalogs')
+router.register("enterprise_catalog_config", views.EnterpriseCustomerCatalogConfigViewSet, 'enterprise-catalog-config')
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')

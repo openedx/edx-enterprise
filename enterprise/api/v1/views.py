@@ -284,6 +284,24 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
     lookup_field = 'enterprise_customer__slug'
 
 
+class EnterpriseCustomerCatalogConfigViewSet(EnterpriseReadOnlyModelViewSet):
+    """
+    API View to return catalog config.
+    """
+    serializer_class = serializers.EnterpriseCustomerCatalogConfigSerializer
+    queryset = models.EnterpriseCustomerCatalog.objects.all()
+    filter_fields = (
+        'uuid', 'enterprise_customer',
+    )
+
+    def get_serializer_class(self):
+        return serializers.EnterpriseCustomerCatalogSerializer(config=True)
+
+    @permission_required('enterprise.can_view_catalog', fn=lambda request, *args, **kwargs: None)
+    def retrieve(self, request, *args, **kwargs):
+        return super(EnterpriseCustomerCatalogConfigViewSet, self).list(request, *args, **kwargs)
+
+
 class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     """
     API Views for performing search through course discovery at the ``enterprise_catalogs`` API endpoint.
