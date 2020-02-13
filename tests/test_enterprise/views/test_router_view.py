@@ -10,9 +10,9 @@ import mock
 from pytest import mark
 
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.test import TestCase
+from django.urls import reverse
 
 from enterprise import views
 from test_utils import factories, fake_catalog_api, fake_enrollment_api

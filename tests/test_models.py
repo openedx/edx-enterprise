@@ -21,10 +21,10 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
-from django.core.urlresolvers import reverse
 from django.db.utils import IntegrityError
 from django.http import QueryDict
 from django.test.testcases import TransactionTestCase
+from django.urls import reverse
 
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent

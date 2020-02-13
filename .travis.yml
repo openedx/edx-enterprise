@@ -7,17 +7,17 @@ python:
   - 3.6
 
 env:
-  - TOXENV=master
+  - TOXENV=django111
+  - TOXENV=django20
+  - TOXENV=django21
+  - TOXENV=django22
+  - TOXENV=quality
 
 services:
     - xvfb
 
 matrix:
   include:
-    - python: 3.6
-      env: TOXENV=quality
-    - python: 3.5
-      env: TOXENV=quality
     - python: 3.6
       env: TOXENV=docs
     - python: 3.5

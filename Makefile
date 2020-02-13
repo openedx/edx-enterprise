@@ -89,6 +89,10 @@ upgrade: check_pins	## update the requirements/*.txt files with the latest packa
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
 	$(PIP_COMPILE) -o requirements/travis.txt requirements/travis.in
 	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
+	# Let tox control the Django version version for tests
+	grep -e "^django==" requirements/test.txt > requirements/django.txt
+	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
+	mv requirements/test.tmp requirements/test.txt
 
 requirements.js: ## install JS requirements for local development
 	npm install

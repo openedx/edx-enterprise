@@ -15,9 +15,9 @@ from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.test import Client, TestCase
+from django.urls import reverse
 
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import fake_render

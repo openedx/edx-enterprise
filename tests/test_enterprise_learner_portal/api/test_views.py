@@ -12,8 +12,8 @@ from pytest import mark
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.conf import settings
-from django.core.urlresolvers import reverse
 from django.test import Client, TestCase
+from django.urls import reverse
 
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import factories

@@ -16,9 +16,9 @@ from django.contrib import admin
 from django.contrib.auth import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
-from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _

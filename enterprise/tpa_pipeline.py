@@ -3,7 +3,7 @@ Module provides elements to be used in third-party auth pipeline.
 """
 from __future__ import absolute_import, unicode_literals
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import get_identity_provider

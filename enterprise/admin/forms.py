@@ -15,8 +15,8 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.urlresolvers import reverse
 from django.db.models.fields import BLANK_CHOICE_DASH
+from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 

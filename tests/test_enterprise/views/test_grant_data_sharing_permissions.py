@@ -12,9 +12,9 @@ from pytest import mark
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.test import Client, TestCase
+from django.urls import reverse
 
 from enterprise.models import EnterpriseCourseEnrollment
 from test_utils import fake_render

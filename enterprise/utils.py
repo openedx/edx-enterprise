@@ -21,9 +21,9 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
-from django.core.urlresolvers import reverse
 from django.http import Http404
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.dateparse import parse_datetime
 from django.utils.html import format_html
 from django.utils.text import slugify
