@@ -197,6 +197,24 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
             track_enrollment('rest-api-enrollment', self.enterprise_customer_user.user_id, course_id)
 
 
+class EnterpriseCustomerCatalogConfigSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the ``EnterpriseCustomerCatalog`` model.
+    """
+    content_filter = serializers.SerializerMethodField()
+    enabled_course_modes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.EnterpriseCustomerCatalog
+        fields = '__all__'
+
+    def get_content_filter(self, obj):
+        return dict(obj.content_filter)
+
+    def get_enabled_course_modes(self, obj):
+        return list(obj.content_filter)
+
+
 class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
     """
     Serializer for the ``EnterpriseCustomerCatalog`` model.
