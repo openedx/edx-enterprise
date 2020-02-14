@@ -112,7 +112,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         'uuid', 'slug', 'name', 'active', 'site', 'enable_data_sharing_consent',
         'enforce_data_sharing_consent',
     )
-    filter_fields = FIELDS
+    filterset_fields = FIELDS
     ordering_fields = FIELDS
 
     def get_serializer_class(self):
@@ -232,7 +232,7 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
     FIELDS = (
         'enterprise_customer_user', 'course_id'
     )
-    filter_fields = FIELDS
+    filterset_fields = FIELDS
     ordering_fields = FIELDS
 
     def get_serializer_class(self):
@@ -255,7 +255,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     FIELDS = (
         'enterprise_customer', 'user_id', 'active',
     )
-    filter_fields = FIELDS
+    filterset_fields = FIELDS
     ordering_fields = FIELDS
 
     def get_serializer_class(self):
@@ -279,7 +279,7 @@ class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelView
     FIELDS = (
         'enterprise_customer__slug',
     )
-    filter_fields = FIELDS
+    filterset_fields = FIELDS
     ordering_fields = FIELDS
     lookup_field = 'enterprise_customer__slug'
 
@@ -294,7 +294,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
     FIELDS = (
         'uuid', 'enterprise_customer',
     )
-    filter_fields = FIELDS
+    filterset_fields = FIELDS
     ordering_fields = FIELDS
     renderer_classes = (JSONRenderer, XMLRenderer,)
 
@@ -440,7 +440,7 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
     FIELDS = (
         'enterprise_customer',
     )
-    filter_fields = FIELDS
+    filterset_fields = FIELDS
     ordering_fields = FIELDS
 
     @permission_required(
