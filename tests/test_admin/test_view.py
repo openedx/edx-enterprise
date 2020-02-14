@@ -18,6 +18,7 @@ from django.contrib.auth.models import User
 from django.contrib.messages import constants as messages
 from django.core import mail
 from django.test import Client, TestCase, override_settings
+from django.urls import reverse
 
 from enterprise import admin as enterprise_admin
 from enterprise.admin import (
@@ -28,7 +29,6 @@ from enterprise.admin import (
 from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
 from enterprise.admin.utils import ValidationMessages, get_course_runs_from_program
 from enterprise.constants import PAGE_SIZE
-from enterprise.django_compatibility import reverse
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,

@@ -18,6 +18,7 @@ from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.test import RequestFactory
+from django.urls import reverse
 
 from enterprise.decorators import (
     deprecated,
@@ -26,7 +27,6 @@ from enterprise.decorators import (
     force_fresh_session,
     ignore_warning,
 )
-from enterprise.django_compatibility import reverse
 from test_utils import get_magic_name, mock_view_function
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 
