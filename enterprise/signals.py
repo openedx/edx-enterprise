@@ -84,7 +84,8 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
                     enrollment.course_id,
                     enrollment.course_mode,
                     cohort=enrollment.cohort_name,
-                    source_slug=getattr(enrollment.source, 'slug', None)
+                    source_slug=getattr(enrollment.source, 'slug', None),
+                    discount_percentage=enrollment.discount_percentage,
                 )
                 track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
             pending_ecu.delete()

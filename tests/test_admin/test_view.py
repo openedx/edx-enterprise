@@ -1376,6 +1376,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         """
         Test bulk upload with linking and enrolling
         """
+        discount_percentage = 20.0
+        self.required_fields_with_default[ManageLearnersForm.Fields.DISCOUNT] = discount_percentage
         course_catalog_instance = course_catalog_client.return_value
         course_catalog_instance.get_course_run.return_value = {
             "name": "Enterprise Training",
@@ -1412,7 +1414,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             (messages.SUCCESS, "1 learner was enrolled in {}.".format(course_id)),
             (messages.WARNING, pending_user_message.format(course_id, unknown_email)),
         ]))
-        assert PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0].course_id == course_id
+        pending_enrollment = PendingEnterpriseCustomerUser.objects.all()[0].pendingenrollment_set.all()[0]
+        assert pending_enrollment.course_id == course_id
+        assert pending_enrollment.discount_percentage == discount_percentage
         num_messages = len(mail.outbox)
         assert num_messages == 2
 

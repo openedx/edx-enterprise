@@ -603,7 +603,8 @@ class EnterpriseCustomerManageLearnersView(View):
             course_mode,
             emails,
             enrollment_requester=None,
-            enrollment_reason=None
+            enrollment_reason=None,
+            discount=0.0,
     ):
         """
         Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -613,6 +614,9 @@ class EnterpriseCustomerManageLearnersView(View):
             course_id (str): The unique identifier of the course in which we're enrolling
             course_mode (str): The mode with which we're enrolling in the course
             emails: An iterable of email addresses which need to be enrolled
+            enrollment_requester (User): Admin user who is requesting the enrollment.
+            enrollment_reason (str): A reason for enrollment.
+            discount (Decimal): Percentage discount for enrollment.
 
         Returns:
             successes: A list of users who were successfully enrolled in the course
@@ -647,7 +651,8 @@ class EnterpriseCustomerManageLearnersView(View):
                 email,
                 course_mode,
                 course_id,
-                enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
+                enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL),
+                discount=discount,
             )
             pending.append(pending_user)
             if enrollment_requester and enrollment_reason:
@@ -829,7 +834,6 @@ class EnterpriseCustomerManageLearnersView(View):
             notify: Whether to notify (by email) the users that have been enrolled
         """
         pending_messages = []
-        succeeded = []
         paid_modes = ['verified', 'professional']
 
         if course_id:
@@ -840,6 +844,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 emails=emails,
                 enrollment_requester=request.user,
                 enrollment_reason=enrollment_reason,
+                discount=discount,
             )
             all_successes = succeeded + pending
             if notify:
@@ -854,6 +859,19 @@ class EnterpriseCustomerManageLearnersView(View):
                 pending_messages.append(cls.get_failed_enrollment_message(failed, course_id))
             if pending:
                 pending_messages.append(cls.get_pending_enrollment_message(pending, course_id))
+
+            if mode in paid_modes:
+                # Create an order to track the manual enrollments of non-pending accounts
+                enrollments = [{
+                    "lms_user_id": success.id,
+                    "email": success.email,
+                    "username": success.username,
+                    "course_run_key": course_id,
+                    "discount_percentage": float(discount),
+                    "enterprise_customer_name": enterprise_customer.name,
+                    "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                } for success in succeeded]
+                EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
 
         if program_details:
             succeeded, pending, failed = cls.enroll_users_in_program(
@@ -878,19 +896,6 @@ class EnterpriseCustomerManageLearnersView(View):
                 pending_messages.append(cls.get_failed_enrollment_message(failed, program_identifier))
             if pending:
                 pending_messages.append(cls.get_pending_enrollment_message(pending, program_identifier))
-
-        enrollments = [{
-            "lms_user_id": success.id,
-            "email": success.email,
-            "username": success.username,
-            "course_run_key": course_id,
-            "discount_percentage": float(discount),
-            "enterprise_customer_name": enterprise_customer.name,
-            "enterprise_customer_uuid": str(enterprise_customer.uuid),
-        } for success in succeeded]
-        if mode in paid_modes:
-            # Create an order to track the manual enrollments of non-pending accounts
-            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
         cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
