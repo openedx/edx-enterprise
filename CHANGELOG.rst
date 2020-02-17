@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[2.3.9] - 2020-02-17
+--------------------
+
+* Added discount percentage support in pending enrollment use case.
+
 [2.3.8] - 2020-02-10
 --------------------
 
