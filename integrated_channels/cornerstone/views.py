@@ -4,6 +4,7 @@ Views containing APIs for cornerstone integrated channel
 from __future__ import absolute_import, unicode_literals
 
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
+
 from openedx.core.lib.api.authentication import OAuth2Authentication
 
 from rest_framework import generics, permissions, renderers, status
@@ -13,6 +14,11 @@ from rest_framework.response import Response
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
+
+try:
+    from openedx.core.lib.api.authentication import OAuth2Authentication
+except ImportError:
+    OAuth2Authentication = None
 
 
 class CornerstoneCoursesListView(generics.ListAPIView):
