@@ -9,15 +9,17 @@ from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
+from enterprise.api.throttles import ServiceUserThrottle
+from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user
+from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
+
+
 try:
     from openedx.core.lib.api.authentication import OAuth2Authentication
 except ImportError:
     # Temp fix until OAuth2Authentication has been moved out of edx-platform
     OAuth2Authentication = JwtAuthentication
 
-from enterprise.api.throttles import ServiceUserThrottle
-from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user
-from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 
 
 class CornerstoneCoursesListView(generics.ListAPIView):
