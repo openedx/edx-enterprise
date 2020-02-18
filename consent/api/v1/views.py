@@ -7,7 +7,6 @@ from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 
-from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
@@ -70,7 +69,7 @@ class DataSharingConsentView(APIView):
     """
 
     permission_classes = (permissions.IsStaffOrUserInRequest,)
-    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
 
     REQUIRED_PARAM_USERNAME = 'username'

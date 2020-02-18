@@ -151,20 +151,6 @@ def get_all_field_names(model, excluded=None):
     excluded_fields = excluded or []
     return [f.name for f in model._meta.get_fields() if f.name not in excluded_fields]
 
-
-def get_oauth2authentication_class():
-    """
-    Return oauth2 authentication class to authenticate REST APIs with Bearer token.
-    """
-    try:
-        from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser as OAuth2Authentication
-    except ImportError:
-        from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication \
-            as OAuth2Authentication
-
-    return OAuth2Authentication
-
-
 def get_catalog_admin_url(catalog_id):
     """
     Get url to catalog details admin page.

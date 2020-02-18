@@ -9,7 +9,6 @@ from smtplib import SMTPException
 
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
-from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
@@ -54,7 +53,7 @@ class EnterpriseViewSet:
     """
 
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
 
     def ensure_data_exists(self, request, data, error_message=None):
@@ -517,7 +516,7 @@ class CouponCodesView(APIView):
     API to request coupon codes.
     """
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
 
     REQUIRED_PARAM_EMAIL = 'email'

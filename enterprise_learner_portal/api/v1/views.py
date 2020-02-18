@@ -4,7 +4,6 @@ Views for enterprise_learner_portal app.
 """
 from __future__ import absolute_import, unicode_literals
 
-from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import permissions
 from rest_framework.authentication import SessionAuthentication
@@ -30,7 +29,7 @@ class EnterpriseCourseEnrollmentView(APIView):
     View for returning information around a user's enterprise course enrollments.
     """
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (JwtAuthentication, BearerAuthentication, SessionAuthentication,)
+    authentication_classes = (JwtAuthentication,  SessionAuthentication,)
 
     def get(self, request):
         """
