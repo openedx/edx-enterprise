@@ -5,8 +5,6 @@ from __future__ import absolute_import, unicode_literals
 
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 
-from openedx.core.lib.api.authentication import OAuth2Authentication
-
 from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
