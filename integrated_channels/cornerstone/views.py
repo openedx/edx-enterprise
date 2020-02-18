@@ -16,7 +16,8 @@ from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomer
 try:
     from openedx.core.lib.api.authentication import OAuth2Authentication
 except ImportError:
-    OAuth2Authentication = None
+    # Temp fix until OAuth2Authentication has been moved out of edx-platform
+    from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication as OAuth2Authentication
 
 
 class CornerstoneCoursesListView(generics.ListAPIView):
