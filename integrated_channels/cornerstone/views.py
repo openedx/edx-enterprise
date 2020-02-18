@@ -17,7 +17,7 @@ try:
     from openedx.core.lib.api.authentication import OAuth2Authentication
 except ImportError:
     # Temp fix until OAuth2Authentication has been moved out of edx-platform
-    from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication as OAuth2Authentication
+    OAuth2Authentication = JwtAuthentication
 
 
 class CornerstoneCoursesListView(generics.ListAPIView):
