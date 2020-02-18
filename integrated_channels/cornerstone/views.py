@@ -4,22 +4,13 @@ Views containing APIs for cornerstone integrated channel
 from __future__ import absolute_import, unicode_literals
 
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-
 from rest_framework import generics, permissions, renderers, status
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
 from enterprise.api.throttles import ServiceUserThrottle
-from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user
+from enterprise.utils import get_enterprise_customer, get_enterprise_worker_user, get_oauth2authentication_class
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
-
-
-try:
-    from openedx.core.lib.api.authentication import OAuth2Authentication
-except ImportError:
-    # Temp fix until OAuth2Authentication has been moved out of edx-platform
-    OAuth2Authentication = JwtAuthentication
-
 
 
 class CornerstoneCoursesListView(generics.ListAPIView):
@@ -82,7 +73,7 @@ class CornerstoneCoursesListView(generics.ListAPIView):
 
     """
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (JwtAuthentication, OAuth2Authentication, SessionAuthentication,)
+    authentication_classes = (JwtAuthentication, get_oauth2authentication_class(), SessionAuthentication,)
     throttle_classes = (ServiceUserThrottle,)
     renderer_classes = [renderers.JSONRenderer]
 
