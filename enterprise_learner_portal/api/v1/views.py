@@ -29,7 +29,7 @@ class EnterpriseCourseEnrollmentView(APIView):
     View for returning information around a user's enterprise course enrollments.
     """
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (JwtAuthentication,  SessionAuthentication,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
 
     def get(self, request):
         """
