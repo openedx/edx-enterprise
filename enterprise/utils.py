@@ -159,9 +159,7 @@ def get_oauth2authentication_class():
     try:
         from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser as OAuth2Authentication
     except ImportError:
-        # Temporary until OAuth2Authentication has been moved out of edx-platform
-        from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication \
-            as OAuth2Authentication
+        return None
 
     return OAuth2Authentication
 
