@@ -83,7 +83,7 @@ class ContentMetadataExporter(Exporter):
         LOGGER.info('Retrieved content metadata for enterprise [%s]', self.enterprise_customer.name)
         for item in content_metadata_items:
             transformed = self._transform_item(item)
-            LOGGER.info(
+            LOGGER.debug(
                 'Exporting content metadata item with plugin configuration [%s]: [%s]',
                 self.enterprise_configuration,
                 json.dumps(transformed, indent=4),

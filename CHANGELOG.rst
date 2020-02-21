@@ -11,6 +11,12 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+
+[2.4.1] - 2020-02-26
+--------------------
+
+* Update log level from INFO to DEBUG for transmit_content_metadata management command
+
 [2.4.0] - 2020-02-25
 --------------------
 
