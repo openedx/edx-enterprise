@@ -154,11 +154,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata')
     def test_transmit_content_metadata_task_with_error(
             self,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
             degreed_create_content_metadata_mock,
+            transmit_content_metadata_mock,
     ):  # pylint: disable=invalid-name
         """
         Verify the data transmission task for integrated channels with error.
@@ -187,7 +189,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         # enterprise courses API to send failure response
         dummy_enterprise_customer = factories.EnterpriseCustomerFactory(
             name='Dummy Enterprise',
-        )
+            )
         enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
             enterprise_customer=dummy_enterprise_customer,
             content_filter=content_filter
@@ -209,64 +211,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             active=True,
         )
 
-        # Verify that first integrated channel logs failure but the second
-        # integrated channel still successfully transmits courseware data.
-        expected_messages = [
-            # SAPSF
-            '[Integrated Channel] Content metadata transmission started. Configuration:'
-            ' <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
-            '[Integrated Channel] Transmission of content metadata failed.'
-            ' ChannelCode: SAP, ChannelId: 1, Username: C-3PO',
-            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
-            ' {configuration},Duration: 0.0'.format(configuration=self.sapsf),
-            '[Integrated Channel] Content metadata transmission started. Configuration:'
-            ' <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>',
-            'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit update of [0] content metadata items with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
-            ' {configuration},Duration: 0.0'.format(configuration=dummy_sapsf),
-
-            # Degreed
-            '[Integrated Channel] Content metadata transmission started. Configuration:'
-            ' <DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
-            '[Integrated Channel] Transmission of content metadata failed.'
-            ' ChannelCode: DEGREED, ChannelId: 1, Username: C-3PO',
-            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
-            ' {configuration},Duration: 0.0'.format(configuration=self.degreed),
-            '[Integrated Channel] Content metadata transmission started. Configuration:'
-            ' <DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>',
-            'Retrieved content metadata for enterprise [{}]'.format(dummy_enterprise_customer.name),
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit update of [0] content metadata items with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Dummy Enterprise>]',
-            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
-            ' {configuration},Duration: 0.0'.format(configuration=dummy_degreed)
+        expected_calls = [
+            mock.call('C-3PO', '', ''),
+            mock.call('C-3PO', '', '')
         ]
 
-        with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
-            for index, message in enumerate(expected_messages):
-                assert message in log_capture.records[index].getMessage()
+        call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
+
+        transmit_content_metadata_mock.delay.assert_has_calls(expected_calls, any_order=True)
 
     @responses.activate
     @freeze_time(NOW)
@@ -274,11 +226,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata')
     def test_transmit_content_metadata_task_success(
             self,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
             degreed_create_content_metadata_mock,
+            transmit_content_metadata_mock,
     ):  # pylint: disable=invalid-name
         """
         Test the data transmission task.
@@ -291,50 +245,14 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         enterprise_catalog_uuid = str(self.enterprise_customer.enterprise_customer_catalogs.first().uuid)
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
-        expected_messages = [
-            # SAPSF
-            '[Integrated Channel] Content metadata transmission started. Configuration:'
-            ' <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
-            'Retrieved content metadata for enterprise [{}]'.format(self.enterprise_customer.name),
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit update of [0] content metadata items with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
-            '[<SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
-            ' {configuration},Duration: 0.0'.format(configuration=self.sapsf),
-
-            # Degreed
-            '[Integrated Channel] Content metadata transmission started. Configuration:'
-            ' <DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>',
-            'Retrieved content metadata for enterprise [{}]'.format(self.enterprise_customer.name),
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Exporting content metadata item with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit creation of [3] content metadata items with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit update of [0] content metadata items with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            'Preparing to transmit deletion of [0] content metadata items with plugin configuration '
-            '[<DegreedEnterpriseCustomerConfiguration for Enterprise Veridian Dynamics>]',
-            '[Integrated Channel] Content metadata transmission task finished. Configuration:'
-            ' {configuration},Duration: 0.0'.format(configuration=self.degreed)
+        expected_calls = [
+            mock.call('C-3PO', '', ''),
+            mock.call('C-3PO', '', '')
         ]
 
-        with LogCapture(level=logging.INFO) as log_capture:
-            call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
-            for index, message in enumerate(expected_messages):
-                assert message in log_capture.records[index].getMessage()
+        call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
+
+        transmit_content_metadata_mock.delay.assert_has_calls(expected_calls, any_order=True)
 
     @responses.activate
     def test_transmit_content_metadata_task_no_channel(self):

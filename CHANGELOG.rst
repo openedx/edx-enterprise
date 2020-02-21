@@ -11,6 +11,7 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+
 [2.4.0] - 2020-02-25
 --------------------
 
