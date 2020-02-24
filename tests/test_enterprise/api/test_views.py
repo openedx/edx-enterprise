@@ -446,7 +446,6 @@ class TestEnterpriseAPIViews(APITest):
                 },
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
-                'learner_portal_hostname': '',
                 'contact_email': 'fake@example.com',
             }],
         ),
@@ -482,7 +481,6 @@ class TestEnterpriseAPIViews(APITest):
                     },
                     'sync_learner_profile_data': False,
                     'enable_learner_portal': False,
-                    'learner_portal_hostname': '',
                     'contact_email': 'fake@example.com',
                 }
             }],
@@ -530,7 +528,6 @@ class TestEnterpriseAPIViews(APITest):
                 },
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
-                'learner_portal_hostname': '',
                 'contact_email': 'fake@example.com',
             }],
         ),
@@ -700,7 +697,6 @@ class TestEnterpriseAPIViews(APITest):
                 },
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
-                'learner_portal_hostname': '',
                 'contact_email': 'fake@example.com',
             }
         else:

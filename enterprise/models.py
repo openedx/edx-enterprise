@@ -265,13 +265,6 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
     )
 
-    learner_portal_hostname = models.CharField(
-        max_length=255,
-        blank=True,
-        default='',
-        help_text=_("Hostname of the enterprise learner portal, e.g. bestrun.edx.org.")
-    )
-
     contact_email = models.EmailField(
         null=True,
         blank=True,

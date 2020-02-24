@@ -283,7 +283,6 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "hide_course_original_price",
             "enable_portal_code_management_screen",
             "enable_learner_portal",
-            "learner_portal_hostname",
             "enable_portal_reporting_config_screen",
             "contact_email",
         )
