@@ -13,7 +13,6 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from enterprise.admin.paginator import CustomPaginator
-from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCustomerUser
 
 DOT = '.'

@@ -21,7 +21,6 @@ from enterprise.admin.forms import (
     ManageLearnersForm,
 )
 from enterprise.admin.utils import ValidationMessages
-from enterprise.api_client.discovery import CourseCatalogApiClient
 from test_utils import fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
@@ -36,24 +35,9 @@ from test_utils.factories import (
 FAKER = FakerFactory.create()
 
 
-class TestWithCourseCatalogApiMixin:
-    """
-    Mixin class to provide CourseCatalogApiClient mock.
-    """
-    def setUp(self):
-        """
-        Build CourseCatalogApiClient mock and register it for deactivation at cleanup.
-        """
-        super(TestWithCourseCatalogApiMixin, self).setUp()
-        self.catalog_api = mock.Mock(CourseCatalogApiClient)
-        patcher = mock.patch('enterprise.admin.forms.CourseCatalogApiClient', mock.Mock(return_value=self.catalog_api))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-
 @mark.django_db
 @ddt.ddt
-class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
+class TestManageLearnersForm(unittest.TestCase):
     """
     Tests for ManageLearnersForm.
     """
