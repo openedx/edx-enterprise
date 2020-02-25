@@ -38,7 +38,6 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 
-
 try:
     from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
 except ImportError:

@@ -12,7 +12,6 @@ import unittest
 import ddt
 import mock
 import responses
-from pytest import raises
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from slumber.exceptions import HttpClientError
 
@@ -20,7 +19,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
-from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import MockLoggingHandler
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 

@@ -18,7 +18,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import utils
-from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_configuration_value_for_site
+from enterprise.utils import NotConnectedToOpenEdX, get_configuration_value_for_site
 
 try:
     import cPickle as pickle
