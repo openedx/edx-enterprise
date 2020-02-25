@@ -22,15 +22,12 @@ from django.utils.translation import ugettext as _
 
 from enterprise import utils
 from enterprise.admin.utils import (
-    ProgramStatuses,
     ValidationMessages,
     email_or_username__to__email,
-    get_course_runs_from_program,
     split_usernames_and_emails,
     validate_email_to_link,
 )
 from enterprise.admin.widgets import SubmitInput
-from enterprise.api_client.discovery import CourseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
     EnterpriseCustomer,
@@ -40,7 +37,7 @@ from enterprise.models import (
     EnterpriseFeatureUserRoleAssignment,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import MultipleProgramMatchError
+
 
 try:
     from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
@@ -72,11 +69,6 @@ class ManageLearnersForm(forms.Form):
     course = forms.CharField(
         label=_("Enroll these learners in this course"), required=False,
         help_text=_("To enroll learners in a course, enter a course ID."),
-    )
-    program = forms.CharField(
-        label=_("Or enroll these learners in this program"), required=False,
-        help_text=_(
-            "To enroll learners in a program, enter a program name or ID.")
     )
     course_mode = forms.ChoiceField(
         label=_("Course enrollment track"), required=False,
@@ -134,7 +126,6 @@ class ManageLearnersForm(forms.Form):
         MODE = "mode"
         COURSE = "course"
         COURSE_MODE = "course_mode"
-        PROGRAM = "program"
         NOTIFY = "notify_on_enrollment"
         REASON = "reason"
         DISCOUNT = "discount"
@@ -215,37 +206,6 @@ class ManageLearnersForm(forms.Form):
         except (HttpClientError, HttpServerError):
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
 
-    def clean_program(self):
-        """
-        Clean program.
-
-        Try obtaining program treating form value as program UUID or title.
-
-        Returns:
-            dict: Program information if program found
-        """
-        program_id = self.cleaned_data[self.Fields.PROGRAM].strip()
-        if not program_id:
-            return None
-
-        try:
-            client = CourseCatalogApiClient(self._user, self._enterprise_customer.site)
-            program = client.get_program_by_uuid(program_id) or client.get_program_by_title(program_id)
-        except MultipleProgramMatchError as exc:
-            raise ValidationError(ValidationMessages.MULTIPLE_PROGRAM_MATCH.format(program_count=exc.programs_matched))
-        except (HttpClientError, HttpServerError):
-            raise ValidationError(ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_id))
-
-        if not program:
-            raise ValidationError(ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_id))
-
-        if program['status'] != ProgramStatuses.ACTIVE:
-            raise ValidationError(
-                ValidationMessages.PROGRAM_IS_INACTIVE.format(program_id=program_id, status=program['status'])
-            )
-
-        return program
-
     def clean_notify(self):
         """
         Clean the notify_on_enrollment field.
@@ -281,10 +241,6 @@ class ManageLearnersForm(forms.Form):
         cleaned_data[self.Fields.NOTIFY] = self.clean_notify()
 
         self._validate_course()
-        self._validate_program()
-
-        if self.data.get(self.Fields.PROGRAM, None) and self.data.get(self.Fields.COURSE, None):
-            raise ValidationError(ValidationMessages.COURSE_AND_PROGRAM_ERROR)
 
         return cleaned_data
 
@@ -305,31 +261,6 @@ class ManageLearnersForm(forms.Form):
                     course_id=course_details["course_id"],
                 ))
                 raise ValidationError({self.Fields.COURSE_MODE: error})
-
-    def _validate_program(self):
-        """
-        Verify that selected mode is available for program and all courses in the program
-        """
-        program = self.cleaned_data.get(self.Fields.PROGRAM)
-        if not program:
-            return
-
-        course_runs = get_course_runs_from_program(program)
-        try:
-            client = CourseCatalogApiClient(self._user, self._enterprise_customer.site)
-            available_modes = client.get_common_course_modes(course_runs)
-            course_mode = self.cleaned_data.get(self.Fields.COURSE_MODE)
-        except (HttpClientError, HttpServerError):
-            raise ValidationError(
-                ValidationMessages.FAILED_TO_OBTAIN_COURSE_MODES.format(program_title=program.get("title"))
-            )
-
-        if not course_mode:
-            raise ValidationError(ValidationMessages.COURSE_WITHOUT_COURSE_MODE)
-        if course_mode not in available_modes:
-            raise ValidationError(ValidationMessages.COURSE_MODE_NOT_AVAILABLE.format(
-                mode=course_mode, program_title=program.get("title"), modes=", ".join(available_modes)
-            ))
 
 
 class EnterpriseCustomerAdminForm(forms.ModelForm):

@@ -9,7 +9,6 @@ import unittest
 
 import ddt
 import mock
-from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 from faker import Factory as FakerFactory
 from pytest import mark
 
@@ -23,8 +22,7 @@ from enterprise.admin.forms import (
 )
 from enterprise.admin.utils import ValidationMessages
 from enterprise.api_client.discovery import CourseCatalogApiClient
-from enterprise.utils import MultipleProgramMatchError
-from test_utils import fake_catalog_api, fake_enrollment_api
+from test_utils import fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
@@ -34,7 +32,6 @@ from test_utils.factories import (
     SiteFactory,
     UserFactory,
 )
-from test_utils.fake_catalog_api import FAKE_PROGRAM_RESPONSE1, FAKE_PROGRAM_RESPONSE2
 
 FAKER = FakerFactory.create()
 
@@ -66,7 +63,6 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             email,
             file_attached=False,
             course="",
-            program="",
             course_mode="",
             notify="",
             reason="tests",
@@ -78,7 +74,6 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         form_data = {
             ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email,
             ManageLearnersForm.Fields.COURSE: course,
-            ManageLearnersForm.Fields.PROGRAM: program,
             ManageLearnersForm.Fields.COURSE_MODE: course_mode,
             ManageLearnersForm.Fields.NOTIFY: notify,
             ManageLearnersForm.Fields.REASON: reason,
@@ -256,142 +251,6 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
             form.Fields.COURSE_MODE: [ValidationMessages.COURSE_MODE_INVALID_FOR_COURSE.format(
                 course_mode=course_mode, course_id=course_id
             )],
-        }
-
-    @ddt.data(None, "")
-    def test_clean_program_empty(self, value):
-        form = self._make_bound_form("irrelevant@example.com", program=value)
-        assert form.is_valid()
-        assert form.cleaned_data[form.Fields.PROGRAM] is None
-
-    def test_clean_program_valid_by_uuid(self):
-        course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.return_value = {course_mode}
-        program_uuid = FAKE_PROGRAM_RESPONSE1.get("uuid")
-        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
-        assert form.is_valid()
-        assert form.cleaned_data[form.Fields.PROGRAM] == FAKE_PROGRAM_RESPONSE1
-
-    def test_clean_program_valid_by_title(self):
-        course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.return_value = None
-        self.catalog_api.get_program_by_title.side_effect = fake_catalog_api.get_program_by_title
-        self.catalog_api.get_common_course_modes.return_value = {course_mode}
-        program_title = FAKE_PROGRAM_RESPONSE1.get("title")
-        program_details = FAKE_PROGRAM_RESPONSE1
-        form = self._make_bound_form("irrelevant@example.com", program=program_title, course_mode=course_mode)
-        assert form.is_valid()
-        assert form.cleaned_data[form.Fields.PROGRAM] == program_details
-
-    @ddt.data(2, 4, 5, 7, 12, 42, 3e5)
-    def test_clean_program_course_api_exception(self, program_count):
-        course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.return_value = None
-        self.catalog_api.get_program_by_title.side_effect = MultipleProgramMatchError(program_count)
-
-        form = self._make_bound_form("irrelevant@example.com", program="irrelevant", course_mode=course_mode)
-        assert not form.is_valid()
-        assert form.errors == {
-            form.Fields.PROGRAM: [ValidationMessages.MULTIPLE_PROGRAM_MATCH.format(program_count=program_count)],
-        }
-
-    def test_clean_program_invalid(self):
-        program_id = "non-existing"
-        self.catalog_api.get_program_by_uuid.return_value = None
-        self.catalog_api.get_program_by_title.return_value = None
-        form = self._make_bound_form("irrelevant@example.com", program=program_id)
-        assert not form.is_valid()
-        assert form.errors == {
-            form.Fields.PROGRAM: [ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_id)],
-        }
-
-    @ddt.data("disabled", "unpublished", "deleted")
-    def test_clean_program_inactive(self, program_status):
-        program = FAKE_PROGRAM_RESPONSE1.copy()
-        program["status"] = program_status
-        program_id = program["uuid"]
-        self.catalog_api.get_program_by_uuid.return_value = program
-        form = self._make_bound_form("irrelevant@example.com", program=program_id)
-        assert not form.is_valid()
-        assert form.errors == {
-            form.Fields.PROGRAM: [
-                ValidationMessages.PROGRAM_IS_INACTIVE.format(program_id=program_id, status=program['status'])
-            ]
-        }
-
-    @ddt.data(HttpClientError, HttpServerError)
-    def test_clean_program_http_error(self, exception):
-        course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = exception
-        program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
-        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
-        assert not form.is_valid()
-        assert form.errors == {
-            form.Fields.PROGRAM: [ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_uuid)]
-        }
-
-    def test_validate_program_and_course_mode_missing(self):
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.return_value = {"prof"}
-        program_uuid = FAKE_PROGRAM_RESPONSE1.get("uuid")
-        form = self._make_bound_form("irrelevant@example.com", program=program_uuid)
-        assert not form.is_valid()
-        assert form.errors == {
-            "__all__": [ValidationMessages.COURSE_WITHOUT_COURSE_MODE]
-        }
-
-    @ddt.data(HttpClientError, HttpServerError)
-    def test_validate_program_and_course_mode_http_error(self, exception):
-        course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.side_effect = exception
-        program = FAKE_PROGRAM_RESPONSE2
-        form = self._make_bound_form("irrelevant@example.com", program=program["uuid"], course_mode=course_mode)
-        assert not form.is_valid()
-        assert form.errors == {
-            "__all__": [ValidationMessages.FAILED_TO_OBTAIN_COURSE_MODES.format(program_title=program.get("title"))]
-        }
-
-    def test_validate_program_and_course_mode_valid(self):
-        course_mode = "professional"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.side_effect = fake_catalog_api.get_common_course_modes
-        program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
-        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
-        assert form.is_valid()
-        assert form.cleaned_data[form.Fields.PROGRAM] == FAKE_PROGRAM_RESPONSE2
-
-    def test_validate_program_and_course_mode_invalid(self):
-        course_mode = "audit"
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.side_effect = fake_catalog_api.get_common_course_modes
-        program_uuid = FAKE_PROGRAM_RESPONSE2.get("uuid")
-        form = self._make_bound_form("irrelevant@example.com", program=program_uuid, course_mode=course_mode)
-        assert not form.is_valid()
-        assert form.errors == {
-            "__all__": [ValidationMessages.COURSE_MODE_NOT_AVAILABLE.format(
-                mode=course_mode, program_title=FAKE_PROGRAM_RESPONSE2.get("title"), modes=", ".join({"professional"})
-            )]
-        }
-
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_clean_both_course_and_program_passed(self, enrollment_client):
-        instance = enrollment_client.return_value
-        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        self.catalog_api.get_program_by_uuid.side_effect = fake_catalog_api.get_program_by_uuid
-        self.catalog_api.get_common_course_modes.return_value = {"audit"}
-
-        program_id = FAKE_PROGRAM_RESPONSE2.get("uuid")
-        course_id = "course-v1:edX+DemoX+Demo_Course"
-
-        form = self._make_bound_form(
-            "irrelevant@example.com", program=program_id, course=course_id, course_mode="audit"
-        )
-
-        assert not form.is_valid()
-        assert form.errors == {
-            "__all__": [ValidationMessages.COURSE_AND_PROGRAM_ERROR]
         }
 
     @ddt.unpack

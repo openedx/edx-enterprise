@@ -11,13 +11,10 @@ import ddt
 from pytest import mark, raises
 
 from django.core.exceptions import ValidationError
-from django.utils.dateparse import parse_datetime
 
 from enterprise.admin.utils import (
     ValidationMessages,
     email_or_username__to__email,
-    get_course_runs_from_program,
-    get_earliest_start_date_from_program,
     get_idiff_list,
     parse_csv,
     validate_email_to_link,
@@ -224,73 +221,3 @@ class TestValidateEmailToLink(unittest.TestCase):
 
             with raises(ValidationError, match=expected_message):
                 exists = validate_email_to_link(email)
-
-
-class TestGetCourseRunsFromProgram(unittest.TestCase):
-    """
-    Tests for :method:`get_course_runs_from_program`.
-    """
-    def test_get_course_runs_from_program_no_courses(self):
-        program = {}
-        result = get_course_runs_from_program(program)
-        assert result == set()
-
-    def test_get_course_runs_from_program_no_runs(self):
-        program = {"courses": [{}, {}, {}]}
-        result = get_course_runs_from_program(program)
-        assert result == set()
-
-    def test_get_course_runs_from_program_no_keys(self):
-        program = {
-            "courses": [
-                {"course_runs": []},
-                {"course_runs": []},
-            ]
-        }
-        result = get_course_runs_from_program(program)
-        assert result == set()
-
-    def test_get_course_runs_from_program_normal(self):
-        program = {
-            "courses": [
-                {"course_runs": [
-                    {"key": "1"},
-                    {"key": None}
-                ]},
-                {"course_runs": [
-                    {"key": "CourseRunKey"}
-                ]},
-            ]
-        }
-        result = get_course_runs_from_program(program)
-        assert result == {"1", "CourseRunKey"}
-
-
-class TestGetEarliestStartDateFromProgram(unittest.TestCase):
-    """
-    Tests for :method:`get_earliest_start_date_from_program`.
-    """
-    def test_earliest_start_date_no_courses(self):
-        program = {}
-        assert get_earliest_start_date_from_program(program) is None
-
-    def test_earliest_start_date_no_course_runs(self):
-        program = {"courses": [{"course_runs": []}]}
-        assert get_earliest_start_date_from_program(program) is None
-
-    def test_earliest_start_date(self):
-        program = {
-            "courses": [
-                {
-                    "course_runs": [
-                        {
-                            "start": "2016-01-01T00:00:00Z",
-                        },
-                        {
-                            "start": "2017-01-01T00:00:00Z",
-                        }
-                    ]
-                }
-            ]
-        }
-        assert get_earliest_start_date_from_program(program) == parse_datetime('2016-01-01 00:00:00+0000')
