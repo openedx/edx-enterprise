@@ -183,20 +183,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         self.get_data_mock.return_value = response
         assert self.api.get_program_type_by_slug('slug') is None
 
-    @ddt.unpack
-    @ddt.data(
-        # single run
-        (("c1",), [_make_run("c1", "prof", "audit")], {"prof", "audit"}),
-        # multiple runs - intersection
-        (("c1", "c2"), [_make_run("c1", "prof", "audit"), _make_run("c2", "prof")], {"prof"}),
-        # multiple runs, one of which is empty
-        (("c1", "c2"), [_make_run("c1"), _make_run("c2", "prof")], set()),
-        # multiple runs, one of which is empty - other way around
-        (("c1", "c2"), [_make_run("c2", "prof"), _make_run("c1")], set()),
-        # run(s) not found
-        (("c1", "c3", "c4"), [_make_run("c1"), _make_run("c2", "prof")], set()),
-    )
-
     @ddt.data(
         (None, []),
         ({}, []),
