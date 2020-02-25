@@ -603,6 +603,34 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._test_post_existing_record_response(response)
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
 
+    def test_post_existing_pending_record_with_another_enterprise_customer(self):
+        """
+        Tests that a PendingEnterpriseCustomerUser already linked with an Enterprise cannot be linked with another
+        Enterprise and a warning message is created in response
+        """
+        # precondition checks:
+        self._login()
+        email = FAKER.email()  # pylint: disable=no-member
+        another_ent = EnterpriseCustomerFactory()
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=another_ent, user_email=email)
+        # Confirm that only one instance exists before post request
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
+
+        response = self.client.post(
+            self.view_url,
+            data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
+        )
+        pending_user_message = (
+            "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
+            "you will be able to add the learner once the user creates account or other enterprise "
+            "deletes the pending user"
+        )
+        self._assert_django_messages(response, {
+            (messages.WARNING, pending_user_message.format(ec_name=another_ent.name, user_email=email)),
+        })
+        self._test_post_existing_record_response(response)
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
+
     def _enroll_user_request(self, user, mode, course_id="", program_id="", notify=True, reason="tests", discount=0.0):
         """
         Perform post request to log in and submit the form to enroll a user.
