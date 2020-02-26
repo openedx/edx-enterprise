@@ -154,13 +154,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata')
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
     def test_transmit_content_metadata_task_with_error(
             self,
+            transmit_content_metadata_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
             degreed_create_content_metadata_mock,
-            transmit_content_metadata_mock,
     ):  # pylint: disable=invalid-name
         """
         Verify the data transmission task for integrated channels with error.
@@ -212,13 +212,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         )
 
         expected_calls = [
-            mock.call('C-3PO', '', ''),
-            mock.call('C-3PO', '', '')
+            mock.call('C-3PO', 'SAP', 1),
+            mock.call('C-3PO', 'DEGREED', 1)
         ]
 
         call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
 
-        transmit_content_metadata_mock.delay.assert_has_calls(expected_calls, any_order=True)
+        transmit_content_metadata_mock.assert_has_calls(expected_calls, any_order=True)
 
     @responses.activate
     @freeze_time(NOW)
@@ -226,13 +226,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata')
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
     def test_transmit_content_metadata_task_success(
             self,
+            transmit_content_metadata_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
             degreed_create_content_metadata_mock,
-            transmit_content_metadata_mock,
     ):  # pylint: disable=invalid-name
         """
         Test the data transmission task.
@@ -246,13 +246,13 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         self.mock_enterprise_customer_catalogs(enterprise_catalog_uuid)
 
         expected_calls = [
-            mock.call('C-3PO', '', ''),
-            mock.call('C-3PO', '', '')
+            mock.call('C-3PO', 'SAP', 1),
+            mock.call('C-3PO', 'DEGREED', 1),
         ]
 
         call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
 
-        transmit_content_metadata_mock.delay.assert_has_calls(expected_calls, any_order=True)
+        transmit_content_metadata_mock.assert_has_calls(expected_calls, any_order=True)
 
     @responses.activate
     def test_transmit_content_metadata_task_no_channel(self):
