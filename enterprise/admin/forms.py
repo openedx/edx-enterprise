@@ -247,10 +247,10 @@ class ManageLearnersForm(forms.Form):
         return program
 
     def clean_reason(self):
-        reason = self.cleaned_data.get(self.Fields.REASON).strip()
-        if not reason or len(reason) == 0:
-            return None
-        return reason
+        """
+        Clean the reason for enrollment field
+        """
+        return self.cleaned_data.get(self.Fields.REASON).strip()
 
     def clean_notify(self):
         """
@@ -340,16 +340,13 @@ class ManageLearnersForm(forms.Form):
 
     def _validate_reason(self):
         """
-        Verify that the reason field is populated if the new learner(s) is being enrolled
-        in a course or program.
+        Verify that the reason field is populated if the new learner(s) is being enrolled in a course.
         """
-        program = self.cleaned_data.get(self.Fields.PROGRAM)
         course = self.cleaned_data.get(self.Fields.COURSE)
+        reason = self.cleaned_data.get(self.Fields.REASON)
 
-        if program or course:
-            reason = self.cleaned_data.get(self.Fields.REASON)
-            if not reason:
-                raise ValidationError(ValidationMessages.MISSING_REASON)
+        if course and not reason:
+            raise ValidationError(ValidationMessages.MISSING_REASON)
 
 
 class EnterpriseCustomerAdminForm(forms.ModelForm):
