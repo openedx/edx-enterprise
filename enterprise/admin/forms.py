@@ -89,7 +89,7 @@ class ManageLearnersForm(forms.Form):
             ("honor", _("Honor")),
         ],
     )
-    reason = forms.CharField(label=_("Reason for manual enrollment"), required=True)
+    reason = forms.CharField(label=_("Reason for manual enrollment"), required=False)
     discount = forms.DecimalField(
         label=_("Discount percentage for manual enrollment"),
         help_text=_("Discount percentage should be from 0 to 100"),
@@ -246,6 +246,12 @@ class ManageLearnersForm(forms.Form):
 
         return program
 
+    def clean_reason(self):
+        reason = self.cleaned_data.get(self.Fields.REASON).strip()
+        if not reason or len(reason) == 0:
+            return None
+        return reason
+
     def clean_notify(self):
         """
         Clean the notify_on_enrollment field.
@@ -282,6 +288,7 @@ class ManageLearnersForm(forms.Form):
 
         self._validate_course()
         self._validate_program()
+        self._validate_reason()
 
         if self.data.get(self.Fields.PROGRAM, None) and self.data.get(self.Fields.COURSE, None):
             raise ValidationError(ValidationMessages.COURSE_AND_PROGRAM_ERROR)
@@ -330,6 +337,19 @@ class ManageLearnersForm(forms.Form):
             raise ValidationError(ValidationMessages.COURSE_MODE_NOT_AVAILABLE.format(
                 mode=course_mode, program_title=program.get("title"), modes=", ".join(available_modes)
             ))
+
+    def _validate_reason(self):
+        """
+        Verify that the reason field is populated if the new learner(s) is being enrolled
+        in a course or program.
+        """
+        program = self.cleaned_data.get(self.Fields.PROGRAM)
+        course = self.cleaned_data.get(self.Fields.COURSE)
+
+        if program or course:
+            reason = self.cleaned_data.get(self.Fields.REASON)
+            if not reason:
+                raise ValidationError(ValidationMessages.MISSING_REASON)
 
 
 class EnterpriseCustomerAdminForm(forms.ModelForm):
