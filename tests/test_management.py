@@ -263,7 +263,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             ' {configuration},Duration: 0.0'.format(configuration=dummy_degreed)
         ]
 
-        with LogCapture(level=logging.INFO) as log_capture:
+        with LogCapture(level=logging.DEBUG) as log_capture:
             call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
@@ -331,7 +331,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
             ' {configuration},Duration: 0.0'.format(configuration=self.degreed)
         ]
 
-        with LogCapture(level=logging.INFO) as log_capture:
+        with LogCapture(level=logging.DEBUG) as log_capture:
             call_command('transmit_content_metadata', '--catalog_user', 'C-3PO')
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
@@ -350,7 +350,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         SAPSuccessFactorsEnterpriseCustomerConfiguration.objects.all().delete()
         DegreedEnterpriseCustomerConfiguration.objects.all().delete()
 
-        with LogCapture(level=logging.INFO) as log_capture:
+        with LogCapture(level=logging.DEBUG) as log_capture:
             call_command('transmit_content_metadata', '--catalog_user', user.username)
 
             # Because there are no IntegratedChannels, the process will end early.
@@ -365,7 +365,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         integrated_channel_enterprise.active = False
         integrated_channel_enterprise.save()
 
-        with LogCapture(level=logging.INFO) as log_capture:
+        with LogCapture(level=logging.DEBUG) as log_capture:
             call_command('transmit_content_metadata', '--catalog_user', self.user.username)
 
             # Because there are no active customers, the process will end early.
