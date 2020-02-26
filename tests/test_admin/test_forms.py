@@ -420,6 +420,29 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
                 error_message = 'Ensure that there are no more than 5 decimal places.'
             assert form.errors == {form.Fields.DISCOUNT: [error_message]}
 
+    @ddt.unpack
+    @ddt.data(
+        ("a thirst for knowledge", "a thirst for knowledge"),
+        ("   a thirst for knowledge   ", "a thirst for knowledge"),  # strips spaces
+        ("\r\t\n a thirst for knowledge", "a thirst for knowledge"),  # strips spaces
+        ("a thirst for knowledge\r\t\n ", "a thirst for knowledge"),  # strips spaces
+        ("    ", ""),
+    )
+    def test_clean_reason(self, reason, expected_reason):
+        form = self._make_bound_form(reason)
+        assert form.is_valid()
+        cleaned_data = form.clean()
+        assert cleaned_data[ManageLearnersForm.Fields.REASON] == expected_reason
+
+    def test_validate_reason(self):
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        reason = ""
+        form = self._make_bound_form("irrelevant@example.com", course=course_id, reason=reason)
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": [ValidationMessages.MISSING_REASON]
+        }
+
 
 @mark.django_db
 class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
