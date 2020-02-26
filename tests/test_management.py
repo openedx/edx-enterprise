@@ -189,7 +189,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         # enterprise courses API to send failure response
         dummy_enterprise_customer = factories.EnterpriseCustomerFactory(
             name='Dummy Enterprise',
-            )
+        )
         enterprise_catalog = factories.EnterpriseCustomerCatalogFactory(
             enterprise_customer=dummy_enterprise_customer,
             content_filter=content_filter
