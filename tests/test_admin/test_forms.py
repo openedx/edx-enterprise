@@ -429,7 +429,7 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         ("    ", ""),
     )
     def test_clean_reason(self, reason, expected_reason):
-        form = self._make_bound_form(reason)
+        form = self._make_bound_form("irrelevant@example.com", reason=reason)
         assert form.is_valid()
         cleaned_data = form.clean()
         assert cleaned_data[ManageLearnersForm.Fields.REASON] == expected_reason
