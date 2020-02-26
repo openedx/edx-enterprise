@@ -154,7 +154,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')  # pylint: disable=line-too-long
     def test_transmit_content_metadata_task_with_error(
             self,
             transmit_content_metadata_mock,
@@ -226,7 +226,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
     @mock.patch('integrated_channels.degreed.client.DegreedAPIClient.create_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')
+    @mock.patch('integrated_channels.integrated_channel.management.commands.transmit_content_metadata.transmit_content_metadata.delay')  # pylint: disable=line-too-long
     def test_transmit_content_metadata_task_success(
             self,
             transmit_content_metadata_mock,
