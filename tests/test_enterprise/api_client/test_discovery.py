@@ -12,7 +12,6 @@ import unittest
 import ddt
 import mock
 import responses
-from pytest import raises
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from slumber.exceptions import HttpClientError
 
@@ -20,7 +19,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
-from enterprise.utils import CourseCatalogApiError, NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import MockLoggingHandler
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
 
@@ -158,49 +157,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         self.get_data_mock.return_value = response
         assert self.api.get_program_by_uuid("any") is None
 
-    @ddt.unpack
-    @ddt.data(
-        ("mk Ultra", [{'title': "Star Wars"}], None),
-        ("Star Wars", [{'title': "Star Wars"}], {'title': "Star Wars"}),
-        (
-            "Apollo",
-            [{'title': "Star Wars"}, {'title': "Apollo", "uuid": "Apollo11"}],
-            {'title': "Apollo", "uuid": "Apollo11"}
-        ),
-    )
-    def test_get_program_by_title(self, program_title, response, expected_result):
-        """
-        Verify get_program_by_title of CourseCatalogApiClient works as expected.
-        """
-        self.get_data_mock.return_value = response
-
-        actual_result = self.api.get_program_by_title(program_title)
-
-        assert self.get_data_mock.call_count == 1
-        resource, _ = self._get_important_parameters(self.get_data_mock)
-
-        assert resource == CourseCatalogApiClient.PROGRAMS_ENDPOINT
-        assert actual_result == expected_result
-
-    @ddt.data(*EMPTY_RESPONSES)
-    def test_get_program_by_title_empty_response(self, response):
-        """
-        Verify get_program_by_title of CourseCatalogApiClient works as expected for empty responses.
-        """
-        self.get_data_mock.return_value = response
-        assert self.api.get_program_by_title("any") is None
-
-    def test_get_program_by_title_raise_multiple_match(self):
-        """
-        Verify get_program_by_title of CourseCatalogApiClient works as expected for when there are multiple matches.
-        """
-        self.get_data_mock.return_value = [
-            {'title': "Apollo", "uuid": "Apollo11"},
-            {'title': "Apollo", "uuid": "Apollo12"}
-        ]
-        with raises(CourseCatalogApiError):
-            self.api.get_program_by_title("Apollo")
-
     @ddt.data("MicroMasters Certificate", "Professional Certificate", "XSeries Certificate")
     def test_get_program_type_by_slug(self, slug):
         """
@@ -225,38 +181,6 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         self.get_data_mock.return_value = response
         assert self.api.get_program_type_by_slug('slug') is None
-
-    @ddt.unpack
-    @ddt.data(
-        # single run
-        (("c1",), [_make_run("c1", "prof", "audit")], {"prof", "audit"}),
-        # multiple runs - intersection
-        (("c1", "c2"), [_make_run("c1", "prof", "audit"), _make_run("c2", "prof")], {"prof"}),
-        # multiple runs, one of which is empty
-        (("c1", "c2"), [_make_run("c1"), _make_run("c2", "prof")], set()),
-        # multiple runs, one of which is empty - other way around
-        (("c1", "c2"), [_make_run("c2", "prof"), _make_run("c1")], set()),
-        # run(s) not found
-        (("c1", "c3", "c4"), [_make_run("c1"), _make_run("c2", "prof")], set()),
-    )
-    def test_get_common_course_modes(self, course_runs, response, expected_result):
-        """
-        Verify get_common_course_modes of CourseCatalogApiClient works as expected.
-        """
-        def get_course_run(*args, **kwargs):  # pylint: disable=unused-argument
-            """
-            Return course run data from `reponse` argument by key.
-            """
-            resource_id = kwargs.get("resource_id")
-            try:
-                return next(item for item in response if item["key"] == resource_id)
-            except StopIteration:
-                return {}
-
-        self.get_data_mock.side_effect = get_course_run
-
-        actual_result = self.api.get_common_course_modes(course_runs)
-        assert actual_result == expected_result
 
     @ddt.data(
         (None, []),

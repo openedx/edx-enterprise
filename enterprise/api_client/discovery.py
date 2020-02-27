@@ -18,7 +18,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import utils
-from enterprise.utils import MultipleProgramMatchError, NotConnectedToOpenEdX, get_configuration_value_for_site
+from enterprise.utils import NotConnectedToOpenEdX, get_configuration_value_for_site
 
 try:
     import cPickle as pickle
@@ -292,25 +292,6 @@ class CourseCatalogApiClient:
             long_term_cache=True
         )
 
-    def get_program_by_title(self, program_title):
-        """
-        Return single program by name, or None if not found.
-
-        Arguments:
-            program_title(string): Program title as seen by students and in Course Catalog Admin
-
-        Returns:
-            dict: Program data provided by Course Catalog API
-
-        """
-        all_programs = self._load_data(self.PROGRAMS_ENDPOINT, default=[])
-        matching_programs = [program for program in all_programs if program.get('title') == program_title]
-        if len(matching_programs) > 1:
-            raise MultipleProgramMatchError(len(matching_programs))
-        if len(matching_programs) == 1:
-            return matching_programs[0]
-        return None
-
     def get_program_by_uuid(self, program_uuid):
         """
         Return single program by UUID, or None if not found.
@@ -360,60 +341,6 @@ class CourseCatalogApiClient:
             resource_id=slug,
             default=None,
         )
-
-    def get_common_course_modes(self, course_run_ids):
-        """
-        Find common course modes for a set of course runs.
-
-        This function essentially returns an intersection of types of seats available
-        for each course run.
-
-        Arguments:
-            course_run_ids(Iterable[str]): Target Course run IDs.
-
-        Returns:
-            set: course modes found in all given course runs
-
-        Examples:
-            # run1 has prof and audit, run 2 has the same
-            get_common_course_modes(['course-v1:run1', 'course-v1:run2'])
-            {'prof', 'audit'}
-
-            # run1 has prof and audit, run 2 has only prof
-            get_common_course_modes(['course-v1:run1', 'course-v1:run2'])
-            {'prof'}
-
-            # run1 has prof and audit, run 2 honor
-            get_common_course_modes(['course-v1:run1', 'course-v1:run2'])
-            {}
-
-            # run1 has nothing, run2 has prof
-            get_common_course_modes(['course-v1:run1', 'course-v1:run2'])
-            {}
-
-            # run1 has prof and audit, run 2 prof, run3 has audit
-            get_common_course_modes(['course-v1:run1', 'course-v1:run2', 'course-v1:run3'])
-            {}
-
-            # run1 has nothing, run 2 prof, run3 has prof
-            get_common_course_modes(['course-v1:run1', 'course-v1:run2', 'course-v1:run3'])
-            {}
-
-        """
-        available_course_modes = None
-        for course_run_id in course_run_ids:
-            course_run = self.get_course_run(course_run_id) or {}
-            course_run_modes = {seat.get('type') for seat in course_run.get('seats', [])}
-
-            if available_course_modes is None:
-                available_course_modes = course_run_modes
-            else:
-                available_course_modes &= course_run_modes
-
-            if not available_course_modes:
-                return available_course_modes
-
-        return available_course_modes
 
     def _load_data(self, resource, default=DEFAULT_VALUE_SAFEGUARD, **kwargs):
         """
