@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.4.2] - 2020-02-27
+--------------------
+
+* Removed the code for enrolling the program from manage learner django admin panel.
+
 [2.4.1] - 2020-02-26
 --------------------
 
