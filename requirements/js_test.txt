@@ -7,23 +7,22 @@
 cheroot==8.3.0            # via cherrypy
 cherrypy==18.5.0          # via jasmine
 glob2==0.7                # via jasmine-core
-importlib-resources==1.0.2  # via jaraco.text
-jaraco.classes==2.0       # via jaraco.collections
-jaraco.collections==2.1   # via cherrypy
-jaraco.functools==2.0     # via cheroot, jaraco.text, tempora
+jaraco.classes==3.1.0     # via jaraco.collections
+jaraco.collections==3.0.0  # via cherrypy
+jaraco.functools==3.0.0   # via cheroot, jaraco.text, tempora
 jaraco.text==3.2.0        # via jaraco.collections
 jasmine-core==3.1.0       # via jasmine
 jasmine==3.1.0
 jinja2==2.11.1            # via jasmine
 markupsafe==1.1.1         # via jinja2
-more-itertools==8.2.0     # via cheroot, cherrypy, jaraco.functools
+more-itertools==8.2.0     # via cheroot, cherrypy, jaraco.classes, jaraco.functools
 ordereddict==1.1          # via jasmine-core
 portend==2.6              # via cherrypy
 pytz==2019.3              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.141.0         # via jasmine
-six==1.14.0               # via cheroot, jaraco.classes, jaraco.collections, jaraco.text, tempora
-tempora==1.14.1           # via portend
+six==1.14.0               # via cheroot, jaraco.collections, jaraco.text
+tempora==2.1.0            # via portend
 urllib3==1.25.8           # via selenium
 zc.lockfile==2.0          # via cherrypy
 

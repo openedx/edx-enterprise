@@ -15,9 +15,9 @@ attrs==19.3.0
 babel==2.8.0
 backports.functools-lru-cache==1.6.1  # via caniusepython3
 billiard==3.3.0.23
-bleach==3.1.0
+bleach==3.1.1
 caniusepython3==7.2.0
-celery==3.1.25
+celery==3.1.26.post2
 certifi==2019.11.28
 cffi==1.14.0
 chardet==3.0.4
@@ -47,24 +47,23 @@ djangorestframework-xml==1.4.0
 djangorestframework==3.9.4
 doc8==0.8.0
 docutils==0.16
-edx-django-utils==2.0.4
-edx-drf-extensions==2.4.6
+edx-django-utils==3.0
+edx-drf-extensions==3.0.0
 edx-i18n-tools==0.5.0
 edx-lint==1.4.1
 edx-opaque-keys[django]==2.0.1
-edx-rbac==1.0.5
-edx-rest-api-client==3.0.2
+edx-rbac==1.1.0
+edx-rest-api-client==4.0.1
 edx-sphinx-theme==1.5.0
 edx-tincan-py35==0.0.5
 factory-boy==2.12.0
-faker==4.0.0
+faker==4.0.1
 filelock==3.0.12          # via tox, virtualenv
-freezegun==0.3.14
+freezegun==0.3.15
 future==0.18.2
-idna==2.8
+idna==2.9
 imagesize==1.2.0
 importlib-metadata==1.5.0
-importlib-resources==1.0.2  # via virtualenv
 inflect==3.0.2
 isort==4.3.21
 jinja2-pluralize==0.3.0
@@ -77,14 +76,13 @@ markupsafe==1.1.1
 mccabe==0.6.1             # via pylint
 mock==3.0.5
 more-itertools==8.2.0
-newrelic==5.6.0.135
+newrelic==5.8.0.136
 packaging==20.1
 path.py==12.4.0
 path==13.1.0
-pathlib2==2.3.5
 pbr==5.4.4
 pillow==7.0.0
-pip-tools==4.4.1
+pip-tools==4.5.1
 pkginfo==1.5.0.1          # via twine
 pluggy==0.13.1
 pockets==0.9.1
@@ -93,7 +91,7 @@ psutil==1.2.1
 py==1.8.1
 pycodestyle==2.5.0
 pycparser==2.19
-pycryptodomex==3.9.6
+pycryptodomex==3.9.7
 pydocstyle==5.0.2
 pygments==2.5.2
 pyjwkest==1.3.2
@@ -114,8 +112,8 @@ pytz==2019.3
 pyyaml==5.3
 readme-renderer==24.0
 requests-toolbelt==0.9.1  # via twine
-requests==2.22.0
-responses==0.10.9
+requests==2.23.0
+responses==0.10.11
 rest-condition==1.0.3
 restructuredtext-lint==1.3.0
 rules==2.2
@@ -123,26 +121,26 @@ semantic-version==2.8.4
 six==1.14.0
 slumber==0.7.1
 snowballstemmer==2.0.0
-sphinx==2.4.1
-sphinxcontrib-applehelp==1.0.1
-sphinxcontrib-devhelp==1.0.1
-sphinxcontrib-htmlhelp==1.0.2
+sphinx==2.4.3
+sphinxcontrib-applehelp==1.0.2
+sphinxcontrib-devhelp==1.0.2
+sphinxcontrib-htmlhelp==1.0.3
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-napoleon==0.6.1
-sphinxcontrib-qthelp==1.0.2
-sphinxcontrib-serializinghtml==1.1.3
-stevedore==1.31.0
-testfixtures==6.12.0
+sphinxcontrib-qthelp==1.0.3
+sphinxcontrib-serializinghtml==1.1.4
+stevedore==1.32.0
+testfixtures==6.14.0
 text-unidecode==1.3
 toml==0.10.0              # via tox
 tox-battery==0.5.1
-tox==3.14.3
-tqdm==4.42.1              # via twine
+tox==3.14.5
+tqdm==4.43.0              # via twine
 twine==1.11.0
 typed-ast==1.4.1          # via astroid
 unicodecsv==0.14.1
 urllib3==1.25.8
-virtualenv==20.0.2        # via tox
+virtualenv==20.0.7        # via tox
 wcwidth==0.1.8
 webencodings==0.5.1
 wheel==0.34.2

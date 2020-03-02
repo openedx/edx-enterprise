@@ -7,7 +7,6 @@ celery
 code-annotations
 cryptography
 django-config-models
-django-countries
 django-crum
 django-fernet-fields
 django-filter
@@ -42,3 +41,4 @@ testfixtures
 unicodecsv
 
 # Explicitly pinned packages. Anything pinned here must match edx-platform's pinned packages.
+django-countries==5.5  # pinned because 6.0 causes much longer load times on enterprise customer django admin screen
