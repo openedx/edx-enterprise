@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.5.0] - 2020-03-03
+--------------------
+
+* Removing enterprise_learner_portal_hostname from ent cust model (including api)
+
 [2.4.2] - 2020-02-27
 --------------------
 
