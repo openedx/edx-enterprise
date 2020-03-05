@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.5.1] - 2020-03-05
+--------------------
+
+* Added new data type for enterprise report configurations
+
 [2.5.0] - 2020-03-03
 --------------------
 
