@@ -3,8 +3,10 @@
 from __future__ import unicode_literals
 
 import collections
-from django.db import migrations
+
 import jsonfield.fields
+
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
