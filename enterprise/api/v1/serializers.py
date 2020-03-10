@@ -111,6 +111,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'identity_provider', 'enable_audit_enrollment', 'replace_sensitive_sso_username',
             'enable_portal_code_management_screen', 'sync_learner_profile_data', 'enable_audit_data_reporting',
             'enable_learner_portal', 'enable_portal_reporting_config_screen', 'contact_email',
+            'enable_portal_subscription_management_screen',
         )
 
     site = SiteSerializer()

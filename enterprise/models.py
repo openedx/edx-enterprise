@@ -261,6 +261,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether to allow access to the reporting configurations screen in the admin portal.")
     )
 
+    enable_portal_subscription_management_screen = models.BooleanField(  # pylint: disable=invalid-name
+        default=False,
+        help_text=_("Specifies whether to allow access to the subscription management screen in the admin portal.")
+    )
+
     enable_learner_portal = models.BooleanField(
         default=False,
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")

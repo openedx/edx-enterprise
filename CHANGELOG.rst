@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.5.5] - 2020-03-13
+--------------------
+
+* Add field for enabling subscription managment screen in the admin portal to EnterpriseCustomer.
+
 [2.5.4] - 2020-03-12
 --------------------
 
