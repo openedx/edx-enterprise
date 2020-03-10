@@ -1352,6 +1352,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         blank=True,
         null=True,
         load_kwargs={'object_pairs_hook': collections.OrderedDict},
+        dump_kwargs={'indent': 4},
         help_text=_(
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a JSON object. An empty JSON object means that all available content items will be "
@@ -1414,6 +1415,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         blank=True,
         null=True,
         load_kwargs={'object_pairs_hook': collections.OrderedDict},
+        dump_kwargs={'indent': 4},
         help_text=_(
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a Json object. An empty Json object means that all available content items will be "

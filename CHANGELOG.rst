@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.5.2] - 2020-03-10
+--------------------
+
+* Fixed formatting on JSON fields in django admin forms
+
 [2.5.1] - 2020-03-05
 --------------------
 
