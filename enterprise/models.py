@@ -16,6 +16,7 @@ from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rest_api_client.exceptions import HttpClientError
 from fernet_fields import EncryptedCharField
+from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
@@ -1352,7 +1353,7 @@ class EnterpriseCatalogQuery(TimeStampedModel):
         blank=True,
         null=True,
         load_kwargs={'object_pairs_hook': collections.OrderedDict},
-        dump_kwargs={'indent': 4},
+        dump_kwargs={'indent': 4, 'cls': JSONEncoder, 'separators': (',', ':')},
         help_text=_(
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a JSON object. An empty JSON object means that all available content items will be "
@@ -1415,7 +1416,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         blank=True,
         null=True,
         load_kwargs={'object_pairs_hook': collections.OrderedDict},
-        dump_kwargs={'indent': 4},
+        dump_kwargs={'indent': 4, 'cls': JSONEncoder, 'separators': (',', ':')},
         help_text=_(
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a Json object. An empty Json object means that all available content items will be "
