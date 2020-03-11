@@ -81,6 +81,7 @@ class ManageLearnersForm(forms.Form):
         ],
     )
     reason = forms.CharField(label=_("Reason for manual enrollment"), required=True)
+    sales_force_id = forms.CharField(label=_("Salesforce Opportunity ID"), required=False)
     discount = forms.DecimalField(
         label=_("Discount percentage for manual enrollment"),
         help_text=_("Discount percentage should be from 0 to 100"),
@@ -127,6 +128,7 @@ class ManageLearnersForm(forms.Form):
         COURSE_MODE = "course_mode"
         NOTIFY = "notify_on_enrollment"
         REASON = "reason"
+        SALES_FORCE_ID = "sales_force_id"
         DISCOUNT = "discount"
 
     class CsvColumns:

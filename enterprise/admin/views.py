@@ -535,6 +535,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enrollment_requester=None,
             enrollment_reason=None,
             discount=0.0,
+            sales_force_id=None,
     ):
         """
         Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -547,6 +548,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enrollment_requester (User): Admin user who is requesting the enrollment.
             enrollment_reason (str): A reason for enrollment.
             discount (Decimal): Percentage discount for enrollment.
+            sales_force_id (str): Salesforce opportunity id.
 
         Returns:
             successes: A list of users who were successfully enrolled in the course
@@ -583,6 +585,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 course_id,
                 enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL),
                 discount=discount,
+                sales_force_id=sales_force_id,
             )
             pending.append(pending_user)
             if enrollment_requester and enrollment_reason:
@@ -697,6 +700,7 @@ class EnterpriseCustomerManageLearnersView(View):
             course_id=None,
             notify=True,
             enrollment_reason=None,
+            sales_force_id=None,
             discount=0.0
     ):
         """
@@ -722,6 +726,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enrollment_requester=request.user,
             enrollment_reason=enrollment_reason,
             discount=discount,
+            sales_force_id=sales_force_id,
         )
         all_successes = succeeded + pending
         if notify:
@@ -747,6 +752,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 "discount_percentage": float(discount),
                 "enterprise_customer_name": enterprise_customer.name,
                 "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                "sales_force_id": sales_force_id,
             } for success in succeeded]
             EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
         cls.send_messages(request, pending_messages)
@@ -828,10 +834,8 @@ class EnterpriseCustomerManageLearnersView(View):
             notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
             discount = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.DISCOUNT)
-
-            course_id = None
-            if course_details:
-                course_id = course_details['course_id']
+            sales_force_id = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.SALES_FORCE_ID)
+            course_id = course_details['course_id'] if course_details else None
 
             if course_id:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
@@ -844,6 +848,7 @@ class EnterpriseCustomerManageLearnersView(View):
                         course_id=course_id,
                         notify=notify,
                         enrollment_reason=manual_enrollment_reason,
+                        sales_force_id=sales_force_id,
                         discount=discount
                     )
 

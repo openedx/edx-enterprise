@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.5.3] - 2020-03-11
+--------------------
+
+* Added the salesforce opportunity_id in manage learner django admin.
+
 [2.5.2] - 2020-03-10
 --------------------
 
