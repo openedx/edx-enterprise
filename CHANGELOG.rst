@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[2.5.4] - 2020-03-12
+--------------------
+
+* Reset authentication cookies on enterprise selection to update JWT cookie with user's enterprise
+
 [2.5.3] - 2020-03-11
 --------------------
 
