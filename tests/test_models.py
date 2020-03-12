@@ -385,6 +385,8 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
             username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
         )
         self.user = factories.UserFactory(username='Batman')
+        self.order_create_log_message = 'Creating order for enterprise learner with id [{}] for enrollment in course ' \
+                                        'with id: [{}], [percentage discount] [{}] and [sales_force_id] [{}]'
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -546,28 +548,38 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         Test that expected logs appear when we try to create an order for a course while enrolling an enterprise user.
         """
         discount = 10.0
+        sales_force_id = 'dummy-sales_force_id'
         user = factories.UserFactory()
         utils_mock.return_value = user
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
 
-        expected_msg = 'Creating order for enterprise learner with id [{}] for enrollment in course with id: [{}] ' \
-                       'with [{}] percentage discount'.format(enterprise_customer_user.user_id, course_run_id, discount)
+        expected_msg = self.order_create_log_message.format(
+            enterprise_customer_user.user_id,
+            course_run_id,
+            discount,
+            sales_force_id
+        )
 
         with LogCapture(level=logging.DEBUG) as log_capture:
-            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount)
+            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, sales_force_id)
             assert expected_msg in log_capture.records[0].getMessage()
 
     @mock.patch('enterprise.models.get_ecommerce_worker_user')
     def test_create_order_error_cannot_retrieve_service_worker(self, utils_mock):
         discount = 100.0
+        sales_force_id = 'other-sales_force_id'
         utils_mock.return_value = None
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
 
         expected_messages = [
-            'Creating order for enterprise learner with id [{}] for enrollment in course with id: [{}] with [{}] '
-            'percentage discount'.format(enterprise_customer_user.user_id, course_run_id, discount),
+            self.order_create_log_message.format(
+                enterprise_customer_user.user_id,
+                course_run_id,
+                discount,
+                sales_force_id
+            ),
             'Could not create order for enterprise learner with id [{}] for enrollment in course with id [{}]. Reason: '
             '[{}]'.format(
                 enterprise_customer_user.user_id,
@@ -576,21 +588,26 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ]
 
         with LogCapture(level=logging.DEBUG) as log_capture:
-            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount)
+            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, sales_force_id)
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
     @mock.patch('enterprise.models.get_ecommerce_worker_user')
     def test_create_order_error_cannot_create_ecommerce_api_client(self, utils_mock):
         discount = 0.0
+        sales_force_id = 'another-sales_force_id'
         user = factories.UserFactory()
         utils_mock.return_value = user
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
 
         expected_messages = [
-            'Creating order for enterprise learner with id [{}] for enrollment in course with id: [{}] with [{}] '
-            'percentage discount'.format(enterprise_customer_user.user_id, course_run_id, discount),
+            self.order_create_log_message.format(
+                enterprise_customer_user.user_id,
+                course_run_id,
+                discount,
+                sales_force_id
+            ),
             'edx-enterprise unexpectedly failed as if not installed in an OpenEdX platform',
             'Could not create order for enterprise learner with id [{}] for enrollment in course with id [{}]'.format(
                 enterprise_customer_user.user_id,
@@ -598,7 +615,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ]
 
         with LogCapture(level=logging.DEBUG) as log_capture:
-            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount)
+            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, sales_force_id)
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
