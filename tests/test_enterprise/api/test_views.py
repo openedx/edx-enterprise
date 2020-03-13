@@ -446,6 +446,7 @@ class TestEnterpriseAPIViews(APITest):
                 },
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
+                'enable_portal_subscription_management_screen': False,
                 'contact_email': 'fake@example.com',
             }],
         ),
@@ -481,6 +482,7 @@ class TestEnterpriseAPIViews(APITest):
                     },
                     'sync_learner_profile_data': False,
                     'enable_learner_portal': False,
+                    'enable_portal_subscription_management_screen': False,
                     'contact_email': 'fake@example.com',
                 }
             }],
@@ -528,6 +530,7 @@ class TestEnterpriseAPIViews(APITest):
                 },
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
+                'enable_portal_subscription_management_screen': False,
                 'contact_email': 'fake@example.com',
             }],
         ),
@@ -657,6 +660,7 @@ class TestEnterpriseAPIViews(APITest):
             'enforce_data_sharing_consent': 'at_enrollment', 'enable_portal_code_management_screen': True,
             'enable_portal_reporting_config_screen': False,
             'site__domain': 'example.com', 'site__name': 'example.com',
+            'enable_portal_subscription_management_screen': False,
             'contact_email': 'fake@example.com',
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
@@ -697,6 +701,7 @@ class TestEnterpriseAPIViews(APITest):
                 },
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
+                'enable_portal_subscription_management_screen': False,
                 'contact_email': 'fake@example.com',
             }
         else:

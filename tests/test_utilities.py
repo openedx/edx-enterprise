@@ -109,6 +109,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "customer_type",
                 "enable_portal_code_management_screen",
                 "enable_portal_reporting_config_screen",
+                "enable_portal_subscription_management_screen",
                 "enable_learner_portal",
                 "contact_email",
             ]
