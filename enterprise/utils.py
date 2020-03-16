@@ -159,8 +159,7 @@ def get_oauth2authentication_class():
     try:
         from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser as OAuth2Authentication
     except ImportError:
-        from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication \
-            as OAuth2Authentication
+        return None
 
     return OAuth2Authentication
 
