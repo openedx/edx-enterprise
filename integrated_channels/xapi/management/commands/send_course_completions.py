@@ -219,6 +219,6 @@ class Command(BaseCommand):
         Returns:
             (dict): A dictionary containing course_id to course_overview mapping.
         """
-        return CourseOverview.get_from_ids_if_exists(
+        return CourseOverview.get_from_ids(
             [grade.course_id for grade in persistent_course_grades]
         )
