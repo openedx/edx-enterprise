@@ -12,6 +12,16 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[3.0.1] - 2020-03-18
+--------------------
+
+* Updated xApi integrated channel to use the updated CourseOverview method 'get_from_ids()'
+
+[3.0.0] - 2020-03-16
+--------------------
+
+* Removed use of Bearer Authentication
+
 [2.5.5] - 2020-03-13
 --------------------
 
