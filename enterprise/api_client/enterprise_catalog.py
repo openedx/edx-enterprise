@@ -25,6 +25,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
 
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalog'
+    GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata' #.json ?
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token
@@ -96,6 +97,19 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
                 'Failed to delete EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                catalog_uuid, str(exc)
+            )
+            return {}
+
+    @JwtLmsApiClient.refresh_token
+    def enterprise_catalog_get_content_metadata(self, catalog_uuid):
+        """Returns all the content linked to the specified catalog, ordered by content key."""
+        endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT)(catalog_uuid)
+        try:
+            return endpoint.get()
+        except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            LOGGER.exception(
+                'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
                 catalog_uuid, str(exc)
             )
             return {}
