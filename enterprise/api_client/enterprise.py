@@ -8,10 +8,13 @@ from __future__ import absolute_import, unicode_literals
 from collections import OrderedDict
 from logging import getLogger
 
+from waffle import switch_is_active
+
 from django.conf import settings
 from django.core.cache import cache
 
 from enterprise import utils
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import JwtLmsApiClient
 
 LOGGER = getLogger(__name__)
@@ -44,12 +47,16 @@ class EnterpriseApiClient(JwtLmsApiClient):
         content_metadata = OrderedDict()
         enterprise_customer_catalogs = enterprise_catalogs or enterprise_customer.enterprise_customer_catalogs.all()
         for enterprise_customer_catalog in enterprise_customer_catalogs:
-            response = self._load_data(
-                self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
-                resource_id=str(enterprise_customer_catalog.uuid),
-                traverse_pagination=True,
-                querystring={'page_size': 1000},
-            )
+            if switch_is_active('ENTERPRISE_CATALOG_API_ENDPOINTS_ENABLED'):
+                response = \
+                    EnterpriseCatalogApiClient.enterprise_catalog_get_content_metadata(enterprise_customer_catalog.uuid)
+            else:
+                response = self._load_data(
+                    self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
+                    resource_id=str(enterprise_customer_catalog.uuid),
+                    traverse_pagination=True,
+                    querystring={'page_size': 1000},
+                )
 
             for item in response['results']:
                 content_id = utils.get_content_metadata_item_id(item)
