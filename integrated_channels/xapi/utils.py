@@ -67,4 +67,4 @@ def send_course_completion_statement(lrs_configuration, user, course_overview, c
         course_overview,
         course_grade,
     )
-    EnterpriseXAPIClient(lrs_configuration).save_statement(statement)
+    return EnterpriseXAPIClient(lrs_configuration).save_statement(statement)
