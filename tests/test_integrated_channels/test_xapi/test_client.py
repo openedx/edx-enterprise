@@ -12,6 +12,7 @@ from pytest import mark, raises
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.xapi.client import EnterpriseXAPIClient
+from integrated_channels.xapi.statements.base import EnterpriseStatement
 from test_utils import factories
 
 
@@ -25,6 +26,7 @@ class TestXAPILRSConfiguration(unittest.TestCase):
         super(TestXAPILRSConfiguration, self).setUp()
         self.x_api_lrs_config = factories.XAPILRSConfigurationFactory()
         self.x_api_client = EnterpriseXAPIClient(self.x_api_lrs_config)
+        self.statement = EnterpriseStatement()
 
     @mock.patch('integrated_channels.xapi.client.RemoteLRS', mock.MagicMock())
     def test_save_statement(self):
@@ -32,8 +34,8 @@ class TestXAPILRSConfiguration(unittest.TestCase):
         Verify that save_statement sends xAPI statement to LRS.
         """
         # verify that request completes without an error.
-        self.x_api_client.save_statement({})
-        self.x_api_client.lrs.save_statement.assert_called_once_with({})
+        self.x_api_client.save_statement(self.statement)
+        self.x_api_client.lrs.save_statement.assert_called_once_with(self.statement)
 
     @mock.patch('integrated_channels.xapi.client.RemoteLRS', mock.MagicMock())
     def test_save_statement_raises_client_error(self):
@@ -43,4 +45,4 @@ class TestXAPILRSConfiguration(unittest.TestCase):
         self.x_api_client.lrs.save_statement = mock.Mock(return_value=None)
 
         with raises(ClientError):
-            self.x_api_client.save_statement({})
+            self.x_api_client.save_statement(self.statement)
