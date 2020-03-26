@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[3.0.2] - 2020-03-26
+--------------------
+
+* Improved xApi logging to include statement and LRS endpoint'
+
 [3.0.1] - 2020-03-18
 --------------------
 

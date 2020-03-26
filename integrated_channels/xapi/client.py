@@ -49,6 +49,11 @@ class EnterpriseXAPIClient:
         Raises:
             ClientError: If xAPI statement fails to save.
         """
+        LOGGER.info(
+            "[Integrated Channel][xAPI] Sending statement %s to LRS endpoint %s ",
+            statement.to_json(),
+            self.lrs.endpoint
+        )
         response = self.lrs.save_statement(statement)
 
         if not response:
