@@ -11,6 +11,67 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+
+[3.0.2] - 2020-03-26
+--------------------
+
+* Improved xApi logging to include statement and LRS endpoint'
+
+[3.0.1] - 2020-03-18
+--------------------
+
+* Updated xApi integrated channel to use the updated CourseOverview method 'get_from_ids()'
+
+[3.0.0] - 2020-03-16
+--------------------
+
+* Removed use of Bearer Authentication
+
+[2.5.5] - 2020-03-13
+--------------------
+
+* Add field for enabling subscription managment screen in the admin portal to EnterpriseCustomer.
+
+[2.5.4] - 2020-03-12
+--------------------
+
+* Reset authentication cookies on enterprise selection to update JWT cookie with user's enterprise
+
+[2.5.3] - 2020-03-11
+--------------------
+
+* Added the salesforce opportunity_id in manage learner django admin.
+
+[2.5.2] - 2020-03-10
+--------------------
+
+* Fixed formatting on JSON fields in django admin forms
+
+[2.5.1] - 2020-03-05
+--------------------
+
+* Added new data type for enterprise report configurations
+
+[2.5.0] - 2020-03-03
+--------------------
+
+* Removing enterprise_learner_portal_hostname from ent cust model (including api)
+
+[2.4.2] - 2020-02-27
+--------------------
+
+* Removed the code for enrolling the program from manage learner django admin panel.
+
+[2.4.1] - 2020-02-26
+--------------------
+
+* Update log level from INFO to DEBUG for transmit_content_metadata management command
+
+[2.4.0] - 2020-02-25
+--------------------
+
+* Restricted PendingEnterpriseCustomerUser to be linked with only one EnterpriseCustomer at a time
+
 [2.3.9] - 2020-02-17
 --------------------
 

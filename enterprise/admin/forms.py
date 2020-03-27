@@ -90,6 +90,7 @@ class ManageLearnersForm(forms.Form):
         ],
     )
     reason = forms.CharField(label=_("Reason for manual enrollment"), required=False)
+    sales_force_id = forms.CharField(label=_("Salesforce Opportunity ID"), required=False)
     discount = forms.DecimalField(
         label=_("Discount percentage for manual enrollment"),
         help_text=_("Discount percentage should be from 0 to 100"),
@@ -215,36 +216,6 @@ class ManageLearnersForm(forms.Form):
         except (HttpClientError, HttpServerError):
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
 
-    def clean_program(self):
-        """
-        Clean program.
-
-        Try obtaining program treating form value as program UUID or title.
-
-        Returns:
-            dict: Program information if program found
-        """
-        program_id = self.cleaned_data[self.Fields.PROGRAM].strip()
-        if not program_id:
-            return None
-
-        try:
-            client = CourseCatalogApiClient(self._user, self._enterprise_customer.site)
-            program = client.get_program_by_uuid(program_id) or client.get_program_by_title(program_id)
-        except MultipleProgramMatchError as exc:
-            raise ValidationError(ValidationMessages.MULTIPLE_PROGRAM_MATCH.format(program_count=exc.programs_matched))
-        except (HttpClientError, HttpServerError):
-            raise ValidationError(ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_id))
-
-        if not program:
-            raise ValidationError(ValidationMessages.INVALID_PROGRAM_ID.format(program_id=program_id))
-
-        if program['status'] != ProgramStatuses.ACTIVE:
-            raise ValidationError(
-                ValidationMessages.PROGRAM_IS_INACTIVE.format(program_id=program_id, status=program['status'])
-            )
-
-        return program
 
     def clean_reason(self):
         """
@@ -287,7 +258,6 @@ class ManageLearnersForm(forms.Form):
         cleaned_data[self.Fields.NOTIFY] = self.clean_notify()
 
         self._validate_course()
-        self._validate_program()
         self._validate_reason()
 
         if self.data.get(self.Fields.PROGRAM, None) and self.data.get(self.Fields.COURSE, None):
@@ -312,31 +282,6 @@ class ManageLearnersForm(forms.Form):
                     course_id=course_details["course_id"],
                 ))
                 raise ValidationError({self.Fields.COURSE_MODE: error})
-
-    def _validate_program(self):
-        """
-        Verify that selected mode is available for program and all courses in the program
-        """
-        program = self.cleaned_data.get(self.Fields.PROGRAM)
-        if not program:
-            return
-
-        course_runs = get_course_runs_from_program(program)
-        try:
-            client = CourseCatalogApiClient(self._user, self._enterprise_customer.site)
-            available_modes = client.get_common_course_modes(course_runs)
-            course_mode = self.cleaned_data.get(self.Fields.COURSE_MODE)
-        except (HttpClientError, HttpServerError):
-            raise ValidationError(
-                ValidationMessages.FAILED_TO_OBTAIN_COURSE_MODES.format(program_title=program.get("title"))
-            )
-
-        if not course_mode:
-            raise ValidationError(ValidationMessages.COURSE_WITHOUT_COURSE_MODE)
-        if course_mode not in available_modes:
-            raise ValidationError(ValidationMessages.COURSE_MODE_NOT_AVAILABLE.format(
-                mode=course_mode, program_title=program.get("title"), modes=", ".join(available_modes)
-            ))
 
     def _validate_reason(self):
         """

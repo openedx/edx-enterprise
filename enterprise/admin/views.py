@@ -14,14 +14,12 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.contrib.auth import get_permission_codename
 from django.contrib.auth.models import User
-from django.core import mail
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
-from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
@@ -31,8 +29,6 @@ from enterprise.admin.utils import (
     UrlNames,
     ValidationMessages,
     email_or_username__to__email,
-    get_course_runs_from_program,
-    get_earliest_start_date_from_program,
     get_idiff_list,
     paginated_list,
     parse_csv,
@@ -50,12 +46,7 @@ from enterprise.models import (
     EnterpriseEnrollmentSource,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import (
-    get_configuration_value_for_site,
-    get_ecommerce_worker_user,
-    send_email_notification_message,
-    track_enrollment,
-)
+from enterprise.utils import get_ecommerce_worker_user, track_enrollment
 
 # Only create manual enrollments if running in edx-platform
 try:
@@ -305,7 +296,7 @@ class EnterpriseCustomerManageLearnersView(View):
         return queryset
 
     @classmethod
-    def _handle_singular(cls, enterprise_customer, manage_learners_form):
+    def _handle_singular(cls, request, enterprise_customer, manage_learners_form):
         """
         Link single user by email or username.
 
@@ -316,10 +307,21 @@ class EnterpriseCustomerManageLearnersView(View):
         form_field_value = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME]
         email = email_or_username__to__email(form_field_value)
         try:
-            validate_email_to_link(email, form_field_value, ValidationMessages.INVALID_EMAIL_OR_USERNAME, True)
+            existing_record = validate_email_to_link(email, form_field_value, ValidationMessages.
+                                                     INVALID_EMAIL_OR_USERNAME, True)
         except ValidationError as exc:
             manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc)
         else:
+            if isinstance(existing_record, PendingEnterpriseCustomerUser) and existing_record.enterprise_customer \
+                    != enterprise_customer:
+                messages.warning(
+                    request,
+                    ValidationMessages.PENDING_USER_ALREADY_LINKED.format(
+                        user_email=email,
+                        ec_name=existing_record.enterprise_customer.name
+                    )
+                )
+                return None
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]
 
@@ -524,78 +526,6 @@ class EnterpriseCustomerManageLearnersView(View):
         return users, unregistered_emails
 
     @classmethod
-    def enroll_users_in_program(
-            cls,
-            enterprise_customer,
-            program_details,
-            course_mode,
-            emails,
-            cohort=None,
-            enrollment_requester=None,
-            enrollment_reason=None
-    ):
-        """
-        Enroll existing users in all courses in a program, and create pending enrollments for nonexisting users.
-
-        Args:
-            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
-            program_details: The details of the program in which we're enrolling
-            course_mode (str): The mode with which we're enrolling in the program
-            emails: An iterable of email addresses which need to be enrolled
-
-        Returns:
-            successes: A list of users who were successfully enrolled in all courses of the program
-            pending: A list of PendingEnterpriseCustomerUsers who were successfully linked and had
-                pending enrollments created for them in the database
-            failures: A list of users who could not be enrolled in the program
-        """
-        existing_users, unregistered_emails = cls.get_users_by_email(emails)
-        course_ids = get_course_runs_from_program(program_details)
-
-        successes = []
-        pending = []
-        failures = []
-
-        for user in existing_users:
-            succeeded = cls.enroll_user(enterprise_customer, user, course_mode, *course_ids)
-            if succeeded:
-                successes.append(user)
-                if enrollment_requester and enrollment_reason:
-                    for course_id in course_ids:
-                        create_manual_enrollment_audit(
-                            enrollment_requester,
-                            user.email,
-                            UNENROLLED_TO_ENROLLED,
-                            enrollment_reason,
-                            course_id,
-                            role=MANUAL_ENROLLMENT_ROLE,
-                        )
-            else:
-                failures.append(user)
-
-        for email in unregistered_emails:
-            pending_user = enterprise_customer.enroll_user_pending_registration(
-                email,
-                course_mode,
-                *course_ids,
-                cohort=cohort,
-                enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
-            )
-            pending.append(pending_user)
-            if enrollment_requester and enrollment_reason:
-                for course_id in course_ids:
-                    create_manual_enrollment_audit(
-                        enrollment_requester,
-                        email,
-                        UNENROLLED_TO_ALLOWEDTOENROLL,
-                        enrollment_reason,
-                        course_id,
-                        role=MANUAL_ENROLLMENT_ROLE,
-                    )
-
-        return successes, pending, failures
-
-    @classmethod
     def enroll_users_in_course(
             cls,
             enterprise_customer,
@@ -605,6 +535,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enrollment_requester=None,
             enrollment_reason=None,
             discount=0.0,
+            sales_force_id=None,
     ):
         """
         Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -617,6 +548,7 @@ class EnterpriseCustomerManageLearnersView(View):
             enrollment_requester (User): Admin user who is requesting the enrollment.
             enrollment_reason (str): A reason for enrollment.
             discount (Decimal): Percentage discount for enrollment.
+            sales_force_id (str): Salesforce opportunity id.
 
         Returns:
             successes: A list of users who were successfully enrolled in the course
@@ -653,6 +585,7 @@ class EnterpriseCustomerManageLearnersView(View):
                 course_id,
                 enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL),
                 discount=discount,
+                sales_force_id=sales_force_id,
             )
             pending.append(pending_user)
             if enrollment_requester and enrollment_reason:
@@ -683,63 +616,13 @@ class EnterpriseCustomerManageLearnersView(View):
             message_function(http_request, text)
 
     @classmethod
-    def notify_program_learners(cls, enterprise_customer, program_details, users):
-        """
-        Notify learners about a program in which they've been enrolled.
-
-        Args:
-            enterprise_customer: The EnterpriseCustomer being linked to
-            program_details: Details about the specific program the learners were enrolled in
-            users: An iterable of the users or pending users who were enrolled
-        """
-        program_name = program_details.get('title')
-        program_branding = program_details.get('type')
-        program_uuid = program_details.get('uuid')
-
-        lms_root_url = get_configuration_value_for_site(
-            enterprise_customer.site,
-            'LMS_ROOT_URL',
-            settings.LMS_ROOT_URL
-        )
-        program_path = urlquote(
-            '/dashboard/programs/{program_uuid}/?tpa_hint={tpa_hint}'.format(
-                program_uuid=program_uuid,
-                tpa_hint=enterprise_customer.identity_provider,
-            )
-        )
-        destination_url = '{site}/{login_or_register}?next={program_path}'.format(
-            site=lms_root_url,
-            login_or_register='{login_or_register}',
-            program_path=program_path
-        )
-        program_type = 'program'
-        program_start = get_earliest_start_date_from_program(program_details)
-
-        with mail.get_connection() as email_conn:
-            for user in users:
-                login_or_register = 'register' if isinstance(user, PendingEnterpriseCustomerUser) else 'login'
-                destination_url = destination_url.format(login_or_register=login_or_register)
-                send_email_notification_message(
-                    user=user,
-                    enrolled_in={
-                        'name': program_name,
-                        'url': destination_url,
-                        'type': program_type,
-                        'start': program_start,
-                        'branding': program_branding,
-                    },
-                    enterprise_customer=enterprise_customer,
-                    email_connection=email_conn
-                )
-
-    @classmethod
     def get_success_enrollment_message(cls, users, enrolled_in):
         """
-        Create message for the users who were enrolled in a course or program.
+        Create message for the users who were enrolled in a course.
 
         Args:
             users: An iterable of users who were successfully enrolled
-            enrolled_in (str): A string identifier for the course or program the users were enrolled in
+            enrolled_in (str): A string identifier for the course the users were enrolled in
 
         Returns:
             tuple: A 2-tuple containing a message type and message text
@@ -760,11 +643,11 @@ class EnterpriseCustomerManageLearnersView(View):
     @classmethod
     def get_failed_enrollment_message(cls, users, enrolled_in):
         """
-        Create message for the users who were not able to be enrolled in a course or program.
+        Create message for the users who were not able to be enrolled in a course.
 
         Args:
             users: An iterable of users who were not successfully enrolled
-            enrolled_in (str): A string identifier for the course or program with which enrollment was attempted
+            enrolled_in (str): A string identifier for the course with which enrollment was attempted
 
         Returns:
         tuple: A 2-tuple containing a message type and message text
@@ -783,11 +666,11 @@ class EnterpriseCustomerManageLearnersView(View):
     @classmethod
     def get_pending_enrollment_message(cls, pending_users, enrolled_in):
         """
-        Create message for the users who were enrolled in a course or program.
+        Create message for the users who were enrolled in a course.
 
         Args:
             users: An iterable of PendingEnterpriseCustomerUsers who were successfully linked with a pending enrollment
-            enrolled_in (str): A string identifier for the course or program the pending users were linked to
+            enrolled_in (str): A string identifier for the course the pending users were linked to
 
         Returns:
             tuple: A 2-tuple containing a message type and message text
@@ -815,13 +698,13 @@ class EnterpriseCustomerManageLearnersView(View):
             emails,
             mode,
             course_id=None,
-            program_details=None,
             notify=True,
             enrollment_reason=None,
+            sales_force_id=None,
             discount=0.0
     ):
         """
-        Enroll the users with the given email addresses to the courses specified, either specifically or by program.
+        Enroll the users with the given email addresses to the course.
 
         Args:
             cls (type): The EnterpriseCustomerManageLearnersView class itself
@@ -830,72 +713,48 @@ class EnterpriseCustomerManageLearnersView(View):
             emails: An iterable of strings containing email addresses to enroll in a course
             mode: The enrollment mode the users will be enrolled in the course with
             course_id: The ID of the course in which we want to enroll
-            program_details: Details about a program in which we want to enroll
             notify: Whether to notify (by email) the users that have been enrolled
         """
         pending_messages = []
         paid_modes = ['verified', 'professional']
 
-        if course_id:
-            succeeded, pending, failed = cls.enroll_users_in_course(
-                enterprise_customer=enterprise_customer,
+        succeeded, pending, failed = cls.enroll_users_in_course(
+            enterprise_customer=enterprise_customer,
+            course_id=course_id,
+            course_mode=mode,
+            emails=emails,
+            enrollment_requester=request.user,
+            enrollment_reason=enrollment_reason,
+            discount=discount,
+            sales_force_id=sales_force_id,
+        )
+        all_successes = succeeded + pending
+        if notify:
+            enterprise_customer.notify_enrolled_learners(
+                catalog_api_user=request.user,
                 course_id=course_id,
-                course_mode=mode,
-                emails=emails,
-                enrollment_requester=request.user,
-                enrollment_reason=enrollment_reason,
-                discount=discount,
+                users=all_successes,
             )
-            all_successes = succeeded + pending
-            if notify:
-                enterprise_customer.notify_enrolled_learners(
-                    catalog_api_user=request.user,
-                    course_id=course_id,
-                    users=all_successes,
-                )
-            if succeeded:
-                pending_messages.append(cls.get_success_enrollment_message(succeeded, course_id))
-            if failed:
-                pending_messages.append(cls.get_failed_enrollment_message(failed, course_id))
-            if pending:
-                pending_messages.append(cls.get_pending_enrollment_message(pending, course_id))
+        if succeeded:
+            pending_messages.append(cls.get_success_enrollment_message(succeeded, course_id))
+        if failed:
+            pending_messages.append(cls.get_failed_enrollment_message(failed, course_id))
+        if pending:
+            pending_messages.append(cls.get_pending_enrollment_message(pending, course_id))
 
-            if mode in paid_modes:
-                # Create an order to track the manual enrollments of non-pending accounts
-                enrollments = [{
-                    "lms_user_id": success.id,
-                    "email": success.email,
-                    "username": success.username,
-                    "course_run_key": course_id,
-                    "discount_percentage": float(discount),
-                    "enterprise_customer_name": enterprise_customer.name,
-                    "enterprise_customer_uuid": str(enterprise_customer.uuid),
-                } for success in succeeded]
-                EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
-
-        if program_details:
-            succeeded, pending, failed = cls.enroll_users_in_program(
-                enterprise_customer=enterprise_customer,
-                program_details=program_details,
-                course_mode=mode,
-                emails=emails,
-                enrollment_requester=request.user,
-                enrollment_reason=enrollment_reason,
-            )
-            all_successes = succeeded + pending
-            if notify:
-                cls.notify_program_learners(
-                    enterprise_customer=enterprise_customer,
-                    program_details=program_details,
-                    users=all_successes
-                )
-            program_identifier = program_details.get('title', program_details.get('uuid', _('the program')))
-            if succeeded:
-                pending_messages.append(cls.get_success_enrollment_message(succeeded, program_identifier))
-            if failed:
-                pending_messages.append(cls.get_failed_enrollment_message(failed, program_identifier))
-            if pending:
-                pending_messages.append(cls.get_pending_enrollment_message(pending, program_identifier))
+        if mode in paid_modes:
+            # Create an order to track the manual enrollments of non-pending accounts
+            enrollments = [{
+                "lms_user_id": success.id,
+                "email": success.email,
+                "username": success.username,
+                "course_run_key": course_id,
+                "discount_percentage": float(discount),
+                "enterprise_customer_name": enterprise_customer.name,
+                "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                "sales_force_id": sales_force_id,
+            } for success in succeeded]
+            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
         cls.send_messages(request, pending_messages)
 
     def get(self, request, customer_uuid):
@@ -946,7 +805,7 @@ class EnterpriseCustomerManageLearnersView(View):
             # The form is valid. Call the appropriate helper depending on the mode:
             mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.MODE]
             if mode == ManageLearnersForm.Modes.MODE_SINGULAR and not is_bulk_entry:
-                linked_learners = self._handle_singular(enterprise_customer, manage_learners_form)
+                linked_learners = self._handle_singular(request, enterprise_customer, manage_learners_form)
             elif mode == ManageLearnersForm.Modes.MODE_SINGULAR:
                 linked_learners = self._handle_bulk_upload(
                     enterprise_customer,
@@ -960,7 +819,6 @@ class EnterpriseCustomerManageLearnersView(View):
         # _handle_form might add form errors, so we check if it is still valid
         if manage_learners_form.is_valid():
             course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
-            program_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.PROGRAM)
 
             # If we aren't installed in Open edX, blank out enrollment reason so downstream methods don't attempt to
             # create audit items
@@ -976,24 +834,23 @@ class EnterpriseCustomerManageLearnersView(View):
             notification_type = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.NOTIFY)
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
             discount = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.DISCOUNT)
+            sales_force_id = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.SALES_FORCE_ID)
+            course_id = course_details['course_id'] if course_details else None
 
-            course_id = None
-            if course_details:
-                course_id = course_details['course_id']
-
-            if course_id or program_details:
+            if course_id:
                 course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
-                self._enroll_users(
-                    request=request,
-                    enterprise_customer=enterprise_customer,
-                    emails=linked_learners,
-                    mode=course_mode,
-                    course_id=course_id,
-                    program_details=program_details,
-                    notify=notify,
-                    enrollment_reason=manual_enrollment_reason,
-                    discount=discount
-                )
+                if linked_learners:
+                    self._enroll_users(
+                        request=request,
+                        enterprise_customer=enterprise_customer,
+                        emails=linked_learners,
+                        mode=course_mode,
+                        course_id=course_id,
+                        notify=notify,
+                        enrollment_reason=manual_enrollment_reason,
+                        sales_force_id=sales_force_id,
+                        discount=discount
+                    )
 
             # Redirect to GET if everything went smooth.
             manage_learners_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS, args=(customer_uuid,))

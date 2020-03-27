@@ -86,24 +86,6 @@ class CourseCatalogApiError(Exception):
     """
 
 
-class MultipleProgramMatchError(CourseCatalogApiError):
-    """
-    Exception to raise when Course Catalog api returned multiple programs, while single program was expected.
-    """
-
-    def __init__(self, programs_matched, *args, **kwargs):
-        """
-        Initialize :class:`MultipleProgramMatchError`.
-
-        Arguments:
-            programs_matched (int): number of programs matched where one  proram was expected.
-            args (iterable): variable arguments
-            kwargs (dict): keyword arguments
-        """
-        super(MultipleProgramMatchError, self).__init__(*args, **kwargs)
-        self.programs_matched = programs_matched
-
-
 class CourseEnrollmentDowngradeError(Exception):
     """
     Exception to raise when an enrollment attempts to enroll the user in an unpaid mode when they are in a paid mode.
@@ -177,8 +159,7 @@ def get_oauth2authentication_class():
     try:
         from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser as OAuth2Authentication
     except ImportError:
-        from edx_rest_framework_extensions.auth.bearer.authentication import BearerAuthentication \
-            as OAuth2Authentication
+        return None
 
     return OAuth2Authentication
 

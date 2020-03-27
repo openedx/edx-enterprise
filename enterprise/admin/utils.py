@@ -13,22 +13,11 @@ from django.core.validators import validate_email
 from django.utils.translation import ugettext as _
 
 from enterprise.admin.paginator import CustomPaginator
-from enterprise.api_client.lms import parse_lms_api_datetime
 from enterprise.models import EnterpriseCustomerUser
 
 DOT = '.'
 PAGES_ON_EACH_SIDE = 3
 PAGES_ON_ENDS = 2
-
-
-class ProgramStatuses:
-    """
-    Namespace class for program statuses.
-    """
-    UNPUBLISHED = "unpublished"
-    ACTIVE = "active"
-    RETIRED = "retired"
-    DELETED = "deleted"
 
 
 class UrlNames:
@@ -52,18 +41,10 @@ class ValidationMessages:
         "but both were.")
     BULK_LINK_FAILED = _(
         "Error: Learners could not be added. Correct the following errors.")
-    COURSE_AND_PROGRAM_ERROR = _(
-        "Either \"Course ID\" or \"Program ID\" can be specified, but both were.")
     COURSE_MODE_INVALID_FOR_COURSE = _(
         "Enrollment track {course_mode} is not available for course {course_id}.")
-    COURSE_MODE_NOT_AVAILABLE = _(
-        "Enrollment track {mode} is not available for all courses in program "
-        "{program_title}. The available enrollment tracks are {modes}.")
     COURSE_WITHOUT_COURSE_MODE = _(
-        "Select a course enrollment track for the given course or program.")
-    FAILED_TO_OBTAIN_COURSE_MODES = _(
-        "Failed to obtain available course enrollment tracks for "
-        "program {program_title}")
+        "Select a course enrollment track for the given course.")
     INVALID_COURSE_ID = _(
         "Could not retrieve details for the course ID {course_id}. Specify "
         "a valid ID.")
@@ -72,10 +53,6 @@ class ValidationMessages:
     INVALID_EMAIL_OR_USERNAME = _(
         "{argument} does not appear to be a valid email address or known "
         "username")
-    INVALID_PROGRAM_ID = _(
-        "Could not retrieve details for the program {program_id}. Specify a "
-        "valid program ID or program name."
-    )
     MISSING_EXPECTED_COLUMNS = _(
         "Expected a CSV file with [{expected_columns}] columns, but found "
         "[{actual_columns}] columns instead."
@@ -83,16 +60,13 @@ class ValidationMessages:
     MISSING_REASON = _(
         "Reason field is required but was not filled."
     )
-    MULTIPLE_PROGRAM_MATCH = _(
-        "Searching programs by title returned {program_count} programs. "
-        "Try using program UUID"
-    )
     NO_FIELDS_SPECIFIED = _(
         "Either \"Email or Username\" or \"CSV bulk upload\" must be "
         "specified, but neither were.")
-    PROGRAM_IS_INACTIVE = _(
-        "Enrollment in program {program_id} is closed because it is in "
-        "{status} status.")
+    PENDING_USER_ALREADY_LINKED = _(
+        "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
+        "you will be able to add the learner once the user creates account or other enterprise "
+        "deletes the pending user")
     USER_ALREADY_REGISTERED = _(
         "User with email address {email} is already registered with Enterprise "
         "Customer {ec_name}")
@@ -200,46 +174,6 @@ def validate_email_to_link(email, raw_email=None, message_template=None, ignore_
             email=email, ec_name=existing_record.enterprise_customer.name
         ))
     return existing_record or False
-
-
-def get_course_runs_from_program(program):
-    """
-    Return course runs from program data.
-
-    Arguments:
-        program(dict): Program data from Course Catalog API
-
-    Returns:
-        set: course runs in given program
-    """
-    course_runs = set()
-    for course in program.get("courses", []):
-        for run in course.get("course_runs", []):
-            if "key" in run and run["key"]:
-                course_runs.add(run["key"])
-
-    return course_runs
-
-
-def get_earliest_start_date_from_program(program):
-    """
-    Get the earliest date that one of the courses in the program was available.
-    For the sake of emails to new learners, we treat this as the program start date.
-
-    Arguemnts:
-        program (dict): Program data from Course Catalog API
-
-    returns:
-        datetime.datetime: The date and time at which the first course started
-    """
-    start_dates = []
-    for course in program.get('courses', []):
-        for run in course.get('course_runs', []):
-            if run.get('start'):
-                start_dates.append(parse_lms_api_datetime(run['start']))
-    if not start_dates:
-        return None
-    return min(start_dates)
 
 
 def split_usernames_and_emails(email_field):

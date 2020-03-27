@@ -74,6 +74,12 @@ try:
 except ImportError:
     ProgramDataExtender = None
 
+try:
+    from openedx.core.djangoapps.user_authn import cookies as user_authn_cookies
+except ImportError:
+    user_authn_cookies = None
+
+
 LOGGER = getLogger(__name__)
 BASKET_URL = urljoin(settings.ECOMMERCE_PUBLIC_URL_ROOT, '/basket/add/')
 LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
@@ -909,7 +915,11 @@ class EnterpriseSelectionView(FormView):
                 self.request.user.username,
                 enterprise_customer,
             )
-            return JsonResponse({})
+            response = JsonResponse({})
+            return user_authn_cookies.set_logged_in_cookies(
+                self.request, response, self.request.user
+            ) if user_authn_cookies else response
+
         return None
 
 

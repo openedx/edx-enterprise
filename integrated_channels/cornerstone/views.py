@@ -73,7 +73,13 @@ class CornerstoneCoursesListView(generics.ListAPIView):
 
     """
     permission_classes = (permissions.IsAuthenticated,)
-    authentication_classes = (JwtAuthentication, get_oauth2authentication_class(), SessionAuthentication,)
+
+    OAuth2Authentication = get_oauth2authentication_class()
+    if OAuth2Authentication is not None:
+        authentication_classes = (JwtAuthentication, OAuth2Authentication, SessionAuthentication,)
+    else:
+        authentication_classes = (JwtAuthentication, SessionAuthentication,)
+
     throttle_classes = (ServiceUserThrottle,)
     renderer_classes = [renderers.JSONRenderer]
 
