@@ -434,15 +434,17 @@ class TestManageLearnersForm(TestWithCourseCatalogApiMixin, unittest.TestCase):
         cleaned_data = form.clean()
         assert cleaned_data[ManageLearnersForm.Fields.REASON] == expected_reason
 
-    def test_validate_reason(self):
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_validate_reason(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
         course_id = "course-v1:edX+DemoX+Demo_Course"
         reason = ""
-        form = self._make_bound_form("irrelevant@example.com", course=course_id, reason=reason)
+        form = self._make_bound_form("irrelevant@example.com", course=course_id, reason=reason, course_mode="audit")
         assert not form.is_valid()
         assert form.errors == {
             "__all__": [ValidationMessages.MISSING_REASON]
         }
-
 
 @mark.django_db
 class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
