@@ -48,7 +48,7 @@ def test_create_enterprise_catalog():
     }
     responses.add(
         responses.POST,
-        _url("enterprise-catalog/"),
+        _url("enterprise-catalogs/"),
         json=expected_response
     )
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
@@ -78,7 +78,7 @@ def test_get_enterprise_catalog():
     }
     responses.add(
         responses.GET,
-        _url("enterprise-catalog/{catalog_uuid}/".format(catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID)),
+        _url("enterprise-catalogs/{catalog_uuid}/".format(catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID)),
         json=expected_response,
     )
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
@@ -99,7 +99,7 @@ def test_update_enterprise_catalog():
     }
     responses.add(
         responses.PUT,
-        _url("enterprise-catalog/{catalog_uuid}/".format(catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID)),
+        _url("enterprise-catalogs/{catalog_uuid}/".format(catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID)),
         json=expected_response,
     )
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
@@ -117,7 +117,7 @@ def test_update_enterprise_catalog():
 def test_delete_enterprise_catalog():
     responses.add(
         responses.DELETE,
-        _url("enterprise-catalog/{catalog_uuid}/".format(catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID)),
+        _url("enterprise-catalogs/{catalog_uuid}/".format(catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID)),
     )
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.delete_enterprise_catalog(TEST_ENTERPRISE_CATALOG_UUID)

@@ -12,6 +12,11 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 
+[3.0.3] - 2020-03-27
+--------------------
+
+* Updated enterprise-catalog endpoint urls to match rename
+
 [3.0.2] - 2020-03-26
 --------------------
 

@@ -24,7 +24,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     """
 
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
-    ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalog'
+    ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token
