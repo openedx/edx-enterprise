@@ -289,6 +289,7 @@ class TestManageLearnersForm(unittest.TestCase):
             "__all__": [ValidationMessages.MISSING_REASON]
         }
 
+
 @mark.django_db
 class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
     """
