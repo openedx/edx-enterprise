@@ -11,6 +11,13 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+
+[3.0.5] - 2020-03-31
+--------------------
+
+* Added "active" key in enterprise_catalog API for "course" content_type if the "course" has "course_run" available for enrollment.
+
+
 [3.0.4] - 2020-03-31
 --------------------
 

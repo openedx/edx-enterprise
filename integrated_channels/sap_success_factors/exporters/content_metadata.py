@@ -10,13 +10,10 @@ from logging import getLogger
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise.api_client.lms import parse_lms_api_datetime
-from enterprise.utils import get_closest_course_run
+from enterprise.utils import get_closest_course_run, is_course_run_available_for_enrollment
 from enterprise.views import CourseEnrollmentView
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.sap_success_factors.exporters.utils import (
-    course_available_for_enrollment,
-    transform_language_code,
-)
+from integrated_channels.sap_success_factors.exporters.utils import transform_language_code
 from integrated_channels.utils import (
     UNIX_MAX_DATE_STRING,
     UNIX_MIN_DATE_STRING,
@@ -170,7 +167,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         course_run_start = content_metadata_item.get('start')
 
         if course_run_start:
-            if course_available_for_enrollment(content_metadata_item):
+            if is_course_run_available_for_enrollment(content_metadata_item):
                 title += ' ({starts}: {:%B %Y})'.format(
                     parse_lms_api_datetime(course_run_start),
                     starts=_('Starts')
@@ -217,7 +214,7 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
             if date_str:
                 date_str += '. '
 
-        if not course_available_for_enrollment(course_run):
+        if not is_course_run_available_for_enrollment(course_run):
             date_str += 'Enrollment is closed. '
 
         return date_str
