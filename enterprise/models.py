@@ -53,6 +53,7 @@ from enterprise.utils import (
     NotConnectedToOpenEdX,
     get_configuration_value,
     get_ecommerce_worker_user,
+    get_enterprise_worker_user,
 )
 from enterprise.validators import validate_hex_color, validate_image_extension, validate_image_size
 
@@ -786,7 +787,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
         user = self.user
         identity_provider = self.enterprise_customer.identity_provider
         if user and identity_provider:
-            client = ThirdPartyAuthApiClient()
+            enterprise_worker = get_enterprise_worker_user()
+            client = ThirdPartyAuthApiClient(enterprise_worker)
             return client.get_remote_id(self.enterprise_customer.identity_provider, user.username)
         return None
 
