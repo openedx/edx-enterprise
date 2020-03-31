@@ -1,10 +1,21 @@
+# -*- coding: utf-8 -*-
 """
 Toggles for edx-enterprise
 """
 
 
-from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
-from openedx.core.djangoapps.waffle_utils import WaffleFlag, WaffleFlagNamespace
+from __future__ import absolute_import, unicode_literals
+
+try:
+    from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
+except ImportError:
+    configuration_helpers = None
+
+try:
+    from openedx.core.djangoapps.waffle_utils import WaffleFlag, WaffleFlagNamespace
+except ImportError:
+    WaffleFlag = None
+    WaffleFlagNamespace = None
 
 
 # Namespace for learner profile waffle flags.

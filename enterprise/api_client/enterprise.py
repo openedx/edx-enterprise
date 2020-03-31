@@ -10,7 +10,6 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.cache import cache
-from openedx.core.djangoapps.waffle_utils import WaffleFlagNamespace, WaffleFlag
 
 from enterprise import utils
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
