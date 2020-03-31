@@ -58,6 +58,23 @@ class LmsApiClient:
         )
 
 
+class NoAuthenticationLmsApiClient:
+    """
+    Object builds an API client to make calls to the edxapp LMS API.
+
+    Authentication is not required.
+    """
+
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
+    APPEND_SLASH = False
+
+    def __init__(self):
+        """
+        Create an LMS API client.
+        """
+        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
+
+
 class JwtLmsApiClient:
     """
     LMS client authenticates using a JSON Web Token (JWT) for the given user.
@@ -317,7 +334,7 @@ class EnrollmentApiClient(LmsApiClient):
         return self.client.enrollment.get(user=username)
 
 
-class CourseApiClient(LmsApiClient):
+class CourseApiClient(NoAuthenticationLmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
     """
