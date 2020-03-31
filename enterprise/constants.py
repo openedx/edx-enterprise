@@ -116,6 +116,9 @@ OAUTH2_PROVIDER_APPLICATION_MODEL = 'oauth2_provider.Application'
 
 EDX_ORG_NAME = 'edX, Inc'
 
+# Waffle flag used to switch over ecommerce's usage of the enterprise catalog service
+USE_ENTERPRISE_CATALOG = 'use_enterprise_catalog'
+
 
 def json_serialized_course_modes():
     """

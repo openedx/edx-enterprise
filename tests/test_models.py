@@ -16,6 +16,7 @@ from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
+from waffle.testutils import override_flag
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -23,13 +24,14 @@ from django.core.files import File
 from django.core.files.storage import Storage
 from django.db.utils import IntegrityError
 from django.http import QueryDict
+from django.test.client import RequestFactory
 from django.test.testcases import TransactionTestCase
 from django.urls import reverse
 
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
-from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE, USE_ENTERPRISE_CATALOG
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -920,6 +922,8 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         self.catalog_uuid = self.faker.uuid4()  # pylint: disable=no-member
         self.enterprise_uuid = self.faker.uuid4()  # pylint: disable=no-member
         self.enterprise_name = 'enterprisewithacatalog'
+        self.request = RequestFactory()
+        self.request.user = factories.UserFactory()
         super(TestEnterpriseCustomerCatalog, self).setUp()
 
     @ddt.data(str, repr)
@@ -1107,6 +1111,62 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         contains_courses_mock.return_value = False
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    def test_get_course_and_course_run_no_content_items_waffle_flag(self, api_client_mock, get_current_request_mock):
+        """
+        Verify the `get_course_and_course_run` method returns the same tuple with the enterprise catalog flag active.
+        """
+        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+            api_client_mock.return_value.contains_content_items.return_value = False
+            get_current_request_mock.return_value = self.request
+
+            enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+            assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    def test_get_course_no_content_items_waffle_flag(self, api_client_mock, get_current_request_mock):
+        """
+        Verify the `get_course` method returns None with the enterprise catalog flag active if no content items exist.
+        """
+        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+            api_client_mock.return_value.contains_content_items.return_value = False
+            get_current_request_mock.return_value = self.request
+
+            enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+            assert enterprise_customer_catalog.get_course('fake-course-key') is None
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    def test_get_course_run_no_content_items_waffle_flag(self, api_client_mock, get_current_request_mock):
+        """
+        Verify the `get_course_run` method returns None with the catalog flag active if no content items exist.
+        """
+        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+            api_client_mock.return_value.contains_content_items.return_value = False
+            get_current_request_mock.return_value = self.request
+
+            enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+            assert enterprise_customer_catalog.get_course_run('fake-course-run-id') is None
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+    def test_get_program_no_content_items_waffle_flag(self, api_client_mock, get_current_request_mock):
+        """
+        Verify the `get_program` method returns None with the catalog flag active if no content items exist.
+        """
+        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+            api_client_mock.return_value.contains_content_items.return_value = False
+            get_current_request_mock.return_value = self.request
+
+            enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+            assert enterprise_customer_catalog.get_program('fake-program-uuid') is None
 
     def test_title_length(self):
         """
