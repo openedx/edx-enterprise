@@ -104,7 +104,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     @JwtLmsApiClient.refresh_token
     def enterprise_catalog_get_content_metadata(self, catalog_uuid):
         """Returns all the content linked to the specified catalog, ordered by content key."""
-        endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT)(catalog_uuid)
+        endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))(catalog_uuid)
         try:
             return endpoint.get()
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
