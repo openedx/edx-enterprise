@@ -37,6 +37,9 @@ ENTERPRISE_CATALOG_API_ENABLED = WaffleFlag(WAFFLE_FLAG_NAMESPACE, 'enterprise_c
 
 
 def should_use_enterprise_catalog_api():
+    """
+    Returns enterprise.enterprise_catalog_api_enabled WaffleFlag value if enabled
+    """
     return (
         configuration_helpers.get_value('ENABLE_ENTERPRISE_CATALOG_API_ENDPOINTS') and
         ENTERPRISE_CATALOG_API_ENABLED.is_enabled()
