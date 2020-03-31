@@ -359,13 +359,14 @@ class CourseApiClient(NoAuthenticationLmsApiClient):
             return None
 
 
-class ThirdPartyAuthApiClient(LmsApiClient):
+class ThirdPartyAuthApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Third Party Auth API.
     """
 
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/third_party_auth/v0/'
 
+    @JwtLmsApiClient.refresh_token
     def get_remote_id(self, identity_provider, username):
         """
         Retrieve the remote identifier for the given username.
@@ -379,6 +380,7 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         """
         return self._get_results(identity_provider, 'username', username, 'remote_id')
 
+    @JwtLmsApiClient.refresh_token
     def get_username_from_remote_id(self, identity_provider, remote_id):
         """
         Retrieve the remote identifier for the given username.

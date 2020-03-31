@@ -652,7 +652,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         enterprise_customer = self.context.get('enterprise_customer')
 
         try:
-            tpa_client = ThirdPartyAuthApiClient()
+            tpa_client = ThirdPartyAuthApiClient(self.context['request_user'])
             username = tpa_client.get_username_from_remote_id(
                 enterprise_customer.identity_provider, value
             )
