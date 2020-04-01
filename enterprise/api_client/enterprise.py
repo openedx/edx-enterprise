@@ -12,9 +12,7 @@ from django.conf import settings
 from django.core.cache import cache
 
 from enterprise import utils
-from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import JwtLmsApiClient
-from enterprise.toggles import should_use_enterprise_catalog_api
 
 LOGGER = getLogger(__name__)
 
@@ -46,16 +44,12 @@ class EnterpriseApiClient(JwtLmsApiClient):
         content_metadata = OrderedDict()
         enterprise_customer_catalogs = enterprise_catalogs or enterprise_customer.enterprise_customer_catalogs.all()
         for enterprise_customer_catalog in enterprise_customer_catalogs:
-            if should_use_enterprise_catalog_api():
-                catalog_client = EnterpriseCatalogApiClient(user=self.user)
-                response = catalog_client.enterprise_catalog_get_content_metadata(enterprise_customer_catalog.uuid)
-            else:
-                response = self._load_data(
-                    self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
-                    resource_id=str(enterprise_customer_catalog.uuid),
-                    traverse_pagination=True,
-                    querystring={'page_size': 1000},
-                )
+            response = self._load_data(
+                self.ENTERPRISE_CUSTOMER_CATALOGS_ENDPOINT,
+                resource_id=str(enterprise_customer_catalog.uuid),
+                traverse_pagination=True,
+                querystring={'page_size': 1000},
+            )
 
             for item in response['results']:
                 content_id = utils.get_content_metadata_item_id(item)

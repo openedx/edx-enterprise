@@ -14,6 +14,8 @@ from collections import OrderedDict
 from logging import getLogger
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.toggles import should_use_enterprise_catalog_api
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 
@@ -70,16 +72,23 @@ class ContentMetadataExporter(Exporter):
         """
         super(ContentMetadataExporter, self).__init__(user, enterprise_configuration)
         self.enterprise_api = EnterpriseApiClient(self.user)
+        self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
     def export(self, **kwargs):
         """
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        content_metadata_items = self.enterprise_api.get_content_metadata(
-            self.enterprise_customer,
-            enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
-        )
+        if should_use_enterprise_catalog_api():
+            content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
+                self.enterprise_customer,
+                enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
+            )
+        else:
+            content_metadata_items = self.enterprise_api.get_content_metadata(
+                self.enterprise_customer,
+                enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
+            )
         LOGGER.info('Retrieved content metadata for enterprise [%s]', self.enterprise_customer.name)
         for item in content_metadata_items:
             transformed = self._transform_item(item)
