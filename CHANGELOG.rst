@@ -15,6 +15,11 @@ Unreleased
 --------------------
 Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
 
+[3.0.8] - 2020-04-08
+--------------------
+
+* Converted the EnrollmentApiClient to JWT client.
+
 
 [3.0.7] - 2020-04-07
 --------------------
