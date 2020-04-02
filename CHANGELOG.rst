@@ -11,6 +11,10 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[3.0.6] - 2020-04-06
+--------------------
+
+* Added support for bypassing enterprise selection page for enrollment url triggered login
 
 [3.0.5] - 2020-03-31
 --------------------
