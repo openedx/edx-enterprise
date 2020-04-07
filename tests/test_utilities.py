@@ -1175,6 +1175,75 @@ class TestEnterpriseUtils(unittest.TestCase):
         assert utils.is_course_run_enrollable(course_run) == expected_enrollment_eligibility
 
     @ddt.data(
+        (
+            [],
+            False,
+        ),
+        (
+            [
+                {
+                    "availability": "Current",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2999-10-13T13:11:03Z",  # enrollment_start > now
+                    "enrollment_end": "3000-10-13T13:11:04Z",
+                },
+                {
+                    "availability": "Current",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                },
+            ],
+            True,
+        ),
+        (
+            [
+                {
+                    "availability": "Archived",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                },
+                {
+                    "availability": "Current",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                },
+            ],
+            True,
+        ),
+        (
+            [
+                {
+                    "availability": "Current",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                }
+            ],
+            True,
+        ),
+        (
+            [
+                {
+                    "availability": "Archived",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                }
+            ],
+            False,
+        )
+    )
+    @ddt.unpack
+    def test_contains_course_run_available_for_enrollment(self, course_runs, expected_enrollment_eligibility):
+        """
+        tests contains_course_run_available_for_enrollment functionality
+        """
+        assert utils.has_course_run_available_for_enrollment(course_runs) == expected_enrollment_eligibility
+
+    @ddt.data(
         ({"seats": [{"type": "verified", "upgrade_deadline": "3000-10-13T13:11:04Z"}]}, True),
         ({"seats": [{"type": "verified", "upgrade_deadline": None}]}, True),
         ({"seats": [{"type": "verified"}]}, True),

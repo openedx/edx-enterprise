@@ -58,6 +58,23 @@ class LmsApiClient:
         )
 
 
+class NoAuthenticationLmsApiClient:
+    """
+    Object builds an API client to make calls to the edxapp LMS API.
+
+    Authentication is not required.
+    """
+
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
+    APPEND_SLASH = False
+
+    def __init__(self):
+        """
+        Create an LMS API client.
+        """
+        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
+
+
 class JwtLmsApiClient:
     """
     LMS client authenticates using a JSON Web Token (JWT) for the given user.
@@ -317,7 +334,7 @@ class EnrollmentApiClient(LmsApiClient):
         return self.client.enrollment.get(user=username)
 
 
-class CourseApiClient(LmsApiClient):
+class CourseApiClient(NoAuthenticationLmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
     """
@@ -342,13 +359,14 @@ class CourseApiClient(LmsApiClient):
             return None
 
 
-class ThirdPartyAuthApiClient(LmsApiClient):
+class ThirdPartyAuthApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Third Party Auth API.
     """
 
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/third_party_auth/v0/'
 
+    @JwtLmsApiClient.refresh_token
     def get_remote_id(self, identity_provider, username):
         """
         Retrieve the remote identifier for the given username.
@@ -362,6 +380,7 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         """
         return self._get_results(identity_provider, 'username', username, 'remote_id')
 
+    @JwtLmsApiClient.refresh_token
     def get_username_from_remote_id(self, identity_provider, remote_id):
         """
         Retrieve the remote identifier for the given username.

@@ -131,6 +131,12 @@ class Command(BaseCommand):
         persistent_course_grades = self.get_course_completions(lrs_configuration.enterprise_customer, days)
         users = self.prefetch_users(persistent_course_grades)
         course_overviews = self.prefetch_courses(persistent_course_grades)
+        LOGGER.info(
+            '[Integrated Channel][xAPI] Found %s course completion for enterprise customer: [%s] during last %s days',
+            len(persistent_course_grades),
+            lrs_configuration.enterprise_customer,
+            days,
+        )
 
         for persistent_course_grade in persistent_course_grades:
             error_message = None
@@ -219,6 +225,6 @@ class Command(BaseCommand):
         Returns:
             (dict): A dictionary containing course_id to course_overview mapping.
         """
-        return CourseOverview.get_from_ids_if_exists(
+        return CourseOverview.get_from_ids(
             [grade.course_id for grade in persistent_course_grades]
         )
