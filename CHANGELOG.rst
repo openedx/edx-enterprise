@@ -16,6 +16,12 @@ Unreleased
 Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
 
 
+[3.0.7] - 2020-04-07
+--------------------
+
+* Additional xAPI transmission workflow logging
+
+
 [3.0.6] - 2020-04-06
 --------------------
 
