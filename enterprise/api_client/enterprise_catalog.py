@@ -56,7 +56,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 'Failed to create EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
                 catalog_uuid, str(exc)
             )
-            return {}
+            raise Exception
 
     @JwtLmsApiClient.refresh_token
     def get_enterprise_catalog(self, catalog_uuid):
@@ -120,7 +120,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
 
         for enterprise_customer_catalog in enterprise_customer_catalogs:
             catalog_uuid = enterprise_customer_catalog.uuid
-            endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))(catalog_uuid)
+            endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
             try:
                 response = endpoint.get()
             except (SlumberBaseException, ConnectionError, Timeout) as exc:

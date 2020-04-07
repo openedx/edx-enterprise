@@ -84,11 +84,19 @@ class ContentMetadataExporter(Exporter):
         content_metadata_export = {}
         request = crum.get_current_request()
         if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+            LOGGER.info(
+                'ENT-2572 [1] - Getting catalog metadata for enterprise [%s] from Enterprise Catalog Service.',
+                self.enterprise_customer.name
+            )
             content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                 self.enterprise_customer,
                 enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
             )
         else:
+            LOGGER.info(
+                'ENT-2572 [2] - Getting catalog metadata for enterprise [%s] from LMS Enterprise.',
+                self.enterprise_customer.name
+            )
             content_metadata_items = self.enterprise_api.get_content_metadata(
                 self.enterprise_customer,
                 enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
