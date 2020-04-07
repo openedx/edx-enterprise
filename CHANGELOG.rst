@@ -11,6 +11,11 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+[3.0.7] - 2020-04-07
+--------------------
+
+* Added Javascript to enable Fullstory for Enterprise admin pages
+
 [3.0.6] - 2020-04-06
 --------------------
 
