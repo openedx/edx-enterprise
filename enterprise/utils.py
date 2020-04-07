@@ -750,6 +750,32 @@ def is_course_run_enrollable(course_run):
            (not enrollment_end or enrollment_end > now)
 
 
+def is_course_run_available_for_enrollment(course_run):
+    """
+    Check if a course run is available for enrollment.
+    """
+    if course_run['availability'] not in ['Current', 'Starting Soon', 'Upcoming']:
+        # course run is archived so not available for enrollment
+        return False
+
+    # now check if the course run is enrollable on the basis of enrollment
+    # start and end date
+    return is_course_run_enrollable(course_run)
+
+
+def has_course_run_available_for_enrollment(course_runs):
+    """
+        Iterates over all course runs to check if there any course run that is available for enrollment.
+
+    :param course_runs: list of course runs
+    :returns True if found else false
+    """
+    for course_run in course_runs:
+        if is_course_run_available_for_enrollment(course_run):
+            return True
+    return False
+
+
 def is_course_run_upgradeable(course_run):
     """
     Return true if the course run has a verified seat with an unexpired upgrade deadline, false otherwise.
