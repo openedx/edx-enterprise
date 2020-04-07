@@ -910,6 +910,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "short_description": None,
     "subject_uuids": [],
     "transcript_languages": [],
+    "course_runs": [],
     "full_description": None,
     "seat_types": [
         "audit",
@@ -950,7 +951,8 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT = {
     "key": "edX+DemoX",
     "short_description": None,
     "aggregation_key": "course:edX+DemoX",
-    "content_type": "course"
+    "content_type": "course",
+    "course_runs": [],
 }
 
 FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
@@ -960,7 +962,8 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
         "key": "edX+DemoX+2",
         "short_description": None,
         "aggregation_key": "course:edX+DemoX",
-        "content_type": "course"
+        "content_type": "course",
+        "course_runs": [],
     },
     {
         "title": "edX Demonstration Course 3",
@@ -968,7 +971,8 @@ FAKE_SEARCH_ALL_SHORT_COURSE_RESULT_LIST = [
         "key": "edX+DemoX+3",
         "short_description": None,
         "aggregation_key": "course:edX+DemoX",
-        "content_type": "course"
+        "content_type": "course",
+        "course_runs": [],
     },
 ]
 
