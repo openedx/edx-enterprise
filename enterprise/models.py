@@ -1101,16 +1101,6 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         verbose_name_plural = _("Branding Configurations")
         ordering = ['created']
 
-    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
-        """Save the enterprise customer branding config."""
-        if self.pk is None:
-            logo_image = self.logo
-            self.logo = None
-            super(EnterpriseCustomerBrandingConfiguration, self).save(*args, **kwargs)
-            self.logo = logo_image
-
-        super(EnterpriseCustomerBrandingConfiguration, self).save(*args, **kwargs)
-
     def __str__(self):
         """
         Return human-readable string representation.

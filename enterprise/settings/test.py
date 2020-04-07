@@ -148,8 +148,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
 DEFAULT_FROM_EMAIL = 'course_staff@example.com'
 
-USER_THROTTLE_RATE = '90/minute'
-SERVICE_USER_THROTTLE_RATE = '100/minute'
+USER_THROTTLE_RATE = '190/minute'
+SERVICE_USER_THROTTLE_RATE = '200/minute'
 REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10,
