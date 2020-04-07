@@ -1482,7 +1482,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
             }],
             [{
                 'non_field_errors': [
@@ -1514,7 +1514,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
             }],
             [{
                 'course_run_id': [
@@ -1530,7 +1530,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
                 'tpa_user_id': 'abc',
             }],
             [{
@@ -1547,7 +1547,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
             }],
             [{
                 'detail': (
@@ -1563,7 +1563,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
                 'cohort': 'masters'
             }],
             [{
@@ -1623,7 +1623,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
                 'tpa_user_id': 'abc',
                 'user_email': 'abc@test.com',
             }],
@@ -1634,7 +1634,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
             }],
         ),
         (
@@ -1661,7 +1661,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
                 'email_students': True
             }],
         ),
@@ -1671,7 +1671,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
                 'email_students': True,
                 'cohort': 'masters',
             }],
@@ -1693,7 +1693,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'verified',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
             }],
         ),
         (
@@ -1702,7 +1702,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'course_mode': 'verified',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
-                'lms_user_id': 1,
+                'lms_user_id': 10,
                 'is_active': False,
             }],
         ),
@@ -1840,7 +1840,7 @@ class TestEnterpriseAPIViews(APITest):
         tpa_user_id = 'abc'
         new_user_email = 'abc@test.com'
         pending_email = 'foo@bar.com'
-        lms_user_id = 1
+        lms_user_id = 10
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
         payload = [
             {
