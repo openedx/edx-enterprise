@@ -15,6 +15,8 @@ Change Log
 --------------------
 
 * Added Javascript to enable Fullstory for Enterprise admin pages
+* Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
+
 
 [3.0.6] - 2020-04-06
 --------------------
