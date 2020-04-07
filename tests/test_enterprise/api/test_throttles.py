@@ -49,6 +49,8 @@ class TestEnterpriseAPIThrottling(APITest):
         """
         Make sure throttling works as expected for regular users.
         """
+        self.create_user('test_user', 'QWERTY')
+        self.client.login(username='test_user', password='QWERTY')
         self.exhaust_throttle_limit(throttle_limit=self.USER_THROTTLE_RATE)
         response = self.client.get(self.url)
         assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS

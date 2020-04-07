@@ -165,7 +165,6 @@ class UserFactory(factory.DjangoModelFactory):
 
         model = User
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     email = factory.LazyAttribute(lambda x: FAKER.email())
     username = factory.LazyAttribute(lambda x: FAKER.user_name())
     first_name = factory.LazyAttribute(lambda x: FAKER.first_name())
@@ -227,7 +226,6 @@ class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelF
 
         model = EnterpriseCustomerBrandingConfiguration
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     logo = factory.LazyAttribute(lambda x: FAKER.image_url())
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     banner_border_color = '#ffffff'
@@ -248,7 +246,6 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
 
         model = EnterpriseCourseEnrollment
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     marked_done = False
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
@@ -325,7 +322,6 @@ class EnterpriseCustomerReportingConfigFactory(factory.django.DjangoModelFactory
 
         model = EnterpriseCustomerReportingConfiguration
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     active = True
     email = factory.LazyAttribute(lambda x: FAKER.email())
     day_of_month = 1
@@ -370,7 +366,6 @@ class SAPSuccessFactorsGlobalConfigurationFactory(factory.django.DjangoModelFact
 
         model = SAPSuccessFactorsGlobalConfiguration
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
@@ -437,7 +432,6 @@ class DegreedGlobalConfigurationFactory(factory.django.DjangoModelFactory):
 
         model = DegreedGlobalConfiguration
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     completion_status_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
     oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
@@ -544,7 +538,6 @@ class CornerstoneGlobalConfigurationFactory(factory.django.DjangoModelFactory):
 
         model = CornerstoneGlobalConfiguration
 
-    id = factory.LazyAttribute(lambda x: FAKER.random_int(min=1))
     completion_status_api_path = '/progress'
     key = factory.LazyAttribute(lambda x: FAKER.slug())
     secret = factory.LazyAttribute(lambda x: FAKER.uuid4())
