@@ -11,7 +11,6 @@ from time import time
 
 from edx_rest_api_client.client import EdxRestApiClient
 from opaque_keys.edx.keys import CourseKey
-from requests import Session
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
@@ -19,7 +18,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from enterprise.constants import COURSE_MODE_SORT_ORDER, EXCLUDED_COURSE_MODES
-from enterprise.utils import NotConnectedToOpenEdX
+from enterprise.utils import NotConnectedToOpenEdX, get_enterprise_worker_user
 
 try:
     from openedx.core.djangoapps.embargo import api as embargo_api
@@ -37,11 +36,11 @@ LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
 
 
-class LmsApiClient:
+class NoAuthenticationLmsApiClient:
     """
     Object builds an API client to make calls to the edxapp LMS API.
 
-    Authenticates using settings.EDX_API_KEY.
+    Authentication is not required.
     """
 
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/'
@@ -49,13 +48,9 @@ class LmsApiClient:
 
     def __init__(self):
         """
-        Create an LMS API client, authenticated with the API token from Django settings.
+        Create an LMS API client.
         """
-        session = Session()
-        session.headers = {"X-Edx-Api-Key": settings.EDX_API_KEY}
-        self.client = EdxRestApiClient(
-            self.API_BASE_URL, append_slash=self.APPEND_SLASH, session=session
-        )
+        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
 
 
 class JwtLmsApiClient:
@@ -133,13 +128,18 @@ class EmbargoApiClient:
         return None
 
 
-class EnrollmentApiClient(LmsApiClient):
+class EnrollmentApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Enrollment API.
     """
 
     API_BASE_URL = settings.ENTERPRISE_ENROLLMENT_API_URL
 
+    def __init__(self, user=None):
+        user = user if user else get_enterprise_worker_user()
+        super(EnrollmentApiClient, self).__init__(user)
+
+    @JwtLmsApiClient.refresh_token
     def get_course_details(self, course_id):
         """
         Query the Enrollment API for the course details of the given course_id.
@@ -181,6 +181,7 @@ class EnrollmentApiClient(LmsApiClient):
         # Sort slug weights in descending order
         return sorted(modes, key=slug_weight, reverse=True)
 
+    @JwtLmsApiClient.refresh_token
     def get_course_modes(self, course_id):
         """
         Query the Enrollment API for the specific course modes that are available for the given course_id.
@@ -196,6 +197,7 @@ class EnrollmentApiClient(LmsApiClient):
         modes = details.get('course_modes', [])
         return self._sort_course_modes([mode for mode in modes if mode['slug'] not in EXCLUDED_COURSE_MODES])
 
+    @JwtLmsApiClient.refresh_token
     def has_course_mode(self, course_run_id, mode):
         """
         Query the Enrollment API to see whether a course run has a given course mode available.
@@ -210,6 +212,7 @@ class EnrollmentApiClient(LmsApiClient):
         course_modes = self.get_course_modes(course_run_id)
         return any(course_mode for course_mode in course_modes if course_mode['slug'] == mode)
 
+    @JwtLmsApiClient.refresh_token
     def enroll_user_in_course(self, username, course_id, mode, cohort=None):
         """
         Call the enrollment API to enroll the user in the course specified by course_id.
@@ -233,6 +236,7 @@ class EnrollmentApiClient(LmsApiClient):
             }
         )
 
+    @JwtLmsApiClient.refresh_token
     def unenroll_user_from_course(self, username, course_id):
         """
         Call the enrollment API to unenroll the user in the course specified by course_id.
@@ -254,6 +258,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         return False
 
+    @JwtLmsApiClient.refresh_token
     def get_course_enrollment(self, username, course_id):
         """
         Query the enrollment API to get information about a single course enrollment.
@@ -288,6 +293,7 @@ class EnrollmentApiClient(LmsApiClient):
 
         return result
 
+    @JwtLmsApiClient.refresh_token
     def is_enrolled(self, username, course_run_id):
         """
         Query the enrollment API and determine if a learner is enrolled in a course run.
@@ -303,6 +309,7 @@ class EnrollmentApiClient(LmsApiClient):
         enrollment = self.get_course_enrollment(username, course_run_id)
         return enrollment is not None and enrollment.get('is_active', False)
 
+    @JwtLmsApiClient.refresh_token
     def get_enrolled_courses(self, username):
         """
         Query the enrollment API to get a list of the courses a user is enrolled in.
@@ -317,7 +324,7 @@ class EnrollmentApiClient(LmsApiClient):
         return self.client.enrollment.get(user=username)
 
 
-class CourseApiClient(LmsApiClient):
+class CourseApiClient(NoAuthenticationLmsApiClient):
     """
     Object builds an API client to make calls to the Course API.
     """
@@ -342,13 +349,14 @@ class CourseApiClient(LmsApiClient):
             return None
 
 
-class ThirdPartyAuthApiClient(LmsApiClient):
+class ThirdPartyAuthApiClient(JwtLmsApiClient):
     """
     Object builds an API client to make calls to the Third Party Auth API.
     """
 
     API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL + '/api/third_party_auth/v0/'
 
+    @JwtLmsApiClient.refresh_token
     def get_remote_id(self, identity_provider, username):
         """
         Retrieve the remote identifier for the given username.
@@ -362,6 +370,7 @@ class ThirdPartyAuthApiClient(LmsApiClient):
         """
         return self._get_results(identity_provider, 'username', username, 'remote_id')
 
+    @JwtLmsApiClient.refresh_token
     def get_username_from_remote_id(self, identity_provider, remote_id):
         """
         Retrieve the remote identifier for the given username.

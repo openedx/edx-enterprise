@@ -18,7 +18,12 @@ from django.utils.translation import ugettext_lazy as _
 from enterprise import models, utils
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
-from enterprise.utils import CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, track_enrollment
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    CourseEnrollmentPermissionError,
+    has_course_run_available_for_enrollment,
+    track_enrollment,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -245,6 +250,7 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
             # Add the Enterprise enrollment URL to each content item returned from the discovery service.
             if content_type == 'course':
                 item['enrollment_url'] = instance.get_course_enrollment_url(item['key'])
+                item['active'] = has_course_run_available_for_enrollment(item['course_runs'])
             if content_type == 'courserun':
                 item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'])
             if content_type == 'program':
@@ -652,7 +658,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         enterprise_customer = self.context.get('enterprise_customer')
 
         try:
-            tpa_client = ThirdPartyAuthApiClient()
+            tpa_client = ThirdPartyAuthApiClient(self.context['request_user'])
             username = tpa_client.get_username_from_remote_id(
                 enterprise_customer.identity_provider, value
             )

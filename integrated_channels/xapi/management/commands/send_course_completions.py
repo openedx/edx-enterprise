@@ -131,6 +131,12 @@ class Command(BaseCommand):
         persistent_course_grades = self.get_course_completions(lrs_configuration.enterprise_customer, days)
         users = self.prefetch_users(persistent_course_grades)
         course_overviews = self.prefetch_courses(persistent_course_grades)
+        LOGGER.info(
+            '[Integrated Channel][xAPI] Found %s course completion for enterprise customer: [%s] during last %s days',
+            len(persistent_course_grades),
+            lrs_configuration.enterprise_customer,
+            days,
+        )
 
         for persistent_course_grade in persistent_course_grades:
             error_message = None
@@ -143,33 +149,49 @@ class Command(BaseCommand):
             )
             if not xapi_transmission_queryset.exists():
                 LOGGER.warning(
-                    'XAPILearnerDataTransmissionAudit object does not exist for user: {username}, course: '
-                    '{course_id} so skipping the course completion statement to xapi.'
+                    'XAPILearnerDataTransmissionAudit object does not exist for enterprise customer: '
+                    '{enterprise_customer}, user: {username}, course: {course_id}.  Skipping transmission '
+                    'of course completion statement to the configured LRS endpoint.  This is likely because '
+                    'a corresponding course enrollment statement has not yet been transmitted.'.format(
+                        enterprise_customer=lrs_configuration.enterprise_customer.name,
+                        username=user.username if user else 'User Unavailable',
+                        course_id=persistent_course_grade.course_id
+                    )
                 )
                 continue
+            fields = {'status': 500, 'error_message': None}
             try:
-                send_course_completion_statement(lrs_configuration, user, course_overview, course_grade)
+                response = send_course_completion_statement(lrs_configuration, user, course_overview, course_grade)
             except ClientError:
                 error_message = 'Client error while sending course completion to xAPI for ' \
                                 'enterprise customer: {enterprise_customer}, user: {username} ' \
                                 'and course: {course_id}'.format(
                                     enterprise_customer=lrs_configuration.enterprise_customer.name,
-                                    username=user.username if user else '',
+                                    username=user.username if user else 'User Unavailable',
                                     course_id=persistent_course_grade.course_id
                                 )
                 LOGGER.exception(error_message)
-                status = 500
+                fields.update({'error_message': error_message})
             else:
-                LOGGER.info(
-                    'Successfully sent course completion to xAPI for user: {username} for course: {course_id}'.format(
-                        username=user.username if user else '',
-                        course_id=persistent_course_grade.course_id
+                status = response.response.status
+                fields.update({'status': status})
+                if response.success:
+                    LOGGER.info(
+                        'Successfully sent xAPI course completion for user: {username} for course: {course_id}'.format(
+                            username=user.username if user else 'User Unavailable',
+                            course_id=persistent_course_grade.course_id
+                        )
                     )
-                )
-                status = 200
-            fields = {'status': status, 'error_message': error_message}
-            if status == 200:
-                fields.update({'grade': course_grade.percent})
+                    fields.update({'grade': course_grade.percent})
+                else:
+                    LOGGER.warning(
+                        'Unexpected xAPI response received for user: {username} for course: {course_id}.  Please '
+                        'reveiew the xAPI learner data transmission audit log for details'.format(
+                            username=user.username if user else 'User Unavailable',
+                            course_id=persistent_course_grade.course_id
+                        )
+                    )
+                    fields.update({'error_message': response.data})
             xapi_transmission_queryset.update(**fields)
 
     def get_course_completions(self, enterprise_customer, days):
@@ -219,6 +241,6 @@ class Command(BaseCommand):
         Returns:
             (dict): A dictionary containing course_id to course_overview mapping.
         """
-        return CourseOverview.get_from_ids_if_exists(
+        return CourseOverview.get_from_ids(
             [grade.course_id for grade in persistent_course_grades]
         )

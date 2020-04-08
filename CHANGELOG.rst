@@ -11,6 +11,59 @@ Change Log
 
 .. There should always be an "Unreleased" section for changes pending release.
 
+Unreleased
+--------------------
+Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
+
+[3.0.8] - 2020-04-08
+--------------------
+
+* Converted the EnrollmentApiClient to JWT client.
+
+
+[3.0.7] - 2020-04-07
+--------------------
+
+* Additional xAPI transmission workflow logging
+
+
+[3.0.6] - 2020-04-06
+--------------------
+
+* Added support for bypassing enterprise selection page for enrollment url triggered login
+
+
+[3.0.5] - 2020-03-31
+--------------------
+
+* Added "active" key in enterprise_catalog API for "course" content_type if the "course" has "course_run" available for enrollment.
+
+
+[3.0.4] - 2020-03-31
+--------------------
+
+* Removed the 'EDX_API_KEY' from CourseApiClient.
+
+
+[3.0.3] - 2020-03-27
+--------------------
+
+* Updated enterprise-catalog endpoint urls to match rename
+
+[3.0.2] - 2020-03-26
+--------------------
+
+* Improved xApi logging to include statement and LRS endpoint'
+
+[3.0.1] - 2020-03-18
+--------------------
+
+* Updated xApi integrated channel to use the updated CourseOverview method 'get_from_ids()'
+
+[3.0.0] - 2020-03-16
+--------------------
+
+* Removed use of Bearer Authentication
 
 [2.5.5] - 2020-03-13
 --------------------

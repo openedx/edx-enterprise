@@ -408,7 +408,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_instance.id)
         assert enterprise_customer_user.user == user_instance
 
-    @ddt.data(1, 42, 1138)
+    @ddt.data(10, 42, 1138)
     def test_user_property_user_missing(self, user_id):
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=user_id)
         assert enterprise_customer_user.user is None
@@ -778,10 +778,10 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo="test1.png"
         )
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test1.png')
+        self.assertEqual(configuration.logo.url, '/test1.png')  # pylint: disable=no-member
         configuration.logo = 'test2.png'
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test2.png')
+        self.assertEqual(configuration.logo.url, '/test2.png')  # pylint: disable=no-member
 
     @ddt.data(
         (False, 2048),

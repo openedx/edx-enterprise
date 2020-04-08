@@ -119,7 +119,15 @@ class Command(BaseCommand):
                 of the LRS where to send xAPI  learner analytics.
             days (int): Include course enrollment of this number of days.
         """
-        for course_enrollment in self.get_course_enrollments(lrs_configuration.enterprise_customer, days):
+        course_enrollments = self.get_course_enrollments(lrs_configuration.enterprise_customer, days)
+        LOGGER.info(
+            '[Integrated Channel][xAPI] Found %s course enrollments for enterprise customer: [%s] during last %s days',
+            len(course_enrollments),
+            lrs_configuration.enterprise_customer,
+            days,
+        )
+
+        for course_enrollment in course_enrollments:
             error_message = None
             course_id = six.text_type(course_enrollment.course.id)
             try:
