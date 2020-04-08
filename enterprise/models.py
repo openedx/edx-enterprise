@@ -432,9 +432,14 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             bool: Whether the enterprise catalog includes the given course run.
         """
-        for catalog in self.enterprise_customer_catalogs.all():
-            if catalog.contains_courses([course_run_id]):
+        # Temporarily gate enterprise catalog api usage behind waffle flag
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if EnterpriseCatalogApiClient().enterprise_customer_contains_content_items(self.uuid, [course_run_id]):
                 return True
+        else:
+            for catalog in self.enterprise_customer_catalogs.all():
+                if catalog.contains_courses([course_run_id]):
+                    return True
 
         return False
 

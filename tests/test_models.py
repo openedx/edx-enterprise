@@ -200,6 +200,24 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api.get_course_id.return_value = None
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    def test_catalog_contains_course_with_enterprise_customer_catalog_waffle_sample(self, api_client_mock):
+        """
+        Test EnterpriseCustomer.catalog_contains_course with a related
+        EnterpriseCustomerCatalog when the sample is active.
+        """
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
+            enterprise_customer = factories.EnterpriseCustomerFactory()
+            factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+
+            # Test when content is in the enterprise customer's catalog(s)
+            api_client_mock.return_value.enterprise_customer_contains_content_items.return_value = True
+            assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
+            
+            # Test when content is NOT in the enterprise customer's catalog(s)
+            api_client_mock.return_value.enterprise_customer_contains_content_items.return_value = False
+            assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
+
 
 @mark.django_db
 @ddt.ddt

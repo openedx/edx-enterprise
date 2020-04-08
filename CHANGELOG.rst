@@ -17,6 +17,12 @@ Unreleased
 [3.0.12] - 2020-04-10
 ---------------------
 
+* Switch catalog_contains_course method to use enterprise catalog service behind waffle sample
+
+
+[3.0.11] - 2020-04-10
+---------------------
+
 * Add USE_ENTERPRISE_CATALOG waffle sample, and remove USE_ENTERPRISE_CATALOG waffle flag
 * Switch the use of waffle.flag_is_active to waffle.sample_is_active
 * Updates the EnterpriseCatalogApiClient to make the user argument optional. If the user argument is not provided, it will use the "enterprise_worker" user instead

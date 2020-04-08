@@ -28,6 +28,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
     GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
+    ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     APPEND_SLASH = True
 
     def __init__(self, user=None):
@@ -150,4 +151,16 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         """
         query_params = {'course_run_ids': content_ids}
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
+        return endpoint.contains_content_items.get(**query_params)['contains_content_items']
+
+    @JwtLmsApiClient.refresh_token
+    def enterprise_customer_contains_content_items(self, enterprise_uuid, content_ids):
+        """
+        Checks whether an enterprise customer has any catalogs that contain the provided content ids.
+
+        The endpoint does not differentiate between course_run_ids and program_uuids so they can be used
+        interchangeably. The two query parameters are left in for backwards compatability with edx-enterprise.
+        """
+        query_params = {'course_run_ids': content_ids}
+        endpoint = getattr(self.client, self.ENTERPRISE_CUSTOMER_ENDPOINT)(enterprise_uuid)
         return endpoint.contains_content_items.get(**query_params)['contains_content_items']
