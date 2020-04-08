@@ -56,7 +56,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 'Failed to create EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
                 catalog_uuid, str(exc)
             )
-            raise Exception
+            return {}
 
     @JwtLmsApiClient.refresh_token
     def get_enterprise_catalog(self, catalog_uuid):
