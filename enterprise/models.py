@@ -11,7 +11,9 @@ from decimal import Decimal
 from logging import getLogger
 from uuid import uuid4
 
+import crum
 import six
+import waffle
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rest_api_client.exceptions import HttpClientError
@@ -45,8 +47,14 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
-from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
+from enterprise.constants import (
+    ALL_ACCESS_CONTEXT,
+    ENTERPRISE_OPERATOR_ROLE,
+    USE_ENTERPRISE_CATALOG,
+    json_serialized_course_modes,
+)
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -1571,8 +1579,15 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course metadata.
         """
-        if not self.contains_courses([course_key]):
-            return None
+        request = crum.get_current_request()
+        # Temporarily gate enterprise catalog api usage behind waffle flag
+        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [course_key]):
+                return None
+        else:
+            if not self.contains_courses([course_key]):
+                return None
+
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_details(course_key)
 
     def get_course_run(self, course_run_id):
@@ -1585,8 +1600,14 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course run metadata.
         """
-        if not self.contains_courses([course_run_id]):
-            return None
+        request = crum.get_current_request()
+        # Temporarily gate enterprise catalog api usage behind waffle flag
+        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [course_run_id]):
+                return None
+        else:
+            if not self.contains_courses([course_run_id]):
+                return None
 
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_run(course_run_id)
 
@@ -1604,8 +1625,14 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             ImproperlyConfigured: Missing or invalid catalog integration.
 
         """
-        if not self.contains_courses([course_run_id]):
-            return None, None
+        request = crum.get_current_request()
+        # Temporarily gate enterprise catalog api usage behind waffle flag
+        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [course_run_id]):
+                return None, None
+        else:
+            if not self.contains_courses([course_run_id]):
+                return None, None
 
         return get_course_catalog_api_service_client(
             self.enterprise_customer.site
@@ -1621,8 +1648,15 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The program metadata.
         """
-        if not self.contains_programs([program_uuid]):
-            return None
+        request = crum.get_current_request()
+        # Temporarily gate enterprise catalog api usage behind waffle flag
+        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [program_uuid]):
+                return None
+        else:
+            if not self.contains_programs([program_uuid]):
+                return None
+
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
 
     def get_course_enrollment_url(self, course_key):

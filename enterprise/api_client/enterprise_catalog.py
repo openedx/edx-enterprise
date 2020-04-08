@@ -99,3 +99,15 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 catalog_uuid, str(exc)
             )
             return {}
+
+    @JwtLmsApiClient.refresh_token
+    def contains_content_items(self, catalog_uuid, content_ids):
+        """
+        Checks whether an enterprise catalog contains the given content
+
+        The enterprise catalog endpoint does not differentiate between course_run_ids and program_uuids so they can
+        be used interchangeably. The two query parameters are left in for backwards compatability with edx-enterprise.
+        """
+        query_params = {'course_run_ids': content_ids}
+        endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
+        return endpoint.contains_content_items.get(**query_params)['contains_content_items']
