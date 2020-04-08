@@ -6,6 +6,7 @@ Client for communicating with the Enterprise API.
 from __future__ import absolute_import, unicode_literals
 
 import json
+from collections import OrderedDict
 from logging import getLogger
 
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
@@ -13,6 +14,7 @@ from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
 from django.conf import settings
 
+from enterprise import utils
 from enterprise.api_client.lms import JwtLmsApiClient
 
 LOGGER = getLogger(__name__)
@@ -25,6 +27,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
 
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
+    GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
     APPEND_SLASH = True
 
     @JwtLmsApiClient.refresh_token
@@ -99,6 +102,39 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 catalog_uuid, str(exc)
             )
             return {}
+
+    @JwtLmsApiClient.refresh_token
+    def get_content_metadata(self, enterprise_customer, enterprise_catalogs=None):
+        """
+        Return all content metadata contained in the catalogs associated with the EnterpriseCustomer.
+
+        Arguments:
+            enterprise_customer (EnterpriseCustomer): The EnterpriseCustomer to return content metadata for.
+            enterprise_catalogs (EnterpriseCustomerCatalog): Optional list of EnterpriseCustomerCatalog objects.
+
+        Returns:
+            list: List of dicts containing content metadata.
+        """
+        content_metadata = OrderedDict()
+        enterprise_customer_catalogs = enterprise_catalogs or enterprise_customer.enterprise_customer_catalogs.all()
+
+        for enterprise_customer_catalog in enterprise_customer_catalogs:
+            catalog_uuid = enterprise_customer_catalog.uuid
+            endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
+            try:
+                response = endpoint.get()
+            except (SlumberBaseException, ConnectionError, Timeout) as exc:
+                LOGGER.exception(
+                    'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
+                    catalog_uuid, str(exc)
+                )
+                response = {}
+
+            for item in response:
+                content_id = utils.get_content_metadata_item_id(item)
+                content_metadata[content_id] = item
+
+        return list(content_metadata.values())
 
     @JwtLmsApiClient.refresh_token
     def contains_content_items(self, catalog_uuid, content_ids):

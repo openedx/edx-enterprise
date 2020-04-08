@@ -13,7 +13,12 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
+import crum
+import waffle
+
 from enterprise.api_client.enterprise import EnterpriseApiClient
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.constants import USE_ENTERPRISE_CATALOG
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 
@@ -70,16 +75,30 @@ class ContentMetadataExporter(Exporter):
         """
         super(ContentMetadataExporter, self).__init__(user, enterprise_configuration)
         self.enterprise_api = EnterpriseApiClient(self.user)
+        self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
     def export(self, **kwargs):
         """
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        content_metadata_items = self.enterprise_api.get_content_metadata(
-            self.enterprise_customer,
-            enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
-        )
+        request = crum.get_current_request()
+        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+            content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
+                self.enterprise_customer,
+                enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
+            )
+            LOGGER.info(
+                'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
+                self.enterprise_customer.name,
+                self.enterprise_configuration.customer_catalogs_to_transmit,
+                json.dumps(content_metadata_items)
+            )
+        else:
+            content_metadata_items = self.enterprise_api.get_content_metadata(
+                self.enterprise_customer,
+                enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
+            )
         LOGGER.info('Retrieved content metadata for enterprise [%s]', self.enterprise_customer.name)
         for item in content_metadata_items:
             transformed = self._transform_item(item)
