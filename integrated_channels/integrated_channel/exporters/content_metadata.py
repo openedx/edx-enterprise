@@ -92,7 +92,7 @@ class ContentMetadataExporter(Exporter):
                 'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
                 self.enterprise_customer.name,
                 self.enterprise_configuration.customer_catalogs_to_transmit,
-                content_metadata_items
+                json.dumps(content_metadata_items)
             )
         else:
             content_metadata_items = self.enterprise_api.get_content_metadata(
