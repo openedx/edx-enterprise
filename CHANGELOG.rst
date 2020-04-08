@@ -15,6 +15,13 @@ Unreleased
 --------------------
 Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
 
+[3.0.9] - 2020-04-08
+--------------------
+
+* Add USE_ENTERPRISE_CATALOG waffle flag
+* Switch get_course, get_course_run, get_program, and get_course_and_course_run methods to use enterprise catalog service behind waffle flag
+
+
 [3.0.8] - 2020-04-08
 --------------------
 
