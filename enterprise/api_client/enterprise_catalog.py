@@ -135,7 +135,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 content_metadata[content_id] = item
 
         return list(content_metadata.values())
-    
+
     @JwtLmsApiClient.refresh_token
     def contains_content_items(self, catalog_uuid, content_ids):
         """
@@ -147,4 +147,3 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         query_params = {'course_run_ids': content_ids}
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
         return endpoint.contains_content_items.get(**query_params)['contains_content_items']
-
