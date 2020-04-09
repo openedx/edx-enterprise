@@ -11,7 +11,6 @@ from decimal import Decimal
 from logging import getLogger
 from uuid import uuid4
 
-import crum
 import six
 import waffle
 from django_countries.fields import CountryField
@@ -1579,10 +1578,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course metadata.
         """
-        request = crum.get_current_request()
-        # Temporarily gate enterprise catalog api usage behind waffle flag
-        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
-            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [course_key]):
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_key]):
                 return None
         else:
             if not self.contains_courses([course_key]):
@@ -1600,10 +1598,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course run metadata.
         """
-        request = crum.get_current_request()
-        # Temporarily gate enterprise catalog api usage behind waffle flag
-        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
-            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [course_run_id]):
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
                 return None
         else:
             if not self.contains_courses([course_run_id]):
@@ -1625,10 +1622,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             ImproperlyConfigured: Missing or invalid catalog integration.
 
         """
-        request = crum.get_current_request()
-        # Temporarily gate enterprise catalog api usage behind waffle flag
-        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
-            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [course_run_id]):
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
                 return None, None
         else:
             if not self.contains_courses([course_run_id]):
@@ -1648,10 +1644,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The program metadata.
         """
-        request = crum.get_current_request()
-        # Temporarily gate enterprise catalog api usage behind waffle flag
-        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
-            if not EnterpriseCatalogApiClient(user=request.user).contains_content_items(self.uuid, [program_uuid]):
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [program_uuid]):
                 return None
         else:
             if not self.contains_programs([program_uuid]):

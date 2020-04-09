@@ -16,7 +16,7 @@ from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
-from waffle.testutils import override_flag
+from waffle.testutils import override_sample
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -1119,7 +1119,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         Verify the `get_course_and_course_run` method returns the same tuple with the enterprise catalog flag active.
         """
-        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
             api_client_mock.return_value.contains_content_items.return_value = False
             get_current_request_mock.return_value = self.request
 
@@ -1133,7 +1133,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         Verify the `get_course` method returns None with the enterprise catalog flag active if no content items exist.
         """
-        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
             api_client_mock.return_value.contains_content_items.return_value = False
             get_current_request_mock.return_value = self.request
 
@@ -1147,7 +1147,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         Verify the `get_course_run` method returns None with the catalog flag active if no content items exist.
         """
-        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
             api_client_mock.return_value.contains_content_items.return_value = False
             get_current_request_mock.return_value = self.request
 
@@ -1161,7 +1161,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         Verify the `get_program` method returns None with the catalog flag active if no content items exist.
         """
-        with override_flag(USE_ENTERPRISE_CATALOG, active=True):
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
             api_client_mock.return_value.contains_content_items.return_value = False
             get_current_request_mock.return_value = self.request
 
