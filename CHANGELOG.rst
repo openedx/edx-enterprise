@@ -15,6 +15,15 @@ Unreleased
 --------------------
 Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
 
+[3.0.11] - 2020-04-10
+---------------------
+
+* Add USE_ENTERPRISE_CATALOG waffle sample, and remove USE_ENTERPRISE_CATALOG waffle flag
+* Switch the use of waffle.flag_is_active to waffle.sample_is_active
+* Updates the EnterpriseCatalogApiClient to make the user argument optional. If the user argument is not provided, it will use the "enterprise_worker" user instead
+* No longer passes user to the EnterpriseCatalogApiClient during initialization in places where a request and/or user object doesn't already exist
+
+
 [3.0.10] - 2020-04-08
 ---------------------
 
