@@ -154,7 +154,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         return endpoint.contains_content_items.get(**query_params)['contains_content_items']
 
     @JwtLmsApiClient.refresh_token
-    def enterprise_customer_contains_content_items(self, enterprise_uuid, content_ids):
+    def enterprise_contains_content_items(self, enterprise_uuid, content_ids):
         """
         Checks whether an enterprise customer has any catalogs that contain the provided content ids.
 
