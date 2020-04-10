@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.0.14] - 2020-04-10
+---------------------
+
+* Fixing the traversal of results in get_content_metadata for the enterprise-catalog API client
+
+
 [3.0.13] - 2020-04-10
 ---------------------
 
