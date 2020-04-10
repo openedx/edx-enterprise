@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.0.15] - 2020-04-14
+---------------------
+
+* Fixed HTML tags bug from short course description in enterprise course enrollment page
+
+
 [3.0.14] - 2020-04-10
 ---------------------
 
