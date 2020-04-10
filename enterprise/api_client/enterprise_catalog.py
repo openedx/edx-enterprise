@@ -136,7 +136,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                     'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
                     catalog_uuid, str(exc)
                 )
-        
+
         return list(content_metadata.values())
 
     @JwtLmsApiClient.refresh_token
