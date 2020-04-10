@@ -135,7 +135,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 )
                 response = {}
 
-            for item in response:
+            for item in response['results']:
                 content_id = utils.get_content_metadata_item_id(item)
                 content_metadata[content_id] = item
 
