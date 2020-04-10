@@ -128,7 +128,8 @@ def test_delete_enterprise_catalog():
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_contains_content_items():
     url = _url("enterprise-catalogs/{catalog_uuid}/contains_content_items/?course_run_ids=demoX".format(
-        catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID))
+        catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID
+    ))
     expected_response = {
         'contains_content_items': True,
     }
@@ -146,7 +147,8 @@ def test_contains_content_items():
 @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
 def test_enterprise_contains_content_items():
     url = _url("enterprise-customer/{enterprise_uuid}/contains_content_items/?course_run_ids=demoX".format(
-        enterprise_uuid=TEST_ENTERPRISE_ID))
+        enterprise_uuid=TEST_ENTERPRISE_ID
+    ))
     expected_response = {
         'contains_content_items': True,
     }
