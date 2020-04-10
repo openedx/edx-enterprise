@@ -13,7 +13,12 @@ Change Log
 
 Unreleased
 --------------------
-Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
+
+[3.0.11] - 2020-04-10
+---------------------
+
+* Fix issue with matching urls for redirect to enterprise selection page
+
 
 [3.0.10] - 2020-04-08
 ---------------------
