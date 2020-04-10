@@ -14,13 +14,13 @@ Change Log
 Unreleased
 --------------------
 
-[3.0.12] - 2020-04-10
+[3.0.13] - 2020-04-10
 ---------------------
 
 * Switch catalog_contains_course method to use enterprise catalog service behind waffle sample
 
 
-[3.0.11] - 2020-04-10
+[3.0.12] - 2020-04-10
 ---------------------
 
 * Add USE_ENTERPRISE_CATALOG waffle sample, and remove USE_ENTERPRISE_CATALOG waffle flag
