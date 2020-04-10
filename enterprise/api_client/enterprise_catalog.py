@@ -30,6 +30,10 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
     APPEND_SLASH = True
 
+    def __init__(self, user=None):
+        user = user if user else utils.get_enterprise_worker_user()
+        super(EnterpriseCatalogApiClient, self).__init__(user)
+
     @JwtLmsApiClient.refresh_token
     def create_enterprise_catalog(
             self,

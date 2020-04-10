@@ -13,7 +13,6 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
-import crum
 import waffle
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
@@ -82,8 +81,7 @@ class ContentMetadataExporter(Exporter):
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        request = crum.get_current_request()
-        if request and waffle.flag_is_active(request, USE_ENTERPRISE_CATALOG):
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
             content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                 self.enterprise_customer,
                 enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
