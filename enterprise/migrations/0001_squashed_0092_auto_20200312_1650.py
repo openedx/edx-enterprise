@@ -3,39 +3,99 @@
 from __future__ import unicode_literals
 
 import collections
-from django.conf import settings
-import django.core.validators
-from django.db import migrations, models
-import django.db.migrations.operations.special
-import django.db.models.deletion
-import django.utils.timezone
+import uuid
+
 import django_countries.fields
+import fernet_fields.fields
+import jsonfield.fields
+import multi_email_field.fields
+import simple_history.models
+
+import django.utils.timezone
+from django.conf import settings
+from django.db import migrations, models
+
+import model_utils.fields
+
 import enterprise.constants
 import enterprise.models
 import enterprise.validators
-import fernet_fields.fields
-import jsonfield.encoder
-import jsonfield.fields
-import model_utils.fields
-import multi_email_field.fields
-import simple_history.models
-import uuid
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_CATALOG_ADMIN_ROLE,
+    ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+    ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
+    ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+    ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+)
+
+ENTERPRISE_ENROLLMENT_SOURCES = {
+    # Created in squashed 0079_AddEnterpriseEnrollmentSource
+    'Manual Enterprise Enrollment': 'manual',
+    'Enterprise API Enrollment': 'enterprise_api',
+    'Enterprise Enrollment URL': 'enrollment_url',
+    'Enterprise Offer Redemption': 'offer_redemption',
+    # Updated in squashed 0081_UpdateEnterpriseEnrollmentSource
+    'Enterprise User Enrollment Background Task': 'enrollment_task',
+    # Added in squashed 0082_AddManagementEnterpriseEnrollmentSource
+    'Enterprise management command enrollment': 'management_command',
+}
 
 
-# Functions from the following migrations need manual copying.
-# Move them and any dependencies into this file, then update the
-# RunPython operations to refer to the local versions:
-# enterprise.migrations.0051_add_enterprise_slug
-# enterprise.migrations.0062_add_system_wide_enterprise_roles
-# enterprise.migrations.0065_add_enterprise_feature_roles
-# enterprise.migrations.0066_add_system_wide_enterprise_operator_role
-# enterprise.migrations.0067_add_role_based_access_control_switch
-# enterprise.migrations.0068_remove_role_based_access_control_switch
-# enterprise.migrations.0072_add_enterprise_report_config_feature_role
-# enterprise.migrations.0073_enterprisecustomerreportingconfiguration_uuid
-# enterprise.migrations.0079_AddEnterpriseEnrollmentSource
-# enterprise.migrations.0081_UpdateEnterpriseEnrollmentSource
-# enterprise.migrations.0082_AddManagementEnterpriseEnrollmentSource
+# From squashed 0079_AddEnterpriseEnrollmentSource
+def add_enterprise_enrollment_sources(apps, schema_editor):
+    enrollment_sources = apps.get_model('enterprise', 'EnterpriseEnrollmentSource')
+    for name, slug in ENTERPRISE_ENROLLMENT_SOURCES.items():
+        enrollment_sources.objects.update_or_create(name=name, slug=slug)
+
+
+# From squashed 0079_AddEnterpriseEnrollmentSource
+def drop_enterprise_enrollment_sources(apps, schema_editor):
+    enrollment_sources = apps.get_model('enterprise', 'EnterpriseEnrollmentSource')
+    enrollment_sources.objects.filter(name__in=ENTERPRISE_ENROLLMENT_SOURCES).delete()
+
+
+def create_enterprise_roles(apps, schema_editor):
+    """Create the enterprise roles if they do not already exist."""
+    SystemWideEnterpriseRole = apps.get_model('enterprise', 'SystemWideEnterpriseRole')
+    # From squashed 0062_add_system_wide_enterprise_roles
+    SystemWideEnterpriseRole.objects.update_or_create(name=ENTERPRISE_ADMIN_ROLE)
+    SystemWideEnterpriseRole.objects.update_or_create(name=ENTERPRISE_LEARNER_ROLE)
+    # From squashed 0066_add_system_wide_enterprise_operator_role
+    SystemWideEnterpriseRole.objects.update_or_create(name=ENTERPRISE_OPERATOR_ROLE)
+
+    EnterpriseFeatureRole = apps.get_model('enterprise', 'EnterpriseFeatureRole')
+    # From squashed 0065_add_enterprise_feature_roles
+    EnterpriseFeatureRole.objects.update_or_create(name=ENTERPRISE_CATALOG_ADMIN_ROLE)
+    EnterpriseFeatureRole.objects.update_or_create(name=ENTERPRISE_DASHBOARD_ADMIN_ROLE)
+    EnterpriseFeatureRole.objects.update_or_create(name=ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE)
+    # From squashed 0072_add_enterprise_report_config_feature_role
+    EnterpriseFeatureRole.objects.update_or_create(name=ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+
+
+def delete_enterprise_roles(apps, schema_editor):
+    """Delete the enterprise roles."""
+    SystemWideEnterpriseRole = apps.get_model('enterprise', 'SystemWideEnterpriseRole')
+    # From squashed 0062_add_system_wide_enterprise_roles
+    SystemWideEnterpriseRole.objects.filter(
+        name__in=[ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE]
+    ).delete()
+    # From squashed 0066_add_system_wide_enterprise_operator_role
+    SystemWideEnterpriseRole.objects.filter(
+        name__in=[ENTERPRISE_OPERATOR_ROLE]
+    ).delete()
+
+    EnterpriseFeatureRole = apps.get_model('enterprise', 'EnterpriseFeatureRole')
+    # From squashed 0065_add_enterprise_feature_roles
+    EnterpriseFeatureRole.objects.filter(
+        name__in=[ENTERPRISE_CATALOG_ADMIN_ROLE, ENTERPRISE_DASHBOARD_ADMIN_ROLE, ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE]
+    ).delete()
+    # From squashed 0072_add_enterprise_report_config_feature_role
+    EnterpriseFeatureRole.objects.filter(
+        name__in=[ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE]
+    ).delete()
+
 
 class Migration(migrations.Migration):
 
@@ -44,238 +104,11 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('waffle', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('sites', '0001_initial'),
+        ('sites', '0002_alter_domain_unique'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='EnterpriseCustomer',
-            fields=[
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('name', models.CharField(help_text='Enterprise Customer name.', max_length=255)),
-                ('active', models.BooleanField(default=True)),
-            ],
-            options={
-                'verbose_name': 'Enterprise Customer',
-                'verbose_name_plural': 'Enterprise Customers',
-            },
-        ),
-        migrations.CreateModel(
-            name='EnterpriseCustomerUser',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('user_id', models.PositiveIntegerField()),
-                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomer')),
-            ],
-            options={
-                'verbose_name': 'Enterprise Customer User',
-                'verbose_name_plural': 'Enterprise Customer Users',
-            },
-        ),
-        migrations.CreateModel(
-            name='HistoricalEnterpriseCustomer',
-            fields=[
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False)),
-                ('name', models.CharField(help_text='Enterprise Customer name.', max_length=255)),
-                ('active', models.BooleanField(default=True)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField()),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('site', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='sites.Site')),
-                ('catalog', models.PositiveIntegerField(blank=True, help_text='Course catalog for the Enterprise Customer.', null=True)),
-                ('enable_data_sharing_consent', models.BooleanField(default=False, help_text='Specifies whether data sharing consent is enabled or disabled for learners signing in through this enterprise customer. If disabled, consent will not be requested, and eligible data will not be shared.')),
-                ('enforce_data_sharing_consent', models.CharField(choices=[('at_enrollment', 'At Enrollment'), ('externally_managed', 'Managed externally')], default='at_enrollment', help_text='Specifies whether data sharing consent is optional, is required at login, or is required at enrollment.', max_length=25)),
-                ('enable_audit_enrollment', models.BooleanField(default=False, help_text='Specifies whether the audit track enrollment option will be displayed in the course enrollment view.')),
-                ('enable_audit_data_reporting', models.BooleanField(default=False, help_text='Specifies whether to pass-back audit track enrollment data through an integrated channel.')),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('replace_sensitive_sso_username', models.BooleanField(default=False, help_text='Specifies whether to replace the display of potentially sensitive SSO usernames with a more generic name, e.g. EnterpriseLearner.')),
-                ('hide_course_original_price', models.BooleanField(default=False, help_text='Specify whether display the course original price on enterprise course landing page or not.')),
-                ('slug', models.SlugField(blank=True, default='default', help_text='A short string uniquely identifying this enterprise. Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"', max_length=30)),
-            ],
-            options={
-                'verbose_name': 'historical Enterprise Customer',
-                'get_latest_by': 'history_date',
-                'ordering': ('-history_date', '-history_id'),
-            },
-        ),
-        migrations.AlterUniqueTogether(
-            name='enterprisecustomeruser',
-            unique_together=set([('enterprise_customer', 'user_id')]),
-        ),
-        migrations.CreateModel(
-            name='EnterpriseCustomerBrandingConfiguration',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('logo', models.ImageField(blank=True, help_text='Logo images must be in .png format.', max_length=255, null=True, upload_to=enterprise.models.logo_path, validators=[enterprise.validators.validate_image_extension, enterprise.validators.validate_image_size])),
-                ('enterprise_customer', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='branding_configuration', to='enterprise.EnterpriseCustomer')),
-            ],
-            options={
-                'verbose_name': 'Branding Configuration',
-                'verbose_name_plural': 'Branding Configurations',
-                'ordering': ['created'],
-            },
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='site',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customers', to='sites.Site'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='identity_provider',
-            field=models.SlugField(blank=True, default=None, null=True),
-        ),
-        migrations.CreateModel(
-            name='PendingEnterpriseCustomerUser',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('user_email', models.EmailField(max_length=254, unique=True)),
-                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomer')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='catalog',
-            field=models.PositiveIntegerField(help_text='Course catalog for the Enterprise Customer.', null=True),
-        ),
-        migrations.CreateModel(
-            name='EnterpriseCustomerIdentityProvider',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('provider_id', models.SlugField(help_text='Slug field containing a unique identifier for the identity provider.', unique=True)),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RemoveField(
-            model_name='enterprisecustomer',
-            name='identity_provider',
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomeridentityprovider',
-            name='enterprise_customer',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_identity_provider', to='enterprise.EnterpriseCustomer'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_data_sharing_consent',
-            field=models.BooleanField(default=False, help_text='This field is used to determine whether data sharing consent is enabled or disabled for users signing in using this enterprise customer. If disabled, consent will not be requested, and eligible data will not be shared.'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enforce_data_sharing_consent',
-            field=models.CharField(choices=[('optional', 'Optional'), ('at_login', 'At Login'), ('at_enrollment', 'At Enrollment')], default='optional', help_text="This field determines if data sharing consent is optional, if it's required at login, or if it's required when registering for eligible courses.", max_length=25),
-        ),
-        migrations.CreateModel(
-            name='PendingEnrollment',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('course_id', models.CharField(max_length=255)),
-                ('course_mode', models.CharField(max_length=25)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.PendingEnterpriseCustomerUser')),
-            ],
-        ),
-        migrations.AlterUniqueTogether(
-            name='pendingenrollment',
-            unique_together=set([('user', 'course_id')]),
-        ),
-        migrations.CreateModel(
-            name='EnterpriseCustomerEntitlement',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('entitlement_id', models.PositiveIntegerField(help_text="Enterprise customer's entitlement id for relationship with e-commerce coupon.", unique=True, verbose_name='Seat Entitlement')),
-                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_entitlements', to='enterprise.EnterpriseCustomer')),
-            ],
-            options={
-                'verbose_name': 'Enterprise Customer Entitlement',
-                'verbose_name_plural': 'Enterprise Customer Entitlements',
-                'ordering': ['created'],
-            },
-        ),
-        migrations.CreateModel(
-            name='HistoricalEnterpriseCustomerEntitlement',
-            fields=[
-                ('id', models.IntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('entitlement_id', models.PositiveIntegerField(db_index=True, help_text="Enterprise customer's entitlement id for relationship with e-commerce coupon.", verbose_name='Seat Entitlement')),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField()),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('enterprise_customer', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomer')),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-            ],
-            options={
-                'verbose_name': 'historical Enterprise Customer Entitlement',
-                'get_latest_by': 'history_date',
-                'ordering': ('-history_date', '-history_id'),
-            },
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomer',
-            name='catalog',
-            field=models.PositiveIntegerField(blank=True, help_text='Course catalog for the Enterprise Customer.', null=True),
-        ),
-        migrations.CreateModel(
-            name='EnterpriseCourseEnrollment',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('consent_granted', models.NullBooleanField(help_text='Whether the learner has granted consent for this particular course.')),
-                ('course_id', models.CharField(help_text='The course ID in which the learner was enrolled.', max_length=255)),
-                ('enterprise_customer_user', models.ForeignKey(help_text='The enterprise learner to which this enrollment is attached.', on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollments', to='enterprise.EnterpriseCustomerUser')),
-            ],
-        ),
-        migrations.CreateModel(
-            name='HistoricalEnterpriseCourseEnrollment',
-            fields=[
-                ('id', models.IntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('course_id', models.CharField(help_text='The ID of the course in which the learner was enrolled.', max_length=255)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField()),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('enterprise_customer_user', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomerUser')),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-            ],
-            options={
-                'verbose_name': 'historical enterprise course enrollment',
-                'get_latest_by': 'history_date',
-                'ordering': ('-history_date', '-history_id'),
-            },
-        ),
-        migrations.AlterUniqueTogether(
-            name='enterprisecourseenrollment',
-            unique_together=set([('enterprise_customer_user', 'course_id')]),
-        ),
         migrations.CreateModel(
             name='EnrollmentNotificationEmailTemplate',
             fields=[
@@ -285,78 +118,84 @@ class Migration(migrations.Migration):
                 ('plaintext_template', models.TextField(blank=True, help_text='Fill in a standard Django template that, when rendered, produces the email you want sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n<ul><li>user_name: A human-readable name for the person being emailed. Be sure to handle the case where this is not defined, as it may be missing in some cases. It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>    <li>organization_name: The name of the organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>        <li>url: A link to the homepage of the enrolled-in item.</li>        <li>branding: A custom branding name for the enrolled-in item. For example, the branding of a MicroMasters program would be "MicroMasters".</li>     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date` template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date">the Django documentation</a>).</li><li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>')),
                 ('html_template', models.TextField(blank=True, help_text='Fill in a standard Django template that, when rendered, produces the email you want sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n<ul><li>user_name: A human-readable name for the person being emailed. Be sure to handle the case where this is not defined, as it may be missing in some cases. It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>    <li>organization_name: The name of the organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>        <li>url: A link to the homepage of the enrolled-in item.</li>        <li>branding: A custom branding name for the enrolled-in item. For example, the branding of a MicroMasters program would be "MicroMasters".</li>     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date` template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date">the Django documentation</a>).</li><li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>')),
                 ('subject_line', models.CharField(blank=True, help_text='Enter a string that can be used to generate a dynamic subject line for notification emails. The placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.', max_length=100)),
-                ('site', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollment_template', to='sites.Site')),
-            ],
-        ),
-        migrations.CreateModel(
-            name='HistoricalEnrollmentNotificationEmailTemplate',
-            fields=[
-                ('id', models.IntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('plaintext_template', models.TextField(blank=True, help_text='Fill in a standard Django template that, when rendered, produces the email you want sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n<ul><li>user_name: A human-readable name for the person being emailed. Be sure to handle the case where this is not defined, as it may be missing in some cases. It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>    <li>organization_name: The name of the organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>        <li>url: A link to the homepage of the enrolled-in item.</li>        <li>branding: A custom branding name for the enrolled-in item. For example, the branding of a MicroMasters program would be "MicroMasters".</li>     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date` template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date">the Django documentation</a>).</li><li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>')),
-                ('html_template', models.TextField(blank=True, help_text='Fill in a standard Django template that, when rendered, produces the email you want sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n<ul><li>user_name: A human-readable name for the person being emailed. Be sure to handle the case where this is not defined, as it may be missing in some cases. It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>    <li>organization_name: The name of the organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>        <li>url: A link to the homepage of the enrolled-in item.</li>        <li>branding: A custom branding name for the enrolled-in item. For example, the branding of a MicroMasters program would be "MicroMasters".</li>     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date` template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date">the Django documentation</a>).</li><li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>')),
-                ('subject_line', models.CharField(blank=True, help_text='Enter a string that can be used to generate a dynamic subject line for notification emails. The placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.', max_length=100)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField()),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('site', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='sites.Site')),
             ],
             options={
-                'verbose_name': 'historical enrollment notification email template',
-                'get_latest_by': 'history_date',
-                'ordering': ('-history_date', '-history_id'),
+                'ordering': ['created'],
             },
         ),
-        migrations.AlterField(
-            model_name='enterprisecustomeruser',
-            name='enterprise_customer',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_users', to='enterprise.EnterpriseCustomer'),
+        migrations.CreateModel(
+            name='EnterpriseCatalogQuery',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('title', models.CharField(default='All Content', max_length=255)),
+                ('content_filter', jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'indent': 4, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a JSON object. An empty JSON object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True)),
+            ],
+            options={
+                'verbose_name': 'Enterprise Catalog Query',
+                'verbose_name_plural': 'Enterprise Catalog Queries',
+                'ordering': ['created'],
+            },
         ),
-        migrations.AlterModelOptions(
-            name='enterprisecustomeruser',
-            options={'ordering': ['created'], 'verbose_name': 'Enterprise Customer Learner', 'verbose_name_plural': 'Enterprise Customer Learners'},
+        migrations.CreateModel(
+            name='EnterpriseCourseEnrollment',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('course_id', models.CharField(help_text='The ID of the course in which the learner was enrolled.', max_length=255)),
+                ('marked_done', models.BooleanField(default=False, help_text='Specifies whether a user marked this course as completed in the learner portal.')),
+            ],
+            options={
+                'ordering': ['created'],
+            },
         ),
-        migrations.AlterField(
-            model_name='enterprisecourseenrollment',
-            name='course_id',
-            field=models.CharField(help_text='The ID of the course in which the learner was enrolled.', max_length=255),
+        migrations.CreateModel(
+            name='EnterpriseCustomer',
+            fields=[
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('name', models.CharField(help_text='Enterprise Customer name.', max_length=255)),
+                ('slug', models.SlugField(default='default', help_text='A short string uniquely identifying this enterprise. Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"', max_length=30, unique=True)),
+                ('active', models.BooleanField(default=True)),
+                ('country', django_countries.fields.CountryField(max_length=2, null=True)),
+                ('hide_course_original_price', models.BooleanField(default=False, help_text='Specify whether display the course original price on enterprise course landing page or not.')),
+                ('enable_data_sharing_consent', models.BooleanField(default=False, help_text='Specifies whether data sharing consent is enabled or disabled for learners signing in through this enterprise customer. If disabled, consent will not be requested, and eligible data will not be shared.')),
+                ('enforce_data_sharing_consent', models.CharField(choices=[('at_enrollment', 'At Enrollment'), ('externally_managed', 'Managed externally')], default='at_enrollment', help_text='Specifies whether data sharing consent is optional, is required at login, or is required at enrollment.', max_length=25)),
+                ('enable_audit_enrollment', models.BooleanField(default=False, help_text='Specifies whether the audit track enrollment option will be displayed in the course enrollment view.')),
+                ('enable_audit_data_reporting', models.BooleanField(default=False, help_text='Specifies whether to pass-back audit track enrollment data through an integrated channel.')),
+                ('replace_sensitive_sso_username', models.BooleanField(default=False, help_text='Specifies whether to replace the display of potentially sensitive SSO usernames with a more generic name, e.g. EnterpriseLearner.')),
+                ('enable_autocohorting', models.BooleanField(default=False, help_text='Specifies whether the customer is able to assign learners to cohorts upon enrollment.')),
+                ('enable_portal_code_management_screen', models.BooleanField(default=False, help_text='Specifies whether to allow access to the code management screen in the admin portal.')),
+                ('enable_portal_reporting_config_screen', models.BooleanField(default=False, help_text='Specifies whether to allow access to the reporting configurations screen in the admin portal.')),
+                ('enable_portal_subscription_management_screen', models.BooleanField(default=False, help_text='Specifies whether to allow access to the subscription management screen in the admin portal.')),
+                ('enable_learner_portal', models.BooleanField(default=False, help_text='Specifies whether the enterprise learner portal site should be made known to the learner.')),
+                ('contact_email', models.EmailField(blank=True, help_text='Email to be displayed as public point of contact for enterprise.', max_length=254, null=True)),
+            ],
+            options={
+                'verbose_name': 'Enterprise Customer',
+                'verbose_name_plural': 'Enterprise Customers',
+                'ordering': ['created'],
+            },
         ),
-        migrations.AlterField(
-            model_name='enterprisecustomer',
-            name='enable_data_sharing_consent',
-            field=models.BooleanField(default=False, help_text='Specifies whether data sharing consent is enabled or disabled for learners signing in through this enterprise customer. If disabled, consent will not be requested, and eligible data will not be shared.'),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomer',
-            name='enforce_data_sharing_consent',
-            field=models.CharField(choices=[('optional', 'Optional'), ('at_login', 'At Login'), ('at_enrollment', 'At Enrollment')], default='optional', help_text='Specifies whether data sharing consent is optional, is required at login, or is required at enrollment.', max_length=25),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomer',
-            name='enforce_data_sharing_consent',
-            field=models.CharField(choices=[('optional', 'Optional'), ('at_login', 'At Login'), ('at_enrollment', 'At Enrollment'), ('externally_managed', 'Managed externally')], default='optional', help_text='Specifies whether data sharing consent is optional, is required at login, or is required at enrollment.', max_length=25),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_audit_enrollment',
-            field=models.BooleanField(default=False, help_text='Specifies whether the audit track enrollment option will be displayed in the course enrollment view.'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='require_account_level_consent',
-            field=models.BooleanField(default=False, help_text='Specifies whether every consent interaction should ask for account-wide consent, rather than only the specific scope at which the interaction is happening.'),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomer',
-            name='enforce_data_sharing_consent',
-            field=models.CharField(choices=[('at_enrollment', 'At Enrollment'), ('externally_managed', 'Managed externally')], default='at_enrollment', help_text='Specifies whether data sharing consent is optional, is required at login, or is required at enrollment.', max_length=25),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_audit_data_reporting',
-            field=models.BooleanField(default=False, help_text='Specifies whether to pass-back audit track enrollment data through an integrated channel.'),
+        migrations.CreateModel(
+            name='EnterpriseCustomerBrandingConfiguration',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('logo', models.ImageField(blank=True, help_text='Logo images must be in .png format.', max_length=255, null=True, upload_to=enterprise.models.logo_path, validators=[enterprise.validators.validate_image_extension, enterprise.validators.validate_image_size])),
+                ('banner_border_color', models.CharField(blank=True, max_length=7, null=True, validators=[enterprise.validators.validate_hex_color])),
+                ('banner_background_color', models.CharField(blank=True, max_length=7, null=True, validators=[enterprise.validators.validate_hex_color])),
+                ('enterprise_customer', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='branding_configuration', to='enterprise.EnterpriseCustomer')),
+            ],
+            options={
+                'verbose_name': 'Branding Configuration',
+                'verbose_name_plural': 'Branding Configurations',
+                'ordering': ['created'],
+            },
         ),
         migrations.CreateModel(
             name='EnterpriseCustomerCatalog',
@@ -364,11 +203,12 @@ class Migration(migrations.Migration):
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
                 ('uuid', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_catalogs', to='enterprise.EnterpriseCustomer')),
-                ('content_filter', jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={}, null=True)),
                 ('title', models.CharField(default='All Content', max_length=255)),
+                ('content_filter', jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'indent': 4, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True)),
                 ('enabled_course_modes', jsonfield.fields.JSONField(default=enterprise.constants.json_serialized_course_modes, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text='Ordered list of enrollment modes which can be displayed to learners for course runs in this catalog.', load_kwargs={})),
                 ('publish_audit_enrollment_urls', models.BooleanField(default=False, help_text='Specifies whether courses should be published with direct-to-audit enrollment URLs.')),
+                ('enterprise_catalog_query', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='enterprise_customer_catalogs', to='enterprise.EnterpriseCatalogQuery')),
+                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_catalogs', to='enterprise.EnterpriseCustomer')),
             ],
             options={
                 'verbose_name': 'Enterprise Customer Catalog',
@@ -377,54 +217,17 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name='HistoricalEnterpriseCustomerCatalog',
+            name='EnterpriseCustomerIdentityProvider',
             fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False)),
-                ('history_id', models.AutoField(primary_key=True, serialize=False)),
-                ('history_date', models.DateTimeField()),
-                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
-                ('enterprise_customer', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomer')),
-                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('content_filter', jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={}, null=True)),
-                ('title', models.CharField(default='All Content', max_length=255)),
-                ('enabled_course_modes', jsonfield.fields.JSONField(default=enterprise.constants.json_serialized_course_modes, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text='Ordered list of enrollment modes which can be displayed to learners for course runs in this catalog.', load_kwargs={})),
-                ('history_change_reason', models.CharField(max_length=100, null=True)),
-                ('publish_audit_enrollment_urls', models.BooleanField(default=False, help_text='Specifies whether courses should be published with direct-to-audit enrollment URLs.')),
+                ('provider_id', models.SlugField(help_text='Slug field containing a unique identifier for the identity provider.', unique=True)),
+                ('enterprise_customer', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_identity_provider', to='enterprise.EnterpriseCustomer')),
             ],
             options={
-                'verbose_name': 'historical Enterprise Customer Catalog',
-                'get_latest_by': 'history_date',
-                'ordering': ('-history_date', '-history_id'),
+                'ordering': ['created'],
             },
-        ),
-        migrations.RemoveField(
-            model_name='enterprisecustomer',
-            name='require_account_level_consent',
-        ),
-        migrations.RemoveField(
-            model_name='enterprisecourseenrollment',
-            name='consent_granted',
-        ),
-        migrations.AddField(
-            model_name='enrollmentnotificationemailtemplate',
-            name='enterprise_customer',
-            field=models.OneToOneField(default=None, on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollment_template', to='enterprise.EnterpriseCustomer'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='historicalenrollmentnotificationemailtemplate',
-            name='enterprise_customer',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomer'),
-        ),
-        migrations.RemoveField(
-            model_name='enrollmentnotificationemailtemplate',
-            name='site',
-        ),
-        migrations.RemoveField(
-            model_name='historicalenrollmentnotificationemailtemplate',
-            name='site',
         ),
         migrations.CreateModel(
             name='EnterpriseCustomerReportingConfiguration',
@@ -432,141 +235,30 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('uuid', models.UUIDField(default=uuid.uuid4, unique=True)),
                 ('active', models.BooleanField(verbose_name='Active')),
+                ('include_date', models.BooleanField(default=True, help_text='Include date in the report file name', verbose_name='Include Date')),
                 ('delivery_method', models.CharField(choices=[('email', 'email'), ('sftp', 'sftp')], default='email', help_text='The method in which the data should be sent.', max_length=20, verbose_name='Delivery Method')),
+                ('pgp_encryption_key', models.TextField(blank=True, help_text='The key for encryption, if PGP encrypted file is required.', null=True, verbose_name='PGP Encryption Key')),
+                ('data_type', models.CharField(choices=[('progress', 'progress'), ('progress_v2', 'progress_v2'), ('catalog', 'catalog'), ('engagement', 'engagement')], default='progress', help_text='The type of data this report should contain.', max_length=20, verbose_name='Data Type')),
+                ('report_type', models.CharField(choices=[('csv', 'csv'), ('json', 'json')], default='csv', help_text='The type this report should be sent as, e.g. CSV.', max_length=20, verbose_name='Report Type')),
                 ('email', multi_email_field.fields.MultiEmailField(blank=True, help_text='The email(s), one per line, where the report should be sent.', verbose_name='Email')),
                 ('frequency', models.CharField(choices=[('daily', 'daily'), ('monthly', 'monthly'), ('weekly', 'weekly')], default='monthly', help_text='The frequency interval (daily, weekly, or monthly) that the report should be sent.', max_length=20, verbose_name='Frequency')),
                 ('day_of_month', models.SmallIntegerField(blank=True, help_text='The day of the month to send the report. This field is required and only valid when the frequency is monthly.', null=True, validators=[django.core.validators.MinValueValidator(1), django.core.validators.MaxValueValidator(31)], verbose_name='Day of Month')),
                 ('day_of_week', models.SmallIntegerField(blank=True, choices=[(0, 'Monday'), (1, 'Tuesday'), (2, 'Wednesday'), (3, 'Thursday'), (4, 'Friday'), (5, 'Saturday'), (6, 'Sunday')], help_text='The day of the week to send the report. This field is required and only valid when the frequency is weekly.', null=True, verbose_name='Day of Week')),
                 ('hour_of_day', models.SmallIntegerField(help_text='The hour of the day to send the report, in Eastern Standard Time (EST). This is required for all frequency settings.', validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(23)], verbose_name='Hour of Day')),
-                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reporting_configurations', to='enterprise.EnterpriseCustomer', verbose_name='Enterprise Customer')),
-                ('sftp_file_path', models.CharField(blank=True, help_text='If the delivery method is sftp, the path on the host to deliver the report to.', max_length=256, null=True, verbose_name='SFTP file path')),
+                ('decrypted_password', fernet_fields.fields.EncryptedCharField(blank=True, help_text='This password will be used to secure the zip file. It will be encrypted when stored in the database.', max_length=256, null=True)),
                 ('sftp_hostname', models.CharField(blank=True, help_text='If the delivery method is sftp, the host to deliver the report to.', max_length=256, null=True, verbose_name='SFTP Host name')),
                 ('sftp_port', models.PositiveIntegerField(blank=True, default=22, help_text='If the delivery method is sftp, the port on the host to connect to.', null=True, verbose_name='SFTP Port')),
                 ('sftp_username', models.CharField(blank=True, help_text='If the delivery method is sftp, the username to use to securely access the host.', max_length=256, null=True, verbose_name='SFTP username')),
-                ('decrypted_password', fernet_fields.fields.EncryptedCharField(blank=True, help_text='This password will be used to secure the zip file. It will be encrypted when stored in the database.', max_length=256, null=True)),
                 ('decrypted_sftp_password', fernet_fields.fields.EncryptedCharField(blank=True, help_text='If the delivery method is sftp, the password to use to securely access the host. The password will be encrypted when stored in the database.', max_length=256, null=True)),
-                ('data_type', models.CharField(choices=[('progress', 'progress'), ('catalog', 'catalog')], default='progress', help_text='The type of data this report should contain.', max_length=20, verbose_name='Data Type')),
-                ('report_type', models.CharField(choices=[('csv', 'csv')], default='csv', help_text='The type this report should be sent as, e.g. CSV.', max_length=20, verbose_name='Report Type')),
+                ('sftp_file_path', models.CharField(blank=True, help_text='If the delivery method is sftp, the path on the host to deliver the report to.', max_length=256, null=True, verbose_name='SFTP file path')),
+                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reporting_configurations', to='enterprise.EnterpriseCustomer', verbose_name='Enterprise Customer')),
+                ('enterprise_customer_catalogs', models.ManyToManyField(to='enterprise.EnterpriseCustomerCatalog', verbose_name='Enterprise Customer Catalogs')),
             ],
             options={
                 'ordering': ['created'],
             },
-        ),
-        migrations.AddField(
-            model_name='historicalenrollmentnotificationemailtemplate',
-            name='history_change_reason',
-            field=models.CharField(max_length=100, null=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='replace_sensitive_sso_username',
-            field=models.BooleanField(default=False, help_text='Specifies whether to replace the display of potentially sensitive SSO usernames with a more generic name, e.g. EnterpriseLearner.'),
-        ),
-        migrations.AlterModelOptions(
-            name='enrollmentnotificationemailtemplate',
-            options={'ordering': ['created']},
-        ),
-        migrations.AlterModelOptions(
-            name='enterprisecourseenrollment',
-            options={'ordering': ['created']},
-        ),
-        migrations.AlterModelOptions(
-            name='enterprisecustomer',
-            options={'ordering': ['created'], 'verbose_name': 'Enterprise Customer', 'verbose_name_plural': 'Enterprise Customers'},
-        ),
-        migrations.AlterModelOptions(
-            name='enterprisecustomeridentityprovider',
-            options={'ordering': ['created']},
-        ),
-        migrations.AlterModelOptions(
-            name='pendingenrollment',
-            options={'ordering': ['created']},
-        ),
-        migrations.AlterModelOptions(
-            name='pendingenterprisecustomeruser',
-            options={'ordering': ['created']},
-        ),
-        migrations.AlterUniqueTogether(
-            name='enterprisecustomerreportingconfiguration',
-            unique_together=set([('enterprise_customer', 'data_type', 'report_type', 'delivery_method')]),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='report_type',
-            field=models.CharField(choices=[('csv', 'csv'), ('json', 'json')], default='csv', help_text='The type this report should be sent as, e.g. CSV.', max_length=20, verbose_name='Report Type'),
-        ),
-        migrations.AlterUniqueTogether(
-            name='enterprisecustomerreportingconfiguration',
-            unique_together=set([]),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='hide_course_original_price',
-            field=models.BooleanField(default=False, help_text='Specify whether display the course original price on enterprise course landing page or not.'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomeruser',
-            name='active',
-            field=models.BooleanField(default=True),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='data_type',
-            field=models.CharField(choices=[('progress', 'progress'), ('progress_v2', 'progress_v2'), ('catalog', 'catalog')], default='progress', help_text='The type of data this report should contain.', max_length=20, verbose_name='Data Type'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='slug',
-            field=models.SlugField(blank=True, default='default', help_text='A short string uniquely identifying this enterprise. Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"', max_length=30),
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0051_add_enterprise_slug.populate_slug,
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomer',
-            name='slug',
-            field=models.SlugField(default='default', help_text='A short string uniquely identifying this enterprise. Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"', max_length=30, unique=True),
-        ),
-        migrations.AlterField(
-            model_name='historicalenterprisecustomer',
-            name='slug',
-            field=models.SlugField(default='default', help_text='A short string uniquely identifying this enterprise. Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"', max_length=30),
-        ),
-        migrations.AddField(
-            model_name='pendingenrollment',
-            name='cohort_name',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='country',
-            field=django_countries.fields.CountryField(max_length=2, null=True),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='country',
-            field=django_countries.fields.CountryField(max_length=2, null=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_autocohorting',
-            field=models.BooleanField(default=False, help_text='Specifies whether the customer is able to assign learners to cohorts upon enrollment.'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='enable_autocohorting',
-            field=models.BooleanField(default=False, help_text='Specifies whether the customer is able to assign learners to cohorts upon enrollment.'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='pgp_encryption_key',
-            field=models.TextField(blank=True, help_text='The key for encryption, if PGP encrypted file is required.', null=True, verbose_name='PGP Encryption Key'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='enterprise_customer_catalogs',
-            field=models.ManyToManyField(to='enterprise.EnterpriseCustomerCatalog', verbose_name='Enterprise Customer Catalogs'),
         ),
         migrations.CreateModel(
             name='EnterpriseCustomerType',
@@ -582,64 +274,35 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='customer_type',
-            field=models.ForeignKey(default=enterprise.models.get_default_customer_type, help_text='Specifies enterprise customer type.', on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomerType', verbose_name='Customer Type'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='customer_type',
-            field=models.ForeignKey(blank=True, db_constraint=False, default=enterprise.models.get_default_customer_type, help_text='Specifies enterprise customer type.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomerType', verbose_name='Customer Type'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_portal_code_management_screen',
-            field=models.BooleanField(default=False, help_text='Specifies whether to allow access to the code management screen in the admin portal.'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='enable_portal_code_management_screen',
-            field=models.BooleanField(default=False, help_text='Specifies whether to allow access to the code management screen in the admin portal.'),
-        ),
-        migrations.AlterField(
-            model_name='historicalenterprisecourseenrollment',
-            name='enterprise_customer_user',
-            field=models.ForeignKey(blank=True, db_constraint=False, help_text='The enterprise learner to which this enrollment is attached.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomerUser'),
-        ),
         migrations.CreateModel(
-            name='SystemWideEnterpriseRole',
+            name='EnterpriseCustomerUser',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('name', models.CharField(db_index=True, max_length=255, unique=True)),
+                ('user_id', models.PositiveIntegerField(db_index=True)),
+                ('active', models.BooleanField(default=True)),
+                ('linked', models.BooleanField(default=True)),
+                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customer_users', to='enterprise.EnterpriseCustomer')),
             ],
             options={
-                'abstract': False,
+                'verbose_name': 'Enterprise Customer Learner',
+                'verbose_name_plural': 'Enterprise Customer Learners',
+                'ordering': ['-active', '-modified'],
             },
         ),
         migrations.CreateModel(
-            name='SystemWideEnterpriseUserRoleAssignment',
+            name='EnterpriseEnrollmentSource',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.SystemWideEnterpriseRole')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                ('name', models.CharField(max_length=64)),
+                ('slug', models.SlugField(max_length=30, unique=True)),
             ],
             options={
                 'abstract': False,
             },
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0062_add_system_wide_enterprise_roles.create_roles,
-            reverse_code=enterprise.migrations.0062_add_system_wide_enterprise_roles.delete_roles,
-        ),
-        migrations.AddField(
-            model_name='systemwideenterpriserole',
-            name='description',
-            field=models.TextField(blank=True, null=True),
         ),
         migrations.CreateModel(
             name='EnterpriseFeatureRole',
@@ -666,56 +329,115 @@ class Migration(migrations.Migration):
             options={
                 'abstract': False,
             },
-            bases=(models.Model, enterprise.models.EnterpriseRoleAssignmentContextMixin),
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0065_add_enterprise_feature_roles.create_roles,
-            reverse_code=enterprise.migrations.0065_add_enterprise_feature_roles.delete_roles,
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0066_add_system_wide_enterprise_operator_role.create_roles,
-            reverse_code=enterprise.migrations.0066_add_system_wide_enterprise_operator_role.delete_roles,
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0067_add_role_based_access_control_switch.create_switch,
-            reverse_code=enterprise.migrations.0067_add_role_based_access_control_switch.delete_switch,
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0068_remove_role_based_access_control_switch.delete_switch,
-            reverse_code=enterprise.migrations.0068_remove_role_based_access_control_switch.create_switch,
-        ),
-        migrations.RemoveField(
-            model_name='enterprisecustomer',
-            name='catalog',
-        ),
-        migrations.RemoveField(
-            model_name='historicalenterprisecustomer',
-            name='catalog',
+            bases=(enterprise.models.EnterpriseRoleAssignmentContextMixin, models.Model),
         ),
         migrations.CreateModel(
-            name='EnterpriseCatalogQuery',
+            name='HistoricalEnrollmentNotificationEmailTemplate',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.IntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('title', models.CharField(default='All Content', max_length=255)),
-                ('content_filter', jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a JSON object. An empty JSON object means that all available content items will be included in the catalog.", load_kwargs={}, null=True)),
+                ('plaintext_template', models.TextField(blank=True, help_text='Fill in a standard Django template that, when rendered, produces the email you want sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n<ul><li>user_name: A human-readable name for the person being emailed. Be sure to handle the case where this is not defined, as it may be missing in some cases. It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>    <li>organization_name: The name of the organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>        <li>url: A link to the homepage of the enrolled-in item.</li>        <li>branding: A custom branding name for the enrolled-in item. For example, the branding of a MicroMasters program would be "MicroMasters".</li>     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date` template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date">the Django documentation</a>).</li><li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>')),
+                ('html_template', models.TextField(blank=True, help_text='Fill in a standard Django template that, when rendered, produces the email you want sent to newly-enrolled Enterprise Customer learners. The following variables may be available:\n<ul><li>user_name: A human-readable name for the person being emailed. Be sure to handle the case where this is not defined, as it may be missing in some cases. It may also be a username, if the learner hasn\'t configured their "real" name in the system.</li>    <li>organization_name: The name of the organization sponsoring the enrollment.</li>    <li>enrolled_in: Details of the course or program that was enrolled in. It may contain:    <ul><li>name: The name of the enrollable item (e.g., "Demo Course").</li>        <li>url: A link to the homepage of the enrolled-in item.</li>        <li>branding: A custom branding name for the enrolled-in item. For example, the branding of a MicroMasters program would be "MicroMasters".</li>     <li>start: The date the enrolled-in item becomes available. Render this to text using the Django `date` template filter (see <a href="https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date">the Django documentation</a>).</li><li>type: Whether the enrolled-in item is a course, a program, or something else.</li></ul></ul>')),
+                ('subject_line', models.CharField(blank=True, help_text='Enter a string that can be used to generate a dynamic subject line for notification emails. The placeholder {course_name} will be replaced with the name of the course or program that was enrolled in.', max_length=100)),
+                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_date', models.DateTimeField()),
+                ('history_change_reason', models.CharField(max_length=100, null=True)),
+                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
+                ('enterprise_customer', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomer')),
+                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
             ],
             options={
-                'verbose_name': 'Enterprise Catalog Query',
-                'verbose_name_plural': 'Enterprise Catalog Queries',
-                'ordering': ['created'],
+                'verbose_name': 'historical enrollment notification email template',
+                'get_latest_by': 'history_date',
+                'ordering': ('-history_date', '-history_id'),
             },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
-        migrations.AddField(
-            model_name='enterprisecustomercatalog',
-            name='enterprise_catalog_query',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='enterprise_customer_catalogs', to='enterprise.EnterpriseCatalogQuery'),
+        migrations.CreateModel(
+            name='HistoricalEnterpriseCourseEnrollment',
+            fields=[
+                ('id', models.IntegerField(auto_created=True, blank=True, db_index=True, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('course_id', models.CharField(help_text='The ID of the course in which the learner was enrolled.', max_length=255)),
+                ('marked_done', models.BooleanField(default=False, help_text='Specifies whether a user marked this course as completed in the learner portal.')),
+                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_date', models.DateTimeField()),
+                ('history_change_reason', models.CharField(max_length=100, null=True)),
+                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
+                ('enterprise_customer_user', models.ForeignKey(blank=True, db_constraint=False, help_text='The enterprise learner to which this enrollment is attached.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomerUser')),
+                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+                ('source', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseEnrollmentSource')),
+            ],
+            options={
+                'verbose_name': 'historical enterprise course enrollment',
+                'get_latest_by': 'history_date',
+                'ordering': ('-history_date', '-history_id'),
+            },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomercatalog',
-            name='enterprise_catalog_query',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCatalogQuery'),
+        migrations.CreateModel(
+            name='HistoricalEnterpriseCustomer',
+            fields=[
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False)),
+                ('name', models.CharField(help_text='Enterprise Customer name.', max_length=255)),
+                ('slug', models.SlugField(default='default', help_text='A short string uniquely identifying this enterprise. Cannot contain spaces and should be a usable as a CSS class. Examples: "ubc", "mit-staging"', max_length=30)),
+                ('active', models.BooleanField(default=True)),
+                ('country', django_countries.fields.CountryField(max_length=2, null=True)),
+                ('hide_course_original_price', models.BooleanField(default=False, help_text='Specify whether display the course original price on enterprise course landing page or not.')),
+                ('enable_data_sharing_consent', models.BooleanField(default=False, help_text='Specifies whether data sharing consent is enabled or disabled for learners signing in through this enterprise customer. If disabled, consent will not be requested, and eligible data will not be shared.')),
+                ('enforce_data_sharing_consent', models.CharField(choices=[('at_enrollment', 'At Enrollment'), ('externally_managed', 'Managed externally')], default='at_enrollment', help_text='Specifies whether data sharing consent is optional, is required at login, or is required at enrollment.', max_length=25)),
+                ('enable_audit_enrollment', models.BooleanField(default=False, help_text='Specifies whether the audit track enrollment option will be displayed in the course enrollment view.')),
+                ('enable_audit_data_reporting', models.BooleanField(default=False, help_text='Specifies whether to pass-back audit track enrollment data through an integrated channel.')),
+                ('replace_sensitive_sso_username', models.BooleanField(default=False, help_text='Specifies whether to replace the display of potentially sensitive SSO usernames with a more generic name, e.g. EnterpriseLearner.')),
+                ('enable_autocohorting', models.BooleanField(default=False, help_text='Specifies whether the customer is able to assign learners to cohorts upon enrollment.')),
+                ('enable_portal_code_management_screen', models.BooleanField(default=False, help_text='Specifies whether to allow access to the code management screen in the admin portal.')),
+                ('enable_portal_reporting_config_screen', models.BooleanField(default=False, help_text='Specifies whether to allow access to the reporting configurations screen in the admin portal.')),
+                ('enable_portal_subscription_management_screen', models.BooleanField(default=False, help_text='Specifies whether to allow access to the subscription management screen in the admin portal.')),
+                ('enable_learner_portal', models.BooleanField(default=False, help_text='Specifies whether the enterprise learner portal site should be made known to the learner.')),
+                ('contact_email', models.EmailField(blank=True, help_text='Email to be displayed as public point of contact for enterprise.', max_length=254, null=True)),
+                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_date', models.DateTimeField()),
+                ('history_change_reason', models.CharField(max_length=100, null=True)),
+                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
+                ('customer_type', models.ForeignKey(blank=True, db_constraint=False, default=enterprise.models.get_default_customer_type, help_text='Specifies enterprise customer type.', null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomerType', verbose_name='Customer Type')),
+                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+                ('site', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='sites.Site')),
+            ],
+            options={
+                'verbose_name': 'historical Enterprise Customer',
+                'get_latest_by': 'history_date',
+                'ordering': ('-history_date', '-history_id'),
+            },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
+        ),
+        migrations.CreateModel(
+            name='HistoricalEnterpriseCustomerCatalog',
+            fields=[
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False)),
+                ('title', models.CharField(default='All Content', max_length=255)),
+                ('content_filter', jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'indent': 4, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True)),
+                ('enabled_course_modes', jsonfield.fields.JSONField(default=enterprise.constants.json_serialized_course_modes, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text='Ordered list of enrollment modes which can be displayed to learners for course runs in this catalog.', load_kwargs={})),
+                ('publish_audit_enrollment_urls', models.BooleanField(default=False, help_text='Specifies whether courses should be published with direct-to-audit enrollment URLs.')),
+                ('history_id', models.AutoField(primary_key=True, serialize=False)),
+                ('history_date', models.DateTimeField()),
+                ('history_change_reason', models.CharField(max_length=100, null=True)),
+                ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
+                ('enterprise_catalog_query', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCatalogQuery')),
+                ('enterprise_customer', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseCustomer')),
+                ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'verbose_name': 'historical Enterprise Customer Catalog',
+                'get_latest_by': 'history_date',
+                'ordering': ('-history_date', '-history_id'),
+            },
+            bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
         migrations.CreateModel(
             name='HistoricalPendingEnrollment',
@@ -726,12 +448,14 @@ class Migration(migrations.Migration):
                 ('course_id', models.CharField(max_length=255)),
                 ('course_mode', models.CharField(max_length=25)),
                 ('cohort_name', models.CharField(blank=True, max_length=255, null=True)),
+                ('discount_percentage', models.DecimalField(decimal_places=5, default=0.0, max_digits=8)),
+                ('sales_force_id', models.CharField(blank=True, max_length=255, null=True)),
                 ('history_id', models.AutoField(primary_key=True, serialize=False)),
                 ('history_date', models.DateTimeField()),
                 ('history_change_reason', models.CharField(max_length=100, null=True)),
                 ('history_type', models.CharField(choices=[('+', 'Created'), ('~', 'Changed'), ('-', 'Deleted')], max_length=1)),
                 ('history_user', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('user', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.PendingEnterpriseCustomerUser')),
+                ('source', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseEnrollmentSource')),
             ],
             options={
                 'verbose_name': 'historical pending enrollment',
@@ -761,241 +485,116 @@ class Migration(migrations.Migration):
             },
             bases=(simple_history.models.HistoricalChanges, models.Model),
         ),
-        migrations.RunPython(
-            code=enterprise.migrations.0072_add_enterprise_report_config_feature_role.create_roles,
-            reverse_code=enterprise.migrations.0072_add_enterprise_report_config_feature_role.delete_roles,
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='uuid',
-            field=models.UUIDField(blank=True, default=uuid.uuid4, null=True),
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0073_enterprisecustomerreportingconfiguration_uuid.create_uuid,
-            reverse_code=django.db.migrations.operations.special.RunPython.noop,
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='uuid',
-            field=models.UUIDField(default=uuid.uuid4, unique=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecourseenrollment',
-            name='marked_done',
-            field=models.BooleanField(default=False, help_text='Specifies whether a user marked this course as completed in the learner portal.'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecourseenrollment',
-            name='marked_done',
-            field=models.BooleanField(default=False, help_text='Specifies whether a user marked this course as completed in the learner portal.'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_learner_portal',
-            field=models.BooleanField(default=False, help_text='Specifies whether the enterprise learner portal site should be made known to the learner.'),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='learner_portal_hostname',
-            field=models.CharField(blank=True, default='', help_text='Hostname of the enterprise learner portal, e.g. bestrun.edx.org.', max_length=255),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='enable_learner_portal',
-            field=models.BooleanField(default=False, help_text='Specifies whether the enterprise learner portal site should be made known to the learner.'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='learner_portal_hostname',
-            field=models.CharField(blank=True, default='', help_text='Hostname of the enterprise learner portal, e.g. bestrun.edx.org.', max_length=255),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_portal_reporting_config_screen',
-            field=models.BooleanField(default=False, help_text='Specifies whether to allow access to the reporting configurations screen in the admin portal.'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='enable_portal_reporting_config_screen',
-            field=models.BooleanField(default=False, help_text='Specifies whether to allow access to the reporting configurations screen in the admin portal.'),
-        ),
-        migrations.RemoveField(
-            model_name='enterprisecustomerentitlement',
-            name='enterprise_customer',
-        ),
-        migrations.RemoveField(
-            model_name='historicalenterprisecustomerentitlement',
-            name='enterprise_customer',
-        ),
-        migrations.RemoveField(
-            model_name='historicalenterprisecustomerentitlement',
-            name='history_user',
-        ),
-        migrations.DeleteModel(
-            name='EnterpriseCustomerEntitlement',
-        ),
-        migrations.DeleteModel(
-            name='HistoricalEnterpriseCustomerEntitlement',
-        ),
-        migrations.AlterModelOptions(
-            name='enterprisecustomeruser',
-            options={'ordering': ['active', '-modified'], 'verbose_name': 'Enterprise Customer Learner', 'verbose_name_plural': 'Enterprise Customer Learners'},
-        ),
         migrations.CreateModel(
-            name='EnterpriseEnrollmentSource',
+            name='PendingEnrollment',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
                 ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('name', models.CharField(max_length=64)),
-                ('slug', models.SlugField(max_length=30, unique=True)),
+                ('course_id', models.CharField(max_length=255)),
+                ('course_mode', models.CharField(max_length=25)),
+                ('cohort_name', models.CharField(blank=True, max_length=255, null=True)),
+                ('discount_percentage', models.DecimalField(decimal_places=5, default=0.0, max_digits=8)),
+                ('sales_force_id', models.CharField(blank=True, max_length=255, null=True)),
+                ('source', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='enterprise.EnterpriseEnrollmentSource')),
+            ],
+            options={
+                'ordering': ['created'],
+            },
+        ),
+        migrations.CreateModel(
+            name='PendingEnterpriseCustomerUser',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('user_email', models.EmailField(max_length=254, unique=True)),
+                ('enterprise_customer', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomer')),
+            ],
+            options={
+                'ordering': ['created'],
+            },
+        ),
+        migrations.CreateModel(
+            name='SystemWideEnterpriseRole',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('name', models.CharField(db_index=True, max_length=255, unique=True)),
+                ('description', models.TextField(blank=True, null=True)),
             ],
             options={
                 'abstract': False,
             },
         ),
+        migrations.CreateModel(
+            name='SystemWideEnterpriseUserRoleAssignment',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
+                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
+                ('role', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.SystemWideEnterpriseRole')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(enterprise.models.EnterpriseRoleAssignmentContextMixin, models.Model),
+        ),
+        migrations.AddField(
+            model_name='pendingenrollment',
+            name='user',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='enterprise.PendingEnterpriseCustomerUser'),
+        ),
+        migrations.AddField(
+            model_name='historicalpendingenrollment',
+            name='user',
+            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.PendingEnterpriseCustomerUser'),
+        ),
+        migrations.AddField(
+            model_name='enterprisecustomer',
+            name='customer_type',
+            field=models.ForeignKey(default=enterprise.models.get_default_customer_type, help_text='Specifies enterprise customer type.', on_delete=django.db.models.deletion.CASCADE, to='enterprise.EnterpriseCustomerType', verbose_name='Customer Type'),
+        ),
+        migrations.AddField(
+            model_name='enterprisecustomer',
+            name='site',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_customers', to='sites.Site'),
+        ),
+        migrations.AddField(
+            model_name='enterprisecourseenrollment',
+            name='enterprise_customer_user',
+            field=models.ForeignKey(help_text='The enterprise learner to which this enrollment is attached.', on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollments', to='enterprise.EnterpriseCustomerUser'),
+        ),
         migrations.AddField(
             model_name='enterprisecourseenrollment',
             name='source',
             field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='enterprise.EnterpriseEnrollmentSource'),
         ),
         migrations.AddField(
-            model_name='historicalenterprisecourseenrollment',
-            name='source',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseEnrollmentSource'),
+            model_name='enrollmentnotificationemailtemplate',
+            name='enterprise_customer',
+            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='enterprise_enrollment_template', to='enterprise.EnterpriseCustomer'),
         ),
-        migrations.AddField(
-            model_name='pendingenrollment',
-            name='source',
-            field=models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='enterprise.EnterpriseEnrollmentSource'),
+        migrations.AlterUniqueTogether(
+            name='pendingenrollment',
+            unique_together=set([('user', 'course_id')]),
         ),
-        migrations.AddField(
-            model_name='historicalpendingenrollment',
-            name='source',
-            field=models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='enterprise.EnterpriseEnrollmentSource'),
-        ),
-        migrations.RunPython(
-            code=enterprise.migrations.0079_AddEnterpriseEnrollmentSource.add_sources,
-            reverse_code=enterprise.migrations.0079_AddEnterpriseEnrollmentSource.drop_sources,
-        ),
-        migrations.AlterModelOptions(
+        migrations.AlterUniqueTogether(
             name='enterprisecustomeruser',
-            options={'ordering': ['-active', '-modified'], 'verbose_name': 'Enterprise Customer Learner', 'verbose_name_plural': 'Enterprise Customer Learners'},
+            unique_together=set([('enterprise_customer', 'user_id')]),
+        ),
+        migrations.AlterUniqueTogether(
+            name='enterprisecourseenrollment',
+            unique_together=set([('enterprise_customer_user', 'course_id')]),
         ),
         migrations.RunPython(
-            code=enterprise.migrations.0081_UpdateEnterpriseEnrollmentSource.update_source,
-            reverse_code=enterprise.migrations.0081_UpdateEnterpriseEnrollmentSource.revert_source,
+            code=create_enterprise_roles,
+            reverse_code=delete_enterprise_roles,
         ),
         migrations.RunPython(
-            code=enterprise.migrations.0082_AddManagementEnterpriseEnrollmentSource.update_source,
-            reverse_code=enterprise.migrations.0082_AddManagementEnterpriseEnrollmentSource.revert_source,
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='include_date',
-            field=models.BooleanField(default=True, help_text='Include date in the report file name', verbose_name='Include Date'),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomeruser',
-            name='user_id',
-            field=models.PositiveIntegerField(db_index=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomeruser',
-            name='linked',
-            field=models.BooleanField(default=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='contact_email',
-            field=models.EmailField(blank=True, help_text='Email to be displayed as public point of contact for enterprise.', max_length=254, null=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomerbrandingconfiguration',
-            name='banner_background_color',
-            field=models.CharField(blank=True, max_length=7, null=True, validators=[enterprise.validators.validate_hex_color]),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomerbrandingconfiguration',
-            name='banner_border_color',
-            field=models.CharField(blank=True, max_length=7, null=True, validators=[enterprise.validators.validate_hex_color]),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='contact_email',
-            field=models.EmailField(blank=True, help_text='Email to be displayed as public point of contact for enterprise.', max_length=254, null=True),
-        ),
-        migrations.AddField(
-            model_name='historicalpendingenrollment',
-            name='discount_percentage',
-            field=models.DecimalField(decimal_places=5, default=0.0, max_digits=8),
-        ),
-        migrations.AddField(
-            model_name='pendingenrollment',
-            name='discount_percentage',
-            field=models.DecimalField(decimal_places=5, default=0.0, max_digits=8),
-        ),
-        migrations.RemoveField(
-            model_name='enterprisecustomer',
-            name='learner_portal_hostname',
-        ),
-        migrations.RemoveField(
-            model_name='historicalenterprisecustomer',
-            name='learner_portal_hostname',
-        ),
-        migrations.AlterField(
-            model_name='enterprisecatalogquery',
-            name='content_filter',
-            field=jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a JSON object. An empty JSON object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomercatalog',
-            name='content_filter',
-            field=jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True),
-        ),
-        migrations.AlterField(
-            model_name='historicalenterprisecustomercatalog',
-            name='content_filter',
-            field=jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomerreportingconfiguration',
-            name='data_type',
-            field=models.CharField(choices=[('progress', 'progress'), ('progress_v2', 'progress_v2'), ('catalog', 'catalog'), ('engagement', 'engagement')], default='progress', help_text='The type of data this report should contain.', max_length=20, verbose_name='Data Type'),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecatalogquery',
-            name='content_filter',
-            field=jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'indent': 4, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a JSON object. An empty JSON object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True),
-        ),
-        migrations.AlterField(
-            model_name='enterprisecustomercatalog',
-            name='content_filter',
-            field=jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'indent': 4, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True),
-        ),
-        migrations.AlterField(
-            model_name='historicalenterprisecustomercatalog',
-            name='content_filter',
-            field=jsonfield.fields.JSONField(blank=True, default={}, dump_kwargs={'cls': jsonfield.encoder.JSONEncoder, 'indent': 4, 'separators': (',', ':')}, help_text="Query parameters which will be used to filter the discovery service's search/all endpoint results, specified as a Json object. An empty Json object means that all available content items will be included in the catalog.", load_kwargs={'object_pairs_hook': collections.OrderedDict}, null=True),
-        ),
-        migrations.AddField(
-            model_name='historicalpendingenrollment',
-            name='sales_force_id',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='pendingenrollment',
-            name='sales_force_id',
-            field=models.CharField(blank=True, max_length=255, null=True),
-        ),
-        migrations.AddField(
-            model_name='enterprisecustomer',
-            name='enable_portal_subscription_management_screen',
-            field=models.BooleanField(default=False, help_text='Specifies whether to allow access to the subscription management screen in the admin portal.'),
-        ),
-        migrations.AddField(
-            model_name='historicalenterprisecustomer',
-            name='enable_portal_subscription_management_screen',
-            field=models.BooleanField(default=False, help_text='Specifies whether to allow access to the subscription management screen in the admin portal.'),
+            code=add_enterprise_enrollment_sources,
+            reverse_code=drop_enterprise_enrollment_sources,
         ),
     ]

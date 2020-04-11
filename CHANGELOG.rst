@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.1.0] - 2020-04-14
+--------------------
+
+* Squashed the enterprise app migrations.
+
 [3.0.15] - 2020-04-14
 ---------------------
 
