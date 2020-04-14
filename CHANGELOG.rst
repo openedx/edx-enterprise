@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.1.1] - 2020-04-20
+--------------------
+
+* removed get_cache_key and using it from edx-django-utils.
+
 [3.1.0] - 2020-04-14
 --------------------
 
