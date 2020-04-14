@@ -355,9 +355,7 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         )
         if not created and active:
             # if learner has activated enterprise we need to de-activate other enterprises learner is linked to
-            models.EnterpriseCustomerUser.objects.filter(
-                user_id=self.user.pk
-            ).exclude(enterprise_customer=enterprise_customer).update(active=False)
+            models.EnterpriseCustomerUser.inactivate_other_customers(self.user.pk, enterprise_customer)
 
 
 class CourseDetailSerializer(ImmutableStateSerializer):

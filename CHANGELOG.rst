@@ -14,15 +14,23 @@ Change Log
 Unreleased
 --------------------
 
+[3.1.2] - 2020-04-21
+--------------------
+
+* Added extra exception handling in `create_enterprise_course_enrollments` management command.
+
+
 [3.1.1] - 2020-04-20
 --------------------
 
 * removed get_cache_key and using it from edx-django-utils.
 
+
 [3.1.0] - 2020-04-14
 --------------------
 
 * Squashed the enterprise app migrations.
+
 
 [3.0.15] - 2020-04-14
 ---------------------
