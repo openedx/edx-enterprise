@@ -175,12 +175,12 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             extra_context=extra_context
         )
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(self, request, obj=None, change=False, **kwargs):
         """
         Retrieve the appropriate form to use, saving the request user
         into the form for use in loading catalog details
         """
-        form = super(EnterpriseCustomerAdmin, self).get_form(request, obj, **kwargs)
+        form = super(EnterpriseCustomerAdmin, self).get_form(request, obj, change, **kwargs)
         form.user = request.user
         return form
 
@@ -629,8 +629,8 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         return format_html('<span style="white-space: nowrap;">{uuid}</span>'.format(uuid=obj.uuid))
     uuid_nowrap.short_description = 'UUID'
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, **kwargs)
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, change, **kwargs)
         form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return form
 
