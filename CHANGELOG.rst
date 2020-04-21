@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.0] - 2020-04-23
+--------------------
+
+* Squashed the sap_success_factors and integrated_channel app migrations.
+
 
 [3.1.3] - 2020-04-23
 --------------------
