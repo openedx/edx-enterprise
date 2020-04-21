@@ -932,6 +932,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
         else:
             LOGGER.warning(failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.')
 
+    @classmethod
+    def inactivate_other_customers(cls, user_id, enterprise_customer):
+        """
+        Inactive all the enterprise customers of given user except the given enterprise_customer.
+        """
+        EnterpriseCustomerUser.objects.filter(
+            user_id=user_id
+        ).exclude(enterprise_customer=enterprise_customer).update(active=False)
+
 
 @python_2_unicode_compatible
 class PendingEnterpriseCustomerUser(TimeStampedModel):
