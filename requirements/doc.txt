@@ -10,7 +10,7 @@ aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
 anyjson==0.3.3            # via -r requirements/test-master.txt, kombu
 babel==2.8.0              # via sphinx
 billiard==3.3.0.23        # via -r requirements/test-master.txt, celery
-bleach==3.1.5             # via -r requirements/test-master.txt, readme-renderer
+bleach==3.1.4             # via -r requirements/test-master.txt, readme-renderer
 celery==3.1.26.post2      # via -r requirements/test-master.txt
 certifi==2020.4.5.1       # via -r requirements/test-master.txt, requests
 cffi==1.14.0              # via -r requirements/test-master.txt, cryptography
@@ -37,8 +37,8 @@ doc8==0.8.0               # via -r requirements/doc.in
 docutils==0.16            # via -r requirements/doc.in, doc8, readme-renderer, restructuredtext-lint, sphinx
 drf-jwt==1.14.0           # via -r requirements/test-master.txt, edx-drf-extensions
 edx-django-utils==3.2.1   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
-edx-drf-extensions==5.1.0  # via -r requirements/test-master.txt, edx-rbac
-edx-opaque-keys[django]==2.1.0  # via -r requirements/test-master.txt, edx-drf-extensions
+edx-drf-extensions==5.0.2  # via -r requirements/test-master.txt, edx-rbac
+edx-opaque-keys[django]==2.0.2  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.1.3           # via -r requirements/test-master.txt
 edx-rest-api-client==5.1.0  # via -r requirements/test-master.txt
 edx-sphinx-theme==1.5.0   # via -r requirements/doc.in
@@ -54,7 +54,7 @@ kombu==3.0.37             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
 more-itertools==8.2.0     # via -r requirements/test-master.txt, zipp
 newrelic==5.12.0.140      # via -r requirements/test-master.txt, edx-django-utils
-packaging==20.3           # via -r requirements/test-master.txt, bleach, sphinx
+packaging==20.3           # via sphinx
 path.py==12.4.0           # via -r requirements/test-master.txt
 path==13.1.0              # via -r requirements/test-master.txt, path.py
 pbr==5.4.5                # via -r requirements/test-master.txt, stevedore
@@ -67,7 +67,7 @@ pygments==2.6.1           # via readme-renderer, sphinx
 pyjwkest==1.4.2           # via -r requirements/test-master.txt, edx-drf-extensions
 pyjwt==1.5.2              # via -r requirements/test-master.txt, drf-jwt, edx-rest-api-client
 pymongo==3.9.0            # via -r requirements/test-master.txt, edx-opaque-keys
-pyparsing==2.2.0          # via -r requirements/test-master.txt, packaging
+pyparsing==2.4.7          # via packaging
 python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensions
 python-slugify==4.0.0     # via -r requirements/test-master.txt, code-annotations
 pytz==2020.1              # via -r requirements/test-master.txt, babel, celery, django, edx-tincan-py35

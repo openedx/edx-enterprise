@@ -17,6 +17,8 @@ Unreleased
 [3.2.3] - 2020-05-06
 --------------------
 
+* Removed support for Django<2.2 & Python3.6
+* Added support for python3.8.
 * Changes to use catalog query content filter if defined instead of catalog content filter.
 
 [3.2.2] - 2020-05-05

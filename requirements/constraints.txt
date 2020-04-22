@@ -24,3 +24,7 @@ mock==3.0.5
 # sphinx has dropped support for python 3.5, latest version requires at least python3.6
 # see https://www.sphinx-doc.org/en/master/intro.html#prerequisites
 sphinx==2.4.1
+
+# freezegun>0.3.14 requires python-dateutil>2.8.1 to pass the tests which is a dependency of edx-platform
+and edx-drf-extensions.
+freezegun==0.3.14
