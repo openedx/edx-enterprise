@@ -14,6 +14,13 @@ Change Log
 Unreleased
 --------------------
 
+
+[3.1.3] - 2020-04-23
+--------------------
+
+* Revised "end date" window for determinine course active/inactive status in catalog API responses.
+
+
 [3.1.2] - 2020-04-21
 --------------------
 
