@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.1] - 2020-04-28
+--------------------
+
+* Add Fullstory javascript to enterprise admin pages.
+
+
 [3.2.0] - 2020-04-23
 --------------------
 
