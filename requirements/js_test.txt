@@ -22,7 +22,7 @@ pytz==2020.1              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.141.0         # via jasmine
 six==1.14.0               # via cheroot, jaraco.collections, jaraco.text
-tempora==3.0.0            # via portend
+tempora==1.14.1            # via portend
 urllib3==1.25.9           # via selenium
 zc.lockfile==2.0          # via cherrypy
 
