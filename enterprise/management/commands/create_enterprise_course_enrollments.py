@@ -6,9 +6,6 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
-from slumber.exceptions import SlumberBaseException
-
 from django.core.management import BaseCommand
 from django.db import connection
 
@@ -47,18 +44,32 @@ class Command(BaseCommand):
         missing_enrollment_data = self._fetch_course_enrollment_data(
             enterprise_customer_uuid_filter
         )
+        LOGGER.info('System has %s missing enrollments', len(missing_enrollment_data))
         for item in missing_enrollment_data:
             course_exist_in_catalog = False
             user_id = item['user_id']
             course_run_id = item['course_run_id']
             enterprise_customer_uuid = item['enterprise_customer_uuid']
 
+            LOGGER.info(
+                'Trying to create the enrollment for user [%s] in course [%s] for enterprise customer [%s]',
+                user_id,
+                course_run_id,
+                enterprise_customer_uuid
+            )
+
             # pylint: disable=no-member
             enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
 
             try:
+                LOGGER.info(
+                    'Checking whether course [%s] exists in enterprise customer [%s] - [%s] catalog',
+                    course_run_id,
+                    enterprise_customer_uuid,
+                    enterprise_customer.name
+                )
                 course_exist_in_catalog = enterprise_customer.catalog_contains_course(course_run_id)
-            except (SlumberBaseException, ConnectionError, Timeout) as exc:
+            except Exception as exc:    # pylint: disable=broad-except
                 records_failed += 1
                 LOGGER.warning(
                     'Course [%s] does not exist in EnterpriseCustomer [%s] due to this exception: [%s]',
