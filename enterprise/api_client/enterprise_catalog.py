@@ -128,6 +128,13 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
             try:
                 response = endpoint.get()
+                results = utils.traverse_pagination(response, endpoint)
+                response = {
+                    'count': len(results),
+                    'next': 'None',
+                    'previous': 'None',
+                    'results': results,
+                }
                 for item in response['results']:
                     content_id = utils.get_content_metadata_item_id(item)
                     content_metadata[content_id] = item
