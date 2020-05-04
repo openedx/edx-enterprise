@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.5] - 2020-05-06
+--------------------
+
+* Pass enterprise customer's name to enterprise-catalog service
+
+
 [3.2.4] - 2020-05-06
 --------------------
 
@@ -26,10 +32,12 @@ Unreleased
 * Added support for python3.8.
 * Changes to use catalog query content filter if defined instead of catalog content filter.
 
+
 [3.2.2] - 2020-05-05
 --------------------
 
 * Made enrollment reason optional when linking learners without enrollment.
+
 
 [3.2.1] - 2020-05-04
 --------------------

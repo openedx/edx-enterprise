@@ -14,6 +14,7 @@ from enterprise.api_client import enterprise_catalog
 
 TEST_ENTERPRISE_ID = '1840e1dc-59cf-4a78-82c5-c5bbc0b5df0f'
 TEST_ENTERPRISE_CATALOG_UUID = 'cde8287a-1001-457c-b9d5-f9f5bd535427'
+TEST_ENTERPRISE_NAME = 'Test Enterprise'
 
 
 def _url(path):
@@ -33,6 +34,7 @@ def test_create_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
+        'enterprise_customer_name': TEST_ENTERPRISE_NAME,
         'title': 'Test Catalog',
         'content_filter': {"content_type": "course"},
         'enabled_course_modes': ["verified"],
@@ -41,6 +43,7 @@ def test_create_enterprise_catalog():
     expected_request = {
         'uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
+        'enterprise_customer_name': TEST_ENTERPRISE_NAME,
         'title': 'Test Catalog',
         'content_filter': {"content_type": "course"},
         'enabled_course_modes': ["verified"],
@@ -55,6 +58,7 @@ def test_create_enterprise_catalog():
     actual_response = client.create_enterprise_catalog(
         expected_response['catalog_uuid'],
         expected_response['enterprise_customer'],
+        expected_response['enterprise_customer_name'],
         expected_response['title'],
         expected_response['content_filter'],
         expected_response['enabled_course_modes'],
@@ -71,6 +75,7 @@ def test_get_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
+        'enterprise_customer_name': TEST_ENTERPRISE_NAME,
         'title': 'Test Catalog',
         'content_filter': {"content_type": "course"},
         'enabled_course_modes': ["verified"],
@@ -92,6 +97,7 @@ def test_update_enterprise_catalog():
     expected_response = {
         'catalog_uuid': TEST_ENTERPRISE_CATALOG_UUID,
         'enterprise_customer': TEST_ENTERPRISE_ID,
+        'enterprise_customer_name': TEST_ENTERPRISE_NAME,
         'title': 'Test Catalog',
         'content_filter': {"content_type": "course"},
         'enabled_course_modes': ["verified"],

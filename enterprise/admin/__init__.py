@@ -652,6 +652,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         if change:
             update_fields = {
                 'enterprise_customer': str(obj.enterprise_customer.uuid),
+                'enterprise_customer_name': obj.enterprise_customer.name,
                 'title': obj.title,
                 'content_filter': obj.content_filter,
                 'enabled_course_modes': obj.enabled_course_modes,
@@ -662,6 +663,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
             catalog_client.create_enterprise_catalog(
                 str(catalog_uuid),
                 str(obj.enterprise_customer.uuid),
+                obj.enterprise_customer.name,
                 obj.title,
                 obj.content_filter,
                 obj.enabled_course_modes,

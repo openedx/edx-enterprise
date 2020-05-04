@@ -60,6 +60,7 @@ class Command(BaseCommand):
                 client.create_enterprise_catalog(
                     str(enterprise_catalog.uuid),
                     str(enterprise_catalog.enterprise_customer.uuid),
+                    enterprise_catalog.enterprise_customer.name,
                     enterprise_catalog.title,
                     enterprise_catalog.content_filter,
                     enterprise_catalog.enabled_course_modes,
