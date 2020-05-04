@@ -38,6 +38,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
         Test that the command calls the enterprise catalog api successfully for each catalog.
         """
         api_client_mock.return_value = mock.MagicMock()
+        api_client_mock.return_value.get_enterprise_catalog.return_value = {'uuid': 'test-catalog-uuid'}
         api_client_mock.return_value.create_enterprise_catalog = mock.MagicMock()
         call_command(self.command, '--api_user', self.user.username)
 
@@ -53,6 +54,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
         Test that the command catches errors that may occur from hitting the enterprise catalog api.
         """
         api_client_mock.return_value = mock.MagicMock()
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
         api_client_mock.return_value.create_enterprise_catalog = mock.MagicMock(side_effect=Exception)
         call_command(self.command, '--api_user', self.user.username)
 

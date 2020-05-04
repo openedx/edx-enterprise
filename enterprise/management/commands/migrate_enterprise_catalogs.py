@@ -57,15 +57,34 @@ class Command(BaseCommand):
         for enterprise_catalog in queryset:
             LOGGER.info('Migrating Enterprise Catalog {}'.format(enterprise_catalog.uuid))
             try:
-                client.create_enterprise_catalog(
-                    str(enterprise_catalog.uuid),
-                    str(enterprise_catalog.enterprise_customer.uuid),
-                    enterprise_catalog.enterprise_customer.name,
-                    enterprise_catalog.title,
-                    enterprise_catalog.content_filter,
-                    enterprise_catalog.enabled_course_modes,
-                    enterprise_catalog.publish_audit_enrollment_urls
-                )
+                response = client.get_enterprise_catalog(enterprise_catalog.uuid)
+                if not response:
+                    # catalog with matching uuid does NOT exist in enterprise-catalog
+                    # service, so we should create a new catalog
+                    client.create_enterprise_catalog(
+                        str(enterprise_catalog.uuid),
+                        str(enterprise_catalog.enterprise_customer.uuid),
+                        enterprise_catalog.enterprise_customer.name,
+                        enterprise_catalog.title,
+                        enterprise_catalog.content_filter,
+                        enterprise_catalog.enabled_course_modes,
+                        enterprise_catalog.publish_audit_enrollment_urls,
+                    )
+                else:
+                    # catalog with matching uuid does exist in enterprise-catalog
+                    # service, so we should update the existing catalog
+                    update_fields = {
+                        'enterprise_customer': str(enterprise_catalog.enterprise_customer.uuid),
+                        'enterprise_customer_name': enterprise_catalog.enterprise_customer.name,
+                        'title': enterprise_catalog.title,
+                        'content_filter': enterprise_catalog.content_filter,
+                        'enabled_course_modes': enterprise_catalog.enabled_course_modes,
+                        'publish_audit_enrollment_urls': enterprise_catalog.publish_audit_enrollment_urls,
+                    }
+                    client.update_enterprise_catalog(
+                        str(enterprise_catalog.uuid),
+                        **update_fields,
+                    )
                 LOGGER.info('Successfully migrated Enterprise Catalog {}'.format(enterprise_catalog.uuid))
             except Exception:  # pylint: disable=broad-except
                 LOGGER.exception('Failed to create enterprise catalog {}'.format(enterprise_catalog.uuid))
