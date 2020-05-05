@@ -80,7 +80,7 @@ class ManageLearnersForm(forms.Form):
             ("honor", _("Honor")),
         ],
     )
-    reason = forms.CharField(label=_("Reason for manual enrollment"), required=True)
+    reason = forms.CharField(label=_("Reason for manual enrollment"), required=False)
     sales_force_id = forms.CharField(label=_("Salesforce Opportunity ID"), required=False)
     discount = forms.DecimalField(
         label=_("Discount percentage for manual enrollment"),
@@ -207,6 +207,12 @@ class ManageLearnersForm(forms.Form):
         except (HttpClientError, HttpServerError):
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
 
+    def clean_reason(self):
+        """
+        Clean the reason for enrollment field
+        """
+        return self.cleaned_data.get(self.Fields.REASON).strip()
+
     def clean_notify(self):
         """
         Clean the notify_on_enrollment field.
@@ -242,6 +248,8 @@ class ManageLearnersForm(forms.Form):
         cleaned_data[self.Fields.NOTIFY] = self.clean_notify()
 
         self._validate_course()
+        self._validate_reason()
+
 
         return cleaned_data
 
@@ -262,6 +270,17 @@ class ManageLearnersForm(forms.Form):
                     course_id=course_details["course_id"],
                 ))
                 raise ValidationError({self.Fields.COURSE_MODE: error})
+
+    def _validate_reason(self):
+        """
+        Verify that the reason field is populated if the new learner(s) is being enrolled
+        in a course or program.
+        """
+        course = self.cleaned_data.get(self.Fields.COURSE)
+        reason = self.cleaned_data.get(self.Fields.REASON)
+
+        if course and not reason:
+            raise ValidationError(ValidationMessages.MISSING_REASON)
 
 
 class EnterpriseCustomerAdminForm(forms.ModelForm):

@@ -7,7 +7,6 @@ python:
   - 3.6
 
 env:
-  - TOXENV=django111
   - TOXENV=django20
   - TOXENV=django21
   - TOXENV=django22
