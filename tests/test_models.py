@@ -1244,6 +1244,22 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         mock_catalog_api.get_catalog_results.return_value = {}
         assert catalog.contains_programs([fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid']]) is False
 
+    def test_get_content_filter(self):
+        """
+        Test `get_content_filter` method of `EnterpriseCustomerCatalog` model should return content filter
+        of its own if there is no `EnterpriseCatalogQuery` is linked to it. If there is a linked
+        `EnterpriseCatalogQuery` then it should return content filter of linked `EnterpriseCatalogQuery`.
+        """
+        catalog_query_content_filter = {"content_type": "course", "partner": "edx"}
+        catalog_content_filter = {"content_type": "course_run", "partner": "dummy"}
+        catalog_query = factories.EnterpriseCatalogQueryFactory(content_filter=catalog_query_content_filter)
+        catalog = factories.EnterpriseCustomerCatalogFactory(content_filter=catalog_content_filter)
+        self.assertEqual(catalog.get_content_filter(), catalog_content_filter)
+
+        catalog.enterprise_catalog_query = catalog_query
+        catalog.save()
+        self.assertEqual(catalog.get_content_filter(), catalog_query_content_filter)
+
 
 @mark.django_db
 @ddt.ddt

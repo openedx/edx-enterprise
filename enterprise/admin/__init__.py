@@ -586,9 +586,6 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     class Meta:
         model = EnterpriseCustomerCatalog
 
-    class Media:
-        js = ('enterprise/admin/enterprise_customer_catalog.js', )
-
     list_display = (
         'uuid_nowrap',
         'enterprise_customer',
@@ -616,7 +613,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         """
         Return discovery url for preview.
         """
-        return discovery_query_url(obj.content_filter)
+        return discovery_query_url(obj.get_content_filter())
 
     readonly_fields = ('discovery_query_url',)
     discovery_query_url.allow_tags = True

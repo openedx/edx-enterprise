@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.3] - 2020-05-06
+--------------------
+
+* Changes to use catalog query content filter if defined instead of catalog content filter.
+
 [3.2.2] - 2020-05-05
 --------------------
 

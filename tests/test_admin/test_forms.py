@@ -23,6 +23,7 @@ from enterprise.admin.forms import (
 from enterprise.admin.utils import ValidationMessages
 from test_utils import fake_enrollment_api
 from test_utils.factories import (
+    EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -546,6 +547,7 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
 
 
 @ddt.ddt
+@mark.django_db
 class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
     """
     Tests Different type of utilities methods.
@@ -553,7 +555,18 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
     dummy_content_filter_data = {
         'field': 'value'
     }
+    catalog_query_content_filter = {
+        "query_field": "query_data"
+    }
     form = EnterpriseCustomerCatalogAdminForm
+
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super(EnterpriseCustomerCatalogAdminFormTest, self).setUp()
+        EnterpriseCatalogQueryFactory(content_filter=self.catalog_query_content_filter)
+
     @ddt.unpack
     @ddt.data(
         (
@@ -587,6 +600,17 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
                 'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
             },
             dummy_content_filter_data
+        ),
+        # content filter from catalog query
+        (
+            {
+                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-enterprise_catalog_query': '1',
+                'enterprise_customer_catalogs-1-content_filter': json.dumps({'field_1': 'value_1'}),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+            },
+            catalog_query_content_filter
         ),
         # not clicked catalog_preview_button
         (

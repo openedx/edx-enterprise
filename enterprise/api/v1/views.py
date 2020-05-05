@@ -16,7 +16,7 @@ from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import NotFound
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_500_INTERNAL_SERVER_ERROR
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
 from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
@@ -488,27 +488,6 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
     def destroy(self, request, *args, **kwargs):
         # pylint: disable=no-member
         return super(EnterpriseCustomerReportingConfigurationViewSet, self).destroy(request, *args, **kwargs)
-
-
-class CatalogQueryView(APIView):
-    """
-    View for enterprise catalog query.
-
-    This will be called from django admin tool to populate `content_filter` field of `EnterpriseCustomerCatalog` model.
-    """
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [permissions.IsAuthenticated, permissions.IsAdminUser]
-    http_method_names = ['get']
-
-    def get(self, request, catalog_query_id):
-        """
-        API endpoint for fetching an enterprise catalog query.
-        """
-        try:
-            catalog_query = models.EnterpriseCatalogQuery.objects.get(pk=catalog_query_id)
-        except models.EnterpriseCatalogQuery.DoesNotExist:
-            return Response({"detail": "Could not find enterprise catalog query."}, status=HTTP_404_NOT_FOUND)
-        return Response(catalog_query.content_filter, status=HTTP_200_OK)
 
 
 class CouponCodesView(APIView):
