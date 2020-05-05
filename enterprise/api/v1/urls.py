@@ -37,6 +37,11 @@ urlpatterns = [
         views.CouponCodesView.as_view(),
         name='request-codes'
     ),
+    url(
+        r'^link_user',
+        views.LinkUserView.as_view(),
+        name='link-user'
+    ),
 ]
 
 urlpatterns += router.urls

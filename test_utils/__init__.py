@@ -36,6 +36,7 @@ from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
+DUMMY_EMAIL = 'dummy@email.com'
 TEST_USERNAME = 'api_worker'
 TEST_EMAIL = 'test@email.com'
 TEST_PASSWORD = 'QWERTY'

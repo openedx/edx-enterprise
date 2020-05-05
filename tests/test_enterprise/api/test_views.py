@@ -46,6 +46,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
 )
 from test_utils import (
+    DUMMY_EMAIL,
     FAKE_UUIDS,
     TEST_COURSE,
     TEST_COURSE_KEY,
@@ -2199,6 +2200,88 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         assert response.status_code == expected_status
+
+
+@ddt.ddt
+@mark.django_db
+class TestLinkUserAPIView(APITest):
+    """
+    Test Link user API View.
+    """
+
+    def setUp(self):
+        super(TestLinkUserAPIView, self).setUp()
+        factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[2])
+        factories.UserFactory(email=DUMMY_EMAIL)
+
+    @ddt.data(
+        (
+            # A valid request.
+            {
+                'user_email': DUMMY_EMAIL,
+                'enterprise_customer': FAKE_UUIDS[2],
+            },
+            200,
+            "",
+        ),
+        (
+            # wrong enterprise_customer UUID
+            {
+                'user_email': DUMMY_EMAIL,
+                'enterprise_customer': FAKE_UUIDS[3],
+            },
+            400,
+            "There is no enterprise customer with the following UUID [{uuid}].".format(uuid=FAKE_UUIDS[3]),
+        ),
+        (
+            # invalid enterprise_customer UUID
+            {
+                'user_email': DUMMY_EMAIL,
+                'enterprise_customer': 'invalid-uuid',
+            },
+            400,
+            "not a valid UUID."
+        ),
+        (
+            # empty email
+            {
+                'user_email': '',
+                'enterprise_customer': FAKE_UUIDS[2],
+            },
+            400,
+            "User Email is required parameter."
+        ),
+        (
+            # invalid email
+            {
+                'user_email': 'bac.com',
+                'enterprise_customer': FAKE_UUIDS[2],
+            },
+            400,
+            "Enter a valid email address.",
+        ),
+    )
+    @ddt.unpack
+    def test_post_link_user(
+            self,
+            post_data,
+            status_code,
+            error_message,
+    ):
+        """
+        Ensure link-user endpoint response data and status codes.
+        """
+        endpoint_name = 'link-user'
+        response = self.client.post(
+            settings.TEST_SERVER + reverse(endpoint_name),
+            data=json.dumps(post_data),
+            content_type='application/json',
+        )
+        assert response.status_code == status_code
+        response = self.load_json(response.content)
+
+        if status_code != 200:
+            self.assertIn(error_message, response['error'])
 
 
 @ddt.ddt

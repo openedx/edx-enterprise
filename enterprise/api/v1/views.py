@@ -24,6 +24,8 @@ from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import
 from django.apps import apps
 from django.conf import settings
 from django.core import mail
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.http import Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
@@ -41,8 +43,8 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.constants import COURSE_KEY_URL_PATTERN
-from enterprise.errors import CodesAPIRequestError
-from enterprise.utils import get_request_value
+from enterprise.errors import CodesAPIRequestError, LinkUserRequestError
+from enterprise.utils import get_enterprise_customer, get_request_value
 
 LOGGER = getLogger(__name__)
 
@@ -619,3 +621,57 @@ class CouponCodesView(APIView):
                 {'error': str('Request codes email could not be sent')},
                 status=HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class LinkUserView(APIView):
+    """
+    API to link the user to an enterprise customer.
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
+    throttle_classes = (ServiceUserThrottle,)
+
+    USER_EMAIL = 'user_email'
+    ENTERPRISE_CUSTOMER = 'enterprise_customer'
+
+    def get_required_params(self, request):
+        """
+        Get the required params, validate them and return them.
+        """
+        email = get_request_value(request, self.USER_EMAIL, '')
+        enterprise_customer_uuid = get_request_value(request, self.ENTERPRISE_CUSTOMER, '')
+
+        enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
+        if enterprise_customer is None:
+            raise LinkUserRequestError(
+                "There is no enterprise customer with the following UUID [{enterprise_customer_uuid}].".format(
+                    enterprise_customer_uuid=enterprise_customer_uuid
+                )
+            )
+        if not email:
+            raise LinkUserRequestError("User Email is required parameter.")
+        validate_email(email)
+
+        return enterprise_customer, email
+
+    def post(self, request):
+        """
+        POST /enterprise/api/v1/link_user
+
+        Links the user of given email to the enterprise customer of given UUID.
+        """
+        try:
+            enterprise_customer, email = self.get_required_params(request)
+        except (LinkUserRequestError, ValidationError) as invalid_request:
+            error_message = str(invalid_request)
+            LOGGER.error(error_message)
+            return Response({'error': error_message}, status=HTTP_400_BAD_REQUEST)
+
+        models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+        return Response(
+            {
+                self.USER_EMAIL: email,
+                self.ENTERPRISE_CUSTOMER: str(enterprise_customer.uuid)
+            },
+            status=HTTP_200_OK
+        )
