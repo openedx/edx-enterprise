@@ -52,7 +52,7 @@
               <i class="fa fa-clock-o" aria-hidden="true"></i>
               <span>{{ starts_at_text }} {{ course_start_date }} &nbsp;| &nbsp; {{ course_pacing }}</span>
             </div>
-            {{ course_short_description }}
+            {{ course_short_description | striptags }}
             {{ view_course_details_text|link_to_modal:0 }}
           </div>
           {% if course_enrollable %}

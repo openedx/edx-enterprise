@@ -106,8 +106,18 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
         return formset
 
 
+class EnterpriseModelAdmin(admin.ModelAdmin):
+    """
+    Base class for model admin classes for enterprise. Adds the Fullstory script to their admin pages to enable
+    user analytics. ENT-2620
+    """
+
+    class Media:
+        js = ("enterprise/js/fullstory.js",)
+
+
 @admin.register(EnterpriseCustomerType)
-class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
+class EnterpriseCustomerTypeAdmin(EnterpriseModelAdmin):
     """
     Django admin model for EnterpriseCustomerType.
     """
@@ -163,6 +173,9 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     class Meta:
         model = EnterpriseCustomer
 
+    class Media:
+        js = ("enterprise/js/fullstory.js",)
+
     def change_view(self, request, object_id, form_url='', extra_context=None):
         preview_content_filter = EnterpriseCustomerCatalogAdminForm.get_clicked_preview_content_filter(request.POST)
         if preview_content_filter:
@@ -175,12 +188,12 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             extra_context=extra_context
         )
 
-    def get_form(self, request, obj=None, **kwargs):
+    def get_form(self, request, obj=None, change=False, **kwargs):
         """
         Retrieve the appropriate form to use, saving the request user
         into the form for use in loading catalog details
         """
-        form = super(EnterpriseCustomerAdmin, self).get_form(request, obj, **kwargs)
+        form = super(EnterpriseCustomerAdmin, self).get_form(request, obj, change, **kwargs)
         form.user = request.user
         return form
 
@@ -404,7 +417,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
 
 @admin.register(PendingEnterpriseCustomerUser)
-class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
+class PendingEnterpriseCustomerUserAdmin(EnterpriseModelAdmin):
     """
     Django admin model for PendingEnterpriseCustomerUser
     """
@@ -426,7 +439,7 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
 
 
 @admin.register(EnrollmentNotificationEmailTemplate)
-class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelAdmin):
+class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, EnterpriseModelAdmin):
     """
     Django admin for EnrollmentNotificationEmailTemplate model
     """
@@ -480,7 +493,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
 
 
 @admin.register(EnterpriseCourseEnrollment)
-class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
+class EnterpriseCourseEnrollmentAdmin(EnterpriseModelAdmin):
     """
     Django admin model for EnterpriseCourseEnrollment
     """
@@ -516,7 +529,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
 
 
 @admin.register(PendingEnrollment)
-class PendingEnrollmentAdmin(admin.ModelAdmin):
+class PendingEnrollmentAdmin(EnterpriseModelAdmin):
     """
     Django admin model for PendingEnrollment
     """
@@ -552,7 +565,7 @@ class PendingEnrollmentAdmin(admin.ModelAdmin):
 
 
 @admin.register(EnterpriseCatalogQuery)
-class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
+class EnterpriseCatalogQueryAdmin(EnterpriseModelAdmin):
     """
     Django admin model for EnterpriseCatalogQuery.
     """
@@ -577,7 +590,7 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
 
 
 @admin.register(EnterpriseCustomerCatalog)
-class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
+class EnterpriseCustomerCatalogAdmin(EnterpriseModelAdmin):
     """
     Django admin model for EnterpriseCustomerCatalog.
     """
@@ -587,7 +600,8 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         model = EnterpriseCustomerCatalog
 
     class Media:
-        js = ('enterprise/admin/enterprise_customer_catalog.js', )
+        js = ('enterprise/admin/enterprise_customer_catalog.js',
+              "enterprise/js/fullstory.js",)
 
     list_display = (
         'uuid_nowrap',
@@ -629,8 +643,8 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         return format_html('<span style="white-space: nowrap;">{uuid}</span>'.format(uuid=obj.uuid))
     uuid_nowrap.short_description = 'UUID'
 
-    def get_form(self, request, obj=None, **kwargs):
-        form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, **kwargs)
+    def get_form(self, request, obj=None, change=False, **kwargs):
+        form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, change, **kwargs)
         form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return form
 
@@ -689,7 +703,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
 
 @admin.register(EnterpriseCustomerReportingConfiguration)
-class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
+class EnterpriseCustomerReportingConfigurationAdmin(EnterpriseModelAdmin):
     """
     Django admin model for EnterpriseCustomerReportingConfiguration.
     """

@@ -5,14 +5,13 @@ Utility functions for enterprise app.
 from __future__ import absolute_import, division, unicode_literals
 
 import datetime
-import hashlib
 import logging
 import re
 from uuid import UUID
 
 import bleach
 import pytz
-from six import iteritems  # pylint: disable=ungrouped-imports
+from edx_django_utils.cache import get_cache_key as get_django_cache_key
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 
@@ -519,26 +518,9 @@ def clean_html_for_template_rendering(text):
 
 def get_cache_key(**kwargs):
     """
-    Get MD5 encoded cache key for given arguments.
-
-    Here is the format of key before MD5 encryption.
-        key1:value1__key2:value2 ...
-
-    Example:
-        >>> get_cache_key(site_domain="example.com", resource="enterprise")
-        # Here is key format for above call
-        # "site_domain:example.com__resource:enterprise"
-        a54349175618ff1659dee0978e3149ca
-
-    Arguments:
-        **kwargs: Key word arguments that need to be present in cache key.
-
-    Returns:
-         An MD5 encoded key uniquely identified by the key word arguments.
+    Wrapper method on edx_django_utils get_cache_key utility.
     """
-    key = '__'.join(['{}:{}'.format(item, value) for item, value in iteritems(kwargs)])
-
-    return hashlib.md5(key.encode('utf-8')).hexdigest()
+    return get_django_cache_key(**kwargs)
 
 
 def traverse_pagination(response, endpoint):
@@ -737,15 +719,17 @@ def is_course_run_enrollable(course_run):
     Return true if the course run is enrollable, false otherwise.
 
     We look for the following criteria:
-    - end is greater than now OR null
-    - enrollment_start is less than now OR null
-    - enrollment_end is greater than now OR null
+    1. end date is greater than a reasonably-defined enrollment window, or undefined
+       * reasonably-defined enrollment window is 1 day before course run end date
+    2. enrollment_start is less than now, or undefined
+    3. enrollment_end is greater than now, or undefined
     """
     now = datetime.datetime.now(pytz.UTC)
+    reasonable_enrollment_window = now + datetime.timedelta(days=1)
     end = parse_datetime_handle_invalid(course_run.get('end'))
     enrollment_start = parse_datetime_handle_invalid(course_run.get('enrollment_start'))
     enrollment_end = parse_datetime_handle_invalid(course_run.get('enrollment_end'))
-    return (not end or end > now) and \
+    return (not end or end > reasonable_enrollment_window) and \
            (not enrollment_start or enrollment_start < now) and \
            (not enrollment_end or enrollment_end > now)
 

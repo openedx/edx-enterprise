@@ -12,6 +12,7 @@ from logging import getLogger
 from uuid import uuid4
 
 import six
+import waffle
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rest_api_client.exceptions import HttpClientError
@@ -45,8 +46,14 @@ from model_utils.models import TimeStampedModel
 from enterprise import utils
 from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
-from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
+from enterprise.constants import (
+    ALL_ACCESS_CONTEXT,
+    ENTERPRISE_OPERATOR_ROLE,
+    USE_ENTERPRISE_CATALOG,
+    json_serialized_course_modes,
+)
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -425,9 +432,14 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             bool: Whether the enterprise catalog includes the given course run.
         """
-        for catalog in self.enterprise_customer_catalogs.all():
-            if catalog.contains_courses([course_run_id]):
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if EnterpriseCatalogApiClient().enterprise_contains_content_items(self.uuid, [course_run_id]):
                 return True
+        else:
+            for catalog in self.enterprise_customer_catalogs.all():
+                if catalog.contains_courses([course_run_id]):
+                    return True
 
         return False
 
@@ -919,6 +931,15 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 ecommerce_api_client.create_manual_enrollment_orders(course_enrollments)
         else:
             LOGGER.warning(failure_log_msg, self.user_id, course_run_id, 'Failed to retrieve a valid ecommerce worker.')
+
+    @classmethod
+    def inactivate_other_customers(cls, user_id, enterprise_customer):
+        """
+        Inactive all the enterprise customers of given user except the given enterprise_customer.
+        """
+        EnterpriseCustomerUser.objects.filter(
+            user_id=user_id
+        ).exclude(enterprise_customer=enterprise_customer).update(active=False)
 
 
 @python_2_unicode_compatible
@@ -1571,8 +1592,14 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course metadata.
         """
-        if not self.contains_courses([course_key]):
-            return None
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_key]):
+                return None
+        else:
+            if not self.contains_courses([course_key]):
+                return None
+
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_details(course_key)
 
     def get_course_run(self, course_run_id):
@@ -1585,8 +1612,13 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course run metadata.
         """
-        if not self.contains_courses([course_run_id]):
-            return None
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
+                return None
+        else:
+            if not self.contains_courses([course_run_id]):
+                return None
 
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_run(course_run_id)
 
@@ -1604,8 +1636,13 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             ImproperlyConfigured: Missing or invalid catalog integration.
 
         """
-        if not self.contains_courses([course_run_id]):
-            return None, None
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
+                return None, None
+        else:
+            if not self.contains_courses([course_run_id]):
+                return None, None
 
         return get_course_catalog_api_service_client(
             self.enterprise_customer.site
@@ -1621,8 +1658,14 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The program metadata.
         """
-        if not self.contains_programs([program_uuid]):
-            return None
+        # Temporarily gate enterprise catalog api usage behind waffle sample
+        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [program_uuid]):
+                return None
+        else:
+            if not self.contains_programs([program_uuid]):
+                return None
+
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
 
     def get_course_enrollment_url(self, course_key):

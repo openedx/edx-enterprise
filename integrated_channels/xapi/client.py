@@ -58,3 +58,5 @@ class EnterpriseXAPIClient:
 
         if not response:
             raise ClientError('EnterpriseXAPIClient request failed.')
+
+        return response

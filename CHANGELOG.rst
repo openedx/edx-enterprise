@@ -13,7 +13,99 @@ Change Log
 
 Unreleased
 --------------------
-Removed all auto-generated fields (e.g: id's) from factories to stop initializing them using `fake.random_int()`
+
+[3.2.1] - 2020-05-04
+--------------------
+
+* Added extra logging in 'create_enterprise_course_enrollments' management command.
+
+
+[3.2.0] - 2020-04-23
+--------------------
+
+* Squashed the sap_success_factors and integrated_channel app migrations.
+
+
+[3.1.3] - 2020-04-23
+--------------------
+
+* Revised "end date" window for determinine course active/inactive status in catalog API responses.
+
+
+[3.1.2] - 2020-04-21
+--------------------
+
+* Added extra exception handling in `create_enterprise_course_enrollments` management command.
+
+
+[3.1.1] - 2020-04-20
+--------------------
+
+* removed get_cache_key and using it from edx-django-utils.
+
+
+[3.1.0] - 2020-04-14
+--------------------
+
+* Squashed the enterprise app migrations.
+
+
+[3.0.15] - 2020-04-14
+---------------------
+
+* Fixed HTML tags bug from short course description in enterprise course enrollment page
+
+
+[3.0.14] - 2020-04-10
+---------------------
+
+* Fixing the traversal of results in get_content_metadata for the enterprise-catalog API client
+
+
+[3.0.13] - 2020-04-10
+---------------------
+
+* Switch catalog_contains_course method to use enterprise catalog service behind waffle sample
+
+
+[3.0.12] - 2020-04-10
+---------------------
+
+* Add USE_ENTERPRISE_CATALOG waffle sample, and remove USE_ENTERPRISE_CATALOG waffle flag
+* Switch the use of waffle.flag_is_active to waffle.sample_is_active
+* Updates the EnterpriseCatalogApiClient to make the user argument optional. If the user argument is not provided, it will use the "enterprise_worker" user instead
+* No longer passes user to the EnterpriseCatalogApiClient during initialization in places where a request and/or user object doesn't already exist
+
+
+[3.0.11] - 2020-04-10
+---------------------
+
+* Fix issue with matching urls for redirect to enterprise selection page
+
+
+[3.0.10] - 2020-04-08
+---------------------
+
+* Use the USE_ENTERPRISE_CATALOG waffle flag for transitioning integrated channels to using the enterprise-catalog service
+
+
+[3.0.9] - 2020-04-08
+--------------------
+
+* Add USE_ENTERPRISE_CATALOG waffle flag
+* Switch get_course, get_course_run, get_program, and get_course_and_course_run methods to use enterprise catalog service behind waffle flag
+
+
+[3.0.8] - 2020-04-08
+--------------------
+
+* Converted the EnrollmentApiClient to JWT client.
+
+
+[3.0.7] - 2020-04-07
+--------------------
+
+* Additional xAPI transmission workflow logging
 
 
 [3.0.6] - 2020-04-06

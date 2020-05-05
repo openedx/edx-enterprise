@@ -39,50 +39,95 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         enterprise_customer_uuid_filter = options.get('enterprise_customer_uuid')
         records_created = 0
+        records_failed = 0
 
         missing_enrollment_data = self._fetch_course_enrollment_data(
             enterprise_customer_uuid_filter
         )
+        LOGGER.info('System has %s missing enrollments', len(missing_enrollment_data))
         for item in missing_enrollment_data:
-            enterprise_customer_uuid = item['enterprise_customer_uuid']
+            course_exist_in_catalog = False
             user_id = item['user_id']
             course_run_id = item['course_run_id']
+            enterprise_customer_uuid = item['enterprise_customer_uuid']
+
+            LOGGER.info(
+                'Trying to create the enrollment for user [%s] in course [%s] for enterprise customer [%s]',
+                user_id,
+                course_run_id,
+                enterprise_customer_uuid
+            )
 
             # pylint: disable=no-member
             enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
-            if enterprise_customer.catalog_contains_course(course_run_id):
-                enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+
+            try:
+                LOGGER.info(
+                    'Checking whether course [%s] exists in enterprise customer [%s] - [%s] catalog',
+                    course_run_id,
+                    enterprise_customer_uuid,
+                    enterprise_customer.name
+                )
+                course_exist_in_catalog = enterprise_customer.catalog_contains_course(course_run_id)
+            except Exception as exc:    # pylint: disable=broad-except
+                records_failed += 1
+                LOGGER.warning(
+                    'Course [%s] does not exist in EnterpriseCustomer [%s] due to this exception: [%s]',
+                    course_run_id,
+                    enterprise_customer.uuid,
+                    str(exc)
+                )
+
+            if course_exist_in_catalog:
+                enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
                     enterprise_customer=enterprise_customer_uuid,
                     user_id=user_id
                 )
 
-                # pylint: disable=no-member
-                __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-                    enterprise_customer_user=enterprise_customer_user,
-                    course_id=course_run_id,
-                    defaults={
-                        'source': EnterpriseEnrollmentSource.get_source(
-                            EnterpriseEnrollmentSource.MANAGEMENT_COMMAND
-                        )
-                    }
-                )
-                if created:
-                    records_created += 1
-                    LOGGER.info(
-                        'EnterpriseCourseEnrollment created: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
-                        enterprise_customer_uuid,
-                        user_id,
-                        course_run_id
+                # This is an extra check for preventing the exception.
+                # We already have implemented the solution for this (soft deletion).
+                if enterprise_customer_user.exists():
+                    enterprise_customer_user = enterprise_customer_user.first()
+                    # pylint: disable=no-member
+                    __, created = EnterpriseCourseEnrollment.objects.get_or_create(
+                        enterprise_customer_user=enterprise_customer_user,
+                        course_id=course_run_id,
+                        defaults={
+                            'source': EnterpriseEnrollmentSource.get_source(
+                                EnterpriseEnrollmentSource.MANAGEMENT_COMMAND
+                            )
+                        }
                     )
+                    if created:
+                        # if we have enrolled the user in a course then we should
+                        # active this record and inactive all the other records.
+                        enterprise_customer_user.active = True
+                        enterprise_customer_user.save()
+                        EnterpriseCustomerUser.inactivate_other_customers(user_id, enterprise_customer)
+
+                        records_created += 1
+                        LOGGER.info(
+                            'EnterpriseCourseEnrollment created: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
+                            enterprise_customer_uuid,
+                            user_id,
+                            course_run_id
+                        )
+                    else:
+                        LOGGER.warning(
+                            'EnterpriseCourseEnrollment exists: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
+                            enterprise_customer_uuid,
+                            user_id,
+                            course_run_id
+                        )
                 else:
-                    LOGGER.warning(
-                        'EnterpriseCourseEnrollment exists: EnterpriseCustomer [%s] - User [%s] - CourseRun [%s]',
-                        enterprise_customer_uuid,
+                    LOGGER.info(
+                        'User [%s] is not linked with EnterpriseCustomer - [%s]',
                         user_id,
-                        course_run_id
+                        enterprise_customer.uuid,
                     )
 
         LOGGER.info('Created %s missing EnterpriseCourseEnrollments.', records_created)
+        LOGGER.info('Exception raised for %s records.', records_failed)
 
     def _fetch_course_enrollment_data(self, enterprise_customer_uuid):
         """
@@ -108,7 +153,8 @@ class Command(BaseCommand):
                 ON ece.enterprise_customer_user_id = ecu.id
                 AND ece.course_id = sce.course_id
             WHERE
-                ece.id IS NULL
+                ecu.linked = true
+                AND ece.id IS NULL
                 AND ecu.created <= sce.created
                 AND au.email NOT LIKE '%@edx.org'
                 {enterprise_customer_filter}

@@ -122,3 +122,41 @@ def test_delete_enterprise_catalog():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.delete_enterprise_catalog(TEST_ENTERPRISE_CATALOG_UUID)
     assert actual_response
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_contains_content_items():
+    url = _url("enterprise-catalogs/{catalog_uuid}/contains_content_items/?course_run_ids=demoX".format(
+        catalog_uuid=TEST_ENTERPRISE_CATALOG_UUID
+    ))
+    expected_response = {
+        'contains_content_items': True,
+    }
+    responses.add(
+        responses.GET,
+        url,
+        json=expected_response,
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    actual_response = client.contains_content_items(TEST_ENTERPRISE_CATALOG_UUID, ['demoX'])
+    assert actual_response == expected_response['contains_content_items']
+
+
+@responses.activate
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_enterprise_contains_content_items():
+    url = _url("enterprise-customer/{enterprise_uuid}/contains_content_items/?course_run_ids=demoX".format(
+        enterprise_uuid=TEST_ENTERPRISE_ID
+    ))
+    expected_response = {
+        'contains_content_items': True,
+    }
+    responses.add(
+        responses.GET,
+        url,
+        json=expected_response,
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    actual_response = client.enterprise_contains_content_items(TEST_ENTERPRISE_ID, ['demoX'])
+    assert actual_response == expected_response['contains_content_items']
