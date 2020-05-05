@@ -14,10 +14,10 @@ Change Log
 Unreleased
 --------------------
 
-[3.2.1] - 2020-04-28
+[3.2.1] - 2020-05-04
 --------------------
 
-* Add Fullstory javascript to enterprise admin pages.
+* Added extra logging in 'create_enterprise_course_enrollments' management command.
 
 
 [3.2.0] - 2020-04-23
