@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.2] - 2020-05-05
+--------------------
+
+* Made enrollment reason optional when linking learners without enrollment.
+
 [3.2.1] - 2020-05-04
 --------------------
 
