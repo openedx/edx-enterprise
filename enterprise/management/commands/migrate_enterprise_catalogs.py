@@ -87,4 +87,4 @@ class Command(BaseCommand):
                     )
                 LOGGER.info('Successfully migrated Enterprise Catalog {}'.format(enterprise_catalog.uuid))
             except Exception:  # pylint: disable=broad-except
-                LOGGER.exception('Failed to create enterprise catalog {}'.format(enterprise_catalog.uuid))
+                LOGGER.exception('Failed to migrate enterprise catalog {}'.format(enterprise_catalog.uuid))
