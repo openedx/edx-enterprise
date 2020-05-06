@@ -7,24 +7,27 @@
 cheroot==8.3.0            # via cherrypy
 cherrypy==18.6.0          # via jasmine
 glob2==0.7                # via jasmine-core
-jaraco.classes==2.0     # via jaraco.collections
-jaraco.collections==2.1  # via cherrypy
-jaraco.functools==2.0   # via cheroot, jaraco.text, tempora
+importlib-metadata==1.6.0  # via importlib-resources
+importlib-resources==1.5.0  # via jaraco.text
+jaraco.classes==2.0       # via jaraco.collections
+jaraco.collections==2.1   # via cherrypy
+jaraco.functools==2.0     # via cheroot, jaraco.text, tempora
 jaraco.text==3.2.0        # via jaraco.collections
 jasmine-core==3.1.0       # via jasmine
 jasmine==3.1.0            # via -r requirements/js_test.in
 jinja2==2.11.2            # via jasmine
 markupsafe==1.1.1         # via jinja2
-more-itertools==8.2.0     # via cheroot, cherrypy, jaraco.classes, jaraco.functools
+more-itertools==8.2.0     # via cheroot, cherrypy, jaraco.functools
 ordereddict==1.1          # via jasmine-core
 portend==2.6              # via cherrypy
 pytz==2020.1              # via tempora
 pyyaml==3.10              # via jasmine
 selenium==3.141.0         # via jasmine
-six==1.14.0               # via cheroot, jaraco.collections, jaraco.text
-tempora==1.14.1            # via portend
+six==1.14.0               # via cheroot, jaraco.classes, jaraco.collections, jaraco.text, tempora
+tempora==1.14.1           # via portend
 urllib3==1.25.9           # via selenium
 zc.lockfile==2.0          # via cherrypy
+zipp==1.2.0               # via importlib-metadata, importlib-resources
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
