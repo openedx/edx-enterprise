@@ -1485,12 +1485,19 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         return self.__str__()
 
+    def get_content_filter(self):
+        """
+        Return content filter of the linked catalog query otherwise content filter of catalog itself.
+        """
+        return self.enterprise_catalog_query.content_filter if self.enterprise_catalog_query else self.content_filter
+
     @cached_property
     def content_filter_ids(self):
         """
         Return the list of any content IDs specified in the catalog's content filter.
         """
-        return set(self.content_filter.get('key', []) + self.content_filter.get('uuid', []))
+        content_filter = self.get_content_filter()
+        return set(content_filter.get('key', []) + content_filter.get('uuid', []))
 
     def get_paginated_content(self, query_parameters):
         """
@@ -1505,7 +1512,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         # exclude_expired_course_run query_param is added to remove the expired course run
         query_params["exclude_expired_course_run"] = True
         results = []
-        content_filter_query = self.content_filter.copy()
+        content_filter_query = self.get_content_filter().copy()
         catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
         search_results = catalog_client.get_catalog_results(content_filter_query, query_params.dict())
         for content in search_results['results']:
@@ -1540,7 +1547,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Returns:
             list: The list of content IDs that are members of the catalog.
         """
-        updated_content_filter = self.content_filter.copy()
+        updated_content_filter = self.get_content_filter().copy()
         updated_content_filter[content_id_field_name] = content_id_values
         response = get_course_catalog_api_service_client(self.enterprise_customer.site).get_catalog_results(
             updated_content_filter,

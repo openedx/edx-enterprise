@@ -30,6 +30,7 @@ from enterprise.admin.utils import (
 from enterprise.admin.widgets import SubmitInput
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
+    EnterpriseCatalogQuery,
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
@@ -342,7 +343,16 @@ class EnterpriseCustomerCatalogAdminForm(forms.ModelForm):
         if not catalog_preview_button:
             return None
         content_filter_key = catalog_preview_button.replace('preview_button', 'content_filter')
-        content_filter = post_data.get(content_filter_key)
+        enterprise_catalog_query_key = catalog_preview_button.replace('preview_button', 'enterprise_catalog_query')
+        enterprise_catalog_query_id = post_data.get(enterprise_catalog_query_key)
+        if enterprise_catalog_query_id:
+            content_filter = EnterpriseCatalogQuery.objects.filter(
+                id=enterprise_catalog_query_id
+            ).first().content_filter
+            content_filter = json.dumps(content_filter)
+        else:
+            content_filter = post_data.get(content_filter_key)
+
         if not content_filter:
             return None
         return json.loads(content_filter)

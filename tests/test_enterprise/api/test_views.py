@@ -36,7 +36,6 @@ from enterprise.constants import (
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
 )
 from enterprise.models import (
-    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
@@ -1972,78 +1971,6 @@ class TestEnterpriseAPIViews(APITest):
 
         response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
         self.assertEqual(response_xml['content-type'], 'application/xml; charset=utf-8')
-
-    def test_get_catalog_query(self):
-        """
-        Test that `CatalogQueryView` returns expected response.
-        """
-        expected_content_filter = {'partner': 'MushiX'}
-        catalog_query = EnterpriseCatalogQuery.objects.create(
-            title='Test Catalog Query',
-            content_filter=expected_content_filter
-        )
-        response = self.client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': catalog_query.id})
-        )
-        assert response.status_code == 200
-        assert response.json() == expected_content_filter
-
-    def test_get_catalog_query_not_found(self):
-        """
-        Test that `CatalogQueryView` returns correct response when enterprise catalog query is not found.
-        """
-        non_existed_id = 100
-        response = self.client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': non_existed_id})
-        )
-        assert response.status_code == 404
-        response = response.json()
-        assert response['detail'] == 'Could not find enterprise catalog query.'
-
-    def test_get_catalog_query_post_method_not_allowed(self):
-        """
-        Test that `CatalogQueryView` does not allow POST method.
-        """
-        response = self.client.post(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1}),
-            data=json.dumps({'current_troll_hunter': 'Jim Lake Jr.'}),
-            content_type='application/json'
-        )
-        assert response.status_code == 405
-        response = response.json()
-        assert response['detail'] == 'Method "POST" not allowed.'
-
-    def test_get_catalog_query_not_staff(self):
-        """
-        Test that `CatalogQueryView` does not allow non staff users.
-        """
-        # Creating a non staff user so as to verify the insufficient permission conditions.
-        user = factories.UserFactory(username='test_user', is_active=True, is_staff=False)
-        user.set_password('test_password')  # pylint: disable=no-member
-        user.save()  # pylint: disable=no-member
-
-        client = APIClient()
-        client.login(username='test_user', password='test_password')
-        response = client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1})
-        )
-
-        assert response.status_code == 403
-        response = response.json()
-        assert response['detail'] == 'You do not have permission to perform this action.'
-
-    def test_get_catalog_query_not_logged_in(self):
-        """
-        Test that `CatalogQueryView` only allows logged in users.
-        """
-        client = APIClient()
-        # User is not logged in.
-        response = client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1})
-        )
-        assert response.status_code == 403
-        response = response.json()
-        assert response['detail'] == 'Authentication credentials were not provided.'
 
     @mock.patch('django.core.mail.send_mail')
     @ddt.data(
