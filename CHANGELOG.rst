@@ -18,14 +18,14 @@ Unreleased
 --------------------
 
 * Pass enterprise customer's name to enterprise-catalog service during create/update of enterprise catalogs
-* Refactor `migrate_enterprise_catalogs` management command to check if a catalog already exists in the enterprise-catalog service. If a catalog does already exist, it will be updated with a PUT request; otherwise, a new catalog will be created with a POST request.
-
+* Refactor `migrate_enterprise_catalogs` management command to check if a catalog already exists in the enterprise-catalog service. If a catalog already exists, it will be updated with a PUT request; otherwise, a new catalog will be created with a POST request.
 
 
 [3.2.4] - 2020-05-06
 --------------------
 
 * Specified python3.5 version for PyPI release
+
 
 [3.2.3] - 2020-05-06
 --------------------
