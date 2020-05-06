@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.6] - 2020-05-06
+--------------------
+
+* Added use of traverse_pagination for get_content_metadata in the enterprise_catalog api client.
+
+
 [3.2.5] - 2020-05-06
 --------------------
 

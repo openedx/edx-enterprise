@@ -130,7 +130,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT.format(catalog_uuid))
             try:
                 response = endpoint.get()
-                for item in response['results']:
+                for item in utils.traverse_pagination(response, endpoint):
                     content_id = utils.get_content_metadata_item_id(item)
                     content_metadata[content_id] = item
             except (SlumberBaseException, ConnectionError, Timeout) as exc:
