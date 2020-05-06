@@ -35,7 +35,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
     @mock.patch('enterprise.management.commands.migrate_enterprise_catalogs.EnterpriseCatalogApiClient')
     def test_enterprise_catalogs_created_success(self, api_client_mock, logger_mock):
         """
-        Test that the command calls the enterprise catalog api successfully for each catalog.
+        Test that the command calls the enterprise catalog api to create each catalog successfully.
         """
         api_client_mock.return_value = mock.MagicMock()
         api_client_mock.return_value.get_enterprise_catalog.return_value = False
@@ -51,7 +51,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
     @mock.patch('enterprise.management.commands.migrate_enterprise_catalogs.EnterpriseCatalogApiClient')
     def test_enterprise_catalogs_created_failure(self, api_client_mock, logger_mock):
         """
-        Test that the command catches errors that may occur from hitting the enterprise catalog api.
+        Test that the command catches errors that may occur while creating catalogs with the enterprise catalog api.
         """
         api_client_mock.return_value = mock.MagicMock()
         api_client_mock.return_value.get_enterprise_catalog.return_value = False
@@ -67,7 +67,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
     @mock.patch('enterprise.management.commands.migrate_enterprise_catalogs.EnterpriseCatalogApiClient')
     def test_enterprise_catalogs_updated_success(self, api_client_mock, logger_mock):
         """
-        Test that the command calls the enterprise catalog api successfully for each catalog.
+        Test that the command calls the enterprise catalog api to update each catalog successfully.
         """
         api_client_mock.return_value = mock.MagicMock()
         api_client_mock.return_value.get_enterprise_catalog.return_value = True
@@ -83,7 +83,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
     @mock.patch('enterprise.management.commands.migrate_enterprise_catalogs.EnterpriseCatalogApiClient')
     def test_enterprise_catalogs_updated_failure(self, api_client_mock, logger_mock):
         """
-        Test that the command catches errors that may occur from hitting the enterprise catalog api.
+        Test that the command catches errors that may occur while updating catalogs with the enterprise catalog api.
         """
         api_client_mock.return_value = mock.MagicMock()
         api_client_mock.return_value.get_enterprise_catalog.return_value = True
