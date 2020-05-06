@@ -28,11 +28,6 @@ router.register(
 
 urlpatterns = [
     url(
-        r'^enterprise_catalog_query/(?P<catalog_query_id>[\d]+)/$',
-        views.CatalogQueryView.as_view(),
-        name='enterprise-catalog-query'
-    ),
-    url(
         r'^request_codes$',
         views.CouponCodesView.as_view(),
         name='request-codes'

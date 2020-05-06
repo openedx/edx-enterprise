@@ -23,6 +23,7 @@ from enterprise.admin.forms import (
 from enterprise.admin.utils import ValidationMessages
 from test_utils import fake_enrollment_api
 from test_utils.factories import (
+    EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
@@ -262,6 +263,32 @@ class TestManageLearnersForm(unittest.TestCase):
             if is_decimal_error:
                 error_message = 'Ensure that there are no more than 5 decimal places.'
             assert form.errors == {form.Fields.DISCOUNT: [error_message]}
+
+    @ddt.unpack
+    @ddt.data(
+        ("a thirst for knowledge", "a thirst for knowledge"),
+        ("   a thirst for knowledge   ", "a thirst for knowledge"),  # strips spaces
+        ("\r\t\n a thirst for knowledge", "a thirst for knowledge"),  # strips spaces
+        ("a thirst for knowledge\r\t\n ", "a thirst for knowledge"),  # strips spaces
+        ("    ", ""),
+    )
+    def test_clean_reason(self, reason, expected_reason):
+        form = self._make_bound_form("irrelevant@example.com", reason=reason)
+        assert form.is_valid()
+        cleaned_data = form.clean()
+        assert cleaned_data[ManageLearnersForm.Fields.REASON] == expected_reason
+
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_validate_reason(self, enrollment_client):
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        reason = ""
+        form = self._make_bound_form("irrelevant@example.com", course=course_id, reason=reason, course_mode="audit")
+        assert not form.is_valid()
+        assert form.errors == {
+            "__all__": [ValidationMessages.MISSING_REASON]
+        }
 
 
 @mark.django_db
@@ -520,6 +547,7 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
 
 
 @ddt.ddt
+@mark.django_db
 class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
     """
     Tests Different type of utilities methods.
@@ -527,7 +555,18 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
     dummy_content_filter_data = {
         'field': 'value'
     }
+    catalog_query_content_filter = {
+        "query_field": "query_data"
+    }
     form = EnterpriseCustomerCatalogAdminForm
+
+    def setUp(self):
+        """
+        Test set up.
+        """
+        super(EnterpriseCustomerCatalogAdminFormTest, self).setUp()
+        EnterpriseCatalogQueryFactory(content_filter=self.catalog_query_content_filter)
+
     @ddt.unpack
     @ddt.data(
         (
@@ -561,6 +600,17 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
                 'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
             },
             dummy_content_filter_data
+        ),
+        # content filter from catalog query
+        (
+            {
+                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-enterprise_catalog_query': '1',
+                'enterprise_customer_catalogs-1-content_filter': json.dumps({'field_1': 'value_1'}),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+            },
+            catalog_query_content_filter
         ),
         # not clicked catalog_preview_button
         (

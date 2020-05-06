@@ -16,6 +16,7 @@ from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
+    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
@@ -267,6 +268,23 @@ class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
 
     uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+
+class EnterpriseCatalogQueryFactory(factory.django.DjangoModelFactory):
+    """
+    EnterpriseCatalogQuery factory.
+
+    Creates an instance of EnterpriseCatalogQuery with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCatalogQuery.
+        """
+
+        model = EnterpriseCatalogQuery
+
+    title = factory.Faker('sentence', nb_words=4)
 
 
 class DataSharingConsentFactory(factory.django.DjangoModelFactory):

@@ -13,7 +13,7 @@ distlib==0.3.0            # via virtualenv
 filelock==3.0.12          # via tox, virtualenv
 idna==2.9                 # via requests
 importlib-metadata==1.6.0  # via importlib-resources, pluggy, tox, virtualenv
-importlib-resources==1.4.0  # via virtualenv
+importlib-resources==1.5.0  # via virtualenv
 more-itertools==8.2.0     # via zipp
 packaging==20.3           # via tox
 pluggy==0.13.1            # via tox
@@ -24,6 +24,6 @@ six==1.14.0               # via packaging, tox, virtualenv
 toml==0.10.0              # via tox
 tox-battery==0.5.1        # via -r requirements/travis.in
 tox==3.14.6               # via -r requirements/travis.in, tox-battery
-urllib3==1.25.8           # via requests
-virtualenv==20.0.17       # via tox
+urllib3==1.25.9           # via requests
+virtualenv==20.0.18       # via tox
 zipp==1.0.0               # via -c requirements/constraints.txt, importlib-metadata, importlib-resources
