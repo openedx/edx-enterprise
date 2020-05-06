@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.4] - 2020-05-06
+--------------------
+
+* Specified python3.5 version for PyPI release
+
 [3.2.3] - 2020-05-06
 --------------------
 
