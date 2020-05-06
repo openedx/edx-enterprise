@@ -14,10 +14,18 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.5] - 2020-05-06
+--------------------
+
+* Pass enterprise customer's name to enterprise-catalog service during create/update of enterprise catalogs
+* Refactor `migrate_enterprise_catalogs` management command to check if a catalog already exists in the enterprise-catalog service. If a catalog already exists, it will be updated with a PUT request; otherwise, a new catalog will be created with a POST request.
+
+
 [3.2.4] - 2020-05-06
 --------------------
 
 * Specified python3.5 version for PyPI release
+
 
 [3.2.3] - 2020-05-06
 --------------------
@@ -26,10 +34,12 @@ Unreleased
 * Added support for python3.8.
 * Changes to use catalog query content filter if defined instead of catalog content filter.
 
+
 [3.2.2] - 2020-05-05
 --------------------
 
 * Made enrollment reason optional when linking learners without enrollment.
+
 
 [3.2.1] - 2020-05-04
 --------------------
