@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.7] - 2020-05-07
+--------------------
+
+* Added extra logging in 'create_enterprise_course_enrollments' management command.
+
+
 [3.2.6] - 2020-05-06
 --------------------
 
