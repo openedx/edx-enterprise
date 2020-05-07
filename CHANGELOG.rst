@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.8] - 2020-05-08
+--------------------
+
+* Added extra logging when syncing Enterprise Catalog data to the Enterprise Catalog Service.
+
 [3.2.7] - 2020-05-07
 --------------------
 
