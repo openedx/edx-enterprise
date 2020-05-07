@@ -37,6 +37,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        LOGGER.info("Command has started...")
         enterprise_customer_uuid_filter = options.get('enterprise_customer_uuid')
         records_created = 0
         records_failed = 0
@@ -139,6 +140,7 @@ class Command(BaseCommand):
         and the enterprise. It also excludes learners with edx.org email addresses in order to
         filter out test users.
         """
+        LOGGER.info("Trying to fetch the data from Database with enterprise customer [%s]", enterprise_customer_uuid)
         query = '''
             SELECT
                 au.id as user_id,
