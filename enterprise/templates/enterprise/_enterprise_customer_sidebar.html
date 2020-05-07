@@ -1,5 +1,5 @@
 {% load enterprise %}
-{% if enterprise_customer.branding_configuration %}
+{% if enterprise_customer.branding_configuration and enterprise_customer.branding_configuration.logo %}
     <img class="enterprise-logo" src="{{ enterprise_customer.branding_configuration.logo.url }}" alt="{{ enterprise_customer.name }}"/>
 {% endif %}
 {% if text_override_available %}
