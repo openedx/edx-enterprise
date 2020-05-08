@@ -57,6 +57,11 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             'publish_audit_enrollment_urls': json.dumps(publish_audit_enrollment_urls),
         }
         try:
+            LOGGER.info(
+                'Creating Enterprise Catalog %s in the Enterprise Catalog Service with params: %s',
+                catalog_uuid,
+                json.dumps(post_data)
+            )
             return endpoint.post(post_data)
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
@@ -83,6 +88,11 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         """Updates an enterprise catalog."""
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
         try:
+            LOGGER.info(
+                'Updating Enterprise Catalog %s in the Enterprise Catalog Service with params: %s',
+                catalog_uuid,
+                json.dumps(kwargs)
+            )
             return endpoint.put(kwargs)
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
