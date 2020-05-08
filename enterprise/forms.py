@@ -8,11 +8,20 @@ from django import forms
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
+from enterprise.utils import get_enterprise_customer_idp
 
 ENTERPRISE_SELECT_SUBTITLE = _(
     u'You have access to multiple organizations. Select the organization that you will use '
     'to sign up for courses. If you want to change organizations, sign out and sign back in.'
 )
+ENTERPRISE_LOGIN_TITLE = _(u'Enter the company name')
+ENTERPRISE_LOGIN_SUBTITLE = _(
+    u'Have an account through your company, school, or organization? Enter name below to sign in '
+)
+ERROR_MESSAGE_FOR_WRONG_ENTERPRISE_CUSTOMER = _(
+    "Either you have entered the wrong name or your company hasn't enabled the login."
+)
+ERROR_MESSAGE_FOR_WRONG_IDP = _("No provider is linked to your company/organization. Kindly contact admin.")
 
 
 class EnterpriseSelectionForm(forms.Form):
@@ -49,4 +58,35 @@ class EnterpriseSelectionForm(forms.Form):
         if not EnterpriseCustomerUser.objects.filter(enterprise_customer=enterprise, user_id=self._user_id).exists():
             raise forms.ValidationError(_("Wrong Enterprise"))
 
+        return cleaned_data
+
+
+class EnterpriseLoginForm(forms.Form):
+    """
+    Enterprise Login Form.
+    """
+
+    enterprise_slug = forms.CharField(label='Company Name')
+
+    def clean(self):
+        """
+        Validate POST data.
+        """
+        cleaned_data = super(EnterpriseLoginForm, self).clean()
+        enterprise_slug = cleaned_data['enterprise_slug']
+
+        # verify that given slug has any associated enterprise customer.
+        try:
+            enterprise_customer = EnterpriseCustomer.objects.get(slug=enterprise_slug)
+        except EnterpriseCustomer.DoesNotExist:
+            raise forms.ValidationError(ERROR_MESSAGE_FOR_WRONG_ENTERPRISE_CUSTOMER)
+
+        # verify that enterprise customer has enabled the slug login feature.
+        if not enterprise_customer.enable_slug_login:
+            raise forms.ValidationError(ERROR_MESSAGE_FOR_WRONG_ENTERPRISE_CUSTOMER)
+
+        # verify that a valid idp is linked to the enterprise customer.
+        enterprise_customer_idp = get_enterprise_customer_idp(enterprise_slug)
+        if enterprise_customer_idp is None or enterprise_customer_idp.identity_provider is None:
+            raise forms.ValidationError(ERROR_MESSAGE_FOR_WRONG_IDP)
         return cleaned_data

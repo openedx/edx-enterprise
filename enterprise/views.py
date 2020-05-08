@@ -38,7 +38,13 @@ from enterprise.api_client.discovery import get_course_catalog_api_service_clien
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
-from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE, EnterpriseSelectionForm
+from enterprise.forms import (
+    ENTERPRISE_LOGIN_SUBTITLE,
+    ENTERPRISE_LOGIN_TITLE,
+    ENTERPRISE_SELECT_SUBTITLE,
+    EnterpriseLoginForm,
+    EnterpriseSelectionForm,
+)
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
@@ -55,9 +61,11 @@ from enterprise.utils import (
     get_active_course_runs,
     get_configuration_value,
     get_current_course_run,
+    get_enterprise_customer_idp,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
+    get_provider_login_url,
     is_course_run_enrollable,
     track_enrollment,
     ungettext_min_max,
@@ -845,6 +853,44 @@ class GrantDataSharingPermissions(View):
             consent_record.save()
 
         return redirect(success_url if consent_provided else failure_url)
+
+
+class EnterpriseLoginView(FormView):
+    """
+    Allow an enterprise learner to login by enterprise customer's slug login.
+    """
+
+    form_class = EnterpriseLoginForm
+    template_name = 'enterprise/enterprise_customer_login_page.html'
+
+    def get_context_data(self, **kwargs):
+        """Return the context data needed to render the view."""
+        context_data = super(EnterpriseLoginView, self).get_context_data(**kwargs)
+        context_data.update({
+            'page_title': _(u'Enterprise Slug Login'),
+            'enterprise_login_title_message': ENTERPRISE_LOGIN_TITLE,
+            'enterprise_login_subtitle_message': ENTERPRISE_LOGIN_SUBTITLE,
+        })
+        return context_data
+
+    def form_invalid(self, form):
+        """
+        If the form is invalid then return the errors.
+        """
+        # flatten the list of lists
+        errors = [item for sublist in form.errors.values() for item in sublist]
+        return JsonResponse({'errors': errors}, status=400)
+
+    def form_valid(self, form):
+        """
+        If the form is valid, redirect to the third party auth login page.
+        """
+        provider_id = get_enterprise_customer_idp(form.cleaned_data['enterprise_slug']).provider_id
+        return JsonResponse(
+            {
+                "url": get_provider_login_url(self.request, provider_id)
+            }
+        )
 
 
 @method_decorator(login_required, name='dispatch')

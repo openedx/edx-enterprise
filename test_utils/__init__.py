@@ -11,6 +11,8 @@ from __future__ import absolute_import, unicode_literals
 import copy
 import json
 import logging
+import os
+import tempfile
 import uuid
 
 import mock
@@ -28,11 +30,11 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
 
 from django.conf import settings
 from django.shortcuts import render
+from django.test import TestCase
 from django.test.client import RequestFactory
 from django.urls import reverse
 
 from enterprise import utils
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE
 from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
@@ -358,3 +360,37 @@ class MockLoggingHandler(logging.Handler):
             'error': [],
             'critical': [],
         }
+
+
+class EnterpriseFormViewTestCase(TestCase):
+    """
+    Base class for TestCase.
+
+    It has support for mocking of rendering the template file for FormView.
+    """
+
+    url = None
+    template_path = None
+
+    def setUp(self):
+        """
+        Mocked the rendering the template file.
+        """
+        super(EnterpriseFormViewTestCase, self).setUp()
+        # create a temporary template file
+        # rendering View's template fails becuase of dependency on edx-platform
+        tpl = tempfile.NamedTemporaryFile(
+            prefix='test_template.',
+            suffix=".html",
+            dir=settings.REPO_ROOT + '/templates/enterprise/',
+            delete=False,
+        )
+        tpl.close()
+        self.addCleanup(os.remove, tpl.name)
+
+        patcher = mock.patch(
+            self.template_path,
+            mock.PropertyMock(return_value=tpl.name)
+        )
+        patcher.start()
+        self.addCleanup(patcher.stop)

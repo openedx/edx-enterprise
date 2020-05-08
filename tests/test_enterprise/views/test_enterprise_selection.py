@@ -5,29 +5,27 @@ Tests for the ``EnterpriseSelectionView`` view of the Enterprise app.
 
 from __future__ import absolute_import, unicode_literals
 
-import os
-import tempfile
-
 import ddt
 import mock
 from pytest import mark
 
-from django.conf import settings
-from django.test import Client, TestCase
+from django.test import Client
 from django.urls import reverse
 
 from enterprise.forms import ENTERPRISE_SELECT_SUBTITLE
 from enterprise.models import EnterpriseCustomerUser
+from test_utils import EnterpriseFormViewTestCase
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerUserFactory, UserFactory
 
 
 @mark.django_db
 @ddt.ddt
-class TestEnterpriseSelectionView(TestCase):
+class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
     """
     Test EnterpriseSelectionView.
     """
     url = reverse('enterprise_select_active')
+    template_path = 'enterprise.views.EnterpriseSelectionView.template_name'
 
     def setUp(self):
         self.user = UserFactory.create(is_active=True)
@@ -51,24 +49,6 @@ class TestEnterpriseSelectionView(TestCase):
             'enterprise_customer__uuid', 'enterprise_customer__name'
         )
         self.enterprise_choices = [(str(uuid), name) for uuid, name in enterprises]
-
-        # create a temporary template file
-        # rendering `enterprise/enterprise_customer_select_form.html` fails becuase of dependency on edx-platform
-        tpl = tempfile.NamedTemporaryFile(
-            prefix='test_template.',
-            suffix=".html",
-            dir=settings.REPO_ROOT + '/templates/enterprise/',
-            delete=False,
-        )
-        tpl.close()
-        self.addCleanup(os.remove, tpl.name)
-
-        patcher = mock.patch(
-            'enterprise.views.EnterpriseSelectionView.template_name',
-            mock.PropertyMock(return_value=tpl.name)
-        )
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
     def _login(self):
         """
