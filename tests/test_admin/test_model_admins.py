@@ -56,8 +56,25 @@ class EnterpriseCustomerCatalogAdminTests(TestCase):
         )
 
     @mock.patch('enterprise.admin.EnterpriseCatalogApiClient')
-    def test_update_catalog(self, api_client_mock):
+    def test_update_catalog_without_existing_service_catalog(self, api_client_mock):
         api_client_mock.return_value = mock.MagicMock()
+        api_client_mock.return_value.get_enterprise_catalog.return_value = False
+        api_client_mock.return_value.create_enterprise_catalog = mock.MagicMock()
+
+        change = True  # True for updating
+        self.catalog_admin.save_model(self.request, self.enterprise_catalog, self.form, change)
+
+        # Verify the API was called and the catalog is the same as there were no real updates
+        api_client_mock.return_value.create_enterprise_catalog.assert_called()
+        self.assertEqual(
+            EnterpriseCustomerCatalog.objects.get(uuid=self.enterprise_catalog_uuid),
+            self.enterprise_catalog
+        )
+
+    @mock.patch('enterprise.admin.EnterpriseCatalogApiClient')
+    def test_update_catalog_with_existing_service_catalog(self, api_client_mock):
+        api_client_mock.return_value = mock.MagicMock()
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
         api_client_mock.return_value.update_enterprise_catalog = mock.MagicMock()
 
         change = True  # True for updating

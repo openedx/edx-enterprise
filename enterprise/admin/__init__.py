@@ -650,15 +650,31 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         catalog_client = EnterpriseCatalogApiClient(user=request.user)
 
         if change:
-            update_fields = {
-                'enterprise_customer': str(obj.enterprise_customer.uuid),
-                'enterprise_customer_name': obj.enterprise_customer.name,
-                'title': obj.title,
-                'content_filter': obj.content_filter,
-                'enabled_course_modes': obj.enabled_course_modes,
-                'publish_audit_enrollment_urls': obj.publish_audit_enrollment_urls,
-            }
-            catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
+            response = catalog_client.get_enterprise_catalog(catalog_uuid)
+            if not response:
+                # catalog with matching uuid does NOT exist in enterprise-catalog
+                # service, so we should create a new catalog
+                catalog_client.create_enterprise_catalog(
+                    str(catalog_uuid),
+                    str(obj.enterprise_customer.uuid),
+                    obj.enterprise_customer.name,
+                    obj.title,
+                    obj.content_filter,
+                    obj.enabled_course_modes,
+                    obj.publish_audit_enrollment_urls,
+                )
+            else:
+                # catalog with matching uuid does exist in enterprise-catalog
+                # service, so we should update the existing catalog
+                update_fields = {
+                    'enterprise_customer': str(obj.enterprise_customer.uuid),
+                    'enterprise_customer_name': obj.enterprise_customer.name,
+                    'title': obj.title,
+                    'content_filter': obj.content_filter,
+                    'enabled_course_modes': obj.enabled_course_modes,
+                    'publish_audit_enrollment_urls': obj.publish_audit_enrollment_urls,
+                }
+                catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
         else:
             catalog_client.create_enterprise_catalog(
                 str(catalog_uuid),
