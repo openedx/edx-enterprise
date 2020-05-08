@@ -279,6 +279,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
     )
 
+    enable_slug_login = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether the learner should be able to login through enterprise's slug login")
+    )
+
     contact_email = models.EmailField(
         null=True,
         blank=True,
