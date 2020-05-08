@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.10] - 2020-05-08
+---------------------
+
+* Updated EnterpriseCustomerCatalogAdmin save hook to check if a corresponding catalog exists in the enterprise-catalog service. If it does, the save hook will update the existing catalog; otherwise, a new catalog will be created.
+
+
 [3.2.9] - 2020-05-08
 --------------------
 
