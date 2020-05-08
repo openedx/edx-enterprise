@@ -14,10 +14,17 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.9] - 2020-05-08
+--------------------
+
+* Added a flag to enable the slug login for an enterprise customer.
+
+
 [3.2.8] - 2020-05-07
 --------------------
 
 * Makes the data sharing consent template guard against empty/null branding configuration logo values.
+
 
 [3.2.7] - 2020-05-07
 --------------------
