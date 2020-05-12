@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.11] - 2020-05-12
+---------------------
+
+* Moving the post model save logic for Enterprise Catalog to signals.py.
+
+
 [3.2.10] - 2020-05-08
 ---------------------
 

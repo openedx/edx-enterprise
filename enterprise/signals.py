@@ -11,6 +11,7 @@ from django.db import transaction
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
@@ -21,7 +22,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.tasks import create_enterprise_enrollment
-from enterprise.utils import get_default_catalog_content_filter, track_enrollment
+from enterprise.utils import NotConnectedToOpenEdX, get_default_catalog_content_filter, track_enrollment
 
 try:
     from student.models import CourseEnrollment
@@ -133,6 +134,57 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
         except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
+
+
+@receiver(post_save, sender=EnterpriseCustomerCatalog)
+def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Send data changes to Enterprise Catalogs to the Enterprise Catalog Service.
+    """
+    catalog_uuid = instance.uuid
+    try:
+        catalog_client = EnterpriseCatalogApiClient()
+        response = catalog_client.get_enterprise_catalog(catalog_uuid)
+    except NotConnectedToOpenEdX as exc:
+        logger.exception('Unable to update Enterprise Catalog {}'.format(str(catalog_uuid)), exc)
+    else:
+        if not response:
+            # catalog with matching uuid does NOT exist in enterprise-catalog
+            # service, so we should create a new catalog
+            catalog_client.create_enterprise_catalog(
+                str(catalog_uuid),
+                str(instance.enterprise_customer.uuid),
+                instance.enterprise_customer.name,
+                instance.title,
+                instance.content_filter,
+                instance.enabled_course_modes,
+                instance.publish_audit_enrollment_urls,
+            )
+        else:
+            # catalog with matching uuid does exist in enterprise-catalog
+            # service, so we should update the existing catalog
+            update_fields = {
+                'enterprise_customer': str(instance.enterprise_customer.uuid),
+                'enterprise_customer_name': instance.enterprise_customer.name,
+                'title': instance.title,
+                'content_filter': instance.content_filter,
+                'enabled_course_modes': instance.enabled_course_modes,
+                'publish_audit_enrollment_urls': instance.publish_audit_enrollment_urls,
+            }
+            catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
+
+
+@receiver(post_delete, sender=EnterpriseCustomerCatalog)
+def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Send deletions of Enterprise Catalogs to the Enterprise Catalog Service.
+    """
+    catalog_uuid = instance.uuid
+    try:
+        catalog_client = EnterpriseCatalogApiClient()
+        catalog_client.delete_enterprise_catalog(catalog_uuid)
+    except NotConnectedToOpenEdX as exc:
+        logger.exception('Unable to delete Enterprise Catalog {}'.format(str(catalog_uuid)), exc)
 
 
 def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument

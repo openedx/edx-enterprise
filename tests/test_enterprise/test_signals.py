@@ -17,6 +17,7 @@ from django.test import override_settings
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
     EnterpriseCourseEnrollment,
+    EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
@@ -532,3 +533,76 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
 
         create_enterprise_enrollment_receiver(sender, instance, **kwargs)
         mock_task.assert_not_called()
+
+
+@mark.django_db
+class TestEnterpriseCatalogSignals(unittest.TestCase):
+    """
+    Tests the EnterpriseCustomerCatalogAdmin
+    """
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_delete_catalog(self, api_client_mock):
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
+        enterprise_catalog_uuid = enterprise_catalog.uuid
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
+        enterprise_catalog.delete()
+
+        # Verify the API was called correctly and the catalog was deleted
+        api_client_mock.return_value.delete_enterprise_catalog.assert_called_with(enterprise_catalog_uuid)
+        self.assertFalse(EnterpriseCustomerCatalog.objects.exists())
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_create_catalog(self, api_client_mock):
+        api_client_mock.return_value.get_enterprise_catalog.return_value = {}
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
+
+        # Verify the API was called and the catalog "was created" (even though it already was)
+        # This method is a little weird in that the object is sort of created / not-created at the same time
+        api_client_mock.return_value.create_enterprise_catalog.assert_called_with(
+            str(enterprise_catalog.uuid),
+            str(enterprise_catalog.enterprise_customer.uuid),
+            enterprise_catalog.enterprise_customer.name,
+            enterprise_catalog.title,
+            enterprise_catalog.content_filter,
+            enterprise_catalog.enabled_course_modes,
+            enterprise_catalog.publish_audit_enrollment_urls
+        )
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_update_catalog_without_existing_service_catalog(self, api_client_mock):
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
+        api_client_mock.return_value.get_enterprise_catalog.return_value = {}
+
+        enterprise_catalog.title = 'New title'
+        enterprise_catalog.save()
+
+        # Verify the API was called and the catalog is the same as there were no real updates
+        api_client_mock.return_value.create_enterprise_catalog.assert_called_with(
+            str(enterprise_catalog.uuid),
+            str(enterprise_catalog.enterprise_customer.uuid),
+            enterprise_catalog.enterprise_customer.name,
+            enterprise_catalog.title,
+            enterprise_catalog.content_filter,
+            enterprise_catalog.enabled_course_modes,
+            enterprise_catalog.publish_audit_enrollment_urls
+        )
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_update_catalog_with_existing_service_catalog(self, api_client_mock):
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
+
+        enterprise_catalog.title = 'New title'
+        enterprise_catalog.save()
+
+        # Verify the API was called and the catalog is the same as there were no real updates
+        api_client_mock.return_value.update_enterprise_catalog.assert_called_with(
+            enterprise_catalog.uuid,
+            enterprise_customer=str(enterprise_catalog.enterprise_customer.uuid),
+            enterprise_customer_name=enterprise_catalog.enterprise_customer.name,
+            title=enterprise_catalog.title,
+            content_filter=enterprise_catalog.content_filter,
+            enabled_course_modes=enterprise_catalog.enabled_course_modes,
+            publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
+        )
