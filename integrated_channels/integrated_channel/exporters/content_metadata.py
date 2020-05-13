@@ -13,12 +13,10 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
-import waffle
-
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import USE_ENTERPRISE_CATALOG
-from enterprise.utils import get_content_metadata_item_id
+from enterprise.utils import can_use_enterprise_catalog, get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 
 LOGGER = getLogger(__name__)
@@ -81,7 +79,7 @@ class ContentMetadataExporter(Exporter):
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+        if can_use_enterprise_catalog(self.enterprise_customer.uuid):
             content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                 self.enterprise_customer,
                 enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit

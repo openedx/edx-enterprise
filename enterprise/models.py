@@ -438,7 +438,7 @@ class EnterpriseCustomer(TimeStampedModel):
             bool: Whether the enterprise catalog includes the given course run.
         """
         # Temporarily gate enterprise catalog api usage behind waffle sample
-        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+        if utils.can_use_enterprise_catalog(self.uuid):
             if EnterpriseCatalogApiClient().enterprise_contains_content_items(self.uuid, [course_run_id]):
                 return True
         else:
@@ -1605,7 +1605,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             dict: The course metadata.
         """
         # Temporarily gate enterprise catalog api usage behind waffle sample
-        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
             if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_key]):
                 return None
         else:
@@ -1625,7 +1625,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             dict: The course run metadata.
         """
         # Temporarily gate enterprise catalog api usage behind waffle sample
-        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
             if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
                 return None
         else:
@@ -1649,7 +1649,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         """
         # Temporarily gate enterprise catalog api usage behind waffle sample
-        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
             if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
                 return None, None
         else:
@@ -1671,7 +1671,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             dict: The program metadata.
         """
         # Temporarily gate enterprise catalog api usage behind waffle sample
-        if waffle.sample_is_active(USE_ENTERPRISE_CATALOG):
+        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
             if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [program_uuid]):
                 return None
         else:

@@ -11,6 +11,7 @@ from uuid import UUID
 
 import bleach
 import pytz
+import waffle
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
@@ -29,7 +30,9 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
+from enterprise.constants import (
+    ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, USE_ENTERPRISE_CATALOG
+)
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -1017,3 +1020,19 @@ def discovery_query_url(content_filter, html_format=True):
             url=disc_url
         )
     return disc_url
+
+
+def can_use_enterprise_catalog(enterprise_uuid):
+    """
+    Function to check the USE_ENTERPRISE_CATALOG waffle sample and ensure the passed
+    enterprise uuid is not in the ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list
+
+    Args:
+        enterprise_uuid: the unique identifier for an enterprise customer
+
+    Returns:
+        boolean: True if sample is active and enterprise is not excluded
+                 False if sample not active or enterprise is excluded
+    """
+    return (waffle.sample_is_active(USE_ENTERPRISE_CATALOG) and
+            enterprise_uuid not in getattr(settings, 'ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG', []))
