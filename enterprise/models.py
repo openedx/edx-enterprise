@@ -12,7 +12,6 @@ from logging import getLogger
 from uuid import uuid4
 
 import six
-import waffle
 from django_countries.fields import CountryField
 from edx_rbac.models import UserRole, UserRoleAssignment
 from edx_rest_api_client.exceptions import HttpClientError
@@ -48,12 +47,7 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_c
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
-from enterprise.constants import (
-    ALL_ACCESS_CONTEXT,
-    ENTERPRISE_OPERATOR_ROLE,
-    USE_ENTERPRISE_CATALOG,
-    json_serialized_course_modes,
-)
+from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,

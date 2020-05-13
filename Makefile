@@ -74,10 +74,11 @@ docs: ## generate Sphinx HTML documentation, including API docs
 # Define PIP_COMPILE_OPTS=-v to get more information during make upgrade.
 PIP_COMPILE = pip-compile --upgrade --rebuild $(PIP_COMPILE_OPTS)
 LOCAL_EDX_PINS = requirements/edx-platform-constraints.txt
+PLATFORM_BASE_REQS = https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt
 
 check_pins: ## check that our local copy of edx-platform pins is accurate
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
-	curl -fsSL https://raw.githubusercontent.com/edx/edx-platform/master/requirements/edx/base.txt | grep -v '^-e' >> $(LOCAL_EDX_PINS)
+	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
@@ -89,7 +90,8 @@ upgrade: check_pins	## update the requirements/*.txt files with the latest packa
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
 	$(PIP_COMPILE) -o requirements/travis.txt requirements/travis.in
 	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
-	# Let tox control the Django version version for tests
+	# This section removes django from test.txt to
+	# let tox control the Django version for tests
 	grep -e "^django==" requirements/test.txt > requirements/django.txt
 	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
 	mv requirements/test.tmp requirements/test.txt

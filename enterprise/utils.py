@@ -31,7 +31,10 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
 from enterprise.constants import (
-    ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, USE_ENTERPRISE_CATALOG
+    ALLOWED_TAGS,
+    DEFAULT_CATALOG_CONTENT_FILTER,
+    PROGRAM_TYPE_DESCRIPTION,
+    USE_ENTERPRISE_CATALOG,
 )
 
 try:
@@ -1024,8 +1027,10 @@ def discovery_query_url(content_filter, html_format=True):
 
 def can_use_enterprise_catalog(enterprise_uuid):
     """
-    Function to check the USE_ENTERPRISE_CATALOG waffle sample and ensure the passed
-    enterprise uuid is not in the ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list
+    Function to check if enterprise-catalog endpoints should be hit given an enterprise uuid.
+
+    Checks the USE_ENTERPRISE_CATALOG waffle sample and ensures the passed
+    enterprise uuid is not in the ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list.
 
     Args:
         enterprise_uuid: the unique identifier for an enterprise customer

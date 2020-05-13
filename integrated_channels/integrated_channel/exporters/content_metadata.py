@@ -15,7 +15,6 @@ from logging import getLogger
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.constants import USE_ENTERPRISE_CATALOG
 from enterprise.utils import can_use_enterprise_catalog, get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 
