@@ -14,6 +14,18 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.12] - 2020-05-13
+---------------------
+
+* Created migration to `update_or_create` a system-wide enterprise role named `enterprise_catalog_admin`
+
+
+[3.2.11] - 2020-05-12
+---------------------
+
+* Moving the post model save logic for Enterprise Catalog to signals.py.
+
+
 [3.2.10] - 2020-05-08
 ---------------------
 
