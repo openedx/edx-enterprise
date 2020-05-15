@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.13] - 2020-05-15
+---------------------
+
+* Added can_use_enterprise_catalog utility function to exclude enterprises from the transition to enterprise-catalog
+
+
 [3.2.12] - 2020-05-13
 ---------------------
 
