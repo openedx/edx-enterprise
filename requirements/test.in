@@ -3,7 +3,7 @@
 -c constraints.txt
 -r test-master.txt
 
-ddt                       # data-driven tests
+ddt<1.4.0                 # data-driven tests
 diff-cover
 django-model-utils        # Provides TimeStampedModel abstract base class
 factory_boy               # Test factory framework

@@ -1,3 +1,9 @@
 # Requirements for Jasmine javascript testing framework
 
-jasmine==3.1.0  # versions>3.1.0 cause test failures.
+-c constraints.txt
+
+jaraco.classes==2.0     # versions>=3.0.0 require python>=3.6
+jaraco.collections==2.1 # versions>=3.0.0 require python>=3.6
+jaraco.functools==2.0   # versions>=3.0.0 require python>=3.6
+jasmine==3.1.0          # versions>=3.1.0 cause test failures.
+tempora==1.14.1         # versions>=2.0.0 require python>=3.6

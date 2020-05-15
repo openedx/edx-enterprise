@@ -24,6 +24,7 @@ from django.core.files import File
 from django.core.files.storage import Storage
 from django.db.utils import IntegrityError
 from django.http import QueryDict
+from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 from django.urls import reverse
 
@@ -217,6 +218,23 @@ class TestEnterpriseCustomer(unittest.TestCase):
             # Test when content is NOT in the enterprise customer's catalog(s)
             api_client_mock.return_value.enterprise_contains_content_items.return_value = False
             assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
+
+    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_courses')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient.enterprise_contains_content_items')
+    def test_catalog_contains_course_with_enterprise_customer_excluded(self, api_client_fn_mock, contains_fn_mock):
+        """
+        Test EnterpriseCustomer.catalog_contains_course when enterprise uuid in
+        ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list and sample active to
+        ensure the enterprise-catalog API isn't hit
+        """
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
+            enterprise_customer = factories.EnterpriseCustomerFactory()
+            factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+
+            with override_settings(ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG=[enterprise_customer.uuid]):
+                contains_fn_mock.return_value = False
+                enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key'])
+                api_client_fn_mock.assert_not_called()
 
 
 @mark.django_db
@@ -1170,6 +1188,37 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
             enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
             assert enterprise_customer_catalog.get_program('fake-program-uuid') is None
+
+    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_courses')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient.enterprise_contains_content_items')
+    def test_getters_enterprise_customer_excluded(self, api_client_fn_mock, contains_fn_mock):
+        """
+        Test EnterpriseCustomerCatalog.get_course/get_course_run/get_course_and_course_run/get_program
+        when enterprise uuid in ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list and sample active to
+        ensure the enterprise-catalog API isn't hit
+        """
+        with override_sample(USE_ENTERPRISE_CATALOG, active=True):
+            enterprise_customer = factories.EnterpriseCustomerFactory()
+            enterprise_customer_catalog = \
+                factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+            contains_fn_mock.return_value = False
+
+            with override_settings(ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG=[enterprise_customer.uuid]):
+                # Test get_course()
+                enterprise_customer_catalog.get_course(fake_catalog_api.FAKE_COURSE['key'])
+                api_client_fn_mock.assert_not_called()
+
+                # Test get_course_run()
+                enterprise_customer_catalog.get_course_run(fake_catalog_api.FAKE_COURSE_RUN['key'])
+                api_client_fn_mock.assert_not_called()
+
+                # Test get_course_and_course_run()
+                enterprise_customer_catalog.get_course_and_course_run(fake_catalog_api.FAKE_COURSE_RUN2['key'])
+                api_client_fn_mock.assert_not_called()
+
+                # Test get_program()
+                enterprise_customer_catalog.get_course(fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid'])
+                api_client_fn_mock.assert_not_called()
 
     def test_title_length(self):
         """

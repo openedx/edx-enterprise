@@ -3,4 +3,5 @@
 #
 
 -c edx-platform-constraints.txt
+-c constraints.txt
 -r base.in
