@@ -3,12 +3,12 @@ function redirectToURL(redirectURL) {
 }
 
 function setupFormSubmit() {
-    $('#select-enterprise-form').submit(function(event){
+    $('#enterprise-login-form').submit(function(event){
         event.preventDefault();
-        var enterpriseSlug = $("#id_enterprise").val();
+        var enterpriseSlug = $("#id_enterprise_slug").val();
 
         $("#activate-progress-icon").removeClass("is-hidden");
-        $("#select-enterprise-submit").attr("disabled", true);
+        $("#enterprise-login-submit").attr("disabled", true);
 
         $.ajax({
             url : "/enterprise/login",
@@ -19,7 +19,7 @@ function setupFormSubmit() {
             },
 
             data : {
-                enterprise : enterpriseSlug
+                enterprise_slug : enterpriseSlug
             },
 
             success: function(data) {
@@ -28,8 +28,8 @@ function setupFormSubmit() {
 
             error : function(xhr) {
                 $("#activate-progress-icon").addClass("is-hidden");
-                $("#select-enterprise-submit").attr("disabled", false);
-                $("#select-enterprise-form-error")
+                $("#enterprise-login-submit").attr("disabled", false);
+                $("#enterprise-login-form-error")
                 .text(xhr.responseJSON.errors.join(", "))
                 .removeClass( "is-hidden" );
             }

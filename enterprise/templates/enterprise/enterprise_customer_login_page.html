@@ -11,26 +11,25 @@
 {% block contents %}
   <main>
     <div class="enterprise-container">
-      <div class="select-enterprise-container">
+      <div class="enterprise-login-container">
 
-          <h2 class="select-enterprise-title">{{ enterprise_login_title_message|safe }}</h2>
-          <div class="select-enterprise-message">
+          <h2 class="enterprise-login-title">{{ enterprise_login_title_message|safe }}</h2>
+          <div class="enterprise-login-message">
             <p>{{ enterprise_login_subtitle_message|safe }}</p>
           </div>
 
-          <form action="" method="POST" id="select-enterprise-form">
+          <form action="" method="POST" id="enterprise-login-form">
             {% csrf_token %}
 
             <div
               role="alert"
               aria-live="assertive"
-              class="select-enterprise errorlist is-hidden"
-              id="select-enterprise-form-error">
+              class="enterprise-login errorlist is-hidden"
+              id="enterprise-login-form-error">
             </div>
 
             {% for field in form.visible_fields %}
               <div>
-              {{ field.label_tag }}
               {{ field.errors }}
               {{ field }}
               {{ field.help_text }}
@@ -39,8 +38,8 @@
 
             <button
               type="submit"
-              class="background-input select-enterprise-submit-button"
-              id="select-enterprise-submit">
+              class="background-input enterprise-login-submit-button"
+              id="enterprise-login-submit">
               {% trans "Login" %}
             </button>
             <span id="activate-progress-icon" class="icon fa fa-spinner fa-spin is-hidden" aria-hidden="true"></span>
