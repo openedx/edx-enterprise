@@ -1,0 +1,31 @@
+<main>
+    <div class="enterprise-container">
+      <div class="enterprise-login-container">
+
+          <h2 class="enterprise-login-title">Enter the organization name</h2>
+          <div class="enterprise-login-message">
+            <p>Have an account through your company, school, or organization? Enter your organization’s name below to sign in.</p>
+          </div>
+
+          <form action="" method="POST" id="enterprise-login-form">
+
+            <div role="alert" aria-live="assertive" class="enterprise-login errorlist is-hidden" id="enterprise-login-form-error">
+            </div>
+
+
+              <div>
+
+              <input type="text" name="enterprise_slug" required="" id="id_enterprise_slug" value="dummy">
+
+              </div>
+
+
+            <button type="submit" class="background-input enterprise-login-submit-button" id="enterprise-login-submit">
+              Login
+            </button>
+            <span id="activate-progress-icon" class="icon fa fa-spinner fa-spin is-hidden" aria-hidden="true"></span>
+          </form>
+
+      </div>
+    </div>
+  </main>
