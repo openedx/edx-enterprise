@@ -78,7 +78,7 @@ class ContentMetadataExporter(Exporter):
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        if can_use_enterprise_catalog(str(self.enterprise_customer.uuid)):
+        if can_use_enterprise_catalog(self.enterprise_customer.uuid):
             content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
                 self.enterprise_customer,
                 enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
