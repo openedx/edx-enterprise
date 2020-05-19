@@ -231,7 +231,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
             enterprise_customer = factories.EnterpriseCustomerFactory()
             factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
 
-            with override_settings(ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG=[enterprise_customer.uuid]):
+            with override_settings(ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG=[str(enterprise_customer.uuid)]):
                 contains_fn_mock.return_value = False
                 enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key'])
                 api_client_fn_mock.assert_not_called()
@@ -1203,7 +1203,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
                 factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
             contains_fn_mock.return_value = False
 
-            with override_settings(ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG=[enterprise_customer.uuid]):
+            with override_settings(ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG=[str(enterprise_customer.uuid)]):
                 # Test get_course()
                 enterprise_customer_catalog.get_course(fake_catalog_api.FAKE_COURSE['key'])
                 api_client_fn_mock.assert_not_called()
