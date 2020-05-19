@@ -55,12 +55,12 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import (
-    NotConnectedToOpenEdX,
-    discovery_query_url,
-    get_all_field_names,
-    get_default_catalog_content_filter,
-)
+from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
+
+try:
+    from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+except ImportError:
+    EnterpriseCatalogApiClient = None
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -163,10 +163,11 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         model = EnterpriseCustomer
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
-        preview_content_filter = EnterpriseCustomerCatalogAdminForm.get_clicked_preview_content_filter(request.POST)
-        if preview_content_filter:
-            discovery_url = discovery_query_url(preview_content_filter, html_format=False)
-            return HttpResponseRedirect(discovery_url)
+        catalog_uuid = EnterpriseCustomerCatalogAdminForm.get_catalog_preview_uuid(request.POST)
+        if catalog_uuid:
+            catalog_content_metadata_url = \
+                EnterpriseCatalogApiClient.get_content_metadata_url(catalog_uuid)
+            return HttpResponseRedirect(catalog_content_metadata_url)
         return super(EnterpriseCustomerAdmin, self).change_view(
             request,
             object_id,
@@ -561,18 +562,23 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
 
     list_display = (
         'title',
-        'discovery_query_url'
+        'preview_catalog_url'
     )
 
-    def discovery_query_url(self, obj):
+    def preview_catalog_url(self, obj):
         """
-        Return discovery url for preview.
+        Return enterprise catalog url for preview.
         """
-        return discovery_query_url(obj.content_filter)
+        catalog_content_metadata_url = \
+            EnterpriseCatalogApiClient.get_content_metadata_url(obj.uuid)
+        return format_html(
+            '<a href="{url}" target="_blank">Preview</a>',
+            url=catalog_content_metadata_url
+        )
 
-    readonly_fields = ('discovery_query_url',)
-    discovery_query_url.allow_tags = True
-    discovery_query_url.short_description = 'Preview Catalog Courses'
+    readonly_fields = ('preview_catalog_url',)
+    preview_catalog_url.allow_tags = True
+    preview_catalog_url.short_description = 'Preview Catalog Courses'
 
 
 @admin.register(EnterpriseCustomerCatalog)
@@ -589,7 +595,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'uuid_nowrap',
         'enterprise_customer',
         'title',
-        'discovery_query_url',
+        'preview_catalog_url',
     )
 
     search_fields = (
@@ -608,15 +614,20 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'publish_audit_enrollment_urls',
     )
 
-    def discovery_query_url(self, obj):
+    def preview_catalog_url(self, obj):
         """
-        Return discovery url for preview.
+        Return enterprise catalog url for preview.
         """
-        return discovery_query_url(obj.get_content_filter())
+        catalog_content_metadata_url = \
+            EnterpriseCatalogApiClient.get_content_metadata_url(obj.uuid)
+        return format_html(
+            '<a href="{url}" target="_blank">Preview</a>',
+            url=catalog_content_metadata_url
+        )
 
-    readonly_fields = ('discovery_query_url',)
-    discovery_query_url.allow_tags = True
-    discovery_query_url.short_description = 'Preview Catalog Courses'
+    readonly_fields = ('preview_catalog_url',)
+    preview_catalog_url.allow_tags = True
+    preview_catalog_url.short_description = 'Preview Catalog Courses'
 
     def uuid_nowrap(self, obj):
         """

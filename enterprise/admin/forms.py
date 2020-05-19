@@ -4,7 +4,6 @@ Forms to be used in the enterprise djangoapp.
 """
 from __future__ import absolute_import, unicode_literals
 
-import json
 import re
 from logging import getLogger
 
@@ -30,7 +29,6 @@ from enterprise.admin.utils import (
 from enterprise.admin.widgets import SubmitInput
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
-    EnterpriseCatalogQuery,
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerIdentityProvider,
@@ -323,40 +321,24 @@ class EnterpriseCustomerCatalogAdminForm(forms.ModelForm):
                                  help_text=_("Hold Ctrl when clicking on button to open Preview in new tab"))
 
     @staticmethod
-    def get_enterprise_customer_catalog_preview_button(post_data):  # pylint: disable=invalid-name
+    def get_catalog_preview_uuid(post_data):  # pylint: disable=invalid-name
         """
-        Return name of the preview button clicked by user from POST data.
+        Return the uuid of the catalog the preview button was clicked on
+        There must be only one preview button in the POST data.
 
         e.g: 'enterprise_customer_catalogs-0-preview_button'
         """
-        catalog_preview_button = re.compile(r'enterprise_customer_catalogs-\d+-preview_button')
+        preview_button_expression = re.compile(r'enterprise_customer_catalogs-\d+-preview_button')
+        clicked_button_index_expression = re.compile(r'-(.+?)-')
+        count = 0
+        preview_button_index = None
         for key, _ in post_data.items():
-            if catalog_preview_button.match(key):
-                return key
+            if preview_button_expression.match(key):
+                count += 1
+                preview_button_index = clicked_button_index_expression.search(key).group(1)
+        if count == 1:
+            return post_data.get('enterprise_customer_catalogs-' + preview_button_index + '-uuid')
         return None
-
-    @classmethod
-    def get_clicked_preview_content_filter(cls, post_data):
-        """
-        Return content_filter for the EnterpriseCustomerCatalog against preview button clicked.
-        """
-        catalog_preview_button = cls.get_enterprise_customer_catalog_preview_button(post_data)
-        if not catalog_preview_button:
-            return None
-        content_filter_key = catalog_preview_button.replace('preview_button', 'content_filter')
-        enterprise_catalog_query_key = catalog_preview_button.replace('preview_button', 'enterprise_catalog_query')
-        enterprise_catalog_query_id = post_data.get(enterprise_catalog_query_key)
-        if enterprise_catalog_query_id:
-            content_filter = EnterpriseCatalogQuery.objects.filter(
-                id=enterprise_catalog_query_id
-            ).first().content_filter
-            content_filter = json.dumps(content_filter)
-        else:
-            content_filter = post_data.get(content_filter_key)
-
-        if not content_filter:
-            return None
-        return json.loads(content_filter)
 
 
 class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):

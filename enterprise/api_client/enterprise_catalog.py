@@ -83,6 +83,14 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             )
             return {}
 
+    @staticmethod
+    def get_content_metadata_url(uuid):
+        """
+        Get the url for the preview information for an enterprise catalog
+        """
+        return EnterpriseCatalogApiClient.API_BASE_URL + \
+            EnterpriseCatalogApiClient.GET_CONTENT_METADATA_ENDPOINT.format(uuid)
+
     @JwtLmsApiClient.refresh_token
     def update_enterprise_catalog(self, catalog_uuid, **kwargs):
         """Updates an enterprise catalog."""
