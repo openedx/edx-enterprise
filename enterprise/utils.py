@@ -1040,4 +1040,4 @@ def can_use_enterprise_catalog(enterprise_uuid):
                  False if sample not active or enterprise is excluded
     """
     return (waffle.sample_is_active(USE_ENTERPRISE_CATALOG) and
-            enterprise_uuid not in getattr(settings, 'ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG', []))
+            str(enterprise_uuid) not in getattr(settings, 'ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG', []))

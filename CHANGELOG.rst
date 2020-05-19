@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.14] - 2020-05-19
+---------------------
+
+* Converting UUID fields to string for use in can_use_enterprise_catalog
+
+
 [3.2.13] - 2020-05-15
 ---------------------
 
