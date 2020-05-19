@@ -9,7 +9,7 @@ describe('Enterprise Selection Page', function () {
         it('renders page correctly', function () {
             expect($('.select-enterprise-title').text()).toBe('Select an organization');
             expect($('.select-enterprise-message p').text()).toBe(
-                'You have access to multiple organizations. Select the organization that you will use ' +
+                'You have access to multiple organ' +
                 'to sign up for courses. If you want to change organizations, sign out and sign back in.'
             );
             expect($('#select-enterprise-form label').text()).toBe('Organization:');
