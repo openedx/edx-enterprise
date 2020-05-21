@@ -8,7 +8,7 @@ from django.conf import settings
 from django.conf.urls import include, url
 
 from enterprise.constants import COURSE_KEY_URL_PATTERN
-from enterprise.views import EnterpriseSelectionView, GrantDataSharingPermissions, RouterView
+from enterprise.views import EnterpriseLoginView, EnterpriseSelectionView, GrantDataSharingPermissions, RouterView
 
 ENTERPRISE_ROUTER = RouterView.as_view()
 
@@ -22,6 +22,11 @@ urlpatterns = [
         r'^enterprise/select/active',
         EnterpriseSelectionView.as_view(),
         name='enterprise_select_active'
+    ),
+    url(
+        r'^enterprise/login',
+        EnterpriseLoginView.as_view(),
+        name='enterprise_slug_login'
     ),
     url(
         r'^enterprise/handle_consent_enrollment/(?P<enterprise_uuid>[^/]+)/course/{}/$'.format(

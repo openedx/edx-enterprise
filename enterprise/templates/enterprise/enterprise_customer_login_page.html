@@ -1,0 +1,51 @@
+
+{% extends 'enterprise/base.html' %}
+
+{% load i18n staticfiles enterprise %}
+
+{% block extrahead %}
+  <script type="text/javascript" src="{% static 'js/vendor/jquery.cookie.js' %}"></script>
+  <script type="text/javascript" src="{% static 'enterprise/js/enterprise_login_page.js' %}"></script>
+{% endblock %}
+
+{% block contents %}
+  <main>
+    <div class="enterprise-container">
+      <div class="enterprise-login-container">
+
+          <h2 class="enterprise-login-title">{{ enterprise_login_title_message|safe }}</h2>
+          <div class="enterprise-login-message">
+            <p>{{ enterprise_login_subtitle_message|safe }}</p>
+          </div>
+
+          <form action="" method="POST" id="enterprise-login-form">
+            {% csrf_token %}
+
+            <div
+              role="alert"
+              aria-live="assertive"
+              class="enterprise-login errorlist is-hidden"
+              id="enterprise-login-form-error">
+            </div>
+
+            {% for field in form.visible_fields %}
+              <div>
+              {{ field.errors }}
+              {{ field }}
+              {{ field.help_text }}
+              </div>
+            {% endfor %}
+
+            <button
+              type="submit"
+              class="background-input enterprise-login-submit-button"
+              id="enterprise-login-submit">
+              {% trans "Login" %}
+            </button>
+            <span id="activate-progress-icon" class="icon fa fa-spinner fa-spin is-hidden" aria-hidden="true"></span>
+          </form>
+
+      </div>
+    </div>
+  </main>
+{% endblock %}
