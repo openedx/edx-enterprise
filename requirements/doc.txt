@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
-
 alabaster==0.7.12         # via sphinx
 amqp==1.4.9               # via -r requirements/test-master.txt, kombu
 aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
@@ -41,7 +40,7 @@ edx-django-utils==3.2.2   # via -r requirements/test-master.txt, django-config-m
 edx-drf-extensions==6.0.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.0  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.2.1           # via -r requirements/test-master.txt
-edx-rest-api-client==5.2.0  # via -r requirements/test-master.txt
+edx-rest-api-client==5.2.1  # via -r requirements/test-master.txt
 edx-sphinx-theme==1.5.0   # via -r requirements/doc.in
 edx-tincan-py35==0.0.5    # via -r requirements/test-master.txt
 future==0.18.2            # via -r requirements/test-master.txt, pyjwkest
@@ -53,7 +52,7 @@ jsondiff==1.2.0           # via -r requirements/test-master.txt
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements/test-master.txt
 kombu==3.0.37             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
-more-itertools==8.2.0     # via -r requirements/test-master.txt, zipp
+more-itertools==8.3.0     # via -r requirements/test-master.txt, zipp
 newrelic==5.12.1.141      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.3           # via -r requirements/test-master.txt, bleach, sphinx
 path.py==12.4.0           # via -r requirements/test-master.txt

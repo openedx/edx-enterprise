@@ -55,7 +55,7 @@
 [MASTER]
 ignore = migrations
 persistent = yes
-load-plugins = caniusepython3.pylint_checker,edx_lint.pylint,pylint_django,pylint_celery
+load-plugins = edx_lint.pylint,pylint_django,pylint_celery
 no-docstring-rgx = (__.*__)|Meta
 
 [MESSAGES CONTROL]
