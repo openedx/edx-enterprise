@@ -7,8 +7,6 @@ from __future__ import absolute_import, unicode_literals
 import six
 import unicodecsv
 
-
-# pylint: disable=open-builtin
 class MakeCsvStreamContextManager:
     """
     Context manager that creates a temporary csv file.
