@@ -145,7 +145,8 @@ class Command(BaseCommand):
             course_grade = CourseGradeFactory().read(user, course_key=persistent_course_grade.course_id)
             xapi_transmission_queryset = XAPILearnerDataTransmissionAudit.objects.filter(
                 user=user,
-                course_id=persistent_course_grade.course_id
+                course_id=persistent_course_grade.course_id,
+                course_completed=0
             )
             if not xapi_transmission_queryset.exists():
                 LOGGER.warning(
@@ -182,7 +183,11 @@ class Command(BaseCommand):
                             course_id=persistent_course_grade.course_id
                         )
                     )
-                    fields.update({'grade': course_grade.percent})
+                    fields.update({
+                        'grade': course_grade.percent,
+                        'course_completed': 1,
+                        'completed_timestamp': persistent_course_grade.modified
+                    })
                 else:
                     LOGGER.warning(
                         'Unexpected xAPI response received for user: {username} for course: {course_id}.  Please '
