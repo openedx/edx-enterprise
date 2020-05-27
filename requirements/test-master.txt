@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
-
 amqp==1.4.9               # via -c requirements/edx-platform-constraints.txt, kombu
 aniso8601==8.0.0          # via -c requirements/edx-platform-constraints.txt, edx-tincan-py35
 anyjson==0.3.3            # via -c requirements/edx-platform-constraints.txt, kombu
@@ -37,7 +36,7 @@ edx-django-utils==3.2.2   # via -c requirements/edx-platform-constraints.txt, -r
 edx-drf-extensions==6.0.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rbac
 edx-opaque-keys[django]==2.1.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-drf-extensions
 edx-rbac==1.2.1           # via -r requirements/base.in
-edx-rest-api-client==5.2.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
+edx-rest-api-client==5.2.1  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 edx-tincan-py35==0.0.5    # via -r requirements/base.in
 future==0.18.2            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, pyjwkest
 idna==2.9                 # via -c requirements/edx-platform-constraints.txt, requests
@@ -47,9 +46,9 @@ jsondiff==1.2.0           # via -r requirements/base.in
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 kombu==3.0.37             # via -c requirements/edx-platform-constraints.txt, celery
 markupsafe==1.1.1         # via -c requirements/edx-platform-constraints.txt, jinja2
-more-itertools==8.2.0     # via -c requirements/edx-platform-constraints.txt, zipp
+more-itertools==8.3.0     # via -c requirements/edx-platform-constraints.txt, zipp
 newrelic==5.12.1.141      # via -c requirements/edx-platform-constraints.txt, edx-django-utils
-packaging==20.3           # via -c requirements/edx-platform-constraints.txt, bleach
+packaging==20.4           # via -c requirements/edx-platform-constraints.txt, bleach
 path.py==12.4.0           # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 path==13.1.0              # via -c requirements/edx-platform-constraints.txt, path.py
 pbr==5.4.5                # via -c requirements/edx-platform-constraints.txt, stevedore
@@ -69,7 +68,7 @@ requests==2.23.0          # via -c requirements/edx-platform-constraints.txt, -r
 rest-condition==1.0.3     # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
 rules==2.2                # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 semantic-version==2.8.5   # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
-six==1.14.0               # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, bleach, cryptography, django-countries, django-simple-history, edx-drf-extensions, edx-opaque-keys, edx-rbac, packaging, pyjwkest, python-dateutil, stevedore
+six==1.15.0               # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, bleach, cryptography, django-countries, django-simple-history, edx-drf-extensions, edx-opaque-keys, edx-rbac, packaging, pyjwkest, python-dateutil, stevedore
 slumber==0.7.1            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rest-api-client
 sqlparse==0.3.1           # via -c requirements/edx-platform-constraints.txt, django
 stevedore==1.32.0         # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, edx-opaque-keys
