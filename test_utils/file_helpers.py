@@ -8,7 +8,6 @@ import six
 import unicodecsv
 
 
-# pylint: disable=open-builtin
 class MakeCsvStreamContextManager:
     """
     Context manager that creates a temporary csv file.

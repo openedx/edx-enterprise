@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.16] - 2020-05-27
+---------------------
+
+* Removing caniusepython3 as it is no longer needed since python3 upgrade.
+
 [3.2.15] - 2020-05-26
 ---------------------
 

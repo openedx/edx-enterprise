@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
-
 amqp==1.4.9               # via -r requirements/test-master.txt, kombu
 aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
 anyjson==0.3.3            # via -r requirements/test-master.txt, kombu
@@ -40,7 +39,7 @@ edx-django-utils==3.2.2   # via -r requirements/test-master.txt, django-config-m
 edx-drf-extensions==6.0.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.0  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.2.1           # via -r requirements/test-master.txt
-edx-rest-api-client==5.2.0  # via -r requirements/test-master.txt
+edx-rest-api-client==5.2.1  # via -r requirements/test-master.txt
 edx-tincan-py35==0.0.5    # via -r requirements/test-master.txt
 factory-boy==2.12.0       # via -r requirements/test.in
 faker==4.1.0              # via factory-boy
@@ -56,12 +55,11 @@ jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements
 kombu==3.0.37             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
 mock==3.0.5               # via -c requirements/constraints.txt, -r requirements/test.in
-more-itertools==8.2.0     # via -r requirements/test-master.txt, pytest, zipp
+more-itertools==8.3.0     # via -r requirements/test-master.txt, pytest, zipp
 newrelic==5.12.1.141      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.3           # via -r requirements/test-master.txt, bleach, pytest
 path.py==12.4.0           # via -r requirements/test-master.txt
 path==13.1.0              # via -r requirements/test-master.txt, path.py
-pathlib2==2.3.5           # via pytest
 pbr==5.4.5                # via -r requirements/test-master.txt, stevedore
 pillow==7.1.2             # via -r requirements/test-master.txt
 pluggy==0.13.1            # via diff-cover, pytest

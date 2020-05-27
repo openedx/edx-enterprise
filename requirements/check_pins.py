@@ -6,8 +6,6 @@ one in the second one.
 
 from __future__ import absolute_import, print_function, unicode_literals
 
-# pylint: disable=open-builtin
-
 import re
 import sys
 
