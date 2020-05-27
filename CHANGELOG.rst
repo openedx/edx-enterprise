@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.15] - 2020-05-26
+---------------------
+
+* Improve EnterpriseRoleAssigment exception messaging
+
+
 [3.2.14] - 2020-05-19
 ---------------------
 
