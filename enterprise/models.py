@@ -2106,9 +2106,11 @@ class EnterpriseRoleAssignmentContextMixin:
         enterprise_users = EnterpriseCustomerUser.objects.filter(user_id=self.user.id)
         if not enterprise_users:
             LOGGER.warning(
-                'User {} has a {} assignment but is not linked to an enterprise!'.format(
+                'User {} has a {} of "{}" but is not linked to an enterprise. (ID: {})'.format(
+                    self.user.id,
                     self.__class__,
-                    self.user.id
+                    self.role.name,
+                    self.id
                 ))
             return None
 
