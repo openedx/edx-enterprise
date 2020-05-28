@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.18] - 2020-05-28
+---------------------
+
+* Added the enterprise slug login functionality.
+
+
 [3.2.17] - 2020-05-27
 ---------------------
 
