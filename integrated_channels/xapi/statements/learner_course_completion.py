@@ -16,7 +16,7 @@ class LearnerCourseCompletionStatement(EnterpriseStatement):
     xAPI Statement to serialize data related to course completion.
     """
 
-    def __init__(self, user, user_social_auth, course_overview, course_grade, *args, **kwargs):
+    def __init__(self, site, user, user_social_auth, course_overview, course_grade, object_type, *args, **kwargs):
         """
         Initialize and populate statement with learner info and course info.
 
@@ -29,7 +29,7 @@ class LearnerCourseCompletionStatement(EnterpriseStatement):
         kwargs.update(
             actor=self.get_actor(user, user_social_auth),
             verb=self.get_verb(),
-            object=self.get_object(course_overview),
+            object=self.get_object(site.domain, course_overview, object_type),
             result=self.get_result(course_grade),
         )
         super(LearnerCourseCompletionStatement, self).__init__(*args, **kwargs)
@@ -43,20 +43,27 @@ class LearnerCourseCompletionStatement(EnterpriseStatement):
             display=LanguageMap({'en-US': 'completed'}),
         )
 
-    def get_result(self, course_grade):
+    def get_result(self, persistent_course_grade):
         """
         Get result for the statement.
 
         Arguments:
-            course_grade (CourseGrade): Course grade.
+            persistent_course_grade (PersistentCourseGrade): PersistentCourseGrade record
         """
+        completed = 0
+        success = 0
+
+        if persistent_course_grade.passed_timestamp is not None:
+            completed = 1
+            success = 1
+
         return Result(
             score=Score(
-                scaled=course_grade.percent,
-                raw=course_grade.percent * 100,
+                scaled=persistent_course_grade.percent_grade,
+                raw=persistent_course_grade.percent_grade * 100,
                 min=MIN_SCORE,
                 max=MAX_SCORE,
             ),
-            success=course_grade.passed,
-            completion=course_grade.passed
+            success=success,
+            completion=completed
         )

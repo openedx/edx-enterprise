@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 --------------------
+[3.3.0] - 2020-06-09
+---------------------
+
+* xAPI Integrated Reporting Channel, Version 2
+
+
 [3.2.22] - 2020-06-09
 ---------------------
 
