@@ -57,7 +57,12 @@ class Command(BaseCommand):
         for enterprise_catalog in queryset:
             LOGGER.info('Migrating Enterprise Catalog {}'.format(enterprise_catalog.uuid))
             try:
-                response = client.get_enterprise_catalog(enterprise_catalog.uuid)
+                response = client.get_enterprise_catalog(
+                    catalog_uuid=enterprise_catalog.uuid,
+                    # Suppress 404 exception since we do not expect the catalog to exist
+                    # in enterprise-catalog if it is a new catalog
+                    should_raise_exception=False,
+                )
                 if not response:
                     # catalog with matching uuid does NOT exist in enterprise-catalog
                     # service, so we should create a new catalog
