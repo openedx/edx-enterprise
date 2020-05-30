@@ -332,7 +332,7 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
 
         if should_learner_role_exist:
             # Verify that learner_role_assignment is not modified again when making a
-            # usual update, i.e. it is still the same time when the object was created.
+            # normal update, i.e. modified time is the same as when the object was created.
             learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.get(
                 user=self.learner_user,
                 role=self.enterprise_learner_role
