@@ -245,6 +245,7 @@ class TestDefaultContentFilter(unittest.TestCase):
 
 
 @mark.django_db
+@ddt.ddt
 class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
     """
     Tests signals associated with EnterpriseCustomerUser.
@@ -295,9 +296,16 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
         )
         self.assertTrue(learner_role_assignment.exists())
 
-    def test_assign_enterprise_learner_role_on_update(self):
+    @ddt.data(
+        (True, False),
+        (False, True),
+    )
+    @ddt.unpack
+    def test_enterprise_learner_role_post_save(self, should_unlink_user, should_learner_role_exist):
         """
-        Test that `assign_enterprise_learner_role` does not do anything on `EnterpriseCustomerUser` update operation.
+        Verify enterprise_learner role is assigned on the EnterpriseCustomerUser
+        create operation and that the enterprise_learner role is deleted on the
+        EnterpriseCustomerUser update operation when the `linked` attribute is False.
         """
         # Create a new EnterpriseCustomerUser record.
         EnterpriseCustomerUserFactory(
@@ -316,16 +324,27 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
         enterprise_customer_user = EnterpriseCustomerUser.objects.get(
             user_id=self.learner_user.id
         )
-        enterprise_customer_user.active = False
+        if should_unlink_user:
+            enterprise_customer_user.linked = False
+        else:
+            enterprise_customer_user.active = False
         enterprise_customer_user.save()
 
-        # Verify that learner_role_assignment is not modified again
-        # i.e it is still the same time when the object was created.
-        learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.get(
-            user=self.learner_user,
-            role=self.enterprise_learner_role
-        )
-        self.assertEqual(learner_role_assignment.modified, modified_datetime_at_create)
+        if should_learner_role_exist:
+            # Verify that learner_role_assignment is not modified again when making a
+            # usual update, i.e. it is still the same time when the object was created.
+            learner_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.get(
+                user=self.learner_user,
+                role=self.enterprise_learner_role
+            )
+            self.assertEqual(learner_role_assignment.modified, modified_datetime_at_create)
+        else:
+            # Verify that the enterprise_learner role is deleted when unlinking an EnterpriseCustomerUser
+            learner_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.learner_user,
+                role=self.enterprise_learner_role
+            )
+            self.assertFalse(learner_role_assignments.exists())
 
     def test_assign_enterprise_learner_role_no_user_association(self):
         """
