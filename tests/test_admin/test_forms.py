@@ -575,8 +575,9 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
                 'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
                 'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
                 'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+                'enterprise_customer_catalogs-1-uuid': 'CFDF8161-5225-4278-9479-9331A6A16C33'
             },
-            'enterprise_customer_catalogs-1-preview_button'
+            'CFDF8161-5225-4278-9479-9331A6A16C33'
         ),
         (
             {
@@ -586,49 +587,35 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
             },
             None
         ),
+        (
+            {
+                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
+                'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
+                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
+                'enterprise_customer_catalogs-1-uuid': '3DEC72FD-6BF6-4F8E-91AD-40C119F1BE3B',
+                'enterprise_customer_catalogs-2-uuid': '839F392C-CB03-4116-A3D5-41F2FEBF5853'
+            },
+            '3DEC72FD-6BF6-4F8E-91AD-40C119F1BE3B'
+        )
     )
-    def test_get_enterprise_customer_catalog_preview_button(self, post_data, catalog_preview_button):
-        assert self.form.get_enterprise_customer_catalog_preview_button(post_data) == catalog_preview_button
+    def test_get_enterprise_customer_catalog_uuid(self, post_data, expected_result):
+        assert self.form.get_catalog_preview_uuid(post_data) == expected_result
 
     @ddt.unpack
     @ddt.data(
         (
             {
                 'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-2-preview_button': 'Preview',
                 'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
                 'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
                 'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
-            },
-            dummy_content_filter_data
-        ),
-        # content filter from catalog query
-        (
-            {
-                'enterprise_customer_catalogs-1-preview_button': 'Preview',
-                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
-                'enterprise_customer_catalogs-1-enterprise_catalog_query': '1',
-                'enterprise_customer_catalogs-1-content_filter': json.dumps({'field_1': 'value_1'}),
-                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
-            },
-            catalog_query_content_filter
-        ),
-        # not clicked catalog_preview_button
-        (
-            {
-                'enterprise_customer_catalogs-0-content_filter': json.dumps({'field_0': 'value_0'}),
-                'enterprise_customer_catalogs-1-content_filter': json.dumps(dummy_content_filter_data),
-                'enterprise_customer_catalogs-2-content_filter': json.dumps({'field_2': 'value_2'}),
-            },
-            None
-        ),
-        # missing content filter
-        (
-            {
-                'enterprise_customer_catalogs-1-preview_button': 'Preview',
+                'enterprise_customer_catalogs-1-uuid': '3DEC72FD-6BF6-4F8E-91AD-40C119F1BE3B',
+                'enterprise_customer_catalogs-2-uuid': '839F392C-CB03-4116-A3D5-41F2FEBF5853'
             },
             None
         )
-
     )
-    def test_get_preview_content_filter(self, post_data, content_filter):
-        assert self.form.get_clicked_preview_content_filter(post_data) == content_filter
+    def test_get_catalog_with_two_preview_buttons(self, post_data, expected_result):
+        assert self.form.get_catalog_preview_uuid(post_data) == expected_result
