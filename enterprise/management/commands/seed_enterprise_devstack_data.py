@@ -139,7 +139,7 @@ class Command(BaseCommand):
             LOGGER.error('UserProfile module does not exist.')
             return
 
-        user_profile = UserProfile.objects.get(user=user)
+        user_profile = UserProfile.objects.get_or_create(user=user)
         if user_profile:
             user_profile.name = 'Test Enterprise User'
             user_profile.save()
