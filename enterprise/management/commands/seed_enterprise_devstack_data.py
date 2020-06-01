@@ -138,11 +138,10 @@ class Command(BaseCommand):
         if not UserProfile:
             LOGGER.error('UserProfile module does not exist.')
             return
-
-        user_profile = UserProfile.objects.get_or_create(user=user)
-        if user_profile:
-            user_profile.name = 'Test Enterprise User'
-            user_profile.save()
+        UserProfile.objects.update_or_create(
+            user=user,
+            defaults={'name': 'Test Enterprise User'},
+        )
 
     def _add_user_to_groups(self, user, role):
         """ Adds a user with a given role to the appropriate groups """
