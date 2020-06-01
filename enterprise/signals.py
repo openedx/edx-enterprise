@@ -107,16 +107,32 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
 
 
 @receiver(post_save, sender=EnterpriseCustomerUser)
-def assign_enterprise_learner_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
+def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
-    Assign an enterprise learner role to EnterpriseCustomerUser whenever a new record is created.
+    Assign or delete enterprise_learner role for EnterpriseCustomerUser when updated.
+
+    The enterprise_learner role is assigned when a new EnterpriseCustomerUser record is
+    initially created and removed when a EnterpriseCustomerUser record is updated and
+    unlinked (i.e., soft delete - see ENT-2538).
     """
-    if kwargs['created'] and instance.user:
+    if instance.user:
         enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
-        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-            user=instance.user,
-            role=enterprise_learner_role
-        )
+        if kwargs['created']:
+            # EnterpriseCustomerUser record was created, so assign the enterprise_learner role
+            SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+                user=instance.user,
+                role=enterprise_learner_role
+            )
+        elif not kwargs['created'] and not instance.linked:
+            # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_learner role
+            try:
+                SystemWideEnterpriseUserRoleAssignment.objects.get(
+                    user=instance.user,
+                    role=enterprise_learner_role
+                ).delete()
+            except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
+                # Do nothing if no role assignment is present for the enterprise customer user.
+                pass
 
 
 @receiver(post_delete, sender=EnterpriseCustomerUser)

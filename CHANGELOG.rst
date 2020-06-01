@@ -19,6 +19,7 @@ Unreleased
 
 * Suppress the 404 exception in get_enterprise_catalog when we expect it
 * Add enterprise_customer_uuid to an error message to be more informative
+* Delete "enterprise_learner" role assignment when an EnterpriseCustomerUser record is soft deleted (i.e., `linked` attribute is False)
 
 
 [3.2.19] - 2020-06-01
