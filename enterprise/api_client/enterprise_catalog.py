@@ -71,16 +71,27 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
             return {}
 
     @JwtLmsApiClient.refresh_token
-    def get_enterprise_catalog(self, catalog_uuid):
-        """Gets an enterprise catalog."""
+    def get_enterprise_catalog(self, catalog_uuid, should_raise_exception=True):
+        """
+        Gets an enterprise catalog.
+
+        Arguments:
+            catalog_uuid (uuid): The uuid of an EnterpriseCatalog instance
+            should_raise_exception (bool): Whether an exception should be logged if
+                a catalog does not yet exist in enterprise-catalog. Defaults to True.
+
+        Returns:
+            dict: a dictionary representing an enterprise catalog
+        """
         endpoint = getattr(self.client, self.ENTERPRISE_CATALOG_ENDPOINT)(catalog_uuid)
         try:
             return endpoint.get()
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception(
-                'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
-                catalog_uuid, str(exc)
-            )
+            if should_raise_exception:
+                LOGGER.exception(
+                    'Failed to get EnterpriseCustomer Catalog [%s] in enterprise-catalog due to: [%s]',
+                    catalog_uuid, str(exc)
+                )
             return {}
 
     @staticmethod

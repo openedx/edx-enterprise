@@ -697,9 +697,11 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
 
         if not enterprise_customer.catalog_contains_course(value):
             error_message = ('[Enterprise API] The course run id is not in the catalog for the Enterprise Customer.'
-                             ' EnterpriseCustomer: {enterprise_customer}, CourseRun: {course_run_id}').format(
+                             ' EnterpriseCustomer: {enterprise_uuid}, EnterpriseName: {enterprise_name},'
+                             ' CourseRun: {course_run_id}').format(
                                  course_run_id=value,
-                                 enterprise_customer=enterprise_customer.name)
+                                 enterprise_uuid=enterprise_customer.uuid,
+                                 enterprise_name=enterprise_customer.name)
             LOGGER.error(error_message)
             raise serializers.ValidationError(
                 'The course run id {course_run_id} is not in the catalog '

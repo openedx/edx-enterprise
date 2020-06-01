@@ -144,7 +144,15 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
     catalog_uuid = instance.uuid
     try:
         catalog_client = EnterpriseCatalogApiClient()
-        response = catalog_client.get_enterprise_catalog(catalog_uuid)
+        if kwargs['created']:
+            response = catalog_client.get_enterprise_catalog(
+                catalog_uuid=catalog_uuid,
+                # Suppress 404 exception on create since we do not expect the catalog
+                # to exist yet in enterprise-catalog
+                should_raise_exception=False,
+            )
+        else:
+            response = catalog_client.get_enterprise_catalog(catalog_uuid=catalog_uuid)
     except NotConnectedToOpenEdX as exc:
         logger.exception('Unable to update Enterprise Catalog {}'.format(str(catalog_uuid)), exc)
     else:
