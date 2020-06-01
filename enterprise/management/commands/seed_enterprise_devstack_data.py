@@ -3,6 +3,7 @@ Management command for assigning enterprise roles to existing enterprise users.
 """
 from __future__ import absolute_import, unicode_literals
 
+import json
 import logging
 import textwrap
 
@@ -32,6 +33,12 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
+
+try:
+    from student.models import UserProfile
+except ImportError:
+    UserProfile = None
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -114,6 +121,7 @@ class Command(BaseCommand):
                 # slightly different parameters, we will attempt to use the existing user.
                 user = User.objects.get(username=username)
             if user:
+                self._add_name_to_user_profile(user)
                 self._add_user_to_groups(user=user, role=role)
                 self._create_system_wide_role_assignment(user=user, role=role)
                 self._create_feature_role_assignments(user=user, role=role)
@@ -124,6 +132,17 @@ class Command(BaseCommand):
         else:
             LOGGER.warning('\nUser not created. Role %s not recognized.', role)
         return None
+
+    def _add_name_to_user_profile(self, user):
+        """ Adds a name to a user's profile. """
+        if not UserProfile:
+            LOGGER.error('UserProfile module does not exist.')
+            return
+
+        user_profile = UserProfile.objects.get(user=user)
+        if user_profile:
+            user_profile.name = 'Test Enterprise User'
+            user_profile.save()
 
     def _add_user_to_groups(self, user, role):
         """ Adds a user with a given role to the appropriate groups """
@@ -192,7 +211,7 @@ class Command(BaseCommand):
                 enterprise_customer=enterprise_customer,
             )
             enterprise_linked_users.append({
-                "enterprise_user": enterprise_user_obj,
+                "enterprise_customer_user": enterprise_user_obj,
                 "enterprise_role": enterprise_user['role'],
             })
 
@@ -242,18 +261,28 @@ class Command(BaseCommand):
 
         LOGGER.info('\nCreating a new enterprise...')
         enterprise = self._create_enterprise(enterprise_users=enterprise_users)
+
+        # generate a json serializable list of linked enterprise users
+        enterprise_linked_users = []
+        for item in enterprise['enterprise_linked_users']:
+            ecu = item['enterprise_customer_user']
+            enterprise_linked_users.append({
+                'user_id': ecu.user_id,
+                'enterprise_customer_user_id': ecu.id,
+            })
+
         LOGGER.info(
             textwrap.dedent(
                 '''\nSuccessfully created a new enterprise with the following data:
-                \n|    Enterprise Customer: %s (%s)
-                \n|    Enterprise Catalog: %s (%s)
-                \n|    Enterprise Users (%i): %s
+                \n| Enterprise Customer: %s (%s)
+                \n| Enterprise Catalog: %s (%s)
+                \n| Enterprise Users (%i): %s
                 '''
             ),
             enterprise['enterprise_customer'].name,
             enterprise['enterprise_customer'].uuid,
             enterprise['enterprise_catalog'].title,
             enterprise['enterprise_catalog'].uuid,
-            len(enterprise['enterprise_linked_users']),
-            enterprise['enterprise_linked_users'],
+            len(enterprise_linked_users),
+            json.dumps(enterprise_linked_users, sort_keys=True, indent=2),
         )
