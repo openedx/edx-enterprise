@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.2.21] - 2020-06-03
+---------------------
+
+* Downgrade an error log to a warning to reduce alert noise
+
+
 [3.2.20] - 2020-06-01
 ---------------------
 

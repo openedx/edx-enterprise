@@ -702,7 +702,7 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                                  course_run_id=value,
                                  enterprise_uuid=enterprise_customer.uuid,
                                  enterprise_name=enterprise_customer.name)
-            LOGGER.error(error_message)
+            LOGGER.warning(error_message)
             raise serializers.ValidationError(
                 'The course run id {course_run_id} is not in the catalog '
                 'for Enterprise Customer {enterprise_customer}'.format(
