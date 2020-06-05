@@ -28,11 +28,11 @@ django-multi-email-field==0.6.1  # via -r requirements/base.in
 django-object-actions==2.0.0  # via -r requirements/base.in
 django-simple-history==2.10.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 django-waffle==0.18.0     # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-django-utils, edx-drf-extensions
-django==2.2.12            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, django-config-models, django-crum, django-fernet-fields, django-filter, django-model-utils, django-multi-email-field, drf-jwt, edx-django-utils, edx-drf-extensions, edx-opaque-keys, edx-rbac, jsonfield2, rest-condition
+django==2.2.13            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, django-config-models, django-crum, django-fernet-fields, django-filter, django-model-utils, django-multi-email-field, drf-jwt, edx-django-utils, edx-drf-extensions, edx-opaque-keys, edx-rbac, jsonfield2, rest-condition
 djangorestframework-xml==2.0.0  # via -r requirements/base.in
 djangorestframework==3.9.4  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-config-models, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.14.0           # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
-edx-django-utils==3.2.2   # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-config-models, edx-drf-extensions, edx-rest-api-client
+edx-django-utils==3.2.3   # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.0.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rbac
 edx-opaque-keys[django]==2.1.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-drf-extensions
 edx-rbac==1.2.1           # via -r requirements/base.in
@@ -47,8 +47,8 @@ jsonfield2==3.0.3         # via -c requirements/constraints.txt, -c requirements
 kombu==3.0.37             # via -c requirements/edx-platform-constraints.txt, celery
 markupsafe==1.1.1         # via -c requirements/edx-platform-constraints.txt, jinja2
 more-itertools==8.3.0     # via -c requirements/edx-platform-constraints.txt, zipp
-newrelic==5.12.1.141      # via -c requirements/edx-platform-constraints.txt, edx-django-utils
-packaging==20.3           # via -c requirements/edx-platform-constraints.txt, bleach
+newrelic==5.14.0.142      # via -c requirements/edx-platform-constraints.txt, edx-django-utils
+packaging==20.4           # via -c requirements/edx-platform-constraints.txt, bleach
 path.py==12.4.0           # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 path==13.1.0              # via -c requirements/edx-platform-constraints.txt, path.py
 pbr==5.4.5                # via -c requirements/edx-platform-constraints.txt, stevedore
@@ -68,7 +68,7 @@ requests==2.23.0          # via -c requirements/edx-platform-constraints.txt, -r
 rest-condition==1.0.3     # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
 rules==2.2                # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 semantic-version==2.8.5   # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
-six==1.14.0               # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, bleach, cryptography, django-countries, django-simple-history, edx-drf-extensions, edx-opaque-keys, edx-rbac, packaging, pyjwkest, python-dateutil, stevedore
+six==1.15.0               # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, bleach, cryptography, django-countries, django-simple-history, edx-drf-extensions, edx-opaque-keys, edx-rbac, packaging, pyjwkest, python-dateutil, stevedore
 slumber==0.7.1            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rest-api-client
 sqlparse==0.3.1           # via -c requirements/edx-platform-constraints.txt, django
 stevedore==1.32.0         # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, edx-opaque-keys
