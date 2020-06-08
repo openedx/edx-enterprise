@@ -821,7 +821,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 raise CourseEnrollmentPermissionError("Auto-cohorting is not enabled for this enterprise")
 
             try:
-                EnterpriseCourseEnrollment.objects.get_or_create(
+                enterprise_course_enrollment, created = EnterpriseCourseEnrollment.objects.get_or_create(
                     enterprise_customer_user=self,
                     course_id=course_run_id,
                     defaults={
@@ -847,6 +847,8 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
             except HttpClientError as exc:
                 succeeded = False
+                if created:
+                    enterprise_course_enrollment.delete()
                 default_message = 'No error message provided'
                 try:
                     error_message = json.loads(exc.content.decode()).get('message', default_message)

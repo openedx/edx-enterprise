@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 --------------------
+[3.2.22] - 2020-06-09
+---------------------
+
+* Added rollback for EnterpriseCourseEnrollment enroll
 
 [3.2.21] - 2020-06-03
 ---------------------

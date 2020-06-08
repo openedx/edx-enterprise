@@ -515,19 +515,22 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
     def test_enroll_failure_with_no_order(self, enrollment_order_mock, enrollment_api_client_mock, analytics_mock):
         """
-        ``enroll_learner`` cannot enroll due to api client error and order in ecommerce is not generated.
+        ``enroll_learner`` cannot enroll due to api client error. Orders in ecommerce and EnterpriseCourseEnrollment
+         remain unmodified.
         """
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         enrollment_api_client_mock.return_value.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "Enrollment error"}).encode()
         )
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
+        enterprise_enrollment_count = EnterpriseCourseEnrollment.objects.count()
         with LogCapture(level=logging.ERROR) as log_capture:
             enterprise_customer_user.enroll('course-v1:edX+DemoX+Demo_Course', 'verified')
             enrollment_api_client_mock.return_value.enroll_user_in_course.assert_called_once()
             analytics_mock.track.assert_not_called()
             enrollment_order_mock.assert_not_called()
             assert 'Enrollment error' in log_capture.records[0].getMessage()
+            self.assertEqual(EnterpriseCourseEnrollment.objects.count(), enterprise_enrollment_count)
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('enterprise.models.EnterpriseCustomerUser.create_order_for_enrollment')
