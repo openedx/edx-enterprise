@@ -72,6 +72,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
 
+        representation['marked_done'] = instance.marked_done
+
         return representation
 
     def _get_course_overview(self, course_run_id):
