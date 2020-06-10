@@ -16,7 +16,7 @@ class LearnerCourseEnrollmentStatement(EnterpriseStatement):
     xAPI statement to serialize data related to course registration.
     """
 
-    def __init__(self, user, user_social_auth, course_overview, *args, **kwargs):
+    def __init__(self, site, user, user_social_auth, course_overview, object_type, *args, **kwargs):
         """
         Initialize and populate statement with learner info and course info.
 
@@ -29,7 +29,7 @@ class LearnerCourseEnrollmentStatement(EnterpriseStatement):
         kwargs.update(
             actor=self.get_actor(user, user_social_auth),
             verb=self.get_verb(),
-            object=self.get_object(course_overview),
+            object=self.get_object(site.domain, course_overview, object_type)
         )
         super(LearnerCourseEnrollmentStatement, self).__init__(*args, **kwargs)
 

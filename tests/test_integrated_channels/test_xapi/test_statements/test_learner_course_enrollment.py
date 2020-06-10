@@ -27,52 +27,115 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
         super(TestLearnerCourseEnrollmentStatement, self).setUp()
         faker = FakerFactory.create()
 
+        self.site = Mock(domain='xapi.testing.com')
         self.user = factories.UserFactory()
+        self.mock_social_auth = Mock(provider='tpa-saml', uid='default:edxsso')
+
         # pylint: disable=no-member
         self.course_overview = Mock(
             id='course-v1:edX+DemoX+Demo_Course',
             display_name=faker.text(max_nb_chars=25),
-            short_description=faker.text()
+            short_description=faker.text(),
+            key='edX+DemoX',
         )
-        self.expected = {
-            'verb':
-                {
-                    'id': X_API_VERB_REGISTERED,
-                    'display': {'en-US': 'registered'}
-                },
-            'version': '1.0.1',
-            'actor':
-                {
-                    'mbox': 'mailto:{email}'.format(email=self.user.email),
-                    'name': self.user.email,
-                    'objectType': 'Agent'
-                },
-            'object':
-                {
-                    'definition':
-                        {
-                            'type': X_API_ACTIVITY_COURSE,
-                            'description':
-                                {
-                                    'en-US': self.course_overview.short_description
-                                },
-                            'name':
-                                {
-                                    'en-US': self.course_overview.display_name
-                                }
-                        },
-                    'id': self.course_overview.id,
-                    'objectType': 'Activity'
-                },
+
+        self.object_id_course = 'https://{domain}/xapi/activities/course/{activity_id}'.format(
+            domain=self.site.domain,
+            activity_id=self.course_overview.key)
+
+        self.object_id_courserun = 'https://{domain}/xapi/activities/courserun/{activity_id}'.format(
+            domain=self.site.domain,
+            activity_id=self.course_overview.id)
+
+        self.verb = {
+            'id': X_API_VERB_REGISTERED,
+            'display': {'en-US': 'registered'}
         }
 
-    def test_statement(self):
+        self.actor = {
+            'mbox': 'mailto:{email}'.format(email=self.user.email),
+            'name': 'edxsso',
+            'objectType': 'Agent'
+        }
+
+        self.object_course = {
+            'definition':
+                {
+                    'type': X_API_ACTIVITY_COURSE,
+                    'description':
+                        {
+                            'en-US': self.course_overview.short_description
+                        },
+                    'name':
+                        {
+                            'en-US': self.course_overview.display_name
+                        },
+                    "extensions":
+                        {
+                            'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
+                        }
+                },
+            'id': self.object_id_course,
+            'objectType': 'Activity'
+        }
+
+        self.object_courserun = {
+            'definition':
+                {
+                    'type': X_API_ACTIVITY_COURSE,
+                    'description':
+                        {
+                            'en-US': self.course_overview.short_description
+                        },
+                    'name':
+                        {
+                            'en-US': self.course_overview.display_name
+                        },
+                    "extensions":
+                        {
+                            'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
+                        }
+                },
+            'id': self.object_id_courserun,
+            'objectType': 'Activity'
+        }
+
+        self.expected_course = {
+            'verb': self.verb,
+            'version': '1.0.1',
+            'actor': self.actor,
+            'object': self.object_course
+        }
+
+        self.expected_courserun = {
+            'verb': self.verb,
+            'version': '1.0.1',
+            'actor': self.actor,
+            'object': self.object_courserun
+        }
+
+    def test_statement_course(self):
         """
         Validate statement when learner enrolls in a course.
         """
         statement = LearnerCourseEnrollmentStatement(
+            self.site,
             self.user,
-            None,
+            self.mock_social_auth,
             self.course_overview,
+            'course',
         )
-        self.assertDictEqual(json.loads(statement.to_json()), self.expected)
+        self.assertDictEqual(json.loads(statement.to_json()), self.expected_course)
+
+    def test_statement_courserun(self):
+        """
+        Validate statement when learner enrolls in a course.
+        """
+        statement = LearnerCourseEnrollmentStatement(
+            self.site,
+            self.user,
+            self.mock_social_auth,
+            self.course_overview,
+            'courserun',
+        )
+        self.assertDictEqual(json.loads(statement.to_json()), self.expected_courserun)
