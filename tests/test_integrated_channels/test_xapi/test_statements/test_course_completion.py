@@ -27,60 +27,155 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
         super(TestLearnerCourseCompletionStatement, self).setUp()
         faker = FakerFactory.create()
 
+        self.site = Mock(domain='xapi.testing.com')
         self.user = factories.UserFactory()
         self.mock_social_auth = Mock(provider='tpa-saml', uid='default:edxsso')
         # pylint: disable=no-member
         self.course_overview = Mock(
             id='course-v1:edX+DemoX+Demo_Course',
             display_name=faker.text(max_nb_chars=25),
-            short_description=faker.text()
+            short_description=faker.text(),
+            key='edX+DemoX',
         )
-        self.course_grade = Mock(percent=0.80, passed=True)
+        self.course_grade = Mock(percent_grade=0.80, passed_timestamp='2020-04-01')
+        self.course_grade_notpassed = Mock(percent_grade=0.50, passed_timestamp=None)
 
-        self.expected = {
-            'verb': {
-                'id': X_API_VERB_COMPLETED,
-                'display': {'en-US': 'completed'}
-            },
-            'version': '1.0.1',
-            'actor': {
-                'mbox': 'mailto:{email}'.format(email=self.user.email),
-                'name': 'edxsso',
-                'objectType': 'Agent'
-            },
-            'object': {
-                'definition': {
-                    'type': X_API_ACTIVITY_COURSE,
-                    'description': {
-                        'en-US': self.course_overview.short_description
-                    },
-                    'name': {
-                        'en-US': self.course_overview.display_name
-                    }
-                },
-                'id': self.course_overview.id,
-                'objectType': 'Activity'
-            },
-            'result': {
-                'score': {
-                    'scaled': 0.8,
-                    'raw': 80,
-                    'min': 0,
-                    'max': 100
-                },
-                'success': True,
-                'completion': True,
-            },
+        self.object_id_course = 'https://{domain}/xapi/activities/course/{activity_id}'.format(
+            domain=self.site.domain,
+            activity_id=self.course_overview.key)
+
+        self.object_id_courserun = 'https://{domain}/xapi/activities/courserun/{activity_id}'.format(
+            domain=self.site.domain,
+            activity_id=self.course_overview.id)
+
+        self.verb = {
+            'id': X_API_VERB_COMPLETED,
+            'display': {'en-US': 'completed'}
+        }
+        self.actor = {
+            'mbox': 'mailto:{email}'.format(email=self.user.email),
+            'name': 'edxsso',
+            'objectType': 'Agent'
         }
 
-    def test_statement(self):
+        self.object_course = {
+            'definition': {
+                'type': X_API_ACTIVITY_COURSE,
+                'description': {
+                    'en-US': self.course_overview.short_description
+                },
+                'name': {
+                    'en-US': self.course_overview.display_name
+                },
+                "extensions": {
+                    'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
+                }
+            },
+            'id': self.object_id_course,
+            'objectType': 'Activity'
+        }
+
+        self.object_courserun = {
+            'definition': {
+                'type': X_API_ACTIVITY_COURSE,
+                'description': {
+                    'en-US': self.course_overview.short_description
+                },
+                'name': {
+                    'en-US': self.course_overview.display_name
+                },
+                "extensions": {
+                    'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
+                }
+            },
+            'id': self.object_id_courserun,
+            'objectType': 'Activity'
+        }
+
+        self.result = {
+            'score': {
+                'scaled': 0.8,
+                'raw': 80,
+                'min': 0,
+                'max': 100
+            },
+            'success': True,
+            'completion': True,
+        }
+
+        self.result_notpassed = {
+            'score': {
+                'scaled': 0.5,
+                'raw': 50,
+                'min': 0,
+                'max': 100
+            },
+            'success': False,
+            'completion': False,
+        }
+
+        self.expected_course = {
+            'verb': self.verb,
+            'version': '1.0.1',
+            'actor': self.actor,
+            'object': self.object_course,
+            'result': self.result,
+        }
+
+        self.expected_courserun = {
+            'verb': self.verb,
+            'version': '1.0.1',
+            'actor': self.actor,
+            'object': self.object_courserun,
+            'result': self.result,
+        }
+
+        self.expected_notpassed = {
+            'verb': self.verb,
+            'version': '1.0.1',
+            'actor': self.actor,
+            'object': self.object_course,
+            'result': self.result_notpassed,
+        }
+
+    def test_statement_course(self):
         """
         Validate statement when learner completes a course.
         """
         statement = LearnerCourseCompletionStatement(
+            self.site,
             self.user,
             self.mock_social_auth,
             self.course_overview,
             self.course_grade,
+            'course'
         )
-        self.assertDictEqual(json.loads(statement.to_json()), self.expected)
+        self.assertDictEqual(json.loads(statement.to_json()), self.expected_course)
+
+    def test_statement_courserun(self):
+        """
+        Validate statement when learner completes a course.
+        """
+        statement = LearnerCourseCompletionStatement(
+            self.site,
+            self.user,
+            self.mock_social_auth,
+            self.course_overview,
+            self.course_grade,
+            'courserun'
+        )
+        self.assertDictEqual(json.loads(statement.to_json()), self.expected_courserun)
+
+    def test_statement_notpassed(self):
+        """
+        Validate statement when learner completes a course.
+        """
+        statement = LearnerCourseCompletionStatement(
+            self.site,
+            self.user,
+            self.mock_social_auth,
+            self.course_overview,
+            self.course_grade_notpassed,
+            'course'
+        )
+        self.assertDictEqual(json.loads(statement.to_json()), self.expected_notpassed)
