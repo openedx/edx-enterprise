@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 --------------------
+
+[3.3.0] - 2020-06-10
+---------------------
+
+* marked_done field in /enterprise_course_enrollments/ response
+
 [3.3.0] - 2020-06-09
 ---------------------
 
