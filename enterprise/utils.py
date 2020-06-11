@@ -741,6 +741,10 @@ def is_course_run_enrollable(course_run):
     2. enrollment_start is less than now, or undefined
     3. enrollment_end is greater than now, or undefined
     """
+    # Check if the course run is unpublished (sometimes these sneak through)
+    if not is_course_run_published(course_run):
+        return False
+
     now = datetime.datetime.now(pytz.UTC)
     reasonable_enrollment_window = now + datetime.timedelta(days=1)
     end = parse_datetime_handle_invalid(course_run.get('end'))
@@ -755,13 +759,15 @@ def is_course_run_available_for_enrollment(course_run):
     """
     Check if a course run is available for enrollment.
     """
+    # If the course run is Archived, it's not available for enrollment
     if course_run['availability'] not in ['Current', 'Starting Soon', 'Upcoming']:
-        # course run is archived so not available for enrollment
         return False
 
-    # now check if the course run is enrollable on the basis of enrollment
-    # start and end date
-    return is_course_run_enrollable(course_run)
+    # If the course run is not "enrollable", it's not available for enrollment
+    if not is_course_run_enrollable(course_run):
+        return False
+
+    return True
 
 
 def has_course_run_available_for_enrollment(course_runs):
@@ -786,6 +792,16 @@ def is_course_run_upgradeable(course_run):
         if seat.get('type') == 'verified':
             upgrade_deadline = parse_datetime_handle_invalid(seat.get('upgrade_deadline'))
             return not upgrade_deadline or upgrade_deadline > now
+    return False
+
+
+def is_course_run_published(course_run):
+    """
+    Return True if the course run's status value is "published".
+    """
+    if course_run:
+        if course_run.get('status') == 'published':
+            return True
     return False
 
 
