@@ -86,7 +86,8 @@ DEFAULT_CATALOG_CONTENT_FILTER = {
         'Current',
         'Starting Soon',
         'Upcoming'
-    ]
+    ],
+    'status': 'published'
 }
 
 # Django groups specific to granting permission to enterprise admins.
