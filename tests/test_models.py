@@ -45,7 +45,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
-from enterprise.utils import CourseEnrollmentDowngradeError
+from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
@@ -1276,11 +1276,9 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         mock_catalog_api = mock_catalog_api_class.return_value
         enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
         enterprise_catalog.get_paginated_content(QueryDict())
-        mock_catalog_api.get_catalog_results.assert_called_with({
-            u'partner': u'edx',
-            u'level_type': [u'Introductory', u'Intermediate', u'Advanced'],
-            u'availability': [u'Current', u'Starting Soon', u'Upcoming'],
-            u'content_type': u'course'}, {"exclude_expired_course_run": True})
+        default_catalog_content_filter = get_default_catalog_content_filter()
+        query_param = {"exclude_expired_course_run": True}
+        mock_catalog_api.get_catalog_results.assert_called_with(default_catalog_content_filter, query_param)
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_contains_programs(self, mock_catalog_api_class):

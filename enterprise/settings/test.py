@@ -196,7 +196,8 @@ ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
         'Current',
         'Starting Soon',
         'Upcoming'
-    ]
+    ],
+    'status': 'published'
 }
 
 # For testing edx-rbac rules. This is not the actual value of the setting in prod.

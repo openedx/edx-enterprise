@@ -212,7 +212,8 @@ class TestDefaultContentFilter(unittest.TestCase):
                     'Current',
                     'Starting Soon',
                     'Upcoming'
-                ]
+                ],
+                'status': 'published'
             },
             {
                 'content_type': 'course',
@@ -224,7 +225,8 @@ class TestDefaultContentFilter(unittest.TestCase):
                     'Current',
                     'Starting Soon',
                     'Upcoming'
-                ]
+                ],
+                'status': 'published'
             }
         ),
         # if the value is not set is settings, it picks default value from constant.
