@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.2] - 2020-06-10
+---------------------
+
+* Added status key to default content filter for EnterpriseCustomerCatalog.
+
+
 [3.3.1] - 2020-06-10
 ---------------------
 
