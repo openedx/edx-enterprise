@@ -136,14 +136,16 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             'pacing_type': 'instructor_paced',
             'availability': 'Current',
             'title': 'edX Demonstration Course',
-            'content_language': 'English'
+            'content_language': 'English',
+            'status': 'published'
         },
         {
             'start': '2013-02-05T05:00:00Z',
             'pacing_type': 'self_paced',
             'availability': 'Current',
             'title': 'edX Demonstration Course',
-            'content_language': 'English'
+            'content_language': 'English',
+            'status': 'published'
         }
     )
     @responses.activate
@@ -337,6 +339,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                         'end': '2050-12-31T18:00:00Z',
                         'pacing_type': 'instructor_paced',
                         'availability': 'Current',
+                        'status': 'published',
                     }
                 ],
                 'short_description': 'Watch the rabbits roam.',
@@ -354,6 +357,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                         'end': '2151-12-31T18:00:00Z',
                         'pacing_type': 'self_paced',
                         'availability': 'Archived',
+                        'status': 'published'
                     }
                 ],
                 'short_description': 'The bunnies are delighted.',
@@ -368,6 +372,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                     {
                         'pacing_type': 'instructor_paced',
                         'availability': 'Archived',
+                        'status': 'published',
                     }
                 ],
                 'full_description': 'In depth discussion of rabbit care and feeding.',
@@ -382,6 +387,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                         'start': '2216-02-05T05:00:00Z',
                         'pacing_type': 'instructor_paced',
                         'availability': 'Current',
+                        'status': 'published'
                     }
                 ],
                 'short_description': 'Learn to grow this colorful veggie.',
@@ -398,6 +404,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                         'end': '2317-02-05T05:00:00Z',
                         'pacing_type': 'instructor_paced',
                         'availability': 'Current',
+                        'status': 'published'
                     }
                 ],
                 'short_description': 'Yep.',

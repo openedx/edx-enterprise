@@ -1119,6 +1119,7 @@ class TestEnterpriseUtils(unittest.TestCase):
     @ddt.data(
         (
             {
+                "status": "published",
                 "end": "3000-10-13T13:11:01Z",
                 "enrollment_start": "2014-10-13T13:11:03Z",
                 "enrollment_end": "2999-10-13T13:11:04Z",
@@ -1126,19 +1127,35 @@ class TestEnterpriseUtils(unittest.TestCase):
             True,
         ),
         (
-            {"end": None, "enrollment_start": "2014-10-13T13:11:03Z", "enrollment_end": "2999-10-13T13:11:04Z"},
-            True,
-        ),
-        (
-            {"end": "3000-10-13T13:11:01Z", "enrollment_start": None, "enrollment_end": "2999-10-13T13:11:04Z"},
-            True,
-        ),
-        (
-            {"end": "3000-10-13T13:11:01Z", "enrollment_start": "2014-10-13T13:11:03Z", "enrollment_end": None},
+            {
+                "status": "published",
+                "end": None,
+                "enrollment_start": "2014-10-13T13:11:03Z",
+                "enrollment_end": "2999-10-13T13:11:04Z"
+            },
             True,
         ),
         (
             {
+                "status": "published",
+                "end": "3000-10-13T13:11:01Z",
+                "enrollment_start": None,
+                "enrollment_end": "2999-10-13T13:11:04Z"
+            },
+            True,
+        ),
+        (
+            {
+                "status": "published",
+                "end": "3000-10-13T13:11:01Z",
+                "enrollment_start": "2014-10-13T13:11:03Z",
+                "enrollment_end": None
+            },
+            True,
+        ),
+        (
+            {
+                "status": "published",
                 "end": "2014-10-13T13:11:01Z",  # end < now
                 "enrollment_start": "2014-10-13T13:11:03Z",
                 "enrollment_end": "2999-10-13T13:11:04Z",
@@ -1147,6 +1164,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         ),
         (
             {
+                "status": "published",
                 "end": "3000-10-13T13:11:01Z",
                 "enrollment_start": "2999-10-13T13:11:03Z",  # enrollment_start > now
                 "enrollment_end": "3000-10-13T13:11:04Z",
@@ -1155,9 +1173,19 @@ class TestEnterpriseUtils(unittest.TestCase):
         ),
         (
             {
+                "status": "published",
                 "end": "3000-10-13T13:11:01Z",
                 "enrollment_start": "2014-10-13T13:11:03Z",
                 "enrollment_end": "2014-10-13T13:11:04Z",  # enrollment_end < now
+            },
+            False,
+        ),
+        (
+            {
+                "status": "unpublished",
+                "end": "3000-10-13T13:11:01Z",
+                "enrollment_start": "2014-10-13T13:11:03Z",
+                "enrollment_end": "3000-10-13T13:11:04Z",  # enrollment_end < now
             },
             False,
         ),
@@ -1171,6 +1199,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         - False on end < now.
         - False on enrollment_end < now.
         - False on enrollment_start > now.
+        - False on is_course_run_published = False
         - True if none of the above plus, optionally, if any of the values are NULL.
         """
         assert utils.is_course_run_enrollable(course_run) == expected_enrollment_eligibility
@@ -1183,12 +1212,14 @@ class TestEnterpriseUtils(unittest.TestCase):
         (
             [
                 {
+                    "status": "published",
                     "availability": "Current",
                     "end": "3000-10-13T13:11:01Z",
                     "enrollment_start": "2999-10-13T13:11:03Z",  # enrollment_start > now
                     "enrollment_end": "3000-10-13T13:11:04Z",
                 },
                 {
+                    "status": "published",
                     "availability": "Current",
                     "end": "3000-10-13T13:11:01Z",
                     "enrollment_start": "2014-10-13T13:11:03Z",
@@ -1200,12 +1231,14 @@ class TestEnterpriseUtils(unittest.TestCase):
         (
             [
                 {
+                    "status": "published",
                     "availability": "Archived",
                     "end": "3000-10-13T13:11:01Z",
                     "enrollment_start": "2014-10-13T13:11:03Z",
                     "enrollment_end": "2999-10-13T13:11:04Z",
                 },
                 {
+                    "status": "published",
                     "availability": "Current",
                     "end": "3000-10-13T13:11:01Z",
                     "enrollment_start": "2014-10-13T13:11:03Z",
@@ -1217,6 +1250,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         (
             [
                 {
+                    "status": "published",
                     "availability": "Current",
                     "end": "3000-10-13T13:11:01Z",
                     "enrollment_start": "2014-10-13T13:11:03Z",
@@ -1228,6 +1262,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         (
             [
                 {
+                    "status": "published",
                     "availability": "Archived",
                     "end": "3000-10-13T13:11:01Z",
                     "enrollment_start": "2014-10-13T13:11:03Z",
@@ -1235,7 +1270,31 @@ class TestEnterpriseUtils(unittest.TestCase):
                 }
             ],
             False,
-        )
+        ),
+        (
+            [
+                {
+                    "status": "published",
+                    "availability": "Current",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                }
+            ],
+            True,
+        ),
+        (
+            [
+                {
+                    "status": "unpublished",
+                    "availability": "Current",
+                    "end": "3000-10-13T13:11:01Z",
+                    "enrollment_start": "2014-10-13T13:11:03Z",
+                    "enrollment_end": "2999-10-13T13:11:04Z",
+                }
+            ],
+            False,
+        ),
     )
     @ddt.unpack
     def test_contains_course_run_available_for_enrollment(self, course_runs, expected_enrollment_eligibility):
@@ -1259,6 +1318,18 @@ class TestEnterpriseUtils(unittest.TestCase):
         for an upgrade to the verified track.
         """
         assert utils.is_course_run_upgradeable(course_run) == expected_upgradeability
+
+    @ddt.data(
+        ({"status": "published"}, True),
+        ({"status": "unpublished"}, False)
+    )
+    @ddt.unpack
+    def test_is_course_published(self, course_run, expected_response):
+        """
+        ``is_course_run_published`` returns whether the course run is considered "published"
+        given its metadata structure and values.
+        """
+        assert utils.is_course_run_published(course_run) == expected_response
 
     @ddt.data(
         ({"start": "3000-10-13T13:11:04Z"}, utils.parse_datetime_handle_invalid("3000-10-13T13:11:04Z")),
