@@ -7,8 +7,6 @@ grade and completion data for enrollments belonging to a particular
 enterprise customer.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from slumber.exceptions import HttpNotFoundError

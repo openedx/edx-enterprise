@@ -4,7 +4,6 @@ Custom `Django Admin actions`_ used in enterprise app.
 
 .. _Django Admin actions: https://docs.djangoproject.com/en/1.8/ref/contrib/admin/actions/
 """
-from __future__ import absolute_import, unicode_literals
 
 import unicodecsv
 from six import string_types

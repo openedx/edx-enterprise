@@ -2,7 +2,6 @@
 """
 Tests for the utils of the enterprise_learner_portal app.
 """
-from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime
 

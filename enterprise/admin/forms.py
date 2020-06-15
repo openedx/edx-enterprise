@@ -2,7 +2,6 @@
 """
 Forms to be used in the enterprise djangoapp.
 """
-from __future__ import absolute_import, unicode_literals
 
 import re
 from logging import getLogger

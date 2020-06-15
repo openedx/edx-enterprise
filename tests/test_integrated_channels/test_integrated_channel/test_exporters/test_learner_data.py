@@ -3,8 +3,6 @@
 Tests for the `edx-enterprise` learner_data export classes.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import unittest
 

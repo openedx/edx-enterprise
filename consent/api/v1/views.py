@@ -3,8 +3,6 @@
 A generic API for edX Enterprise's Consent application.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication

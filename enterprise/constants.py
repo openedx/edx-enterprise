@@ -3,8 +3,6 @@
 Enterprise Django application constants.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 
 from django.utils.translation import ugettext_lazy as _
@@ -72,7 +70,6 @@ ALLOWED_TAGS = [
     u'a', u'abbr', u'acronym', u'b', u'blockquote', u'em', u'i',
     u'li', u'ol', u'strong', u'ul', u'p', u'h1', u'h2',
 ]
-
 
 DEFAULT_CATALOG_CONTENT_FILTER = {
     'content_type': 'course',

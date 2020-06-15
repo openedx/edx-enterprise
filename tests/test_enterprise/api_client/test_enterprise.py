@@ -1,7 +1,6 @@
 """
 Test the Enterprise API client functionality.
 """
-from __future__ import absolute_import, unicode_literals, with_statement
 
 import unittest
 

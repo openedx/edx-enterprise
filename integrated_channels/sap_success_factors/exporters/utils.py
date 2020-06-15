@@ -3,8 +3,6 @@
 Utility functions for the SAP SuccessFactors integrated channel.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from integrated_channels.sap_success_factors.constants import SUCCESSFACTORS_OCN_LANGUAGE_CODES

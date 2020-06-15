@@ -1,7 +1,6 @@
 """
 Management command for assigning enterprise roles to existing enterprise users.
 """
-from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
@@ -38,7 +37,6 @@ try:
     from student.models import UserProfile
 except ImportError:
     UserProfile = None
-
 
 LOGGER = logging.getLogger(__name__)
 

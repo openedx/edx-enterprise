@@ -3,8 +3,6 @@
 Package for generic data transmitters which send serialized data to integrated channels.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 
 class Transmitter:
     """

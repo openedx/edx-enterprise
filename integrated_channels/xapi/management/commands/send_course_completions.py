@@ -3,8 +3,6 @@
 Send xAPI statements to the LRS configured via admin.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 import six
@@ -27,7 +25,6 @@ try:
     from openedx.core.djangoapps.content.course_overviews.models import CourseOverview
 except ImportError:
     CourseOverview = None
-
 
 LOGGER = getLogger(__name__)
 

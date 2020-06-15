@@ -2,7 +2,6 @@
 """
 Custom Django Admin views used in enterprise app.
 """
-from __future__ import absolute_import, unicode_literals
 
 import datetime
 import json

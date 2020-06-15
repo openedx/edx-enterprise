@@ -2,7 +2,6 @@
 """
 Serializers for enterprise api version 1.
 """
-from __future__ import absolute_import, unicode_literals
 
 import copy
 from logging import getLogger

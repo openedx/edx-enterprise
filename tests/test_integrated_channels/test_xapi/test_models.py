@@ -3,8 +3,6 @@
 Tests for the xAPI models.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import base64
 import unittest
 

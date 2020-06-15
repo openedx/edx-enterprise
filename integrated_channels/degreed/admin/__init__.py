@@ -2,7 +2,6 @@
 """
 Django admin integration for configuring degreed app to communicate with Degreed systems.
 """
-from __future__ import absolute_import, unicode_literals
 
 from config_models.admin import ConfigurationModelAdmin
 

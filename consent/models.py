@@ -3,8 +3,6 @@
 Models for edX Enterprise's Consent application.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import logging
 
 import six

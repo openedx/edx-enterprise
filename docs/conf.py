@@ -13,8 +13,6 @@ All configuration values have a default; values that are commented out
 serve to show the default.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import os
 import sys
 from subprocess import check_call

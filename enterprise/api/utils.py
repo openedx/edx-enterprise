@@ -2,7 +2,6 @@
 """
 Utility functions for the Enterprise API.
 """
-from __future__ import absolute_import, unicode_literals
 
 from django.conf import settings
 from django.utils.translation import ugettext as _

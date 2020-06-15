@@ -3,8 +3,6 @@
 Tests for the `edx-enterprise` throttles module.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from pytest import mark
 from rest_framework import status
 from rest_framework.reverse import reverse

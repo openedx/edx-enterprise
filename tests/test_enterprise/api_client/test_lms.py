@@ -2,7 +2,6 @@
 """
 Tests for enterprise.api_client.lms.py
 """
-from __future__ import absolute_import, unicode_literals, with_statement
 
 import json
 import time

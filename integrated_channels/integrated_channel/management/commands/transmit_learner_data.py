@@ -2,7 +2,6 @@
 """
 Transmits consenting enterprise learner data to the integrated channels.
 """
-from __future__ import absolute_import, unicode_literals
 
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError

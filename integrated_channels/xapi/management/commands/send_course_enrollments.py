@@ -3,8 +3,6 @@
 Send xAPI statements to the LRS configured via admin.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 from logging import getLogger
 
@@ -22,7 +20,6 @@ try:
     from student.models import CourseEnrollment
 except ImportError:
     CourseEnrollment = None
-
 
 LOGGER = getLogger(__name__)
 
@@ -136,7 +133,6 @@ class Command(BaseCommand):
             )
 
             if is_success_response(response_fields):
-
                 Command.transmit_courserun_enrollment_statement(
                     lrs_configuration,
                     course_enrollment.user,
@@ -169,7 +165,6 @@ class Command(BaseCommand):
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
-
             courserun_id = six.text_type(course_overview.id)
             enterprise_course_enrollment_id = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
                 user,
@@ -195,7 +190,6 @@ class Command(BaseCommand):
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
-
             courserun_id = six.text_type(course_overview.id)
             enterprise_course_enrollment_id = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
                 user,

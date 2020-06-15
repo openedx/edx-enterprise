@@ -12,8 +12,6 @@ data was transferred and which data is new at the time of the migration. In orde
 new data, we simply leave it to someone with DB access to manage things based on the desired timestamp.
 """
 
-from __future__ import unicode_literals
-
 from django.db import migrations
 
 

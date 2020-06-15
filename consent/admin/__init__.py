@@ -3,8 +3,6 @@
 Django admin integration for the Consent application.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from django_object_actions import DjangoObjectActions
 from simple_history.admin import SimpleHistoryAdmin
 

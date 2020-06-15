@@ -2,7 +2,6 @@
 """
 Django management command for migrating EnterpriseCustomerCatalog data to new service.
 """
-from __future__ import absolute_import, unicode_literals
 
 import logging
 

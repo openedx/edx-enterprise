@@ -3,8 +3,6 @@
 Transmits information about an enterprise's course catalog to connected IntegratedChannels
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from django.contrib.auth.models import User

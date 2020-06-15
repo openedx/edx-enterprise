@@ -3,8 +3,6 @@
 Tests for the base content metadata transmitter.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import unittest
 
 import ddt

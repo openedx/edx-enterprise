@@ -3,8 +3,6 @@
 Tests for Cornerstone Learner Data exporters.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import unittest
 
