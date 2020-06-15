@@ -577,7 +577,6 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
         )
 
     readonly_fields = ('preview_catalog_url',)
-    preview_catalog_url.allow_tags = True
     preview_catalog_url.short_description = 'Preview Catalog Courses'
 
 
@@ -626,7 +625,6 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         )
 
     readonly_fields = ('preview_catalog_url',)
-    preview_catalog_url.allow_tags = True
     preview_catalog_url.short_description = 'Preview Catalog Courses'
 
     def uuid_nowrap(self, obj):
