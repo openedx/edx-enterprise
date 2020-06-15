@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.4] - 2020-06-15
+---------------------
+
+* Update GrantDataSharingPermissionView to accept both; course_run_id as well as course_key
+
+
 [3.3.3] - 2020-06-12
 ---------------------
 

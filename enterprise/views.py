@@ -13,6 +13,8 @@ import pytz
 import waffle
 from dateutil.parser import parse
 from ipware.ip import get_ip
+from opaque_keys import InvalidKeyError
+from opaque_keys.edx.keys import CourseKey
 from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
 
 from django.conf import settings
@@ -36,7 +38,7 @@ from enterprise import constants, messages
 from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import CourseApiClient, EmbargoApiClient, EnrollmentApiClient
+from enterprise.api_client.lms import EmbargoApiClient, EnrollmentApiClient
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import (
     ENTERPRISE_LOGIN_SUBTITLE,
@@ -238,7 +240,7 @@ class GrantDataSharingPermissions(View):
         Return whether the input course or program exist.
         """
         try:
-            course_exists = course_id and CourseApiClient().get_course_details(course_id)
+            course_exists = course_id and get_course_catalog_api_service_client().get_course_id(course_id)
             program_exists = program_uuid and get_course_catalog_api_service_client().program_exists(program_uuid)
             return course_exists or program_exists
         except ImproperlyConfigured as error:
@@ -416,6 +418,25 @@ class GrantDataSharingPermissions(View):
         }
         return context_data
 
+    def is_course_run_id(self, course_id):
+        """
+        Returns True if the course_id is in the correct format of a course_run_id, false otherwise.
+
+        Arguments:
+            course_id (str): The course_key or course run id
+
+        Returns:
+            (Boolean): True or False
+        """
+        try:
+            # Check if we have a course ID or a course run ID
+            CourseKey.from_string(course_id)
+        except InvalidKeyError:
+            # The ID we have is for a course instead of a course run
+            return False
+        # If here, the course_id is a course_run_id
+        return True
+
     def get_course_or_program_context(self, enterprise_customer, course_id=None, program_uuid=None):
         """
         Return a dict having course or program specific keys for data sharing consent page.
@@ -445,13 +466,19 @@ class GrantDataSharingPermissions(View):
                     LOGGER.error(log_message)
                     raise Http404
 
-                course_run_details = catalog_api_client.get_course_run(course_id)
                 course_start_date = ''
-                if course_run_details['start']:
-                    course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
+
+                if self.is_course_run_id(course_id):
+                    course_run_details = catalog_api_client.get_course_run(course_id)
+                    if course_run_details['start']:
+                        course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
+                    course_title = course_run_details['title']
+                else:
+                    course_details = catalog_api_client.get_course_details(course_id)
+                    course_title = course_details.get('title')
 
                 context_data.update({
-                    'course_title': course_run_details['title'],
+                    'course_title': course_title,
                     'course_start_date': course_start_date,
                 })
             else:
@@ -833,7 +860,15 @@ class GrantDataSharingPermissions(View):
         defer_creation = request.POST.get('defer_creation')
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required():
-            if course_id:
+
+            # Create EnterpriseCourseEnrollment if we found course_run_id instead of course_key in course_id param.
+            # Skip creating EnterpriseCourseEnrollment if we found course_key instead of course_run_id.
+
+            # EnterpriseCourseEnrollment will be created when the user will select a course run.
+            # A CourseEnrollment record will be created and on the post signal of the CourseEnrollment,
+            # an EnterpriseCourseEnrollment record will also get created.
+
+            if course_id and self.is_course_run_id(course_id):
                 try:
                     self.create_enterprise_course_enrollment(request, consent_record, course_id)
                 except IntegrityError:
