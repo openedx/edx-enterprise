@@ -11,6 +11,7 @@ from django.apps import apps
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
+from enterprise.constants import CONTENT_FILTER_FIELD_TYPES
 
 def get_app_config():
     """
@@ -48,3 +49,19 @@ def validate_image_size(image):
     if config and not image.size <= valid_max_image_size_in_bytes:
         raise ValidationError(
             _("The logo image file size must be less than or equal to %s KB.") % config.valid_max_image_size)
+
+
+def validate_content_filter_fields(content_filter):
+    for key in CONTENT_FILTER_FIELD_TYPES:
+        if key in content_filter.keys():
+            if not isinstance(content_filter[key], CONTENT_FILTER_FIELD_TYPES[key]['type']):
+                raise ValidationError(
+                    "Content filter '%s' must be of type %s" % (key, CONTENT_FILTER_FIELD_TYPES[key]['type'])
+                )
+            if CONTENT_FILTER_FIELD_TYPES[key]['type'] == list:
+                if not all(isinstance(x, str) for x in content_filter[key]):
+                    raise ValidationError(
+                        "Content filter '%s' must contain values of type %s" % (
+                            key, CONTENT_FILTER_FIELD_TYPES[key]['subtype']
+                        )
+                    )

@@ -121,6 +121,12 @@ EDX_ORG_NAME = 'edX, Inc'
 # Waffle flag used to switch over edx-enterprise's usage of the enterprise catalog service
 USE_ENTERPRISE_CATALOG = 'use_enterprise_catalog'
 
+# ContentFilter field types for validation.
+CONTENT_FILTER_FIELD_TYPES = {
+    'key': {'type': list, 'subtype': str},
+    'aggregation_key': {'type': list, 'subtype': str},
+    'first_enrollable_paid_seat_price__lte': {'type': str}
+}
 
 def json_serialized_course_modes():
     """
