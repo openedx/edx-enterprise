@@ -128,6 +128,7 @@ CONTENT_FILTER_FIELD_TYPES = {
     'first_enrollable_paid_seat_price__lte': {'type': str}
 }
 
+
 def json_serialized_course_modes():
     """
     :return: serialized course modes.

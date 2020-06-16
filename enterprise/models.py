@@ -57,10 +57,10 @@ from enterprise.utils import (
     get_enterprise_worker_user,
 )
 from enterprise.validators import (
+    validate_content_filter_fields,
     validate_hex_color,
     validate_image_extension,
     validate_image_size,
-    validate_content_filter_fields
 )
 
 try:

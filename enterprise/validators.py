@@ -13,6 +13,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from enterprise.constants import CONTENT_FILTER_FIELD_TYPES
 
+
 def get_app_config():
     """
     :return Application configuration.
@@ -52,6 +53,9 @@ def validate_image_size(image):
 
 
 def validate_content_filter_fields(content_filter):
+    """
+    Validate particular fields (if present) passed in through content_filter are certain types.
+    """
     for key in CONTENT_FILTER_FIELD_TYPES:
         if key in content_filter.keys():
             if not isinstance(content_filter[key], CONTENT_FILTER_FIELD_TYPES[key]['type']):
