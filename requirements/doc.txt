@@ -12,7 +12,7 @@ babel==2.8.0              # via sphinx
 billiard==3.3.0.23        # via -r requirements/test-master.txt, celery
 bleach==3.1.5             # via -r requirements/test-master.txt, readme-renderer
 celery==3.1.26.post2      # via -r requirements/test-master.txt
-certifi==2020.4.5.1       # via -r requirements/test-master.txt, requests
+certifi==2020.4.5.2       # via -r requirements/test-master.txt, requests
 cffi==1.14.0              # via -r requirements/test-master.txt, cryptography
 chardet==3.0.4            # via -r requirements/test-master.txt, doc8, requests
 click==7.1.2              # via -r requirements/test-master.txt, code-annotations
@@ -23,7 +23,7 @@ django-config-models==2.0.2  # via -r requirements/test-master.txt
 django-countries==5.5     # via -r requirements/test-master.txt
 django-crum==0.7.6        # via -r requirements/test-master.txt, edx-rbac
 django-fernet-fields==0.6  # via -r requirements/test-master.txt
-django-filter==2.2.0      # via -r requirements/test-master.txt
+django-filter==2.3.0      # via -r requirements/test-master.txt
 django-ipware==2.1.0      # via -r requirements/test-master.txt
 django-model-utils==4.0.0  # via -r requirements/test-master.txt, edx-rbac
 django-multi-email-field==0.6.1  # via -r requirements/test-master.txt
@@ -39,14 +39,14 @@ drf-jwt==1.14.0           # via -r requirements/test-master.txt, edx-drf-extensi
 edx-django-utils==3.2.3   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.0.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.0  # via -r requirements/test-master.txt, edx-drf-extensions
-edx-rbac==1.2.1           # via -r requirements/test-master.txt
+edx-rbac==1.3.1           # via -r requirements/test-master.txt
 edx-rest-api-client==5.2.1  # via -r requirements/test-master.txt
 edx-sphinx-theme==1.5.0   # via -r requirements/doc.in
 edx-tincan-py35==0.0.5    # via -r requirements/test-master.txt
 future==0.18.2            # via -r requirements/test-master.txt, pyjwkest
 idna==2.9                 # via -r requirements/test-master.txt, requests
 imagesize==1.2.0          # via sphinx
-importlib-metadata==1.6.0  # via -r requirements/test-master.txt, path
+importlib-metadata==1.6.1  # via -r requirements/test-master.txt, path
 jinja2==2.11.2            # via -r requirements/test-master.txt, code-annotations, sphinx
 jsondiff==1.2.0           # via -r requirements/test-master.txt
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements/test-master.txt
