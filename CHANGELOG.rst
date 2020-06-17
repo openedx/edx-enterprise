@@ -14,6 +14,7 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.6] - 2020-06-17
 ---------------------
 
 * Add validation for content_filter subfields in EnterpriseCatalogQuery and EnterpriseCustomerCatalog
