@@ -100,7 +100,7 @@ class EnterpriseCourseEnrollmentView(APIView):
             course_id=course_id
         )
 
-        # TODO: For now, this makes the change backward compatible, we will change this to true boolean support 
+        # TODO: For now, this makes the change backward compatible, we will change this to true boolean support
         enterprise_enrollment.marked_done = marked_done.lower() == 'true'
         enterprise_enrollment.save()
 
