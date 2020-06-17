@@ -100,7 +100,8 @@ class EnterpriseCourseEnrollmentView(APIView):
             course_id=course_id
         )
 
-        enterprise_enrollment.marked_done = marked_done
+        # TODO: change client to use patch body and then process this as proper boolean
+        enterprise_enrollment.marked_done = marked_done == 'true'
         enterprise_enrollment.save()
 
         course_overviews = get_course_overviews([course_id])

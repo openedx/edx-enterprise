@@ -43,7 +43,9 @@ def get_course_run_status(course_overview, certificate_info, enterprise_enrollme
     is_certificate_passing = certificate_info.get('is_passing', False)
     certificate_creation_date = certificate_info.get('created', datetime.max)
 
-    if enterprise_enrollment and enterprise_enrollment.marked_done:
+    if enterprise_enrollment and enterprise_enrollment.marked_done is False:
+        return CourseRunProgressStatuses.IN_PROGRESS
+    if enterprise_enrollment and enterprise_enrollment.marked_done is True:
         return CourseRunProgressStatuses.COMPLETED
     if course_overview['pacing'] == 'instructor':
         if course_overview['has_ended']:

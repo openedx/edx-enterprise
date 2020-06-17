@@ -161,7 +161,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         query_params = {
             'enterprise_id': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,
-            'marked_done': True,
+            'marked_done': 'true',
         }
 
         assert not self.enterprise_enrollment.marked_done
@@ -190,7 +190,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         query_params_full = {
             'enterprise_id': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,
-            'marked_done': True,
+            'marked_done': 'true',
         }
         for key in query_params_full:
             query_params = query_params_full.copy()
@@ -218,7 +218,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         query_params = {
             'enterprise_id': str(uuid.uuid4()),
             'course_id': self.course_run_id,
-            'marked_done': True,
+            'marked_done': 'true',
         }
 
         resp = self.client.patch(
