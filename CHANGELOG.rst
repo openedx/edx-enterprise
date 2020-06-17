@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.5] - 2020-06-17
+---------------------
+
+* Update processing of marked_done field slightly for cleaner boolean usage in client
+
 [3.3.4] - 2020-06-15
 ---------------------
 
