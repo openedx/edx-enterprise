@@ -161,7 +161,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         query_params = {
             'enterprise_id': str(self.enterprise_customer.uuid),
             'course_id': self.course_run_id,
-            'marked_done': 'true',
+            'marked_done': True,
         }
 
         assert not self.enterprise_enrollment.marked_done
