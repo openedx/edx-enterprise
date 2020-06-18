@@ -439,3 +439,27 @@ class CourseCatalogApiServiceClient(CourseCatalogApiClient):
             return bool(cls().get_program_by_uuid(program_uuid))
         except ImproperlyConfigured:
             return False
+
+
+class NoAuthDiscoveryClient:
+    """
+    Class to build a course discovery client to make calls to the discovery service.
+    """
+
+    API_BASE_URL = settings.COURSE_CATALOG_URL_ROOT
+    APPEND_SLASH = False
+
+    def __init__(self):
+        """
+        Create a course discovery client.
+        """
+        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
+
+    def get_health(self):
+        """
+        Retrieve health details for course discovery service.
+
+        Returns:
+            dict: Response containing course discovery service health.
+        """
+        return self.client.health.get()

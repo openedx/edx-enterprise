@@ -489,6 +489,24 @@ class CertificatesApiClient(JwtLmsApiClient):
         return self.client.certificates(username).courses(course_id).get()
 
 
+class NoAuthLMSClient(NoAuthenticationLmsApiClient):
+    """
+    Class to build an LMS client to make calls to the LMS.
+    """
+
+    API_BASE_URL = settings.LMS_INTERNAL_ROOT_URL
+    APPEND_SLASH = False
+
+    def get_health(self):
+        """
+        Retrieve health details for LMS service.
+
+        Returns:
+            dict: Response containing LMS service health.
+        """
+        return self.client.heartbeat.get()
+
+
 def parse_lms_api_datetime(datetime_string, datetime_format=LMS_API_DATETIME_FORMAT):
     """
     Parse a received datetime into a timezone-aware, Python datetime object.

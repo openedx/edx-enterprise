@@ -7,6 +7,7 @@ from django.conf import settings
 from django.conf.urls import include, url
 
 from enterprise.constants import COURSE_KEY_URL_PATTERN
+from enterprise.heartbeat.views import heartbeat
 from enterprise.views import EnterpriseLoginView, EnterpriseSelectionView, GrantDataSharingPermissions, RouterView
 
 ENTERPRISE_ROUTER = RouterView.as_view()
@@ -53,6 +54,11 @@ urlpatterns = [
         r'^enterprise/api/',
         include('enterprise.api.urls'),
         name='enterprise_api'
+    ),
+    url(
+        r'^enterprise/heartbeat/',
+        heartbeat,
+        name='enterprise_heartbeat',
     ),
 ]
 
