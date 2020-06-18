@@ -691,7 +691,7 @@ class GrantDataSharingPermissions(View):
                     )
                 )
                 LOGGER.info(log_message)
-                redirect_url = success_url if success_url is not None else LMS_DASHBOARD_URL
+                redirect_url = success_url if success_url else LMS_DASHBOARD_URL
                 return redirect(redirect_url)
             enterprise_customer = consent_record.enterprise_customer
         elif not request.user.is_staff:
