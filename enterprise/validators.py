@@ -63,7 +63,7 @@ def validate_content_filter_fields(content_filter):
                     "Content filter '%s' must be of type %s" % (key, cftypes[key]['type'])
                 )
             if cftypes[key]['type'] == list:
-                if not all(isinstance(x, str) for x in content_filter[key]):
+                if not all(cftypes[key]['subtype'] == type(x) for x in content_filter[key]):
                     raise ValidationError(
                         "Content filter '%s' must contain values of type %s" % (
                             key, cftypes[key]['subtype']
