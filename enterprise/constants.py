@@ -124,7 +124,6 @@ USE_ENTERPRISE_CATALOG = 'use_enterprise_catalog'
 # ContentFilter field types for validation.
 CONTENT_FILTER_FIELD_TYPES = {
     'key': {'type': list, 'subtype': str},
-    'aggregation_key': {'type': list, 'subtype': str},
     'first_enrollable_paid_seat_price__lte': {'type': str}
 }
 

@@ -2014,10 +2014,6 @@ class TestEnterpriseCatalogQuery(unittest.TestCase):
             'error': ["Content filter 'key' must be of type <class 'list'>"]
         },
         {
-            'content_filter': {'aggregation_key': 'courserun:course'},
-            'error': ["Content filter 'aggregation_key' must be of type <class 'list'>"],
-        },
-        {
             'content_filter': {'first_enrollable_paid_seat_price__lte': [12]},
             'error': ["Content filter 'first_enrollable_paid_seat_price__lte' must be of type <class 'str'>"]
         },
