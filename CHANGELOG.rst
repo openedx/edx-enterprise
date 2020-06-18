@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.6] - 2020-06-17
+---------------------
+
+* Changed GrantDataSharingPermission to redirect to the intended course instead of dashboard, if consent is not required
+
 [3.3.5] - 2020-06-17
 ---------------------
 
