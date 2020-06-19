@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.7] - 2020-06-19
+---------------------
+
+* Bug fix: Added missing migration for content_filter validation changes.
+
 [3.3.6] - 2020-06-17
 ---------------------
 
