@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.11] - 2020-06-25
+---------------------
+
+* Restore EnterpriseCatalogQuery functionality to previous state.
+
 [3.3.10] - 2020-06-24
 ---------------------
 

@@ -55,7 +55,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
+from enterprise.utils import discovery_query_url, get_all_field_names, get_default_catalog_content_filter
 
 try:
     from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -592,22 +592,18 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
 
     list_display = (
         'title',
-        'preview_catalog_url'
+        'discovery_query_url'
     )
 
-    def preview_catalog_url(self, obj):
+    def discovery_query_url(self, obj):
         """
-        Return enterprise catalog url for preview.
+        Return discovery url for preview.
         """
-        catalog_content_metadata_url = \
-            EnterpriseCatalogApiClient.get_content_metadata_url(obj.uuid)
-        return format_html(
-            '<a href="{url}" target="_blank">Preview</a>',
-            url=catalog_content_metadata_url
-        )
+        return discovery_query_url(obj.content_filter)
 
-    readonly_fields = ('preview_catalog_url',)
-    preview_catalog_url.short_description = 'Preview Catalog Courses'
+    readonly_fields = ('discovery_query_url',)
+    discovery_query_url.allow_tags = True
+    discovery_query_url.short_description = 'Preview Catalog Courses'
 
 
 @admin.register(EnterpriseCustomerCatalog)
@@ -619,6 +615,9 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
     class Meta:
         model = EnterpriseCustomerCatalog
+
+    class Media:
+        js = ('enterprise/admin/enterprise_customer_catalog.js',)
 
     list_display = (
         'uuid_nowrap',
