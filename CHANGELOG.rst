@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.8] - 2020-06-23
+---------------------
+
+* Add support to override enrollment attributes for learners
+
 [3.3.7] - 2020-06-19
 ---------------------
 

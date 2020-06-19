@@ -1251,6 +1251,8 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     class Meta:
         unique_together = (('enterprise_customer_user', 'course_id',),)
         app_label = 'enterprise'
+        verbose_name = _('Enterprise Course Enrollment')
+        verbose_name_plural = _('Enterprise Course Enrollments')
         ordering = ['created']
 
     enterprise_customer_user = models.ForeignKey(
