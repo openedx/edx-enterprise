@@ -62,6 +62,11 @@ try:
 except ImportError:
     EnterpriseCatalogApiClient = None
 
+try:
+    from openedx.features.enterprise_support.admin.views import EnrollmentAttributeOverrideView
+except ImportError:
+    EnrollmentAttributeOverrideView = None
+
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
     """
@@ -500,6 +505,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'marked_done',
     )
 
+    change_list_template = "enterprise/admin/enterprise_course_enrollments_list.html"
     search_fields = ('enterprise_customer_user__user_id', 'course_id',)
 
     def has_add_permission(self, request):
@@ -513,6 +519,30 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         Disable deletion for EnterpriseCourseEnrollment.
         """
         return False
+
+    def changelist_view(self, request, extra_context=None):
+        """
+        Override to conditionally show the button.
+        """
+        extra_context = extra_context or {}
+        extra_context['attr_override_button'] = bool(EnrollmentAttributeOverrideView)
+        return super(EnterpriseCourseEnrollmentAdmin, self).changelist_view(request, extra_context=extra_context)
+
+    def get_urls(self):
+        """
+        Append `Enrollment Attribute Override` view url with default urls
+        """
+        custom_urls = []
+        if EnrollmentAttributeOverrideView:
+            custom_urls = [
+                url(
+                    r'^override_attributes/$',
+                    self.admin_site.admin_view(EnrollmentAttributeOverrideView.as_view()),
+                    name='enterprise_override_attributes'
+                ),
+            ]
+
+        return custom_urls + super(EnterpriseCourseEnrollmentAdmin, self).get_urls()
 
 
 @admin.register(PendingEnrollment)
