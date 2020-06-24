@@ -54,7 +54,7 @@ class EnterpriseStatement(Statement):
 
         activity_id = course_overview.id
         if object_type is not None and object_type == 'course':
-            activity_id = course_overview.key
+            activity_id = course_overview.course_key
 
         xapi_activity_id = 'https://{domain}/xapi/activities/{object_type}/{activity_id}'.format(
             domain=domain,
@@ -62,9 +62,13 @@ class EnterpriseStatement(Statement):
             activity_id=activity_id
         )
 
-        xapi_object_extensions = {
-            'https://{domain}/course/key'.format(domain=domain): course_overview.key
-        }
+        xapi_object_extensions = {}
+
+        course_key_keyname = 'https://{domain}/course/key'.format(domain=domain)
+        xapi_object_extensions[course_key_keyname] = course_overview.course_key
+
+        course_uuid_keyname = 'https://{domain}/course/uuid'.format(domain=domain)
+        xapi_object_extensions[course_uuid_keyname] = course_overview.course_uuid
 
         return Activity(
             id=xapi_activity_id,

@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.10] - 2020-06-24
+---------------------
+
+* xAPI: Include course UUID in activity extensions collection
+
 [3.3.9] - 2020-06-24
 ---------------------
 

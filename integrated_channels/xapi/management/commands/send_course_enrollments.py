@@ -125,7 +125,9 @@ class Command(BaseCommand):
 
             course_overview = course_enrollment.course
             courserun_id = six.text_type(course_overview.id)
-            course_overview.key = course_catalog_client.get_course_id(courserun_id)
+            course_run_identifiers = course_catalog_client.get_course_run_identifiers(courserun_id)
+            course_overview.course_key = course_run_identifiers['course_key']
+            course_overview.course_uuid = course_run_identifiers['course_uuid']
 
             response_fields = Command.transmit_course_enrollment_statement(
                 lrs_configuration,
@@ -177,7 +179,7 @@ class Command(BaseCommand):
 
             Command.save_xapi_learner_data_transmission_audit(
                 user,
-                course_overview.key,
+                course_overview.course_key,
                 enterprise_course_enrollment_id,
                 response_fields.get('status'),
                 response_fields.get('error_message')
