@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.9] - 2020-06-24
+---------------------
+
+* Remove verbose names from EnterpriseCourseEnrollment model Meta class
+
 [3.3.8] - 2020-06-23
 ---------------------
 
