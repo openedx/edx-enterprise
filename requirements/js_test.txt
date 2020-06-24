@@ -8,7 +8,7 @@ cheroot==8.3.0            # via cherrypy
 cherrypy==18.6.0          # via jasmine
 glob2==0.7                # via jasmine-core
 importlib-metadata==1.6.1  # via importlib-resources
-importlib-resources==2.0.0  # via jaraco.text
+importlib-resources==2.0.1  # via jaraco.text
 jaraco.classes==2.0       # via -r requirements/js_test.in, jaraco.collections
 jaraco.collections==2.1   # via -r requirements/js_test.in, cherrypy
 jaraco.functools==2.0     # via -r requirements/js_test.in, cheroot, jaraco.text, tempora
@@ -17,7 +17,7 @@ jasmine-core==3.1.0       # via jasmine
 jasmine==3.1.0            # via -r requirements/js_test.in
 jinja2==2.11.2            # via jasmine
 markupsafe==1.1.1         # via jinja2
-more-itertools==8.3.0     # via cheroot, cherrypy, jaraco.functools, zipp
+more-itertools==8.4.0     # via cheroot, cherrypy, jaraco.functools, zipp
 ordereddict==1.1          # via jasmine-core
 portend==2.6              # via cherrypy
 pytz==2020.1              # via tempora
