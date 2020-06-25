@@ -234,6 +234,18 @@ class CourseCatalogApiClient:
         )
         return None
 
+    def get_course_run_identifiers(self, course_run_id):
+        """
+        Return all course and course run keys and uuids for the specified course run id
+        """
+        course, course_run = self.get_course_and_course_run(course_run_id)
+        identifiers = {}
+        identifiers['course_key'] = course.key
+        identifiers['course_uuid'] = course.uuid
+        identifiers['course_run_key'] = course_run.key
+        identifiers['course_run_uuid'] = course_run.uuid
+        return identifiers
+
     def get_course_and_course_run(self, course_run_id):
         """
         Return the course and course run metadata for the given course run ID.

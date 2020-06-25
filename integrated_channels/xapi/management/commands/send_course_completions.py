@@ -148,7 +148,9 @@ class Command(BaseCommand):
             user = users.get(course_grade.user_id)
             courserun_id = six.text_type(course_grade.course_id)
             course_overview = course_overviews.get(course_grade.course_id)
-            course_overview.key = course_catalog_client.get_course_id(courserun_id)
+            course_run_identifiers = course_catalog_client.get_course_run_identifiers(courserun_id)
+            course_overview.course_key = course_run_identifiers['course_key']
+            course_overview.course_uuid = course_run_identifiers['course_uuid']
 
             default_error_message = 'Days argument has been deprecated.  Value: {days}'.format(days=days)
             response_fields = {'status': 500, 'error_message': default_error_message}

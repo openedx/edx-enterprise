@@ -36,12 +36,13 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
             id='course-v1:edX+DemoX+Demo_Course',
             display_name=faker.text(max_nb_chars=25),
             short_description=faker.text(),
-            key='edX+DemoX',
+            course_key='edX+DemoX',
+            course_uuid='b1e7c719af3c42288c6f50e2124bb913',
         )
 
         self.object_id_course = 'https://{domain}/xapi/activities/course/{activity_id}'.format(
             domain=self.site.domain,
-            activity_id=self.course_overview.key)
+            activity_id=self.course_overview.course_key)
 
         self.object_id_courserun = 'https://{domain}/xapi/activities/courserun/{activity_id}'.format(
             domain=self.site.domain,
@@ -58,6 +59,14 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
             'objectType': 'Agent'
         }
 
+        self.extensions = {}
+
+        self.extension_course_key = 'https://{domain}/course/key'.format(domain=self.site.domain)
+        self.extensions[self.extension_course_key] = self.course_overview.course_key
+
+        self.extension_course_uuid = 'https://{domain}/course/uuid'.format(domain=self.site.domain)
+        self.extensions[self.extension_course_uuid] = self.course_overview.course_uuid
+
         self.object_course = {
             'definition':
                 {
@@ -70,10 +79,7 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
                         {
                             'en-US': self.course_overview.display_name
                         },
-                    "extensions":
-                        {
-                            'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
-                        }
+                    "extensions": self.extensions
                 },
             'id': self.object_id_course,
             'objectType': 'Activity'
@@ -91,10 +97,7 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
                         {
                             'en-US': self.course_overview.display_name
                         },
-                    "extensions":
-                        {
-                            'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
-                        }
+                    "extensions": self.extensions
                 },
             'id': self.object_id_courserun,
             'objectType': 'Activity'
