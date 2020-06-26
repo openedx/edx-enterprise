@@ -3,8 +3,6 @@
 Package for generic data exporters which serialize data to be transmitted to integrated channels.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 
 class Exporter:
     """

@@ -3,8 +3,6 @@
 Fake responses for course catalog api.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import copy
 
 import mock

@@ -3,8 +3,6 @@
 Tests for the integrated channel models.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import unittest
 
 from pytest import mark

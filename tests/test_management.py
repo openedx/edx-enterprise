@@ -2,7 +2,6 @@
 """
 Test the Enterprise management commands and related functions.
 """
-from __future__ import absolute_import, division, unicode_literals, with_statement
 
 import logging
 import unittest

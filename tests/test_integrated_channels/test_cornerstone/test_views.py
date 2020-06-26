@@ -3,8 +3,6 @@
 Tests for Cornerstone views.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import mock
 import responses
 from pytest import mark

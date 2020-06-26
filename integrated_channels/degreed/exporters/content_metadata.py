@@ -3,8 +3,6 @@
 Content metadata exporter for Degreed.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from enterprise.utils import get_closest_course_run, get_course_run_duration_info

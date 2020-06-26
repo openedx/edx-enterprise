@@ -3,8 +3,6 @@
 Tests for helper functions in the Consent application.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import ddt
 from pytest import mark
 

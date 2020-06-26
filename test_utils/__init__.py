@@ -6,7 +6,6 @@ Test utilities.
 # one cannot import from anywhere under tests folder. However, some utility classes/methods might be useful
 # in multiple test modules. So this package the place to put them.
 
-from __future__ import absolute_import, unicode_literals
 
 import copy
 import json

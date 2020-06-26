@@ -3,8 +3,6 @@
 Mixins for edX Enterprise's Consent application.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 

@@ -2,7 +2,6 @@
 """
 Tests for the `edx-enterprise` decorators.
 """
-from __future__ import absolute_import, unicode_literals
 
 import unittest
 import warnings
@@ -37,6 +36,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
     """
     Tests for enterprise decorators.
     """
+
     def setUp(self):
         """
         Set up test environment.
@@ -63,8 +63,10 @@ class TestEnterpriseDecorators(unittest.TestCase):
         """
         Calling a deprecated function emits a warning.
         """
+
         def func():
             """ Function to be decorated. """
+
         with warnings.catch_warnings(record=True) as warning:
             warnings.simplefilter('always')
             deprecated('Yep!')(func)()
@@ -76,8 +78,10 @@ class TestEnterpriseDecorators(unittest.TestCase):
         """
         Emitted warnings from a function are ignored.
         """
+
         def func():
             """ Function to be decorated. """
+
         with warnings.catch_warnings(record=True) as warning:
             warnings.simplefilter('always')
             ignore_warning(DeprecationWarning)(func)()

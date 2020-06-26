@@ -3,8 +3,6 @@
 Utilities for Cornerstone integrated channels.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 from logging import getLogger
 
 from integrated_channels.cornerstone.models import CornerstoneLearnerDataTransmissionAudit

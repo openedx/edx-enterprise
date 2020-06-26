@@ -2,7 +2,6 @@
 """
 URL definitions for enterprise api version 1 endpoint.
 """
-from __future__ import absolute_import, unicode_literals
 
 from rest_framework.routers import DefaultRouter
 

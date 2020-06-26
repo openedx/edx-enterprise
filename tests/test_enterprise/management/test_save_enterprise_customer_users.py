@@ -2,7 +2,6 @@
 """
 Tests for the djagno management command `save_enterprise_customer_users`.
 """
-from __future__ import absolute_import, unicode_literals
 
 import mock
 from pytest import mark

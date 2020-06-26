@@ -2,7 +2,6 @@
 """
 Throttle classes for enterprise API.
 """
-from __future__ import absolute_import, unicode_literals
 
 from rest_framework.throttling import UserRateThrottle
 

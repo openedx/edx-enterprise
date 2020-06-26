@@ -3,8 +3,6 @@
 Errors thrown by the APIs in the Consent application.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 
 class ConsentAPIRequestError(Exception):
     """There was a problem with a request to the Consent application's APIs."""

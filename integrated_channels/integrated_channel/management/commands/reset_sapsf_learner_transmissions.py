@@ -2,7 +2,6 @@
 """
 Reset SAPSF learner transmissions between two dates.
 """
-from __future__ import absolute_import, unicode_literals
 
 from django.apps import apps
 from django.core.management.base import BaseCommand

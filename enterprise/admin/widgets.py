@@ -2,7 +2,6 @@
 """
 Widgets to be used in the enterprise djangoapp.
 """
-from __future__ import absolute_import, unicode_literals
 
 from django.forms.widgets import Input
 

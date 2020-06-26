@@ -2,7 +2,6 @@
 """
 Views for enterprise api version 1 endpoint.
 """
-from __future__ import absolute_import, unicode_literals
 
 from logging import getLogger
 from smtplib import SMTPException

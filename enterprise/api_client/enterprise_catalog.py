@@ -3,8 +3,6 @@
 Client for communicating with the Enterprise API.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 from collections import OrderedDict
 from logging import getLogger
