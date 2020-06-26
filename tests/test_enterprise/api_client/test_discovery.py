@@ -130,6 +130,73 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         self.get_data_mock.return_value = response
         assert self.api.get_course_run("any") == {}
 
+    @ddt.data(
+        "course-v1:JediAcademy+AppliedTelekinesis+T1",
+        "course-v1:TrantorAcademy+Psychohistory101+T1",
+    )
+    def test_get_course_run_identifiers(self, course_run_id):
+
+        self.get_data_mock.return_value = {}
+        actual_result = self.api.get_course_run_identifiers(course_run_id)
+        assert 'course_key' in actual_result
+        assert actual_result['course_key'] is None
+        assert 'course_uuid' in actual_result
+        assert actual_result['course_uuid'] is None
+        assert 'course_run_key' in actual_result
+        assert actual_result['course_run_key'] is None
+        assert 'course_run_uuid' in actual_result
+        assert actual_result['course_run_uuid'] is None
+
+        mock_response = {
+            "key": "JediAcademy+AppliedTelekinesis",
+            "uuid": "785b11f5-fad5-4ce1-9233-e1a3ed31aadb",
+        }
+        self.get_data_mock.return_value = mock_response
+        actual_result = self.api.get_course_run_identifiers(course_run_id)
+        assert 'course_key' in actual_result
+        assert actual_result['course_key'] == 'JediAcademy+AppliedTelekinesis'
+        assert 'course_uuid' in actual_result
+        assert actual_result['course_uuid'] == '785b11f5-fad5-4ce1-9233-e1a3ed31aadb'
+        assert 'course_run_key' in actual_result
+        assert actual_result['course_run_key'] is None
+        assert 'course_run_uuid' in actual_result
+        assert actual_result['course_run_uuid'] is None
+
+        mock_response = {
+            "key": "JediAcademy+AppliedTelekinesis",
+            "uuid": "785b11f5-fad5-4ce1-9233-e1a3ed31aadb",
+            "course_runs": [],
+        }
+        self.get_data_mock.return_value = mock_response
+        actual_result = self.api.get_course_run_identifiers(course_run_id)
+        assert 'course_key' in actual_result
+        assert actual_result['course_key'] == 'JediAcademy+AppliedTelekinesis'
+        assert 'course_uuid' in actual_result
+        assert actual_result['course_uuid'] == '785b11f5-fad5-4ce1-9233-e1a3ed31aadb'
+        assert 'course_run_key' in actual_result
+        assert actual_result['course_run_key'] is None
+        assert 'course_run_uuid' in actual_result
+        assert actual_result['course_run_uuid'] is None
+
+        mock_response = {
+            "key": "JediAcademy+AppliedTelekinesis",
+            "uuid": "785b11f5-fad5-4ce1-9233-e1a3ed31aadb",
+            "course_runs": [{
+                "key": course_run_id,
+                "uuid": "1234abcd-fad5-4ce1-9233-e1a3ed31aadb"
+            }],
+        }
+        self.get_data_mock.return_value = mock_response
+        actual_result = self.api.get_course_run_identifiers(course_run_id)
+        assert 'course_key' in actual_result
+        assert actual_result['course_key'] == 'JediAcademy+AppliedTelekinesis'
+        assert 'course_uuid' in actual_result
+        assert actual_result['course_uuid'] == '785b11f5-fad5-4ce1-9233-e1a3ed31aadb'
+        assert 'course_run_key' in actual_result
+        assert actual_result['course_run_key'] == course_run_id
+        assert 'course_run_uuid' in actual_result
+        assert actual_result['course_run_uuid'] == '1234abcd-fad5-4ce1-9233-e1a3ed31aadb'
+
     @ddt.data("Apollo", "Star Wars", "mk Ultra")
     def test_get_program_by_uuid(self, program_id):
         """
