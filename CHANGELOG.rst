@@ -54,7 +54,6 @@ Unreleased
 
 * Add validation for content_filter subfields in EnterpriseCatalogQuery and EnterpriseCustomerCatalog
 
-
 [3.3.5] - 2020-06-17
 ---------------------
 
