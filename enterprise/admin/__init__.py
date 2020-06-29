@@ -2,7 +2,6 @@
 """
 Django admin integration for enterprise app.
 """
-from __future__ import absolute_import, unicode_literals
 
 import json
 
@@ -55,12 +54,17 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import get_all_field_names, get_default_catalog_content_filter
+from enterprise.utils import discovery_query_url, get_all_field_names, get_default_catalog_content_filter
 
 try:
     from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 except ImportError:
     EnterpriseCatalogApiClient = None
+
+try:
+    from openedx.features.enterprise_support.admin.views import EnrollmentAttributeOverrideView
+except ImportError:
+    EnrollmentAttributeOverrideView = None
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -500,6 +504,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'marked_done',
     )
 
+    change_list_template = "enterprise/admin/enterprise_course_enrollments_list.html"
     search_fields = ('enterprise_customer_user__user_id', 'course_id',)
 
     def has_add_permission(self, request):
@@ -513,6 +518,30 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         Disable deletion for EnterpriseCourseEnrollment.
         """
         return False
+
+    def changelist_view(self, request, extra_context=None):
+        """
+        Override to conditionally show the button.
+        """
+        extra_context = extra_context or {}
+        extra_context['attr_override_button'] = bool(EnrollmentAttributeOverrideView)
+        return super(EnterpriseCourseEnrollmentAdmin, self).changelist_view(request, extra_context=extra_context)
+
+    def get_urls(self):
+        """
+        Append `Enrollment Attribute Override` view url with default urls
+        """
+        custom_urls = []
+        if EnrollmentAttributeOverrideView:
+            custom_urls = [
+                url(
+                    r'^override_attributes/$',
+                    self.admin_site.admin_view(EnrollmentAttributeOverrideView.as_view()),
+                    name='enterprise_override_attributes'
+                ),
+            ]
+
+        return custom_urls + super(EnterpriseCourseEnrollmentAdmin, self).get_urls()
 
 
 @admin.register(PendingEnrollment)
@@ -562,22 +591,18 @@ class EnterpriseCatalogQueryAdmin(admin.ModelAdmin):
 
     list_display = (
         'title',
-        'preview_catalog_url'
+        'discovery_query_url'
     )
 
-    def preview_catalog_url(self, obj):
+    def discovery_query_url(self, obj):
         """
-        Return enterprise catalog url for preview.
+        Return discovery url for preview.
         """
-        catalog_content_metadata_url = \
-            EnterpriseCatalogApiClient.get_content_metadata_url(obj.uuid)
-        return format_html(
-            '<a href="{url}" target="_blank">Preview</a>',
-            url=catalog_content_metadata_url
-        )
+        return discovery_query_url(obj.content_filter)
 
-    readonly_fields = ('preview_catalog_url',)
-    preview_catalog_url.short_description = 'Preview Catalog Courses'
+    readonly_fields = ('discovery_query_url',)
+    discovery_query_url.allow_tags = True
+    discovery_query_url.short_description = 'Preview Catalog Courses'
 
 
 @admin.register(EnterpriseCustomerCatalog)
@@ -589,6 +614,9 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
 
     class Meta:
         model = EnterpriseCustomerCatalog
+
+    class Media:
+        js = ('enterprise/admin/enterprise_customer_catalog.js',)
 
     list_display = (
         'uuid_nowrap',

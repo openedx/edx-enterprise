@@ -3,8 +3,6 @@
 Send xAPI statements to the LRS configured via admin.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 from logging import getLogger
 
@@ -22,7 +20,6 @@ try:
     from student.models import CourseEnrollment
 except ImportError:
     CourseEnrollment = None
-
 
 LOGGER = getLogger(__name__)
 
@@ -125,7 +122,9 @@ class Command(BaseCommand):
 
             course_overview = course_enrollment.course
             courserun_id = six.text_type(course_overview.id)
-            course_overview.key = course_catalog_client.get_course_id(courserun_id)
+            course_run_identifiers = course_catalog_client.get_course_run_identifiers(courserun_id)
+            course_overview.course_key = course_run_identifiers['course_key']
+            course_overview.course_uuid = course_run_identifiers['course_uuid']
 
             response_fields = Command.transmit_course_enrollment_statement(
                 lrs_configuration,
@@ -134,7 +133,6 @@ class Command(BaseCommand):
             )
 
             if is_success_response(response_fields):
-
                 Command.transmit_courserun_enrollment_statement(
                     lrs_configuration,
                     course_enrollment.user,
@@ -167,7 +165,6 @@ class Command(BaseCommand):
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
-
             courserun_id = six.text_type(course_overview.id)
             enterprise_course_enrollment_id = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
                 user,
@@ -177,7 +174,7 @@ class Command(BaseCommand):
 
             Command.save_xapi_learner_data_transmission_audit(
                 user,
-                course_overview.key,
+                course_overview.course_key,
                 enterprise_course_enrollment_id,
                 response_fields.get('status'),
                 response_fields.get('error_message')
@@ -193,7 +190,6 @@ class Command(BaseCommand):
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
-
             courserun_id = six.text_type(course_overview.id)
             enterprise_course_enrollment_id = EnterpriseCourseEnrollment.get_enterprise_course_enrollment_id(
                 user,

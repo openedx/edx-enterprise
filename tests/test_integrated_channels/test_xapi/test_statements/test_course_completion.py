@@ -3,8 +3,6 @@
 Test for xAPI Learner Course Completion Statements.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 import unittest
 
@@ -35,14 +33,15 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
             id='course-v1:edX+DemoX+Demo_Course',
             display_name=faker.text(max_nb_chars=25),
             short_description=faker.text(),
-            key='edX+DemoX',
+            course_key='edX+DemoX',
+            course_uuid='b1e7c719af3c42288c6f50e2124bb913',
         )
         self.course_grade = Mock(percent_grade=0.80, passed_timestamp='2020-04-01')
         self.course_grade_notpassed = Mock(percent_grade=0.50, passed_timestamp=None)
 
         self.object_id_course = 'https://{domain}/xapi/activities/course/{activity_id}'.format(
             domain=self.site.domain,
-            activity_id=self.course_overview.key)
+            activity_id=self.course_overview.course_key)
 
         self.object_id_courserun = 'https://{domain}/xapi/activities/courserun/{activity_id}'.format(
             domain=self.site.domain,
@@ -58,6 +57,14 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
             'objectType': 'Agent'
         }
 
+        self.extensions = {}
+
+        self.extension_course_key = 'https://{domain}/course/key'.format(domain=self.site.domain)
+        self.extensions[self.extension_course_key] = self.course_overview.course_key
+
+        self.extension_course_uuid = 'https://{domain}/course/uuid'.format(domain=self.site.domain)
+        self.extensions[self.extension_course_uuid] = self.course_overview.course_uuid
+
         self.object_course = {
             'definition': {
                 'type': X_API_ACTIVITY_COURSE,
@@ -67,9 +74,7 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
                 'name': {
                     'en-US': self.course_overview.display_name
                 },
-                "extensions": {
-                    'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
-                }
+                "extensions": self.extensions
             },
             'id': self.object_id_course,
             'objectType': 'Activity'
@@ -84,9 +89,7 @@ class TestLearnerCourseCompletionStatement(unittest.TestCase):
                 'name': {
                     'en-US': self.course_overview.display_name
                 },
-                "extensions": {
-                    'https://{domain}/course/key'.format(domain=self.site.domain): self.course_overview.key
-                }
+                "extensions": self.extensions
             },
             'id': self.object_id_courserun,
             'objectType': 'Activity'

@@ -3,8 +3,6 @@
 Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal app.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import uuid
 
 import mock

@@ -3,8 +3,6 @@
 Tests for SAPSF content metadata exporters.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import unittest
 
 import ddt

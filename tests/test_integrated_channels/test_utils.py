@@ -3,8 +3,6 @@
 Tests for the utilities used by integration channels.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import unittest
 from datetime import timedelta
 

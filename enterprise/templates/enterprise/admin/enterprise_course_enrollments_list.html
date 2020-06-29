@@ -1,0 +1,8 @@
+{% extends 'admin/change_list.html' %}
+
+{% block object-tools-items %}
+    {% if attr_override_button %}
+      <li><a href="override_attributes/">Override Enrollment Attributes</a></li>
+    {% endif %}
+    {{ block.super }}
+{% endblock %}

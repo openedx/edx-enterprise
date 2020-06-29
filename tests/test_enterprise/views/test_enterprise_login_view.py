@@ -3,8 +3,6 @@
 Tests for the ``EnterpriseLoginView`` view of the Enterprise app.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import ddt
 import mock
 from pytest import mark

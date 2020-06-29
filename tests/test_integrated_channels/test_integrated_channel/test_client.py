@@ -3,8 +3,6 @@
 Tests for the base integrated channel API client.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import unittest
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient

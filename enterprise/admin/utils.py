@@ -2,7 +2,6 @@
 """
 Admin utilities.
 """
-from __future__ import absolute_import, unicode_literals
 
 import unicodecsv
 
@@ -81,6 +80,34 @@ class ValidationMessages:
     )
 
 
+def validate_csv(file_stream, expected_columns=None):
+    """
+    Validate csv file for encoding and expected header.
+
+    Args:
+        file_stream: input file
+        expected_columns: list of column names that are expected to be present in csv
+
+    Returns:
+       reader: an iterable for csv datat if csv passes the validation
+
+    Raises:
+        ValidationError
+    """
+    try:
+        reader = unicodecsv.DictReader(file_stream, encoding="utf-8")
+        reader_fieldnames = reader.fieldnames
+    except (unicodecsv.Error, UnicodeDecodeError):
+        raise ValidationError(ValidationMessages.INVALID_ENCODING)
+
+    if expected_columns and set(expected_columns) - set(reader_fieldnames):
+        raise ValidationError(ValidationMessages.MISSING_EXPECTED_COLUMNS.format(
+            expected_columns=", ".join(expected_columns), actual_columns=", ".join(reader.fieldnames)
+        ))
+
+    return reader
+
+
 def parse_csv(file_stream, expected_columns=None):
     """
     Parse csv file and return a stream of dictionaries representing each row.
@@ -94,16 +121,7 @@ def parse_csv(file_stream, expected_columns=None):
     Yields:
         dict: CSV line parsed into a dictionary.
     """
-    try:
-        reader = unicodecsv.DictReader(file_stream, encoding="utf-8")
-        reader_fieldnames = reader.fieldnames
-    except (unicodecsv.Error, UnicodeDecodeError):
-        raise ValidationError(ValidationMessages.INVALID_ENCODING)
-
-    if expected_columns and set(expected_columns) - set(reader_fieldnames):
-        raise ValidationError(ValidationMessages.MISSING_EXPECTED_COLUMNS.format(
-            expected_columns=", ".join(expected_columns), actual_columns=", ".join(reader.fieldnames)
-        ))
+    reader = validate_csv(file_stream, expected_columns)
 
     # "yield from reader" would be nicer, but we're on python2.7 yet.
     for row in reader:

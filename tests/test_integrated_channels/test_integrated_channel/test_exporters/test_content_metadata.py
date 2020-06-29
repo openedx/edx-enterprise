@@ -3,8 +3,6 @@
 Tests for the base content metadata exporter.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import logging
 import unittest
 

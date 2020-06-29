@@ -2,7 +2,6 @@
 """
 Django admin integration for configuring sap_success_factors app to communicate with SAP SuccessFactors systems.
 """
-from __future__ import absolute_import, unicode_literals
 
 from config_models.admin import ConfigurationModelAdmin
 from requests import RequestException

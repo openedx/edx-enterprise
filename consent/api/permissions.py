@@ -3,8 +3,6 @@
 Permission classes for the Consent API.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from rest_framework import permissions
 
 from enterprise.utils import get_request_value

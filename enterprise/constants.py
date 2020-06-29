@@ -3,8 +3,6 @@
 Enterprise Django application constants.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 
 from django.utils.translation import ugettext_lazy as _
@@ -73,7 +71,6 @@ ALLOWED_TAGS = [
     u'li', u'ol', u'strong', u'ul', u'p', u'h1', u'h2',
 ]
 
-
 DEFAULT_CATALOG_CONTENT_FILTER = {
     'content_type': 'course',
     'partner': 'edx',
@@ -120,6 +117,12 @@ EDX_ORG_NAME = 'edX, Inc'
 
 # Waffle flag used to switch over edx-enterprise's usage of the enterprise catalog service
 USE_ENTERPRISE_CATALOG = 'use_enterprise_catalog'
+
+# ContentFilter field types for validation.
+CONTENT_FILTER_FIELD_TYPES = {
+    'key': {'type': list, 'subtype': str},
+    'first_enrollable_paid_seat_price__lte': {'type': str}
+}
 
 
 def json_serialized_course_modes():

@@ -5,8 +5,6 @@ In a real-world use case, apps in this project are installed into other
 Django applications, so these settings will not be used.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from os.path import abspath, dirname, join
 
 from celery import Celery
@@ -255,7 +253,6 @@ EVENT_TRACKING_BACKENDS = {
     }
 }
 EVENT_TRACKING_PROCESSORS = []
-
 
 #################################### CELERY ####################################
 

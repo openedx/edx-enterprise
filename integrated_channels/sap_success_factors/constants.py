@@ -3,8 +3,6 @@
 Constants used by the SAPSuccessFactors integrated channel.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 SUCCESSFACTORS_OCN_LANGUAGE_CODES = {
     "ms": {
         "_": "Malay"

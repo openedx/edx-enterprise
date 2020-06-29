@@ -3,8 +3,6 @@
 Class for transmitting content metadata to Cornerstone.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from integrated_channels.cornerstone.client import CornerstoneAPIClient
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 

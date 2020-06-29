@@ -3,8 +3,6 @@
 Database models for Enterprise Integrated Channel SAP SuccessFactors.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 from logging import getLogger
 

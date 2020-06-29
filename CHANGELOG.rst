@@ -14,10 +14,45 @@ Change Log
 Unreleased
 --------------------
 
-[3.3.6] - 2020-06-17
+[3.3.13] - 2020-06-29
 ---------------------
 
 * Changed GrantDataSharingPermission to redirect to the intended course instead of dashboard, if consent is not required
+
+[3.3.12] - 2020-06-27
+---------------------
+
+* Repair invalid key references in Discovery API Client method.
+
+[3.3.11] - 2020-06-25
+---------------------
+
+* Restore EnterpriseCatalogQuery functionality to previous state.
+
+[3.3.10] - 2020-06-24
+---------------------
+
+* xAPI: Include course UUID in activity extensions collection
+
+[3.3.9] - 2020-06-24
+---------------------
+
+* Remove verbose names from EnterpriseCourseEnrollment model Meta class
+
+[3.3.8] - 2020-06-23
+---------------------
+
+* Add support to override enrollment attributes for learners
+
+[3.3.7] - 2020-06-19
+---------------------
+
+* Bug fix: Added missing migration for content_filter validation changes.
+
+[3.3.6] - 2020-06-17
+---------------------
+
+* Add validation for content_filter subfields in EnterpriseCatalogQuery and EnterpriseCustomerCatalog
 
 [3.3.5] - 2020-06-17
 ---------------------

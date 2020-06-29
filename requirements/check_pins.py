@@ -4,8 +4,6 @@ Compare two pip requirements files.  Everything in the first one should match
 one in the second one.
 """
 
-from __future__ import absolute_import, print_function, unicode_literals
-
 import re
 import sys
 

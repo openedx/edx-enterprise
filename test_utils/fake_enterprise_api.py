@@ -2,7 +2,6 @@
 """
 Mock Enterprise API for testing.
 """
-from __future__ import absolute_import, unicode_literals
 
 from hashlib import md5
 

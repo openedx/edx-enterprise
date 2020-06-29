@@ -3,8 +3,6 @@
 Tests for clients in integrated_channels.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import datetime
 import json
 import unittest

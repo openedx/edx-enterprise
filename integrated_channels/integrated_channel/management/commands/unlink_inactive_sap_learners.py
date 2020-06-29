@@ -3,8 +3,6 @@
 Unlink inactive enterprise learners of SAP Success Factors from related EnterpriseCustomer(s).
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from django.core.management.base import BaseCommand

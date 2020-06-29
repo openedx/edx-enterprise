@@ -7,8 +7,6 @@ metadata for content contained in the catalogs associated with a particular
 enterprise customer.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import json
 from collections import OrderedDict
 from logging import getLogger

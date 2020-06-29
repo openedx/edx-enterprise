@@ -2,7 +2,6 @@
 """
 Client for communicating with the E-Commerce API.
 """
-from __future__ import absolute_import, unicode_literals
 
 import logging
 
@@ -17,7 +16,6 @@ try:
     from openedx.core.djangoapps.commerce.utils import ecommerce_api_client
 except ImportError:
     ecommerce_api_client = None
-
 
 LOGGER = logging.getLogger(__name__)
 

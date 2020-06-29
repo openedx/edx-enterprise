@@ -3,8 +3,6 @@
 Class for transmitting content metadata to SuccessFactors.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import logging
 
 from integrated_channels.exceptions import ClientError

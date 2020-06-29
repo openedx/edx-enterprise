@@ -3,8 +3,6 @@
 Tests for the ``HandleConsentEnrollment`` view of the Enterprise app.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import ddt
 import mock
 from faker import Factory as FakerFactory

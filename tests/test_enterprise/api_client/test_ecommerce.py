@@ -3,8 +3,6 @@
 Tests for the `edx-enterprise` course catalogs api module.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import unittest
 
 import ddt

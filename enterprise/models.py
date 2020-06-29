@@ -2,7 +2,6 @@
 """
 Database models for enterprise.
 """
-from __future__ import absolute_import, unicode_literals
 
 import collections
 import json
@@ -56,7 +55,12 @@ from enterprise.utils import (
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
 )
-from enterprise.validators import validate_hex_color, validate_image_extension, validate_image_size
+from enterprise.validators import (
+    validate_content_filter_fields,
+    validate_hex_color,
+    validate_image_extension,
+    validate_image_size,
+)
 
 try:
     from lms.djangoapps.email_marketing.tasks import update_user
@@ -1381,7 +1385,8 @@ class EnterpriseCatalogQuery(TimeStampedModel):
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a JSON object. An empty JSON object means that all available content items will be "
             "included in the catalog."
-        )
+        ),
+        validators=[validate_content_filter_fields]
     )
 
     class Meta:
@@ -1444,7 +1449,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             "Query parameters which will be used to filter the discovery service's search/all endpoint results, "
             "specified as a Json object. An empty Json object means that all available content items will be "
             "included in the catalog."
-        )
+        ),
+        validators=[validate_content_filter_fields]
     )
     enabled_course_modes = JSONField(
         default=json_serialized_course_modes,

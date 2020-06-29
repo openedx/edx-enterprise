@@ -3,9 +3,6 @@
 Learner data exporter for Enterprise Integrated Channel SAP SuccessFactors.
 """
 
-
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from requests import RequestException

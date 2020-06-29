@@ -3,9 +3,6 @@
 Learner data exporter for Enterprise Integrated Channel Degreed.
 """
 
-
-from __future__ import absolute_import, unicode_literals
-
 from datetime import datetime
 from logging import getLogger
 

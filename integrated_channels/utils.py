@@ -3,8 +3,6 @@
 Utilities common to different integrated channels.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import math
 import re

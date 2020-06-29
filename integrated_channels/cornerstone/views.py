@@ -1,7 +1,6 @@
 """
 Views containing APIs for cornerstone integrated channel
 """
-from __future__ import absolute_import, unicode_literals
 
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import generics, permissions, renderers, status

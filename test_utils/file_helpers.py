@@ -2,7 +2,6 @@
 """
 Utility functions for dealing with files in tests.
 """
-from __future__ import absolute_import, unicode_literals
 
 import six
 import unicodecsv

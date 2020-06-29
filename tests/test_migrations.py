@@ -3,8 +3,6 @@
 Tests for migrations, especially potentially risky data migrations.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.test.testcases import TransactionTestCase

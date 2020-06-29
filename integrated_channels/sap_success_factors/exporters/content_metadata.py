@@ -3,8 +3,6 @@
 Content metadata exporter for SAP SuccessFactors.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from logging import getLogger
 
 from django.utils.translation import ugettext_lazy as _

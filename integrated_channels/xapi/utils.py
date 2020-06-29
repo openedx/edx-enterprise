@@ -4,8 +4,6 @@
 Utility functions for xAPI.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import logging
 
 import six
@@ -81,7 +79,7 @@ def send_course_enrollment_statement(lrs_configuration, user, course_overview, o
          course_overview (CourseOverview): CourseOverview object containing course details.
     """
     event_type = 'enrollment'
-    course_id = course_overview.key if object_type == 'course' else six.text_type(course_overview.id)
+    course_id = course_overview.course_key if object_type == 'course' else six.text_type(course_overview.id)
     username = user.username if user else 'Unavailable'
     user_social_auth = get_user_social_auth(user, lrs_configuration.enterprise_customer)
 
@@ -119,7 +117,7 @@ def send_course_completion_statement(lrs_configuration,
          course_grade (CourseGrade): Course grade object.
     """
     event_type = 'completion'
-    course_id = course_overview.key if object_type == 'course' else six.text_type(course_overview.id)
+    course_id = course_overview.course_key if object_type == 'course' else six.text_type(course_overview.id)
     username = user.username if user else 'Unavailable'
     user_social_auth = get_user_social_auth(user, lrs_configuration.enterprise_customer)
 

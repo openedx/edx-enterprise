@@ -2,7 +2,6 @@
 """
 URL definitions for enterprise api version 1 endpoint.
 """
-from __future__ import absolute_import, unicode_literals
 
 from rest_framework.routers import DefaultRouter
 
@@ -27,6 +26,11 @@ router.register(
 )
 
 urlpatterns = [
+    url(
+        r'^enterprise_catalog_query/(?P<catalog_query_id>[\d]+)/$',
+        views.CatalogQueryView.as_view(),
+        name='enterprise-catalog-query'
+    ),
     url(
         r'^request_codes$',
         views.CouponCodesView.as_view(),

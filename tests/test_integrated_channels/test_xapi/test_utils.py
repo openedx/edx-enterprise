@@ -3,8 +3,6 @@
 Test for xAPI utility functions.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import unittest
 from datetime import datetime, timedelta
 
@@ -52,7 +50,8 @@ class TestUtils(unittest.TestCase):
             effort=self.faker.text(max_nb_chars=10),  # pylint: disable=no-member
             start=now,
             end=now + timedelta(weeks=3, days=4),
-            key='OrgX+Course101'
+            course_key='OrgX+Course101',
+            course_uuid='b1e7c719af3c42288c6f50e2124bb913',
         )
         self.course_overview = mock.Mock(**self.course_overview_mock_data)
 

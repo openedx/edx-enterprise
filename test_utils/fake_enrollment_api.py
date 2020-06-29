@@ -3,8 +3,6 @@
 Fake implementation of the Enrollment API.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import json
 import re

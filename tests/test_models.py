@@ -3,8 +3,6 @@
 Tests for the `edx-enterprise` models module.
 """
 
-from __future__ import absolute_import, unicode_literals, with_statement
-
 import json
 import logging
 import unittest
@@ -34,6 +32,7 @@ from consent.models import DataSharingConsent, ProxyDataSharingConsent
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE, USE_ENTERPRISE_CATALOG
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
+    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
@@ -1310,6 +1309,32 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         catalog.save()
         self.assertEqual(catalog.get_content_filter(), catalog_query_content_filter)
 
+    @ddt.data(
+        {
+            'content_filter': {'key': 'coursev1:course1'},
+            'error': ["Content filter 'key' must be of type <class 'list'>"]
+        },
+        {
+            'content_filter': {'aggregation_key': 'courserun:course'},
+            'error': ["Content filter 'aggregation_key' must be of type <class 'list'>"],
+        },
+        {
+            'content_filter': {'first_enrollable_paid_seat_price__lte': [12]},
+            'error': ["Content filter 'first_enrollable_paid_seat_price__lte' must be of type <class 'str'>"]
+        },
+        {
+            'content_filter': {'key': [3, 'course']},
+            'error': ["Content filter 'key' must contain values of type <class 'str'>"]
+        }
+    )
+    @ddt.unpack
+    def test_save_content_filter_fail(self, content_filter, error):
+        fail_catalog = factories.EnterpriseCustomerCatalogFactory(content_filter=content_filter)
+        try:
+            fail_catalog.full_clean()
+        except ValidationError as validation_error:
+            assert sorted(validation_error.messages) == sorted(error)
+
 
 @mark.django_db
 @ddt.ddt
@@ -1972,3 +1997,49 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         )
 
         assert enterprise_role_assignment.get_context() == expected_context
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseCatalogQuery(unittest.TestCase):
+    """
+    Tests for the EnterpriseCatalogQuery model.
+    """
+
+    @ddt.data(
+        {
+            'content_filter': {'key': 'coursev1:course1'},
+            'error': ["Content filter 'key' must be of type <class 'list'>"]
+        },
+        {
+            'content_filter': {'first_enrollable_paid_seat_price__lte': [12]},
+            'error': ["Content filter 'first_enrollable_paid_seat_price__lte' must be of type <class 'str'>"]
+        },
+        {
+            'content_filter': {'key': [3, 'course']},
+            'error': ["Content filter 'key' must contain values of type <class 'str'>"]
+        }
+    )
+    @ddt.unpack
+    def test_save_content_filter_fail(self, content_filter, error):
+        catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
+        try:
+            catalog_query.full_clean()
+        except ValidationError as validation_error:
+            assert sorted(validation_error.messages) == sorted(error)
+
+    @ddt.data(
+        {
+            'content_filter': {'key': ['coursev1:course1', ]},
+        },
+        {
+            'content_filter': {'aggregation_key': ['courserun:course', ]},
+        },
+        {
+            'content_filter': {'first_enrollable_paid_seat_price__lte': "12"},
+        }
+    )
+    @ddt.unpack
+    def test_save_content_filter_success(self, content_filter):
+        catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
+        catalog_query.full_clean()

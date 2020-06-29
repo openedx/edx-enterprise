@@ -2,7 +2,6 @@
 """
 Tests for the djagno management command `create_enterprise_course_enrollments`.
 """
-from __future__ import absolute_import, unicode_literals
 
 import logging
 
@@ -143,7 +142,6 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
         )
 
         with LogCapture(level=logging.INFO) as log_capture:
-
             call_command(self.command)
 
             course_enrollments = EnterpriseCourseEnrollment.objects.filter(

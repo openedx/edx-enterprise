@@ -3,8 +3,6 @@
 Class for transmitting learner data to Degreed.
 """
 
-from __future__ import absolute_import, unicode_literals
-
 from integrated_channels.degreed.client import DegreedAPIClient
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
 
