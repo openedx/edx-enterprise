@@ -496,12 +496,14 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'course_id',
         'marked_done',
+        'saved_for_later',
     )
 
     list_display = (
         'enterprise_customer_user',
         'course_id',
         'marked_done',
+        'saved_for_later',
     )
 
     change_list_template = "enterprise/admin/enterprise_course_enrollments_list.html"

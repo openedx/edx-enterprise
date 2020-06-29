@@ -1276,6 +1276,13 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
             "Specifies whether a user marked this course as completed in the learner portal."
         )
     )
+    saved_for_later = models.BooleanField(
+        default=False,
+        blank=False,
+        help_text=_(
+            "Specifies whether a user marked this course as saved for later in the learner portal."
+        )
+    )
     history = HistoricalRecords()
     source = models.ForeignKey(
         EnterpriseEnrollmentSource,
