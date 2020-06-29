@@ -238,11 +238,18 @@ class CourseCatalogApiClient:
         Return all course and course run keys and uuids for the specified course run id
         """
         course, course_run = self.get_course_and_course_run(course_run_id)
-        identifiers = {}
-        identifiers['course_key'] = course.key
-        identifiers['course_uuid'] = course.uuid
-        identifiers['course_run_key'] = course_run.key
-        identifiers['course_run_uuid'] = course_run.uuid
+        identifiers = {
+            'course_key': None,
+            'course_uuid': None,
+            'course_run_key': None,
+            'course_run_uuid': None,
+        }
+        if course:
+            identifiers['course_key'] = course.get('key')
+            identifiers['course_uuid'] = course.get('uuid')
+        if course_run:
+            identifiers['course_run_key'] = course_run.get('key')
+            identifiers['course_run_uuid'] = course_run.get('uuid')
         return identifiers
 
     def get_course_and_course_run(self, course_run_id):
@@ -259,13 +266,16 @@ class CourseCatalogApiClient:
         # Retrieve the course metadata from the catalog service.
         course = self.get_course_details(course_id)
 
+        # Return the specified course run from the returned course detail container
         course_run = None
         if course:
-            # Find the specified course run.
-            course_run = None
-            course_runs = [course_run for course_run in course['course_runs'] if course_run['key'] == course_run_id]
+            course_runs = course.get('course_runs')
+            matching_course_runs = None
             if course_runs:
-                course_run = course_runs[0]
+                matching_course_runs = [course_run for course_run in course_runs
+                                        if course_run.get('key') == course_run_id]
+            if matching_course_runs:
+                course_run = matching_course_runs[0]
 
         return course, course_run
 

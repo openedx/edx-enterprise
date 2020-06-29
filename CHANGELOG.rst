@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.12] - 2020-06-27
+---------------------
+
+* Repair invalid key references in Discovery API Client method.
+
 [3.3.11] - 2020-06-25
 ---------------------
 
