@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.14] - 2020-06-30
+---------------------
+
+* Added saved_for_later field to the EnterpriseCourseEnrollment model. This will eventually replace the marked_done field.
+
 [3.3.13] - 2020-06-29
 ---------------------
 

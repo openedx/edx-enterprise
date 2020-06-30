@@ -81,6 +81,7 @@ class EnterpriseCourseEnrollmentView(APIView):
         enterprise_customer_id = request.query_params.get('enterprise_id', None)
         course_id = request.query_params.get('course_id', None)
         marked_done = request.query_params.get('marked_done', None)
+
         if not enterprise_customer_id or not course_id or marked_done is None:
             return Response(
                 {'error': 'enterprise_id, course_id, and marked_done must be provided as query parameters'},
@@ -101,6 +102,7 @@ class EnterpriseCourseEnrollmentView(APIView):
 
         # TODO: For now, this makes the change backward compatible, we will change this to true boolean support
         enterprise_enrollment.marked_done = marked_done.lower() == 'true'
+        enterprise_enrollment.saved_for_later = marked_done.lower() == 'true'
         enterprise_enrollment.save()
 
         course_overviews = get_course_overviews([course_id])
