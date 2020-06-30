@@ -39,6 +39,7 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    LicensedEnterpriseCourseEnrollment,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
@@ -110,6 +111,50 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
             self.enterprise_customer_user.enterprise_customer
         )
         assert course_enrollment == self.enrollment.id
+
+    def test_get_license_not_licensed_enrolled(self):
+        """
+        Test the license property on the Enterprise Course Enrollment
+        """
+        assert self.enrollment.license is None
+
+
+@mark.django_db
+class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):
+    """
+    Test for LicensedEnterpriseCourseEnrollment.
+    """
+    LICENSE_UUID = '730844c7-dee3-479d-bba8-b3e9ccc89518'
+
+    def setUp(self):
+        self.username = 'KyloRen'
+        self.user = factories.UserFactory(username=self.username)
+        self.course_id = 'course-v1:edX+DemoX+DemoCourse'
+        self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(user_id=self.user.id)
+        self.enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        self.licensed_enrollment = LicensedEnterpriseCourseEnrollment.objects.create(
+            license_uuid=self.LICENSE_UUID,
+            enterprise_course_enrollment=self.enrollment
+        )
+        super(TestLicensedEnterpriseCourseEnrollment, self).setUp()
+
+    def test_create_license_enrollment_no_course_enrollment(self):
+        """
+        Test creating a LicensedEnterpriseCourseEnrollment without a Course Enrollment.
+        """
+        with raises(IntegrityError):
+            self.licensed_enrollment = LicensedEnterpriseCourseEnrollment.objects.create(
+                license_uuid=self.LICENSE_UUID
+            )
+
+    def test_get_license(self):
+        """
+        Test the license property on the Enterprise Course Enrollment.
+        """
+        assert self.enrollment.license.license_uuid == self.LICENSE_UUID
 
 
 @mark.django_db
