@@ -7,6 +7,7 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
+from edx_rest_api_client.client import EdxRestApiClient
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import HttpNotFoundError, SlumberBaseException
 
@@ -191,3 +192,27 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         query_params = {'course_run_ids': content_ids}
         endpoint = getattr(self.client, self.ENTERPRISE_CUSTOMER_ENDPOINT)(enterprise_uuid)
         return endpoint.contains_content_items.get(**query_params)['contains_content_items']
+
+
+class NoAuthEnterpriseCatalogClient:
+    """
+    Class to build a enterprise catalog client to make calls to the discovery service.
+    """
+
+    API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL
+    APPEND_SLASH = False
+
+    def __init__(self):
+        """
+        Create an enterprise catalog client.
+        """
+        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
+
+    def get_health(self):
+        """
+        Retrieve health details for enterprise catalog service.
+
+        Returns:
+            dict: Response containing enterprise catalog service health.
+        """
+        return self.client.health.get()

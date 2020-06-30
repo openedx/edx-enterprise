@@ -5,9 +5,11 @@ Client for communicating with the E-Commerce API.
 
 import logging
 
+from edx_rest_api_client.client import EdxRestApiClient
 from requests.exceptions import ConnectionError, Timeout  # pylint: disable=redefined-builtin
 from slumber.exceptions import SlumberBaseException
 
+from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from enterprise.utils import NotConnectedToOpenEdX, format_price
@@ -103,3 +105,27 @@ class EcommerceApiClient:
                 "Failed to created orders for the following manual enrollments. %s",
                 failed_creations
             )
+
+
+class NoAuthEcommerceClient:
+    """
+    Class to build an E-Commerce client to make calls to the E-Commerce.
+    """
+
+    API_BASE_URL = settings.ECOMMERCE_PUBLIC_URL_ROOT
+    APPEND_SLASH = False
+
+    def __init__(self):
+        """
+        Create an E-Commerce client.
+        """
+        self.client = EdxRestApiClient(self.API_BASE_URL, append_slash=self.APPEND_SLASH)
+
+    def get_health(self):
+        """
+        Retrieve health details for E-Commerce service.
+
+        Returns:
+            dict: Response containing E-Commerce service health.
+        """
+        return self.client.health.get()

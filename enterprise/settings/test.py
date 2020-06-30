@@ -122,6 +122,7 @@ SITE_ID = 1
 
 EDX_API_KEY = "PUT_YOUR_API_KEY_HERE"
 
+COURSE_CATALOG_URL_ROOT = "http://localhost:18381/"
 COURSE_CATALOG_API_URL = "http://localhost:18381/api/v1/"
 
 LMS_ROOT_URL = "http://lms.example.com"

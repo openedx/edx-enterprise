@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.15] - 2020-06-30
+---------------------
+
+* Added health checks for enterprise service.
+
 [3.3.14] - 2020-06-30
 ---------------------
 
