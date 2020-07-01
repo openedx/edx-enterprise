@@ -121,14 +121,14 @@ class TestUtils(TestCase):
             self,
             course_overview,
             certificate_info,
-            marked_done,
+            saved_for_later,
             expected,
     ):
         """
         get_course_run_status should return the proper results
         based on input parameters
         """
-        enterprise_enrollment = factories.EnterpriseCourseEnrollmentFactory.create(marked_done=marked_done)
+        enterprise_enrollment = factories.EnterpriseCourseEnrollmentFactory.create(saved_for_later=saved_for_later)
         actual = get_course_run_status(
             course_overview,
             certificate_info,
