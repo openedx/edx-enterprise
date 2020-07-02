@@ -1269,9 +1269,10 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
             "The ID of the course in which the learner was enrolled."
         )
     )
-    marked_done = models.BooleanField(
+    marked_done = models.NullBooleanField(
         default=False,
         blank=False,
+        null=True,
         help_text=_(
             "Specifies whether a user marked this course as completed in the learner portal."
         )
