@@ -14,6 +14,10 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.16] - 2020-07-02
+---------------------
+* Change marked_done on EnterpriseCourseEnrollment mode nullable.
+
 [3.3.15] - 2020-06-30
 ---------------------
 
