@@ -14,6 +14,10 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.17] - 2020-07-07
+---------------------
+* Created LicensedEnterpriseCourseEnrollment.
+
 [3.3.16] - 2020-07-02
 ---------------------
 * Change marked_done on EnterpriseCourseEnrollment mode nullable.

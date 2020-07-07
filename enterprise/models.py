@@ -1325,6 +1325,17 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
         return course_enrollment and course_enrollment.get('mode') in audit_modes
 
+    @property
+    def license(self):
+        """
+        Returns the license associated with this enterprise course enrollment if one exists.
+        """
+        try:
+            associated_license = self.licensed_with  # pylint: disable=no-member
+        except LicensedEnterpriseCourseEnrollment.DoesNotExist:
+            associated_license = None
+        return associated_license
+
     @classmethod
     def get_enterprise_course_enrollment_id(cls, user, course_id, enterprise_customer):
         """
@@ -1364,6 +1375,33 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         Return string representation of the enrollment.
         """
         return self.__str__()
+
+
+class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
+    """
+    An Enterprise Course Enrollment that is enrolled via a license.
+
+    .. no_pii:
+    """
+
+    license_uuid = models.UUIDField(
+        primary_key=False,
+        editable=False,
+        null=False
+    )
+
+    enterprise_course_enrollment = models.OneToOneField(
+        EnterpriseCourseEnrollment,
+        blank=False,
+        null=False,
+        related_name='licensed_with',
+        on_delete=models.deletion.CASCADE,
+        help_text=_(
+            "The course enrollment the associated license is for."
+        )
+    )
+
+    history = HistoricalRecords()
 
 
 @python_2_unicode_compatible
