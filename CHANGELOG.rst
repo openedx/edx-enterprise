@@ -14,6 +14,10 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.18] - 2020-07-07
+---------------------
+* Admin dashboard rules predicates now pass an object into the edx-rbac utility functions.
+
 [3.3.17] - 2020-07-07
 ---------------------
 * Created LicensedEnterpriseCourseEnrollment.
