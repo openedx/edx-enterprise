@@ -5,6 +5,7 @@ Tests for the ``GrantDataSharingPermissions`` view of the Enterprise app.
 
 import ddt
 import mock
+import uuid
 from dateutil.parser import parse
 from pytest import mark
 
@@ -135,11 +136,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 enterprise_customer_user=ecu,
                 course_id=course_id
             )
+        license_uuid = str(uuid.uuid4())
         params = {
             'enterprise_customer_uuid': str(enterprise_customer.uuid),
             'course_id': course_id,
             'next': 'https://google.com',
             'failure_url': 'https://facebook.com',
+            'license_uuid': license_uuid,
         }
         if defer_creation:
             params['defer_creation'] = True
@@ -157,7 +160,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         if course_start_date:
             expected_course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
 
-        for key, value in {
+        for key, expected_value in {
                 'platform_name': 'Test platform',
                 'platform_description': 'Test description',
                 'tagline': "High-quality online learning opportunities from the world's best universities",
@@ -179,6 +182,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'redirect_url': 'https://google.com',
                 'course_specific': True,
                 'defer_creation': defer_creation,
+                'license_uuid': license_uuid,
                 'welcome_text': 'Welcome to Test platform.',
                 'sharable_items_note_header': 'Please note',
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
@@ -194,7 +198,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     "from Starfleet Academy."
                 ),
         }.items():
-            assert response.context[key] == value  # pylint:disable=no-member
+            assert response.context[key] == expected_value  # pylint:disable=no-member
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_get_course_specific_consent_improperly_configured_course_catalog(
@@ -372,6 +376,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.get_create_licensed_ent_enrollment')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
@@ -393,6 +398,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_id,
             reverse_mock,
             course_catalog_api_client_mock,
+            mock_get_create_licensed_ent_enrollment,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         self._login()
@@ -405,7 +411,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        EnterpriseCourseEnrollment.objects.create(
+        enterprise_enrollment = EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=ecu,
             course_id=course_id,
         )
@@ -413,8 +419,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             username=self.user.username,
             course_id=course_id,
             enterprise_customer=enterprise_customer,
-            granted=consent_provided
+            granted=False
         )
+        license_uuid = str(uuid.uuid4())
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
         course_catalog_api_client_mock.return_value.is_course_in_catalog.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
@@ -436,6 +443,12 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert resp.status_code == 302
         if not defer_creation:
             assert dsc.granted is consent_provided
+
+        # we'll only create an enrollment record if (1) creation is not deferred,
+        # (2) consent is provided, and (3) we provide a course _run_ id
+        if (not defer_creation) and consent_provided and course_id.endswith('Demo_Course'):
+            # TODO: assert that a licensed course enrollment was created.
+            mock_get_create_licensed_ent_enrollment.assert_called_once_with(enterprise_enrollment, license_uuid)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.reverse')

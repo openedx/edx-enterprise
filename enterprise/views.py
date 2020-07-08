@@ -187,9 +187,11 @@ def render_page_with_error_code_message(request, context_data, error_code, log_m
 def get_create_ent_enrollment(
         course_id,
         enterprise_customer_user,
+        license_uuid=None,
 ):
     """
     Get or Create the Enterprise Course Enrollment.
+    If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
     """
     source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
     # Create the Enterprise backend database records for this course
@@ -201,7 +203,20 @@ def get_create_ent_enrollment(
             'source': source
         }
     )
+    import pdb; pdb.set_trace()
+    if license_uuid and not getattr(enterprise_course_enrollment, 'license', None):
+        # TODO: create the License record here.  Use ``license`` property once it's created.
+        get_create_licensed_ent_enrollment(enterprise_course_enrollment, license_uuid)
     return enterprise_course_enrollment, created
+
+
+def get_create_licensed_ent_enrollment(ent_course_enrollment, license_uuid):
+    """
+    TODO: Implement real function body.
+    """
+    licensed_enrollment = 'TODO: create me!'
+    ent_course_enrollment.license = licensed_enrollment
+    return licensed_enrollment
 
 
 class NonAtomicView(View):
@@ -498,6 +513,7 @@ class GrantDataSharingPermissions(View):
             enterprise_customer,
             success_url,
             failure_url,
+            license_uuid,
             request,
             platform_name
     ):
@@ -528,6 +544,7 @@ class GrantDataSharingPermissions(View):
             'redirect_url': success_url,
             'failure_url': failure_url,
             'defer_creation': request.GET.get('defer_creation') is not None,
+            'license_uuid': license_uuid,
             'requested_permissions': [
                 _('your enrollment in this {item}').format(item=item),
                 _('your learning progress'),
@@ -547,7 +564,7 @@ class GrantDataSharingPermissions(View):
         return context_data
 
     @staticmethod
-    def create_enterprise_course_enrollment(request, consent_record, course_id):
+    def create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid=None):
         """Create EnterpriseCustomerUser and EnterpriseCourseEnrollment record if not already exists."""
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
             enterprise_customer=consent_record.enterprise_customer,
@@ -556,7 +573,8 @@ class GrantDataSharingPermissions(View):
         enterprise_customer_user.update_session(request)
         __, created = get_create_ent_enrollment(
             course_id,
-            enterprise_customer_user
+            enterprise_customer_user,
+            license_uuid=license_uuid,
         )
         if created:
             track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
@@ -571,6 +589,7 @@ class GrantDataSharingPermissions(View):
         failure_url = request.GET.get('failure_url')
         course_id = request.GET.get('course_id', '')
         program_uuid = request.GET.get('program_uuid', '')
+        license_uuid = request.GET.get('license_uuid')
         self.preview_mode = bool(request.GET.get('preview_mode', False))
 
         # Get enterprise_customer to start in case we need to render a custom 404 page
@@ -752,6 +771,7 @@ class GrantDataSharingPermissions(View):
             enterprise_customer=enterprise_customer,
             success_url=success_url,
             failure_url=failure_url,
+            license_uuid=license_uuid,
             request=request,
             platform_name=context_data['platform_name'],
         ))
@@ -768,6 +788,7 @@ class GrantDataSharingPermissions(View):
         failure_url = request.POST.get('failure_url')
         course_id = request.POST.get('course_id', '')
         program_uuid = request.POST.get('program_uuid', '')
+        license_uuid = request.POST.get('license_uuid')
 
         try:
             enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
@@ -868,9 +889,10 @@ class GrantDataSharingPermissions(View):
             # A CourseEnrollment record will be created and on the post signal of the CourseEnrollment,
             # an EnterpriseCourseEnrollment record will also get created.
 
+            import pdb; pdb.set_trace()
             if course_id and self.is_course_run_id(course_id):
                 try:
-                    self.create_enterprise_course_enrollment(request, consent_record, course_id)
+                    self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
                 except IntegrityError:
                     error_code = 'ENTGDS009'
                     log_message = (
@@ -879,11 +901,13 @@ class GrantDataSharingPermissions(View):
                         'Program: {program_uuid}, '
                         'EnterpriseCustomer: {enterprise_customer_uuid}, '
                         'User: {user_id}, '
+                        'License UUID: {license_uuid}, '
                         'ErrorCode: {error_code}'.format(
                             course_id=course_id,
                             program_uuid=program_uuid,
                             enterprise_customer_uuid=enterprise_uuid,
                             user_id=request.user.id,
+                            license_uuid=license_uuid,
                             error_code=error_code,
                         )
                     )

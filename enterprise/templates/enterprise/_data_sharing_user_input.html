@@ -24,6 +24,9 @@
     {% if failure_url %}
       <input type="hidden" name="failure_url" value="{{ failure_url }}" />
     {% endif %}
+    {% if license_uuid %}
+      <input type="hidden" name="license_uuid" value="{{ license_uuid }}" />
+    {% endif %}
     {% if defer_creation %}
       <input type="hidden" name="defer_creation" value="true" />
     {% endif %}
