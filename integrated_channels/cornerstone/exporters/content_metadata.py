@@ -12,7 +12,11 @@ from django.apps import apps
 
 from enterprise.utils import get_closest_course_run, get_language_code
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
-from integrated_channels.utils import get_duration_from_estimated_hours, get_image_url
+from integrated_channels.utils import (
+    get_duration_from_estimated_hours,
+    get_image_url,
+    get_subjects_from_content_metadata,
+)
 
 LOGGER = getLogger(__name__)
 
@@ -130,7 +134,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         Return the transformed version of the course subject list or default value if no subject found.
         """
         subjects = []
-        course_subjects = content_metadata_item.get('subjects') or []
+        course_subjects = get_subjects_from_content_metadata(content_metadata_item)
         CornerstoneGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
             'cornerstone',
             'CornerstoneGlobalConfiguration'

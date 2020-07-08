@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.21] - 2020-07-10
+---------------------
+
+* Gracefully handle when list of subjects for content metadata contains either a list of strings and list of dictionaries
+
+
 [3.3.20] - 2020-07-09
 ---------------------
 * Added new SAML Config option to EnterpriseCustomer in Django admin.

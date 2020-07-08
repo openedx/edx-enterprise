@@ -509,6 +509,17 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             },
             ["Industry Specific"]
         ),
+        (
+            {
+                'subjects': [
+                    {'name': 'Computer Science'},
+                    {'name': 'Communication'},
+                    {'name': 'Music'},
+                    {'name': 'Design'},
+                ],
+            },
+            ["Technology", "Business Skills", "Creative"],
+        ),
     )
     @responses.activate
     @ddt.unpack

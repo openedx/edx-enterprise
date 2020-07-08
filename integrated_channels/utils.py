@@ -191,3 +191,31 @@ def get_duration_from_estimated_hours(estimated_hours):
         return duration
 
     return None
+
+
+def get_subjects_from_content_metadata(content_metadata_item):
+    """
+    Returns a list of subject names for the content metadata item. Subjects are represented
+    by either:
+      - list of strings, e.g. ['Communication']
+      - list of objects, e.g. [{'name': 'Communication'}]
+
+    Arguments:
+        - content_metadata_item (dict): a dictionary for the content metadata item
+
+    Returns:
+        - list: a list of subject names as strings
+    """
+    metadata_subjects = content_metadata_item.get('subjects') or []
+    subjects = set()
+
+    for subject in metadata_subjects:
+        if isinstance(subject, str):
+            subjects.add(subject)
+            continue
+
+        subject_name = subject.get('name')
+        if subject_name:
+            subjects.add(subject_name)
+
+    return list(subjects)
