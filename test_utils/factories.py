@@ -246,7 +246,7 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
         model = EnterpriseCourseEnrollment
 
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
-    marked_done = False
+    saved_for_later = False
     saved_for_later = False
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
 

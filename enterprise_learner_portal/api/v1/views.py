@@ -80,11 +80,13 @@ class EnterpriseCourseEnrollmentView(APIView):
         user = request.user
         enterprise_customer_id = request.query_params.get('enterprise_id', None)
         course_id = request.query_params.get('course_id', None)
+        # TODO: once front-end is updated, remove marked_done
         marked_done = request.query_params.get('marked_done', None)
+        saved_for_later = request.query_params.get('saved_for_later', None)
 
-        if not enterprise_customer_id or not course_id or marked_done is None:
+        if not enterprise_customer_id or not course_id or (marked_done is None and saved_for_later is None):
             return Response(
-                {'error': 'enterprise_id, course_id, and marked_done must be provided as query parameters'},
+                {'error': 'enterprise_id, course_id, and saved_for_later must be provided as query parameters'},
                 status=HTTP_400_BAD_REQUEST
             )
 
@@ -100,9 +102,13 @@ class EnterpriseCourseEnrollmentView(APIView):
             course_id=course_id
         )
 
-        # TODO: For now, this makes the change backward compatible, we will change this to true boolean support
-        enterprise_enrollment.marked_done = marked_done.lower() == 'true'
-        enterprise_enrollment.saved_for_later = marked_done.lower() == 'true'
+        # if the frontend is sending saved_for_later, use it, if not, use the old field
+        if saved_for_later is not None:
+            # TODO: For now, this makes the change backward compatible, we will change this to true boolean support
+            enterprise_enrollment.saved_for_later = saved_for_later.lower() == 'true'
+        else:
+            enterprise_enrollment.saved_for_later = marked_done.lower() == 'true'
+
         enterprise_enrollment.save()
 
         course_overviews = get_course_overviews([course_id])

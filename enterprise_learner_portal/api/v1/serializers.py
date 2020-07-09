@@ -70,8 +70,8 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['due_dates'] = get_due_dates(request, course_run_id, user)
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
-
-        representation['marked_done'] = instance.marked_done
+        representation['marked_done'] = instance.saved_for_later
+        representation['saved_for_later'] = instance.saved_for_later
 
         return representation
 
