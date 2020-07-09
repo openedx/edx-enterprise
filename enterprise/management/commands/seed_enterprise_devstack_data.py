@@ -73,6 +73,7 @@ class Command(BaseCommand):
             enable_data_sharing_consent=True,
             enable_portal_code_management_screen=True,
             enable_portal_reporting_config_screen=True,
+            enable_portal_saml_configuration_screen=True,
         )
         return enterprise_customer
 

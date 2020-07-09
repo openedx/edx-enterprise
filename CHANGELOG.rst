@@ -14,6 +14,10 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.20] - 2020-07-09
+---------------------
+* Added new SAML Config option to EnterpriseCustomer in Django admin.
+
 [3.3.19] - 2020-07-08
 ---------------------
 

@@ -303,6 +303,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_portal_subscription_management_screen",
             "enable_learner_portal",
             "enable_portal_reporting_config_screen",
+            "enable_portal_saml_configuration_screen",
             "enable_slug_login",
             "contact_email",
         )
