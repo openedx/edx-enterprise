@@ -52,6 +52,7 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
+    LicensedEnterpriseCourseEnrollment,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -203,20 +204,20 @@ def get_create_ent_enrollment(
             'source': source
         }
     )
-    import pdb; pdb.set_trace()
-    if license_uuid and not getattr(enterprise_course_enrollment, 'license', None):
-        # TODO: create the License record here.  Use ``license`` property once it's created.
-        get_create_licensed_ent_enrollment(enterprise_course_enrollment, license_uuid)
+    if license_uuid and not enterprise_course_enrollment.license:
+        LOGGER.info(
+            'LicensedEnterpriseCourseEnrollment being created with following info: '
+            'License UUID: {license_uuid}, '
+            'EnterpriseCourseEnrollment: {enterprise_course_enrollment_uuid}'.format(
+                license_uuid=license_uuid,
+                enterprise_course_enrollment_uuid=enterprise_course_enrollment,
+            )
+        )
+        LicensedEnterpriseCourseEnrollment.objects.create(
+            license_uuid=license_uuid,
+            enterprise_course_enrollment=enterprise_course_enrollment,
+        )
     return enterprise_course_enrollment, created
-
-
-def get_create_licensed_ent_enrollment(ent_course_enrollment, license_uuid):
-    """
-    TODO: Implement real function body.
-    """
-    licensed_enrollment = 'TODO: create me!'
-    ent_course_enrollment.license = licensed_enrollment
-    return licensed_enrollment
 
 
 class NonAtomicView(View):
@@ -888,8 +889,6 @@ class GrantDataSharingPermissions(View):
             # EnterpriseCourseEnrollment will be created when the user will select a course run.
             # A CourseEnrollment record will be created and on the post signal of the CourseEnrollment,
             # an EnterpriseCourseEnrollment record will also get created.
-
-            import pdb; pdb.set_trace()
             if course_id and self.is_course_run_id(course_id):
                 try:
                     self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)

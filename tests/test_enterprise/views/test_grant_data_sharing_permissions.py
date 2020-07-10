@@ -376,7 +376,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
-    @mock.patch('enterprise.views.get_create_licensed_ent_enrollment')
+    @mock.patch('enterprise.views.LicensedEnterpriseCourseEnrollment.objects.create')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
@@ -398,7 +398,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_id,
             reverse_mock,
             course_catalog_api_client_mock,
-            mock_get_create_licensed_ent_enrollment,
+            mock_licensed_ent_course_enrollment_create,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         self._login()
@@ -448,7 +448,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         # (2) consent is provided, and (3) we provide a course _run_ id
         if (not defer_creation) and consent_provided and course_id.endswith('Demo_Course'):
             # TODO: assert that a licensed course enrollment was created.
-            mock_get_create_licensed_ent_enrollment.assert_called_once_with(enterprise_enrollment, license_uuid)
+            mock_licensed_ent_course_enrollment_create.assert_called_once_with(enterprise_enrollment, license_uuid)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.reverse')
