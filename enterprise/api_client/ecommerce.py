@@ -81,29 +81,29 @@ class EcommerceApiClient:
         Since `student.CourseEnrollment` lives in LMS, we're just passing around dicts of the relevant information.
         """
         try:
-            order_repsonse = self.client.manual_course_enrollment_order.post(
+            order_response = self.client.manual_course_enrollment_order.post(
                 {
                     "enrollments": enrollments
                 }
             )
+            order_creations = order_response["orders"]
+            successful_creations = [order for order in order_creations if order["status"] == "success"]
+            failed_creations = [order for order in order_creations if order["status"] == "failure"]
+            if successful_creations:
+                LOGGER.info(
+                    "Successfully created orders for the following manual enrollments. %s",
+                    successful_creations
+                )
+            if failed_creations:
+                LOGGER.error(
+                    "Failed to created orders for the following manual enrollments. %s",
+                    failed_creations
+                )
         except (SlumberBaseException, ConnectionError, Timeout) as exc:
             LOGGER.exception(
                 "Failed to create order for manual enrollments for the following enrollments: %s. Reason: %s",
                 enrollments,
                 str(exc)
-            )
-        order_creations = order_repsonse["orders"]
-        successful_creations = [order for order in order_creations if order["status"] == "success"]
-        failed_creations = [order for order in order_creations if order["status"] == "failure"]
-        if successful_creations:
-            LOGGER.info(
-                "Successfully created orders for the following manual enrollments. %s",
-                successful_creations
-            )
-        if failed_creations:
-            LOGGER.error(
-                "Failed to created orders for the following manual enrollments. %s",
-                failed_creations
             )
 
 
