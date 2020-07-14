@@ -192,6 +192,7 @@ def get_create_ent_enrollment(
 ):
     """
     Get or Create the Enterprise Course Enrollment.
+
     If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
     """
     source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
