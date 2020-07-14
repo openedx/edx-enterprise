@@ -892,6 +892,18 @@ class GrantDataSharingPermissions(View):
             if course_id and self.is_course_run_id(course_id):
                 try:
                     self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
+                    if license_uuid:
+                        # Use enrollment api client to create an lms course enrollment
+                        enrollment_api_client = EnrollmentApiClient()
+                        # Ensure the 'verified' track exists for the given course
+                        # If not, enroll in the 'audit' track
+                        course_modes = enrollment_api_client.get_course_modes(course_id)
+                        course_mode = 'verified' if 'verified' in course_modes else 'audit'
+                        enrollment_api_client.enroll_user_in_course(
+                            request.user.username,
+                            course_id,
+                            course_mode
+                        )
                 except IntegrityError:
                     error_code = 'ENTGDS009'
                     log_message = (

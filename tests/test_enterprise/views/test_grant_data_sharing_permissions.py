@@ -447,7 +447,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         # we'll only create an enrollment record if (1) creation is not deferred,
         # (2) consent is provided, and (3) we provide a course _run_ id
         if (not defer_creation) and consent_provided and course_id.endswith('Demo_Course'):
-            # TODO: assert that a licensed course enrollment was created.
             mock_licensed_ent_course_enrollment_create.assert_called_once_with(enterprise_enrollment, license_uuid)
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
