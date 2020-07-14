@@ -440,6 +440,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -475,6 +476,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enable_audit_enrollment': False, 'identity_provider': None,
                     'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                     'enable_portal_reporting_config_screen': False,
+                    'enable_portal_saml_configuration_screen': False,
                     'enable_audit_data_reporting': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
@@ -523,6 +525,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
                 'enable_audit_data_reporting': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
@@ -658,6 +661,7 @@ class TestEnterpriseAPIViews(APITest):
             'active': True, 'enable_data_sharing_consent': True,
             'enforce_data_sharing_consent': 'at_enrollment', 'enable_portal_code_management_screen': True,
             'enable_portal_reporting_config_screen': False,
+            'enable_portal_saml_configuration_screen': False,
             'site__domain': 'example.com', 'site__name': 'example.com',
             'enable_portal_subscription_management_screen': False,
             'contact_email': 'fake@example.com',
@@ -695,6 +699,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': False, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': True,
                 'enable_portal_reporting_config_screen': False,
+                'enable_portal_saml_configuration_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },

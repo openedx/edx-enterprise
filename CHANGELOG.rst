@@ -14,12 +14,40 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.22] 2020-07-13
+-------------------
+
+* Final removal of marked_done field
+
+[3.3.21] - 2020-07-10
+---------------------
+
+* Gracefully handle when list of subjects for content metadata contains either a list of strings and list of dictionaries
+
+
+[3.3.20] - 2020-07-09
+---------------------
+* Added new SAML Config option to EnterpriseCustomer in Django admin.
+
+[3.3.19] - 2020-07-08
+---------------------
+
+* Remove database references to marked_done.
+
+[3.3.18] - 2020-07-07
+---------------------
+
+* Admin dashboard rules predicates now pass an object into the edx-rbac utility functions.
+
+
 [3.3.17] - 2020-07-07
 ---------------------
 * Created LicensedEnterpriseCourseEnrollment.
 
+
 [3.3.16] - 2020-07-02
 ---------------------
+
 * Change marked_done on EnterpriseCourseEnrollment mode nullable.
 
 [3.3.15] - 2020-06-30

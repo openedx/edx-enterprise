@@ -495,14 +495,12 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     readonly_fields = (
         'enterprise_customer_user',
         'course_id',
-        'marked_done',
         'saved_for_later',
     )
 
     list_display = (
         'enterprise_customer_user',
         'course_id',
-        'marked_done',
         'saved_for_later',
     )
 

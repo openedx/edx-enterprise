@@ -91,7 +91,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('due_dates', ['some', 'dates']),
             ('pacing', 'instructor'),
             ('org_name', 'my university'),
-            ('marked_done', False),
+            ('saved_for_later', False),
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)
