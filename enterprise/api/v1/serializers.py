@@ -358,6 +358,49 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
             models.EnterpriseCustomerUser.inactivate_other_customers(self.user.pk, enterprise_customer)
 
 
+class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for writing to the PendingEnterpriseCustomerUser model.
+    """
+
+    class Meta:
+        model = models.PendingEnterpriseCustomerUser
+        fields = (
+            'enterprise_customer', 'user_email'
+        )
+
+    def validate(self, attrs):
+        """
+        Validate if the EnterpriseCustomerUser record already exists.
+        """
+        enterprise_customer = attrs.get('enterprise_customer')
+        user_email = attrs.get('user_email')
+        try:
+            user = User.objects.get(email=user_email)
+            models.EnterpriseCustomerUser.objects.get(
+                user_id=user.pk,
+                enterprise_customer=enterprise_customer
+            )
+        except (User.DoesNotExist, models.EnterpriseCustomerUser.DoesNotExist):
+            pass
+        else:
+            raise serializers.ValidationError('EnterpriseCustomerUser record already exists')
+
+        return attrs
+
+    def save(self):  # pylint: disable=arguments-differ
+        """
+        Save the PendingEnterpriseCustomerUser.
+        """
+        enterprise_customer = self.validated_data['enterprise_customer']
+        user_email = self.validated_data['user_email']
+        __, created = models.PendingEnterpriseCustomerUser.objects.update_or_create(
+            user_email=user_email,
+            enterprise_customer=enterprise_customer,
+        )
+        return created
+
+
 class CourseDetailSerializer(ImmutableStateSerializer):
     """
     Serializer for course data retrieved from the discovery service course detail API endpoint.

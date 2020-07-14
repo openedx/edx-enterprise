@@ -97,6 +97,7 @@ ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT = reverse('enterprise-customer-c
 ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
+PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-list')
 
 
 def side_effect(url, query_parameters):
@@ -131,11 +132,12 @@ class TestEnterpriseAPIViews(APITest):
         super(TestEnterpriseAPIViews, self).setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
 
-    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
+    # pylint: disable=arguments-differ
+    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=True, **kwargs):
         """
         Create a test user and set its password.
         """
-        self.user = factories.UserFactory(username=username, is_active=True, is_staff=True, **kwargs)
+        self.user = factories.UserFactory(username=username, is_active=True, is_staff=is_staff, **kwargs)
         self.user.set_password(password)  # pylint: disable=no-member
         self.user.save()  # pylint: disable=no-member
 
@@ -418,6 +420,69 @@ class TestEnterpriseAPIViews(APITest):
             'username': self.user.username
         }
         response = self.client.post(settings.TEST_SERVER + ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == 401
+
+    @ddt.data(
+        {'is_staff': True, 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
+        {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
+        {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
+        {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
+        {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
+        {'is_staff': False, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 403},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_user(
+            self,
+            is_staff,
+            user_exists,
+            ecu_exists,
+            pending_ecu_exists,
+            status_code):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerUsers.
+        """
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        new_user_email = 'newuser@example.com'
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'user_email': 'newuser@example.com',
+        }
+        if user_exists:
+            user = factories.UserFactory(email=new_user_email)
+            if ecu_exists:
+                factories.EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
+
+        if pending_ecu_exists:
+            factories.PendingEnterpriseCustomerUserFactory(
+                user_email=new_user_email, enterprise_customer=enterprise_customer
+            )
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == status_code
+        if status_code == 204:
+            assert not response.content
+        elif status_code == 201:
+            response = self.load_json(response.content)
+            self.assertDictEqual(data, response)
+            assert PendingEnterpriseCustomerUser.objects.get(
+                user_email=new_user_email, enterprise_customer=enterprise_customer
+            )
+
+    def test_post_pending_enterprise_customer_user_logged_out(self):
+        """
+        Make sure users can't post PendingEnterpriseCustomerUsers when logged out.
+        """
+        self.client.logout()
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'username': self.user.username
+        }
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
     @ddt.data(
