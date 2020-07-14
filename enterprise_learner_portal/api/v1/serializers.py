@@ -67,7 +67,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['end_date'] = course_overview['end']
         representation['display_name'] = course_overview['display_name_with_default']
         representation['course_run_url'] = get_course_run_url(request, course_run_id)
-        representation['due_dates'] = get_due_dates(request, course_run_id, user)
+        representation['due_dates'] = []
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
         representation['saved_for_later'] = instance.saved_for_later
