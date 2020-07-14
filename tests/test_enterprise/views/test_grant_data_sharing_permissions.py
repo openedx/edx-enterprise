@@ -3,9 +3,10 @@
 Tests for the ``GrantDataSharingPermissions`` view of the Enterprise app.
 """
 
+import uuid
+
 import ddt
 import mock
-import uuid
 from dateutil.parser import parse
 from pytest import mark
 
