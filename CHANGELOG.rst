@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.23] 2020-07-14
+-------------------
+
+* Use the GrantDataSharingPermissions view to enroll licensed users in courses
+
 [3.3.22] 2020-07-13
 -------------------
 
