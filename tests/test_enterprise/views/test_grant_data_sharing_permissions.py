@@ -126,7 +126,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer, content_filter=content_filter)
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -220,7 +223,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 course_id,
             ]
         }
-        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer, content_filter=content_filter)
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -376,6 +382,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.views.LicensedEnterpriseCourseEnrollment.objects.create')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
@@ -399,6 +406,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             reverse_mock,
             course_catalog_api_client_mock,
             mock_licensed_ent_course_enrollment_create,
+            mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         self._login()
@@ -406,6 +414,15 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             name='Starfleet Academy',
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
+        )
+        content_filter = {
+            'key': [
+                course_id,
+            ]
+        }
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
         )
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
@@ -426,11 +443,14 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.is_course_in_catalog.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
         reverse_mock.return_value = '/dashboard'
+        course_mode = 'verified'
+        mock_enrollment_api_client.return_value.get_course_modes.return_value = [course_mode]
         post_data = {
             'enterprise_customer_uuid': enterprise_customer.uuid,
             'course_id': course_id,
             'redirect_url': '/successful_enrollment',
             'failure_url': '/failure_url',
+            'license_uuid': license_uuid,
         }
         if defer_creation:
             post_data['defer_creation'] = True
@@ -442,12 +462,21 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
         assert resp.status_code == 302
         if not defer_creation:
+            dsc.refresh_from_db()
             assert dsc.granted is consent_provided
 
         # we'll only create an enrollment record if (1) creation is not deferred,
         # (2) consent is provided, and (3) we provide a course _run_ id
         if (not defer_creation) and consent_provided and course_id.endswith('Demo_Course'):
-            mock_licensed_ent_course_enrollment_create.assert_called_once_with(enterprise_enrollment, license_uuid)
+            mock_licensed_ent_course_enrollment_create.assert_called_once_with(
+                enterprise_course_enrollment=enterprise_enrollment,
+                license_uuid=license_uuid
+            )
+            mock_enrollment_api_client.return_value.enroll_user_in_course.assert_called_once_with(
+                self.user.username,
+                course_id,
+                course_mode
+            )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.reverse')
