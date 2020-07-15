@@ -730,7 +730,8 @@ class TestProgramDataSharingPermissions(TestCase):
         params = self.valid_post_params.copy()
         params.pop('data_sharing_consent')
         response = self.client.post(self.url, params, follow=False)
-        consent_record.save.assert_called_once()
+        # No need to update the consent record if consent not provided
+        assert consent_record.save.called is False
         self.assertRedirects(response, 'https://facebook.com/', fetch_redirect_response=False)
 
     def test_post_program_consent_deferred(self):

@@ -882,11 +882,7 @@ class GrantDataSharingPermissions(View):
 
         defer_creation = request.POST.get('defer_creation')
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
-        if defer_creation is None and consent_record.consent_required():
-
-            # WARNING: If consent is required for this course and we’re not deferring creation, we’ll create an
-            # enrollment, even if the request specifies that data_sharing_consent is False
-
+        if defer_creation is None and consent_record.consent_required() and consent_provided:
             # Create EnterpriseCourseEnrollment if we found course_run_id instead of course_key in course_id param.
             # Skip creating EnterpriseCourseEnrollment if we found course_key instead of course_run_id.
 
@@ -897,10 +893,7 @@ class GrantDataSharingPermissions(View):
                 try:
                     self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
                     if license_uuid:
-                        # Use enrollment api client to create an lms course enrollment
                         enrollment_api_client = EnrollmentApiClient()
-                        # Ensure the 'verified' track exists for the given course
-                        # If not, enroll in the 'audit' track
                         course_modes = enrollment_api_client.get_course_modes(course_id)
                         course_mode = 'verified' if 'verified' in course_modes else 'audit'
                         enrollment_api_client.enroll_user_in_course(
