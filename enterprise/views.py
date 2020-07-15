@@ -884,6 +884,9 @@ class GrantDataSharingPermissions(View):
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required():
 
+            # WARNING: If consent is required for this course and we’re not deferring creation, we’ll create an
+            # enrollment, even if the request specifies that data_sharing_consent is False
+
             # Create EnterpriseCourseEnrollment if we found course_run_id instead of course_key in course_id param.
             # Skip creating EnterpriseCourseEnrollment if we found course_key instead of course_run_id.
 

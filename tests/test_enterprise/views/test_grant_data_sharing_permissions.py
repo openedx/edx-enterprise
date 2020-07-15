@@ -16,7 +16,7 @@ from django.http import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -384,18 +384,18 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
-    @mock.patch('enterprise.views.LicensedEnterpriseCourseEnrollment.objects.create')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
-        (True, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course'),
-        (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course'),
-        (True, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course'),
-        (False, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course'),
-        (True, True, '/successful_enrollment', 'edX+DemoX'),
-        (False, True, '/successful_enrollment', 'edX+DemoX'),
-        (True, False, '/failure_url', 'edX+DemoX'),
-        (False, False, '/failure_url', 'edX+DemoX'),
+        (True, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
+        (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (True, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (False, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (True, True, '/successful_enrollment', 'edX+DemoX', ''),
+        (False, True, '/successful_enrollment', 'edX+DemoX', ''),
+        (True, False, '/failure_url', 'edX+DemoX', ''),
+        (False, False, '/failure_url', 'edX+DemoX', ''),
     )
     @ddt.unpack
     def test_post_course_specific_consent(
@@ -404,9 +404,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             consent_provided,
             expected_redirect_url,
             course_id,
+            license_uuid,
             reverse_mock,
             course_catalog_api_client_mock,
-            mock_licensed_ent_course_enrollment_create,
             mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
@@ -437,9 +437,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             username=self.user.username,
             course_id=course_id,
             enterprise_customer=enterprise_customer,
-            granted=False
+            granted=consent_provided
         )
-        license_uuid = str(uuid.uuid4())
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
         course_catalog_api_client_mock.return_value.is_course_in_catalog.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
@@ -451,12 +450,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             'course_id': course_id,
             'redirect_url': '/successful_enrollment',
             'failure_url': '/failure_url',
-            'license_uuid': license_uuid,
         }
         if defer_creation:
             post_data['defer_creation'] = True
         if consent_provided:
             post_data['data_sharing_consent'] = consent_provided
+        if license_uuid:
+            post_data['license_uuid'] = license_uuid
 
         resp = self.client.post(self.url, post_data)
 
@@ -466,18 +466,22 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             dsc.refresh_from_db()
             assert dsc.granted is consent_provided
 
-        # we'll only create an enrollment record if (1) creation is not deferred,
-        # (2) consent is provided, and (3) we provide a course _run_ id
-        if (not defer_creation) and consent_provided and course_id.endswith('Demo_Course'):
-            mock_licensed_ent_course_enrollment_create.assert_called_once_with(
+        # we'll only create an enrollment record if (1) creation is not deferred, (2) consent has not been provided,
+        # (3) we provide a license_uuid, and (4) we provide a course _run_ id
+        if (not defer_creation) and (not consent_provided) and license_uuid and course_id.endswith('Demo_Course'):
+            assert LicensedEnterpriseCourseEnrollment.objects.filter(
                 enterprise_course_enrollment=enterprise_enrollment,
-                license_uuid=license_uuid
-            )
+                license_uuid=license_uuid,
+            ).exists() is True
+
             mock_enrollment_api_client.return_value.enroll_user_in_course.assert_called_once_with(
                 self.user.username,
                 course_id,
                 course_mode
             )
+
+        if not license_uuid:
+            assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.reverse')
