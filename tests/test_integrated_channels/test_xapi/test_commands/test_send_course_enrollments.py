@@ -185,6 +185,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
         call_command('send_course_enrollments')
 
     def test_save_xapi_learner_data_transmission_audit(self):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         Command.save_xapi_learner_data_transmission_audit(
@@ -197,6 +198,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
 
     @mock.patch(MODULE_PATH + 'XAPILearnerDataTransmissionAudit')
     def test_save_xapi_learner_data_transmission_audit_preexisting(self, mock_transmission_audit):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         mock_transmission_audit.objects.get_or_create.return_value = (mock.MagicMock(), False)
@@ -213,6 +215,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
         mock.MagicMock(return_value=False)
     )
     def test_get_pertinent_course_enrollments(self):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         course_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -236,6 +239,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
         mock.MagicMock(return_value=True)
     )
     def test_get_pertinent_course_enrollments_already_transmitted(self):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         course_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -255,6 +259,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
         assert len(response) == 0
 
     def test_get_pertinent_course_enrollments_no_enrollments(self):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         course_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -273,6 +278,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
         assert len(response) == 0
 
     def test_is_already_transmitted(self):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         user_id = 12
@@ -290,6 +296,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
     )
     @mock.patch(MODULE_PATH + 'send_course_enrollment_statement')
     def test_transmit_course_enrollments_transmit_fail_skip(self, mock_send_statement):
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_enrollments import Command
 
         lrs_configuration = factories.XAPILRSConfigurationFactory()

@@ -362,7 +362,7 @@ class EnterpriseCustomer(TimeStampedModel):
     @property
     def serialized(self):
         """Return a serialized version of this customer."""
-        from enterprise.api.v1 import serializers
+        from enterprise.api.v1 import serializers  # pylint: disable=import-outside-toplevel
         return serializers.EnterpriseCustomerSerializer(self).data
 
     def get_data_sharing_consent_text_overrides(self, published_only=True):

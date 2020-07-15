@@ -35,8 +35,8 @@ class EnterpriseConfig(AppConfig):
         """
         Perform other one-time initialization steps.
         """
-        from enterprise.signals import handle_user_post_save
-        from django.db.models.signals import pre_migrate, post_save
+        from enterprise.signals import handle_user_post_save  # pylint: disable=import-outside-toplevel
+        from django.db.models.signals import pre_migrate, post_save  # pylint: disable=import-outside-toplevel
 
         post_save.connect(handle_user_post_save, sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
         pre_migrate.connect(self._disconnect_user_post_save_for_migrations)
@@ -45,5 +45,5 @@ class EnterpriseConfig(AppConfig):
         """
         Handle pre_migrate signal - disconnect User post_save handler.
         """
-        from django.db.models.signals import post_save
+        from django.db.models.signals import post_save  # pylint: disable=import-outside-toplevel
         post_save.disconnect(sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
