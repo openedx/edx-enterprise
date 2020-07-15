@@ -468,7 +468,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         # we'll only create an enrollment record if (1) creation is not deferred, (2) consent has not been provided,
         # (3) we provide a license_uuid, and (4) we provide a course _run_ id
-        if (not defer_creation) and (not consent_provided) and license_uuid and course_id.endswith('Demo_Course'):
+        if not defer_creation and not consent_provided and license_uuid and course_id.endswith('Demo_Course'):
             assert LicensedEnterpriseCourseEnrollment.objects.filter(
                 enterprise_course_enrollment=enterprise_enrollment,
                 license_uuid=license_uuid,

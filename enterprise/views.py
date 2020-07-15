@@ -890,17 +890,22 @@ class GrantDataSharingPermissions(View):
             # A CourseEnrollment record will be created and on the post signal of the CourseEnrollment,
             # an EnterpriseCourseEnrollment record will also get created.
             if course_id and self.is_course_run_id(course_id):
-                try:
-                    self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
-                    if license_uuid:
-                        enrollment_api_client = EnrollmentApiClient()
-                        course_modes = enrollment_api_client.get_course_modes(course_id)
-                        course_mode = 'verified' if 'verified' in course_modes else 'audit'
+                if license_uuid:
+                    enrollment_api_client = EnrollmentApiClient()
+                    course_modes = enrollment_api_client.get_course_modes(course_id)
+                    course_mode = 'verified' if 'verified' in course_modes \
+                        else 'professional' if 'professional' in course_modes \
+                        else 'audit'
+                    try:
                         enrollment_api_client.enroll_user_in_course(
                             request.user.username,
                             course_id,
                             course_mode
                         )
+                    except Exception as exc:    # pylint: disable=broad-except
+                        return redirect(failure_url)
+                try:
+                    self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
                 except IntegrityError:
                     error_code = 'ENTGDS009'
                     log_message = (
