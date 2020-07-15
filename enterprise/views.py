@@ -895,6 +895,7 @@ class GrantDataSharingPermissions(View):
                     course_modes = enrollment_api_client.get_course_modes(course_id)
                     course_mode = 'verified' if 'verified' in course_modes \
                         else 'professional' if 'professional' in course_modes \
+                        else 'no-id-professional' if 'no-id-professional' in course_modes \
                         else 'audit'
                     try:
                         enrollment_api_client.enroll_user_in_course(
