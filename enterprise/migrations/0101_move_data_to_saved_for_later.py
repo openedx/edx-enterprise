@@ -3,21 +3,13 @@
 from django.db import migrations
 
 
-# saved_for_later will replace the marked_done field
+# this field is new, there is no data in prod that we have to update
 def move_data_from_marked_done_to_saved_for_later(apps, schema_editor):
-    EnterpriseCourseEnrollment = apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
-    course_enrollments = EnterpriseCourseEnrollment.objects.all()
-    for course_enrollment in course_enrollments:
-        course_enrollment.saved_for_later = course_enrollment.marked_done
-    EnterpriseCourseEnrollment.objects.bulk_update(course_enrollments, ['saved_for_later'])
+   pass
 
 
 def move_data_from_saved_for_later_to_marked_done(apps, schema_editor):
-    EnterpriseCourseEnrollment = apps.get_model('enterprise', 'EnterpriseCourseEnrollment')
-    course_enrollments = EnterpriseCourseEnrollment.objects.all()
-    for course_enrollment in course_enrollments:
-        course_enrollment.marked_done = course_enrollment.saved_for_later
-    EnterpriseCourseEnrollment.objects.bulk_update(course_enrollments, ['marked_done'])
+    pass
 
 class Migration(migrations.Migration):
 

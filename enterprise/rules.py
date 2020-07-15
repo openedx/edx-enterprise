@@ -24,7 +24,7 @@ def has_implicit_access_to_dashboard(user, obj):  # pylint: disable=unused-argum
 
     Params:
         user: An ``auth.User`` instance.
-        obj: An ``EnterpriseCustomer`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
 
     Returns:
         boolean: whether the request user has access or not
@@ -61,7 +61,7 @@ def has_implicit_access_to_catalog(user, obj):  # pylint: disable=unused-argumen
 
     Params:
         user: An ``auth.User`` instance.
-        obj: An ``EnterpriseCustomer`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
 
     Returns:
         boolean: whether the request user has access or not
@@ -98,7 +98,7 @@ def has_implicit_access_to_enrollment_api(user, obj):  # pylint: disable=unused-
 
     Params:
         user: An ``auth.User`` instance.
-        obj: An ``EnterpriseCustomer`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
 
     Returns:
         boolean: whether the request user has access or not
@@ -135,7 +135,7 @@ def has_implicit_access_to_reporting_api(user, obj):  # pylint: disable=unused-a
 
     Params:
         user: An ``auth.User`` instance.
-        obj: An ``EnterpriseCustomer`` instance.
+        obj: The string version of an ``EnterpriseCustomer.uuid``.
 
     Returns:
         boolean: whether the request user has access or not
