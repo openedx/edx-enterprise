@@ -903,6 +903,11 @@ class GrantDataSharingPermissions(View):
                             course_mode
                         )
                     except Exception as exc:    # pylint: disable=broad-except
+                        LOGGER.error(
+                            'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
+                                exc=exc
+                            )
+                        )
                         return redirect(failure_url)
                 try:
                     self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
