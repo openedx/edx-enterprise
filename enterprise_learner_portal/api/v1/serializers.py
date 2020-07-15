@@ -14,12 +14,10 @@ try:
     from lms.djangoapps.bulk_email.api import get_emails_enabled
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from lms.djangoapps.course_api.api import (
-        get_due_dates,
         get_course_run_url,
     )
 except ImportError:
     get_certificate_for_user = None
-    get_due_dates = None
     get_course_run_url = None
     get_emails_enabled = None
 
@@ -67,7 +65,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['end_date'] = course_overview['end']
         representation['display_name'] = course_overview['display_name_with_default']
         representation['course_run_url'] = get_course_run_url(request, course_run_id)
-        representation['due_dates'] = get_due_dates(request, course_run_id, user)
+        representation['due_dates'] = []
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
         representation['saved_for_later'] = instance.saved_for_later

@@ -31,12 +31,10 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_emails_enabled')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_url')
-    @mock.patch('enterprise_learner_portal.api.v1.serializers.get_due_dates')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_certificate_for_user')
     def test_serializer_representation(
             self,
             mock_get_cert,
-            mock_get_due_dates,
             mock_get_course_run_url,
             mock_get_emails_enabled,
             mock_get_course_run_status,
@@ -60,7 +58,6 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             'is_passing': True,
             'created': 'a datetime object',
         }
-        mock_get_due_dates.return_value = ['some', 'dates']
         mock_get_course_run_url.return_value = 'example.com'
         mock_get_emails_enabled.return_value = True
         mock_get_course_run_status.return_value = 'completed'
@@ -88,7 +85,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('end_date', 'a datetime object'),
             ('display_name', 'a default name'),
             ('course_run_url', 'example.com'),
-            ('due_dates', ['some', 'dates']),
+            ('due_dates', []),
             ('pacing', 'instructor'),
             ('org_name', 'my university'),
             ('saved_for_later', False),
