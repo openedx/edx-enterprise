@@ -14,10 +14,15 @@ Change Log
 Unreleased
 --------------------
 
-[3.3.24] 2020-07-14
+[3.3.25] 2020-07-16
 -------------------
 
 * Use the GrantDataSharingPermissions view to enroll licensed users in courses
+
+[3.3.24] 2020-07-15
+-------------------
+
+* Remove get_due_dates and always return an empty list for due_dates
 
 [3.3.23] 2020-07-13
 -------------------

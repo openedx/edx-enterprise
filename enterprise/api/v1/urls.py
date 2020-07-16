@@ -14,6 +14,7 @@ router.register("enterprise_catalogs", views.EnterpriseCustomerCatalogViewSet, '
 router.register("enterprise-course-enrollment", views.EnterpriseCourseEnrollmentViewSet, 'enterprise-course-enrollment')
 router.register("enterprise-customer", views.EnterpriseCustomerViewSet, 'enterprise-customer')
 router.register("enterprise-learner", views.EnterpriseCustomerUserViewSet, 'enterprise-learner')
+router.register("pending-enterprise-learner", views.PendingEnterpriseCustomerUserViewSet, 'pending-enterprise-learner')
 router.register(
     "enterprise-customer-branding",
     views.EnterpriseCustomerBrandingConfigurationViewSet,

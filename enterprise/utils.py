@@ -110,7 +110,8 @@ def get_identity_provider(provider_id):
         Instance of ProviderConfig or None.
     """
     try:
-        from third_party_auth.provider import Registry   # pylint: disable=redefined-outer-name
+        # pylint: disable=redefined-outer-name,import-outside-toplevel
+        from third_party_auth.provider import Registry
     except ImportError as exception:
         LOGGER.warning("Could not import Registry from third_party_auth.provider")
         LOGGER.warning(exception)
@@ -130,7 +131,8 @@ def get_idp_choices():
         A list of choices of all identity providers, None if it can not get any available identity provider.
     """
     try:
-        from third_party_auth.provider import Registry   # pylint: disable=redefined-outer-name
+        # pylint: disable=redefined-outer-name,import-outside-toplevel
+        from third_party_auth.provider import Registry
     except ImportError as exception:
         LOGGER.warning("Could not import Registry from third_party_auth.provider")
         LOGGER.warning(exception)
@@ -161,6 +163,7 @@ def get_oauth2authentication_class():
     Return oauth2 authentication class to authenticate REST APIs with Bearer token.
     """
     try:
+        # pylint: disable=import-outside-toplevel
         from openedx.core.lib.api.authentication import OAuth2AuthenticationAllowInactiveUser as OAuth2Authentication
     except ImportError:
         return None

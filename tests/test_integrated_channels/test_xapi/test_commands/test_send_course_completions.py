@@ -99,6 +99,7 @@ class TestSendCourseCompletions(unittest.TestCase):
         """
         Make sure get_course_completions works as expected
         """
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         user = factories.UserFactory()
@@ -116,6 +117,7 @@ class TestSendCourseCompletions(unittest.TestCase):
         Make sure prefetch_users method works as expected.
         """
         # Import is placed here because if placed at the top it affects mocking.
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         user = factories.UserFactory()
@@ -301,6 +303,7 @@ class TestSendCourseCompletions(unittest.TestCase):
         Make sure get_object_type logic works as expected.
         """
         # Import is placed here because if placed at the top it affects mocking.
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         xapi_transmission = mock.Mock(course_id='edX+DemoX')
@@ -315,6 +318,7 @@ class TestSendCourseCompletions(unittest.TestCase):
         Make sure operation works as expected.
         """
         # Import is placed here because if placed at the top it affects mocking.
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         enterprise_enrollment_ids = [2, 24, 632]
@@ -326,6 +330,7 @@ class TestSendCourseCompletions(unittest.TestCase):
         Make sure operation works as expected.
         """
         # Import is placed here because if placed at the top it affects mocking.
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         mock_transmission_queryset = mock.MagicMock(return_value=[mock.Mock(
@@ -348,6 +353,7 @@ class TestSendCourseCompletions(unittest.TestCase):
         """
         Make sure get_course_completions works as expected
         """
+        # pylint: disable=import-outside-toplevel
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         user = factories.UserFactory()
