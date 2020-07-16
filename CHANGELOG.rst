@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.25] 2020-07-16
+-------------------
+
+* Use the GrantDataSharingPermissions view to enroll licensed users in courses
+
 [3.3.24] 2020-07-15
 -------------------
 
@@ -22,7 +27,7 @@ Unreleased
 [3.3.23] 2020-07-13
 -------------------
 
-* Remove unneceesary data migration
+* Remove unnecessary data migration
 
 [3.3.22] 2020-07-13
 -------------------

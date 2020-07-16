@@ -3,6 +3,8 @@
 Tests for the ``GrantDataSharingPermissions`` view of the Enterprise app.
 """
 
+import uuid
+
 import ddt
 import mock
 from dateutil.parser import parse
@@ -14,7 +16,7 @@ from django.http import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -125,7 +127,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
-        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer, content_filter=content_filter)
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -135,11 +140,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 enterprise_customer_user=ecu,
                 course_id=course_id
             )
+        license_uuid = str(uuid.uuid4())
         params = {
             'enterprise_customer_uuid': str(enterprise_customer.uuid),
             'course_id': course_id,
             'next': 'https://google.com',
             'failure_url': 'https://facebook.com',
+            'license_uuid': license_uuid,
         }
         if defer_creation:
             params['defer_creation'] = True
@@ -157,7 +164,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         if course_start_date:
             expected_course_start_date = parse(course_run_details['start']).strftime('%B %d, %Y')
 
-        for key, value in {
+        for key, expected_value in {
                 'platform_name': 'Test platform',
                 'platform_description': 'Test description',
                 'tagline': "High-quality online learning opportunities from the world's best universities",
@@ -179,6 +186,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 'redirect_url': 'https://google.com',
                 'course_specific': True,
                 'defer_creation': defer_creation,
+                'license_uuid': license_uuid,
                 'welcome_text': 'Welcome to Test platform.',
                 'sharable_items_note_header': 'Please note',
                 'LMS_SEGMENT_KEY': settings.LMS_SEGMENT_KEY,
@@ -194,7 +202,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                     "from Starfleet Academy."
                 ),
         }.items():
-            assert response.context[key] == value  # pylint:disable=no-member
+            assert response.context[key] == expected_value  # pylint:disable=no-member
 
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_get_course_specific_consent_improperly_configured_course_catalog(
@@ -216,7 +224,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
                 course_id,
             ]
         }
-        EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer, content_filter=content_filter)
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
@@ -372,17 +383,19 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 404
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
-        (True, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course'),
-        (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course'),
-        (True, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course'),
-        (False, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course'),
-        (True, True, '/successful_enrollment', 'edX+DemoX'),
-        (False, True, '/successful_enrollment', 'edX+DemoX'),
-        (True, False, '/failure_url', 'edX+DemoX'),
-        (False, False, '/failure_url', 'edX+DemoX'),
+        (True, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', str(uuid.uuid4())),
+        (False, True, '/successful_enrollment', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (True, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (False, False, '/failure_url', 'course-v1:edX+DemoX+Demo_Course', ''),
+        (True, True, '/successful_enrollment', 'edX+DemoX', ''),
+        (False, True, '/successful_enrollment', 'edX+DemoX', ''),
+        (True, False, '/failure_url', 'edX+DemoX', ''),
+        (False, False, '/failure_url', 'edX+DemoX', ''),
     )
     @ddt.unpack
     def test_post_course_specific_consent(
@@ -391,8 +404,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             consent_provided,
             expected_redirect_url,
             course_id,
+            license_uuid,
             reverse_mock,
             course_catalog_api_client_mock,
+            mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         self._login()
@@ -401,11 +416,20 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enable_data_sharing_consent=True,
             enforce_data_sharing_consent='at_enrollment',
         )
+        content_filter = {
+            'key': [
+                course_id,
+            ]
+        }
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
         ecu = EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        EnterpriseCourseEnrollment.objects.create(
+        enterprise_enrollment = EnterpriseCourseEnrollment.objects.create(
             enterprise_customer_user=ecu,
             course_id=course_id,
         )
@@ -419,6 +443,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.is_course_in_catalog.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
         reverse_mock.return_value = '/dashboard'
+        course_mode = 'verified'
+        mock_enrollment_api_client.return_value.get_course_modes.return_value = [course_mode]
         post_data = {
             'enterprise_customer_uuid': enterprise_customer.uuid,
             'course_id': course_id,
@@ -429,13 +455,33 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             post_data['defer_creation'] = True
         if consent_provided:
             post_data['data_sharing_consent'] = consent_provided
+        if license_uuid:
+            post_data['license_uuid'] = license_uuid
 
         resp = self.client.post(self.url, post_data)
 
         assert resp.url.endswith(expected_redirect_url)  # pylint: disable=no-member
         assert resp.status_code == 302
         if not defer_creation:
+            dsc.refresh_from_db()
             assert dsc.granted is consent_provided
+
+        # we'll only create an enrollment record if (1) creation is not deferred, (2) consent has not been provided,
+        # (3) we provide a license_uuid, and (4) we provide a course _run_ id
+        if not defer_creation and not consent_provided and license_uuid and course_id.endswith('Demo_Course'):
+            assert LicensedEnterpriseCourseEnrollment.objects.filter(
+                enterprise_course_enrollment=enterprise_enrollment,
+                license_uuid=license_uuid,
+            ).exists() is True
+
+            mock_enrollment_api_client.return_value.enroll_user_in_course.assert_called_once_with(
+                self.user.username,
+                course_id,
+                course_mode
+            )
+
+        if not license_uuid:
+            assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.reverse')
@@ -684,7 +730,8 @@ class TestProgramDataSharingPermissions(TestCase):
         params = self.valid_post_params.copy()
         params.pop('data_sharing_consent')
         response = self.client.post(self.url, params, follow=False)
-        consent_record.save.assert_called_once()
+        # No need to update the consent record if consent not provided
+        assert consent_record.save.called is False
         self.assertRedirects(response, 'https://facebook.com/', fetch_redirect_response=False)
 
     def test_post_program_consent_deferred(self):
