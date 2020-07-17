@@ -892,7 +892,13 @@ class GrantDataSharingPermissions(View):
             if course_id and self.is_course_run_id(course_id):
                 if license_uuid:
                     enrollment_api_client = EnrollmentApiClient()
-                    course_modes = enrollment_api_client.get_course_modes(course_id)
+                    course_modes = [mode['slug'] for mode in enrollment_api_client.get_course_modes(course_id)]
+                    LOGGER.info(
+                        'Retrieved Course Modes for Course {course_id}: {course_modes}'.format(
+                            course_id=course_id,
+                            course_modes=course_modes
+                        )
+                    )
                     course_mode = 'verified' if 'verified' in course_modes \
                         else 'professional' if 'professional' in course_modes \
                         else 'no-id-professional' if 'no-id-professional' in course_modes \
@@ -902,6 +908,15 @@ class GrantDataSharingPermissions(View):
                             request.user.username,
                             course_id,
                             course_mode
+                        )
+                        LOGGER.info(
+                            'Created LMS enrollment for User {user} in Course {course_id} '
+                            'with License {license_uuid} in Course Mode {course_mode}.'.format(
+                                user=request.user.username,
+                                course_id=course_id,
+                                license_uuid=license_uuid,
+                                course_mode=course_mode
+                            )
                         )
                     except Exception as exc:    # pylint: disable=broad-except
                         LOGGER.error(

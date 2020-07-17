@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.3.26] 2020-07-17
+-------------------
+
+* Uses correct course mode slugs during enrollment from GrantDataSharingPermissions.
+
 [3.3.25] 2020-07-16
 -------------------
 
