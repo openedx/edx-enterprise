@@ -19,18 +19,25 @@ from django.core import mail
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from consent.models import DataSharingConsent
 from enterprise import admin as enterprise_admin
 from enterprise.admin import (
+    EnterpriseCustomerManageLearnerDataSharingConsentView,
     EnterpriseCustomerManageLearnersView,
     EnterpriseCustomerTransmitCoursesView,
     TemplatePreviewView,
 )
-from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
+from enterprise.admin.forms import (
+    ManageLearnersDataSharingConsentForm,
+    ManageLearnersForm,
+    TransmitEnterpriseCoursesForm,
+)
 from enterprise.admin.utils import ValidationMessages
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
+    EnterpriseCustomer,
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
     PendingEnrollment,
@@ -39,6 +46,7 @@ from enterprise.models import (
 from test_utils import fake_enrollment_api  # pylint: disable=ungrouped-imports
 from test_utils.factories import (
     FAKER,
+    DataSharingConsentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
@@ -143,35 +151,26 @@ class TestPreviewTemplateView(TestCase):
         assert result.status_code == 404
 
 
-class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
+class BaseEnterpriseCustomerView(TestCase):
     """
-    Common functionality for EnterpriseCustomerManageLearnersView tests.
+    Common functionality for EnterpriseCustomerViews.
     """
-
     def setUp(self):
         """
-        Test set up - installs common dependencies.
+        Test set up
         """
-        super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
-        self.user = UserFactory.create(is_staff=True, is_active=True, id=1)
-        self.user.set_password("QWERTY")
+        super(BaseEnterpriseCustomerView, self).setUp()
+        self.user = UserFactory.create(is_staff=True, is_active=True)
+        self.user.set_password('QWERTY')
         self.user.save()
+        self.enterprise_channel_worker = UserFactory.create(is_staff=True, is_active=True)
         self.enterprise_customer = EnterpriseCustomerFactory()
         self.default_context = {
-            "has_permission": True,
-            "opts": self.enterprise_customer._meta,
-            "user": self.user
+            'has_permission': True,
+            'opts': self.enterprise_customer._meta,
+            'user': self.user
         }
-        self.view_url = reverse(
-            "admin:" + enterprise_admin.utils.UrlNames.MANAGE_LEARNERS,
-            args=(self.enterprise_customer.uuid,)
-        )
         self.client = Client()
-        self.context_parameters = EnterpriseCustomerManageLearnersView.ContextParameters
-        self.required_fields_with_default = {
-            ManageLearnersForm.Fields.REASON: "tests",
-            ManageLearnersForm.Fields.DISCOUNT: 0.0,
-        }
 
     def _test_common_context(self, actual_context, context_overrides=None):
         """
@@ -184,6 +183,214 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
         for context_key, expected_value in six.iteritems(expected_context):
             assert actual_context[context_key] == expected_value
 
+    def _login(self):
+        """
+        Log user in.
+        """
+        assert self.client.login(username=self.user.username, password='QWERTY')
+
+
+class BaseTestEnterpriseCustomerManageLearnersDSCView(BaseEnterpriseCustomerView):
+    """
+    Common functionality for EnterpriseCustomerManageLearnersDataSharingConsentView tests.
+    """
+
+    def setUp(self):
+        """
+        Test set up
+        """
+        super(BaseTestEnterpriseCustomerManageLearnersDSCView, self).setUp()
+        self.manage_learners_dsc_form = ManageLearnersDataSharingConsentForm()
+        self.view_url = reverse(
+            'admin:' + enterprise_admin.utils.UrlNames.MANAGE_LEARNERS_DSC,
+            args=(self.enterprise_customer.uuid,)
+        )
+        self.context_parameters = EnterpriseCustomerManageLearnerDataSharingConsentView.ContextParameters
+
+
+@mark.django_db
+@override_settings(ROOT_URLCONF='test_utils.admin_urls')
+class TestEnterpriseCustomerManageLearnersDSCViewGet(BaseTestEnterpriseCustomerManageLearnersDSCView):
+    """
+    Tests for EnterpriseCustomerManageLearnersDataSharingConsentView GET endpoint.
+    """
+
+    def _test_get_response(self, response):
+        """
+        Test view GET response for common parts.
+        """
+        assert response.status_code == 200
+        self._test_common_context(response.context)
+        assert response.context[self.context_parameters.ENTERPRISE_CUSTOMER] == self.enterprise_customer
+        assert not response.context[self.context_parameters.MANAGE_LEARNERS_DSC_FORM].is_bound
+
+    def test_get_not_logged_in(self):
+        response = self.client.get(self.view_url)
+        assert response.status_code == 302
+
+    def test_get_links(self):
+        self._login()
+
+        response = self.client.get(self.view_url)
+        self._test_get_response(response)
+
+
+@mark.django_db
+@override_settings(ROOT_URLCONF='test_utils.admin_urls')
+class TestEnterpriseCustomerManageLearnersDSCViewPost(BaseTestEnterpriseCustomerManageLearnersDSCView):
+    """
+    Tests for EnterpriseCustomerManageLearnersDataSharingConsentView POST endpoint.
+    """
+
+    def post_request(self, email_or_username, course_id):
+        """
+        Post the request ad return the response.
+        """
+        data = {
+            ManageLearnersDataSharingConsentForm.Fields.EMAIL_OR_USERNAME: email_or_username,
+            ManageLearnersDataSharingConsentForm.Fields.COURSE: course_id
+        }
+        with mock.patch("enterprise.admin.forms.EnrollmentApiClient") as mock_enrollment_client:
+            forms_instance = mock_enrollment_client.return_value
+            forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+            return self.client.post(self.view_url, data=data)
+
+    def assert_error(self, response, field, expected_error_message):
+        """
+        Assert the form with error for given field.
+        """
+        assert response.status_code == 200
+        self._test_common_context(response.context)
+        manage_learners_dsc_form = response.context[self.context_parameters.MANAGE_LEARNERS_DSC_FORM]
+        assert manage_learners_dsc_form.is_bound
+        assert manage_learners_dsc_form.errors == {field: [expected_error_message]}
+
+    def test_post_not_logged_in(self):
+        response = self.client.post(self.view_url, data={})
+        assert response.status_code == 302
+
+    def test_post_error_user_not_linked(self):
+        """
+        Test the post request with user not linked with enterprise customer
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        user_not_linked = UserFactory(
+            username='user_not_linked',
+            email='user_not_linked@example.com',
+        )
+        with mock.patch.object(EnterpriseCustomer, 'catalog_contains_course') as mock_catalog_contains_course:
+            mock_catalog_contains_course.return_value = True
+            response = self.post_request(user_not_linked.email, course_id)
+            self.assert_error(response, ManageLearnersForm.Fields.EMAIL_OR_USERNAME, ValidationMessages.USER_NOT_LINKED)
+
+    def test_post_error_user_not_exist(self):
+        """
+        Test the post request with user not exist.
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        email = "user_not_exist@example.com"
+
+        with mock.patch.object(EnterpriseCustomer, 'catalog_contains_course') as mock_catalog_contains_course:
+            mock_catalog_contains_course.return_value = True
+            response = self.post_request(email, course_id)
+            self.assert_error(
+                response,
+                ManageLearnersForm.Fields.EMAIL_OR_USERNAME,
+                ValidationMessages.USER_NOT_EXIST.format(email=email)
+            )
+
+    def test_post_error_course_not_exist(self):
+        """
+        Test the post request with course not exist.
+        """
+        self._login()
+        course_id = 'dummy-course'
+        user = UserFactory(username='user_linked', email='user_linked@example.com', )
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
+
+        with mock.patch.object(EnterpriseCustomer, 'catalog_contains_course') as mock_catalog_contains_course:
+            mock_catalog_contains_course.return_value = True
+            response = self.post_request(user.email, course_id)
+            self.assert_error(
+                response,
+                ManageLearnersForm.Fields.COURSE,
+                ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)
+            )
+
+    def test_post_error_course_not_in_catalog(self):
+        """
+        Test the post request with course doesn't exist in customer's catalog.
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        user = UserFactory(username='user_linked', email='user_linked@example.com',)
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
+
+        with mock.patch.object(EnterpriseCustomer, 'catalog_contains_course') as mock_catalog_contains_course:
+            mock_catalog_contains_course.return_value = False
+            response = self.post_request(user.email, course_id)
+            self.assert_error(
+                response,
+                ManageLearnersForm.Fields.COURSE,
+                ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG
+            )
+
+    def test_post_valid_request(self):
+        """
+        Test the valid post request.
+        """
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        user = UserFactory(username='user_linked', email='user_linked@example.com')
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
+
+        DataSharingConsentFactory(
+            enterprise_customer=self.enterprise_customer,
+            username=user.username,
+            course_id=course_id
+        )
+
+        # Learner has a DSC
+        assert DataSharingConsent.objects.filter(
+            enterprise_customer=self.enterprise_customer,
+            course_id=course_id,
+            username=user.username
+        ).count() == 1
+
+        with mock.patch.object(EnterpriseCustomer, 'catalog_contains_course') as mock_catalog_contains_course:
+            mock_catalog_contains_course.return_value = True
+            response = self.post_request(user.email, course_id)
+            # Learner DSC has been removed
+            assert DataSharingConsent.objects.filter(
+                enterprise_customer=self.enterprise_customer,
+                course_id=course_id,
+                username=user.username
+            ).count() == 0
+            self.assertRedirects(response, self.view_url)
+
+
+class BaseTestEnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
+    """
+    Common functionality for EnterpriseCustomerManageLearnersView tests.
+    """
+
+    def setUp(self):
+        """
+        Test set up - installs common dependencies.
+        """
+        super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
+        self.view_url = reverse(
+            "admin:" + enterprise_admin.utils.UrlNames.MANAGE_LEARNERS,
+            args=(self.enterprise_customer.uuid,)
+        )
+        self.context_parameters = EnterpriseCustomerManageLearnersView.ContextParameters
+        self.required_fields_with_default = {
+            ManageLearnersForm.Fields.REASON: "tests",
+            ManageLearnersForm.Fields.DISCOUNT: 0.0,
+        }
+
     @staticmethod
     def _assert_no_record(email):
         """
@@ -195,12 +402,6 @@ class BaseTestEnterpriseCustomerManageLearnersView(TestCase):
             assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0
         except User.DoesNotExist:
             pass
-
-    def _login(self):
-        """
-        Log user in.
-        """
-        assert self.client.login(username=self.user.username, password="QWERTY")  # make sure we've logged in
 
     def _assert_django_messages(self, post_response, expected_messages):
         """
@@ -339,7 +540,6 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 user_id=UserFactory(
                     username='bob',
                     email='bob@thing.com',
-                    id=2,
                 ).id,
             ),
             EnterpriseCustomerUserFactory(
@@ -347,7 +547,6 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 user_id=UserFactory(
                     username='frank',
                     email='iloveschool@example.com',
-                    id=3,
                 ).id,
             ),
             EnterpriseCustomerUserFactory(
@@ -355,7 +554,6 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 user_id=UserFactory(
                     username='angela',
                     email='cats@cats.org',
-                    id=4,
                 ).id,
             ),
         ]
@@ -400,7 +598,7 @@ class TestEnterpriseCustomerManageLearnersViewGet(BaseTestEnterpriseCustomerMana
                 enterprise_customer=self.enterprise_customer,
                 user_id=UserFactory(
                     username='user{user_index}'.format(user_index=i),
-                    id=i + 10,  # Just to make sure we don't get IntegrityError.
+                    id=i + 100,  # Just to make sure we don't get IntegrityError.
                 ).id
             )
             linked_learners.append(learner.user_id)
@@ -463,7 +661,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         self._login()
         self._assert_no_record(email)  # there're no record with current email
 
-        user = UserFactory(username=username, email=email, id=2)
+        user = UserFactory(username=username, email=email)
 
         response = self.client.post(
             self.view_url,
@@ -529,7 +727,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         email = FAKER.email()  # pylint: disable=no-member
 
-        user = UserFactory(email=email, id=2)
+        user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1
         response = self.client.post(
@@ -553,7 +751,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         email = FAKER.email()  # pylint: disable=no-member
 
-        user = UserFactory(email=email, id=2)
+        user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(user_id=user.id)
         assert EnterpriseCustomerUser.objects.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 0
@@ -574,7 +772,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
         email = FAKER.email()  # pylint: disable=no-member
 
-        user = UserFactory(email=email, id=2)
+        user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(user_id=user.id)
         response = self.client.post(
             self.view_url + "?q=bob",
@@ -687,7 +885,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "audit" if audit_mode else "verified"
         if enrollment_exists:
@@ -845,7 +1043,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
 
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -892,7 +1090,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
 
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -936,7 +1134,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
 
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "audit"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -971,7 +1169,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
 
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -1013,7 +1211,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -1058,7 +1256,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -1091,7 +1289,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         )
         forms_instance = forms_client.return_value
         forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
-        user = UserFactory(id=2)
+        user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
@@ -1197,7 +1395,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     def test_post_invalid_email_error_skips_all(self):
         self._login()
-        user = UserFactory(id=2)
+        user = UserFactory()
         invalid_email = "invalid"
 
         assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
@@ -1231,9 +1429,9 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             a message will be created.
         """
         self._login()
-        user = UserFactory(id=2)
-        linked_user = UserFactory(id=3)
-        user_linked_to_other_ec = UserFactory(id=4)
+        user = UserFactory()
+        linked_user = UserFactory()
+        user_linked_to_other_ec = UserFactory()
         EnterpriseCustomerUserFactory(user_id=user_linked_to_other_ec.id)
         EnterpriseCustomerUserFactory(user_id=linked_user.id, enterprise_customer=self.enterprise_customer)
         new_email = FAKER.email()  # pylint: disable=no-member
@@ -1286,7 +1484,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert EnterpriseCustomerUser.objects.count() == 0, "Precondition check: no linked users"
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "Precondition check: no pending linked users"
 
-        user_by_email = UserFactory(id=2)
+        user_by_email = UserFactory()
         previously_not_seen_email = FAKER.email()  # pylint: disable=no-member
 
         columns = [ManageLearnersForm.CsvColumns.EMAIL]
@@ -1494,7 +1692,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         self._login()
 
         email = FAKER.email()  # pylint: disable=no-member
-        user = UserFactory(email=email, id=2)
+        user = UserFactory(email=email)
         EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
         query_string = six.moves.urllib.parse.urlencode({"unlink_email": email})
 
@@ -1523,7 +1721,7 @@ class TestManageUsersDeletion(BaseTestEnterpriseCustomerManageLearnersView):
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 0
 
 
-class BaseTestEnterpriseCustomerTransmitCoursesView(TestCase):
+class BaseTestEnterpriseCustomerTransmitCoursesView(BaseEnterpriseCustomerView):
     """
     Common functionality for EnterpriseCustomerTransmitCoursesView tests.
     """
@@ -1533,40 +1731,12 @@ class BaseTestEnterpriseCustomerTransmitCoursesView(TestCase):
         Test set up
         """
         super(BaseTestEnterpriseCustomerTransmitCoursesView, self).setUp()
-        self.user = UserFactory.create(is_staff=True, is_active=True, id=1)
-        self.user.set_password('QWERTY')
-        self.user.save()
-        self.enterprise_channel_worker = UserFactory.create(is_staff=True, is_active=True)
-        self.enterprise_customer = EnterpriseCustomerFactory()
-        self.default_context = {
-            'has_permission': True,
-            'opts': self.enterprise_customer._meta,
-            'user': self.user
-        }
         self.transmit_courses_metadata_form = TransmitEnterpriseCoursesForm()
         self.view_url = reverse(
             'admin:' + enterprise_admin.utils.UrlNames.TRANSMIT_COURSES_METADATA,
             args=(self.enterprise_customer.uuid,)
         )
-        self.client = Client()
         self.context_parameters = EnterpriseCustomerTransmitCoursesView.ContextParameters
-
-    def _test_common_context(self, actual_context, context_overrides=None):
-        """
-        Test common context parts.
-        """
-        expected_context = {}
-        expected_context.update(self.default_context)
-        expected_context.update(context_overrides or {})
-
-        for context_key, expected_value in six.iteritems(expected_context):
-            assert actual_context[context_key] == expected_value
-
-    def _login(self):
-        """
-        Log user in.
-        """
-        assert self.client.login(username=self.user.username, password='QWERTY')
 
 
 @ddt.ddt

@@ -23,7 +23,11 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 from django.views.generic import View
 
-from enterprise.admin.forms import ManageLearnersForm, TransmitEnterpriseCoursesForm
+from enterprise.admin.forms import (
+    ManageLearnersDataSharingConsentForm,
+    ManageLearnersForm,
+    TransmitEnterpriseCoursesForm,
+)
 from enterprise.admin.utils import (
     UrlNames,
     ValidationMessages,
@@ -45,7 +49,7 @@ from enterprise.models import (
     EnterpriseEnrollmentSource,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import get_ecommerce_worker_user, track_enrollment
+from enterprise.utils import delete_data_sharing_consent, get_ecommerce_worker_user, track_enrollment
 
 # Only create manual enrollments if running in edx-platform
 try:
@@ -105,7 +109,117 @@ class TemplatePreviewView(View):
         return request.user.first_name or request.user.username
 
 
-class EnterpriseCustomerTransmitCoursesView(View):
+class BaseEnterpriseCustomerView(View):
+    """
+    Base class for Enterprise Customer views.
+    """
+    template = None
+
+    @staticmethod
+    def _get_admin_context(request, customer):
+        """
+        Build common admin context.
+        """
+        opts = customer._meta
+        codename = get_permission_codename('change', opts)
+        has_change_permission = request.user.has_perm('%s.%s' % (opts.app_label, codename))
+        return {
+            'has_change_permission': has_change_permission,
+            'opts': opts
+        }
+
+    def _get_view_context(self, request, customer_uuid):
+        """
+        Return the default context parameters
+        """
+        return {
+            'enterprise_customer': EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        }
+
+    def _build_context(self, request, customer_uuid):
+        """
+        Build common context parts used by different handlers in this view.
+        """
+        context = self._get_view_context(request, customer_uuid)
+        context.update(admin.site.each_context(request))
+        context.update(self._get_admin_context(request, context['enterprise_customer']))
+        return context
+
+    def get_form_view(self, request, customer_uuid, additional_context=None):
+        """
+        render the form with appropriate context.
+        """
+        context = self._build_context(request, customer_uuid)
+        context.update(additional_context)
+        return render(request, self.template, context)
+
+
+class EnterpriseCustomerManageLearnerDataSharingConsentView(BaseEnterpriseCustomerView):
+    """
+    Manage Learners Data Sharing Consent View.
+
+    Allows to request the DSC from a learner for a specific course.
+    """
+    template = 'enterprise/admin/manage_learners_data_sharing_consent.html'
+
+    class ContextParameters:
+        """
+        Namespace-style class for custom context parameters.
+        """
+        ENTERPRISE_CUSTOMER = 'enterprise_customer'
+        MANAGE_LEARNERS_DSC_FORM = 'manage_learners_data_sharing_consent_form'
+
+    def get(self, request, customer_uuid):
+        """
+        Handle GET request - render "Request a DSC from Learner" form.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+
+        Returns:
+            django.http.response.HttpResponse: HttpResponse
+        """
+        return self.get_form_view(
+            request,
+            customer_uuid,
+            additional_context={
+                self.ContextParameters.MANAGE_LEARNERS_DSC_FORM: ManageLearnersDataSharingConsentForm()
+            }
+        )
+
+    def post(self, request, customer_uuid):
+        """
+        Handle POST request - handle form submissions.
+
+        Arguments:
+            request (django.http.request.HttpRequest): Request instance
+            customer_uuid (str): Enterprise Customer UUID
+        """
+        manage_learners_dsc_form = ManageLearnersDataSharingConsentForm(
+            request.POST,
+            enterprise_customer=EnterpriseCustomer.objects.get(uuid=customer_uuid)
+        )
+
+        # check that form data is well-formed
+        if manage_learners_dsc_form.is_valid():
+            delete_data_sharing_consent(
+                manage_learners_dsc_form.cleaned_data[ManageLearnersDataSharingConsentForm.Fields.COURSE],
+                customer_uuid,
+                manage_learners_dsc_form.cleaned_data[ManageLearnersDataSharingConsentForm.Fields.EMAIL_OR_USERNAME]
+            )
+            return HttpResponseRedirect(reverse("admin:" + UrlNames.MANAGE_LEARNERS_DSC, args=(customer_uuid,)))
+
+        return self.get_form_view(
+            request,
+            customer_uuid,
+            additional_context={
+                self.ContextParameters.MANAGE_LEARNERS_DSC_FORM: manage_learners_dsc_form
+            }
+        )
+
+
+class EnterpriseCustomerTransmitCoursesView(BaseEnterpriseCustomerView):
     """
     Transmit courses view.
 
@@ -120,56 +234,32 @@ class EnterpriseCustomerTransmitCoursesView(View):
         ENTERPRISE_CUSTOMER = 'enterprise_customer'
         TRANSMIT_COURSES_METADATA_FORM = 'transmit_courses_metadata_form'
 
-    @staticmethod
-    def _build_admin_context(request, customer):
-        """
-        Build common admin context.
-        """
-        opts = customer._meta
-        codename = get_permission_codename('change', opts)
-        has_change_permission = request.user.has_perm('%s.%s' % (opts.app_label, codename))
-        return {
-            'has_change_permission': has_change_permission,
-            'opts': opts
-        }
-
-    def _build_context(self, request, enterprise_customer_uuid):
-        """
-        Build common context parts used by different handlers in this view.
-        """
-        enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)  # pylint: disable=no-member
-
-        context = {
-            self.ContextParameters.ENTERPRISE_CUSTOMER: enterprise_customer,
-        }
-        context.update(admin.site.each_context(request))
-        context.update(self._build_admin_context(request, enterprise_customer))
-        return context
-
-    def get(self, request, enterprise_customer_uuid):
+    def get(self, request, customer_uuid):
         """
         Handle GET request - render "Transmit courses metadata" form.
 
         Arguments:
             request (django.http.request.HttpRequest): Request instance
-            enterprise_customer_uuid (str): Enterprise Customer UUID
+            customer_uuid (str): Enterprise Customer UUID
 
         Returns:
             django.http.response.HttpResponse: HttpResponse
         """
-        context = self._build_context(request, enterprise_customer_uuid)
-        transmit_courses_metadata_form = TransmitEnterpriseCoursesForm()
-        context.update({self.ContextParameters.TRANSMIT_COURSES_METADATA_FORM: transmit_courses_metadata_form})
+        return self.get_form_view(
+            request,
+            customer_uuid,
+            additional_context={
+                self.ContextParameters.TRANSMIT_COURSES_METADATA_FORM: TransmitEnterpriseCoursesForm()
+            }
+        )
 
-        return render(request, self.template, context)
-
-    def post(self, request, enterprise_customer_uuid):
+    def post(self, request, customer_uuid):
         """
         Handle POST request - handle form submissions.
 
         Arguments:
             request (django.http.request.HttpRequest): Request instance
-            enterprise_customer_uuid (str): Enterprise Customer UUID
+            customer_uuid (str): Enterprise Customer UUID
         """
         transmit_courses_metadata_form = TransmitEnterpriseCoursesForm(request.POST)
 
@@ -182,18 +272,22 @@ class EnterpriseCustomerTransmitCoursesView(View):
             call_command(
                 'transmit_content_metadata',
                 '--catalog_user', channel_worker_username,
-                enterprise_customer=enterprise_customer_uuid
+                enterprise_customer=customer_uuid
             )
 
             # Redirect to GET
             return HttpResponseRedirect('')
 
-        context = self._build_context(request, enterprise_customer_uuid)
-        context.update({self.ContextParameters.TRANSMIT_COURSES_METADATA_FORM: transmit_courses_metadata_form})
-        return render(request, self.template, context)
+        return self.get_form_view(
+            request,
+            customer_uuid,
+            additional_context={
+                self.ContextParameters.TRANSMIT_COURSES_METADATA_FORM: transmit_courses_metadata_form
+            }
+        )
 
 
-class EnterpriseCustomerManageLearnersView(View):
+class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
     """
     Manage Learners view.
 
@@ -212,26 +306,8 @@ class EnterpriseCustomerManageLearnersView(View):
         SEARCH_KEYWORD = "search_keyword"
         ENROLLMENT_URL = 'ENROLLMENT_API_ROOT_URL'
 
-    @staticmethod
-    def _build_admin_context(request, customer):
-        """
-        Build common admin context.
-        """
-        opts = customer._meta
-        codename = get_permission_codename("change", opts)
-        has_change_permission = request.user.has_perm("%s.%s" % (opts.app_label, codename))
-        return {
-            "has_change_permission": has_change_permission,
-            "opts": opts
-        }
-
-    def _build_context(self, request, customer_uuid):
-        """
-        Build common context parts used by different handlers in this view.
-        """
-        # TODO: pylint acts stupid - find a way around it without suppressing
+    def _get_view_context(self, request, customer_uuid):
         enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
-
         search_keyword = self.get_search_keyword(request)
         linked_learners = self.get_enterprise_customer_user_queryset(request, search_keyword, customer_uuid)
         pending_linked_learners = self.get_pending_users_queryset(search_keyword, customer_uuid)
@@ -243,8 +319,6 @@ class EnterpriseCustomerManageLearnersView(View):
             self.ContextParameters.SEARCH_KEYWORD: search_keyword or '',
             self.ContextParameters.ENROLLMENT_URL: settings.LMS_ENROLLMENT_API_PATH,
         }
-        context.update(admin.site.each_context(request))
-        context.update(self._build_admin_context(request, enterprise_customer))
         return context
 
     def get_search_keyword(self, request):
@@ -767,14 +841,16 @@ class EnterpriseCustomerManageLearnersView(View):
         Returns:
             django.http.response.HttpResponse: HttpResponse
         """
-        context = self._build_context(request, customer_uuid)
-        manage_learners_form = ManageLearnersForm(
-            user=request.user,
-            enterprise_customer=context[self.ContextParameters.ENTERPRISE_CUSTOMER]
-        )
-        context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
+        enterprise_customer = EnterpriseCustomer.objects.get(uuid=customer_uuid)  # pylint: disable=no-member
+        manage_learners_form = ManageLearnersForm(user=request.user, enterprise_customer=enterprise_customer)
 
-        return render(request, self.template, context)
+        return self.get_form_view(
+            request,
+            customer_uuid,
+            additional_context={
+                self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form
+            }
+        )
 
     def post(self, request, customer_uuid):
         """
@@ -859,9 +935,13 @@ class EnterpriseCustomerManageLearnersView(View):
             return HttpResponseRedirect(manage_learners_url)
 
         # if something went wrong - display bound form on the page
-        context = self._build_context(request, customer_uuid)
-        context.update({self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form})
-        return render(request, self.template, context)
+        return self.get_form_view(
+            request,
+            customer_uuid,
+            additional_context={
+                self.ContextParameters.MANAGE_LEARNERS_FORM: manage_learners_form
+            }
+        )
 
     def delete(self, request, customer_uuid):
         """
