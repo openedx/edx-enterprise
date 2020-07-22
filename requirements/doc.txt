@@ -17,7 +17,7 @@ cffi==1.14.0              # via -r requirements/test-master.txt, cryptography
 chardet==3.0.4            # via -r requirements/test-master.txt, doc8, requests
 click==7.1.2              # via -r requirements/test-master.txt, code-annotations
 code-annotations==0.3.4   # via -r requirements/test-master.txt
-cryptography==2.9.2       # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
+cryptography==3.0         # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
 defusedxml==0.6.0         # via -r requirements/test-master.txt, djangorestframework-xml
 django-config-models==2.0.2  # via -r requirements/test-master.txt
 django-countries==5.5     # via -r requirements/test-master.txt

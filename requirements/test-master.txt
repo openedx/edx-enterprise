@@ -15,7 +15,7 @@ cffi==1.14.0              # via -c requirements/edx-platform-constraints.txt, cr
 chardet==3.0.4            # via -c requirements/edx-platform-constraints.txt, requests
 click==7.1.2              # via -c requirements/edx-platform-constraints.txt, code-annotations
 code-annotations==0.3.4   # via -r requirements/base.in
-cryptography==2.9.2       # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-fernet-fields, pyjwt
+cryptography==3.0         # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-fernet-fields, pyjwt
 defusedxml==0.6.0         # via -c requirements/edx-platform-constraints.txt, djangorestframework-xml
 django-config-models==2.0.2  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 django-countries==5.5     # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
