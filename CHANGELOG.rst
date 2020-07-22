@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.26] 2020-07-20
+-------------------
+
+* Adds proxy login view to allow unauthenticated enterprise learners to login via existing flow from the learner portal.
+
 [3.3.26] 2020-07-17
 -------------------
 

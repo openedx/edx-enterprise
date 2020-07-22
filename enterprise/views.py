@@ -14,7 +14,7 @@ from dateutil.parser import parse
 from ipware.ip import get_ip
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
-from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import parse_qs, urlencode, urljoin, urlsplit, urlunsplit  # pylint: disable=import-error
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -64,6 +64,7 @@ from enterprise.utils import (
     get_active_course_runs,
     get_configuration_value,
     get_current_course_run,
+    get_enterprise_customer_by_slug_or_404,
     get_enterprise_customer_idp,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
@@ -100,6 +101,7 @@ LMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard')
 LMS_PROGRAMS_DASHBOARD_URL = urljoin(settings.LMS_ROOT_URL, '/dashboard/programs/{uuid}')
 LMS_START_PREMIUM_COURSE_FLOW_URL = urljoin(settings.LMS_ROOT_URL, '/verify_student/start-flow/{course_id}/')
 LMS_COURSEWARE_URL = urljoin(settings.LMS_ROOT_URL, '/courses/{course_id}/courseware')
+LMS_LOGIN_URL = urljoin(settings.LMS_ROOT_URL, '/login')
 ENTERPRISE_GENERAL_ERROR_PAGE = 'enterprise/enterprise_error_page_with_messages.html'
 
 
@@ -994,6 +996,37 @@ class EnterpriseLoginView(FormView):
                 )
             }
         )
+
+
+class EnterpriseProxyLoginView(View):
+    """
+    Allows an enterprise learner to login via existing flow from the learner portal.
+    """
+
+    def get(self, request):
+        """
+        Redirects a learner through login with their enterprise's third party auth if it uses tpa.
+        """
+        redirect_to = LMS_LOGIN_URL
+        (scheme, netloc, path, query, fragment) = list(urlsplit(redirect_to))
+        query_dict = parse_qs(query)
+
+        # Add the next param (if given) to the redirect's query parameters
+        query_params = request.GET
+        next_param = query_params.get('next')
+        if next_param:
+            query_dict['next'] = next_param
+
+        enterprise_slug = query_params.get('enterprise_slug')
+        enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
+        if enterprise_customer.identity_provider:
+            # Add the tpa_hint to the redirect's query parameters
+            tpa_hint = enterprise_customer.identity_provider
+            query_dict['tpa_hint'] = tpa_hint
+
+        new_query = urlencode(query_dict, doseq=True)
+        new_redirect_to = urlunsplit((scheme, netloc, path, new_query, fragment))
+        return redirect(new_redirect_to)
 
 
 @method_decorator(login_required, name='dispatch')

@@ -21,6 +21,7 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.dateparse import parse_datetime
@@ -361,6 +362,13 @@ def send_email_notification_message(user, enrolled_in, enterprise_customer, emai
     )
 
 
+def enterprise_customer_model():
+    """
+    Returns the ``EnterpriseCustomer`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+
+
 def get_enterprise_customer(uuid):
     """
     Get the ``EnterpriseCustomer`` instance associated with ``uuid``.
@@ -368,7 +376,7 @@ def get_enterprise_customer(uuid):
     :param uuid: The universally unique ID of the enterprise customer.
     :return: The ``EnterpriseCustomer`` instance, or ``None`` if it doesn't exist.
     """
-    EnterpriseCustomer = apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+    EnterpriseCustomer = enterprise_customer_model()  # pylint: disable=invalid-name
     try:
         return EnterpriseCustomer.objects.get(uuid=uuid)  # pylint: disable=no-member
     except EnterpriseCustomer.DoesNotExist:
@@ -518,13 +526,29 @@ def get_enterprise_customer_or_404(enterprise_uuid):
         (EnterpriseCustomer): The EnterpriseCustomer given the UUID.
 
     """
-    EnterpriseCustomer = apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+    EnterpriseCustomer = enterprise_customer_model()  # pylint: disable=invalid-name
     try:
         enterprise_uuid = UUID(enterprise_uuid)
         return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)  # pylint: disable=no-member
     except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist):
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
         raise Http404
+
+
+def get_enterprise_customer_by_slug_or_404(slug):
+    """
+    Given an EnterpriseCustomer slug, return the corresponding EnterpriseCustomer or raise a 404.
+
+    Arguments:
+        slug (str): The unique slug (a string) identifying the customer.
+
+    Returns:
+        (EnterpriseCustomer): The EnterpriseCustomer given the slug.
+    """
+    return get_object_or_404(
+        enterprise_customer_model(),
+        slug=slug,
+    )
 
 
 def clean_html_for_template_rendering(text):
