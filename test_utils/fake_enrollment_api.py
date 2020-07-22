@@ -7,7 +7,7 @@ import datetime
 import json
 import re
 
-from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
+from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
 
@@ -144,13 +144,11 @@ def get_course_details(course_id):
     Fake implementation returning data from the COURSE_DETAILS dictionary.
     """
     if not re.match(COURSE_ID_REGEX, course_id):
-        raise HttpServerError
+        return None
     try:
         return COURSE_DETAILS[course_id]
     except KeyError:
-        _raise_client_error(
-            "course/{}".format(course_id), "No course found for course ID '{}'".format(course_id)
-        )
+        return None
 
 
 def enroll_user_in_course(user, course_id, mode):

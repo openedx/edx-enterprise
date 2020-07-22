@@ -17,9 +17,11 @@ from enterprise.admin.forms import (
     EnterpriseCustomerCatalogAdminForm,
     EnterpriseCustomerIdentityProviderAdminForm,
     EnterpriseCustomerReportingConfigAdminForm,
+    ManageLearnersDataSharingConsentForm,
     ManageLearnersForm,
 )
 from enterprise.admin.utils import ValidationMessages
+from enterprise.models import EnterpriseCustomer
 from test_utils import fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCatalogQueryFactory,
@@ -288,6 +290,61 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.errors == {
             "__all__": [ValidationMessages.MISSING_REASON]
         }
+
+
+@mark.django_db
+@ddt.ddt
+class TestManageLearnersDataSharingConsentForm(unittest.TestCase):
+    """
+    Tests for ManageLearnersDataSharingConsentForm.
+    """
+
+    def setUp(self):
+        super(TestManageLearnersDataSharingConsentForm, self).setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory()
+
+    def _make_bound_form(
+            self,
+            email_or_username="dummy@example.com",
+            course_id="course-v1:edX+DemoX+Demo_Course"
+    ):
+        """
+        Builds bound ManageLearnersDataSharingConsentForm.
+        """
+        form_data = {
+            ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email_or_username,
+            ManageLearnersForm.Fields.COURSE: course_id,
+        }
+        return ManageLearnersDataSharingConsentForm(form_data, enterprise_customer=self.enterprise_customer)
+
+    @staticmethod
+    def assert_valid_form(form, field_name, expected_field_value):
+        """
+        Assert that form is valid.
+        """
+        assert form.is_valid()
+        cleaned_data = form.clean()
+        assert cleaned_data[field_name] == expected_field_value
+
+    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    def test_clean(self, enrollment_client):
+        """
+        Test clean_email_or_username and clean_course methods.
+        """
+        instance = enrollment_client.return_value
+        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        username = "user_linked"
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        user = UserFactory(username=username, email='user_linked@example.com')
+        EnterpriseCustomerUserFactory(enterprise_customer=self.enterprise_customer, user_id=user.id)
+
+        with mock.patch.object(EnterpriseCustomer, 'catalog_contains_course') as mock_catalog_contains_course:
+            mock_catalog_contains_course.return_value = True
+            form = self._make_bound_form(email_or_username=username, course_id=course_id)
+            assert form.is_valid()
+            cleaned_data = form.clean()
+            assert cleaned_data[ManageLearnersDataSharingConsentForm.Fields.COURSE] == course_id
+            assert cleaned_data[ManageLearnersDataSharingConsentForm.Fields.EMAIL_OR_USERNAME] == user.email
 
 
 @mark.django_db
