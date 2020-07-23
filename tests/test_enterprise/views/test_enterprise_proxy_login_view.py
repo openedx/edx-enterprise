@@ -63,7 +63,11 @@ class TestEnterpriseProxyLoginView(TestCase):
         customer_without_tpa = EnterpriseCustomerFactory()
         url = self._get_url_with_params(enterprise_slug_override=customer_without_tpa.slug, use_next=False)
         response = self.client.get(url)
-        self.assertRedirects(response, LMS_LOGIN_URL, fetch_redirect_response=False)
+        query_params = QueryDict(mutable=True)
+        query_params['enterprise_customer'] = str(customer_without_tpa.uuid)
+        query_params['proxy_login'] = True
+        expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
+        self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
     def test_tpa_redirect(self):
         """
