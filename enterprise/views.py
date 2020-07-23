@@ -1023,6 +1023,10 @@ class EnterpriseProxyLoginView(View):
             # Add the tpa_hint to the redirect's query parameters
             tpa_hint = enterprise_customer.identity_provider
             query_dict['tpa_hint'] = tpa_hint
+        else:
+            # Add Enterprise customer UUID and proxy_login to the redirect's query parameters
+            query_dict['enterprise_customer'] = [str(enterprise_customer.uuid)]
+            query_dict['proxy_login'] = [True]
 
         new_query = urlencode(query_dict, doseq=True)
         new_redirect_to = urlunsplit((scheme, netloc, path, new_query, fragment))
