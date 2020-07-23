@@ -513,6 +513,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_learner_portal': False,
                 'enable_portal_subscription_management_screen': False,
                 'contact_email': 'fake@example.com',
+                'hide_course_original_price': False,
             }],
         ),
         (
@@ -550,6 +551,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enable_learner_portal': False,
                     'enable_portal_subscription_management_screen': False,
                     'contact_email': 'fake@example.com',
+                    'hide_course_original_price': False,
                 }
             }],
         ),
@@ -599,6 +601,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_learner_portal': False,
                 'enable_portal_subscription_management_screen': False,
                 'contact_email': 'fake@example.com',
+                'hide_course_original_price': False,
             }],
         ),
         (
@@ -772,6 +775,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_learner_portal': False,
                 'enable_portal_subscription_management_screen': False,
                 'contact_email': 'fake@example.com',
+                'hide_course_original_price': False,
             }
         else:
             assert response == expected_error
