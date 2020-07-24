@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.28] 2020-07-24
+-------------------
+
+* Add query params to proxy login redirect for new welcome template to be rendered.
+* Fixing proxy_login SSO redirect, adding default next param from proxy_login.
+
 [3.4.27] 2020-07-23
 -------------------
 

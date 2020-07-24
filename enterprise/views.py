@@ -1010,19 +1010,35 @@ class EnterpriseProxyLoginView(View):
         redirect_to = LMS_LOGIN_URL
         (scheme, netloc, path, query, fragment) = list(urlsplit(redirect_to))
         query_dict = parse_qs(query)
-
-        # Add the next param (if given) to the redirect's query parameters
         query_params = request.GET
+
+        # Return 404 response if enterprise_slug not present or invalid
+        enterprise_slug = query_params.get('enterprise_slug')
+        enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
+
+        # Add the next param to the redirect's query parameters
         next_param = query_params.get('next')
         if next_param:
             query_dict['next'] = next_param
+        else:
+            # Default redirect is to the Learner Portal for the given Enterprise
+            learner_portal_base_url = get_configuration_value(
+                'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+            )
+            query_dict['next'] = learner_portal_base_url + '/' + enterprise_slug
 
-        enterprise_slug = query_params.get('enterprise_slug')
-        enterprise_customer = get_enterprise_customer_by_slug_or_404(enterprise_slug)
         if enterprise_customer.identity_provider:
-            # Add the tpa_hint to the redirect's query parameters
+            # Add the tpa_hint to the redirect's 'next' query parameter
+            # Redirect will be to the Enterprise Customer's TPA provider
             tpa_hint = enterprise_customer.identity_provider
-            query_dict['tpa_hint'] = tpa_hint
+            tpa_next_param = query_dict['next'] + '?tpa_hint=' + tpa_hint
+            query_dict['next'] = tpa_next_param
+        else:
+            # Add Enterprise Customer UUID and proxy_login to the redirect's query parameters
+            # Redirect will be to the edX Logistration with Enterprise Proxy Login sidebar
+            query_dict['enterprise_customer'] = [str(enterprise_customer.uuid)]
+            query_dict['proxy_login'] = [True]
 
         new_query = urlencode(query_dict, doseq=True)
         new_redirect_to = urlunsplit((scheme, netloc, path, new_query, fragment))
