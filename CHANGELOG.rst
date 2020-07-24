@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.27] 2020-07-23
+-------------------
+
+* Adds hide_course_original_price field to the serializer for the EnterpriseCustomer endpoint.
+
 [3.4.26] 2020-07-20
 -------------------
 
