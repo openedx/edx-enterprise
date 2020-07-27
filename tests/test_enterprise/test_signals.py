@@ -23,7 +23,7 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
+from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save, update_enterprise_query
 from test_utils.factories import (
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
@@ -628,41 +628,30 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
         )
     
-    def test_update_enterprise_query(self):
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_update_enterprise_query(self, api_client_mock):
         content_filter_1 = {
             'content_type': 'course',
-            'partner': 'edx',
-            'level_type': [
-                'Introductory',
-                'Intermediate',
-                'Advanced'
-            ],
-            'availability': [
-                'Current',
-                'Starting Soon',
-                'Upcoming'
-            ],
-            'status': 'published'
         }
 
         content_filter_2 = {
             'content_type': 'course2',
-            'partner': 'edx',
-            'level_type': [
-                'Introductory',
-                'Intermediate',
-                'Advanced'
-            ],
-            'availability': [
-                'Current',
-                'Starting Soon',
-                'Upcoming'
-            ],
-            'status': 'published'
         }
 
-        test_query = EnterpriseCatalogQueryFactory()
+        sender = mock.Mock()  # this would be an EnterpriseCatalogQuery class
+
+        # kwargs to satisfy parameter 
+        kwargs = {
+            'update_fields': None,
+            'raw': False,
+            'signal': '<django.db.models.signals.ModelSignal object at test>',
+            'using': 'default',
+            'created': False,
+        }
+
+        test_query = EnterpriseCatalogQueryFactory() # represents instance of EnterpriseCatalogQuery
         test_query.content_filter = content_filter_1
+        test_query.save()
 
         enterprise_catalog_1 = EnterpriseCustomerCatalogFactory()
         enterprise_catalog_2 = EnterpriseCustomerCatalogFactory()
@@ -671,7 +660,11 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         enterprise_catalog_2.sync_enterprise_catalog_query = True
         enterprise_catalog_1.enterprise_catalog_query = test_query
         enterprise_catalog_2.enterprise_catalog_query = test_query
+        enterprise_catalog_1.save()
+        enterprise_catalog_2.save()
 
         test_query.content_filter = content_filter_2
 
-        assert enterprise_catalog_1.content_filter == enterprise_catalog_2.content_filter == content_filter_2
+        update_enterprise_query(sender, test_query, **kwargs) # calls post_save signal
+
+        self.assertEqual(enterprise_catalog_1.content_filter, enterprise_catalog_2.content_filter, content_filter_2)
