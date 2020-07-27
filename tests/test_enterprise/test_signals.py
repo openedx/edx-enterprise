@@ -14,7 +14,6 @@ from django.test import override_settings
 
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
-    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -627,9 +626,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enabled_course_modes=enterprise_catalog.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
         )
-    
-    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
-    def test_update_enterprise_query(self, api_client_mock):
+
+    def test_update_enterprise_query(self):
         content_filter_1 = {
             'content_type': 'course',
         }
@@ -640,7 +638,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
         sender = mock.Mock()  # this would be an EnterpriseCatalogQuery class
 
-        # kwargs to satisfy parameter 
+        # kwargs to satisfy parameter
         kwargs = {
             'update_fields': None,
             'raw': False,
