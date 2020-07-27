@@ -14,6 +14,7 @@ from django.test import override_settings
 
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
+    EnterpriseCatalogQuery,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -24,6 +25,7 @@ from enterprise.models import (
 )
 from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils.factories import (
+    EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -625,3 +627,51 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enabled_course_modes=enterprise_catalog.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
         )
+    
+    def test_update_enterprise_query(self):
+        content_filter_1 = {
+            'content_type': 'course',
+            'partner': 'edx',
+            'level_type': [
+                'Introductory',
+                'Intermediate',
+                'Advanced'
+            ],
+            'availability': [
+                'Current',
+                'Starting Soon',
+                'Upcoming'
+            ],
+            'status': 'published'
+        }
+
+        content_filter_2 = {
+            'content_type': 'course2',
+            'partner': 'edx',
+            'level_type': [
+                'Introductory',
+                'Intermediate',
+                'Advanced'
+            ],
+            'availability': [
+                'Current',
+                'Starting Soon',
+                'Upcoming'
+            ],
+            'status': 'published'
+        }
+
+        test_query = EnterpriseCatalogQueryFactory()
+        test_query.content_filter = content_filter_1
+
+        enterprise_catalog_1 = EnterpriseCustomerCatalogFactory()
+        enterprise_catalog_2 = EnterpriseCustomerCatalogFactory()
+
+        enterprise_catalog_1.sync_enterprise_catalog_query = True
+        enterprise_catalog_2.sync_enterprise_catalog_query = True
+        enterprise_catalog_1.enterprise_catalog_query = test_query
+        enterprise_catalog_2.enterprise_catalog_query = test_query
+
+        test_query.content_filter = content_filter_2
+
+        assert enterprise_catalog_1.content_filter == enterprise_catalog_2.content_filter == content_filter_2
