@@ -670,7 +670,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
         enterprise_catalog_1.save()
         enterprise_catalog_2.save()
-        
+
         api_client_mock.return_value.get_enterprise_catalog.return_value = True
 
         # verify that the mock api was called when saving the catalog after updating the query
