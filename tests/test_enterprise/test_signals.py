@@ -629,6 +629,15 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_update_enterprise_query(self, api_client_mock):
+        """
+        Tests the update_enterprise_query post_save signal.
+
+        Creates an EnterpriseCatalogQuery instance and two separate EnterpriseCatalog
+        instances that are associated with the query. The query's content filter is then
+        updated to see if the changes are applied across both related catalogs. Additionally,
+        there is a test to see if the sync is sent to the EnterpriseCatalogApi service
+        which is done through the mock api client.
+        """
         content_filter_1 = {
             'content_type': 'course',
         }
@@ -639,6 +648,22 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
         sender = mock.Mock()  # this would be an EnterpriseCatalogQuery class
 
+        # represents instance of EnterpriseCatalogQuery
+        test_query = EnterpriseCatalogQueryFactory(
+            content_filter=content_filter_1
+        )
+        # represents instances of EnterpriseCustomerCatalog
+        enterprise_catalog_1 = EnterpriseCustomerCatalogFactory(
+            sync_enterprise_catalog_query=True,
+            enterprise_catalog_query = test_query
+        )
+        enterprise_catalog_2 = EnterpriseCustomerCatalogFactory(
+            sync_enterprise_catalog_query=True,
+            enterprise_catalog_query = test_query
+        )
+
+        test_query.content_filter = content_filter_2
+
         # kwargs to satisfy parameter
         kwargs = {
             'update_fields': None,
@@ -647,22 +672,6 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             'using': 'default',
             'created': False,
         }
-
-        test_query = EnterpriseCatalogQueryFactory()  # represents instance of EnterpriseCatalogQuery
-        test_query.content_filter = content_filter_1
-        test_query.save()
-
-        enterprise_catalog_1 = EnterpriseCustomerCatalogFactory()
-        enterprise_catalog_2 = EnterpriseCustomerCatalogFactory()
-
-        enterprise_catalog_1.sync_enterprise_catalog_query = True
-        enterprise_catalog_2.sync_enterprise_catalog_query = True
-        enterprise_catalog_1.enterprise_catalog_query = test_query
-        enterprise_catalog_2.enterprise_catalog_query = test_query
-        enterprise_catalog_1.save()
-        enterprise_catalog_2.save()
-
-        test_query.content_filter = content_filter_2
 
         update_enterprise_query(sender, test_query, **kwargs)  # calls post_save signal
 
