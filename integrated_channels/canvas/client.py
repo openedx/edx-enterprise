@@ -25,7 +25,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             configuration model for connecting with Canvas
         """
         super(CanvasAPIClient, self).__init__(enterprise_configuration)
-        self.global_degreed_config = apps.get_model('degreed', 'CanvasGlobalConfiguration').current()
+        self.global_canvas_config = apps.get_model('canvas', 'CanvasGlobalConfiguration').current()
         self.session = None
         self.expires_at = None
 
@@ -42,4 +42,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         pass
 
     def delete_content_metadata(self, serialized_data):
+        pass
+
+    def _get_oauth_access_token(self, client_id, client_secret):
         pass

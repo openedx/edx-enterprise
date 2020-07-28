@@ -31,6 +31,16 @@ class CanvasGlobalConfiguration(ConfigurationModel):
         help_text="The API path for making course metadata POST/DELETE requests to Canvas."
     )
 
+    oauth_api_path = models.CharField(
+        max_length=255,
+        verbose_name="OAuth API Path",
+        default='login/oauth2/token',
+        help_text=(
+            "The API path for making OAuth-related POST requests to Canvas. "
+            "This will be used to gain the OAuth access token for other API calls."
+        )
+    )
+
     class Meta:
         app_label = 'canvas'
 
@@ -84,7 +94,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         help_text="The organization code provided to the enterprise customer by Canvas."
     )
 
-    degreed_base_url = models.CharField(
+    canvas_base_url = models.CharField(
         max_length=255,
         blank=True,
         verbose_name="Canvas Base URL",
