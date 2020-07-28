@@ -14,6 +14,24 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.29] 2020-07-28
+-------------------
+
+* Add flag to sync updates in an EnterpriseCatalogQuery with its associated EnterpriseCustomerCatalogs.
+* Create a post_save signal to overwrite the content_filter with the update.
+* Changes should also be sent to the Enterprise Catalog service.
+
+[3.4.28] 2020-07-24
+-------------------
+
+* Add query params to proxy login redirect for new welcome template to be rendered.
+* Fixing proxy_login SSO redirect, adding default next param from proxy_login.
+
+[3.4.27] 2020-07-23
+-------------------
+
+* Adds hide_course_original_price field to the serializer for the EnterpriseCustomer endpoint.
+
 [3.4.26] 2020-07-20
 -------------------
 
