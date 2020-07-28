@@ -158,13 +158,11 @@ def update_enterprise_query(sender, instance, **kwargs):     # pylint: disable=u
     Sync data changes from Enterprise Catalog Query to the Enterprise Customer Catalog.
     """
     updated_content_filter = instance.content_filter
-
-    catalogs = instance.enterprise_customer_catalogs.all()
+    catalogs = instance.enterprise_customer_catalogs.filter(sync_enterprise_catalog_query=True)
 
     for catalog in catalogs:
-        if catalog.sync_enterprise_catalog_query:
-            catalog.content_filter = updated_content_filter
-            catalog.save()
+        catalog.content_filter = updated_content_filter
+        catalog.save()
 
 
 @receiver(post_save, sender=EnterpriseCustomerCatalog)

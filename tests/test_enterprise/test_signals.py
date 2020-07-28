@@ -627,7 +627,8 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
         )
 
-    def test_update_enterprise_query(self):
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_update_enterprise_query(self, api_client_mock):
         content_filter_1 = {
             'content_type': 'course',
         }
@@ -666,3 +667,20 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         update_enterprise_query(sender, test_query, **kwargs)  # calls post_save signal
 
         self.assertEqual(enterprise_catalog_1.content_filter, enterprise_catalog_2.content_filter, content_filter_2)
+
+        enterprise_catalog_1.save()
+        enterprise_catalog_2.save()
+        
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
+
+        # verify that the mock api was called when saving the catalog after updating the query
+        # enterprise_catalog_2 was most recently modified so the last call should be for that
+        api_client_mock.return_value.update_enterprise_catalog.assert_called_with(
+            enterprise_catalog_2.uuid,
+            enterprise_customer=str(enterprise_catalog_2.enterprise_customer.uuid),
+            enterprise_customer_name=enterprise_catalog_2.enterprise_customer.name,
+            title=enterprise_catalog_2.title,
+            content_filter=enterprise_catalog_2.content_filter,
+            enabled_course_modes=enterprise_catalog_2.enabled_course_modes,
+            publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls
+        )
