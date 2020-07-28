@@ -655,11 +655,11 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         # represents instances of EnterpriseCustomerCatalog
         enterprise_catalog_1 = EnterpriseCustomerCatalogFactory(
             sync_enterprise_catalog_query=True,
-            enterprise_catalog_query = test_query
+            enterprise_catalog_query=test_query
         )
         enterprise_catalog_2 = EnterpriseCustomerCatalogFactory(
             sync_enterprise_catalog_query=True,
-            enterprise_catalog_query = test_query
+            enterprise_catalog_query=test_query
         )
 
         test_query.content_filter = content_filter_2
