@@ -19,7 +19,7 @@ NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
 
 
-@freeze_time(NOW)
+@freeze_time(NOW)z
 @pytest.mark.django_db
 @pytest.mark.skip('Can only run once key field is removed from db, since it was marked Not Null')
 class TestCanvasApiClient(unittest.TestCase):
