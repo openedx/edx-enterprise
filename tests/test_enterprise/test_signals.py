@@ -647,7 +647,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             'created': False,
         }
 
-        test_query = EnterpriseCatalogQueryFactory() # represents instance of EnterpriseCatalogQuery
+        test_query = EnterpriseCatalogQueryFactory()  # represents instance of EnterpriseCatalogQuery
         test_query.content_filter = content_filter_1
         test_query.save()
 
@@ -663,6 +663,6 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
         test_query.content_filter = content_filter_2
 
-        update_enterprise_query(sender, test_query, **kwargs) # calls post_save signal
+        update_enterprise_query(sender, test_query, **kwargs)  # calls post_save signal
 
         self.assertEqual(enterprise_catalog_1.content_filter, enterprise_catalog_2.content_filter, content_filter_2)

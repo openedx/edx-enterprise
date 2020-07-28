@@ -151,6 +151,7 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
 
+
 @receiver(post_save, sender=EnterpriseCatalogQuery)
 def update_enterprise_query(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
