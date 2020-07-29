@@ -88,6 +88,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "contentmetadataitemtransmission",
                 "cornerstoneenterprisecustomerconfiguration",
                 "degreedenterprisecustomerconfiguration",
+                "canvasenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "xapilrsconfiguration",
                 "created",
