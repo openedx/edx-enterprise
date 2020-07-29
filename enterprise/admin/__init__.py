@@ -33,6 +33,7 @@ from enterprise.admin.forms import (
 )
 from enterprise.admin.utils import UrlNames
 from enterprise.admin.views import (
+    EnterpriseCustomerManageLearnerDataSharingConsentView,
     EnterpriseCustomerManageLearnersView,
     EnterpriseCustomerTransmitCoursesView,
     TemplatePreviewView,
@@ -159,7 +160,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         export_as_csv_action('CSV Export', fields=EXPORT_AS_CSV_FIELDS),
     ]
 
-    change_actions = ('manage_learners', 'transmit_courses_metadata')
+    change_actions = ('manage_learners', 'manage_learners_data_sharing_consent', 'transmit_courses_metadata')
 
     form = EnterpriseCustomerAdminForm
 
@@ -228,6 +229,18 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
     has_identity_provider.boolean = True
     has_identity_provider.short_description = u'Identity provider'
 
+    def manage_learners_data_sharing_consent(self, request, obj):  # pylint: disable=unused-argument
+        """
+        Object tool handler method - redirects to "Manage Learners Data Sharing Consent" view
+        """
+        # url names coming from get_urls are prefixed with 'admin' namespace
+        manage_learners_dsc_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS_DSC, args=(obj.uuid,))
+        return HttpResponseRedirect(manage_learners_dsc_url)
+
+    manage_learners_data_sharing_consent.label = "Manage Learners Data Sharing Consent"
+    manage_learners_data_sharing_consent.short_description = "Allows to request a data sharing consent from a user " \
+                                                             "for a course"
+
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """
         Object tool handler method - redirects to "Manage Learners" view
@@ -259,6 +272,11 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                 r"^([^/]+)/manage_learners$",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnersView.as_view()),
                 name=UrlNames.MANAGE_LEARNERS
+            ),
+            url(
+                r"^([^/]+)/manage_learners_data_sharing_consent",
+                self.admin_site.admin_view(EnterpriseCustomerManageLearnerDataSharingConsentView.as_view()),
+                name=UrlNames.MANAGE_LEARNERS_DSC
             ),
             url(
                 r"^([^/]+)/transmit_courses_metadata",

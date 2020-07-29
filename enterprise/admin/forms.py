@@ -7,7 +7,6 @@ import re
 from logging import getLogger
 
 from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
-from edx_rest_api_client.exceptions import HttpClientError, HttpServerError
 
 from django import forms
 from django.conf import settings
@@ -199,11 +198,12 @@ class ManageLearnersForm(forms.Form):
         course_id = self.cleaned_data[self.Fields.COURSE].strip()
         if not course_id:
             return None
-        try:
-            client = EnrollmentApiClient()
-            return client.get_course_details(course_id)
-        except (HttpClientError, HttpServerError):
+
+        client = EnrollmentApiClient()
+        course_details = client.get_course_details(course_id)
+        if not course_details:
             raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
+        return course_details
 
     def clean_reason(self):
         """
@@ -278,6 +278,81 @@ class ManageLearnersForm(forms.Form):
 
         if course and not reason:
             raise ValidationError(ValidationMessages.MISSING_REASON)
+
+
+class ManageLearnersDataSharingConsentForm(forms.Form):
+    """
+    Form to request DSC from a learner.
+    """
+    email_or_username = forms.CharField(
+        label=_("Enter an email address or username."),
+        required=True
+    )
+    course = forms.CharField(
+        label=_("Enter the Course key"),
+        required=True,
+    )
+
+    class Fields:
+        """
+        Namespace class for field names.
+        """
+        EMAIL_OR_USERNAME = "email_or_username"
+        COURSE = "course"
+
+    def __init__(self, *args, **kwargs):
+        """
+        Initializes form with current enterprise customer.
+
+        Arguments:
+            enterprise_customer (enterprise.models.EnterpriseCustomer): current customer
+        """
+        self._enterprise_customer = kwargs.pop('enterprise_customer', None)
+        super(ManageLearnersDataSharingConsentForm, self).__init__(*args, **kwargs)
+
+    def clean_course(self):
+        """
+        Verify course ID has an associated course in LMS.
+        """
+        course_id = self.cleaned_data[self.Fields.COURSE].strip()
+        client = EnrollmentApiClient()
+        # Checks whether a course exist in lms with the given course id.
+        if not client.get_course_details(course_id):
+            raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
+
+        # Checks whether a course exists in customer catalog.
+        if not self.is_course_in_catalog(course_id):
+            raise ValidationError(ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG)
+        return course_id
+
+    def clean_email_or_username(self):
+        """
+        Verify email_or_username has associated user in our database.
+        """
+        email_or_username = self.cleaned_data[self.Fields.EMAIL_OR_USERNAME].strip()
+        email = email_or_username__to__email(email_or_username)
+        # Check whether user exists in our database.
+        if not User.objects.filter(email=email).exists():
+            raise ValidationError(ValidationMessages.USER_NOT_EXIST.format(email=email))
+
+        # Check whether user in linked to the enterprise customer.
+        if not self.is_user_linked(email):
+            raise ValidationError(ValidationMessages.USER_NOT_LINKED)
+        return email
+
+    def is_course_in_catalog(self, course_id):
+        """
+        Check whether course exists in enterprise customer catalog.
+        """
+        enterprise_customer = utils.get_enterprise_customer(self._enterprise_customer.uuid)
+        return enterprise_customer.catalog_contains_course(course_id)
+
+    def is_user_linked(self, email):
+        """
+        Check whether user is linked to the enterprise customer or not.
+        """
+        user = User.objects.get(email=email)
+        return utils.get_enterprise_customer_user(user.id, self._enterprise_customer.uuid)
 
 
 class EnterpriseCustomerAdminForm(forms.ModelForm):

@@ -4,6 +4,7 @@ Tests for the ``EnterpriseProxyLoginView`` view of the Enterprise app.
 
 import ddt
 
+from django.conf import settings
 from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -56,23 +57,46 @@ class TestEnterpriseProxyLoginView(TestCase):
         response = self.client.get(url)
         assert response.status_code == 404
 
-    def test_redirect_no_tpa(self):
+    @ddt.data(
+        {'use_next': True},   # 'next' query param is passed in URL
+        {'use_next': False},  # 'next' query param not passed, default to LP URL with slug
+    )
+    @ddt.unpack
+    def test_redirect_no_tpa(self, use_next):
         """
         Verify the view redirects without tpa_hint if the enterprise has no identity provider.
         """
         customer_without_tpa = EnterpriseCustomerFactory()
-        url = self._get_url_with_params(enterprise_slug_override=customer_without_tpa.slug, use_next=False)
+        url = self._get_url_with_params(enterprise_slug_override=customer_without_tpa.slug, use_next=use_next)
         response = self.client.get(url)
-        self.assertRedirects(response, LMS_LOGIN_URL, fetch_redirect_response=False)
+        query_params = QueryDict(mutable=True)
+        query_params['enterprise_customer'] = str(customer_without_tpa.uuid)
+        if use_next:
+            query_params['next'] = self.next_url
+        else:
+            learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+            query_params['next'] = learner_portal_url + '/' + customer_without_tpa.slug
+        query_params['proxy_login'] = True
+        expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
+        self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
-    def test_tpa_redirect(self):
+    @ddt.data(
+        {'use_next': True},  # 'next' query param is passed in URL
+        {'use_next': False},  # 'next' query param not passed, default to LP URL with slug
+    )
+    @ddt.unpack
+    def test_tpa_redirect(self, use_next):
         """
         Verify the view adds the next param and the tpa_hint to the redirect if the enterprise has an identity provider.
         """
-        url = self._get_url_with_params()
+        url = self._get_url_with_params(use_next=use_next)
         response = self.client.get(url)
         query_params = QueryDict(mutable=True)
-        query_params['next'] = self.next_url
-        query_params['tpa_hint'] = self.enterprise_customer.identity_provider
+        if use_next:
+            next_url = self.next_url
+        else:
+            learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+            next_url = learner_portal_url + '/' + self.enterprise_customer.slug
+        query_params['next'] = next_url + '?tpa_hint=' + self.enterprise_customer.identity_provider
         expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)

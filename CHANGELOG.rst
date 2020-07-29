@@ -14,12 +14,17 @@ Change Log
 Unreleased
 --------------------
 
-[3.4.29] 2020-07-28
+[3.4.30] 2020-07-29
 -------------------
 
 * Add flag to sync updates in an EnterpriseCatalogQuery with its associated EnterpriseCustomerCatalogs.
 * Create a post_save signal to overwrite the content_filter with the update.
 * Changes should also be sent to the Enterprise Catalog service.
+
+[3.4.29] 2020-07-29
+-------------------
+
+* Added new view for requesting the DSC for learners for specific course.
 
 [3.4.28] 2020-07-24
 -------------------

@@ -25,6 +25,7 @@ class UrlNames:
     """
     URL_PREFIX = "enterprise_"
     MANAGE_LEARNERS = URL_PREFIX + "manage_learners"
+    MANAGE_LEARNERS_DSC = URL_PREFIX + "manage_learners_data_sharing_consent"
     TRANSMIT_COURSES_METADATA = URL_PREFIX + "transmit_courses_metadata"
     PREVIEW_EMAIL_TEMPLATE = URL_PREFIX + "preview_email_template"
 
@@ -69,6 +70,9 @@ class ValidationMessages:
     USER_ALREADY_REGISTERED = _(
         "User with email address {email} is already registered with Enterprise "
         "Customer {ec_name}")
+    USER_NOT_LINKED = _("User is not linked with Enterprise Customer")
+    USER_NOT_EXIST = _("User with email address {email} doesn't exist.")
+    COURSE_NOT_EXIST_IN_CATALOG = _("Course doesn't exist in Enterprise Customer's Catalog")
     INVALID_CHANNEL_WORKER = _(
         'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
     )
