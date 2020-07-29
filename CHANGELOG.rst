@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.32] 2020-07-31
+-------------------
+
+* Add Canvas integrated_channel first cut.
+
 [3.4.31] 2020-07-30
 -------------------
 
