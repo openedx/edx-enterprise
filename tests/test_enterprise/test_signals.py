@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` models module.
 """
 
 import unittest
+from collections import OrderedDict
 
 import ddt
 import mock
@@ -638,21 +639,16 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         there is a test to see if the sync is sent to the EnterpriseCatalogApi service
         which is done through the mock api client.
         """
-        content_filter_1 = {
-            'content_type': 'course',
-        }
-
-        content_filter_2 = {
+        content_filter_1 = OrderedDict({
+            'content_type': 'course1',
+        })
+        content_filter_2 = OrderedDict({
             'content_type': 'course2',
-        }
+        })
 
-        sender = mock.Mock()  # this would be an EnterpriseCatalogQuery class
-
-        # represents instance of EnterpriseCatalogQuery
         test_query = EnterpriseCatalogQueryFactory(
             content_filter=content_filter_1
         )
-        # represents instances of EnterpriseCustomerCatalog
         enterprise_catalog_1 = EnterpriseCustomerCatalogFactory(
             sync_enterprise_catalog_query=True,
             enterprise_catalog_query=test_query
@@ -663,22 +659,13 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         )
 
         test_query.content_filter = content_filter_2
+        test_query.save()
 
-        # kwargs to satisfy parameter
-        kwargs = {
-            'update_fields': None,
-            'raw': False,
-            'signal': '<django.db.models.signals.ModelSignal object at test>',
-            'using': 'default',
-            'created': False,
-        }
-
-        update_enterprise_query(sender, test_query, **kwargs)  # calls post_save signal
-
-        self.assertEqual(enterprise_catalog_1.content_filter, enterprise_catalog_2.content_filter, content_filter_2)
-
-        enterprise_catalog_1.save()
-        enterprise_catalog_2.save()
+        enterprise_catalog_1.refresh_from_db()
+        enterprise_catalog_2.refresh_from_db()
+        
+        self.assertEqual(enterprise_catalog_1.content_filter, content_filter_2)
+        self.assertEqual(enterprise_catalog_2.content_filter, content_filter_2)
 
         api_client_mock.return_value.get_enterprise_catalog.return_value = True
 
