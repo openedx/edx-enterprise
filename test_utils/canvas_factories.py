@@ -12,6 +12,8 @@ from .factories import EnterpriseCustomerFactory
 
 FAKER = FakerFactory.create()
 
+# pylint: disable=no-member
+# pylint: disable=invalid-name
 class CanvasGlobalConfigurationFactory(factory.django.DjangoModelFactory):
     """
     ``CanvasGlobalConfiguration`` factory.
