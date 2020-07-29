@@ -6,12 +6,9 @@ Canvas integrated_channel factories.
 import factory
 from faker import Factory as FakerFactory
 
-from .factories import EnterpriseCustomerFactory
-from integrated_channels.canvas.models import (
-    CanvasEnterpriseCustomerConfiguration,
-    CanvasGlobalConfiguration,
-)
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasGlobalConfiguration
 
+from .factories import EnterpriseCustomerFactory
 
 FAKER = FakerFactory.create()
 
