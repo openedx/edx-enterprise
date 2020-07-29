@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.29] 2020-07-29
+-------------------
+
+* Added new view for requesting the DSC for learners for specific course.
+
 [3.4.28] 2020-07-24
 -------------------
 

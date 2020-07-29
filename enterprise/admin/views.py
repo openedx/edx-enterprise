@@ -208,6 +208,7 @@ class EnterpriseCustomerManageLearnerDataSharingConsentView(BaseEnterpriseCustom
                 customer_uuid,
                 manage_learners_dsc_form.cleaned_data[ManageLearnersDataSharingConsentForm.Fields.EMAIL_OR_USERNAME]
             )
+            messages.success(request, _("Successfully requested the Data Sharing consent from learner."))
             return HttpResponseRedirect(reverse("admin:" + UrlNames.MANAGE_LEARNERS_DSC, args=(customer_uuid,)))
 
         return self.get_form_view(
