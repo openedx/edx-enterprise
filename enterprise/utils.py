@@ -11,6 +11,7 @@ from uuid import UUID
 import bleach
 import pytz
 import waffle
+from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
@@ -1100,3 +1101,17 @@ def can_use_enterprise_catalog(enterprise_uuid):
     """
     return (waffle.sample_is_active(USE_ENTERPRISE_CATALOG) and
             str(enterprise_uuid) not in getattr(settings, 'ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG', []))
+
+
+def delete_data_sharing_consent(course_id, customer_uuid, user_email):
+    """
+    Delete the DSC records from the DB for given learner, course and customer, also its cache.
+    """
+    # Deleting the DSC record.
+    user = User.objects.get(email=user_email)
+    enterprise_customer_user = get_enterprise_customer_user(user.id, customer_uuid)
+    enterprise_customer_user.data_sharing_consent_records.filter(course_id=course_id).delete()
+
+    # Deleting the DCS cache
+    consent_cache_key = get_cache_key(type='data_sharing_consent_needed', user_id=user.id, course_id=course_id)
+    TieredCache.delete_all_tiers(consent_cache_key)
