@@ -45,4 +45,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         pass
 
     def _get_oauth_access_token(self, client_id, client_secret):
-        pass
+        """
+        TODO: get oauth token for canvas api access
+        """
