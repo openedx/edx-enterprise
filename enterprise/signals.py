@@ -153,7 +153,7 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
 
 
 @receiver(post_save, sender=EnterpriseCatalogQuery)
-def update_enterprise_query(sender, instance, **kwargs):     # pylint: disable=unused-argument
+def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Sync data changes from Enterprise Catalog Query to the Enterprise Customer Catalog.
     """

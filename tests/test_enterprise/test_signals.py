@@ -23,7 +23,7 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save, update_enterprise_query
+from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils.factories import (
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
@@ -629,7 +629,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         )
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
-    def test_update_enterprise_query(self, api_client_mock):
+    def test_update_enterprise_catalog_query(self, api_client_mock):
         """
         Tests the update_enterprise_query post_save signal.
 
@@ -663,7 +663,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
         enterprise_catalog_1.refresh_from_db()
         enterprise_catalog_2.refresh_from_db()
-        
+
         self.assertEqual(enterprise_catalog_1.content_filter, content_filter_2)
         self.assertEqual(enterprise_catalog_2.content_filter, content_filter_2)
 
