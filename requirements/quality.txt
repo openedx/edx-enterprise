@@ -4,155 +4,157 @@
 #
 #    pip-compile --output-file=requirements/quality.txt requirements/base.in requirements/dev.in requirements/doc.in requirements/quality.in requirements/test-master.in requirements/test.in
 #
--e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35
+-e git+https://github.com/edx/TinCanPython.git@0.0.5.py.35#egg=tincan==0.0.5.py.35  # via -r requirements/base.in
 alabaster==0.7.12         # via sphinx
 amqp==1.4.9               # via kombu
-aniso8601==6.0.0
+aniso8601==8.0.0          # via tincan
 anyjson==0.3.3            # via kombu
+appdirs==1.4.4            # via virtualenv
 argparse==1.4.0           # via caniusepython3
-asn1crypto==0.24.0        # via cryptography
-astroid==1.5.3            # via pylint, pylint-celery
-atomicwrites==1.3.0       # via pytest
-attrs==19.1.0             # via pytest
-babel==2.7.0              # via sphinx
-backports.functools-lru-cache==1.5  # via astroid, caniusepython3, isort, pylint
+asn1crypto==1.4.0         # via cryptography
+astroid==2.3.3            # via pylint, pylint-celery
+attrs==19.3.0             # via pytest
+babel==2.8.0              # via sphinx
+backports.functools-lru-cache==1.6.1  # via caniusepython3
 billiard==3.3.0.23        # via celery
-bleach==2.1.4
-caniusepython3==7.1.0
-celery==3.1.25
-certifi==2019.3.9         # via requests
-cffi==1.12.3              # via cryptography
+bleach==2.1.4             # via -r requirements/test-master.in, readme-renderer
+caniusepython3==7.2.0     # via -r requirements/quality.in
+celery==3.1.25            # via -r requirements/test-master.in
+certifi==2020.6.20        # via requests
+cffi==1.14.1              # via cryptography
 chardet==3.0.4            # via doc8, requests
 click-log==0.3.2          # via edx-lint
-click==7.0                # via click-log, code-annotations, edx-lint, pip-tools
-code-annotations==0.3.1
-configparser==3.7.4       # via importlib-metadata, pydocstyle, pylint
-contextlib2==0.5.5        # via importlib-metadata
-cookies==2.2.1            # via responses
-coverage==4.5.3           # via pytest-cov
-cryptography==2.4.2
-ddt==1.2.1
+click==7.1.2              # via click-log, code-annotations, edx-lint, pip-tools
+code-annotations==0.3.1   # via -r requirements/test-master.in
+coverage==5.2.1           # via pytest-cov
+cryptography==2.4.2       # via -r requirements/test-master.in, django-fernet-fields
+ddt==1.4.1                # via -r requirements/test.in
 defusedxml==0.6.0         # via djangorestframework-xml
-diff-cover==0.9.8
-distlib==0.2.9.post0      # via caniusepython3
-django-config-models==0.2.2
-django-countries==4.6.1
-django-crum==0.7.3        # via edx-rbac
-django-fernet-fields==0.5
-django-filter==1.0.4
-django-ipware==2.1.0
-django-model-utils==3.0.0
-django-multi-email-field==0.5.1
-django-object-actions==0.10.0
-django-simple-history==2.7.0
-django-waffle==0.12.0
-django==1.11.18
+diff-cover==0.9.8         # via -r requirements/dev.in, -r requirements/test-master.in
+distlib==0.3.1            # via caniusepython3, virtualenv
+django-config-models==0.2.2  # via -r requirements/test-master.in
+django-countries==4.6.1   # via -r requirements/base.in, -r requirements/dev.in
+django-crum==0.7.6        # via edx-rbac
+django-fernet-fields==0.5  # via -r requirements/test-master.in
+django-filter==1.0.4      # via -r requirements/test-master.in
+django-ipware==2.1.0      # via -r requirements/test-master.in
+django-model-utils==3.0.0  # via -r requirements/test-master.in, -r requirements/test.in, edx-rbac
+django-multi-email-field==0.5.1  # via -r requirements/base.in
+django-object-actions==0.10.0  # via -r requirements/base.in
+django-simple-history==2.7.0  # via -r requirements/base.in, -r requirements/test-master.in
+django-waffle==0.12.0     # via -r requirements/test-master.in, edx-django-utils, edx-drf-extensions
+django==1.11.18           # via -r requirements/test-master.in, code-annotations, django-config-models, django-crum, django-fernet-fields, django-model-utils, django-multi-email-field, edx-django-oauth2-provider, edx-django-utils, edx-drf-extensions, edx-i18n-tools, edx-rbac, jsonfield, rest-condition
 djangorestframework-jwt==1.11.0  # via edx-drf-extensions
-djangorestframework-oauth==1.1.0
-djangorestframework-xml==1.3.0
-djangorestframework==3.6.3
-doc8==0.8.0
-docutils==0.14
-edx-django-oauth2-provider==1.3.5
-edx-django-utils==1.0.3   # via edx-drf-extensions
-edx-drf-extensions==2.3.0
-edx-i18n-tools==0.4.8
-edx-lint==1.2.1
-edx-opaque-keys==0.4.4
-edx-rbac==1.0.1
-edx-rest-api-client==1.9.2
-edx-sphinx-theme==1.4.0
-enum34==1.1.6             # via astroid, cryptography
-factory-boy==2.12.0
-faker==1.0.7              # via factory-boy
-filelock==3.0.12          # via tox
-flaky==3.5.3
-freezegun==0.3.11
-funcsigs==1.0.2           # via mock, pytest
-future==0.17.1            # via pyjwkest
-futures==3.1.1
-html5lib==1.0.1
+djangorestframework-oauth==1.1.0  # via -r requirements/test-master.in
+djangorestframework-xml==1.3.0  # via -r requirements/base.in
+djangorestframework==3.6.3  # via -r requirements/test-master.in, django-config-models, edx-drf-extensions, rest-condition
+doc8==0.8.1               # via -r requirements/doc.in
+docutils==0.16            # via -r requirements/doc.in, doc8, readme-renderer, restructuredtext-lint, sphinx
+edx-django-oauth2-provider==1.3.5  # via -r requirements/test-master.in
+edx-django-utils==3.5.0   # via edx-drf-extensions
+edx-drf-extensions==2.3.0  # via -r requirements/base.in, -r requirements/test-master.in, edx-rbac
+edx-i18n-tools==0.5.3     # via -r requirements/dev.in
+edx-lint==1.5.0           # via -r requirements/dev.in, -r requirements/quality.in
+edx-opaque-keys==0.4.4    # via -r requirements/test-master.in, edx-drf-extensions
+edx-rbac==1.0.1           # via -r requirements/base.in
+edx-rest-api-client==1.9.2  # via -r requirements/test-master.in
+edx-sphinx-theme==1.5.0   # via -r requirements/doc.in
+factory-boy==2.12.0       # via -r requirements/test.in
+faker==4.1.1              # via factory-boy
+filelock==3.0.12          # via tox, virtualenv
+flaky==3.5.3              # via -r requirements/test-master.in, -r requirements/test.in
+freezegun==0.3.15         # via -r requirements/test.in
+future==0.18.2            # via pyjwkest
+futures==3.1.1            # via -r requirements/quality.in
+html5lib==1.0.1           # via -r requirements/test-master.in, bleach
 idna==2.8                 # via cryptography, requests
-imagesize==1.1.0          # via sphinx
-importlib-metadata==0.15  # via pluggy
-inflect==2.1.0            # via jinja2-pluralize
-ipaddress==1.0.22         # via cryptography, faker
-isort==4.3.20
+imagesize==1.2.0          # via sphinx
+importlib-metadata==1.7.0  # via inflect, pluggy, pytest, tox, virtualenv
+importlib-resources==3.0.0  # via virtualenv
+inflect==3.0.2            # via jinja2-pluralize
+iniconfig==1.0.0          # via pytest
+isort==4.3.21             # via -r requirements/quality.in, pylint
 jinja2-pluralize==0.3.0   # via diff-cover
-jinja2==2.10.1            # via code-annotations, diff-cover, jinja2-pluralize, sphinx
-jsondiff==1.1.1
-jsonfield==2.0.2
+jinja2==2.11.2            # via code-annotations, diff-cover, jinja2-pluralize, sphinx
+jsondiff==1.1.1           # via -r requirements/base.in
+jsonfield==2.0.2          # via -r requirements/test-master.in
 kombu==3.0.37             # via celery
-lazy-object-proxy==1.4.1  # via astroid
+lazy-object-proxy==1.4.3  # via astroid
 markupsafe==1.1.1         # via jinja2
 mccabe==0.6.1             # via pylint
-mock==3.0.5
-more-itertools==5.0.0     # via pytest
-newrelic==4.20.0.120      # via edx-django-utils
-packaging==19.0           # via caniusepython3, sphinx
-path.py==8.2.1
-pathlib2==2.3.3           # via importlib-metadata, pytest, pytest-django
-pbr==5.2.0                # via stevedore
-pillow==5.4.1
-pip-tools==3.7.0
+mock==3.0.5               # via -r requirements/test.in
+more-itertools==8.4.0     # via pytest
+newrelic==5.14.1.144      # via edx-django-utils
+packaging==20.4           # via caniusepython3, pytest, sphinx, tox
+path.py==8.2.1            # via -r requirements/test-master.in, edx-i18n-tools
+pathlib2==2.3.5           # via pytest
+pbr==5.4.5                # via stevedore
+pillow==5.4.1             # via -r requirements/test-master.in
+pip-tools==5.3.0          # via -r requirements/dev.in
 pkginfo==1.5.0.1          # via twine
-pluggy==0.12.0            # via pytest, tox
-pockets==0.7.2            # via sphinxcontrib-napoleon
+pluggy==0.13.1            # via pytest, tox
+pockets==0.9.1            # via sphinxcontrib-napoleon
 polib==1.1.0              # via edx-i18n-tools
 psutil==1.2.1             # via edx-django-utils, edx-drf-extensions
-py==1.8.0                 # via pytest, pytest-catchlog, tox
-pycodestyle==2.5.0
-pycparser==2.19           # via cffi
-pycryptodomex==3.8.1      # via pyjwkest
-pydocstyle==3.0.0
-pygments==2.4.2           # via diff-cover, readme-renderer, sphinx
+py==1.9.0                 # via pytest, pytest-catchlog, tox
+pycodestyle==2.6.0        # via -r requirements/quality.in
+pycparser==2.20           # via cffi
+pycryptodomex==3.9.8      # via pyjwkest
+pydocstyle==5.0.2         # via -r requirements/quality.in
+pygments==2.6.1           # via diff-cover, doc8, readme-renderer, sphinx
 pyjwkest==1.3.2           # via edx-drf-extensions
 pyjwt==1.7.1              # via djangorestframework-jwt, edx-rest-api-client
 pylint-celery==0.3        # via edx-lint
-pylint-django==0.7.2      # via edx-lint
-pylint-plugin-utils==0.5  # via pylint-celery, pylint-django
-pylint==1.7.6             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
-pymongo==3.8.0            # via edx-opaque-keys
-pyparsing==2.4.0          # via packaging
-pytest-catchlog==1.2.2
-pytest-cov==2.7.1
-pytest-django==3.4.8
-pytest==4.5.0             # via pytest-catchlog, pytest-cov, pytest-django
-python-dateutil==2.8.0
-python-slugify==3.0.2     # via code-annotations
-pytz==2019.1
-pyyaml==5.1               # via code-annotations, edx-i18n-tools
-readme-renderer==24.0
+pylint-django==2.0.11     # via edx-lint
+pylint-plugin-utils==0.6  # via pylint-celery, pylint-django
+pylint==2.4.4             # via edx-lint, pylint-celery, pylint-django, pylint-plugin-utils
+pymongo==3.10.1           # via edx-opaque-keys
+pyparsing==2.4.7          # via packaging
+pytest-catchlog==1.2.2    # via -r requirements/test.in
+pytest-cov==2.10.0        # via -r requirements/test.in
+pytest-django==3.9.0      # via -r requirements/test.in
+pytest==6.0.0             # via pytest-catchlog, pytest-cov, pytest-django
+python-dateutil==2.8.0    # via -r requirements/test-master.in, edx-drf-extensions, faker, freezegun
+python-slugify==4.0.1     # via code-annotations
+pytz==2019.1              # via -r requirements/test-master.in, babel, celery, django, tincan
+pyyaml==5.3.1             # via code-annotations, edx-i18n-tools
+readme-renderer==26.0     # via -r requirements/doc.in
 requests-toolbelt==0.9.1  # via twine
-requests==2.21.0
-responses==0.10.6
+requests==2.21.0          # via -r requirements/test-master.in, caniusepython3, edx-drf-extensions, edx-rest-api-client, pyjwkest, requests-toolbelt, responses, slumber, sphinx, twine
+responses==0.10.15        # via -r requirements/test.in
 rest-condition==1.0.3     # via edx-drf-extensions
-restructuredtext-lint==1.3.0  # via doc8
-rules==2.0.1
-scandir==1.10.0           # via pathlib2
-semantic-version==2.6.0   # via edx-drf-extensions
+restructuredtext-lint==1.3.1  # via doc8
+rules==2.0.1              # via -r requirements/test-master.in
+semantic-version==2.8.5   # via edx-drf-extensions
 shortuuid==0.5.0          # via edx-django-oauth2-provider
-singledispatch==3.4.0.3   # via astroid, pylint
-six==1.12.0               # via astroid, bleach, cryptography, diff-cover, doc8, edx-drf-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-rbac, edx-sphinx-theme, faker, freezegun, html5lib, mock, more-itertools, packaging, pathlib2, pip-tools, pockets, pydocstyle, pyjwkest, pylint, pytest, python-dateutil, readme-renderer, responses, singledispatch, sphinx, sphinxcontrib-napoleon, stevedore, tox
+six==1.15.0               # via astroid, bleach, cryptography, diff-cover, doc8, edx-drf-extensions, edx-i18n-tools, edx-lint, edx-opaque-keys, edx-rbac, edx-sphinx-theme, freezegun, html5lib, mock, packaging, pathlib2, pip-tools, pockets, pyjwkest, python-dateutil, readme-renderer, responses, sphinxcontrib-napoleon, stevedore, tox, virtualenv
 slumber==0.7.1            # via edx-rest-api-client
-snowballstemmer==1.2.1    # via pydocstyle, sphinx
-sphinx==1.8.5
-sphinxcontrib-napoleon==0.6.1
-sphinxcontrib-websupport==1.1.2  # via sphinx
-stevedore==1.30.1         # via code-annotations, doc8, edx-opaque-keys
-testfixtures==6.8.2
-text-unidecode==1.2       # via faker, python-slugify
-toml==0.10.0              # via tox
-tox-battery==0.5.1
-tox==3.12.1
-tqdm==4.32.1              # via twine
-twine==1.11.0
-typing==3.6.6             # via sphinx
-unicodecsv==0.14.1
+snowballstemmer==2.0.0    # via pydocstyle, sphinx
+sphinx==3.1.2             # via -r requirements/doc.in, edx-sphinx-theme
+sphinxcontrib-applehelp==1.0.2  # via sphinx
+sphinxcontrib-devhelp==1.0.2  # via sphinx
+sphinxcontrib-htmlhelp==1.0.3  # via sphinx
+sphinxcontrib-jsmath==1.0.1  # via sphinx
+sphinxcontrib-napoleon==0.6.1  # via -r requirements/doc.in
+sphinxcontrib-qthelp==1.0.3  # via sphinx
+sphinxcontrib-serializinghtml==1.1.4  # via sphinx
+stevedore==1.32.0         # via code-annotations, doc8, edx-opaque-keys
+testfixtures==6.14.1      # via -r requirements/quality.in, -r requirements/test-master.in, -r requirements/test.in
+text-unidecode==1.3       # via faker, python-slugify
+toml==0.10.1              # via pytest, tox
+tox-battery==0.5.1        # via -r requirements/dev.in
+tox==3.18.1               # via -r requirements/dev.in, tox-battery
+tqdm==4.48.0              # via twine
+twine==1.11.0             # via -r requirements/dev.in
+typed-ast==1.4.1          # via astroid
+unicodecsv==0.14.1        # via -r requirements/test-master.in
 urllib3==1.24.3           # via requests
-virtualenv==16.6.0        # via tox
-wcwidth==0.1.7            # via pytest
+virtualenv==20.0.28       # via tox
 webencodings==0.5.1       # via html5lib
-wheel==0.33.4
-wrapt==1.11.1             # via astroid
-zipp==0.5.1               # via importlib-metadata
+wheel==0.34.2             # via -r requirements/dev.in
+wrapt==1.11.2             # via astroid
+zipp==1.2.0               # via importlib-metadata, importlib-resources
+
+# The following packages are considered to be unsafe in a requirements file:
+# pip
+# setuptools
