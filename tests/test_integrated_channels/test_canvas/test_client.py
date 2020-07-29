@@ -53,7 +53,7 @@ class TestCanvasApiClient(unittest.TestCase):
         )
 
     def test_global_canvas_config_is_set(self):
-        """ Test  _get_oauth_access_token with non json type response"""
+        """ Test  global_canvas_config is setup"""
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
-        expected_config = {}
-        assert canvas_api_client.global_canvas_config == expected_config
+        assert canvas_api_client.global_canvas_config is not None
+        assert canvas_api_client.global_canvas_config.id == 1
