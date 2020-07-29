@@ -116,6 +116,7 @@ class TestDegreedConfig(unittest.TestCase):
     def test_name(self):
         assert self.app_config.name == 'degreed'
 
+
 @mark.django_db
 class TestCanvasConfig(unittest.TestCase):
     """
