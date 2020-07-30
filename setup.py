@@ -99,6 +99,7 @@ setup(
         "integrated_channels",
         "integrated_channels.integrated_channel",
         "integrated_channels.degreed",
+        "integrated_channels.canvas",
         "integrated_channels.cornerstone",
         "integrated_channels.sap_success_factors",
         "integrated_channels.xapi",
