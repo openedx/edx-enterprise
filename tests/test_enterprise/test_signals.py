@@ -4,6 +4,7 @@ Tests for the `edx-enterprise` models module.
 """
 
 import unittest
+from collections import OrderedDict
 
 import ddt
 import mock
@@ -24,6 +25,7 @@ from enterprise.models import (
 )
 from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils.factories import (
+    EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -624,4 +626,57 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             content_filter=enterprise_catalog.content_filter,
             enabled_course_modes=enterprise_catalog.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
+        )
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
+    def test_update_enterprise_catalog_query(self, api_client_mock):
+        """
+        Tests the update_enterprise_query post_save signal.
+
+        Creates an EnterpriseCatalogQuery instance and two separate EnterpriseCatalog
+        instances that are associated with the query. The query's content filter is then
+        updated to see if the changes are applied across both related catalogs. Additionally,
+        there is a test to see if the sync is sent to the EnterpriseCatalogApi service
+        which is done through the mock api client.
+        """
+        content_filter_1 = OrderedDict({
+            'content_type': 'course1',
+        })
+        content_filter_2 = OrderedDict({
+            'content_type': 'course2',
+        })
+
+        test_query = EnterpriseCatalogQueryFactory(
+            content_filter=content_filter_1
+        )
+        enterprise_catalog_1 = EnterpriseCustomerCatalogFactory(
+            sync_enterprise_catalog_query=True,
+            enterprise_catalog_query=test_query
+        )
+        enterprise_catalog_2 = EnterpriseCustomerCatalogFactory(
+            sync_enterprise_catalog_query=True,
+            enterprise_catalog_query=test_query
+        )
+
+        test_query.content_filter = content_filter_2
+        test_query.save()
+
+        enterprise_catalog_1.refresh_from_db()
+        enterprise_catalog_2.refresh_from_db()
+
+        self.assertEqual(enterprise_catalog_1.content_filter, content_filter_2)
+        self.assertEqual(enterprise_catalog_2.content_filter, content_filter_2)
+
+        api_client_mock.return_value.get_enterprise_catalog.return_value = True
+
+        # verify that the mock api was called when saving the catalog after updating the query
+        # enterprise_catalog_2 was most recently modified so the last call should be for that
+        api_client_mock.return_value.update_enterprise_catalog.assert_called_with(
+            enterprise_catalog_2.uuid,
+            enterprise_customer=str(enterprise_catalog_2.enterprise_customer.uuid),
+            enterprise_customer_name=enterprise_catalog_2.enterprise_customer.name,
+            title=enterprise_catalog_2.title,
+            content_filter=enterprise_catalog_2.content_filter,
+            enabled_course_modes=enterprise_catalog_2.enabled_course_modes,
+            publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls
         )

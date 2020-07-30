@@ -14,6 +14,7 @@ from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
+    EnterpriseCatalogQuery,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerUser,
@@ -149,6 +150,19 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
         except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
+
+
+@receiver(post_save, sender=EnterpriseCatalogQuery)
+def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Sync data changes from Enterprise Catalog Query to the Enterprise Customer Catalog.
+    """
+    updated_content_filter = instance.content_filter
+    catalogs = instance.enterprise_customer_catalogs.filter(sync_enterprise_catalog_query=True)
+
+    for catalog in catalogs:
+        catalog.content_filter = updated_content_filter
+        catalog.save()
 
 
 @receiver(post_save, sender=EnterpriseCustomerCatalog)
