@@ -469,9 +469,14 @@ class TestEnterpriseAPIViews(APITest):
         elif status_code == 201:
             response = self.load_json(response.content)
             self.assertDictEqual(data, response)
-            assert PendingEnterpriseCustomerUser.objects.get(
-                user_email=new_user_email, enterprise_customer=enterprise_customer
-            )
+            if not user_exists:
+                assert PendingEnterpriseCustomerUser.objects.get(
+                    user_email=new_user_email, enterprise_customer=enterprise_customer
+                )
+            else:
+                assert EnterpriseCustomerUser.objects.get(
+                    user_id=user.id, enterprise_customer=enterprise_customer, active=user.is_active
+                )
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
         """

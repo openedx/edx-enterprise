@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.31] 2020-07-30
+-------------------
+
+* The PendingEnterpriseCustomerUser create action will create an EnterpriseCustomerUser
+  if an ``auth.User`` record with the given user_email already exists.
+
 [3.4.30] 2020-07-29
 -------------------
 
