@@ -390,14 +390,24 @@ class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
 
     def save(self):  # pylint: disable=arguments-differ
         """
-        Save the PendingEnterpriseCustomerUser.
+        Save the PendingEnterpriseCustomerUser, or EnterpriseCustomerUser
+        if a user with the validated_email already exists.
         """
         enterprise_customer = self.validated_data['enterprise_customer']
         user_email = self.validated_data['user_email']
-        __, created = models.PendingEnterpriseCustomerUser.objects.update_or_create(
-            user_email=user_email,
-            enterprise_customer=enterprise_customer,
-        )
+        try:
+            user = User.objects.get(email=user_email)
+            defaults = {'active': user.is_active}
+            __, created = models.EnterpriseCustomerUser.objects.update_or_create(
+                user_id=user.pk,
+                enterprise_customer=enterprise_customer,
+                defaults=defaults,
+            )
+        except User.DoesNotExist:
+            __, created = models.PendingEnterpriseCustomerUser.objects.update_or_create(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer,
+            )
         return created
 
 
