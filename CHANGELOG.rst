@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.33] 2020-07-31
+-------------------
+
+* Update BrandingConfiguration color fields.
+
 [3.4.32] 2020-07-31
 -------------------
 

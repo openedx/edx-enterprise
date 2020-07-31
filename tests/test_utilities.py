@@ -137,8 +137,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "modified",
                 "enterprise_customer",
                 "logo",
-                "banner_border_color",
-                "banner_background_color",
+                "secondary_color",
+                "primary_color",
             ]
         ),
         (

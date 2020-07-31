@@ -1111,13 +1111,19 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
     )
-    banner_border_color = models.CharField(
+    primary_color = models.CharField(
         null=True,
         blank=True,
         max_length=7,
         validators=[validate_hex_color],
     )
-    banner_background_color = models.CharField(
+    secondary_color = models.CharField(
+        null=True,
+        blank=True,
+        max_length=7,
+        validators=[validate_hex_color],
+    )
+    tertiary_color = models.CharField(
         null=True,
         blank=True,
         max_length=7,

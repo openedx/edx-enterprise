@@ -941,7 +941,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         """
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
             enterprise_customer=factories.EnterpriseCustomerFactory(),
-            banner_border_color=hex_string,
+            secondary_color=hex_string,
         )
 
         if not is_valid_hex_color:

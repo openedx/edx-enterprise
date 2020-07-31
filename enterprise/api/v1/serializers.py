@@ -89,8 +89,9 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
             'enterprise_customer',
             'enterprise_slug',
             'logo',
-            'banner_border_color',
-            'banner_background_color',
+            'primary_color',
+            'secondary_color',
+            'tertiary_color',
         )
 
     enterprise_slug = serializers.SerializerMethodField()

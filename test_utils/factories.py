@@ -227,8 +227,9 @@ class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelF
 
     logo = factory.LazyAttribute(lambda x: FAKER.image_url())
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-    banner_border_color = '#ffffff'
-    banner_background_color = '#000000'
+    primary_color = '#000000'
+    secondary_color = '#ffffff'
+    tertiary_color = '#4e4e4e'
 
 
 class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
