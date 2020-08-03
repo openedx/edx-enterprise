@@ -227,8 +227,13 @@ class EnterpriseCustomerBrandingConfigurationFactory(factory.django.DjangoModelF
 
     logo = factory.LazyAttribute(lambda x: FAKER.image_url())
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    # TODO: https://openedx.atlassian.net/browse/ENT-2892
+    # Remove banner_border_color and banner_background_color
     banner_border_color = '#ffffff'
     banner_background_color = '#000000'
+    primary_color = '#000000'
+    secondary_color = '#ffffff'
+    tertiary_color = '#888888'
 
 
 class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):

@@ -22,7 +22,7 @@ pyparsing==2.4.7          # via packaging
 requests==2.24.0          # via codecov
 six==1.15.0               # via packaging, tox, virtualenv
 toml==0.10.1              # via tox
-tox-battery==0.5.1        # via -r requirements/travis.in
+tox-battery==0.6.1        # via -r requirements/travis.in
 tox==3.17.1               # via -r requirements/travis.in, tox-battery
 urllib3==1.25.9           # via requests
 virtualenv==20.0.27       # via tox
