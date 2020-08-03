@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.33] 2020-08-03
+-------------------
+
+* Add BrandingConfiguration primary/secondary/tertiary color fields.
+
 [3.4.32] 2020-07-31
 -------------------
 

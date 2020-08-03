@@ -133,7 +133,7 @@ stevedore==1.32.0         # via -r requirements/doc.txt, -r requirements/test-ma
 testfixtures==6.14.1      # via -r requirements/dev.in, -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt
 text-unidecode==1.3       # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, faker, python-slugify
 toml==0.10.1              # via tox
-tox-battery==0.5.1        # via -r requirements/dev.in
+tox-battery==0.6.1        # via -r requirements/dev.in
 tox==3.17.1               # via -r requirements/dev.in, tox-battery
 tqdm==4.48.0              # via twine
 twine==1.11.0             # via -r requirements/dev.in
