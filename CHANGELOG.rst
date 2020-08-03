@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.34] 2020-08-03
+-------------------
+
+* Migration to copy old color field values to new field.
+
 [3.4.33] 2020-08-03
 -------------------
 
