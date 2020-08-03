@@ -420,7 +420,7 @@
 					"formdata": [
 						{
 							"key": "course[image_url]",
-							"value": "lt5H1qDZfNo9aglt7jb9fLCLdRb1cEZNMdD3VZjORE3o82jyV1LAxNVI0up5fnur",
+							"value": "http://some_image_url",
 							"type": "text"
 						}
 					]
