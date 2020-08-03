@@ -13,6 +13,8 @@ Import this collection into postman
 Setup a postman environment and setup these vars
 
 * canvas_url: usually just http://localhost:3000
-* access_token: once you have it (it will be plugged into requests as a bearer token)
+* client_id : for oauth requests only
+* client_secret: for oauth requests only
+* access_token: once you have it (it will be plugged into requests as a bearer token). only used for post/put requests like create course
 
 Most endpoints are wired up to use these vars, but if not, fix them!
