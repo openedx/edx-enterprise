@@ -14,11 +14,15 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.36] 2020-08-04
+-------------------
+
+* Remove references to deprecated ``banner_border_color`` and ``banner_background_color`` branding config fields.
+
 [3.4.35] 2020-08-04
 -------------------
 
 * Add postman collection for Canvas integrated channel
-
 
 [3.4.34] 2020-08-03
 -------------------
