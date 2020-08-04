@@ -16,5 +16,7 @@ Setup a postman environment and setup these vars
 * client_id : for oauth requests only
 * client_secret: for oauth requests only
 * access_token: once you have it (it will be plugged into requests as a bearer token). only used for post/put requests like create course
+* code: the code returned by the oauth2 endpoints used to fetch access tokens (only applicable to
+the `login/oauth2/token` endpoint)
 
 Most endpoints are wired up to use these vars, but if not, fix them!
