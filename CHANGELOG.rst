@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.39] 2020-08-04
+-------------------
+
+* Remove field 'key' from a canvas integrated_channel model (but not migration yet), step 2/3
+
 [3.4.38] 2020-08-04
 -------------------
 
