@@ -137,10 +137,6 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "modified",
                 "enterprise_customer",
                 "logo",
-                # TODO: https://openedx.atlassian.net/browse/ENT-2892
-                # Remove banner_border_color and banner_background_color
-                "banner_border_color",
-                "banner_background_color",
                 "primary_color",
                 "secondary_color",
                 "tertiary_color",
