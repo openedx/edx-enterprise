@@ -77,16 +77,6 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
-    key = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="API Client ID",
-        help_text=(
-            "The API Client ID provided to edX by the enterprise customer to be used to make API "
-            "calls to Canvas on behalf of the customer."
-        )
-    )
-
     secret = models.CharField(
         max_length=255,
         blank=True,
