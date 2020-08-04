@@ -116,24 +116,6 @@ class TestDegreedConfig(unittest.TestCase):
     def test_name(self):
         assert self.app_config.name == 'degreed'
 
-@mark.django_db
-class TestCanvasConfig(unittest.TestCase):
-    """
-    Test integrated_channels.canvas app config.
-    """
-
-    def setUp(self):
-        """
-        Set up test environment
-        """
-        super(TestCanvasConfig, self).setUp()
-        self.app_config = integrated_channels.canvas.apps.CanvasConfig(
-            'canvas', integrated_channels.canvas
-        )
-
-    def test_name(self):
-        assert self.app_config.name == 'canvas'
-
 
 @mark.django_db
 class TestCanvasConfig(unittest.TestCase):

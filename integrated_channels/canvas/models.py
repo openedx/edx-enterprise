@@ -91,6 +91,14 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         help_text="The base URL used for API requests to Canvas, i.e. https://instructure.com."
     )
 
+    refresh_token = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Oauth2 Refresh Token",
+        help_text="The refresh token provided by Canvas along with the access token request, used to "
+                  "re-request the access tokens over multiple client sessions."
+    )
+
     history = HistoricalRecords()
 
     class Meta:
