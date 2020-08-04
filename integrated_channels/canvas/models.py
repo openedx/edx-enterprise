@@ -69,9 +69,7 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
 
     client_id = models.CharField(
         max_length=255,
-        blank=True,
         null=True,
-        editable=False,
         verbose_name="API Client ID",
         help_text=(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
