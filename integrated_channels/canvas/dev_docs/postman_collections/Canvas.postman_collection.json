@@ -1,0 +1,455 @@
+{
+	"info": {
+		"_postman_id": "1e52ea29-e08c-4247-879a-04bd5d82a713",
+		"name": "Canvas",
+		"description": "APIs for interacting with Canvas LMS",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET oauth code",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/login/oauth2/auth?client_id={{client_id}}&response_type=code&state=edx-canvas-user-state&redirect_uri=urn:ietf:wg:oauth:2.0:oob",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"login",
+						"oauth2",
+						"auth"
+					],
+					"query": [
+						{
+							"key": "client_id",
+							"value": "{{client_id}}"
+						},
+						{
+							"key": "response_type",
+							"value": "code"
+						},
+						{
+							"key": "state",
+							"value": "edx-canvas-user-state"
+						},
+						{
+							"key": "redirect_uri",
+							"value": "https://example.com/oauth_complete"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET Oauth key",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "grant_type",
+							"value": "authorization_code",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "{{client_id}}",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "{{client_secret}}",
+							"type": "text"
+						},
+						{
+							"key": "code",
+							"value": "{{code}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{canvas_url}}/login/oauth2/token",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"login",
+						"oauth2",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list courses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Active courses for an account",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/accounts/2/courses",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"accounts",
+						"2",
+						"courses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get a single course",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get a single account",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/accounts/self",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"accounts",
+						"self"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET course modules",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/1/modules",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"1",
+						"modules"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET course module items",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/1/modules/1/items",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"1",
+						"modules",
+						"1",
+						"items"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET course pages",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/1/pages",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"1",
+						"pages"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET content exports",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/1/content_exports",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"1",
+						"content_exports"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET Accounts",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/accounts",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create a course",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "course[name]",
+							"value": "binod created a course using form data",
+							"type": "text"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/accounts/2/courses",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"accounts",
+						"2",
+						"courses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "DELETE a course",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "course[name]",
+							"value": "binod created a course using form data",
+							"type": "text"
+						}
+					],
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/<<id>>?event=delete",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"<<id>>"
+					],
+					"query": [
+						{
+							"key": "event",
+							"value": "delete"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET course settings",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/13/settings",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"13",
+						"settings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update course settings",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/13/settings",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"13",
+						"settings"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update a course",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "course[image_url]",
+							"value": "http://some_image_url",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{canvas_url}}/api/v1/courses/13",
+					"host": [
+						"{{canvas_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"courses",
+						"13"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.35] 2020-08-04
+-------------------
+
+* Add postman collection for Canvas integrated channel
+
+
 [3.4.34] 2020-08-03
 -------------------
 
