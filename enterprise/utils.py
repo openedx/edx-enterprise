@@ -1085,24 +1085,6 @@ def discovery_query_url(content_filter, html_format=True):
     return disc_url
 
 
-def can_use_enterprise_catalog(enterprise_uuid):
-    """
-    Function to check if enterprise-catalog endpoints should be hit given an enterprise uuid.
-
-    Checks the USE_ENTERPRISE_CATALOG waffle sample and ensures the passed
-    enterprise uuid is not in the ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list.
-
-    Args:
-        enterprise_uuid: the unique identifier for an enterprise customer
-
-    Returns:
-        boolean: True if sample is active and enterprise is not excluded
-                 False if sample not active or enterprise is excluded
-    """
-    return (waffle.sample_is_active(USE_ENTERPRISE_CATALOG) and
-            str(enterprise_uuid) not in getattr(settings, 'ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG', []))
-
-
 def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     """
     Delete the DSC records from the DB for given learner, course and customer, also its cache.

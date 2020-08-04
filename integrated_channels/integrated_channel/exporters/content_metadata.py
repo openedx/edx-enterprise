@@ -13,7 +13,7 @@ from logging import getLogger
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.utils import can_use_enterprise_catalog, get_content_metadata_item_id
+from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 
 LOGGER = getLogger(__name__)
@@ -76,22 +76,16 @@ class ContentMetadataExporter(Exporter):
         Return the exported and transformed content metadata as a dictionary.
         """
         content_metadata_export = {}
-        if can_use_enterprise_catalog(self.enterprise_customer.uuid):
-            content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
-                self.enterprise_customer,
-                enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
-            )
-            LOGGER.info(
-                'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
-                self.enterprise_customer.name,
-                self.enterprise_configuration.customer_catalogs_to_transmit,
-                json.dumps(content_metadata_items)
-            )
-        else:
-            content_metadata_items = self.enterprise_api.get_content_metadata(
-                self.enterprise_customer,
-                enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
-            )
+        content_metadata_items = self.enterprise_catalog_api.get_content_metadata(
+            self.enterprise_customer,
+            enterprise_catalogs=self.enterprise_configuration.customer_catalogs_to_transmit
+        )
+        LOGGER.info(
+            'Getting metadata for Enterprise [%s], Catalogs [%s] from Enterprise Catalog Service. Results: [%s]',
+            self.enterprise_customer.name,
+            self.enterprise_configuration.customer_catalogs_to_transmit,
+            json.dumps(content_metadata_items)
+        )
         LOGGER.info('Retrieved content metadata for enterprise [%s]', self.enterprise_customer.name)
         for item in content_metadata_items:
             transformed = self._transform_item(item)

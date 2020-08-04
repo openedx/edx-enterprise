@@ -440,14 +440,8 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             bool: Whether the enterprise catalog includes the given course run.
         """
-        # Temporarily gate enterprise catalog api usage behind waffle sample
-        if utils.can_use_enterprise_catalog(self.uuid):
-            if EnterpriseCatalogApiClient().enterprise_contains_content_items(self.uuid, [course_run_id]):
-                return True
-        else:
-            for catalog in self.enterprise_customer_catalogs.all():
-                if catalog.contains_courses([course_run_id]):
-                    return True
+        if EnterpriseCatalogApiClient().enterprise_contains_content_items(self.uuid, [course_run_id]):
+            return True
 
         return False
 
@@ -1674,13 +1668,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course metadata.
         """
-        # Temporarily gate enterprise catalog api usage behind waffle sample
-        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
-            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_key]):
-                return None
-        else:
-            if not self.contains_courses([course_key]):
-                return None
+        if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_key]):
+            return None
 
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_details(course_key)
 
@@ -1694,13 +1683,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The course run metadata.
         """
-        # Temporarily gate enterprise catalog api usage behind waffle sample
-        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
-            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
-                return None
-        else:
-            if not self.contains_courses([course_run_id]):
-                return None
+        if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
+            return None
 
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_course_run(course_run_id)
 
@@ -1718,13 +1702,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
             ImproperlyConfigured: Missing or invalid catalog integration.
 
         """
-        # Temporarily gate enterprise catalog api usage behind waffle sample
-        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
-            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
-                return None, None
-        else:
-            if not self.contains_courses([course_run_id]):
-                return None, None
+        if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [course_run_id]):
+            return None, None
 
         return get_course_catalog_api_service_client(
             self.enterprise_customer.site
@@ -1740,13 +1719,8 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Return:
             dict: The program metadata.
         """
-        # Temporarily gate enterprise catalog api usage behind waffle sample
-        if utils.can_use_enterprise_catalog(self.enterprise_customer.uuid):
-            if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [program_uuid]):
-                return None
-        else:
-            if not self.contains_programs([program_uuid]):
-                return None
+        if not EnterpriseCatalogApiClient().contains_content_items(self.uuid, [program_uuid]):
+            return None
 
         return get_course_catalog_api_service_client(self.enterprise_customer.site).get_program_by_uuid(program_uuid)
 
