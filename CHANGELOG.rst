@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.37] 2020-08-04
+
+* Add new field client_id to canvas model for removing older key field (step 1/3)
+
+
 [3.4.36] 2020-08-04
 -------------------
 
