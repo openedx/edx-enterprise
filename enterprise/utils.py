@@ -34,7 +34,6 @@ from enterprise.constants import (
     ALLOWED_TAGS,
     DEFAULT_CATALOG_CONTENT_FILTER,
     PROGRAM_TYPE_DESCRIPTION,
-    USE_ENTERPRISE_CATALOG,
 )
 
 try:
