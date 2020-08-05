@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.40] 2020-08-05
+-------------------
+
+* Create fresh migrations from scratch for Canvas since this app is yet to run migrations in platform.
+
 [3.4.39] 2020-08-04
 -------------------
 
