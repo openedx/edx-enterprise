@@ -10,7 +10,6 @@ from uuid import UUID
 
 import bleach
 import pytz
-import waffle
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports

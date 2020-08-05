@@ -14,7 +14,6 @@ from faker import Factory as FakerFactory
 from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
-from waffle.testutils import override_sample
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -22,7 +21,6 @@ from django.core.files import File
 from django.core.files.storage import Storage
 from django.db.utils import IntegrityError
 from django.http import QueryDict
-from django.test import override_settings
 from django.test.testcases import TransactionTestCase
 from django.urls import reverse
 
@@ -216,8 +214,8 @@ class TestEnterpriseCustomer(unittest.TestCase):
         if enterprise customer does not have an associated identity provider.
         """
         assert factories.EnterpriseCustomerFactory().identity_provider is None
-
-    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_catalog_contains_course_with_enterprise_customer_catalog(self, mock_catalog_api_class):
         """
         Test EnterpriseCustomer.catalog_contains_course with a related EnterpriseCustomerCatalog.
@@ -244,34 +242,6 @@ class TestEnterpriseCustomer(unittest.TestCase):
         mock_catalog_api.get_catalog_results.return_value = {'results': [fake_catalog_api.FAKE_COURSE_RUN]}
         mock_catalog_api.get_course_id.return_value = None
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
-
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
-    def test_catalog_contains_course_with_enterprise_customer_catalog_waffle_sample(self, api_client_mock):
-        """
-        Test EnterpriseCustomer.catalog_contains_course with a related
-        EnterpriseCustomerCatalog when the sample is active.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
-
-        # Test when content is in the enterprise customer's catalog(s)
-        api_client_mock.return_value.enterprise_contains_content_items.return_value = True
-        assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is True
-
-        # Test when content is NOT in the enterprise customer's catalog(s)
-        api_client_mock.return_value.enterprise_contains_content_items.return_value = False
-        assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
-
-    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_courses')
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient.enterprise_contains_content_items')
-    def test_catalog_contains_course_with_enterprise_customer_excluded(self, api_client_fn_mock, contains_fn_mock):
-        """
-        Test EnterpriseCustomer.catalog_contains_course when enterprise uuid in
-        ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list and sample active to
-        ensure the enterprise-catalog API isn't hit
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
 
 
 @mark.django_db
@@ -1181,7 +1151,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enrollment_url = enterprise_catalog.get_program_enrollment_url(program_uuid=program_uuid)
         assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 
-    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_courses')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_course_and_course_run_no_content_items(self, contains_courses_mock):
         """
         The ``get_course_and_course_run`` method returns a tuple (None, None) when no content items exist.
@@ -1189,59 +1159,6 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         contains_courses_mock.return_value = False
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
-
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
-    def test_get_course_and_course_run_no_content_items_waffle_sample(self, api_client_mock):
-        """
-        Verify the `get_course_and_course_run` method returns the same tuple with the enterprise catalog sample active.
-        """
-        api_client_mock.return_value.contains_content_items.return_value = False
-
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
-
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
-    def test_get_course_no_content_items_waffle_sample(self, api_client_mock):
-        """
-        Verify the `get_course` method returns None with the enterprise catalog sample active if no content items exist.
-        """
-        api_client_mock.return_value.contains_content_items.return_value = False
-
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_course('fake-course-key') is None
-
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
-    def test_get_course_run_no_content_items_waffle_sample(self, api_client_mock):
-        """
-        Verify the `get_course_run` method returns None with the catalog sample active if no content items exist.
-        """
-        api_client_mock.return_value.contains_content_items.return_value = False
-
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_course_run('fake-course-run-id') is None
-
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
-    def test_get_program_no_content_items_waffle_sample(self, api_client_mock):
-        """
-        Verify the `get_program` method returns None with the catalog sample active if no content items exist.
-        """
-        api_client_mock.return_value.contains_content_items.return_value = False
-
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_program('fake-program-uuid') is None
-
-    @mock.patch('enterprise.models.EnterpriseCustomerCatalog.contains_courses')
-    @mock.patch('enterprise.models.EnterpriseCatalogApiClient.enterprise_contains_content_items')
-    def test_getters_enterprise_customer_excluded(self, api_client_fn_mock, contains_fn_mock):
-        """
-        Test EnterpriseCustomerCatalog.get_course/get_course_run/get_course_and_course_run/get_program
-        when enterprise uuid in ENTERPRISE_CUSTOMERS_EXCLUDED_FROM_CATALOG list and sample active to
-        ensure the enterprise-catalog API isn't hit
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-        enterprise_customer_catalog = \
-            factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
-        contains_fn_mock.return_value = False
 
     def test_title_length(self):
         """
