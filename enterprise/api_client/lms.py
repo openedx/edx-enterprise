@@ -258,6 +258,25 @@ class EnrollmentApiClient(JwtLmsApiClient):
         return False
 
     @JwtLmsApiClient.refresh_token
+    def update_course_enrollment_mode_for_user(self, username, course_id, mode):
+        """
+        Call the enrollment API to update a user's course enrollment to the specified mode, e.g. "audit".
+
+        Args:
+            username (str): The username by which the user goes on the OpenEdx platform
+            course_id (str): The string value of the course's unique identifier
+            mode (str): The string value of the course mode, e.g. "audit"
+
+        Returns:
+            dict: A dictionary containing details of the enrollment, including course details, mode, username, etc.
+        """
+        return self.client.enrollment.post({
+            'user': username,
+            'course_details': {'course_id': course_id},
+            'mode': mode,
+        })
+
+    @JwtLmsApiClient.refresh_token
     def get_course_enrollment(self, username, course_id):
         """
         Query the enrollment API to get information about a single course enrollment.

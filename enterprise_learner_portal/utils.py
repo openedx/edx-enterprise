@@ -16,6 +16,7 @@ class CourseRunProgressStatuses:
     IN_PROGRESS = 'in_progress'
     UPCOMING = 'upcoming'
     COMPLETED = 'completed'
+    SAVED_FOR_LATER = 'saved_for_later'
 
 
 def get_course_run_status(course_overview, certificate_info, enterprise_enrollment):
@@ -43,13 +44,15 @@ def get_course_run_status(course_overview, certificate_info, enterprise_enrollme
     certificate_creation_date = certificate_info.get('created', datetime.max)
 
     if enterprise_enrollment and enterprise_enrollment.saved_for_later:
-        return CourseRunProgressStatuses.COMPLETED
+        return CourseRunProgressStatuses.SAVED_FOR_LATER
+
     if course_overview['pacing'] == 'instructor':
         if course_overview['has_ended']:
             return CourseRunProgressStatuses.COMPLETED
         if course_overview['has_started']:
             return CourseRunProgressStatuses.IN_PROGRESS
         return CourseRunProgressStatuses.UPCOMING
+
     if course_overview['pacing'] == 'self':
         thirty_days_ago = datetime.now(UTC) - timedelta(30)
         certificate_completed = is_certificate_passing and (certificate_creation_date <= thirty_days_ago)
@@ -58,4 +61,5 @@ def get_course_run_status(course_overview, certificate_info, enterprise_enrollme
         if course_overview['has_started']:
             return CourseRunProgressStatuses.IN_PROGRESS
         return CourseRunProgressStatuses.UPCOMING
+
     return None
