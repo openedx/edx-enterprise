@@ -80,16 +80,19 @@ class TestEnterpriseTasks(unittest.TestCase):
         )
         assert EnterpriseCourseEnrollment.objects.count() == 0
 
-    def test_create_enrollment_task_no_create_duplicates(self):
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
+    def test_create_enrollment_task_no_create_duplicates(self, enterprise_catalog_api_client_mock):
         """
         Task should return without creating a new EnterpriseCourseEnrollment
         if one with the course_id and enterprise_customer_user specified
         already exists.
         """
         EnterpriseCourseEnrollment.objects.create(
-            course_id='fake:course',
+            course_id=self.FAKE_COURSE_ID,
             enterprise_customer_user=self.enterprise_customer_user,
         )
+        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
+        mock_enterprise_catalog_api_client.contains_content_items.return_value = False
 
         assert EnterpriseCourseEnrollment.objects.count() == 1
         create_enterprise_enrollment(
