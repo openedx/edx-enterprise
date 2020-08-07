@@ -58,6 +58,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         self.assertEqual(response.status_code, expected_status)
         self.assertEqual(response_body, expected_body)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         # Missing `username` input.
         (
@@ -310,11 +311,21 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
-    def test_consent_api_get_endpoint(self, factory, items, request_body, expected_response_body, expected_status_code):
+    def test_consent_api_get_endpoint(
+            self,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            expected_status_code,
+            enterprise_catalog_api_client_mock,
+    ):
         """Test an expectation against an action on any Consent API endpoint."""
         content_filter = {
             'key': [TEST_COURSE]
         }
+        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
+        mock_enterprise_catalog_api_client.contains_content_items.return_value = False
         self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         if factory:
             create_items(factory, items)
@@ -1076,6 +1087,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         response = self.client.post(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         # Missing `username` input.
         (
@@ -1423,8 +1435,17 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
-    def test_consent_api_delete_endpoint(self, factory, items, request_body,
-                                         expected_response_body, expected_status_code):
+    def test_consent_api_delete_endpoint(
+            self,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            expected_status_code,
+            enterprise_catalog_api_client_mock,
+    ):
+        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
+        mock_enterprise_catalog_api_client.contains_content_items.return_value = True
         content_filter = {
             'key': [TEST_COURSE]
         }
@@ -1445,6 +1466,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         if expected_status_code == 200:
             self._assert_consent_not_provided(response)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         (
             factories.DataSharingConsentFactory,
@@ -1478,9 +1500,11 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             items,
             request_body,
             expected_response_body,
-            expected_status_code
+            expected_status_code,
+            enterprise_catalog_api_client_mock,
     ):
-        self.discovery_client.is_course_in_catalog.return_value = False
+        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
+        mock_enterprise_catalog_api_client.contains_content_items.return_value = False
         if factory:
             create_items(factory, items)
         response = self.client.delete(self.path, request_body)
