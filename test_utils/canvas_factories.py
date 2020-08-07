@@ -30,7 +30,6 @@ class CanvasGlobalConfigurationFactory(factory.django.DjangoModelFactory):
         model = CanvasGlobalConfiguration
 
     course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
-    oauth_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
 
 
 class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
@@ -49,6 +48,7 @@ class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFac
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     active = True
-    canvas_company_id = factory.LazyAttribute(lambda x: FAKER.company())
+    client_id = 'a_client_id'
+    client_secret = 'a_client_secret'
+    canvas_account_id = factory.LazyAttribute(lambda x: FAKER.random_int())
     canvas_base_url = factory.LazyAttribute(lambda x: FAKER.file_path())
-    provider_id = 'CANVAS'

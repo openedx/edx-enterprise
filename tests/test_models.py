@@ -892,9 +892,6 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         """
         branding_configuration = EnterpriseCustomerBrandingConfiguration(
             enterprise_customer=factories.EnterpriseCustomerFactory(),
-            # TODO: https://openedx.atlassian.net/browse/ENT-2892
-            # Remove banner_border_color and banner_background_color
-            banner_border_color=hex_string,
             primary_color=hex_string,
             secondary_color=hex_string,
             tertiary_color=hex_string,

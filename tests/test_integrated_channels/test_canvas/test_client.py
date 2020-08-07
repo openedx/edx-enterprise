@@ -35,20 +35,19 @@ class TestCanvasApiClient(unittest.TestCase):
         self.course_url = urljoin(self.url_base, self.course_api_path)
         self.client_id = "client_id"
         self.client_secret = "client_secret"
-        self.company_id = "company_id"
+        self.account_id = 2000
         self.access_token = "access_token"
         self.expected_token_response_body = {
             "expires_in": "",
             "access_token": self.access_token
         }
         canvas_factories.CanvasGlobalConfigurationFactory(
-            course_api_path=self.course_api_path,
-            oauth_api_path=self.oauth_api_path,
+            course_api_path=self.course_api_path
         )
         self.enterprise_config = canvas_factories.CanvasEnterpriseCustomerConfigurationFactory(
-            key=self.client_id,
-            secret=self.client_secret,
-            canvas_company_id=self.company_id,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            canvas_account_id=self.account_id,
             canvas_base_url=self.url_base,
         )
 

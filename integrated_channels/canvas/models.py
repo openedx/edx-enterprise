@@ -31,16 +31,6 @@ class CanvasGlobalConfiguration(ConfigurationModel):
         help_text="The API path for making course metadata POST/DELETE requests to Canvas."
     )
 
-    oauth_api_path = models.CharField(
-        max_length=255,
-        verbose_name="OAuth API Path",
-        default='login/oauth2/token',
-        help_text=(
-            "The API path for making OAuth-related POST requests to Canvas. "
-            "This will be used to gain the OAuth access token for other API calls."
-        )
-    )
-
     class Meta:
         app_label = 'canvas'
 
@@ -67,9 +57,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     .. no_pii:
     """
 
-    key = models.CharField(
+    client_id = models.CharField(
         max_length=255,
-        blank=True,
+        null=True,
         verbose_name="API Client ID",
         help_text=(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
@@ -77,9 +67,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
-    secret = models.CharField(
+    client_secret = models.CharField(
         max_length=255,
-        blank=True,
+        null=True,
         verbose_name="API Client Secret",
         help_text=(
             "The API Client Secret provided to edX by the enterprise customer to be used to make "
@@ -87,25 +77,18 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         )
     )
 
-    canvas_company_id = models.CharField(
-        max_length=255,
-        blank=True,
-        verbose_name="Canvas Organization Code",
-        help_text="The organization code provided to the enterprise customer by Canvas."
+    canvas_account_id = models.IntegerField(
+        null=True,
+        verbose_name="Canvas Account Number",
+        help_text="Account number to use during api calls. Called account_id in canvas. "
+                  " Required to create courses etc."
     )
 
     canvas_base_url = models.CharField(
         max_length=255,
-        blank=True,
+        null=True,
         verbose_name="Canvas Base URL",
         help_text="The base URL used for API requests to Canvas, i.e. https://instructure.com."
-    )
-
-    provider_id = models.CharField(
-        max_length=100,
-        default='EDX',
-        verbose_name="Provider Code",
-        help_text="The provider code that Canvas gives to the content provider."
     )
 
     history = HistoricalRecords()

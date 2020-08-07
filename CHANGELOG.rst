@@ -14,11 +14,35 @@ Change Log
 Unreleased
 --------------------
 
+[3.4.40] 2020-08-05
+-------------------
+
+* Create fresh migrations from scratch for Canvas since this app is yet to run migrations in platform.
+
+[3.4.39] 2020-08-04
+-------------------
+
+* Remove field 'key' from a canvas integrated_channel model (but not migration yet), step 2/3
+
+[3.4.38] 2020-08-04
+-------------------
+
+* Migration to remove ``banner_border_color`` and ``banner_background_color`` branding config fields.
+
+[3.4.37] 2020-08-04
+-------------------
+
+* Add new field client_id to canvas model for removing older key field (step 1/3)
+
+[3.4.36] 2020-08-04
+-------------------
+
+* Remove references to deprecated ``banner_border_color`` and ``banner_background_color`` branding config fields.
+
 [3.4.35] 2020-08-04
 -------------------
 
 * Add postman collection for Canvas integrated channel
-
 
 [3.4.34] 2020-08-03
 -------------------

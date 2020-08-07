@@ -617,10 +617,6 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__slug': TEST_SLUG,
                 'logo': 'enterprise/branding/1/1_logo.png',
-                # TODO: https://openedx.atlassian.net/browse/ENT-2892
-                # Remove banner_border_color and banner_background_color
-                'banner_border_color': '#123456',
-                'banner_background_color': '#234567',
                 'primary_color': '#000000',
                 'secondary_color': '#ffffff',
                 'tertiary_color': '#888888',
@@ -629,10 +625,6 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer': FAKE_UUIDS[0],
                 'enterprise_slug': TEST_SLUG,
                 'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
-                # TODO: https://openedx.atlassian.net/browse/ENT-2892
-                # Remove banner_border_color and banner_background_color
-                'banner_border_color': '#123456',
-                'banner_background_color': '#234567',
                 'primary_color': '#000000',
                 'secondary_color': '#ffffff',
                 'tertiary_color': '#888888',
@@ -806,10 +798,6 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[0],
                 'enterprise_customer__slug': TEST_SLUG,
                 'logo': 'enterprise/branding/1/1_logo.png',
-                # TODO: https://openedx.atlassian.net/browse/ENT-2892
-                # Remove banner_border_color and banner_background_color
-                'banner_border_color': '#123456',
-                'banner_background_color': '#234567',
                 'primary_color': '#000000',
                 'secondary_color': '#ffffff',
                 'tertiary_color': '#888888',
@@ -818,10 +806,6 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__uuid': FAKE_UUIDS[1],
                 'enterprise_customer__slug': 'another-slug',
                 'logo': 'enterprise/branding/2/2_logo.png',
-                # TODO: https://openedx.atlassian.net/browse/ENT-2892
-                # Remove banner_border_color and banner_background_color
-                'banner_border_color': '#123456',
-                'banner_background_color': '#234567',
                 'primary_color': '#000000',
                 'secondary_color': '#ffffff',
                 'tertiary_color': '#888888',
@@ -831,10 +815,6 @@ class TestEnterpriseAPIViews(APITest):
             'enterprise_customer': FAKE_UUIDS[0],
             'enterprise_slug': TEST_SLUG,
             'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
-            # TODO: https://openedx.atlassian.net/browse/ENT-2892
-            # Remove banner_border_color and banner_background_color
-            'banner_border_color': '#123456',
-            'banner_background_color': '#234567',
             'primary_color': '#000000',
             'secondary_color': '#ffffff',
             'tertiary_color': '#888888',

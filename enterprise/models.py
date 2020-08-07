@@ -1106,21 +1106,7 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         validators=[validate_image_extension, validate_image_size]
     )
     # TODO: https://openedx.atlassian.net/browse/ENT-2892
-    # 2nd phase of 3-step migration:
-    # Migrate data from banner_border_color -> secondary_color
-    # Migrate data from banner_background_color -> primary_color
-    banner_border_color = models.CharField(
-        null=True,
-        blank=True,
-        max_length=7,
-        validators=[validate_hex_color],
-    )
-    banner_background_color = models.CharField(
-        null=True,
-        blank=True,
-        max_length=7,
-        validators=[validate_hex_color],
-    )
+    # Create a migration to drop the banner_border_color and banner_background_color fields.
     primary_color = models.CharField(
         null=True,
         blank=True,
