@@ -10,6 +10,7 @@ from smtplib import SMTPException
 
 import ddt
 import mock
+import pytest
 from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -1167,6 +1168,7 @@ class TestEnterpriseAPIViews(APITest):
         assert 'course_run_ids' in message
         assert response.status_code == 400
 
+    @pytest.mark.skip(reason='Catalog course run detail endpoint now lives in enterprise-catalog service')
     @ddt.data(
         (False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1231,6 +1233,7 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response == expected_result
 
+    @pytest.mark.skip(reason='Catalog course detail endpoint now lives in enterprise-catalog service')
     @ddt.data(
         (False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1295,6 +1298,7 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response == expected_result
 
+    @pytest.mark.skip(reason='Catalog program detail endpoint now lives in enterprise-catalog service')
     @ddt.data(
         (False, False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
