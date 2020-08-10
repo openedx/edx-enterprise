@@ -305,10 +305,6 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
         licensed_enrollments = self.queryset.filter(
             enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
         )
-        if not licensed_enrollments:
-            msg = 'User {} does not have any licensed enterprise course enrollments.'.format(user_id)
-            return Response(msg, status=status.HTTP_404_NOT_FOUND)
-
         enterprise_enrollments = [enrollment.enterprise_course_enrollment for enrollment in licensed_enrollments]
         course_run_ids = [enrollment.course_id for enrollment in enterprise_enrollments]
         course_overviews = get_course_overviews(course_run_ids)
