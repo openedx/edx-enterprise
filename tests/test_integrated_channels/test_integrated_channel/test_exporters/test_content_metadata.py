@@ -13,6 +13,7 @@ from testfixtures import LogCapture
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
+from test_utils.fake_catalog_api import get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -23,7 +24,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     """
 
     def setUp(self):
-        self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
+            self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
         # Need a non-abstract config.
         self.config = factories.DegreedEnterpriseCustomerConfigurationFactory(
@@ -73,10 +75,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             self.config.customer_catalogs_to_transmit.first().uuid
 
     @responses.activate
-    def test_content_exporter_bad_data_transform_mapping(self):
+    @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
+    def test_content_exporter_bad_data_transform_mapping(self, mock_api_client):
         """
         ``ContentMetadataExporter``'s ``export`` raises an exception when DATA_TRANSFORM_MAPPING is invalid.
         """
+        mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         ContentMetadataExporter.DATA_TRANSFORM_MAPPING['fake-key'] = 'fake-value'
         exporter = ContentMetadataExporter('fake-user', self.config)
         with LogCapture(level=logging.ERROR) as log_capture:

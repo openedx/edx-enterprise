@@ -4,6 +4,7 @@ Fake responses for course catalog api.
 """
 
 import copy
+from collections import OrderedDict
 
 import mock
 from six.moves import reduce as six_reduce
@@ -1290,6 +1291,15 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
         "availability": availability,
         "weeks_to_complete": weeks_to_complete
     }
+
+
+def get_fake_content_metadata():
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata
+    """
+    content_metadata = OrderedDict()
+    content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
+    return list(content_metadata.values())
 
 
 class CourseDiscoveryApiTestMixin:
