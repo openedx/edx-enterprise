@@ -294,32 +294,28 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
 
         user_id = request_data.get('user_id')
         enterprise_id = request_data.get('enterprise_id')
-        mode = CourseModes.AUDIT
+        audit_mode = CourseModes.AUDIT
 
         enterprise_customer_user = get_object_or_404(
             models.EnterpriseCustomerUser,
             user_id=user_id,
             enterprise_customer=enterprise_id,
         )
-
         licensed_enrollments = self.queryset.filter(
             enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
         )
-        enterprise_enrollments = [enrollment.enterprise_course_enrollment for enrollment in licensed_enrollments]
-        course_run_ids = [enrollment.course_id for enrollment in enterprise_enrollments]
-        course_overviews = get_course_overviews(course_run_ids)
+
+        enrollments_by_course_id = {
+            enrollment.enterprise_course_enrollment.course_id: enrollment.enterprise_course_enrollment
+            for enrollment in licensed_enrollments
+        }
+        course_overviews = get_course_overviews(list(enrollments_by_course_id.keys()))
 
         enrollment_api_client = EnrollmentApiClient()
         for course_overview in course_overviews:
             course_run_id = course_overview.get('id')
+            enterprise_enrollment = enrollments_by_course_id.get(course_run_id)
             certificate_info = get_certificate_for_user(enterprise_customer_user.username, course_run_id) or {}
-
-            enterprise_enrollment = [
-                enrollment
-                for enrollment in enterprise_enrollments
-                if enrollment.course_id == course_run_id
-            ].pop()
-
             course_run_status = get_course_run_status(
                 course_overview,
                 certificate_info,
@@ -335,7 +331,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
                 enrollment_api_client.update_course_enrollment_mode_for_user(
                     username=enterprise_customer_user.username,
                     course_id=course_run_id,
-                    mode=mode,
+                    mode=audit_mode,
                 )
                 LOGGER.info(
                     'Updated LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
@@ -343,7 +339,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
                         user=enterprise_customer_user.username,
                         enterprise=enterprise_id,
                         course_id=course_run_id,
-                        mode=mode,
+                        mode=audit_mode,
                     )
                 )
             except Exception as exc:  # pylint: disable=broad-except
@@ -353,7 +349,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
                         user=enterprise_customer_user.username,
                         enterprise=enterprise_id,
                         course_id=course_run_id,
-                        mode=mode,
+                        mode=audit_mode,
                     )
                 )
                 LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
