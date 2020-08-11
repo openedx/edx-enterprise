@@ -445,7 +445,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             item.update(enterprise_customer=enterprise_customer)
         if factory:
             create_items(factory, items)
-        
+
         mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
         mock_enterprise_catalog_api_client.contains_content_items.return_value = True
 
@@ -1104,6 +1104,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
         mock_enterprise_catalog_api_client.contains_content_items.return_value = False
+        mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = False
         create_items(factory, items)
         response = self.client.post(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
@@ -1526,6 +1527,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
     ):
         mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
         mock_enterprise_catalog_api_client.contains_content_items.return_value = False
+        mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = False
         if factory:
             create_items(factory, items)
         response = self.client.delete(self.path, request_body)
