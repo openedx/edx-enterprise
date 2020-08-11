@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.5.2] 2020-08-11
+-------------------
+
+* Add Content Metadata Exporter for Canvas Integration.
+
 [3.5.1] 2020-08-11
 -------------------
 
