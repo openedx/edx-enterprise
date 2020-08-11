@@ -1145,7 +1145,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
 
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
-    
+
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_course_run_no_content_items(self, api_client_mock):
         """
@@ -1154,8 +1154,8 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         api_client_mock.return_value.contains_content_items.return_value = False
 
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_course_run('fake-course-run-id') == None
-    
+        assert enterprise_customer_catalog.get_course_run('fake-course-run-id') is None
+
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_course_no_content_items(self, api_client_mock):
         """
@@ -1164,17 +1164,17 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         api_client_mock.return_value.contains_content_items.return_value = False
 
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_course('fake-course-id') == None
+        assert enterprise_customer_catalog.get_course('fake-course-id') is None
 
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
-    def test_get_course_no_content_items(self, api_client_mock):
+    def test_get_program_no_content_items(self, api_client_mock):
         """
         Verify the `get_program` method returns None now that the waffle flag is removed.
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
-        assert enterprise_customer_catalog.get_program('fake-uuid') == None
+        assert enterprise_customer_catalog.get_program('fake-uuid') is None
 
     def test_title_length(self):
         """

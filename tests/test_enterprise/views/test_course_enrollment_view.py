@@ -276,7 +276,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             catalog_api_client_mock,
-            enterprise_catalog_api_client_mock,
+            ent_catalog_api_client_mock,
             embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -293,8 +293,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._setup_enrollment_client(enrollment_api_client_mock)
         self._setup_embargo_api(embargo_api_mock)
 
-        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
-        mock_enterprise_catalog_api_client.contains_content_items.return_value = True
+        mock_ent_catalog_api_client = ent_catalog_api_client_mock.return_value
+        mock_ent_catalog_api_client.contains_content_items.return_value = True
 
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -461,7 +461,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
             ecommerce_api_client_mock,
             enrollment_api_client_mock,
             catalog_api_client_views_mock,
-            enterprise_catalog_api_client_mock,
+            catalog_api_client_mock,
             embargo_api_mock,
             *args
     ):  # pylint: disable=unused-argument
@@ -479,8 +479,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._setup_enrollment_client(enrollment_api_client_mock)
         self._setup_embargo_api(embargo_api_mock)
 
-        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
-        mock_enterprise_catalog_api_client.contains_content_items.return_value = True
+        mock_ent_catalog_api_client = catalog_api_client_mock.return_value
+        mock_ent_catalog_api_client.contains_content_items.return_value = True
 
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
