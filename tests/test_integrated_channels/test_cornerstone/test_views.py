@@ -12,6 +12,7 @@ from rest_framework.reverse import reverse
 from django.conf import settings
 
 from test_utils import APITest, factories
+from test_utils.fake_catalog_api import get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -23,7 +24,8 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
     def setUp(self):
         courses_list_endpoint = reverse('cornerstone-course-list')
         self.course_list_url = settings.TEST_SERVER + courses_list_endpoint
-        self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
+            self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
         # Need a non-abstract config.
         self.config = factories.CornerstoneEnterpriseCustomerConfigurationFactory(
@@ -82,10 +84,12 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
                 self.assertIn(key, keys)
 
     @responses.activate
-    def test_course_list(self):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    def test_course_list(self, mock_get_content_metadata):
         """
         Test courses list view produces desired json
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
