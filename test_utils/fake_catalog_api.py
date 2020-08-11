@@ -1299,6 +1299,8 @@ def get_fake_content_metadata():
     """
     content_metadata = OrderedDict()
     content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
+    content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
+    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = FAKE_SEARCH_ALL_PROGRAM_RESULT_1
     return list(content_metadata.values())
 
 

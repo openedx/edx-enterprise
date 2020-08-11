@@ -40,10 +40,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         super(TestContentMetadataExporter, self).setUp()
 
     @responses.activate
-    def test_content_exporter_export(self):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    def test_content_exporter_export(self, mock_get_content_metadata):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         exporter = ContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([
@@ -53,11 +55,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         ])
 
     @responses.activate
-    @mock.patch("enterprise.api_client.enterprise.EnterpriseApiClient.get_content_metadata")
+    @mock.patch("enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata")
     def test_export_with_catalogs_to_transmit(self, mock_get_content_metadata):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         exporter = ContentMetadataExporter('fake-user', self.config)
         exporter.export()
         assert mock_get_content_metadata.called
