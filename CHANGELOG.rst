@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.5.3] 2020-08-11
+-------------------
+
+* Fix permissions issue with license_revoke endpoint in LicensedEnterpriseCourseEnrollmentViewSet.
+
 [3.5.2] 2020-08-11
 -------------------
 
