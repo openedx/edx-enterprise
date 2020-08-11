@@ -7,8 +7,9 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
-from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.exceptions import ClientError
+from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
 
 class CanvasAPIClient(IntegratedChannelApiClient):
     """

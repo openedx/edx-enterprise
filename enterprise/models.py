@@ -1406,6 +1406,13 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
         )
     )
 
+    is_revoked = models.BooleanField(
+        default=False,
+        help_text=_(
+            "Whether the licensed enterprise course enrollment is revoked, e.g., when a user's license is revoked."
+        )
+    )
+
     history = HistoricalRecords()
 
 

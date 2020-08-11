@@ -113,7 +113,7 @@ class TestUtils(TestCase):
                 'created': NOW,
             },
             True,
-            CourseRunProgressStatuses.COMPLETED,
+            CourseRunProgressStatuses.SAVED_FOR_LATER,
         ),
     )
     @ddt.unpack
@@ -125,8 +125,7 @@ class TestUtils(TestCase):
             expected,
     ):
         """
-        get_course_run_status should return the proper results
-        based on input parameters
+        Assert get_course_run_status returns the proper results based on input parameters
         """
         enterprise_enrollment = factories.EnterpriseCourseEnrollmentFactory.create(saved_for_later=saved_for_later)
         actual = get_course_run_status(

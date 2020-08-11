@@ -14,11 +14,18 @@ Change Log
 Unreleased
 --------------------
 
-[3.4.41] 2020-08-11
+[3.5.1] 2020-08-11
 -------------------
 
 * Add client instantiation and oauth validation for Canvas integration.
 
+[3.5.0] 2020-08-10
+------------------
+
+* Add `update_course_enrollment_mode_for_user` method to the EnrollmentApiClient.
+* Create new API endpoint to update the mode for a user's licensed enterprise course enrollments when their enterprise license is revoked.
+* Introduce new course run status for `saved_for_later`.
+* On revocation of an enterprise license, mark the user's licensed course enrollments as `saved_for_later` and `is_revoked`.
 
 [3.4.40] 2020-08-05
 -------------------

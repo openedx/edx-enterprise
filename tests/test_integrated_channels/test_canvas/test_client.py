@@ -7,11 +7,11 @@ import datetime
 import unittest
 
 import pytest
+import responses
 from freezegun import freeze_time
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
-import responses
 
 from integrated_channels.canvas.client import CanvasAPIClient
 from integrated_channels.exceptions import ClientError

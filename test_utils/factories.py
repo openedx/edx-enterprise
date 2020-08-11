@@ -22,6 +22,7 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
@@ -248,8 +249,24 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
 
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     saved_for_later = False
-    saved_for_later = False
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
+
+
+class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
+    """
+    LicensedEnterpriseCourseEnrollment factory.
+    """
+
+    class Meta:
+        """
+        Meta for LicensedEnterpriseCourseEnrollment.
+        """
+
+        model = LicensedEnterpriseCourseEnrollment
+
+    license_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_course_enrollment = factory.SubFactory(EnterpriseCourseEnrollmentFactory)
+    is_revoked = False
 
 
 class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
