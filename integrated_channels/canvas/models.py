@@ -11,6 +11,7 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
+from integrated_channels.canvas.transmitters.content_metadata import CanvasContentMetadataTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
@@ -99,3 +100,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Return a ``CanvasContentMetadataExporter`` instance.
         """
         return CanvasContentMetadataExporter(user, self)
+
+    def get_content_metadata_transmitter(self):
+        """
+        Return a ``CanvasContentMetadataTransmitter`` instance.
+        """
+        return CanvasContentMetadataTransmitter(self)

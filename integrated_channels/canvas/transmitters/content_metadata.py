@@ -2,6 +2,7 @@
 Transmitter for Canvas content metadata
 """
 
+from integrated_channel.canvas.client import CanvasAPIClient
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 
 
@@ -10,13 +11,13 @@ class CanvasContentMetadataTransmitter(ContentMetadataTransmitter):
     This transmitter transmits exported content metadata to Canvas.
     """
 
-    def __init__(self, enterprise_configuration): # TODO: , client=CanvasAPIClient
+    def __init__(self, enterprise_configuration, client=CanvasAPIClient)
         """
         Use the ``CanvasAPIClient`` for content metadata transmission to Canvas.
         """
         super(CanvasContentMetadataTransmitter, self).__init__(
             enterprise_configuration=enterprise_configuration,
-            # TODO: client=client
+            client=client
         )
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
