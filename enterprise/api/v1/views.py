@@ -11,7 +11,7 @@ from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action, detail_route, list_route
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -24,6 +24,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core import mail
 from django.http import Http404
+from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 
@@ -39,9 +40,19 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
-from enterprise.constants import COURSE_KEY_URL_PATTERN
+from enterprise.api_client.lms import EnrollmentApiClient
+from enterprise.constants import COURSE_KEY_URL_PATTERN, CourseModes
 from enterprise.errors import CodesAPIRequestError
-from enterprise.utils import get_request_value
+from enterprise.utils import NotConnectedToOpenEdX, get_request_value
+from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
+
+try:
+    from lms.djangoapps.certificates.api import get_certificate_for_user
+    from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
+except ImportError:
+    get_course_overviews = None
+    get_certificate_for_user = None
+
 
 LOGGER = getLogger(__name__)
 
@@ -242,6 +253,120 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
         return serializers.EnterpriseCourseEnrollmentWriteSerializer
 
 
+class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
+    """
+    API views for the ``licensed-enterprise-course-enrollment`` API endpoint.
+    """
+
+    queryset = models.LicensedEnterpriseCourseEnrollment.objects.all()
+    serializer_class = serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
+
+    def _validate_license_revoke_data(self, request_data):
+        """
+        Ensures the request data contains the necessary information.
+
+        Arguments:
+            request_data (dict): A dictionary of data passed to the request
+        """
+        user_id = request_data.get('user_id')
+        enterprise_id = request_data.get('enterprise_id')
+
+        if not user_id or not enterprise_id:
+            msg = 'user_id and enterprise_id must be provided.'
+            return Response(msg, status=status.HTTP_400_BAD_REQUEST)
+
+        return None
+
+    @action(methods=['post'], detail=False)
+    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request: request.data.get('enterprise_id'))
+    def license_revoke(self, request, *args, **kwargs):
+        """
+        Changes the mode for a user's licensed enterprise course enrollments to the "audit" course mode.
+        """
+        if get_course_overviews is None or get_certificate_for_user is None:
+            raise NotConnectedToOpenEdX(
+                _('To use this endpoint, this package must be '
+                  'installed in an Open edX environment.')
+            )
+
+        request_data = request.data.copy()
+        self._validate_license_revoke_data(request_data)
+
+        user_id = request_data.get('user_id')
+        enterprise_id = request_data.get('enterprise_id')
+        audit_mode = CourseModes.AUDIT
+
+        enterprise_customer_user = get_object_or_404(
+            models.EnterpriseCustomerUser,
+            user_id=user_id,
+            enterprise_customer=enterprise_id,
+        )
+        licensed_enrollments = self.queryset.filter(
+            enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
+        )
+
+        enrollments_by_course_id = {
+            enrollment.enterprise_course_enrollment.course_id: enrollment.enterprise_course_enrollment
+            for enrollment in licensed_enrollments
+        }
+        course_overviews = get_course_overviews(list(enrollments_by_course_id.keys()))
+
+        enrollment_api_client = EnrollmentApiClient()
+        for course_overview in course_overviews:
+            course_run_id = course_overview.get('id')
+            enterprise_enrollment = enrollments_by_course_id.get(course_run_id)
+            certificate_info = get_certificate_for_user(enterprise_customer_user.username, course_run_id) or {}
+            course_run_status = get_course_run_status(
+                course_overview,
+                certificate_info,
+                enterprise_enrollment,
+            )
+
+            if course_run_status == CourseRunProgressStatuses.COMPLETED:
+                # skip updating the enrollment mode for this course as it is already completed, either
+                # meaning the user has earned a certificate or the course has ended.
+                continue
+
+            try:
+                enrollment_api_client.update_course_enrollment_mode_for_user(
+                    username=enterprise_customer_user.username,
+                    course_id=course_run_id,
+                    mode=audit_mode,
+                )
+                LOGGER.info(
+                    'Updated LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
+                    'to Course Mode {mode}.'.format(
+                        user=enterprise_customer_user.username,
+                        enterprise=enterprise_id,
+                        course_id=course_run_id,
+                        mode=audit_mode,
+                    )
+                )
+            except Exception as exc:  # pylint: disable=broad-except
+                msg = (
+                    'Unable to update LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
+                    'to Course Mode {mode}'.format(
+                        user=enterprise_customer_user.username,
+                        enterprise=enterprise_id,
+                        course_id=course_run_id,
+                        mode=audit_mode,
+                    )
+                )
+                LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
+                return Response(msg, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            # mark the licensed enterprise course enrollment as "revoked"
+            licensed_enrollment = enterprise_enrollment.license
+            licensed_enrollment.is_revoked = True
+            licensed_enrollment.save()
+
+            # mark the enterprise course enrollment as "saved for later"
+            enterprise_enrollment.saved_for_later = True
+            enterprise_enrollment.save()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``enterprise-learner`` API endpoint.
@@ -351,8 +476,8 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return super(EnterpriseCustomerCatalogViewSet, self).retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
-        action = getattr(self, 'action', None)
-        if action == 'retrieve':
+        view_action = getattr(self, 'action', None)
+        if view_action == 'retrieve':
             return serializers.EnterpriseCustomerCatalogDetailSerializer
         return serializers.EnterpriseCustomerCatalogSerializer
 

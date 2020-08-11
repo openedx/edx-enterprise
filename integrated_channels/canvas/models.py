@@ -11,6 +11,7 @@ from simple_history.models import HistoricalRecords
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
+from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
@@ -91,6 +92,14 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         help_text="The base URL used for API requests to Canvas, i.e. https://instructure.com."
     )
 
+    refresh_token = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name="Oauth2 Refresh Token",
+        help_text="The refresh token provided by Canvas along with the access token request, used to "
+                  "re-request the access tokens over multiple client sessions."
+    )
+
     history = HistoricalRecords()
 
     class Meta:
@@ -116,3 +125,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """
         return 'CANVAS'
+
+    def get_content_metadata_exporter(self, user):
+        """
+        Return a ``CanvasContentMetadataExporter`` instance.
+        """
+        return CanvasContentMetadataExporter(user, self)

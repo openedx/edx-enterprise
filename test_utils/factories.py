@@ -22,9 +22,11 @@ from enterprise.models import (
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerReportingConfiguration,
     EnterpriseCustomerUser,
+    LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasGlobalConfiguration
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
@@ -248,8 +250,24 @@ class EnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
 
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
     saved_for_later = False
-    saved_for_later = False
     enterprise_customer_user = factory.SubFactory(EnterpriseCustomerUserFactory)
+
+
+class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactory):
+    """
+    LicensedEnterpriseCourseEnrollment factory.
+    """
+
+    class Meta:
+        """
+        Meta for LicensedEnterpriseCourseEnrollment.
+        """
+
+        model = LicensedEnterpriseCourseEnrollment
+
+    license_uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_course_enrollment = factory.SubFactory(EnterpriseCourseEnrollmentFactory)
+    is_revoked = False
 
 
 class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
@@ -606,3 +624,40 @@ class XAPILearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory)
 
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class CanvasGlobalConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``CanvasGlobalConfiguration`` factory.
+
+    Creates an instance of ``CanvasGlobalConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``CanvasGlobalConfiguration``.
+        """
+
+        model = CanvasGlobalConfiguration
+
+    course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
+
+
+class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``CanvasEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``CanvasEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``CanvasEnterpriseCustomerConfiguration``.
+        """
+
+        model = CanvasEnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    canvas_account_id = 2
+    canvas_base_url = factory.LazyAttribute(lambda x: FAKER.url())

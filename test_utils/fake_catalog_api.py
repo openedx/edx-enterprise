@@ -1058,6 +1058,7 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_2 = {
     "is_program_eligible_for_one_click_purchase": True
 }
 
+
 FAKE_SEARCH_ALL_RESULTS = {
     "count": 3,
     "next": None,

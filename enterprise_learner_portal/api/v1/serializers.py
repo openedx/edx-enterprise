@@ -68,7 +68,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['due_dates'] = []
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
-        representation['saved_for_later'] = instance.saved_for_later
+        representation['is_revoked'] = instance.license.is_revoked if instance.license else False
 
         return representation
 
