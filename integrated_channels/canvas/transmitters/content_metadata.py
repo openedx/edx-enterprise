@@ -2,7 +2,7 @@
 Transmitter for Canvas content metadata
 """
 
-from integrated_channel.canvas.client import CanvasAPIClient
+from integrated_channels.canvas.client import CanvasAPIClient
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 
 
