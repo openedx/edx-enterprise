@@ -12,8 +12,8 @@ from pytest import mark
 
 from integrated_channels.degreed.exporters.content_metadata import DegreedContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_enterprise_api import EnterpriseMockMixin
 from test_utils.fake_catalog_api import get_fake_content_metadata
+from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
 @mark.django_db

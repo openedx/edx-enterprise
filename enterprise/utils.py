@@ -30,11 +30,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import (
-    ALLOWED_TAGS,
-    DEFAULT_CATALOG_CONTENT_FILTER,
-    PROGRAM_TYPE_DESCRIPTION,
-)
+from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
