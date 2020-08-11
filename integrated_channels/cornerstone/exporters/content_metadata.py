@@ -11,6 +11,7 @@ import pytz
 from django.apps import apps
 
 from enterprise.utils import get_closest_course_run, get_language_code
+from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from integrated_channels.utils import (
     get_duration_from_estimated_hours,
@@ -75,7 +76,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         """
         Return the modified datetime of closest course run`.
         """
-        modified_datetime = datetime.datetime.now(pytz.UTC)
+        modified_datetime = datetime.datetime.now(pytz.UTC).strftime(ISO_8601_DATE_FORMAT)
         course_runs = content_metadata_item.get('course_runs')
         if course_runs:
             closest_course_run = get_closest_course_run(course_runs)
