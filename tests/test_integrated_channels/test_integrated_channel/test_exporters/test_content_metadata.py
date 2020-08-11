@@ -39,7 +39,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         self.addCleanup(jwt_builder.stop)
         super(TestContentMetadataExporter, self).setUp()
 
-    @responses.activate
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     def test_content_exporter_export(self, mock_get_content_metadata):
         """
@@ -54,7 +53,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             FAKE_UUIDS[3],
         ])
 
-    @responses.activate
     @mock.patch("enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata")
     def test_export_with_catalogs_to_transmit(self, mock_get_content_metadata):
         """
@@ -77,7 +75,6 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert mock_get_content_metadata.call_args[1]['enterprise_catalogs'].first().uuid == \
             self.config.customer_catalogs_to_transmit.first().uuid
 
-    @responses.activate
     @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
     def test_content_exporter_bad_data_transform_mapping(self, mock_api_client):
         """

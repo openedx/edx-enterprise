@@ -38,7 +38,6 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
         self.addCleanup(jwt_builder.stop)
         super(TestDegreedContentMetadataExporter, self).setUp()
 
-    @responses.activate
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     def test_content_exporter_export(self, mock_get_content_metadata):
         """

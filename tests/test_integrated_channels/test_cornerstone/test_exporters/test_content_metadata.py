@@ -56,7 +56,6 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
         self.addCleanup(jwt_builder.stop)
         super(TestCornerstoneContentMetadataExporter, self).setUp()
 
-    @responses.activate
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     def test_content_exporter_export(self, mock_get_content_metadata):
         """
