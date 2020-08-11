@@ -21,5 +21,5 @@ class CanvasContentMetadataTransmitter(ContentMetadataTransmitter):
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
         return {
-            'courses': channel_metadata_items,
+            'course': channel_metadata_items,
         }

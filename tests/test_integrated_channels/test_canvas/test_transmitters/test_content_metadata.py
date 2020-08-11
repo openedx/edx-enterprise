@@ -28,7 +28,7 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
         transmitter = CanvasContentMetadataTransmitter(self.enterprise_config)
         channel_metadata_items =[ {'field': 'value'} ]
         expected_items = {
-            'courses': channel_metadata_items,
+            'course': channel_metadata_items,
         }
         assert transmitter._prepare_items_for_transmission(channel_metadata_items) == expected_items
 
