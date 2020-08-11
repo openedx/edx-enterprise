@@ -203,6 +203,20 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
             track_enrollment('rest-api-enrollment', self.enterprise_customer_user.user_id, course_id)
 
 
+class LicensedEnterpriseCourseEnrollmentReadOnlySerializer(serializers.ModelSerializer):
+    """
+    Serializer for LicensedEnterpriseCourseEnrollment model.
+    """
+
+    enterprise_course_enrollment = EnterpriseCourseEnrollmentReadOnlySerializer(read_only=True)
+
+    class Meta:
+        model = models.LicensedEnterpriseCourseEnrollment
+        fields = (
+            'enterprise_course_enrollment', 'license_uuid'
+        )
+
+
 class EnterpriseCustomerCatalogSerializer(serializers.ModelSerializer):
     """
     Serializer for the ``EnterpriseCustomerCatalog`` model.

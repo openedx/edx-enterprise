@@ -36,11 +36,31 @@ ENTERPRISE_WELCOME_TEXT = _(
 
 COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
 
+
+class CourseModes:
+    """
+    Class to group modes that a course might have.
+    """
+
+    AUDIT = 'audit'
+    CREDIT = 'credit'
+    HONOR = 'honor'
+    NO_ID_PROFESSIONAL = 'no-id-professional'
+    PROFESSIONAL = 'professional'
+    VERIFIED = 'verified'
+
+
 # Course mode sorting based on slug
-COURSE_MODE_SORT_ORDER = ['verified', 'professional', 'no-id-professional', 'audit', 'honor']
+COURSE_MODE_SORT_ORDER = [
+    CourseModes.VERIFIED,
+    CourseModes.PROFESSIONAL,
+    CourseModes.NO_ID_PROFESSIONAL,
+    CourseModes.AUDIT,
+    CourseModes.HONOR,
+]
 
 # Course modes that should not be displayed to users.
-EXCLUDED_COURSE_MODES = ['credit']
+EXCLUDED_COURSE_MODES = [CourseModes.CREDIT]
 
 # Number of records to display in each paginated set.
 PAGE_SIZE = 25
