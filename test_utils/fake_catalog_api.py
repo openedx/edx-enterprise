@@ -47,6 +47,7 @@ FAKE_COURSE_RUN = {
     'end': '3000-12-31T18:00:00Z',
     'enrollment_start': None,
     'enrollment_end': None,
+    'enrollment_url': 'https://fake.url',
     'pacing_type': 'instructor_paced',
     'type': 'verified',
     'status': 'published',
@@ -128,6 +129,7 @@ FAKE_COURSE = {
     'modified': '2017-08-18T00:23:21.111991Z',
     'marketing_url': None,
     'content_type': 'course',
+    'enrollment_url': 'https://fake.url',
     'programs': []
 }
 
