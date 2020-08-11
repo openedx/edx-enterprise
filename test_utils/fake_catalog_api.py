@@ -1013,6 +1013,7 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "status": "active",
     "weeks_to_complete_max": None,
     "aggregation_key": "program:" + FAKE_UUIDS[3],
+    'enrollment_url': 'https://fake.url',
     "is_program_eligible_for_one_click_purchase": True
 }
 

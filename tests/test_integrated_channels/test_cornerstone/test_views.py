@@ -58,11 +58,12 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    @responses.activate
-    def test_course_list_with_skip_key_if_none_false(self):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    def test_course_list_with_skip_key_if_none_false(self, mock_get_content_metadata):
         """
         Test courses list view produces desired json when SKIP_KEY_IF_NONE is set to False
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         url = '{path}?ciid={customer_uuid}'.format(
             path=self.course_list_url,
             customer_uuid=self.enterprise_customer_catalog.enterprise_customer.uuid
@@ -83,7 +84,6 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             for key in expected_keys:
                 self.assertIn(key, keys)
 
-    @responses.activate
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     def test_course_list(self, mock_get_content_metadata):
         """
