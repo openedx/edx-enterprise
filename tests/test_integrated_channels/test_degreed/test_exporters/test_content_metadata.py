@@ -13,6 +13,7 @@ from pytest import mark
 from integrated_channels.degreed.exporters.content_metadata import DegreedContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
+from test_utils.fake_catalog_api import get_fake_content_metadata
 
 
 @mark.django_db
@@ -38,10 +39,12 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
         super(TestDegreedContentMetadataExporter, self).setUp()
 
     @responses.activate
-    def test_content_exporter_export(self):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    def test_content_exporter_export(self, mock_get_content_metadata):
         """
         ``DegreedContentMetadataExporter``'s ``export`` produces the expected export.
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         exporter = DegreedContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([
