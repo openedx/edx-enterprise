@@ -14,6 +14,10 @@ Change Log
 Unreleased
 --------------------
 
+[3.5.1] 2020-08-11
+-------------------
+
+* Add client instantiation and oauth validation for Canvas integration.
 
 [3.5.0] 2020-08-10
 ------------------
