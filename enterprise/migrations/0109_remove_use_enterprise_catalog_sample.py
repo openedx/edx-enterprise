@@ -24,7 +24,7 @@ def delete_sample(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('enterprise', '0107_remove_branding_config_banner_fields'),
+        ('enterprise', '0108_add_licensed_enrollment_is_revoked'),
     ]
 
     operations = [
