@@ -11,7 +11,7 @@ class CanvasContentMetadataTransmitter(ContentMetadataTransmitter):
     This transmitter transmits exported content metadata to Canvas.
     """
 
-    def __init__(self, enterprise_configuration, client=CanvasAPIClient)
+    def __init__(self, enterprise_configuration, client=CanvasAPIClient):
         """
         Use the ``CanvasAPIClient`` for content metadata transmission to Canvas.
         """
