@@ -11,6 +11,7 @@ from simple_history.models import HistoricalRecords
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
+from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
@@ -124,3 +125,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """
         return 'CANVAS'
+
+    def get_content_metadata_exporter(self, user):
+        """
+        Return a ``CanvasContentMetadataExporter`` instance.
+        """
+        return CanvasContentMetadataExporter(user, self)
