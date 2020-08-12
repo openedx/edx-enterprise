@@ -10,7 +10,6 @@ from smtplib import SMTPException
 
 import ddt
 import mock
-import pytest
 from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
