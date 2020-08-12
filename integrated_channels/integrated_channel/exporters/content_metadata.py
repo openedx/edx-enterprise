@@ -86,7 +86,6 @@ class ContentMetadataExporter(Exporter):
             self.enterprise_configuration.customer_catalogs_to_transmit,
             json.dumps(content_metadata_items)
         )
-        LOGGER.info('Retrieved content metadata for enterprise [%s]', self.enterprise_customer.name)
         for item in content_metadata_items:
             transformed = self._transform_item(item)
             LOGGER.debug(

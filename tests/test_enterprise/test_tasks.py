@@ -91,8 +91,7 @@ class TestEnterpriseTasks(unittest.TestCase):
             course_id=self.FAKE_COURSE_ID,
             enterprise_customer_user=self.enterprise_customer_user,
         )
-        mock_catalog_api_client = catalog_api_client_mock.return_value
-        mock_catalog_api_client.contains_content_items.return_value = False
+        catalog_api_client_mock.return_value.contains_content_items.return_value = False
 
         assert EnterpriseCourseEnrollment.objects.count() == 1
         create_enterprise_enrollment(

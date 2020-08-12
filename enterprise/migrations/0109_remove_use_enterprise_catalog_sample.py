@@ -11,7 +11,7 @@ def create_sample(apps, schema_editor):
     Sample = apps.get_model('waffle', 'Sample')
     Sample.objects.get_or_create(
         name=USE_ENTERPRISE_CATALOG,
-        defaults={'percent': 0},
+        defaults={'percent': 100},
     )
 
 

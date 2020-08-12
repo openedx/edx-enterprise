@@ -11,6 +11,8 @@ from six.moves import reduce as six_reduce
 
 from test_utils import FAKE_UUIDS
 
+FAKE_URL = 'https://fake.url'
+
 FAKE_COURSE_RUN = {
     'key': 'course-v1:edX+DemoX+Demo_Course',
     'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
@@ -47,7 +49,7 @@ FAKE_COURSE_RUN = {
     'end': '3000-12-31T18:00:00Z',
     'enrollment_start': None,
     'enrollment_end': None,
-    'enrollment_url': 'https://fake.url',
+    'enrollment_url': FAKE_URL,
     'pacing_type': 'instructor_paced',
     'type': 'verified',
     'status': 'published',
@@ -129,7 +131,7 @@ FAKE_COURSE = {
     'modified': '2017-08-18T00:23:21.111991Z',
     'marketing_url': None,
     'content_type': 'course',
-    'enrollment_url': 'https://fake.url',
+    'enrollment_url': FAKE_URL,
     'programs': []
 }
 
@@ -1015,7 +1017,7 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "status": "active",
     "weeks_to_complete_max": None,
     "aggregation_key": "program:" + FAKE_UUIDS[3],
-    'enrollment_url': 'https://fake.url',
+    'enrollment_url': FAKE_URL,
     "is_program_eligible_for_one_click_purchase": True
 }
 

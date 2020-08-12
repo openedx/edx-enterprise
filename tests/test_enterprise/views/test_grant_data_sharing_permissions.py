@@ -120,8 +120,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             'title': 'Demo Course'
         }
 
-        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
-        mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_api_client_mock.return_value.enterprise_contains_content_items.return_value = True
 
         mock_discovery_catalog_api_client = course_catalog_api_client_mock.return_value
         mock_discovery_catalog_api_client.get_course_id.return_value = course_key
@@ -449,9 +448,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             granted=consent_provided
         )
 
-        mock_discovery_catalog_api_client = course_catalog_api_client_mock.return_value
-        mock_discovery_catalog_api_client.program_exists.return_value = True
-        mock_discovery_catalog_api_client.get_course_id.return_value = 'edX+DemoX'
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
 
         mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
         mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = True

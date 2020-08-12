@@ -292,9 +292,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
         self._setup_embargo_api(embargo_api_mock)
-
-        mock_ent_catalog_api_client = ent_catalog_api_client_mock.return_value
-        mock_ent_catalog_api_client.contains_content_items.return_value = True
+        ent_catalog_api_client_mock.return_value.contains_content_items.return_value = True
 
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -478,9 +476,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         self._setup_ecommerce_client(ecommerce_api_client_mock, 100)
         self._setup_enrollment_client(enrollment_api_client_mock)
         self._setup_embargo_api(embargo_api_mock)
-
-        mock_ent_catalog_api_client = catalog_api_client_mock.return_value
-        mock_ent_catalog_api_client.contains_content_items.return_value = True
+        catalog_api_client_mock.return_value.contains_content_items.return_value = True
 
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',

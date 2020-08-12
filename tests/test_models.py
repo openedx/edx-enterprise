@@ -1139,7 +1139,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_course_and_course_run_no_content_items(self, api_client_mock):
         """
-        Verify the `get_course_and_course_run` method returns the same tuple now that the waffle flag is removed.
+        Verify the `get_course_and_course_run` method returns a tuple (None, None) when no content items exist.
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
@@ -1149,7 +1149,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_course_run_no_content_items(self, api_client_mock):
         """
-        Verify the `get_course_run` method returns None now that the waffle flag is removed.
+        Verify the `get_course_run` method returns None if no content items exist.
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
@@ -1159,7 +1159,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_course_no_content_items(self, api_client_mock):
         """
-        Verify the `get_course` method returns None now that the waffle flag is removed.
+        Verify the `get_course` method returns None if no content items exist.
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
@@ -1169,7 +1169,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_get_program_no_content_items(self, api_client_mock):
         """
-        Verify the `get_program` method returns None now that the waffle flag is removed.
+        Verify the `get_program` method returns None if no content items exist.
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
