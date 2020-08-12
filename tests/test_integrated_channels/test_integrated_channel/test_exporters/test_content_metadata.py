@@ -7,7 +7,6 @@ import logging
 import unittest
 
 import mock
-import responses
 from pytest import mark
 from testfixtures import LogCapture
 
