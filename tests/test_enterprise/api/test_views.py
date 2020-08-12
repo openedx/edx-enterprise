@@ -1172,7 +1172,6 @@ class TestEnterpriseAPIViews(APITest):
         assert 'course_run_ids' in message
         assert response.status_code == 400
 
-    @pytest.mark.skip(reason='Catalog course run detail endpoint now lives in enterprise-catalog service')
     @ddt.data(
         (False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1204,9 +1203,18 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    def test_enterprise_catalog_course_run_detail(self, is_staff, is_linked_to_enterprise, is_course_run_in_catalog,
-                                                  mocked_course_run, expected_result, mock_catalog_api_client):
+    def test_enterprise_catalog_course_run_detail(
+            self,
+            is_staff,
+            is_linked_to_enterprise,
+            is_course_run_in_catalog,
+            mocked_course_run,
+            expected_result,
+            mock_catalog_api_client,
+            mock_ent_catalog_api_client
+    ):
         """
         The ``course_run`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses.
@@ -1227,7 +1235,7 @@ class TestEnterpriseAPIViews(APITest):
         search_results = {}
         if is_course_run_in_catalog:
             search_results = {'results': [fake_catalog_api.FAKE_COURSE_RUN]}
-
+        mock_ent_catalog_api_client.return_value.contains_content_items.return_value = is_course_run_in_catalog
         mock_catalog_api_client.return_value = mock.Mock(
             get_catalog_results=mock.Mock(return_value=search_results),
             get_course_run=mock.Mock(return_value=mocked_course_run),
@@ -1237,7 +1245,6 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response == expected_result
 
-    @pytest.mark.skip(reason='Catalog course detail endpoint now lives in enterprise-catalog service')
     @ddt.data(
         (False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1269,9 +1276,18 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    def test_enterprise_catalog_course_detail(self, is_staff, is_linked_to_enterprise, is_course_in_catalog,
-                                              mocked_course, expected_result, mock_catalog_api_client):
+    def test_enterprise_catalog_course_detail(
+            self,
+            is_staff,
+            is_linked_to_enterprise,
+            is_course_in_catalog,
+            mocked_course,
+            expected_result,
+            mock_catalog_api_client,
+            mock_ent_catalog_api_client
+    ):
         """
         The ``course`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses and course runs.
@@ -1292,7 +1308,7 @@ class TestEnterpriseAPIViews(APITest):
         search_results = {}
         if is_course_in_catalog:
             search_results = {'results': [fake_catalog_api.FAKE_COURSE]}
-
+        mock_ent_catalog_api_client.return_value.contains_content_items.return_value = is_course_in_catalog
         mock_catalog_api_client.return_value = mock.Mock(
             get_catalog_results=mock.Mock(return_value=search_results),
             get_course_details=mock.Mock(return_value=mocked_course),
@@ -1302,7 +1318,6 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response == expected_result
 
-    @pytest.mark.skip(reason='Catalog program detail endpoint now lives in enterprise-catalog service')
     @ddt.data(
         (False, False, False, False, {}, {'detail': 'Not found.'}),
         (False, True, False, False, {'detail': 'Not found.'}, {'detail': 'Not found.'}),
@@ -1336,10 +1351,19 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    def test_enterprise_catalog_program_detail(self, is_staff, is_linked_to_enterprise, has_existing_catalog,
-                                               is_program_in_catalog, mocked_program, expected_result,
-                                               mock_catalog_api_client):
+    def test_enterprise_catalog_program_detail(
+            self,
+            is_staff,
+            is_linked_to_enterprise,
+            has_existing_catalog,
+            is_program_in_catalog,
+            mocked_program,
+            expected_result,
+            mock_catalog_api_client,
+            mock_ent_catalog_api_client
+    ):
         """
         The ``programs`` detail endpoint should return correct results from course discovery,
         with enterprise context in courses and course runs.
@@ -1365,7 +1389,7 @@ class TestEnterpriseAPIViews(APITest):
         search_results = {}
         if is_program_in_catalog:
             search_results = {'results': [fake_catalog_api.FAKE_SEARCH_ALL_PROGRAM_RESULT_1]}
-
+        mock_ent_catalog_api_client.return_value.contains_content_items.return_value = is_program_in_catalog
         mock_catalog_api_client.return_value = mock.Mock(
             get_catalog_results=mock.Mock(return_value=search_results),
             get_program_by_uuid=mock.Mock(return_value=mocked_program),
