@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.5.5] 2020-08-12
+-------------------
+
+* ENT-2939: removing waffle flag and utility function used in enterprise-catalog transition
+
+
 [3.5.4] 2020-08-12
 -------------------
 
