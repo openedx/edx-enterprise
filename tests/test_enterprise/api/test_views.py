@@ -32,6 +32,7 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
+    ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
 )
@@ -2309,11 +2310,11 @@ class TestEnterpriseAPIViews(APITest):
             is_revoked,
             status_code,
     ):
-        if has_permissions:
-            permission = Permission.objects.get(name='Can add licensed enterprise course enrollment')
-            self.user.user_permissions.add(permission)
-
         enterprise_customer = factories.EnterpriseCustomerFactory()
+
+        if not has_permissions:
+            self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
+
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=enterprise_customer,

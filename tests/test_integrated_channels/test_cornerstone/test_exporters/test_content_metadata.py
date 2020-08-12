@@ -14,6 +14,7 @@ from freezegun import freeze_time
 from pytest import mark
 
 from integrated_channels.cornerstone.exporters.content_metadata import CornerstoneContentMetadataExporter
+from integrated_channels.integrated_channel.constants import ISO_8601_DATE_FORMAT
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import FAKE_SEARCH_ALL_COURSE_RESULT_3, get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -296,7 +297,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
             {
                 'course_runs': 'undefined',
             },
-            str(NOW)
+            NOW.strftime(ISO_8601_DATE_FORMAT)
         ),
         (
             {
@@ -314,7 +315,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
                     },
                 ]
             },
-            str(NOW)
+            NOW.strftime(ISO_8601_DATE_FORMAT)
         ),
         (
             {

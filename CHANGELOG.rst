@@ -14,6 +14,17 @@ Change Log
 Unreleased
 --------------------
 
+[3.5.4] 2020-08-12
+-------------------
+
+* Fixed date format in Cornerstone catalog sync call
+
+
+[3.5.3] 2020-08-11
+-------------------
+
+* Fix permissions issue with license_revoke endpoint in LicensedEnterpriseCourseEnrollmentViewSet.
+
 [3.5.2] 2020-08-11
 -------------------
 

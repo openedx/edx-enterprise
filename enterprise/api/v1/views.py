@@ -253,7 +253,7 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
         return serializers.EnterpriseCourseEnrollmentWriteSerializer
 
 
-class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseReadOnlyModelViewSet):
+class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
     """
     API views for the ``licensed-enterprise-course-enrollment`` API endpoint.
     """
