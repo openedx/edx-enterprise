@@ -4,11 +4,14 @@ Fake responses for course catalog api.
 """
 
 import copy
+from collections import OrderedDict
 
 import mock
 from six.moves import reduce as six_reduce
 
 from test_utils import FAKE_UUIDS
+
+FAKE_URL = 'https://fake.url'
 
 FAKE_COURSE_RUN = {
     'key': 'course-v1:edX+DemoX+Demo_Course',
@@ -46,6 +49,7 @@ FAKE_COURSE_RUN = {
     'end': '3000-12-31T18:00:00Z',
     'enrollment_start': None,
     'enrollment_end': None,
+    'enrollment_url': FAKE_URL,
     'pacing_type': 'instructor_paced',
     'type': 'verified',
     'status': 'published',
@@ -127,6 +131,7 @@ FAKE_COURSE = {
     'modified': '2017-08-18T00:23:21.111991Z',
     'marketing_url': None,
     'content_type': 'course',
+    'enrollment_url': FAKE_URL,
     'programs': []
 }
 
@@ -1012,6 +1017,7 @@ FAKE_SEARCH_ALL_PROGRAM_RESULT_1 = {
     "status": "active",
     "weeks_to_complete_max": None,
     "aggregation_key": "program:" + FAKE_UUIDS[3],
+    'enrollment_url': FAKE_URL,
     "is_program_eligible_for_one_click_purchase": True
 }
 
@@ -1291,6 +1297,17 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
         "availability": availability,
         "weeks_to_complete": weeks_to_complete
     }
+
+
+def get_fake_content_metadata():
+    """
+    Returns a fake response from EnterpriseCatalogApiClient.get_content_metadata.
+    """
+    content_metadata = OrderedDict()
+    content_metadata[FAKE_COURSE_RUN['key']] = FAKE_COURSE_RUN
+    content_metadata[FAKE_COURSE['key']] = FAKE_COURSE
+    content_metadata[FAKE_SEARCH_ALL_PROGRAM_RESULT_1['uuid']] = FAKE_SEARCH_ALL_PROGRAM_RESULT_1
+    return list(content_metadata.values())
 
 
 class CourseDiscoveryApiTestMixin:

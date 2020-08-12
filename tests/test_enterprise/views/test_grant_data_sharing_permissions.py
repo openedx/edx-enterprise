@@ -85,6 +85,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @ddt.data(
         (False, True, None, 'course-v1:edX+DemoX+Demo_Course'),
@@ -105,22 +106,26 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_start_date,
             course_id,
             course_catalog_api_client_mock,
+            enterprise_catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
-        course_key = 'edX+DemoX'
-        course_catalog_api_client_mock.return_value.course_in_catalog.return_value = True
         content_filter = {
             'key': [
                 course_id,
             ]
         }
-        course_catalog_api_client_mock.return_value.get_course_id.return_value = course_key
         course_run_details = {
             'start': course_start_date,
             'title': 'Demo Course'
         }
-        course_catalog_api_client_mock.return_value.get_course_run.return_value = course_run_details
-        course_catalog_api_client_mock.return_value.get_course_details.return_value = {'title': 'Demo Course'}
+
+        enterprise_catalog_api_client_mock.return_value.enterprise_contains_content_items.return_value = True
+
+        mock_discovery_catalog_api_client = course_catalog_api_client_mock.return_value
+        mock_discovery_catalog_api_client.get_course_id.return_value = course_id
+        mock_discovery_catalog_api_client.get_course_run.return_value = course_run_details
+        mock_discovery_catalog_api_client.get_course_details.return_value = course_run_details
+
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
             name='Starfleet Academy',
@@ -384,6 +389,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
     @ddt.data(
@@ -407,6 +413,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             license_uuid,
             reverse_mock,
             course_catalog_api_client_mock,
+            enterprise_catalog_api_client_mock,
             mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
@@ -439,9 +446,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_customer=enterprise_customer,
             granted=consent_provided
         )
+
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
-        course_catalog_api_client_mock.return_value.is_course_in_catalog.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
+
+        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
+        mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = True
+
         reverse_mock.return_value = '/dashboard'
         course_mode = 'verified'
         mock_enrollment_api_client.return_value.get_course_modes.return_value = [course_mode]

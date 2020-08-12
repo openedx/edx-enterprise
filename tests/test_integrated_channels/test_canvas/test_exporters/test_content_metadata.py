@@ -12,6 +12,7 @@ from pytest import mark
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
+from test_utils.fake_catalog_api import get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -23,7 +24,8 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     """
 
     def setUp(self):
-        self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
+            self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
         # Need a non-abstract config.
         self.config = factories.CanvasEnterpriseCustomerConfigurationFactory(
@@ -38,11 +40,12 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         self.addCleanup(jwt_builder.stop)
         super(TestCanvasContentMetadataExporter, self).setUp()
 
-    @responses.activate
-    def test_content_exporter_export(self):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    def test_content_exporter_export(self, mock_get_content_metadata):
         """
         ``CanvasContentMetadataExporter``'s ``export`` produces the expected export.
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([

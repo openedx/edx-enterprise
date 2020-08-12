@@ -7,12 +7,12 @@ import logging
 import unittest
 
 import mock
-import responses
 from pytest import mark
 from testfixtures import LogCapture
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
+from test_utils.fake_catalog_api import get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
@@ -23,7 +23,8 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     """
 
     def setUp(self):
-        self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        with mock.patch('enterprise.signals.EnterpriseCatalogApiClient'):
+            self.enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
 
         # Need a non-abstract config.
         self.config = factories.DegreedEnterpriseCustomerConfigurationFactory(
@@ -37,11 +38,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         self.addCleanup(jwt_builder.stop)
         super(TestContentMetadataExporter, self).setUp()
 
-    @responses.activate
-    def test_content_exporter_export(self):
+    @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
+    def test_content_exporter_export(self, mock_get_content_metadata):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         exporter = ContentMetadataExporter('fake-user', self.config)
         content_items = exporter.export()
         assert sorted(list(content_items.keys())) == sorted([
@@ -50,12 +52,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             FAKE_UUIDS[3],
         ])
 
-    @responses.activate
-    @mock.patch("enterprise.api_client.enterprise.EnterpriseApiClient.get_content_metadata")
+    @mock.patch("enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata")
     def test_export_with_catalogs_to_transmit(self, mock_get_content_metadata):
         """
         ``ContentMetadataExporter``'s ``export`` produces a JSON dump of the course data.
         """
+        mock_get_content_metadata.return_value = get_fake_content_metadata()
         exporter = ContentMetadataExporter('fake-user', self.config)
         exporter.export()
         assert mock_get_content_metadata.called
@@ -72,11 +74,12 @@ class TestContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert mock_get_content_metadata.call_args[1]['enterprise_catalogs'].first().uuid == \
             self.config.customer_catalogs_to_transmit.first().uuid
 
-    @responses.activate
-    def test_content_exporter_bad_data_transform_mapping(self):
+    @mock.patch('integrated_channels.integrated_channel.exporters.content_metadata.EnterpriseCatalogApiClient')
+    def test_content_exporter_bad_data_transform_mapping(self, mock_api_client):
         """
         ``ContentMetadataExporter``'s ``export`` raises an exception when DATA_TRANSFORM_MAPPING is invalid.
         """
+        mock_api_client.return_value.get_content_metadata.return_value = get_fake_content_metadata()
         ContentMetadataExporter.DATA_TRANSFORM_MAPPING['fake-key'] = 'fake-value'
         exporter = ContentMetadataExporter('fake-user', self.config)
         with LogCapture(level=logging.ERROR) as log_capture:

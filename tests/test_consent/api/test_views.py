@@ -58,6 +58,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         self.assertEqual(response.status_code, expected_status)
         self.assertEqual(response_body, expected_body)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         # Missing `username` input.
         (
@@ -310,11 +311,20 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
-    def test_consent_api_get_endpoint(self, factory, items, request_body, expected_response_body, expected_status_code):
+    def test_consent_api_get_endpoint(
+            self,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            expected_status_code,
+            catalog_api_client_mock,
+    ):
         """Test an expectation against an action on any Consent API endpoint."""
         content_filter = {
             'key': [TEST_COURSE]
         }
+        catalog_api_client_mock.return_value.contains_content_items.return_value = False
         self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         if factory:
             create_items(factory, items)
@@ -328,6 +338,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         response = self.client.get(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         (
             factories.DataSharingConsentFactory,
@@ -414,6 +425,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             expected_response_body,
             expected_status_code,
             program_courses,
+            catalog_api_client_mock
     ):
         """Test the expected behavior of the program consent GET endpoint."""
         self.discovery_client.get_program_course_keys.return_value = program_courses
@@ -433,10 +445,12 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         if factory:
             create_items(factory, items)
 
+        catalog_api_client_mock.return_value.contains_content_items.return_value = True
         response = self.client.get(self.path, request_body)
         self.discovery_client.get_program_course_keys.assert_called_once_with(request_body['program_uuid'])
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         (
             {
@@ -506,6 +520,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             followup_checks,
             expected_status_code,
             program_courses,
+            catalog_api_client_mock
     ):
         """Test the expected behavior of the program consent POST endpoint."""
         content_filter = {
@@ -513,6 +528,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         }
         self.discovery_client.get_program_course_keys.return_value = program_courses
         self.discovery_client.get_course_id.return_value = 'edX+DemoX'
+        catalog_api_client_mock.return_value.contains_content_items.return_value = True
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
         factories.EnterpriseCustomerCatalogFactory(
             enterprise_customer=enterprise_customer,
@@ -528,6 +544,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             response = self.client.get(self.path, check['request'])
             self._assert_expectations(response, check['response'], 200)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         (
             {
@@ -601,10 +618,12 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             followup_checks,
             expected_status_code,
             program_courses,
+            catalog_api_client_mock
     ):
         """Test the expected behavior of the program consent DELETE endpoint."""
         self.discovery_client.get_program_course_keys.return_value = program_courses
         self.discovery_client.get_course_id.return_value = 'edX+DemoX'
+        catalog_api_client_mock.return_value.contains_content_items.return_value = False
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_kwargs)
         content_filter = {
             'key': program_courses
@@ -665,6 +684,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         response = self.client.get(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         # Missing `username` input.
         (
@@ -1019,11 +1039,13 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             items,
             request_body,
             expected_response_body,
-            expected_status_code
+            expected_status_code,
+            catalog_api_client_mock
     ):
         content_filter = {
             'key': [TEST_COURSE]
         }
+        catalog_api_client_mock.return_value.contains_content_items.return_value = True
         self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
         if factory:
             create_items(factory, items)
@@ -1037,6 +1059,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         response = self.client.post(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         (
             factories.EnterpriseCustomerUserFactory,
@@ -1068,14 +1091,18 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             items,
             request_body,
             expected_response_body,
-            expected_status_code
+            expected_status_code,
+            catalog_api_client_mock
     ):
         self.discovery_client.is_course_in_catalog.return_value = False
         self.discovery_client.get_course_id.return_value = TEST_COURSE_KEY
+        catalog_api_client_mock.return_value.contains_content_items.return_value = False
+        catalog_api_client_mock.return_value.enterprise_contains_content_items.return_value = False
         create_items(factory, items)
         response = self.client.post(self.path, request_body)
         self._assert_expectations(response, expected_response_body, expected_status_code)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         # Missing `username` input.
         (
@@ -1423,8 +1450,16 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         ),
     )
     @ddt.unpack
-    def test_consent_api_delete_endpoint(self, factory, items, request_body,
-                                         expected_response_body, expected_status_code):
+    def test_consent_api_delete_endpoint(
+            self,
+            factory,
+            items,
+            request_body,
+            expected_response_body,
+            expected_status_code,
+            catalog_api_client_mock,
+    ):
+        catalog_api_client_mock.return_value.contains_content_items.return_value = True
         content_filter = {
             'key': [TEST_COURSE]
         }
@@ -1445,6 +1480,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         if expected_status_code == 200:
             self._assert_consent_not_provided(response)
 
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @ddt.data(
         (
             factories.DataSharingConsentFactory,
@@ -1478,9 +1514,11 @@ class TestConsentAPIViews(APITest, ConsentMixin):
             items,
             request_body,
             expected_response_body,
-            expected_status_code
+            expected_status_code,
+            catalog_api_client_mock,
     ):
-        self.discovery_client.is_course_in_catalog.return_value = False
+        catalog_api_client_mock.return_value.contains_content_items.return_value = False
+        catalog_api_client_mock.return_value.enterprise_contains_content_items.return_value = False
         if factory:
             create_items(factory, items)
         response = self.client.delete(self.path, request_body)
