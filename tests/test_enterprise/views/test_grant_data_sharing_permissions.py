@@ -109,7 +109,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             enterprise_catalog_api_client_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
-        course_key = 'edX+DemoX'
         content_filter = {
             'key': [
                 course_id,
@@ -123,9 +122,9 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         enterprise_catalog_api_client_mock.return_value.enterprise_contains_content_items.return_value = True
 
         mock_discovery_catalog_api_client = course_catalog_api_client_mock.return_value
-        mock_discovery_catalog_api_client.get_course_id.return_value = course_key
+        mock_discovery_catalog_api_client.get_course_id.return_value = course_id
         mock_discovery_catalog_api_client.get_course_run.return_value = course_run_details
-        mock_discovery_catalog_api_client.get_course_details.return_value = {'title': 'Demo Course'}
+        mock_discovery_catalog_api_client.get_course_details.return_value = course_run_details
 
         self._login()
         enterprise_customer = EnterpriseCustomerFactory(
