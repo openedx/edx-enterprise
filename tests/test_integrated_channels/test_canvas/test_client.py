@@ -67,28 +67,28 @@ class TestCanvasApiClient(unittest.TestCase):
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
 
-            assert canvas_api_client.session.headers['Authorization'] == "Bearer " + self.access_token
+            assert canvas_api_client.session.headers["Authorization"] == "Bearer " + self.access_token
 
     def test_client_instantiation_fails_without_client_id(self):
         with pytest.raises(ClientError) as client_error:
             self.enterprise_config.client_id = None
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert client_error.value.__str__() == 'Failed to generate oauth access token: Client ID required.'
+        assert client_error.value.__str__() == "Failed to generate oauth access token: Client ID required."
 
     def test_client_instantiation_fails_without_client_secret(self):
         with pytest.raises(ClientError) as client_error:
             self.enterprise_config.client_secret = None
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert client_error.value.__str__() == 'Failed to generate oauth access token: Client secret required.'
+        assert client_error.value.__str__() == "Failed to generate oauth access token: Client secret required."
 
     def test_client_instantiation_fails_without_refresh_token(self):
         with pytest.raises(ClientError) as client_error:
             self.enterprise_config.refresh_token = None
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert client_error.value.__str__() == 'Failed to generate oauth access token: Refresh token required.'
+        assert client_error.value.__str__() == "Failed to generate oauth access token: Refresh token required."
 
     def test_global_canvas_config_is_set(self):
         """ Test  global_canvas_config is setup"""

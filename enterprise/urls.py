@@ -86,6 +86,11 @@ urlpatterns += [
         name='cornerstone'
     ),
     url(
+        r'^canvas/',
+        include('integrated_channels.canvas.urls'),
+        name='canvas',
+    ),
+    url(
         r'^enterprise_learner_portal/',
         include('enterprise_learner_portal.urls'),
         name='enterprise_learner_portal_api'
