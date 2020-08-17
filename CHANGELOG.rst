@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.1] 2020-08-17
+-------------------
+
+* Added logging in enrollment endpoint for test purposes.
+
 [3.6.0] 2020-08-12
 -------------------
 

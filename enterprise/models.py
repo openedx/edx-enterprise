@@ -819,6 +819,25 @@ class EnterpriseCustomerUser(TimeStampedModel):
         paid_modes = ['verified', 'professional']
         is_upgrading = mode in paid_modes and course_enrollment.get('mode') in audit_modes
 
+        if enrolled_in_course and is_upgrading:
+            LOGGER.info(
+                "[Enroll] Trying to upgrade the enterprise user [{learner_id}] in course [{course_run_id}] in "
+                "[{mode}] mode".format(
+                    learner_id=self.id,
+                    course_run_id=course_run_id,
+                    mode=mode
+                )
+            )
+        if not enrolled_in_course:
+            LOGGER.info(
+                "[Enroll] Trying to enroll the enterprise user [{learner_id}] in course [{course_run_id}] in "
+                "[{mode}] mode".format(
+                    learner_id=self.id,
+                    course_run_id=course_run_id,
+                    mode=mode
+                )
+            )
+
         if not enrolled_in_course or is_upgrading:
             if cohort and not self.enterprise_customer.enable_autocohorting:
                 raise CourseEnrollmentPermissionError("Auto-cohorting is not enabled for this enterprise")
@@ -846,6 +865,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
             # Directly enroll into the specified track.
             # This should happen after we create the EnterpriseCourseEnrollment
             succeeded = True
+            LOGGER.info(
+                "[Enroll] Calling LMS enrollment API for user [username] in course [course_run_id] in mode "
+                "[mode]".format(
+                    username=self.username,
+                    course_run_id=course_run_id,
+                    mode=mode
+                )
+            )
             try:
                 enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
             except HttpClientError as exc:
@@ -871,6 +898,14 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     'cohort': cohort,
                     'is_upgrading': is_upgrading,
                 })
+                LOGGER.info(
+                    "[Enroll] LMS enrollment API succeeded for user [username] in course [course_run_id] in mode "
+                    "[mode]".format(
+                        username=self.username,
+                        course_run_id=course_run_id,
+                        mode=mode
+                    )
+                )
                 if mode in paid_modes:
                     # create an ecommerce order for the course enrollment
                     self.create_order_for_enrollment(course_run_id, discount_percentage, sales_force_id)
