@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.2] 2020-08-17
+-------------------
+
+* Adding Canvas integrated channels API endpoint for the oauth process completion
+
 [3.6.1] 2020-08-17
 -------------------
 
