@@ -638,6 +638,18 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         cohort = validated_data.get('cohort')
         email_students = validated_data.get('email_students')
         is_active = validated_data.get('is_active')
+        LOGGER.info(
+            "[Enrollment-API] Received a call with the following parameters. lms_user: [{lms_user}], "
+            "tpa_user: [{tpa_user}], user_email: {user_email}, course_run_id: {course_run_id}, "
+            "course_mode: {course_mode}, is_active: {is_active}".format(
+                lms_user=lms_user.id if lms_user else None,
+                tpa_user=tpa_user.id if tpa_user else None,
+                user_email=user_email.id if isinstance(user_email, models.EnterpriseCustomerUser) else user_email,
+                course_run_id=course_run_id,
+                course_mode=course_mode,
+                is_active=is_active
+            )
+        )
 
         enterprise_customer_user = lms_user or tpa_user or user_email
 
@@ -645,6 +657,14 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             validated_data['enterprise_customer_user'] = enterprise_customer_user
             try:
                 if is_active:
+                    LOGGER.info(
+                        "[Enrollment-API] Enrolling the enterprise learner [{learner_id}] in course [{course_run_id}] "
+                        "in [{course_mode}] mode".format(
+                            learner_id=enterprise_customer_user.id,
+                            course_run_id=course_run_id,
+                            course_mode=course_mode
+                        )
+                    )
                     enterprise_customer_user.enroll(
                         course_run_id,
                         course_mode,
@@ -652,6 +672,13 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                         source_slug=models.EnterpriseEnrollmentSource.API
                     )
                 else:
+                    LOGGER.info(
+                        "[Enrollment-API] Un-enrolling the enterprise learner [{learner_id}] in course "
+                        "[{course_run_id}]".format(
+                            learner_id=enterprise_customer_user.id,
+                            course_run_id=course_run_id,
+                        )
+                    )
                     enterprise_customer_user.unenroll(course_run_id)
             except (CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError, HttpClientError) as exc:
                 error_message = (
@@ -675,6 +702,14 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                 track_enrollment('enterprise-customer-enrollment-api', enterprise_customer_user.user_id, course_run_id)
         else:
             if is_active:
+                LOGGER.info(
+                    "[Enrollment-API] Creating the pending enrollment for [{email}] in course [{course_run_id}] "
+                    "in [{course_mode}] mode".format(
+                        email=user_email,
+                        course_run_id=course_run_id,
+                        course_mode=course_mode
+                    )
+                )
                 enterprise_customer_user = enterprise_customer.enroll_user_pending_registration(
                     user_email,
                     course_mode,
@@ -685,6 +720,12 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                     )
                 )
             else:
+                LOGGER.info(
+                    "[Enrollment-API] Removing the pending enrollment for [{email}] in course [{course_run_id}]".format(
+                        email=user_email,
+                        course_run_id=course_run_id
+                    )
+                )
                 enterprise_customer.clear_pending_registration(user_email, course_run_id)
 
         if email_students:
@@ -695,6 +736,18 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
             )
 
         validated_data['detail'] = 'success'
+        LOGGER.info(
+            "[Enrollment-API] Returning success for a call with the following parameters. lms_user: [{lms_user}], "
+            "tpa_user: [{tpa_user}], user_email: {user_email}, course_run_id: {course_run_id}, "
+            "course_mode: {course_mode}, is_active: {is_active}".format(
+                lms_user=lms_user.id if lms_user else None,
+                tpa_user=tpa_user.id if tpa_user else None,
+                user_email=user_email.id if isinstance(user_email, models.EnterpriseCustomerUser) else user_email,
+                course_run_id=course_run_id,
+                course_mode=course_mode,
+                is_active=is_active
+            )
+        )
 
         return validated_data
 
