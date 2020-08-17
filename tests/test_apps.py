@@ -153,3 +153,22 @@ class TestXAPIConfig(unittest.TestCase):
 
     def test_name(self):
         assert self.app_config.name == 'xapi'
+
+
+@mark.django_db
+class TestMoodleConfig(unittest.TestCase):
+    """
+    Test integrated_channels.moodle app config.
+    """
+
+    def setUp(self):
+        """
+        Set up test environment
+        """
+        super(TestMoodleConfig, self).setUp()
+        self.app_config = integrated_channels.moodle.apps.MoodleConfig(
+            'moodle', integrated_channels.moodle
+        )
+
+    def test_name(self):
+        assert self.app_config.name == 'moodle'

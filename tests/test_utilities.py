@@ -90,6 +90,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "degreedenterprisecustomerconfiguration",
                 "canvasenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
+                "moodleenterprisecustomerconfiguration",
                 "xapilrsconfiguration",
                 "created",
                 "modified",
