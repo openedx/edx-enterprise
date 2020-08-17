@@ -21,6 +21,9 @@ class CanvasContentMetadataTransmitter(ContentMetadataTransmitter):
         )
 
     def _prepare_items_for_transmission(self, channel_metadata_items):
+        # here is a hack right now to send only one item
+        # we have to investigate how to handle multiple
+        # metadata items
         return {
-            'course': channel_metadata_items,
+            'course': channel_metadata_items[0],
         }
