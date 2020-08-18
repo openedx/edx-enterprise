@@ -31,7 +31,6 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         self.config = factories.CanvasEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer_catalog.enterprise_customer,
         )
-        self.global_config = factories.CanvasGlobalConfigurationFactory()
 
         # Mocks
         self.mock_enterprise_customer_catalogs(str(self.enterprise_customer_catalog.uuid))

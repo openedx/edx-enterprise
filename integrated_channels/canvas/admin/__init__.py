@@ -1,5 +1,5 @@
 """
-Canvas admin integration for configuring Canvas app to communicate with Canvas systems.
+Admin integration for configuring Canvas app to communicate with Canvas systems.
 """
 
 from django.contrib import admin

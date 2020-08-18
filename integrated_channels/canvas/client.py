@@ -44,7 +44,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             configuration model for connecting with Canvas
         """
         super(CanvasAPIClient, self).__init__(enterprise_configuration)
-        self.global_canvas_config = apps.get_model('canvas', 'CanvasGlobalConfiguration').current()
         self.config = apps.get_app_config('canvas')
         self.session = None
         self.expires_at = None
