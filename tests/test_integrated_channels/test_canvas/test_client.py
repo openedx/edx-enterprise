@@ -15,7 +15,7 @@ from django.utils import timezone
 
 from integrated_channels.canvas.client import CanvasAPIClient
 from integrated_channels.exceptions import ClientError
-from test_utils import canvas_factories
+from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
@@ -44,10 +44,10 @@ class TestCanvasApiClient(unittest.TestCase):
             "access_token": self.access_token
         }
         self.refresh_token = "refresh_token"
-        canvas_factories.CanvasGlobalConfigurationFactory(
+        factories.CanvasGlobalConfigurationFactory(
             course_api_path=self.course_api_path
         )
-        self.enterprise_config = canvas_factories.CanvasEnterpriseCustomerConfigurationFactory(
+        self.enterprise_config = factories.CanvasEnterpriseCustomerConfigurationFactory(
             client_id=self.client_id,
             client_secret=self.client_secret,
             canvas_account_id=self.account_id,
