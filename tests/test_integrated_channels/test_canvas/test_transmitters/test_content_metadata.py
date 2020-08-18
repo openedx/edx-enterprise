@@ -3,12 +3,11 @@ Tests for the Canvas content metadata transmitter.
 """
 
 import unittest
+
 from pytest import mark
 
-from test_utils.factories import (
-    CanvasEnterpriseCustomerConfigurationFactory,
-)
 from integrated_channels.canvas.transmitters.content_metadata import CanvasContentMetadataTransmitter
+from test_utils.factories import CanvasEnterpriseCustomerConfigurationFactory
 
 
 @mark.django_db
