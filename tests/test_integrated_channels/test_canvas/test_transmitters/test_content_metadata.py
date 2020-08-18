@@ -6,7 +6,7 @@ import unittest
 from pytest import mark
 
 from test_utils import factories
-from test_utils.canvas_factories import (
+from test_utils.factories import (
     CanvasEnterpriseCustomerConfigurationFactory,
 )
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataItemExport
