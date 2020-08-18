@@ -27,4 +27,7 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
         expected_items = {
             'course': channel_metadata_items[0],
         }
-        assert transmitter._prepare_items_for_transmission(channel_metadata_items) == expected_items
+        # pylint: disable=protected-access
+        assert transmitter._prepare_items_for_transmission(
+            channel_metadata_items
+        ) == expected_items
