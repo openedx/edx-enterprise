@@ -28,28 +28,6 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
         transmitter = CanvasContentMetadataTransmitter(self.enterprise_config)
         channel_metadata_items =[ {'field': 'value'} ]
         expected_items = {
-            'course': channel_metadata_items,
+            'course': channel_metadata_items[0],
         }
         assert transmitter._prepare_items_for_transmission(channel_metadata_items) == expected_items
-
-
-    @mark.skip(reason="not ready yet")
-    def test_transmit_create_metadata(self):
-        """
-        Test creation of content metadata during transmission.
-        """
-
-        content_id = 'course:DemoX'
-
-        transmitter = CanvasContentMetadataTransmitter(self.enterprise_config)
-        transmitter.transmit({
-            content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
-                {'courseID': content_id}
-            )
-        })
-        assert not ContentMetadataItemTransmission.objects.filter(
-            enterprise_customer=self.enterprise_config.enterprise_customer,
-            integrated_channel_code=self.enterprise_config.channel_code(),
-            content_id=content_id,
-        ).exists()
