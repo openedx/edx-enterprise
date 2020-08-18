@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.4] 2020-08-18
+-------------------
+
+* Canvas transmitter implementation for course creation
+
 [3.6.3] 2020-08-19
 -------------------
 
