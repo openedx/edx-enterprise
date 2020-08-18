@@ -7,6 +7,8 @@
 # fake_app_2.FakeModel2:
 #    ".. choice_annotation:": foo, bar, baz
 
+canvas.HistoricalCanvasEnterpriseCustomerConfiguration:
+    ".. no_pii:": ""
 consent.HistoricalDataSharingConsent:
     ".. pii:": "The username field inherited from DataSharingConsent contains PII"
     ".. pii_types:": username
@@ -26,5 +28,7 @@ enterprise.HistoricalEnterpriseCustomerEntitlement:
 enterprise.HistoricalPendingEnterpriseCustomerUser:
     ".. no_pii:": ""
 enterprise.HistoricalPendingEnrollment:
+    ".. no_pii:": ""
+moodle.HistoricalMoodleEnterpriseCustomerConfiguration:
     ".. no_pii:": ""
 

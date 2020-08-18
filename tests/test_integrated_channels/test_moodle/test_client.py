@@ -8,7 +8,6 @@ import unittest
 
 import pytest
 from freezegun import freeze_time
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
 

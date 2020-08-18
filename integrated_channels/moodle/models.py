@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Database models for Enterprise Integrated Channel Moodle.
+"""
+
 from logging import getLogger
 
 from config_models.models import ConfigurationModel
@@ -29,6 +34,22 @@ class MoodleGlobalConfiguration(ConfigurationModel):
             "Created in Moodle at Site administration/Plugins/Web services/Manage tokens"
         )
 
+    )
+
+    wsusername = models.CharField(
+        max_length=100,
+        verbose_name="Webservice Username",
+        help_text=_(
+            "The API user's username used to obtain new tokens."
+        )
+    )
+
+    wspassword = models.CharField(
+        max_length=255,
+        verbose_name="Webservice Password",
+        help_text=_(
+            "The API user's password used to obtain new tokens."
+        )
     )
 
     class Meta:

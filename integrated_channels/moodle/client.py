@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Client for connecting to Moodle.
+"""
+
 from django.apps import apps
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
