@@ -5,7 +5,6 @@ Tests for the Canvas content metadata transmitter.
 import unittest
 from pytest import mark
 
-from test_utils import factories
 from test_utils.factories import (
     CanvasEnterpriseCustomerConfigurationFactory,
 )
