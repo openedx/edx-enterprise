@@ -44,9 +44,6 @@ class TestCanvasApiClient(unittest.TestCase):
             "access_token": self.access_token
         }
         self.refresh_token = "refresh_token"
-        factories.CanvasGlobalConfigurationFactory(
-            course_api_path=self.course_api_path
-        )
         self.enterprise_config = factories.CanvasEnterpriseCustomerConfigurationFactory(
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -89,9 +86,3 @@ class TestCanvasApiClient(unittest.TestCase):
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
         assert client_error.value.__str__() == "Failed to generate oauth access token: Refresh token required."
-
-    def test_global_canvas_config_is_set(self):
-        """ Test  global_canvas_config is setup"""
-        canvas_api_client = CanvasAPIClient(self.enterprise_config)
-        assert canvas_api_client.global_canvas_config is not None
-        assert canvas_api_client.global_canvas_config.id == 1

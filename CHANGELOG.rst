@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.3] 2020-08-19
+-------------------
+
+* Adding Django admin forms for Canvas integration config and cleanup on models.
+
 [3.6.2] 2020-08-17
 -------------------
 

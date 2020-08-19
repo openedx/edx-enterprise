@@ -26,7 +26,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
-from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration, CanvasGlobalConfiguration
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
@@ -624,23 +624,6 @@ class XAPILearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory)
 
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
-
-
-class CanvasGlobalConfigurationFactory(factory.django.DjangoModelFactory):
-    """
-    ``CanvasGlobalConfiguration`` factory.
-
-    Creates an instance of ``CanvasGlobalConfiguration`` with minimal boilerplate.
-    """
-
-    class Meta:
-        """
-        Meta for ``CanvasGlobalConfiguration``.
-        """
-
-        model = CanvasGlobalConfiguration
-
-    course_api_path = factory.LazyAttribute(lambda x: FAKER.file_path())
 
 
 class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
