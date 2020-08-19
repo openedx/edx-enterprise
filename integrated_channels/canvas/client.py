@@ -55,12 +55,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         pass
 
     def create_content_metadata(self, serialized_data):
-        pass
+        url = '{}/api/v1/accounts/{}/courses'.format(
+            self.enterprise_configuration.canvas_base_url,
+            self.enterprise_configuration.canvas_account_id,
+        )
+        self._post(url, serialized_data)
 
     def update_content_metadata(self, serialized_data):
+        # Cannot update yet since we don't have course id
         pass
 
     def delete_content_metadata(self, serialized_data):
+        # Cannot delete yet since we don't have course id
         pass
 
     def _post(self, url, data):

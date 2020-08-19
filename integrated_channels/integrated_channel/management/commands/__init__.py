@@ -9,6 +9,7 @@ from django.core.management.base import CommandError
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
@@ -20,6 +21,7 @@ INTEGRATED_CHANNEL_CHOICES = OrderedDict([
         SAPSuccessFactorsEnterpriseCustomerConfiguration,
         DegreedEnterpriseCustomerConfiguration,
         CornerstoneEnterpriseCustomerConfiguration,
+        CanvasEnterpriseCustomerConfiguration,
     )
 ])
 
