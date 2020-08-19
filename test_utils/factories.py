@@ -674,7 +674,7 @@ class MoodleGlobalConfigurationFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         """
-        Meta for ``MoodleGlobalConfigurationFactory``
+        Meta for ``MoodleGlobalConfigurationFactory``.
         """
 
         model = MoodleGlobalConfiguration
@@ -691,7 +691,7 @@ class MoodleEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFac
 
     class Meta:
         """
-        Meta for ``MoodleGlobalConfigurationFactory``
+        Meta for ``MoodleGlobalConfigurationFactory``.
         """
 
         model = MoodleEnterpriseCustomerConfiguration
