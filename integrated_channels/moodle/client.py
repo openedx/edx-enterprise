@@ -4,6 +4,7 @@ Client for connecting to Moodle.
 """
 
 from django.apps import apps
+# from django.utils.http import urlencode
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
@@ -39,6 +40,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         pass
 
     def create_content_metadata(self, serialized_data):
+        # TODO: Intercept and fix serialized_data so it is an object not a binary string.
+        # The below assumes the data is dict/object.
+        # Format should look like:
+        # {
+        #   courses[0][shortname]: 'value',
+        #   courses[0][fullname]: 'value',
+        #   [...]
+        #   courses[1][shortname]: 'value',
+        #   courses[1][fullname]: 'value',
+        #   [...]
+        # }
+
+        # url = self.config.moodle_base_url + '?{}'.format(urlencode(serialized_data))
         pass
 
     def update_content_metadata(self, serialized_data):

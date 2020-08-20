@@ -12,6 +12,8 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
+from integrated_channels.moodle.exporters.content_metadata import MoodleContentMetadataExporter
+from integrated_channels.moodle.transmitters.content_metadata import MoodleContentMetadataTransmitter
 
 LOGGER = getLogger(__name__)
 
@@ -84,3 +86,15 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Returns an capitalized identifier for this channel class, unique among subclasses.
         """
         return 'MOODLE'
+
+    def get_content_metadata_exporter(self, user):
+        """
+        Return a ``MoodleContentMetadataExporter`` instance.
+        """
+        return MoodleContentMetadataExporter(user, self)
+
+    def get_content_metadata_transmitter(self):
+        """
+        Return a ``MoodleContentMetadataTransmitter`` instance.
+        """
+        return MoodleContentMetadataTransmitter(self)
