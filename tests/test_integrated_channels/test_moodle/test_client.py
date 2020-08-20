@@ -28,18 +28,20 @@ class TestMoodleApiClient(unittest.TestCase):
     def setUp(self):
         super(TestMoodleApiClient, self).setUp()
         self.moodle_base_url = 'http://testing/'
-        self.api_token = 'token'
-        factories.MoodleGlobalConfigurationFactory(
-            api_token=self.api_token
-        )
+        self.api_token = 'token',
+        self.password = 'pass'
+        self.user = 'user'
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
-            moodle_base_url=self.moodle_base_url
+            moodle_base_url=self.moodle_base_url,
+            wsusername=self.user,
+            wspassword=self.password,
+            api_token=self.api_token,
         )
 
-    def test_global_moodle_config_is_set(self):
+    def test_moodle_config_is_set(self):
         """
         Test global_moodle_config is setup.
         """
         moodle_api_client = MoodleAPIClient(self.enterprise_config)
-        assert moodle_api_client.global_moodle_config is not None
-        assert moodle_api_client.global_moodle_config.api_token == self.api_token
+        assert moodle_api_client.config is not None
+
