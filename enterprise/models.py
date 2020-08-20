@@ -908,7 +908,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 )
                 if mode in paid_modes:
                     # create an ecommerce order for the course enrollment
-                    self.create_order_for_enrollment(course_run_id, discount_percentage, sales_force_id)
+                    self.create_order_for_enrollment(course_run_id, discount_percentage, mode, sales_force_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(
@@ -936,7 +936,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         request.session['enterprise_customer'] = self.enterprise_customer.serialized
 
-    def create_order_for_enrollment(self, course_run_id, discount_percentage, sales_force_id):
+    def create_order_for_enrollment(self, course_run_id, discount_percentage, mode, sales_force_id):
         """
         Create an order on the Ecommerce side for tracking the course enrollment of a enterprise customer user.
         """
@@ -962,6 +962,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     'username': self.username,
                     'email': self.user_email,
                     'course_run_key': course_run_id,
+                    'mode': mode,
                     "enterprise_customer_name": self.enterprise_customer.name,
                     "enterprise_customer_uuid": str(self.enterprise_customer.uuid),
                     "discount_percentage": float(discount_percentage),
