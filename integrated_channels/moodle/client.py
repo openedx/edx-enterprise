@@ -52,7 +52,12 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         #   [...]
         # }
 
-        # url = self.config.moodle_base_url + '?{}'.format(urlencode(serialized_data))
+        # base_params = {
+        #   'wstoken': self.enterprise_config.api_token,
+        #   'wsfunction': 'core_course_create_courses',
+        #   ???? I forgot the moodle json formatting field name and can't find it. :(
+        # }
+        # url = self.config.moodle_base_url + '?{}'.format(urlencode(base_params)) + '?{}'.format(urlencode(serialized_data))
         pass
 
     def update_content_metadata(self, serialized_data):

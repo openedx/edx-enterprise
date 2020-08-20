@@ -2,6 +2,8 @@
 Content metadata exporter for Moodle
 """
 
+import time
+
 from logging import getLogger
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
@@ -16,7 +18,6 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
     DATA_TRANSFORM_MAPPING = {
         'fullname': 'key',
         'shortname': 'key',
-        'displayname': 'title',
         'idnumber': 'number',
         'summary': 'description',
         'startdate': 'start',
@@ -56,3 +57,21 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         Will other categories actually be used in the future? Unclear.
         """
         return 1
+
+    def transform_start(self, content_metadata_item):
+        """
+        Converts start from ISO date string to int (required for Moodle's "startdate" field)
+        """
+        start_date = content_metadata_item.get('start', None)
+        if start_date:
+            return time.mktime(time.strptime(start_date, '%Y-%m-%dT%H:%M:%SZ'))
+        return None
+
+    def transform_end(self, content_metadata_item):
+        """
+        Converts end from ISO date string to int (required for Moodle's "enddate" field)
+        """
+        end_date = content_metadata_item.get('end', None)
+        if end_date:
+            return time.mktime(time.strptime(end_date, '%Y-%m-%dT%H:%M:%SZ'))
+        return None
