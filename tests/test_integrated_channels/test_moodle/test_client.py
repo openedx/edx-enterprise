@@ -28,7 +28,7 @@ class TestMoodleApiClient(unittest.TestCase):
     def setUp(self):
         super(TestMoodleApiClient, self).setUp()
         self.moodle_base_url = 'http://testing/'
-        self.api_token = 'token',
+        self.api_token = 'token'
         self.password = 'pass'
         self.user = 'user'
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
@@ -44,4 +44,3 @@ class TestMoodleApiClient(unittest.TestCase):
         """
         moodle_api_client = MoodleAPIClient(self.enterprise_config)
         assert moodle_api_client.config is not None
-
