@@ -14,8 +14,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
     Transmits learner and course metadata.
 
     Required configuration to access Moodle:
-    - API token. (Configured in Moodle)
-    - Moodle url. for local development just `http://localhost` (unless you needed a different port)
+    - wsusername and wspassword:
+        - Web service user and password created in Moodle. Used to generate api tokens.
+    - Moodle base url.
+        - Customer's Moodle instance url.
+        - For local development just `http://localhost` (unless you needed a different port)
     """
 
     def __init__(self, enterprise_configuration):
