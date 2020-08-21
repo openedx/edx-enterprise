@@ -29,35 +29,54 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
 
     moodle_base_url = models.CharField(
         max_length=255,
-        blank=True,
         verbose_name="Moodle Base URL",
         help_text=_("The base URL used for API requests to Moodle")
     )
 
-    api_token = models.CharField(
-        max_length=100,
-        null=True,
-        verbose_name="Developer Token",
+    service_short_name = models.CharField(
+        max_length=255,
+        verbose_name="Webservice Short Name",
         help_text=_(
-            "The token used to authenticate to Moodle. "
-            "Created in Moodle at Site administration/Plugins/Web services/Manage tokens"
+            "The short name for the Moodle webservice."
         )
-
     )
 
-    wsusername = models.CharField(
-        max_length=100,
+    category_id = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name="Category ID",
+        help_text=_(
+            "The category ID for what edX courses should be associated with."
+        )
+    )
+
+    username = models.CharField(
+        max_length=255,
         verbose_name="Webservice Username",
+        blank=True,
+        null=True,
         help_text=_(
             "The API user's username used to obtain new tokens."
         )
     )
 
-    wspassword = models.CharField(
+    password = models.CharField(
         max_length=255,
+        blank=True,
+        null=True,
         verbose_name="Webservice Password",
         help_text=_(
             "The API user's password used to obtain new tokens."
+        )
+    )
+
+    token = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        verbose_name="Webservice User Token",
+        help_text=_(
+            "The user's token for the Moodle webservice."
         )
     )
 

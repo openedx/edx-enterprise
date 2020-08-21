@@ -53,10 +53,10 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
 
     def transform_categoryid(self, content_metadata_item):  # pylint: disable=unused-argument
         """
-        Returns the Moodle category id. ID 1 is Miscellaneous and is the default/basic category.
-        Will other categories actually be used in the future? Unclear.
+        Returns the Moodle category id configured in the model.
+        ID 1 is Miscellaneous and is the default/basic category.
         """
-        return 1
+        return self.enterprise_configuration.category_id or 1
 
     def transform_start(self, content_metadata_item):
         """
