@@ -3,7 +3,6 @@ Content metadata exporter for Moodle
 """
 
 import time
-
 from logging import getLogger
 
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter

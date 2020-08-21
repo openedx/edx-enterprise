@@ -4,9 +4,10 @@ Client for connecting to Moodle.
 """
 
 from django.apps import apps
-# from django.utils.http import urlencode
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+# from django.utils.http import urlencode
 
 
 class MoodleAPIClient(IntegratedChannelApiClient):
