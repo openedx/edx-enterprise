@@ -14,6 +14,16 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.4] 2020-08-18
+-------------------
+
+* Canvas transmitter implementation for course creation
+
+[3.6.3] 2020-08-19
+-------------------
+
+* Adding Django admin forms for Canvas integration config and cleanup on models.
+
 [3.6.2] 2020-08-17
 -------------------
 

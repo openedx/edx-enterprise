@@ -5,47 +5,16 @@ Database models for Enterprise Integrated Channel Canvas.
 
 from logging import getLogger
 
-from config_models.models import ConfigurationModel
 from simple_history.models import HistoricalRecords
 
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
+from integrated_channels.canvas.transmitters.content_metadata import CanvasContentMetadataTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
-
-
-# pylint: disable=feature-toggle-needs-doc
-@python_2_unicode_compatible
-class CanvasGlobalConfiguration(ConfigurationModel):
-    """
-    The global configuration for integrating with Canvas.
-
-    .. no_pii:
-    """
-
-    course_api_path = models.CharField(
-        max_length=255,
-        verbose_name="Course Metadata API Path",
-        help_text="The API path for making course metadata POST/DELETE requests to Canvas."
-    )
-
-    class Meta:
-        app_label = 'canvas'
-
-    def __str__(self):
-        """
-        Return a human-readable string representation of the object.
-        """
-        return "<CanvasGlobalConfiguration with id {id}>".format(id=self.id)
-
-    def __repr__(self):
-        """
-        Return uniquely identifying string representation.
-        """
-        return self.__str__()
 
 
 @python_2_unicode_compatible
@@ -131,3 +100,9 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         Return a ``CanvasContentMetadataExporter`` instance.
         """
         return CanvasContentMetadataExporter(user, self)
+
+    def get_content_metadata_transmitter(self):
+        """
+        Return a ``CanvasContentMetadataTransmitter`` instance.
+        """
+        return CanvasContentMetadataTransmitter(self)
