@@ -230,6 +230,7 @@ class EnrollmentApiClient(JwtLmsApiClient):
             {
                 'user': username,
                 'course_details': {'course_id': course_id},
+                'is_active': True,
                 'mode': mode,
                 'cohort': cohort,
             }

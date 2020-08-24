@@ -89,7 +89,7 @@ def test_enroll_user_in_course():
     course_details = {"course_id": course_id}
     mode = "audit"
     cohort = "masters"
-    expected_response = dict(user=user, course_details=course_details, mode=mode, cohort=cohort)
+    expected_response = dict(user=user, course_details=course_details, mode=mode, cohort=cohort, is_active=True)
     responses.add(
         responses.POST,
         _url(
