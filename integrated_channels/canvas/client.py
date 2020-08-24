@@ -2,12 +2,14 @@
 """
 Client for connecting to Canvas.
 """
+import json
+
 import requests
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
-from integrated_channels.exceptions import ClientError
+from integrated_channels.exceptions import CanvasClientError, ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 
@@ -55,19 +57,39 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         pass
 
     def create_content_metadata(self, serialized_data):
-        url = '{}/api/v1/accounts/{}/courses'.format(
+        self._create_session()
+
+        url = '{}/api/v1/accounts/{}/courses/'.format(
             self.enterprise_configuration.canvas_base_url,
             self.enterprise_configuration.canvas_account_id,
         )
-        self._post(url, serialized_data)
+        return self._post(url, serialized_data)
 
     def update_content_metadata(self, serialized_data):
-        # Cannot update yet since we don't have course id
-        pass
+        self._create_session()
+
+        integration_id = self._get_integration_id_from_transmition_data(serialized_data)
+        course_id = self._get_course_id_from_integration_id(integration_id)
+
+        url = '{}/api/v1/courses/{}'.format(
+            self.enterprise_configuration.canvas_base_url,
+            course_id,
+        )
+
+        return self._put(url, serialized_data)
 
     def delete_content_metadata(self, serialized_data):
-        # Cannot delete yet since we don't have course id
-        pass
+        self._create_session()
+
+        integration_id = self._get_integration_id_from_transmition_data(serialized_data)
+        course_id = self._get_course_id_from_integration_id(integration_id)
+
+        url = '{}/api/v1/courses/{}'.format(
+            self.enterprise_configuration.canvas_base_url,
+            course_id,
+        )
+
+        return self._delete(url)
 
     def _post(self, url, data):
         """
@@ -75,23 +97,82 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         Args:
             url (str): The url to send a POST request to.
-            data (str): The json encoded payload to POST.
+            data (bytearray): The json encoded payload to POST.
         """
-        self._create_session()
-        response = self.session.post(url, data=data)
-        return response.status_code, response.text
+        post_response = self.session.post(url, data=data)
+        post_response.raise_for_status()
+        return post_response.status_code, post_response.text
 
-    def _delete(self, url, data):
+    def _put(self, url, data):
         """
-        Make a DELETE request using the session object to a Canvas endpoint.
+        Make a PUT request using the session object to the Canvas course update endpoint
 
         Args:
-            url (str): The url to send a DELETE request to.
-            data (str): The json encoded payload to DELETE.
+            url (str): The canvas url to send update requests to.
+            data (bytearray): The json encoded payload to UPDATE. This also contains the integration
+            ID used to match a course with a course ID.
         """
-        self._create_session()
-        response = self.session.delete(url, data=data)
-        return response.status_code, response.text
+        put_response = self.session.put(url, data=data)
+        put_response.raise_for_status()
+        return put_response.status_code, put_response.text
+
+    def _delete(self, url):
+        """
+        Make a DELETE request using the session object to the Canvas course delete endpoint.
+
+        Args:
+            url (str): The canvas url to send delete requests to.
+        """
+        delete_response = self.session.delete(url, data='{"event":"delete"}')
+        delete_response.raise_for_status()
+
+        return delete_response.status_code, delete_response.text
+
+    def _get_integration_id_from_transmition_data(self, data):
+        """
+        Retrieve the integration ID string from the encoded transmission data and apply appropriate
+        error handling.
+
+        Args:
+            data (bytearray): The json encoded payload intended for a Canvas endpoint.
+        """
+        if not data:
+            raise CanvasClientError("No data to transmit.")
+        try:
+            integration_id = json.loads(
+                data.decode("utf-8")
+            )['course']['integration_id']
+        except KeyError:
+            raise CanvasClientError("Could not transmit data, no integration ID present.")
+        except AttributeError:
+            raise CanvasClientError("Unable to decode data.")
+
+        return integration_id
+
+    def _get_course_id_from_integration_id(self, integration_id):
+        """
+        To obtain course ID we have to request all courses associated with the integrated
+        account and match the one with our integration ID.
+
+        Args:
+            integration_id (string): The ID retrieved from the transmission payload.
+        """
+        url = "{}/api/v1/accounts/{}/courses/".format(
+            self.enterprise_configuration.canvas_base_url,
+            self.enterprise_configuration.canvas_account_id
+        )
+        all_courses_response = self.session.get(url).json()
+        course_id = None
+        for course in all_courses_response:
+            if course['integration_id'] == integration_id:
+                course_id = course['id']
+                break
+
+        if not course_id:
+            raise CanvasClientError("No Canvas courses found with associated integration ID: {}.".format(
+                integration_id
+            ))
+        return course_id
 
     def _create_session(self):
         """
