@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 --------------------
+[3.8.3] 2020-09-14
+-------------------
+
+* Add management command to create DSC records.
+
 [3.8.2] 2020-09-11
 -------------------
 
