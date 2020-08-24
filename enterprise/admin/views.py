@@ -826,6 +826,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                 "discount_percentage": float(discount),
                 "enterprise_customer_name": enterprise_customer.name,
                 "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                "mode": mode,
                 "sales_force_id": sales_force_id,
             } for success in succeeded]
             EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)

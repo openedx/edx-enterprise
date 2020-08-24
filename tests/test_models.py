@@ -584,6 +584,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         discount = 10.0
         sales_force_id = 'dummy-sales_force_id'
+        mode = "verified"
         user = factories.UserFactory()
         utils_mock.return_value = user
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
@@ -597,13 +598,14 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         )
 
         with LogCapture(level=logging.DEBUG) as log_capture:
-            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, sales_force_id)
+            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, mode, sales_force_id)
             assert expected_msg in log_capture.records[0].getMessage()
 
     @mock.patch('enterprise.models.get_ecommerce_worker_user')
     def test_create_order_error_cannot_retrieve_service_worker(self, utils_mock):
         discount = 100.0
         sales_force_id = 'other-sales_force_id'
+        mode = "verified"
         utils_mock.return_value = None
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -623,7 +625,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ]
 
         with LogCapture(level=logging.DEBUG) as log_capture:
-            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, sales_force_id)
+            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, mode, sales_force_id)
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 
@@ -632,6 +634,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         discount = 0.0
         sales_force_id = 'another-sales_force_id'
         user = factories.UserFactory()
+        mode = "verified"
         utils_mock.return_value = user
         enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
         course_run_id = 'course-v1:edX+DemoX+Demo_Course'
@@ -650,7 +653,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         ]
 
         with LogCapture(level=logging.DEBUG) as log_capture:
-            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, sales_force_id)
+            enterprise_customer_user.create_order_for_enrollment(course_run_id, discount, mode, sales_force_id)
             for index, message in enumerate(expected_messages):
                 assert message in log_capture.records[index].getMessage()
 

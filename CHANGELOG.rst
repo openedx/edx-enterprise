@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.5] 2020-08-24
+-------------------
+
+* Added course mode in ecommerce manual enrollment API.
+
+
 [3.6.4] 2020-08-18
 -------------------
 
