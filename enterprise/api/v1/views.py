@@ -29,7 +29,11 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 
 from enterprise import models
-from enterprise.api.filters import EnterpriseCustomerUserFilterBackend, UserFilterBackend
+from enterprise.api.filters import (
+    EnterpriseCustomerUserFilterBackend,
+    EnterpriseLinkedUserFilterBackend,
+    UserFilterBackend,
+)
 from enterprise.api.throttles import ServiceUserThrottle
 from enterprise.api.utils import (
     create_message_body,
@@ -115,6 +119,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
     queryset = models.EnterpriseCustomer.active_customers.all()
     serializer_class = serializers.EnterpriseCustomerSerializer
+    filter_backends = EnterpriseReadWriteModelViewSet.filter_backends + (EnterpriseLinkedUserFilterBackend,)
 
     USER_ID_FILTER = 'enterprise_customer_users__user_id'
     FIELDS = (
