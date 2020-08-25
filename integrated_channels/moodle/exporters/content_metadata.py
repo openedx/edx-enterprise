@@ -63,7 +63,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         """
         start_date = content_metadata_item.get('start', None)
         if start_date:
-            return time.mktime(time.strptime(start_date, '%Y-%m-%dT%H:%M:%SZ'))
+            return int(time.mktime(time.strptime(start_date, '%Y-%m-%dT%H:%M:%SZ')))
         return None
 
     def transform_end(self, content_metadata_item):
@@ -72,5 +72,5 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         """
         end_date = content_metadata_item.get('end', None)
         if end_date:
-            return time.mktime(time.strptime(end_date, '%Y-%m-%dT%H:%M:%SZ'))
+            return int(time.mktime(time.strptime(end_date, '%Y-%m-%dT%H:%M:%SZ')))
         return None

@@ -3,11 +3,11 @@
 Client for connecting to Moodle.
 """
 
+import requests
+
 from django.apps import apps
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
-
-# from django.utils.http import urlencode
 
 
 class MoodleAPIClient(IntegratedChannelApiClient):
@@ -41,7 +41,6 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         pass
 
     def create_content_metadata(self, serialized_data):
-        # TODO: Intercept and fix serialized_data so it is an object not a binary string.
         # The below assumes the data is dict/object.
         # Format should look like:
         # {
@@ -53,17 +52,24 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         #   [...]
         # }
 
-        # base_params = {
-        #   'wstoken': self.enterprise_config.api_token,
-        #   'wsfunction': 'core_course_create_courses',
-        #   ???? I forgot the moodle json formatting field name and can't find it. :(
-        # }
-        # url = self.config.moodle_base_url + '?{}'.format(urlencode(base_params)) +
-        # '?{}'.format(urlencode(serialized_data))
-        pass
+        serialized_data['wstoken'] = self.enterprise_configuration.api_token
+        serialized_data['wsfunction'] = 'core_course_create_courses'
+        #url = self.enterprise_configuration.moodle_base_url + '?{}'.format(urlencode(base_params)) + serialized_data
+        response = requests.post(
+            self.enterprise_configuration.moodle_base_url,
+            params=serialized_data
+        )
+        return response.status_code, response.text
+
 
     def update_content_metadata(self, serialized_data):
+        # core_course_get_courses_by_field (idnumber or shortname field as our unique match)
+        # Get course id from above call first. Then hit update function based on that id.
+        # May have to get and modify data in a loop here. Actual update call can be bulk though
+        # core_course_update_courses
         pass
 
     def delete_content_metadata(self, serialized_data):
+        # core_course_get_courses_by_field (idnumber or shortname field as our unique match)
+        # Delete by core_course_delete_courses
         pass
