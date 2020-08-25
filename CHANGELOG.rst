@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.6] 2020-08-24
+-------------------
+
+* Added a fix for "Manual Order Not Fulfilled" bug.
+
 [3.6.5] 2020-08-24
 -------------------
 
