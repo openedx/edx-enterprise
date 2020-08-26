@@ -59,11 +59,31 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     def create_content_metadata(self, serialized_data):
         self._create_session()
 
-        url = '{}/api/v1/accounts/{}/courses/'.format(
+        # step 1: create the course
+        url = '{}/api/v1/accounts/{}/courses'.format(
             self.enterprise_configuration.canvas_base_url,
             self.enterprise_configuration.canvas_account_id,
         )
-        return self._post(url, serialized_data)
+        status_code, response_text = self._post(url, serialized_data)
+
+        # step 2: upload image_url if present
+        try:
+            # there is no way to do this in a single request during create
+            # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
+            created_course_id = json.loads(response_text)['id']
+            content_metadata = json.loads(serialized_data.decode("utf-8"))['course']
+            if "image_url" in content_metadata:
+                url = '{}/api/v1/courses/{}'.format(
+                    self.enterprise_configuration.canvas_base_url,
+                    created_course_id,
+                )
+                self._put(url, json.dumps({
+                    'course' : { 'image_url': content_metadata['image_url'] }
+                }).encode('utf-8'))
+        except: # we do not want course image update to cause failures
+            pass
+
+        return status_code, response_text
 
     def update_content_metadata(self, serialized_data):
         self._create_session()
