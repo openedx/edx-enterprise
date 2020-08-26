@@ -88,13 +88,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             if 'shortname' in key:
                 moodle_course_id = self._get_course_id(serialized_data[key])
                 serialized_data[key.replace('shortname', 'id')] = moodle_course_id
-        serialized_data['wstoken'] = self.enterprise_configuration.api_token
         serialized_data['wsfunction'] = 'core_course_update_courses'
-        response = requests.post(
-            self.enterprise_configuration.moodle_base_url,
-            params=serialized_data
-        )
-        return response.status_code, response.text
+
+        return self._post(self.enterprise_configuration.moodle_base_url, serialized_data)
 
     def delete_content_metadata(self, serialized_data):
         course_ids_to_delete = []
@@ -103,14 +99,23 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 moodle_course_id = self._get_course_id(serialized_data[key])
                 course_ids_to_delete.append(('courseids[]', moodle_course_id))
         params = {
-            'wstoken': self.enterprise_configuration.api_token,
             'wsfunction': 'core_course_delete_courses',
-            'moodlewsrestformat': 'json',
         }
         url = self.enterprise_configuration.moodle_base_url + \
             '?{}'.format(urlencode(course_ids_to_delete))
+        return self._post(url, params)
+
+    def _post(self, url, additional_params):
+        """
+        Compile common params and run request's post function
+        """
+        params = {
+            'wstoken': self.enterprise_configuration.api_token,
+            'moodlewsrestformat': 'json',
+        }
+        params.update(additional_params)
         response = requests.post(
-            url,
+            url=url,
             params=params
         )
         return response.status_code, response.text
