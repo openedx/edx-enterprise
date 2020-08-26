@@ -21,6 +21,7 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'integration_id': 'key',
         'syllabus_body': 'description',
         'default_view': 'default_view',
+        'image_url': 'image_url',
     }
 
     LONG_STRING_LIMIT = 2000
