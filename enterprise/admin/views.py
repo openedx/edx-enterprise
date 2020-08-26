@@ -160,7 +160,7 @@ class EnterpriseCustomerManageLearnerDataSharingConsentView(BaseEnterpriseCustom
 
     Allows to request the DSC from a learner for a specific course.
     """
-    template = 'enterprise/admin/manage_learners_data_sharing_consent.html'
+    template = 'enterprise/admin/clear_learners_data_sharing_consent.html'
 
     class ContextParameters:
         """
