@@ -4,11 +4,11 @@ Client for connecting to Moodle.
 """
 
 import json
+from urllib.parse import urlencode
+
 import requests
 
 from django.apps import apps
-from django.utils.http import urlencode
-from urllib.parse import urlencode
 
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
@@ -77,13 +77,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
         serialized_data['wstoken'] = self.enterprise_configuration.api_token
         serialized_data['wsfunction'] = 'core_course_create_courses'
-        #url = self.enterprise_configuration.moodle_base_url + '?{}'.format(urlencode(base_params)) + serialized_data
         response = requests.post(
             self.enterprise_configuration.moodle_base_url,
             params=serialized_data
         )
         return response.status_code, response.text
-
 
     def update_content_metadata(self, serialized_data):
         for key in list(serialized_data):

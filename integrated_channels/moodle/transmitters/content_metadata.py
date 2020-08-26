@@ -32,7 +32,6 @@ class MoodleContentMetadataTransmitter(ContentMetadataTransmitter):
                 items[new_key] = item[key]
         return items
 
-
     def _serialize_items(self, channel_metadata_items):
         """
         Overrides the base class _serialize_items method such that we return an object
