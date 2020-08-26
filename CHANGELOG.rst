@@ -14,11 +14,15 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.8] 2020-08-26
+-------------------
+
+* Added course update and deletion capabilities to the canvas integrated channel.
+
 [3.6.7] 2020-08-26
 -------------------
 
 * Changed strings in Manage Learners DSC view.
-
 
 [3.6.6] 2020-08-24
 -------------------
@@ -29,7 +33,6 @@ Unreleased
 -------------------
 
 * Added course mode in ecommerce manual enrollment API.
-
 
 [3.6.4] 2020-08-18
 -------------------
