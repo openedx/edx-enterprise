@@ -4,6 +4,9 @@ Class for transmitting content metadata to SuccessFactors.
 """
 
 import logging
+from itertools import islice
+
+from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
@@ -38,35 +41,33 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         prepared_items.update(items_to_update)
         prepared_items.update(items_to_delete)
 
-        skip_metadata_transmission = False
-
-        for chunk in chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size):
+        chunk_items = list(chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size))
+        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
+            self.enterprise_configuration.channel_code()
+        )
+        for chunk in islice(chunk_items, transmission_limit):
             chunked_items = list(chunk.values())
-            if skip_metadata_transmission:
+            try:
+                self.client.update_content_metadata(self._serialize_items(chunked_items))
+            except ClientError as exc:
+                LOGGER.error(
+                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                    len(chunked_items),
+                    self.enterprise_configuration.enterprise_customer.name,
+                    self.enterprise_configuration.channel_code(),
+                )
+                LOGGER.exception(exc)
+
                 # Remove the failed items from the create/update/delete dictionaries,
                 # so ContentMetadataItemTransmission objects are not synchronized for
                 # these items below.
                 self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
-            else:
-                try:
-                    self.client.update_content_metadata(self._serialize_items(chunked_items))
-                except ClientError as exc:
-                    LOGGER.error(
-                        'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
-                        len(chunked_items),
-                        self.enterprise_configuration.enterprise_customer.name,
-                        self.enterprise_configuration.channel_code(),
-                    )
-                    LOGGER.exception(exc)
 
-                    # Remove the failed items from the create/update/delete dictionaries,
-                    # so ContentMetadataItemTransmission objects are not synchronized for
-                    # these items below.
-                    self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
-
-                    # SAP servers throttle incoming traffic, If a request fails than the subsequent would fail too,
-                    # So, no need to keep trying and failing. We should stop here and retry later.
-                    skip_metadata_transmission = True
+        # If API Transmission limit is set then Mark the rest of the items as not transferred.
+        if transmission_limit is not None:
+            for chunk in islice(chunk_items, transmission_limit, len(chunk_items) + 1):
+                chunked_items = list(chunk.values())
+                self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
 
         self._create_transmissions(items_to_create)
         self._update_transmissions(items_to_update, transmission_map)
