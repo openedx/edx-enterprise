@@ -12,6 +12,8 @@ from django.conf import settings
 
 from test_utils import FAKE_UUIDS, TEST_EMAIL, TEST_USERNAME, APITest, factories
 
+ENTERPRISE_CUSTOMER_LIST_ENDPOINT = reverse('enterprise-customer-list')
+
 
 @ddt.ddt
 @mark.django_db
@@ -118,3 +120,54 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
         assert response.status_code == status.HTTP_200_OK
         data = self.load_json(response.content)
         assert len(data['results']) == expected_data_length
+
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseLinkedUserFilterBackend(APITest):
+    """
+    Test suite for the ``EnterpriseLinkedUserFilterBackend`` filter.
+    """
+
+    def setUp(self):
+        super(TestEnterpriseLinkedUserFilterBackend, self).setUp()
+        self.url = settings.TEST_SERVER + ENTERPRISE_CUSTOMER_LIST_ENDPOINT
+        self.enterprise_customer_data = {
+            'active': True,
+            'slug': 'test-enterprise1',
+            'uuid': FAKE_UUIDS[0],
+            'name': 'Test Enterprise Customer',
+            'enable_data_sharing_consent': True,
+        }
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(**self.enterprise_customer_data)
+
+    @ddt.data(
+        # API should return enterprise customer details
+        {'is_staff': False, 'is_linked_to_enterprise': True, 'has_access': True},
+        # API should not return enterprise customer details
+        {'is_staff': False, 'is_linked_to_enterprise': False, 'has_access': False},
+        # for staff, API should return enterprise customer details irrespective of linked status
+        {'is_staff': True, 'is_linked_to_enterprise': True, 'has_access': True},
+        # for staff, API should return enterprise customer details irrespective of linked status
+        {'is_staff': True, 'is_linked_to_enterprise': False, 'has_access': True},
+    )
+    @ddt.unpack
+    def test_filter(self, is_staff, is_linked_to_enterprise, has_access):
+        self.user.is_staff = is_staff
+        self.user.save()
+
+        if is_linked_to_enterprise:
+            factories.EnterpriseCustomerUserFactory(
+                user_id=self.user.id,
+                enterprise_customer=self.enterprise_customer,
+            )
+
+        response = self.client.get(self.url)
+        response = self.load_json(response.content)
+
+        if has_access:
+            enterprise_customer_response = response['results'][0]
+            for key, value in self.enterprise_customer_data.items():
+                assert enterprise_customer_response[key] == value
+        else:
+            assert response == {'count': 0, 'next': None, 'previous': None, 'results': []}

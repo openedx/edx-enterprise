@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.9] 2020-08-26
+-------------------
+
+* Return requested user's linked enterprises only. For staff user return all enterprises.
+
 [3.6.8] 2020-08-26
 -------------------
 

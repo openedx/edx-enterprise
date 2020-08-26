@@ -54,3 +54,25 @@ class EnterpriseCustomerUserFilterBackend(filters.BaseFilterBackend):
             queryset = queryset.filter(user_id=request.user.id)
 
         return queryset
+
+
+class EnterpriseLinkedUserFilterBackend(filters.BaseFilterBackend):
+    """
+    Filter backend to return user's linked enterprises only
+
+    * Staff users will bypass this filter.
+    * Non-staff users will receive only their linked enterprises.
+    """
+
+    def filter_queryset(self, request, queryset, view):
+        """
+        Filter out enterprise customer if learner is not linked
+        """
+        if not request.user.is_staff:
+            filter_kwargs = {
+                view.USER_ID_FILTER: request.user.id,
+                'enterprise_customer_users__linked': 1
+            }
+            queryset = queryset.filter(**filter_kwargs)
+
+        return queryset
