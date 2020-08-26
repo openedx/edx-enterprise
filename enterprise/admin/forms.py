@@ -285,11 +285,13 @@ class ManageLearnersDataSharingConsentForm(forms.Form):
     Form to request DSC from a learner.
     """
     email_or_username = forms.CharField(
-        label=_("Enter an email address or username."),
+        label=_("Email/Username"),
+        help_text=_("Enter an email address or username."),
         required=True
     )
     course = forms.CharField(
-        label=_("Enter the Course key"),
+        label=_("Course"),
+        help_text=_("Enter the course run key."),
         required=True,
     )
 

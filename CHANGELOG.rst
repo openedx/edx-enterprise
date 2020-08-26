@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.7] 2020-08-26
+-------------------
+
+* Changed strings in Manage Learners DSC view.
+
+
 [3.6.6] 2020-08-24
 -------------------
 

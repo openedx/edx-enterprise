@@ -231,15 +231,13 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     def manage_learners_data_sharing_consent(self, request, obj):  # pylint: disable=unused-argument
         """
-        Object tool handler method - redirects to "Manage Learners Data Sharing Consent" view
+        Object tool handler method - redirects to "Clear Learners Data Sharing Consent" view
         """
         # url names coming from get_urls are prefixed with 'admin' namespace
-        manage_learners_dsc_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS_DSC, args=(obj.uuid,))
-        return HttpResponseRedirect(manage_learners_dsc_url)
+        return HttpResponseRedirect(reverse("admin:" + UrlNames.MANAGE_LEARNERS_DSC, args=(obj.uuid,)))
 
-    manage_learners_data_sharing_consent.label = "Manage Learners Data Sharing Consent"
-    manage_learners_data_sharing_consent.short_description = "Allows to request a data sharing consent from a user " \
-                                                             "for a course"
+    manage_learners_data_sharing_consent.label = "Clear Data Sharing Consent"
+    manage_learners_data_sharing_consent.short_description = "Clear Data Sharing Consent for a Learner."
 
     def manage_learners(self, request, obj):  # pylint: disable=unused-argument
         """
@@ -274,7 +272,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                 name=UrlNames.MANAGE_LEARNERS
             ),
             url(
-                r"^([^/]+)/manage_learners_data_sharing_consent",
+                r"^([^/]+)/clear_learners_data_sharing_consent",
                 self.admin_site.admin_view(EnterpriseCustomerManageLearnerDataSharingConsentView.as_view()),
                 name=UrlNames.MANAGE_LEARNERS_DSC
             ),

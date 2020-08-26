@@ -30,18 +30,18 @@
     {{ enterprise_customer|capfirst }}
   {% endif %}
   &rsaquo;
-  {% trans "Manage Learners Data Sharing Consent" %}
+  {% trans "Clear Data Sharing Consent" %}
 </div>
 {% endblock %}
 
 {% block content %}
 <div id="content-main">
   <div class="forms-panel">
-    <h1>{% trans "Manage Learners Data Sharing Consent" %}</h1>
+    <h1>{% trans "Clear Data Sharing Consent" %}</h1>
     <form action="" method="post" id="learner-management-form">
       {% csrf_token %}
       {{ manage_learners_data_sharing_consent_form.as_p }}
-      <input type="submit" value="Submit"/>
+      <input type="submit" value="Clear"/>
     </form>
   </div>
 </div>
