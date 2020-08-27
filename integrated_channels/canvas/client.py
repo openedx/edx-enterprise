@@ -60,6 +60,16 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             canvas_account_id,
         )
 
+    @staticmethod
+    def course_update_endpoint(canvas_base_url, course_id):
+        """
+        Returns endpoint to PUT to for course update
+        """
+        return '{}/api/v1/courses/{}'.format(
+            canvas_base_url,
+            course_id,
+        )
+
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         pass
 
@@ -81,14 +91,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
             created_course_id = json.loads(response_text)['id']
-            content_metadata = json.loads(serialized_data.decode("utf-8"))['course']
+            content_metadata = json.loads(serialized_data.decode('utf-8'))['course']
             if "image_url" in content_metadata:
-                url = '{}/api/v1/courses/{}'.format(
+                url = CanvasAPIClient.course_update_endpoint(
                     self.enterprise_configuration.canvas_base_url,
                     created_course_id,
                 )
                 self._put(url, json.dumps({
-                    'course' : { 'image_url': content_metadata['image_url'] }
+                    'course' : {'image_url': content_metadata['image_url']}
                 }).encode('utf-8'))
         except: # we do not want course image update to cause failures
             pass
@@ -101,7 +111,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         integration_id = self._get_integration_id_from_transmition_data(serialized_data)
         course_id = self._get_course_id_from_integration_id(integration_id)
 
-        url = '{}/api/v1/courses/{}'.format(
+        url = CanvasAPIClient.course_update_endpoint(
             self.enterprise_configuration.canvas_base_url,
             course_id,
         )

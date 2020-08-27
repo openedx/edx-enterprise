@@ -202,7 +202,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 status=200
             )
 
-            expected_resp = '{id: 1}'
+            expected_resp = '{"id": 1}'
             request_mock.add(
                 responses.POST,
                 CanvasAPIClient.course_create_endpoint(self.url_base, self.account_id),
@@ -213,6 +213,39 @@ class TestCanvasApiClient(unittest.TestCase):
             assert status_code == 201
             assert response_text == expected_resp
 
+    def test_create_course_success_with_image_url(self):
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        course_to_create = json.dumps({
+            "course": {
+                "integration_id": self.integration_id,
+                "name": "test_course_create",
+                "image_url": "http://image.one/url.png"
+            }
+        }).encode('utf-8')
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json={'access_token': self.access_token},
+                status=200
+            )
+
+            expected_resp = '{"id": 1111}'
+            request_mock.add(
+                responses.POST,
+                CanvasAPIClient.course_create_endpoint(self.url_base, self.account_id),
+                status=201,
+                body=expected_resp
+            )
+            request_mock.add(
+                responses.PUT,
+                CanvasAPIClient.course_update_endpoint(self.url_base, 1111),
+                status=200
+            )
+            status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert status_code == 201
+            assert response_text == expected_resp
 
     def test_course_delete_fails_with_empty_data(self):
         self.transmission_with_empty_data("delete_content_metadata")
