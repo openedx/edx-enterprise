@@ -56,6 +56,7 @@ class TestCanvasApiClient(unittest.TestCase):
         )
         self.integration_id = 'course-v1:test+TEST101'
 
+
     def update_fails_with_poorly_formatted_data(self, request_type):
         """
         Helper method to test error handling with poorly formatted data
@@ -183,6 +184,35 @@ class TestCanvasApiClient(unittest.TestCase):
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
         assert client_error.value.__str__() == "Failed to generate oauth access token: Refresh token required."
+
+    def test_create_course_success(self):
+        canvas_api_client = CanvasAPIClient(self.enterprise_config)
+        course_to_create = json.dumps({
+            "course": {
+                "integration_id": self.integration_id,
+                "name": "test_course_create"
+            }
+        }).encode()
+
+        with responses.RequestsMock() as request_mock:
+            request_mock.add(
+                responses.POST,
+                self.oauth_url,
+                json={'access_token': self.access_token},
+                status=200
+            )
+
+            expected_resp = '{id: 1}'
+            request_mock.add(
+                responses.POST,
+                CanvasAPIClient.course_create_endpoint(self.url_base, self.account_id),
+                status=201,
+                body=expected_resp
+            )
+            status_code, response_text = canvas_api_client.create_content_metadata(course_to_create)
+            assert status_code == 201
+            assert response_text == expected_resp
+
 
     def test_course_delete_fails_with_empty_data(self):
         self.transmission_with_empty_data("delete_content_metadata")

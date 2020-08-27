@@ -50,6 +50,16 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self.session = None
         self.expires_at = None
 
+    @staticmethod
+    def course_create_endpoint(canvas_base_url, canvas_account_id):
+        """
+        Returns endpoint to POST to for course creation
+        """
+        return '{}/api/v1/accounts/{}/courses'.format(
+            canvas_base_url,
+            canvas_account_id,
+        )
+
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         pass
 
@@ -60,9 +70,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         # step 1: create the course
-        url = '{}/api/v1/accounts/{}/courses'.format(
+        url = CanvasAPIClient.course_create_endpoint(
             self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id,
+            self.enterprise_configuration.canvas_account_id
         )
         status_code, response_text = self._post(url, serialized_data)
 
