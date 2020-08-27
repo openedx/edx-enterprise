@@ -30,7 +30,6 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
             api_token=self.api_token,
         )
 
-    @responses.activate
     def test_prepare_items_for_transmission(self):
         channel_metadata_items = [
             {
@@ -63,4 +62,4 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
         }
 
         transmitter = MoodleContentMetadataTransmitter(self.enterprise_config)
-        assert transmitter._prepare_items_for_transmission(channel_metadata_items) == expected_prepared_items
+        assert transmitter._prepare_items_for_transmission(channel_metadata_items) == expected_prepared_items  # pylint: disable=protected-access
