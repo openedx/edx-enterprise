@@ -43,7 +43,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         pass
 
-    def _get_course_id(self, key):
+    def get_course_id(self, key):
         """
         Gets the Moodle course id (because we cannot update/delete without it).
         """
@@ -86,7 +86,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
     def update_content_metadata(self, serialized_data):
         for key in list(serialized_data):
             if 'shortname' in key:
-                moodle_course_id = self._get_course_id(serialized_data[key])
+                moodle_course_id = self.get_course_id(serialized_data[key])
                 serialized_data[key.replace('shortname', 'id')] = moodle_course_id
         serialized_data['wsfunction'] = 'core_course_update_courses'
 
@@ -96,7 +96,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         course_ids_to_delete = []
         for key in list(serialized_data):
             if 'shortname' in key:
-                moodle_course_id = self._get_course_id(serialized_data[key])
+                moodle_course_id = self.get_course_id(serialized_data[key])
                 course_ids_to_delete.append(('courseids[]', moodle_course_id))
         params = {
             'wsfunction': 'core_course_delete_courses',

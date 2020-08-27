@@ -40,9 +40,6 @@ class TestMoodleApiClient(unittest.TestCase):
             api_token=self.api_token,
         )
 
-    def return_params(self, params):
-        pass
-
     def test_moodle_config_is_set(self):
         """
         Test global_moodle_config is setup.
@@ -60,19 +57,22 @@ class TestMoodleApiClient(unittest.TestCase):
         expected_data['wsfunction'] = 'core_course_update_courses'
 
         client = MoodleAPIClient(self.enterprise_config)
-        client._post = unittest.mock.MagicMock(name='_post')
-        client._get_course_id = unittest.mock.MagicMock(name='_get_course_id')
-        client._get_course_id.return_value = MOODLE_COURSE_ID
+        client._post = unittest.mock.MagicMock(name='_post')  # pylint: disable=protected-access
+        client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
+        client.get_course_id.return_value = MOODLE_COURSE_ID
         client.update_content_metadata(SERIALIZED_DATA)
-        client._post.assert_called_once_with(self.moodle_base_url, expected_data)
+        client._post.assert_called_once_with(self.moodle_base_url, expected_data)  # pylint: disable=protected-access
 
     def test_delete_content_metadata(self):
+        """
+        Test core logic for formatting a delete request to Moodle.
+        """
         expected_data = {'wsfunction': 'core_course_delete_courses'}
         expected_url = self.moodle_base_url + quote('?courseids[]={0}'.format(MOODLE_COURSE_ID), safe='?=')
         client = MoodleAPIClient(self.enterprise_config)
-        client._post = unittest.mock.MagicMock(name='_post')
-        client._get_course_id = unittest.mock.MagicMock(name='_get_course_id')
-        client._get_course_id.return_value = MOODLE_COURSE_ID
+        client._post = unittest.mock.MagicMock(name='_post')  # pylint: disable=protected-access
+        client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
+        client.get_course_id.return_value = MOODLE_COURSE_ID
         client.delete_content_metadata(SERIALIZED_DATA)
 
-        client._post.assert_called_once_with(expected_url, expected_data)
+        client._post.assert_called_once_with(expected_url, expected_data)  # pylint: disable=protected-access
