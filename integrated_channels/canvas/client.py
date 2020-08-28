@@ -100,7 +100,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 self._put(url, json.dumps({
                     'course' : {'image_url': content_metadata['image_url']}
                 }).encode('utf-8'))
-        except Exception:
+        except Exception: #pylint: disable=broad-except
             # we do not want course image update to cause failures
             pass
 
