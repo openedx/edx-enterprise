@@ -14,10 +14,16 @@ Change Log
 Unreleased
 --------------------
 
+[3.6.10] 2020-08-28
+-------------------
+
+* Also send course image_url to Canvas when creating course.
+
 [3.7.0] 2020-08-27
 -------------------
 
 * Fixed Duplicate Calls to OCN API.
+
 
 [3.6.9] 2020-08-26
 -------------------
