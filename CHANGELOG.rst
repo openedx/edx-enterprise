@@ -24,7 +24,6 @@ Unreleased
 
 * Fixed Duplicate Calls to OCN API.
 
-
 [3.6.9] 2020-08-26
 -------------------
 
