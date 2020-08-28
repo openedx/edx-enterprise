@@ -14,7 +14,7 @@ Change Log
 Unreleased
 --------------------
 
-[3.6.10] 2020-08-28
+[3.7.1] 2020-08-28
 -------------------
 
 * Also send course image_url to Canvas when creating course.
