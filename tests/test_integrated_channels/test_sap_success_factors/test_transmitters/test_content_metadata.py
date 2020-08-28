@@ -11,6 +11,8 @@ import responses
 from pytest import mark
 from testfixtures import LogCapture
 
+from django.test.utils import override_settings
+
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataItemExport
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
@@ -95,6 +97,82 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
                 integrated_channel_code=self.enterprise_config.channel_code(),
                 content_id=content_id_2,
             ).exists()
+
+    @responses.activate
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_transmit_api_usage_limit(self, update_content_metadata_mock):
+        """
+        Test that API usage limit is being observed while transmitting content metadata.
+        """
+        content_id = 'course:DemoX'
+        content_id_2 = 'course:DemoX2'
+
+        # Set the chunk size to 1 to simulate 2 network calls
+        self.enterprise_config.transmission_chunk_size = 1
+        self.enterprise_config.save()
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+        transmitter.transmit({
+            content_id: ContentMetadataItemExport(
+                {'key': content_id, 'content_type': 'course'},
+                {'courseID': content_id, 'update': True}
+            ),
+            content_id_2: ContentMetadataItemExport(
+                {'key': content_id_2, 'content_type': 'course'},
+                {'courseID': content_id_2, 'update': True}
+            ),
+        })
+        assert update_content_metadata_mock.call_count == 1
+
+        assert ContentMetadataItemTransmission.objects.filter(
+            enterprise_customer=self.enterprise_config.enterprise_customer,
+            integrated_channel_code=self.enterprise_config.channel_code(),
+        ).count() == 1
+
+    @responses.activate
+    @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
+    def test_transmit_api_usage_limit_disabled(self, update_content_metadata_mock):
+        """
+        Test that API usage limit is not applied if setting is not present.
+        """
+        content_id = 'course:DemoX'
+        content_id_2 = 'course:DemoX2'
+
+        # Set the chunk size to 1 to simulate 2 network calls
+        self.enterprise_config.transmission_chunk_size = 1
+        self.enterprise_config.save()
+        responses.add(
+            responses.POST,
+            self.url_base + self.oauth_api_path,
+            json=self.expected_token_response_body,
+            status=200
+        )
+
+        transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
+
+        with override_settings(INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT={}):
+            transmitter.transmit({
+                content_id: ContentMetadataItemExport(
+                    {'key': content_id, 'content_type': 'course'},
+                    {'courseID': content_id, 'update': True}
+                ),
+                content_id_2: ContentMetadataItemExport(
+                    {'key': content_id_2, 'content_type': 'course'},
+                    {'courseID': content_id_2, 'update': True}
+                ),
+            })
+            assert update_content_metadata_mock.call_count == 2
+
+            assert ContentMetadataItemTransmission.objects.filter(
+                enterprise_customer=self.enterprise_config.enterprise_customer,
+                integrated_channel_code=self.enterprise_config.channel_code(),
+            ).count() == 2
 
     @responses.activate
     def test_prepare_items_for_delete(self):

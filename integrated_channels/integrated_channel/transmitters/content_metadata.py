@@ -5,10 +5,12 @@ Generic content metadata transmitter for integrated channels.
 
 import json
 import logging
+from itertools import islice
 
 from jsondiff import diff
 
 from django.apps import apps
+from django.conf import settings
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
@@ -115,7 +117,11 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Transmit content metadata creation to integrated channel.
         """
-        for chunk in chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size):
+        chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
+        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
+            self.enterprise_configuration.channel_code()
+        )
+        for chunk in islice(chunk_items, transmission_limit):
             serialized_chunk = self._serialize_items(list(chunk.values()))
             try:
                 self.client.create_content_metadata(serialized_chunk)
@@ -134,7 +140,11 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Transmit content metadata update to integrated channel.
         """
-        for chunk in chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size):
+        chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
+        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
+            self.enterprise_configuration.channel_code()
+        )
+        for chunk in islice(chunk_items, transmission_limit):
             serialized_chunk = self._serialize_items(list(chunk.values()))
             try:
                 self.client.update_content_metadata(serialized_chunk)
@@ -153,7 +163,11 @@ class ContentMetadataTransmitter(Transmitter):
         """
         Transmit content metadata deletion to integrated channel.
         """
-        for chunk in chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size):
+        chunk_items = chunks(channel_metadata_item_map, self.enterprise_configuration.transmission_chunk_size)
+        transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
+            self.enterprise_configuration.channel_code()
+        )
+        for chunk in islice(chunk_items, transmission_limit):
             serialized_chunk = self._serialize_items(list(chunk.values()))
             try:
                 self.client.delete_content_metadata(serialized_chunk)

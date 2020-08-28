@@ -293,3 +293,8 @@ JWT_AUTH = {
         }
     ],
 }
+
+
+INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = {
+    'SAP': 1,
+}
