@@ -41,7 +41,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         prepared_items.update(items_to_update)
         prepared_items.update(items_to_delete)
 
-        chunk_items = list(chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size))
+        chunk_items = chunks(prepared_items, self.enterprise_configuration.transmission_chunk_size)
         transmission_limit = settings.INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT.get(
             self.enterprise_configuration.channel_code()
         )
@@ -63,11 +63,12 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
                 # these items below.
                 self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
 
-        # If API Transmission limit is set then Mark the rest of the items as not transferred.
-        if transmission_limit is not None:
-            for chunk in islice(chunk_items, transmission_limit, len(chunk_items) + 1):
-                chunked_items = list(chunk.values())
-                self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
+        # If API transmission limit is set then mark the rest of the items as not transmitted.
+        # Since, chunk_items is a generator and we have already iterated through the items that need to
+        # be transmitted. Rest of the items are the ones that need to marked as not transmitted.
+        for chunk in chunk_items:
+            chunked_items = list(chunk.values())
+            self._remove_failed_items(chunked_items, items_to_create, items_to_update, items_to_delete)
 
         self._create_transmissions(items_to_create)
         self._update_transmissions(items_to_update, transmission_map)
