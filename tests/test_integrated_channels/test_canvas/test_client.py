@@ -56,7 +56,6 @@ class TestCanvasApiClient(unittest.TestCase):
         )
         self.integration_id = 'course-v1:test+TEST101'
 
-
     def update_fails_with_poorly_formatted_data(self, request_type):
         """
         Helper method to test error handling with poorly formatted data
