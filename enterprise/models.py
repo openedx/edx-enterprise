@@ -1153,8 +1153,6 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
     )
-    # TODO: https://openedx.atlassian.net/browse/ENT-2892
-    # Create a migration to drop the banner_border_color and banner_background_color fields.
     primary_color = models.CharField(
         null=True,
         blank=True,
@@ -2321,6 +2319,84 @@ class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, 
         return "<EnterpriseFeatureUserRoleAssignment for User {user} assigned to role {role}>".format(
             user=self.user.id,
             role=self.role.name  # pylint: disable=no-member
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+
+class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
+    # pylint: disable=line-too-long
+    """
+    Model for pending enterprise admin users.
+
+    .. pii: The user_email field contains PII, but locally deleted via enterprise.signals.assign_or_delete_enterprise_admin_role when the admin registers a new account.
+    .. pii_types: email_address
+    .. pii_retirement: local_api, consumer_api
+    """  # pylint: enable=line-too-long
+
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        blank=False,
+        null=False,
+        on_delete=models.CASCADE,
+    )
+    user_email = models.EmailField(null=False, blank=False, unique=True)
+    history = HistoricalRecords()
+
+    class Meta:
+        app_label = 'enterprise'
+        ordering = ['created']
+        unique_together = (('enterprise_customer', 'user_email'),)
+
+    @cached_property
+    def admin_registration_url(self):
+        """
+        Returns a URL to be used by a pending enterprise admin user to register their account.
+        """
+        registration_url = '{}/{}/admin/register'.format(
+            settings.ENTERPRISE_ADMIN_PORTAL_BASE_URL,
+            self.enterprise_customer.slug
+        )
+        return registration_url
+
+    def activate_admin_permissions(self, user, role):
+        """
+        Activates admin permissions for an existing PendingEnterpriseCustomerAdminUser.
+
+        Specifically, the "enterprise_admin" system-wide role is assigned to the user and
+        the PendingEnterpriseCustomerAdminUser record is removed.
+
+        Arguments:
+            user: a User instance
+            role: a SystemWideEnterpriseRole instance
+        """
+        try:
+            pending_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
+                user_email=user.email,
+            )
+        except PendingEnterpriseCustomerAdminUser.DoesNotExist:
+            LOGGER.error(
+                'Unable to activate admin permissions as no PendingEnterpriseCustomerAdminUser'
+                ' exists for user %s', user.id,
+            )
+            return
+
+        # create enterprise_admin role and delete pending admin user record
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(user=user, role=role)
+        pending_admin_user.delete()
+
+    def __str__(self):
+        """
+        Return human-readable string representation.
+        """
+        return "<PendingEnterpriseCustomerAdminUser {id}>: {enterprise_name} - {user_email}".format(
+            id=self.id,
+            enterprise_name=self.enterprise_customer.name,
+            user_email=self.user_email,
         )
 
     def __repr__(self):

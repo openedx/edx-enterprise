@@ -11,12 +11,13 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.constants import ENTERPRISE_LEARNER_ROLE
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
     EnterpriseCatalogQuery,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
+    PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
@@ -107,6 +108,58 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
 
 
 @receiver(post_save, sender=EnterpriseCustomerUser)
+def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Assign or delete enterprise_admin role for EnterpriseCustomerUser when updated.
+
+    This only occurs if a PendingEnterpriseCustomerAdminUser record exists.
+    """
+    if instance.user:
+        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
+        try:
+            pending_enterprise_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
+                user_email=instance.user.email,
+            )
+        except PendingEnterpriseCustomerAdminUser.DoesNotExist:
+            pending_enterprise_admin_user = None
+
+        if kwargs['created'] and pending_enterprise_admin_user:
+            # EnterpriseCustomerUser record was created and a pending admin user
+            # exists, so assign the enterprise_admin role.
+            pending_enterprise_admin_user.activate_admin_permissions(
+                user=instance.user,
+                role=enterprise_admin_role,
+            )
+        elif not kwargs['created'] and not instance.linked:
+            # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_admin role
+            try:
+                SystemWideEnterpriseUserRoleAssignment.objects.get(
+                    user=instance.user,
+                    role=enterprise_admin_role
+                ).delete()
+            except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
+                # Do nothing if no role assignment is present for the enterprise customer user.
+                pass
+
+
+@receiver(post_delete, sender=EnterpriseCustomerUser)
+def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Delete the associated enterprise admin role assignment record when deleting an EnterpriseCustomerUser record.
+    """
+    if instance.user:
+        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
+        try:
+            SystemWideEnterpriseUserRoleAssignment.objects.get(
+                user=instance.user,
+                role=enterprise_admin_role
+            ).delete()
+        except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
+            # Do nothing if no role assignment is present for the enterprise customer user.
+            pass
+
+
+@receiver(post_save, sender=EnterpriseCustomerUser)
 def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Assign or delete enterprise_learner role for EnterpriseCustomerUser when updated.
@@ -150,6 +203,28 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
         except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
+
+
+@receiver(post_save, sender=PendingEnterpriseCustomerAdminUser)
+def create_pending_enterprise_admin_user(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Creates a PendingEnterpriseCustomerUser when a PendingEnterpriseCustomerAdminUser is created.
+    """
+    PendingEnterpriseCustomerUser.objects.get_or_create(
+        enterprise_customer=instance.enterprise_customer,
+        user_email=instance.user_email,
+    )
+
+
+@receiver(post_delete, sender=PendingEnterpriseCustomerAdminUser)
+def delete_pending_enterprise_admin_user(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Deletes a PendingEnterpriseCustomerUser when its associated PendingEnterpriseCustomerAdminUser is removed.
+    """
+    PendingEnterpriseCustomerUser.objects.filter(
+        enterprise_customer=instance.enterprise_customer,
+        user_email=instance.user_email,
+    ).delete()
 
 
 @receiver(post_save, sender=EnterpriseCatalogQuery)

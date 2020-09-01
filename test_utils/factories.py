@@ -24,6 +24,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     LicensedEnterpriseCourseEnrollment,
     PendingEnrollment,
+    PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
 )
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
@@ -98,7 +99,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     """
-    EnterpriseCustomer factory.
+    EnterpriseCustomerUser factory.
 
     Creates an instance of EnterpriseCustomerUser with minimal boilerplate - uses this class' attributes as default
     parameters for EnterpriseCustomerUser constructor.
@@ -120,18 +121,36 @@ class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
 
 class PendingEnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
     """
-    EnterpriseCustomer factory.
+    PendingEnterpriseCustomerUser factory.
 
-    Creates an instance of EnterpriseCustomerUser with minimal boilerplate - uses this class' attributes as default
-    parameters for EnterpriseCustomerUser constructor.
+    Creates an instance of PendingEnterpriseCustomerUser with minimal boilerplate - uses
+    this class' attributes as default parameters for PendingEnterpriseCustomerUser constructor.
     """
 
     class Meta:
         """
-        Meta for EnterpriseCustomerFactory.
+        Meta for PendingEnterpriseCustomerUserFactory.
         """
 
         model = PendingEnterpriseCustomerUser
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    user_email = factory.LazyAttribute(lambda x: FAKER.email())
+
+
+class PendingEnterpriseCustomerAdminUserFactory(factory.django.DjangoModelFactory):
+    """
+    PendingEnterpriseCustomerAdminUser factory.
+
+    Creates an instance of PendingEnterpriseCustomerAdminUser with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for PendingEnterpriseCustomerAdminUserFactory.
+        """
+
+        model = PendingEnterpriseCustomerAdminUser
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_email = factory.LazyAttribute(lambda x: FAKER.email())
