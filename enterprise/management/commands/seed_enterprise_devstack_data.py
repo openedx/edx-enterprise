@@ -68,12 +68,14 @@ class Command(BaseCommand):
         enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
             name=customer_name,
             site_id=site.id,
-            country='US',
             slug=slugify(customer_name),
-            enable_data_sharing_consent=True,
-            enable_portal_code_management_screen=True,
-            enable_portal_reporting_config_screen=True,
-            enable_portal_saml_configuration_screen=True,
+            defaults={
+                'country': 'US',
+                'enable_data_sharing_consent': True,
+                'enable_portal_code_management_screen': True,
+                'enable_portal_reporting_config_screen': True,
+                'enable_portal_saml_configuration_screen': True,
+            },
         )
         return enterprise_customer
 
@@ -156,10 +158,13 @@ class Command(BaseCommand):
         Gets or creates a system-wide role assignment for the specified user and role
         """
         system_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role)
-        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-            user=user,
-            role=system_role,
-        )
+        kwargs = {
+            'user': user,
+            'role': system_role,
+        }
+        # We use filter() here, because the model does not currently enforce uniqueness on (user, role).
+        if not SystemWideEnterpriseUserRoleAssignment.objects.filter(**kwargs).exists():
+            SystemWideEnterpriseUserRoleAssignment.objects.create(**kwargs)
 
     def _create_feature_role_assignments(self, user, role):
         """
@@ -245,6 +250,19 @@ class Command(BaseCommand):
             self._create_enterprise_user(
                 username=ENTERPRISE_OPERATOR_ROLE,
                 role=ENTERPRISE_OPERATOR_ROLE
+            ),
+            # Make all of the service workers enterprise_openedx_operators
+            self._create_enterprise_user(
+                username='license_manager_worker',
+                role=ENTERPRISE_OPERATOR_ROLE,
+            ),
+            self._create_enterprise_user(
+                username='enterprise_catalog_worker',
+                role=ENTERPRISE_OPERATOR_ROLE,
+            ),
+            self._create_enterprise_user(
+                username='enterprise_worker',
+                role=ENTERPRISE_OPERATOR_ROLE,
             ),
         ]
         # Add a couple more learners!

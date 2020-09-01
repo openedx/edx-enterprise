@@ -14,6 +14,12 @@ Change Log
 Unreleased
 --------------------
 
+[3.7.2] 2020-09-01
+-------------------
+
+* The ``seed_enterprise_devstack_data`` management command is now idempotent when creating an enterprise,
+  and creates users and operator roles for the license-manager and enterprise-catalog workers.
+
 [3.7.1] 2020-08-28
 -------------------
 
