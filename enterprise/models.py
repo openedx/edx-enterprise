@@ -1801,6 +1801,18 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
+    def save(self, *args, **kwargs):  # pylint: disable=arguments-differ
+        """
+        Saves this ``EnterpriseCatalogQuery``.
+
+        Copies the ``content_filter`` of a related CatalogQuery into this
+        instance's ``content_filter`` if syncing is allowed.
+        """
+        if self.enterprise_catalog_query and self.sync_enterprise_catalog_query:
+            content_filter_from_query = self.enterprise_catalog_query.content_filter
+            self.content_filter = content_filter_from_query
+        super().save(*args, **kwargs)
+
 
 @python_2_unicode_compatible
 class EnrollmentNotificationEmailTemplate(TimeStampedModel):

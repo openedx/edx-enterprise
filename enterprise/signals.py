@@ -158,9 +158,20 @@ def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: d
     Sync data changes from Enterprise Catalog Query to the Enterprise Customer Catalog.
     """
     updated_content_filter = instance.content_filter
+    logger.info(
+        'Running update_enterprise_catalog_query for Catalog Query {} with updated_content_filter {}'.format(
+            instance.pk,
+            updated_content_filter
+        )
+    )
     catalogs = instance.enterprise_customer_catalogs.filter(sync_enterprise_catalog_query=True)
 
     for catalog in catalogs:
+        logger.info(
+            'update_enterprise_catalog_query is updating catalog {} with the updated_content_filter.'.format(
+                catalog.uuid
+            )
+        )
         catalog.content_filter = updated_content_filter
         catalog.save()
 

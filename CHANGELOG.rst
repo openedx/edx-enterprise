@@ -14,6 +14,13 @@ Change Log
 Unreleased
 --------------------
 
+[3.7.3] 2020-09-01
+-------------------
+
+* Override the ``EnterpriseContentCatalog.save()`` method to sync the ``content_filter`` from an associated
+  ``EnterpriseCatalogQuery``, if appropriate.
+* Add some logging to the ``update_enterprise_catalog_query`` signal.
+
 [3.7.2] 2020-09-01
 -------------------
 

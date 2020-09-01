@@ -2000,3 +2000,39 @@ class TestEnterpriseCatalogQuery(unittest.TestCase):
     def test_save_content_filter_success(self, content_filter):
         catalog_query = EnterpriseCatalogQuery(content_filter=content_filter)
         catalog_query.full_clean()
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    def test_sync_catalog_query_content_filter(self, mock_api_client):  # pylint: disable=unused-argument
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            sync_enterprise_catalog_query=True,
+            enterprise_catalog_query=None,
+            content_filter={'key': 'course-v-one-million:course123'},
+        )
+        catalog.save()
+        expected_content_filter = {'key': 'course-v-one-million:course123'}
+        assert expected_content_filter == catalog.content_filter
+
+        catalog.enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory(
+            content_filter={'key': 'coursev1:course1'}
+        )
+        catalog.save()
+        expected_content_filter = {'key': 'coursev1:course1'}
+        assert expected_content_filter == catalog.content_filter
+
+    @mock.patch('enterprise.signals.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
+    def test_no_sync_of_catalog_query_content_filter(self, mock_api_client):  # pylint: disable=unused-argument
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        enterprise_catalog_query = factories.EnterpriseCatalogQueryFactory(
+            content_filter={'key': 'coursev1:course1'},
+        )
+        catalog = factories.EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            sync_enterprise_catalog_query=False,
+            enterprise_catalog_query=enterprise_catalog_query,
+            content_filter={'key': 'course-v-one-million:course123'},
+        )
+        catalog.save()
+        expected_content_filter = {'key': 'course-v-one-million:course123'}
+        assert expected_content_filter == catalog.content_filter
