@@ -79,6 +79,15 @@ PLATFORM_BASE_REQS = https://raw.githubusercontent.com/edx/edx-platform/master/r
 check_pins: ## check that our local copy of edx-platform pins is accurate
 	echo "### DON'T edit this file, it's copied from edx-platform. See make upgrade" > $(LOCAL_EDX_PINS)
 	curl -fsSL $(PLATFORM_BASE_REQS) | grep -v '^-e' | grep -v 'via edx-enterprise$$' >> $(LOCAL_EDX_PINS)
+	# These requirement pins are removed because this is causing a deadlock in upgrading celery in both
+	# edx-platform and edx-enterprise. Will be resolved after the successful upgrade of celery in platform
+	sed -i.tmp '/^amqp==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^anyjson==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^billiard==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^celery==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^kombu==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^amqp==/d' $(LOCAL_EDX_PINS)
+	rm requirements/*.txt.tmp
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
 
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade

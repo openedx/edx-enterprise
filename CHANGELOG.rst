@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 --------------------
+[3.7.5] 2020-09-08
+-------------------
+
+* Celery version is now upgraded to latest one
 
 [3.7.4] 2020-09-04
 -------------------
