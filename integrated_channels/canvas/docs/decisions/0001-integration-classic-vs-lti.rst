@@ -1,5 +1,5 @@
 Canvas Integration via Classic Integration model vs LTI
-=============================
+=======================================================
 
 Status
 ------
@@ -21,6 +21,7 @@ For Canvas integration, these following use cases are prioritized:
 * Faculty can easily view student performance data within their institution’s online learning experience
 
 There is another use case that is deemed not applicable w.r.t Canvas integration:
+
 * Students can consume course content from within their institution's online learning experience
 
 The classic integration model nicely supports the former use cases and allows students to take
