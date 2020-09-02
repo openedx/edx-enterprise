@@ -33,5 +33,5 @@ facilitated learning use-cases. hence we made a decision to choose the classic i
 Consequences
 ------------
 
-Choosing classic over LTI does mean that the "Digital Notebook" use case will be harder/clunkier
+Choosing classic over LTI does mean that the "Digital Textbook" use case will be harder/clunkier
 to implement. LTI does very well as this. This factor may be re-considered in the future.
