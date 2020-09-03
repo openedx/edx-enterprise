@@ -14,6 +14,11 @@ Change Log
 Unreleased
 --------------------
 
+[3.7.4] 2020-09-04
+-------------------
+* Adds support to capture contract discounts from the Enrollment API by adding ``default_contract_discount``
+  to the ``EnterpriseCustomer`` model and passing it to ecommerce when creating orders
+
 [3.7.3] 2020-09-01
 -------------------
 
