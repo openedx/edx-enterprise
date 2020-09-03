@@ -293,6 +293,18 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Email to be displayed as public point of contact for enterprise.")
     )
 
+    default_contract_discount = models.DecimalField(
+        null=True,
+        blank=True,
+        max_digits=8,
+        decimal_places=5,
+        help_text=_(
+            "Specifies the discount percent used for enrollments from the enrollment API "
+            "where capturing the discount per order is not possible. "
+            "This is passed to ecommerce when creating orders for financial data reporting."
+        )
+    )
+
     @property
     def identity_provider(self):
         """
