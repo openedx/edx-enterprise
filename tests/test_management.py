@@ -306,6 +306,7 @@ MOCK_FAILING_CERTIFICATE = dict(
     created_date=NOW.strftime(lms_api.LMS_API_DATETIME_FORMAT),
     status='downloadable',
     is_passing=False,
+    percent_grade=0.6,
 )
 
 # Expected learner completion data from the mock passing certificate
@@ -314,6 +315,7 @@ CERTIFICATE_PASSING_COMPLETION = dict(
     timestamp=NOW_TIMESTAMP,
     grade=LearnerExporter.GRADE_PASSING,
     total_hours=0.0,
+    percent_grade=0.8,
 )
 
 # Expected learner completion data from the mock failing certificate

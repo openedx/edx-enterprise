@@ -161,7 +161,7 @@ class LearnerExporter(Exporter):
 
             # For instructor-paced courses, let the certificate determine course completion
             if course_details.get('pacing') == 'instructor':
-                completed_date_from_api, grade_from_api, is_passing_from_api = \
+                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment)
                 LOGGER.info('[Integrated Channel] Received data from certificate api.'
                             '  CompletedDate: {completed_date}, Course: {course_id}, Enterprise: {enterprise},'
@@ -174,7 +174,7 @@ class LearnerExporter(Exporter):
                                 enterprise=enterprise_enrollment.enterprise_customer_user.enterprise_customer.slug))
             # For self-paced courses, check the Grades API
             else:
-                completed_date_from_api, grade_from_api, is_passing_from_api = \
+                completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_grades_data(enterprise_enrollment, course_details)
                 LOGGER.info('[Integrated Channel] Received data from grades api.'
                             '  CompletedDate: {completed_date}, Course: {course_id}, Enterprise: {enterprise},'
@@ -209,6 +209,7 @@ class LearnerExporter(Exporter):
                 completed_date=completed_date,
                 grade=grade,
                 is_passing=is_passing,
+                grade_percent=grade_percent
             )
 
             if records:
@@ -221,7 +222,14 @@ class LearnerExporter(Exporter):
                 for record in records:
                     yield record
 
-    def get_learner_data_records(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
+    def get_learner_data_records(
+            self,
+            enterprise_enrollment,
+            completed_date=None,
+            grade=None,
+            is_passing=False,
+            grade_percent=None  # pylint: disable=unused-argument
+    ):
         """
         Generate a learner data transmission audit with fields properly filled in.
         """
@@ -259,6 +267,7 @@ class LearnerExporter(Exporter):
         Returns:
             completed_date: Date the course was completed, this is None if course has not been completed.
             grade: Current grade in the course.
+            percent_grade: The current percent grade in the course.
             is_passing: Boolean indicating if the grade is a passing grade or not.
         """
 
@@ -278,6 +287,7 @@ class LearnerExporter(Exporter):
 
             # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
             is_passing = certificate.get('is_passing')
+            percent_grade = certificate.get('grade')
             grade = self.grade_passing if is_passing else self.grade_failing
 
         except HttpNotFoundError:
@@ -290,8 +300,9 @@ class LearnerExporter(Exporter):
             completed_date = None
             grade = self.grade_incomplete
             is_passing = False
+            percent_grade = None
 
-        return completed_date, grade, is_passing
+        return completed_date, grade, is_passing, percent_grade
 
     def _collect_grades_data(self, enterprise_enrollment, course_details):
         """
@@ -331,7 +342,7 @@ class LearnerExporter(Exporter):
                             course_id=course_id,
                             username=username,
                             enterprise_enrollment=enterprise_enrollment.pk))
-                    return None, None, None
+                    return None, None, None, None
 
             LOGGER.error('[Integrated Channel] Grades data not found.'
                          ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment},'
@@ -339,7 +350,7 @@ class LearnerExporter(Exporter):
                              course_id=course_id,
                              username=username,
                              enterprise_enrollment=enterprise_enrollment.pk))
-            return None, None, None
+            return None, None, None, None
 
         # Prepare to process the course end date and pass/fail grade
         course_end_date = course_details.get('end')
@@ -364,4 +375,6 @@ class LearnerExporter(Exporter):
             completed_date = None
             grade = self.grade_incomplete
 
-        return completed_date, grade, is_passing
+        percent_grade = grades_data.get('percent', None)
+
+        return completed_date, grade, is_passing, percent_grade

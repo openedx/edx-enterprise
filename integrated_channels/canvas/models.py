@@ -3,6 +3,7 @@
 Database models for Enterprise Integrated Channel Canvas.
 """
 
+import json
 from logging import getLogger
 
 from simple_history.models import HistoricalRecords
@@ -11,7 +12,9 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
+from integrated_channels.canvas.exporters.learner_data import CanvasLearnerExporter
 from integrated_channels.canvas.transmitters.content_metadata import CanvasContentMetadataTransmitter
+from integrated_channels.canvas.transmitters.learner_data import CanvasLearnerTransmitter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
@@ -95,14 +98,100 @@ class CanvasEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
         """
         return 'CANVAS'
 
+    def get_learner_data_transmitter(self):
+        return CanvasLearnerTransmitter(self)
+
+    def get_learner_data_exporter(self, user):
+        return CanvasLearnerExporter(user, self)
+
     def get_content_metadata_exporter(self, user):
-        """
-        Return a ``CanvasContentMetadataExporter`` instance.
-        """
         return CanvasContentMetadataExporter(user, self)
 
     def get_content_metadata_transmitter(self):
-        """
-        Return a ``CanvasContentMetadataTransmitter`` instance.
-        """
         return CanvasContentMetadataTransmitter(self)
+
+
+@python_2_unicode_compatible
+class CanvasLearnerDataTransmissionAudit(models.Model):
+    """
+    The payload we send to canvas at a given point in time for an enterprise course enrollment.
+    """
+    canvas_user_email = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False
+    )
+
+    enterprise_course_enrollment_id = models.PositiveIntegerField(
+        blank=False,
+        null=False,
+        db_index=True
+    )
+
+    course_id = models.CharField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text="The course run's key which is used to uniquely identify the course for Canvas."
+    )
+
+    course_completed = models.BooleanField(
+        help_text="The learner's course completion status transmitted to Canvas."
+    )
+
+    completed_timestamp = models.CharField(
+        max_length=10,
+        help_text=(
+            'Represents the canvas representation of a timestamp: yyyy-mm-dd, '
+            'which is always 10 characters.'
+        )
+    )
+
+    # Request-related information.
+    status = models.CharField(max_length=100, blank=False, null=False)
+    error_message = models.TextField(blank=True)
+    created = models.DateTimeField(auto_now_add=True)
+    grade = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        app_label = 'canvas'
+
+    def __str__(self):
+        return (
+            '<CanvasLearnerDataTransmissionAudit {transmission_id} for enterprise enrollment {enrollment}, '
+            'email {canvas_user_email}, and course {course_id}>'.format(
+                transmission_id=self.id,
+                enrollment=self.enterprise_course_enrollment_id,
+                canvas_user_email=self.canvas_user_email,
+                course_id=self.course_id
+            )
+        )
+
+    def __repr__(self):
+        """
+        Return uniquely identifying string representation.
+        """
+        return self.__str__()
+
+    def serialize(self, *args, **kwargs):  # pylint: disable=unused-argument
+        """
+        Return a JSON-serialized representation.
+
+        Sort the keys so the result is consistent and testable.
+
+        # TODO: When we refactor to use a serialization flow consistent with how course metadata
+        # is serialized, remove the serialization here and make the learner data exporter handle the work.
+        """
+        return json.dumps(self._payload_data(), sort_keys=True)
+
+    def _payload_data(self):
+        """
+        Convert the audit record's fields into Canvas key/value pairs.
+        """
+        return dict(
+            userID=self.canvas_user_email,
+            courseID=self.course_id,
+            courseCompleted="true" if self.course_completed else "false",
+            completedTimestamp=self.completed_timestamp,
+            grade=self.grade,
+        )
