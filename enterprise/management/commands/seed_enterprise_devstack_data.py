@@ -57,20 +57,33 @@ class Command(BaseCommand):
     data in devstack for related Enterprise models.
     '''
 
+    def add_arguments(self, parser):
+        """
+        Entry point for subclassed commands to add custom arguments.
+        """
+        parser.add_argument(
+            '--enterprise-name',
+            action='store',
+            dest='enterprise-name',
+            default='Test Enterprise',
+            help='Name of enterprise to be created. Defaults to "Test Enterprise".'
+        )
+
     def _get_default_site(self):
         """ Gets or creates the default devstack site example.com """
         site = Site.objects.get_or_create(name='example.com')
         return site
 
-    def _create_enterprise_customer(self, site):
+    def _create_enterprise_customer(self, name, site):
         """ Gets or creates an EnterpriseCustomer """
-        customer_name = 'Test Enterprise'
         enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
-            name=customer_name,
+            name=name,
             site_id=site.id,
-            slug=slugify(customer_name),
+            slug=slugify(name),
+            country='US',
             defaults={
                 'country': 'US',
+                'enable_learner_portal': True,
                 'enable_data_sharing_consent': True,
                 'enable_portal_code_management_screen': True,
                 'enable_portal_reporting_config_screen': True,
@@ -196,14 +209,14 @@ class Command(BaseCommand):
         )
         return enterprise_customer_user
 
-    def _create_enterprise(self, enterprise_users):
+    def _create_enterprise(self, enterprise_name, enterprise_users):
         """
         Creates an enterprise and its associated data, including the
         EnterpriseCustomer, an enterprise catalog, and initial users of
         varying roles.
         """
         site, __ = self._get_default_site()
-        enterprise_customer = self._create_enterprise_customer(site=site)
+        enterprise_customer = self._create_enterprise_customer(site=site, name=enterprise_name)
         enterprise_catalog = self._create_catalog_for_enterprise(
             enterprise_customer=enterprise_customer
         )
@@ -228,6 +241,8 @@ class Command(BaseCommand):
         """
         Entry point for managment command execution.
         """
+        enterprise_name = options['enterprise-name']
+        slug = slugify(enterprise_name)
         LOGGER.info(
             '\nEnsuring enterprise-related Django groups (%s, %s) exist...',
             ENTERPRISE_DATA_API_ACCESS_GROUP,
@@ -268,15 +283,15 @@ class Command(BaseCommand):
         # Add a couple more learners!
         for i in range(2):
             enterprise_users.append(self._create_enterprise_user(
-                username='{role}_{index}'.format(
-                    role=ENTERPRISE_LEARNER_ROLE,
+                username='{slug}_learner_{index}'.format(
+                    slug=slug,
                     index=i + 1,
                 ),
                 role=ENTERPRISE_LEARNER_ROLE
             ))
 
         LOGGER.info('\nCreating a new enterprise...')
-        enterprise = self._create_enterprise(enterprise_users=enterprise_users)
+        enterprise = self._create_enterprise(enterprise_name=enterprise_name, enterprise_users=enterprise_users)
 
         # generate a json serializable list of linked enterprise users
         enterprise_linked_users = []
@@ -285,6 +300,7 @@ class Command(BaseCommand):
             enterprise_linked_users.append({
                 'user_id': ecu.user_id,
                 'enterprise_customer_user_id': ecu.id,
+                'username': ecu.username,
             })
 
         LOGGER.info(
