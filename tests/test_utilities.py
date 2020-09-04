@@ -114,6 +114,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_learner_portal",
                 "enable_slug_login",
                 "contact_email",
+                "default_contract_discount",
             ]
         ),
         (

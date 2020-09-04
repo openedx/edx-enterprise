@@ -638,16 +638,18 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
         cohort = validated_data.get('cohort')
         email_students = validated_data.get('email_students')
         is_active = validated_data.get('is_active')
+        discount = enterprise_customer.default_contract_discount or 0
         LOGGER.info(
             "[Enrollment-API] Received a call with the following parameters. lms_user: [{lms_user}], "
             "tpa_user: [{tpa_user}], user_email: {user_email}, course_run_id: {course_run_id}, "
-            "course_mode: {course_mode}, is_active: {is_active}".format(
+            "course_mode: {course_mode}, is_active: {is_active}, discount: {discount}".format(
                 lms_user=lms_user.id if lms_user else None,
                 tpa_user=tpa_user.id if tpa_user else None,
                 user_email=user_email.id if isinstance(user_email, models.EnterpriseCustomerUser) else user_email,
                 course_run_id=course_run_id,
                 course_mode=course_mode,
-                is_active=is_active
+                is_active=is_active,
+                discount=discount
             )
         )
 
@@ -669,7 +671,8 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                         course_run_id,
                         course_mode,
                         cohort=cohort,
-                        source_slug=models.EnterpriseEnrollmentSource.API
+                        source_slug=models.EnterpriseEnrollmentSource.API,
+                        discount_percentage=discount
                     )
                 else:
                     LOGGER.info(
@@ -717,7 +720,8 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                     cohort=cohort,
                     enrollment_source=models.EnterpriseEnrollmentSource.get_source(
                         models.EnterpriseEnrollmentSource.API
-                    )
+                    ),
+                    discount=discount
                 )
             else:
                 LOGGER.info(
