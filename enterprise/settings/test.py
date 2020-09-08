@@ -261,6 +261,7 @@ EVENT_TRACKING_PROCESSORS = []
 #################################### CELERY ####################################
 
 app = Celery('enterprise')  # pylint: disable=invalid-name
+app.conf.task_protocol = 1
 app.config_from_object('django.conf:settings')
 
 CELERY_ALWAYS_EAGER = True

@@ -28,3 +28,15 @@ sphinx==2.4.1
 # freezegun>0.3.14 requires python-dateutil>2.8.1 to pass the tests which is a dependency of edx-platform
 # and edx-drf-extensions.
 freezegun==0.3.14
+
+# version 0.10.16 is having version conflict in make upgrade
+responses<0.10.16
+
+# version 3.0 is causing test failures
+factory-boy<3.0
+
+# pytest version 6.0 causing test failures
+pytest<6.0
+
+# Python 3.8 isn't officially supported until 4.4 and 4.3 requires redis version 3.2.0 or above.
+celery<4.3
