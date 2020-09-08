@@ -4,7 +4,7 @@ Canvas Integration via Classic Integration model vs LTI
 Status
 ------
 
-Draft
+Accepted
 
 Context
 -------
