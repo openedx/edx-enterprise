@@ -26,7 +26,14 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
     Class to provide a SAPSF learner data transmission audit prepared for serialization.
     """
 
-    def get_learner_data_records(self, enterprise_enrollment, completed_date=None, grade=None, is_passing=False):
+    def get_learner_data_records(
+            self,
+            enterprise_enrollment,
+            completed_date=None,
+            grade=None,
+            is_passing=False,
+            grade_percent=None
+    ):
         """
         Return a SapSuccessFactorsLearnerDataTransmissionAudit with the given enrollment and course completion data.
 

@@ -70,12 +70,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             course_id,
         )
 
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        pass
-
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        pass
-
     def create_content_metadata(self, serialized_data):
         self._create_session()
 
@@ -131,6 +125,23 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
 
         return self._delete(url)
+
+    def _create_session(self):
+        """
+        Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
+        connecting to Canvas should have a single client session.
+        """
+        if self.session:
+            self.session.close()
+        # Create a new session with a valid token
+        oauth_access_token = self._get_oauth_access_token(
+            self.enterprise_configuration.client_id,
+            self.enterprise_configuration.client_secret,
+        )
+        session = requests.Session()
+        session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
+        session.headers['content-type'] = 'application/json'
+        self.session = session
 
     def _post(self, url, data):
         """
@@ -215,22 +226,99 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             ))
         return course_id
 
-    def _create_session(self):
+    def _search_for_canvas_user_by_email(self, user_email):
         """
-        Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
-        connecting to Canvas should have a single client session.
+        Helper method to make an api call to Canvas using the user's email as a search term.
+
+        Args:
+            user_email (string) : The email associated with both the user's Edx account and Canvas account.
         """
-        if self.session:
-            self.session.close()
-        # Create a new session with a valid token
-        oauth_access_token = self._get_oauth_access_token(
-            self.enterprise_configuration.client_id,
-            self.enterprise_configuration.client_secret,
+        get_user_id_from_email_url = '{url_base}/api/v1/accounts/{account_id}/users?search_term={email_address}'.format(
+            url_base=self.enterprise_configuration.canvas_base_url,
+            account_id=self.enterprise_configuration.canvas_account_id,
+            email_address=user_email
         )
-        session = requests.Session()
-        session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-        session.headers['content-type'] = 'application/json'
-        self.session = session
+        rsps = self.session.get(get_user_id_from_email_url)
+        rsps.raise_for_status()
+        get_users_by_email_response = rsps.json()
+
+        try:
+            canvas_user_id = get_users_by_email_response[0]['id']
+        except (KeyError, IndexError):
+            # Trying to figure out how we should handle errors here- should we catch
+            # them in the in the transmitter? Should we return 400 but not raise?
+            # If we have multiple course completions to post, a raised exception here without
+            # anything else will prevent other transmissions to happen.
+            raise CanvasClientError(
+                "No Canvas user ID found associated with email: {}".format(user_email)
+            )
+        return canvas_user_id
+
+    def _get_canvas_user_courses_by_id(self, user_id):
+        """Helper method to retrieve all courses that a Canvas user is enrolled in."""
+        get_users_courses_url = '{canvas_base_url}/api/v1/users/{canvas_user_id}/courses'.format(
+            canvas_base_url=self.enterprise_configuration.canvas_base_url,
+            canvas_user_id=user_id
+        )
+        rsps = self.session.get(get_users_courses_url)
+        rsps.raise_for_status()
+        return rsps.json()
+
+    def _handle_canvas_assignment_retrieval(self, integration_id, course_id):
+        """
+        Helper method to handle course assignment creation or retrieval. Canvas requires an assignment
+        in order for a user to get a grade, so first check the course for the "final grade"
+        assignment. This assignment will have a matching integration id to the currently transmitting
+        learner data. If this assignment is not yet created on Canvas, send a post request to do so.
+
+        Args:
+            integration_id (str) : the string integration id from the edx course.
+            course_id (str) : the Canvas course ID relating to the course which the client is currently
+            transmitting learner data to.
+        """
+        # First, check if the course assignment already exists
+        canvas_assignments_url = '{canvas_base_url}/api/v1/courses/{course_id}/assignments'.format(
+            canvas_base_url=self.enterprise_configuration.canvas_base_url,
+            course_id=course_id
+        )
+        resp = self.session.get(canvas_assignments_url)
+        resp.raise_for_status()
+        assignments_resp = resp.json()
+        assignment_id = None
+        for assignment in assignments_resp:
+            try:
+                if assignment['integration_id'] == integration_id:
+                    assignment_id = assignment['id']
+                    break
+            except (KeyError, ValueError):
+                raise CanvasClientError(
+                    "Something went wrong retrieving assignments from Canvas. Got response: {}".format(resp.text)
+                )
+
+        # Canvas requires a course assignment for a learner to be assigned a grade.
+        # If no assignment has been made yet, create it.
+        if not assignment_id:
+            assignment_creation_data = {
+                'assignment': {
+                    'name': '(Edx integration) Final Grade',
+                    'submission_types': 'none',
+                    'integration_id': integration_id,
+                    'published': True,
+                    'points_possible': 100
+                }
+            }
+            create_assignment_resp = self.session.post(canvas_assignments_url, json=assignment_creation_data)
+            create_assignment_resp.raise_for_status()
+
+            try:
+                assignment_id = create_assignment_resp.json()['id']
+            except (ValueError, KeyError):
+                raise CanvasClientError(
+                    "Something went wrong creating an assignment on Canvas. Got response: {}".format(
+                        create_assignment_resp.text
+                    )
+                )
+        return assignment_id
 
     def _get_oauth_access_token(self, client_id, client_secret):
         """Uses the client id, secret and refresh token to request the user's auth token from Canvas.
@@ -274,3 +362,57 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             return data['access_token']
         except (KeyError, ValueError):
             raise requests.RequestException(response=auth_response)
+
+    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        learner_data = json.loads(payload)
+        self._create_session()
+
+        # Retrieve the Canvas user ID from the user's edx email (it is assumed that the learner's Edx
+        # and Canvas emails will match).
+        canvas_user_id = self._search_for_canvas_user_by_email(user_id)
+
+        # With the Canvas user ID, retrieve all courses for the user.
+        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
+
+        # Find the course who's integration ID matches the learner data course ID
+        course_id = None
+        for course in user_courses:
+            integration_id = course['integration_id']
+            if '+'.join(integration_id.split(":")[1].split("+")[:2]) == learner_data['courseID']:
+                course_id = course['id']
+                break
+
+        if not course_id:
+            raise CanvasClientError(
+                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
+                "/Canvas learner: {canvas_user_id}.".format(
+                    course_id=learner_data['courseID'],
+                    user_id=learner_data['userID'],
+                    canvas_user_id=canvas_user_id
+                ))
+
+        # Depending on if the assignment already exists, either retrieve or create it.
+        assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
+
+        # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
+        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
+                         '{assignment_id}/submissions/{user_id}'.format(
+                             base_url=self.enterprise_configuration.canvas_base_url,
+                             course_id=course_id,
+                             assignment_id=assignment_id,
+                             user_id=canvas_user_id
+                         )
+
+        # The percent grade from the grades api is represented as a decimal
+        submission_data = {
+            'submission': {
+                'posted_grade': learner_data['grade'] * 100
+            }
+        }
+        update_grade_response = self.session.put(submission_url, json=submission_data)
+        update_grade_response.raise_for_status()
+        return update_grade_response.status_code, update_grade_response.text
+
+    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        # Todo: There isn't a great way for users to delete course completion data
+        pass

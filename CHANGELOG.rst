@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 --------------------
+[3.7.6] 2020-09-09
+-------------------
+
+* Adds the learner data exporter and transmitter to the Canvas integrated channel.
+
 [3.7.5] 2020-09-08
 -------------------
 
