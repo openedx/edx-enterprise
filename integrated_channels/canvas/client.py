@@ -112,6 +112,62 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return self._delete(url)
 
+    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        learner_data = json.loads(payload)
+        self._create_session()
+
+        # Retrieve the Canvas user ID from the user's edx email (it is assumed that the learner's Edx
+        # and Canvas emails will match).
+        canvas_user_id = self._search_for_canvas_user_by_email(user_id)
+
+        # With the Canvas user ID, retrieve all courses for the user.
+        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
+
+        # Find the course who's integration ID matches the learner data course ID
+        course_id = None
+        for course in user_courses:
+            integration_id = course['integration_id']
+            if '+'.join(integration_id.split(":")[1].split("+")[:2]) == learner_data['courseID']:
+                course_id = course['id']
+                break
+
+        if not course_id:
+            raise CanvasClientError(
+                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
+                "/Canvas learner: {canvas_user_id}.".format(
+                    course_id=learner_data['courseID'],
+                    user_id=learner_data['userID'],
+                    canvas_user_id=canvas_user_id
+                ))
+
+        # Depending on if the assignment already exists, either retrieve or create it.
+        assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
+
+        # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
+        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
+                         '{assignment_id}/submissions/{user_id}'.format(
+                             base_url=self.enterprise_configuration.canvas_base_url,
+                             course_id=course_id,
+                             assignment_id=assignment_id,
+                             user_id=canvas_user_id
+                         )
+
+        # The percent grade from the grades api is represented as a decimal
+        submission_data = {
+            'submission': {
+                'posted_grade': learner_data['grade'] * 100
+            }
+        }
+        update_grade_response = self.session.put(submission_url, json=submission_data)
+        update_grade_response.raise_for_status()
+        return update_grade_response.status_code, update_grade_response.text
+
+    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        # Todo: There isn't a great way for users to delete course completion data
+        pass
+
+    # Private Methods
+
     def _create_session(self):
         """
         Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
@@ -365,57 +421,3 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             return data['access_token']
         except (KeyError, ValueError):
             raise requests.RequestException(response=auth_response)
-
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        learner_data = json.loads(payload)
-        self._create_session()
-
-        # Retrieve the Canvas user ID from the user's edx email (it is assumed that the learner's Edx
-        # and Canvas emails will match).
-        canvas_user_id = self._search_for_canvas_user_by_email(user_id)
-
-        # With the Canvas user ID, retrieve all courses for the user.
-        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
-
-        # Find the course who's integration ID matches the learner data course ID
-        course_id = None
-        for course in user_courses:
-            integration_id = course['integration_id']
-            if '+'.join(integration_id.split(":")[1].split("+")[:2]) == learner_data['courseID']:
-                course_id = course['id']
-                break
-
-        if not course_id:
-            raise CanvasClientError(
-                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
-                "/Canvas learner: {canvas_user_id}.".format(
-                    course_id=learner_data['courseID'],
-                    user_id=learner_data['userID'],
-                    canvas_user_id=canvas_user_id
-                ))
-
-        # Depending on if the assignment already exists, either retrieve or create it.
-        assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
-
-        # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
-        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
-                         '{assignment_id}/submissions/{user_id}'.format(
-                             base_url=self.enterprise_configuration.canvas_base_url,
-                             course_id=course_id,
-                             assignment_id=assignment_id,
-                             user_id=canvas_user_id
-                         )
-
-        # The percent grade from the grades api is represented as a decimal
-        submission_data = {
-            'submission': {
-                'posted_grade': learner_data['grade'] * 100
-            }
-        }
-        update_grade_response = self.session.put(submission_url, json=submission_data)
-        update_grade_response.raise_for_status()
-        return update_grade_response.status_code, update_grade_response.text
-
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        # Todo: There isn't a great way for users to delete course completion data
-        pass
