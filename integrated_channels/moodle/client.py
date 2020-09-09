@@ -4,11 +4,13 @@ Client for connecting to Moodle.
 """
 
 import json
+
+from urllib.parse import urlencode, urljoin
 import requests
 
 from django.apps import apps
-from urllib.parse import urlencode, urljoin
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 # accessexception
@@ -25,6 +27,13 @@ def moodle_request_wrapper(method):
         if error_code and error_code == 'invalidtoken':
             self.token = self._get_access_token()
             response = method(self, *args, **kwargs)
+        elif error_code:
+            raise ClientError(
+                'Moodle API Client Task "{method}" failed with error code '
+                '"{code}" and message: "{msg}" '.format(
+                    method=method.__name__, code=error_code, msg=body.get('message')
+                )
+            )
         return response
     return inner
 
@@ -79,11 +88,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'moodlewsrestformat': 'json'
         }
         response = requests.get(
-            self.enterprise_configuration.moodle_base_url,
+            urljoin(
+                self.enterprise_configuration.moodle_base_url,
+                self.MOODLE_API_PATH,
+            ),
             params=params
         )
+        parsed_response = json.loads(response.text)
+        if not parsed_response.get('courses'):
+            raise ClientError('MoodleAPIClient request failed: 404 Course key '
+                '"{}" not found in Moodle.'.format(key)
+            )
 
-        return json.loads(response.text)['courses'][0]['id']
+        return parsed_response[0]['id']
 
     @moodle_request_wrapper
     def create_content_metadata(self, serialized_data):
@@ -114,7 +131,6 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 moodle_course_id = self.get_course_id(serialized_data[key])
                 serialized_data[key.replace('shortname', 'id')] = moodle_course_id
         serialized_data['wsfunction'] = 'core_course_update_courses'
-
         return self._post(self.enterprise_configuration.moodle_base_url, serialized_data)
 
     @moodle_request_wrapper
