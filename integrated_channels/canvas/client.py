@@ -186,6 +186,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self.session = session
 
     def _update_course_details(self, course_id, serialized_data):
+        """
+        Update a course for image_url (and possibly other settings in future)
+        This is used only for settings that are not settable in the initial course creation
+        """
         try:
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
