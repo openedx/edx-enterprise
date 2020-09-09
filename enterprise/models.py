@@ -52,6 +52,7 @@ from enterprise.utils import (
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
     get_configuration_value,
+    get_course_key_from_course_run_key,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
 )
@@ -397,13 +398,23 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise landing page url.
         """
-        url = urljoin(
-            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
-            reverse(
-                'enterprise_course_enrollment_page',
-                kwargs={'enterprise_uuid': self.uuid, 'course_key': course_key}
+        if self.enable_learner_portal:
+            url = '{}/{}/course/{}'.format(
+                get_configuration_value(
+                    'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                    settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+                ),
+                self.slug,
+                course_key,
             )
-        )
+        else:
+            url = urljoin(
+                get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+                reverse(
+                    'enterprise_course_enrollment_page',
+                    kwargs={'enterprise_uuid': self.uuid, 'course_key': course_key}
+                )
+            )
         return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def get_course_run_enrollment_url(self, course_run_key):
@@ -415,14 +426,27 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise landing page url.
         """
-        url = urljoin(
-            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
-            reverse(
-                'enterprise_course_run_enrollment_page',
-                kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
+        parent_course_key = get_course_key_from_course_run_key(course_run_key)
+        params = utils.get_enterprise_utm_context(self)
+        if self.enable_learner_portal:
+            params.update({'course_run_key': course_run_key})
+            url = '{}/{}/course/{}'.format(
+                get_configuration_value(
+                    'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                    settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+                ),
+                self.slug,
+                parent_course_key,
             )
-        )
-        return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
+        else:
+            url = urljoin(
+                get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+                reverse(
+                    'enterprise_course_run_enrollment_page',
+                    kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
+                )
+            )
+        return utils.update_query_parameters(url, params)
 
     def get_program_enrollment_url(self, program_uuid):
         """
@@ -1794,8 +1818,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key)
         if self.publish_audit_enrollment_urls:
             url = utils.update_query_parameters(url, {'audit': 'true'})
-
-        return utils.update_query_parameters(url, {'catalog': self.uuid})
+        if not self.enterprise_customer.enable_learner_portal:
+            url = utils.update_query_parameters(url, {'catalog': self.uuid})
+        return url
 
     def get_program_enrollment_url(self, program_uuid):
         """

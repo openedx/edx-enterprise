@@ -11,7 +11,6 @@ import ddt
 import mock
 from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
-from opaque_keys.edx.keys import CourseKey
 from pytest import mark, raises
 from testfixtures import LogCapture
 
@@ -43,7 +42,13 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
     logo_path,
 )
-from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter
+from enterprise.utils import (
+    CourseEnrollmentDowngradeError,
+    get_configuration_value,
+    get_default_catalog_content_filter,
+    get_enterprise_utm_context,
+    update_query_parameters,
+)
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
@@ -1034,14 +1039,19 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enrollment_url = enterprise_catalog.get_course_enrollment_url(course_key=course_key)
         assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 
+    @ddt.data(
+        False,
+        True
+    )
     @mock.patch('enterprise.utils.configuration_helpers')
-    def test_catalog_param_in_course_run_enrollment_url(self, config_mock):
+    def test_catalog_param_in_course_run_enrollment_url(self, learner_portal_enabled, config_mock):
         """
-        The ``get_course_run_enrollment_url`` method includes the ``catalog`` query string param.
+        Test the ``get_course_run_enrollment_url`` method includes the ``catalog`` query string param
+        when the Learner Portal is not enabled and doesn't when LP is enabled.
         """
         config_mock.get_value.return_value = 'value'
-        course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
-        course_run_key = CourseKey.from_string(course_run_id)
+        parent_course_key = 'edX+DemoX'
+        course_run_id = 'course-v1:{}+Demo_Course_1'.format(parent_course_key)
 
         course_enrollment_url = reverse(
             'enterprise_course_run_enrollment_page',
@@ -1053,40 +1063,63 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             'utm_source': self.enterprise_name,
             'catalog': self.catalog_uuid,
         })
-        expected_course_enrollment_url = '{course_enrollment_url}?{querystring}'.format(
-            course_enrollment_url=course_enrollment_url,
-            querystring=querystring_dict.urlencode()
-        )
 
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=self.catalog_uuid,
             enterprise_customer=factories.EnterpriseCustomerFactory(
                 uuid=self.enterprise_uuid,
-                name=self.enterprise_name
+                name=self.enterprise_name,
+                enable_learner_portal=learner_portal_enabled,
             )
         )
-        enrollment_url = enterprise_catalog.get_course_run_enrollment_url(course_run_key=course_run_key)
+        enrollment_url = enterprise_catalog.get_course_run_enrollment_url(
+            course_run_key=course_run_id,
+        )
+        if learner_portal_enabled:
+            learner_portal_course_page_url = '{}/{}/course/{}'.format(
+                get_configuration_value(
+                    'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+                    settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+                ),
+                enterprise_catalog.enterprise_customer.slug,
+                parent_course_key,
+            )
+            params = get_enterprise_utm_context(enterprise_catalog.enterprise_customer)
+            params.update({'course_run_key': course_run_id})
+            expected_course_enrollment_url = update_query_parameters(learner_portal_course_page_url, params)
+        else:
+            expected_course_enrollment_url = '{course_enrollment_url}?{querystring}'.format(
+                course_enrollment_url=course_enrollment_url,
+                querystring=querystring_dict.urlencode()
+            )
         assert_url(enrollment_url, expected_course_enrollment_url)
 
+    @ddt.data(
+        False,
+        True
+    )
     @mock.patch('enterprise.utils.configuration_helpers')
-    def test_audit_param_in_course_run_enrollment_url(self, config_mock):
+    def test_audit_param_in_course_run_enrollment_url(self, learner_portal_enabled, config_mock):
         """
         The ``get_course_run_enrollment_url`` method returns ``audit=true`` in the query string when
         publish_audit_enrollment_urls is enabled for the EnterpriseCustomerCatalog
         """
         config_mock.get_value.return_value = 'value'
-        course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
-        course_run_key = CourseKey.from_string(course_run_id)
+        parent_course_key = 'edX+DemoX'
+        course_run_id = 'course-v1:{}+Demo_Course_1'.format(parent_course_key)
 
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=self.catalog_uuid,
             enterprise_customer=factories.EnterpriseCustomerFactory(
                 uuid=self.enterprise_uuid,
-                name=self.enterprise_name
+                name=self.enterprise_name,
+                enable_learner_portal=learner_portal_enabled,
             ),
             publish_audit_enrollment_urls=True
         )
-        enrollment_url = enterprise_catalog.get_course_run_enrollment_url(course_run_key=course_run_key)
+        enrollment_url = enterprise_catalog.get_course_run_enrollment_url(
+            course_run_key=course_run_id,
+        )
         assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 
     @mock.patch('enterprise.utils.configuration_helpers')
