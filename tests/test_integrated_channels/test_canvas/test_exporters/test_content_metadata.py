@@ -125,7 +125,7 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
-        assert exporter.transform_is_public(content_metadata_item) == True
+        assert exporter.transform_is_public(content_metadata_item) is True
 
     @responses.activate
     def test_transform_self_enrollment(self):
@@ -134,4 +134,4 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
-        assert exporter.transform_self_enrollment(content_metadata_item) == True
+        assert exporter.transform_self_enrollment(content_metadata_item) is True
