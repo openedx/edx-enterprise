@@ -135,3 +135,16 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_self_enrollment(content_metadata_item) is True
+
+    @responses.activate
+    def test_transform_key(self):
+        """
+        `CanvasContentMetadataExporter``'s ``transform_key` returns edx_acctID_key.
+        """
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        expected_id = "edx_{}_{}".format(
+            self.config.canvas_account_id,
+            content_metadata_item.get("key")
+        )
+        assert exporter.transform_key(content_metadata_item) == expected_id
