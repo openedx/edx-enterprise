@@ -22,6 +22,8 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'syllabus_body': 'description',
         'default_view': 'default_view',
         'image_url': 'image_url',
+        'is_public': 'is_public',
+        'self_enrollment': 'self_enrollment',
     }
 
     LONG_STRING_LIMIT = 2000
@@ -55,3 +57,15 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         Sets the Home page view in Canvas. We're using Syllabus.
         """
         return 'syllabus'
+
+    def transform_is_public(self, content_metadata_item): # pylint: disable=unused-argument
+        """
+        Whether to make the course visible in the public Canvas index by default.
+        """
+        return True
+
+    def transform_self_enrollment(self, content_metadata_item): # pylint: disable=unused-argument
+        """
+        Whether to allow students to self enroll. Helps students enroll via link or enroll button.
+        """
+        return True
