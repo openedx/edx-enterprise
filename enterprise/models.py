@@ -46,7 +46,12 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_c
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
-from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
+from enterprise.constants import (
+    ALL_ACCESS_CONTEXT,
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+    json_serialized_course_modes,
+)
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -2329,14 +2334,15 @@ class EnterpriseFeatureUserRoleAssignment(EnterpriseRoleAssignmentContextMixin, 
 
 
 class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
-    # pylint: disable=line-too-long
     """
     Model for pending enterprise admin users.
 
-    .. pii: The user_email field contains PII, but locally deleted via enterprise.signals.assign_or_delete_enterprise_admin_role when the admin registers a new account.
+    .. pii: The user_email field contains PII, but locally deleted via
+    enterprise.signals.assign_or_delete_enterprise_admin_role when the 
+    admin registers a new account.
     .. pii_types: email_address
     .. pii_retirement: local_api, consumer_api
-    """  # pylint: enable=line-too-long
+    """
 
     enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
@@ -2344,7 +2350,7 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         null=False,
         on_delete=models.CASCADE,
     )
-    user_email = models.EmailField(null=False, blank=False, unique=True)
+    user_email = models.EmailField(null=False, blank=False)
     history = HistoricalRecords()
 
     class Meta:
@@ -2363,7 +2369,8 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         )
         return registration_url
 
-    def activate_admin_permissions(self, user, role):
+    @classmethod
+    def activate_admin_permissions(self, user, enterprise_customer):
         """
         Activates admin permissions for an existing PendingEnterpriseCustomerAdminUser.
 
@@ -2372,21 +2379,23 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
 
         Arguments:
             user: a User instance
-            role: a SystemWideEnterpriseRole instance
+            enterprise_customer: An EnterpriseCustomer instance
         """
         try:
             pending_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
                 user_email=user.email,
+                enterprise_customer=enterprise_customer,
             )
         except PendingEnterpriseCustomerAdminUser.DoesNotExist:
             LOGGER.error(
                 'Unable to activate admin permissions as no PendingEnterpriseCustomerAdminUser'
-                ' exists for user %s', user.id,
+                ' records exist for user %s', user.id,
             )
             return
 
         # create enterprise_admin role and delete pending admin user record
-        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(user=user, role=role)
+        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(user=user, role=enterprise_admin_role)
         pending_admin_user.delete()
 
     def __str__(self):

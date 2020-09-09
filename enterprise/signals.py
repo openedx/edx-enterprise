@@ -119,6 +119,7 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
         try:
             pending_enterprise_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
                 user_email=instance.user.email,
+                enterprise_customer=instance.enterprise_customer,
             )
         except PendingEnterpriseCustomerAdminUser.DoesNotExist:
             pending_enterprise_admin_user = None
@@ -128,10 +129,10 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
             # exists, so assign the enterprise_admin role.
             pending_enterprise_admin_user.activate_admin_permissions(
                 user=instance.user,
-                role=enterprise_admin_role,
+                enterprise_customer=instance.enterprise_customer,
             )
         elif not kwargs['created'] and not instance.linked:
-            # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_admin role
+            # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_admin role.
             try:
                 SystemWideEnterpriseUserRoleAssignment.objects.get(
                     user=instance.user,
@@ -140,6 +141,13 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
             except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
                 # Do nothing if no role assignment is present for the enterprise customer user.
                 pass
+        else:
+            logger.info(
+                'Could not assign or delete enterprise_admin role for user %s'
+                ' due to a PendingEnterpriseCustomerAdminUser record not existing'
+                ' or the user not being linked.',
+                instance.user.id,
+            )
 
 
 @receiver(post_delete, sender=EnterpriseCustomerUser)
@@ -149,14 +157,10 @@ def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # p
     """
     if instance.user:
         enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
-        try:
-            SystemWideEnterpriseUserRoleAssignment.objects.get(
-                user=instance.user,
-                role=enterprise_admin_role
-            ).delete()
-        except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
-            # Do nothing if no role assignment is present for the enterprise customer user.
-            pass
+        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=instance.user,
+            role=enterprise_admin_role
+        ).delete()
 
 
 @receiver(post_save, sender=EnterpriseCustomerUser)

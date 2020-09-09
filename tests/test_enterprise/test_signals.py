@@ -262,13 +262,23 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory()
         super(TestPendingEnterpriseAdminUserSignals, self).setUp()
 
-    def test_create_pending_enterprise_admin_user(self):
-        # verify that PendingEnterpriseCustomerUser record does not yet exist.
+    def _assert_pending_ecus_exist(self, should_exist=True):
+        """
+        Assert whether ``PendingEnterpriseCustomerUser`` record(s) exist for the specified user
+        and enterprise customer.
+        """
         pending_ecus = PendingEnterpriseCustomerUser.objects.filter(
             user_email=self.admin_user.email,
             enterprise_customer=self.enterprise_customer,
         )
-        self.assertFalse(pending_ecus.exists())
+        assert should_exist == pending_ecus.exists()
+    
+    def test_create_pending_enterprise_admin_user(self):
+        """
+        Assert that creating a ``PendingEnterpriseCustomerAdminUser`` creates a ``PendingEnterpriseCustomerUser``.
+        """
+        # verify that PendingEnterpriseCustomerUser record does not yet exist.
+        self._assert_pending_ecus_exist(should_exist=False)
 
         # create new PendingEnterpriseCustomerAdminUser
         PendingEnterpriseCustomerAdminUserFactory(
@@ -277,13 +287,12 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
         )
 
         # verify that PendingEnterpriseCustomerUser record was created.
-        pending_ecus = PendingEnterpriseCustomerUser.objects.filter(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
-        self.assertTrue(pending_ecus.exists())
+        self._assert_pending_ecus_exist()
 
     def test_delete_pending_enterprise_admin_user(self):
+        """
+        Assert that deleting a ``PendingEnterpriseCustomerAdminUser`` deletes its ``PendingEnterpriseCustomerUser``.
+        """
         # create new PendingEnterpriseCustomerAdminUser
         PendingEnterpriseCustomerAdminUserFactory(
             user_email=self.admin_user.email,
@@ -291,11 +300,7 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
         )
 
         # verify that PendingEnterpriseCustomerUser record exists.
-        pending_ecus = PendingEnterpriseCustomerUser.objects.filter(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
-        self.assertTrue(pending_ecus.exists())
+        self._assert_pending_ecus_exist()
 
         # delete the PendingEnterpriseCustomerAdminUser record and verify that the
         # associated PendingEnterpriseCustomerUser is also deleted.
@@ -303,11 +308,7 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
             user_email=self.admin_user.email,
             enterprise_customer=self.enterprise_customer,
         ).delete()
-        pending_ecus = PendingEnterpriseCustomerUser.objects.filter(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
-        self.assertFalse(pending_ecus.exists())
+        self._assert_pending_ecus_exist(should_exist=False)
 
 
 @mark.django_db
@@ -366,10 +367,7 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
             user=self.admin_user,
             role=self.enterprise_admin_role,
         )
-        if has_pending_admin_user:
-            self.assertTrue(admin_role_assignment.exists())
-        else:
-            self.assertFalse(admin_role_assignment.exists())
+        assert admin_role_assignment.exists() == has_pending_admin_user
 
     @ddt.data(
         {'should_unlink_user': True, 'should_admin_role_exist': False},
@@ -439,10 +437,7 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         self.assertTrue(admin_role_assignments.exists())
 
         # delete EnterpriseCustomerUser record and verify that admin role assignment is deleted as well.
-        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
-            user_id=self.admin_user.id
-        )
-        enterprise_customer_user.delete()
+        EnterpriseCustomerUser.objects.filter(user_id=self.admin_user.id).delete()
         admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             user=self.admin_user,
             role=self.enterprise_admin_role,
