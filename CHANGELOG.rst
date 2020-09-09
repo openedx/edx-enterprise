@@ -13,13 +13,16 @@ Change Log
 
 Unreleased
 --------------------
+[3.7.8] 2020-09-09
+-------------------
+
+* Fixes migration mismatch for Canvas models.
 
 [3.7.7] 2020-09-04
 ------------------
 
 * The ``seed_enterprise_devstack_data`` management command now accepts an enterprise name when creating an enterprise,
   and the learner portal is activated by default.
-
 
 [3.7.6] 2020-09-09
 -------------------
