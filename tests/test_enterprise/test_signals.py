@@ -272,7 +272,7 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
         )
         assert should_exist == pending_ecus.exists()
-    
+
     def test_create_pending_enterprise_admin_user(self):
         """
         Assert that creating a ``PendingEnterpriseCustomerAdminUser`` creates a ``PendingEnterpriseCustomerUser``.

@@ -2338,7 +2338,7 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     Model for pending enterprise admin users.
 
     .. pii: The user_email field contains PII, but locally deleted via
-    enterprise.signals.assign_or_delete_enterprise_admin_role when the 
+    enterprise.signals.assign_or_delete_enterprise_admin_role when the
     admin registers a new account.
     .. pii_types: email_address
     .. pii_retirement: local_api, consumer_api
@@ -2370,7 +2370,7 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         return registration_url
 
     @classmethod
-    def activate_admin_permissions(self, user, enterprise_customer):
+    def activate_admin_permissions(cls, user, enterprise_customer):
         """
         Activates admin permissions for an existing PendingEnterpriseCustomerAdminUser.
 
