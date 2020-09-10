@@ -9,6 +9,7 @@ from requests import RequestException
 
 from django.apps import apps
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
 from integrated_channels.utils import is_already_transmitted
@@ -84,7 +85,7 @@ class LearnerTransmitter(Transmitter):
                         enterprise_enrollment_id,
                     )
                 )
-            except RequestException as request_exception:
+            except (RequestException, ClientError) as request_exception:
                 code = 500
                 body = str(request_exception)
                 self.handle_transmission_error(learner_data, request_exception)

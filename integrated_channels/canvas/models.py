@@ -123,9 +123,9 @@ class CanvasLearnerDataTransmissionAudit(models.Model):
     )
 
     enterprise_course_enrollment_id = models.PositiveIntegerField(
-        blank=False,
-        null=False,
-        db_index=True
+        blank=True,
+        null=True,
+        db_index=True,
     )
 
     course_id = models.CharField(

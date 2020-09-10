@@ -9,7 +9,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
-from integrated_channels.exceptions import CanvasClientError, ClientError
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 
@@ -189,15 +189,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             data (bytearray): The json encoded payload intended for a Canvas endpoint.
         """
         if not data:
-            raise CanvasClientError("No data to transmit.")
+            raise ClientError("No data to transmit.")
         try:
             integration_id = json.loads(
                 data.decode("utf-8")
             )['course']['integration_id']
         except KeyError:
-            raise CanvasClientError("Could not transmit data, no integration ID present.")
+            raise ClientError("Could not transmit data, no integration ID present.")
         except AttributeError:
-            raise CanvasClientError("Unable to decode data.")
+            raise ClientError("Unable to decode data.")
 
         return integration_id
 
@@ -221,7 +221,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 break
 
         if not course_id:
-            raise CanvasClientError("No Canvas courses found with associated integration ID: {}.".format(
+            raise ClientError("No Canvas courses found with associated integration ID: {}.".format(
                 integration_id
             ))
         return course_id
@@ -245,11 +245,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         try:
             canvas_user_id = get_users_by_email_response[0]['id']
         except (KeyError, IndexError):
-            # Trying to figure out how we should handle errors here- should we catch
-            # them in the in the transmitter? Should we return 400 but not raise?
-            # If we have multiple course completions to post, a raised exception here without
-            # anything else will prevent other transmissions to happen.
-            raise CanvasClientError(
+            raise ClientError(
                 "No Canvas user ID found associated with email: {}".format(user_email)
             )
         return canvas_user_id
@@ -291,7 +287,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     assignment_id = assignment['id']
                     break
             except (KeyError, ValueError):
-                raise CanvasClientError(
+                raise ClientError(
                     "Something went wrong retrieving assignments from Canvas. Got response: {}".format(resp.text)
                 )
 
@@ -313,7 +309,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             try:
                 assignment_id = create_assignment_resp.json()['id']
             except (ValueError, KeyError):
-                raise CanvasClientError(
+                raise ClientError(
                     "Something went wrong creating an assignment on Canvas. Got response: {}".format(
                         create_assignment_resp.text
                     )
@@ -383,7 +379,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 break
 
         if not course_id:
-            raise CanvasClientError(
+            raise ClientError(
                 "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
                 "/Canvas learner: {canvas_user_id}.".format(
                     course_id=learner_data['courseID'],
