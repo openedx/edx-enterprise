@@ -35,7 +35,7 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         """
         return "edx_{}_{}".format(
             self.enterprise_configuration.canvas_account_id,
-            content_metadata_item.get('key','')
+            content_metadata_item.get('key', '')
         )
 
     def transform_description(self, content_metadata_item):
