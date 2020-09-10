@@ -12,7 +12,6 @@ from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.auth import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import Q
@@ -52,6 +51,7 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     EnterpriseFeatureUserRoleAssignment,
     PendingEnrollment,
+    PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
@@ -110,6 +110,31 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
         return formset
 
 
+class PendingEnterpriseCustomerAdminUserInline(admin.TabularInline):
+    """
+    Django admin inline model for PendingEnterpriseCustomerAdminUser.
+    """
+
+    model = PendingEnterpriseCustomerAdminUser
+    extra = 0
+    fieldsets = (
+        (None, {
+            'fields': ('user_email', 'get_admin_registration_url')
+        }),
+    )
+    readonly_fields = (
+        'get_admin_registration_url',
+    )
+
+    def get_admin_registration_url(self, obj):
+        """
+        Formats the ``admin_registration_url`` model property as an HTML link.
+        """
+        return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
+
+    get_admin_registration_url.short_description = 'Admin Registration Link'
+
+
 @admin.register(EnterpriseCustomerType)
 class EnterpriseCustomerTypeAdmin(admin.ModelAdmin):
     """
@@ -152,6 +177,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         EnterpriseCustomerBrandingConfigurationInline,
         EnterpriseCustomerIdentityProviderInline,
         EnterpriseCustomerCatalogInline,
+        PendingEnterpriseCustomerAdminUserInline,
     ]
 
     EXPORT_AS_CSV_FIELDS = ['name', 'active', 'site', 'uuid', 'identity_provider']
@@ -443,6 +469,53 @@ class PendingEnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'enterprise_customer',
         'created'
     )
+
+
+@admin.register(PendingEnterpriseCustomerAdminUser)
+class PendingEnterpriseCustomerAdminUserAdmin(admin.ModelAdmin):
+    """
+    Django admin model for PendingEnterpriseCustomerAdminUser
+    """
+
+    class Meta:
+        model = PendingEnterpriseCustomerAdminUser
+
+    fields = (
+        'user_email',
+        'enterprise_customer',
+        'get_admin_registration_url',
+    )
+
+    readonly_fields = (
+        'get_admin_registration_url',
+    )
+
+    list_display = (
+        'user_email',
+        'get_enterprise_customer',
+        'get_admin_registration_url',
+    )
+
+    search_fields = (
+        'user_email',
+        'enterprise_customer__name',
+    )
+
+    def get_enterprise_customer(self, obj):
+        """
+        Returns the name of the associated EnterpriseCustomer.
+        """
+        return obj.enterprise_customer.name
+
+    get_enterprise_customer.short_description = 'Enterprise Customer'
+
+    def get_admin_registration_url(self, obj):
+        """
+        Formats the ``admin_registration_url`` model property as an HTML link.
+        """
+        return format_html('<a href="{0}">{0}</a>'.format(obj.admin_registration_url))
+
+    get_admin_registration_url.short_description = 'Admin Registration Link'
 
 
 @admin.register(EnrollmentNotificationEmailTemplate)

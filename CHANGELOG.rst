@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 --------------------
+
+[3.8.0] 2020-09-09
+-------------------
+
+* Assign "enterprise_admin" system-wide role to pending admin users when registering their user account.
+
 [3.7.8] 2020-09-09
 -------------------
 

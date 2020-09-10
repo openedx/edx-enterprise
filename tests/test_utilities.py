@@ -83,6 +83,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enterprise_customer_catalogs",
                 "enterprise_enrollment_template",
                 "reporting_configurations",
+                "pendingenterprisecustomeradminuser",
                 "enterprise_customer_consent",
                 "data_sharing_consent_page",
                 "contentmetadataitemtransmission",
