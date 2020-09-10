@@ -23,7 +23,13 @@ def moodle_request_wrapper(method):
         if not self.token:
             self.token = self._get_access_token()  # pylint: disable=protected-access
         response = method(self, *args, **kwargs)
+
         body = response.json()
+        if isinstance(body, list):
+            # On course creation (and ONLY course creation) success,
+            # Moodle returns a list of JSON objects, because of course it does.
+            # Otherwise, it fails instantly and returns actual JSON.
+            return response
         error_code = body.get('errorcode')
         if error_code and error_code == 'invalidtoken':
             self.token = self._get_access_token()  # pylint: disable=protected-access
@@ -77,9 +83,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         pass
 
     @moodle_request_wrapper
-    def get_course_id(self, key):
+    def _get_courses(self, key):
         """
-        Gets the Moodle course id (because we cannot update/delete without it).
+        Gets courses from Moodle by key (because we cannot update/delete without it).
         """
         params = {
             'wstoken': self.token,
@@ -95,12 +101,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             ),
             params=params
         )
+        return response
+
+    def get_course_id(self, key):
+        """
+        Obtain course from Moodle by course key and parse out the id.
+        """
+        response = self._get_courses(key)
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
             raise ClientError('MoodleAPIClient request failed: 404 Course key '
                               '"{}" not found in Moodle.'.format(key))
 
-        return parsed_response[0]['id']
+        return parsed_response['courses'][0]['id']
 
     @moodle_request_wrapper
     def create_content_metadata(self, serialized_data):
@@ -116,7 +129,6 @@ class MoodleAPIClient(IntegratedChannelApiClient):
           [...]
         }
         """
-        # http://localhost:80/webservice/rest/server.php?wsfunction=core_course_create_courses&moodlewsrestformat=json&courses[0][fullname]=YourCourseFullName&courses[0][shortname]=YourCourseShortName&courses[0][categoryid]=1
         serialized_data['wsfunction'] = 'core_course_create_courses'
         response = self._post(
             self.enterprise_configuration.moodle_base_url,
