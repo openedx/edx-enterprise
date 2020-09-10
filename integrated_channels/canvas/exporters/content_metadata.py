@@ -68,13 +68,13 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         """
         return 'syllabus'
 
-    def transform_is_public(self, content_metadata_item): # pylint: disable=unused-argument
+    def transform_is_public(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Whether to make the course visible in the public Canvas index by default.
         """
         return True
 
-    def transform_self_enrollment(self, content_metadata_item): # pylint: disable=unused-argument
+    def transform_self_enrollment(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Whether to allow students to self enroll. Helps students enroll via link or enroll button.
         """

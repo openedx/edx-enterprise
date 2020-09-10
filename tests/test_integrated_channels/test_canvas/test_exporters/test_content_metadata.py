@@ -23,6 +23,7 @@ GENERIC_CONTENT_METADATA_ITEM = {
     'content_type': 'course',
 }
 
+
 @mark.django_db
 @ddt.ddt
 class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
