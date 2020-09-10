@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 --------------------
+[3.7.9] 2020-09-10
+-------------------
+
+* Course and Course Run enrollment_url now points to learner portal course page if LP enabled.
+
 [3.7.8] 2020-09-09
 -------------------
 
