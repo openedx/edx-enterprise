@@ -136,6 +136,7 @@ class CanvasLearnerDataTransmissionAudit(models.Model):
     )
 
     course_completed = models.BooleanField(
+        default=False,
         help_text="The learner's course completion status transmitted to Canvas."
     )
 
