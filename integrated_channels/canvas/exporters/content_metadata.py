@@ -24,6 +24,7 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'image_url': 'image_url',
         'is_public': 'is_public',
         'self_enrollment': 'self_enrollment',
+        'course_code': 'course_code',
     }
 
     LONG_STRING_LIMIT = 2000
@@ -79,3 +80,9 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         Whether to allow students to self enroll. Helps students enroll via link or enroll button.
         """
         return True
+
+    def transform_course_code(self, content_metadata_item): # pylint: disable=unused-argument
+        """
+        Course code is same as integration id for now
+        """
+        return content_metadata_item.get('key', 'edx course')
