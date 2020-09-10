@@ -7,6 +7,7 @@ import unittest
 from urllib.parse import quote
 
 import pytest
+from requests.models import Response
 
 from integrated_channels.moodle.client import MoodleAPIClient
 from test_utils import factories
@@ -20,6 +21,10 @@ SERIALIZED_DATA = {
 
 MOODLE_COURSE_ID = 100
 
+SUCCESSFUL_RESPONSE = unittest.mock.Mock(spec=Response)
+SUCCESSFUL_RESPONSE.json.return_value = {}
+SUCCESSFUL_RESPONSE.status_code = 200
+
 
 @pytest.mark.django_db
 class TestMoodleApiClient(unittest.TestCase):
@@ -30,14 +35,14 @@ class TestMoodleApiClient(unittest.TestCase):
     def setUp(self):
         super(TestMoodleApiClient, self).setUp()
         self.moodle_base_url = 'http://testing/'
-        self.api_token = 'token'
+        self.token = 'token'
         self.password = 'pass'
         self.user = 'user'
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.moodle_base_url,
-            wsusername=self.user,
-            wspassword=self.password,
-            api_token=self.api_token,
+            username=self.user,
+            password=self.password,
+            token=self.token,
         )
 
     def test_moodle_config_is_set(self):
@@ -57,7 +62,7 @@ class TestMoodleApiClient(unittest.TestCase):
         expected_data['wsfunction'] = 'core_course_update_courses'
 
         client = MoodleAPIClient(self.enterprise_config)
-        client._post = unittest.mock.MagicMock(name='_post')  # pylint: disable=protected-access
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
         client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
         client.get_course_id.return_value = MOODLE_COURSE_ID
         client.update_content_metadata(SERIALIZED_DATA)
@@ -69,8 +74,9 @@ class TestMoodleApiClient(unittest.TestCase):
         """
         expected_data = {'wsfunction': 'core_course_delete_courses'}
         expected_url = self.moodle_base_url + quote('?courseids[]={0}'.format(MOODLE_COURSE_ID), safe='?=')
+
         client = MoodleAPIClient(self.enterprise_config)
-        client._post = unittest.mock.MagicMock(name='_post')  # pylint: disable=protected-access
+        client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
         client.get_course_id = unittest.mock.MagicMock(name='_get_course_id')
         client.get_course_id.return_value = MOODLE_COURSE_ID
         client.delete_content_metadata(SERIALIZED_DATA)

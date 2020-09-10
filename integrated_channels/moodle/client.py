@@ -4,8 +4,8 @@ Client for connecting to Moodle.
 """
 
 import json
-
 from urllib.parse import urlencode, urljoin
+
 import requests
 
 from django.apps import apps
@@ -13,19 +13,20 @@ from django.apps import apps
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
-# accessexception
-# invalidtoken
-
 
 def moodle_request_wrapper(method):
+    """
+    Wraps requests to Moodle's API in a token check.
+    Will obtain a new token if there isn't one.
+    """
     def inner(self, *args, **kwargs):
         if not self.token:
-            self.token = self._get_access_token()
+            self.token = self._get_access_token()  # pylint: disable=protected-access
         response = method(self, *args, **kwargs)
         body = response.json()
         error_code = body.get('errorcode')
         if error_code and error_code == 'invalidtoken':
-            self.token = self._get_access_token()
+            self.token = self._get_access_token()  # pylint: disable=protected-access
             response = method(self, *args, **kwargs)
         elif error_code:
             raise ClientError(
@@ -97,8 +98,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
             raise ClientError('MoodleAPIClient request failed: 404 Course key '
-                '"{}" not found in Moodle.'.format(key)
-            )
+                              '"{}" not found in Moodle.'.format(key))
 
         return parsed_response[0]['id']
 
@@ -164,6 +164,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         return response
 
     def _get_access_token(self):
+        """
+        Obtains a new access token from Moodle using username and password.
+        """
         querystring = {
             'service': self.enterprise_configuration.service_short_name
         }
