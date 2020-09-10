@@ -13,6 +13,7 @@ from testfixtures import LogCapture
 
 from django.test.utils import override_settings
 
+from enterprise.constants import ContentType
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataItemExport
 from integrated_channels.integrated_channel.models import ContentMetadataItemTransmission
@@ -76,11 +77,11 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
             transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
             transmitter.transmit({
                 content_id: ContentMetadataItemExport(
-                    {'key': content_id, 'content_type': 'course'},
+                    {'key': content_id, ContentType.METADATA_KEY: ContentType.COURSE},
                     {'courseID': content_id, 'update': True}
                 ),
                 content_id_2: ContentMetadataItemExport(
-                    {'key': content_id_2, 'content_type': 'course'},
+                    {'key': content_id_2, ContentType.METADATA_KEY: ContentType.COURSE},
                     {'courseID': content_id_2, 'update': True}
                 )
             })
@@ -120,11 +121,11 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         transmitter = SapSuccessFactorsContentMetadataTransmitter(self.enterprise_config)
         transmitter.transmit({
             content_id: ContentMetadataItemExport(
-                {'key': content_id, 'content_type': 'course'},
+                {'key': content_id, ContentType.METADATA_KEY: ContentType.COURSE},
                 {'courseID': content_id, 'update': True}
             ),
             content_id_2: ContentMetadataItemExport(
-                {'key': content_id_2, 'content_type': 'course'},
+                {'key': content_id_2, ContentType.METADATA_KEY: ContentType.COURSE},
                 {'courseID': content_id_2, 'update': True}
             ),
         })
@@ -159,11 +160,11 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
         with override_settings(INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT={}):
             transmitter.transmit({
                 content_id: ContentMetadataItemExport(
-                    {'key': content_id, 'content_type': 'course'},
+                    {'key': content_id, ContentType.METADATA_KEY: ContentType.COURSE},
                     {'courseID': content_id, 'update': True}
                 ),
                 content_id_2: ContentMetadataItemExport(
-                    {'key': content_id_2, 'content_type': 'course'},
+                    {'key': content_id_2, ContentType.METADATA_KEY: ContentType.COURSE},
                     {'courseID': content_id_2, 'update': True}
                 ),
             })

@@ -17,6 +17,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
+from enterprise.constants import ContentType
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import MockLoggingHandler
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
@@ -351,7 +352,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         Verify `get_catalog_results` of CourseCatalogApiClient works as expected.
         """
-        content_filter_query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        content_filter_query = {ContentType.METADATA_KEY: ContentType.COURSE, 'aggregation_key': ['course:edX+DemoX']}
         response_dict = {
             'next': 'next',
             'previous': 'previous',
@@ -360,7 +361,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
                 'catalog_id': 1111,
                 'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
                 'aggregation_key': 'course:edX+DemoX',
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'title': 'edX Demonstration Course',
             }],
         }
@@ -382,7 +383,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         Verify `get_catalog_results` of CourseCatalogApiClient works as expected.
         """
-        content_filter_query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        content_filter_query = {ContentType.METADATA_KEY: ContentType.COURSE, 'aggregation_key': ['course:edX+DemoX']}
         self.api.get_catalog_results(content_filter_query=content_filter_query)
         assert mocked_get_catalog_results_from_discovery.call_count == 1
 
@@ -400,7 +401,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
         """
         Verify `get_catalog_results` of CourseCatalogApiClient works as expected with traverse_pagination=True.
         """
-        content_filter_query = {'content_type': 'course', 'aggregation_key': ['course:edX+DemoX']}
+        content_filter_query = {ContentType.METADATA_KEY: ContentType.COURSE, 'aggregation_key': ['course:edX+DemoX']}
         response_dict = {
             'next': 'next',
             'previous': None,
@@ -409,7 +410,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
                 'catalog_id': 1111,
                 'uuid': '785b11f5-fad5-4ce1-9233-e1a3ed31aadb',
                 'aggregation_key': 'course:edX+DemoX',
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'title': 'edX Demonstration Course',
             }],
         }
@@ -524,7 +525,7 @@ class TestCourseCatalogApiService(CourseDiscoveryApiTestMixin, unittest.TestCase
         self.integration_mock.current.return_value = self.integration_config_mock
         self.api = CourseCatalogApiServiceClient()
 
-    @ddt.data({}, {'program': 'data'})
+    @ddt.data({}, {ContentType.PROGRAM: 'data'})
     def test_program_exists_no_exception(self, response):
         """
         The client should return the appropriate boolean value for program existence depending on the response.

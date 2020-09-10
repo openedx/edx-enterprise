@@ -10,6 +10,7 @@ import mock
 import responses
 from pytest import mark
 
+from enterprise.constants import ContentType
 from integrated_channels.degreed.exporters.content_metadata import DegreedContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import get_fake_content_metadata
@@ -58,7 +59,7 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
                 'aggregation_key': 'course:edX+DemoX',
                 'title': 'edX Demonstration Course',
                 'key': 'edX+DemoX',
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'image_url': 'https://edx.devstack.lms:18000/'
                              'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
                 'short_description': 'Some short description.',
@@ -74,7 +75,7 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
                 'key': 'course-v1:edX+DemoX+Demo_Course',
                 'availability': 'Current',
                 'title': 'edX Demonstration Course',
-                'content_type': 'courserun',
+                ContentType.METADATA_KEY: ContentType.COURSE_RUN,
                 'image_url': 'https://edx.devstack.lms:18000/'
                              'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
             },
@@ -89,7 +90,7 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
                 'language': [],
                 'type': 'Verified Certificate',
                 'status': 'active',
-                'content_type': 'program',
+                ContentType.METADATA_KEY: ContentType.PROGRAM,
                 'card_image_url': 'https://edx.devstack.discovery/'
                                   'media/programs/banner_images/5742ec8d-25ce-43b7-a158-6dad82034ca2.jpg',
             },
@@ -98,7 +99,7 @@ class TestDegreedContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin)
         (
             {
                 'title': 'INVALID COURSE',
-                'content_type': 'INVALID-CONTENT_TYPE',
+                ContentType.METADATA_KEY: 'INVALID-CONTENT_TYPE',
             },
             '',
         ),

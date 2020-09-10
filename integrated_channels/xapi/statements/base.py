@@ -6,6 +6,7 @@ Statements base for xAPI.
 
 from tincan import Activity, ActivityDefinition, Agent, LanguageMap, Statement
 
+from enterprise.constants import ContentType
 from integrated_channels.xapi.constants import X_API_ACTIVITY_COURSE
 
 
@@ -52,7 +53,7 @@ class EnterpriseStatement(Statement):
         description = (course_overview.short_description or '').encode("ascii", "ignore").decode('ascii')
 
         activity_id = course_overview.id
-        if object_type is not None and object_type == 'course':
+        if object_type is not None and object_type == ContentType.COURSE:
             activity_id = course_overview.course_key
 
         xapi_activity_id = 'https://{domain}/xapi/activities/{object_type}/{activity_id}'.format(

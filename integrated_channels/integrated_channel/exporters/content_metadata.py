@@ -13,6 +13,7 @@ from logging import getLogger
 
 from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
+from enterprise.constants import ContentType
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
 
@@ -101,7 +102,7 @@ class ContentMetadataExporter(Exporter):
         """
         Transform the provided content metadata item to the schema expected by the integrated channel.
         """
-        content_metadata_type = content_metadata_item['content_type']
+        content_metadata_type = content_metadata_item[ContentType.METADATA_KEY]
         transformed_item = {}
         for integrated_channel_schema_key, edx_data_schema_key in self.DATA_TRANSFORM_MAPPING.items():
             # Look for transformer functions defined on subclasses.

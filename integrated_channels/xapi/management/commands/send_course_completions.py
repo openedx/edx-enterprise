@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand, CommandError
 
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from enterprise.constants import ContentType
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer, EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
 from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
@@ -175,9 +176,9 @@ class Command(BaseCommand):
         """
         Returns the object type for the xAPI transmission based on the course object identifier
         """
-        object_type = 'course'
+        object_type = ContentType.COURSE
         if 'course-v1' in xapi_transmission.course_id:
-            object_type = 'courserun'
+            object_type = ContentType.COURSE_RUN
         return object_type
 
     def get_enterprise_course_enrollments(self, enterprise_customer):

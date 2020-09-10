@@ -17,6 +17,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import utils
+from enterprise.constants import ContentType
 from enterprise.utils import NotConnectedToOpenEdX, get_configuration_value_for_site
 
 try:
@@ -225,8 +226,8 @@ class CourseCatalogApiClient:
         # always a substring of the course run id and this is not always the case.  The only reliable way to determine
         # which courses are associated with a given course run id is by by calling the discovery service.
         course_run_data = self.get_course_run(course_identifier)
-        if 'course' in course_run_data:
-            return course_run_data['course']
+        if ContentType.COURSE in course_run_data:
+            return course_run_data[ContentType.COURSE]
 
         LOGGER.info(
             "Could not find course_key for course identifier [%s].", course_identifier

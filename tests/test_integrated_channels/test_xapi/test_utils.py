@@ -10,6 +10,7 @@ import mock
 from faker import Factory as FakerFactory
 from pytest import mark
 
+from enterprise.constants import ContentType
 from integrated_channels.exceptions import ClientError
 from integrated_channels.xapi.client import EnterpriseXAPIClient
 from integrated_channels.xapi.utils import (
@@ -75,7 +76,7 @@ class TestUtils(unittest.TestCase):
             self.x_api_lrs_config,
             self.user,
             self.course_overview,
-            'course',
+            ContentType.COURSE,
             {'status': 500, 'error_messages': None},
         )
 
@@ -97,7 +98,7 @@ class TestUtils(unittest.TestCase):
             self.x_api_lrs_config,
             self.user,
             self.course_overview,
-            'course',
+            ContentType.COURSE,
             {'status': 500, 'error_messages': None},
         )
 
@@ -117,7 +118,7 @@ class TestUtils(unittest.TestCase):
             self.x_api_lrs_config,
             self.user,
             self.course_overview,
-            'course',
+            ContentType.COURSE,
             {'status': 500, 'error_messages': None},
         )
 
@@ -135,7 +136,7 @@ class TestUtils(unittest.TestCase):
             self.user,
             self.course_overview,
             self.course_grade,
-            'course',
+            ContentType.COURSE,
             {'status': 500, 'error_message': None}
         )
 

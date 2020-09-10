@@ -46,7 +46,7 @@ from enterprise.api_client.discovery import CourseCatalogApiClient, get_course_c
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
-from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, json_serialized_course_modes
+from enterprise.constants import ALL_ACCESS_CONTEXT, ENTERPRISE_OPERATOR_ROLE, ContentType, json_serialized_course_modes
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -579,7 +579,7 @@ class EnterpriseCustomer(TimeStampedModel):
                     enrolled_in={
                         'name': course_name,
                         'url': destination_url,
-                        'type': 'course',
+                        'type': ContentType.COURSE,
                         'start': course_start,
                     },
                     enterprise_customer=self,
@@ -1649,11 +1649,12 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
         search_results = catalog_client.get_catalog_results(content_filter_query, query_params.dict())
         for content in search_results['results']:
-            if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
+            if content[ContentType.METADATA_KEY] == ContentType.COURSE_RUN and content['has_enrollable_seats']:
                 results.append(content)
-            elif content['content_type'] == 'course':
+            elif content[ContentType.METADATA_KEY] == ContentType.COURSE:
                 results.append(content)
-            elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
+            elif content[ContentType.METADATA_KEY] == ContentType.PROGRAM and \
+                    content['is_program_eligible_for_one_click_purchase']:
                 results.append(content)
 
         response = {

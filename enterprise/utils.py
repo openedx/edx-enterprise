@@ -30,7 +30,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
+from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, ContentType
 
 try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
@@ -942,7 +942,7 @@ def get_content_metadata_item_id(content_metadata_item):
     """
     Return the unique identifier given a content metadata item dictionary.
     """
-    if content_metadata_item['content_type'] == 'program':
+    if content_metadata_item[ContentType.METADATA_KEY] == ContentType.PROGRAM:
         return content_metadata_item['uuid']
     return content_metadata_item['key']
 
@@ -1091,3 +1091,17 @@ def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     # Deleting the DCS cache
     consent_cache_key = get_cache_key(type='data_sharing_consent_needed', user_id=user.id, course_id=course_id)
     TieredCache.delete_all_tiers(consent_cache_key)
+
+
+def get_enterprise_enrollment_url(content_key):
+    """
+    Get the enrollment_url for the constrained checkout experience offered
+    by the edx-enterprise package.
+
+    Args:
+        content_key (str): Course, Course Run, or Program key.
+        content_type (str):
+
+    Returns:
+
+    """

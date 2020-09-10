@@ -26,7 +26,7 @@ from django.urls import reverse
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
-from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE, ContentType
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -1315,7 +1315,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             'error': ["Content filter 'first_enrollable_paid_seat_price__lte' must be of type <class 'str'>"]
         },
         {
-            'content_filter': {'key': [3, 'course']},
+            'content_filter': {'key': [3, ContentType.COURSE]},
             'error': ["Content filter 'key' must contain values of type <class 'str'>"]
         }
     )
@@ -2008,7 +2008,7 @@ class TestEnterpriseCatalogQuery(unittest.TestCase):
             'error': ["Content filter 'first_enrollable_paid_seat_price__lte' must be of type <class 'str'>"]
         },
         {
-            'content_filter': {'key': [3, 'course']},
+            'content_filter': {'key': [3, ContentType.COURSE]},
             'error': ["Content filter 'key' must contain values of type <class 'str'>"]
         }
     )

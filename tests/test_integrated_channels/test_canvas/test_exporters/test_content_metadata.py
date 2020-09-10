@@ -10,6 +10,7 @@ import mock
 import responses
 from pytest import mark
 
+from enterprise.constants import ContentType
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import get_fake_content_metadata
@@ -112,7 +113,7 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             'aggregation_key': 'course:edX+DemoX',
             'title': 'edX Demonstration Course',
             'key': 'edX+DemoX',
-            'content_type': 'course',
+            ContentType.METADATA_KEY: ContentType.COURSE,
         }
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_default_view(content_metadata_item) == 'syllabus'

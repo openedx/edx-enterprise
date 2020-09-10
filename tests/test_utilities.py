@@ -16,6 +16,7 @@ from django.core import mail
 from django.test import override_settings
 
 from enterprise import utils
+from enterprise.constants import ContentType
 from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
@@ -260,7 +261,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'Demo Course',
                 'url': 'http://lms.example.com/courses',
-                'type': 'course',
+                'type': ContentType.COURSE,
                 'start': '2017-01-01'
             },
             'EdX',
@@ -294,7 +295,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'Enterprise Learning',
                 'url': 'http://lms.example.com/courses',
-                'type': 'course',
+                'type': ContentType.COURSE,
                 'start': '2017-06-23'
             },
             'Widgets, Inc',
@@ -365,7 +366,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'coursename',
                 'url': 'lms.example.com/courses',
-                'type': 'program',
+                'type': ContentType.PROGRAM,
                 'branding': 'MicroMaster',
                 'start': '2017-01-01',
             },
@@ -415,7 +416,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'Demo Course',
                 'url': 'http://lms.example.com/courses',
-                'type': 'course',
+                'type': ContentType.COURSE,
                 'start': '2017-01-01'
             },
             'EdX',
@@ -444,7 +445,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'Enterprise Learning',
                 'url': 'http://lms.example.com/courses',
-                'type': 'course',
+                'type': ContentType.COURSE,
                 'start': '2017-06-23'
             },
             'Widgets, Inc',
@@ -503,7 +504,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'coursename',
                 'url': 'lms.example.com/courses',
-                'type': 'program',
+                'type': ContentType.PROGRAM,
                 'branding': 'MicroMaster',
                 'start': '2017-01-01',
             },
@@ -561,7 +562,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'Demo Course',
                 'url': 'http://lms.example.com/courses',
-                'type': 'course',
+                'type': ContentType.COURSE,
                 'start': '2017-01-01'
             },
             'EdX',
@@ -596,7 +597,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'Enterprise Learning',
                 'url': 'http://lms.example.com/courses',
-                'type': 'course',
+                'type': ContentType.COURSE,
                 'start': '2017-06-23'
             },
             'Widgets, Inc',
@@ -669,7 +670,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             {
                 'name': 'coursename',
                 'url': 'lms.example.com/courses',
-                'type': 'program',
+                'type': ContentType.PROGRAM,
                 'branding': 'MicroMaster',
                 'start': '2017-01-01',
             },
@@ -752,7 +753,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         enrolled_in = {
             'name': 'Demo Course',
             'url': 'http://lms.example.com/courses',
-            'type': 'course',
+            'type': ContentType.COURSE,
             'start': '2017-01-01'
         }
         enrolled_in['start'] = datetime.datetime.strptime(enrolled_in['start'], '%Y-%m-%d')

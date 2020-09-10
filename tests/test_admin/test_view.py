@@ -33,7 +33,7 @@ from enterprise.admin.forms import (
     TransmitEnterpriseCoursesForm,
 )
 from enterprise.admin.utils import ValidationMessages
-from enterprise.constants import PAGE_SIZE
+from enterprise.constants import PAGE_SIZE, ContentType
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCourseEnrollment,
@@ -105,7 +105,7 @@ class TestPreviewTemplateView(TestCase):
         assert self.client.login(username=self.user.username, password="QWERTY")
         url = reverse(
             'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
-            args=((self.template.pk, 'course'))
+            args=(self.template.pk, ContentType.COURSE)
         )
         result = self.client.get(url)
         assert result.content.decode('utf-8') == (
@@ -119,7 +119,7 @@ class TestPreviewTemplateView(TestCase):
         assert self.client.login(username=self.user.username, password="QWERTY")
         url = reverse(
             'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
-            args=((self.template.pk, 'program'))
+            args=(self.template.pk, ContentType.PROGRAM)
         )
         result = self.client.get(url)
         assert result.content.decode('utf-8') == (
@@ -145,7 +145,7 @@ class TestPreviewTemplateView(TestCase):
         assert self.client.login(username=self.user.username, password="QWERTY")
         url = reverse(
             'admin:' + enterprise_admin.utils.UrlNames.PREVIEW_EMAIL_TEMPLATE,
-            args=((self.template.pk + 1, 'course'))
+            args=(self.template.pk + 1, ContentType.COURSE)
         )
         result = self.client.get(url)
         assert result.status_code == 404

@@ -50,6 +50,17 @@ class CourseModes:
     VERIFIED = 'verified'
 
 
+class ContentType:
+    """
+    Class to distinguish between Course, Course Run, and Program content types.
+    """
+
+    COURSE = 'course'
+    COURSE_RUN = 'courserun'
+    METADATA_KEY = 'content_type'
+    PROGRAM = 'program'
+
+
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = [
     CourseModes.VERIFIED,
@@ -92,7 +103,7 @@ ALLOWED_TAGS = [
 ]
 
 DEFAULT_CATALOG_CONTENT_FILTER = {
-    'content_type': 'course',
+    ContentType.METADATA_KEY: ContentType.COURSE,
     'partner': 'edx',
     'level_type': [
         'Introductory',

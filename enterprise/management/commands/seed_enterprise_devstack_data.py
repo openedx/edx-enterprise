@@ -22,6 +22,7 @@ from enterprise.constants import (
     ENTERPRISE_LEARNER_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE,
+    ContentType,
 )
 from enterprise.models import (
     EnterpriseCustomer,
@@ -41,7 +42,7 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 CATALOG_CONTENT_FILTER = {
-    'content_type': 'courserun',
+    ContentType.METADATA_KEY: ContentType.COURSE_RUN,
 }
 
 
