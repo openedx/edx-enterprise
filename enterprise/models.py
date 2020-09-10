@@ -52,7 +52,6 @@ from enterprise.utils import (
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
     get_configuration_value,
-    get_course_key_from_course_run_key,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
 )
@@ -417,16 +416,16 @@ class EnterpriseCustomer(TimeStampedModel):
             )
         return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
-    def get_course_run_enrollment_url(self, course_run_key):
+    def get_course_run_enrollment_url(self, course_run_key, parent_course_key):
         """
         Return enterprise landing page url for the given course.
 
         Arguments:
             course_run_key (str): The course run id for the course to be displayed.
+            parent_course_key (str): The parent course id for the given course run.
         Returns:
             (str): Enterprise landing page url.
         """
-        parent_course_key = get_course_key_from_course_run_key(course_run_key)
         params = utils.get_enterprise_utm_context(self)
         if self.enable_learner_portal:
             params.update({'course_run_key': course_run_key})
@@ -1805,17 +1804,18 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
-    def get_course_run_enrollment_url(self, course_run_key):
+    def get_course_run_enrollment_url(self, course_run_key, parent_course_key):
         """
         Return enterprise course enrollment page url with the catalog information for the given course.
 
         Arguments:
             course_run_key (str): The course run id for the course to be displayed.
+            parent_course_key (str): The parent course id for the given course run.
 
         Returns:
             (str): Enterprise landing page url.
         """
-        url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key)
+        url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key, parent_course_key)
         if self.publish_audit_enrollment_urls:
             url = utils.update_query_parameters(url, {'audit': 'true'})
         if not self.enterprise_customer.enable_learner_portal:

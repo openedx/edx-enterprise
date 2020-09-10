@@ -53,6 +53,7 @@ class EnterpriseCourseContextSerializerMixin:
             course_runs=course.get('course_runs') or [],
             enterprise_customer=enterprise_customer,
             enterprise_context=enterprise_context,
+            parent_course_key=course['key'],
         )
 
         # Update marketing urls in course metadata to include enterprise related info (i.e. our global context).
@@ -65,7 +66,7 @@ class EnterpriseCourseContextSerializerMixin:
         course.update(enterprise_context)
         return course
 
-    def update_course_runs(self, course_runs, enterprise_customer, enterprise_context):
+    def update_course_runs(self, course_runs, enterprise_customer, enterprise_context, parent_course_key):
         """
         Update Marketing urls in course metadata and return updated course.
 
@@ -73,6 +74,7 @@ class EnterpriseCourseContextSerializerMixin:
             course_runs (list): List of course runs.
             enterprise_customer (EnterpriseCustomer): enterprise customer instance.
             enterprise_context (dict): The context to inject into URLs.
+            parent_course_key (str): The parent course id for the given course runs.
 
         Returns:
             (dict): Dictionary containing updated course metadata.
@@ -84,7 +86,7 @@ class EnterpriseCourseContextSerializerMixin:
                 query_parameters=dict(enterprise_context, **utils.get_enterprise_utm_context(enterprise_customer)),
             )
 
-            enrollment_url = enterprise_customer.get_course_run_enrollment_url(course_run.get('key'))
+            enrollment_url = enterprise_customer.get_course_run_enrollment_url(course_run.get('key'), parent_course_key)
 
             course_run.update({
                 'enrollment_url': enrollment_url,

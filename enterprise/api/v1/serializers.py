@@ -267,7 +267,7 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
                 item['enrollment_url'] = instance.get_course_enrollment_url(item['key'])
                 item['active'] = has_course_run_available_for_enrollment(item['course_runs'])
             if content_type == 'courserun':
-                item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'])
+                item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'], item['course'])
             if content_type == 'program':
                 item['enrollment_url'] = instance.get_program_enrollment_url(item['uuid'])
 
@@ -451,7 +451,8 @@ class CourseDetailSerializer(ImmutableStateSerializer):
         )
         for course_run in updated_course['course_runs']:
             course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                course_run['key']
+                course_run['key'],
+                updated_course['key'],
             )
         return updated_course
 
@@ -477,7 +478,8 @@ class CourseRunDetailSerializer(ImmutableStateSerializer):
         updated_course_run = copy.deepcopy(instance)
         enterprise_customer_catalog = self.context['enterprise_customer_catalog']
         updated_course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-            updated_course_run['key']
+            updated_course_run['key'],
+            updated_course_run['course'],
         )
         return updated_course_run
 
@@ -509,7 +511,8 @@ class ProgramDetailSerializer(ImmutableStateSerializer):
             course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(course['key'])
             for course_run in course['course_runs']:
                 course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                    course_run['key']
+                    course_run['key'],
+                    course['key'],
                 )
         return updated_program
 

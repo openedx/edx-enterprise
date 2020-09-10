@@ -1074,6 +1074,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         )
         enrollment_url = enterprise_catalog.get_course_run_enrollment_url(
             course_run_key=course_run_id,
+            parent_course_key=parent_course_key,
         )
         if learner_portal_enabled:
             learner_portal_course_page_url = '{}/{}/course/{}'.format(
@@ -1119,6 +1120,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         )
         enrollment_url = enterprise_catalog.get_course_run_enrollment_url(
             course_run_key=course_run_id,
+            parent_course_key=parent_course_key,
         )
         assert_url_contains_query_parameters(enrollment_url, {'audit': 'true'})
 

@@ -1091,15 +1091,3 @@ def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     # Deleting the DCS cache
     consent_cache_key = get_cache_key(type='data_sharing_consent_needed', user_id=user.id, course_id=course_id)
     TieredCache.delete_all_tiers(consent_cache_key)
-
-
-def get_course_key_from_course_run_key(course_run_key):
-    """
-    Args:
-        course_run_key (str): The course run id for which we would like to know the parent course id.
-
-    Returns:
-        parent_course_key (str): The parent course id for the given course run.
-    """
-    split_key = course_run_key.split(':')[1].split('+')
-    return split_key[0] + '+' + split_key[1]
