@@ -151,15 +151,3 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             content_metadata_item.get("key")
         )
         assert exporter.transform_key(content_metadata_item) == expected_id
-
-
-    @responses.activate
-    def test_transform_course_code(self):
-        """
-        `CanvasContentMetadataExporter``'s ``course_code` returns key.
-        """
-        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
-        exporter = CanvasContentMetadataExporter('fake-user', self.config)
-        assert exporter.transform_course_code(
-            content_metadata_item
-        ) == content_metadata_item.get('key')
