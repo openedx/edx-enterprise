@@ -25,9 +25,9 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
         self.user = 'user'
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.moodle_base_url,
-            wsusername=self.user,
-            wspassword=self.password,
-            api_token=self.api_token,
+            username=self.user,
+            password=self.password,
+            token=self.api_token,
         )
 
     def test_prepare_items_for_transmission(self):
