@@ -938,6 +938,7 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "number": "DemoX",
     "type": "verified",
     "key": "course-v1:edX+DemoX+Demo_Course",
+    ContentType.COURSE: 'edX+DemoX',
     "org": "edX",
     "level_type": None,
     "program_types": [],
