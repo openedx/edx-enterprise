@@ -28,16 +28,6 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
 
     LONG_STRING_LIMIT = 2000
 
-    def transform_key(self, content_metadata_item):
-        """
-        IntegrationId is set to edx_{account_id}_{key} which allows multiple accounts to hold the same
-        courses
-        """
-        return "edx_{}_{}".format(
-            self.enterprise_configuration.canvas_account_id,
-            content_metadata_item.get('key', '')
-        )
-
     def transform_description(self, content_metadata_item):
         """
         Return the course description and enrollment url as Canvas' syllabus body attribute.
