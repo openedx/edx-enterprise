@@ -13,12 +13,13 @@ from pytest import mark
 from django.db import transaction
 from django.test import override_settings
 
-from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ContentType
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ContentType
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     PendingEnrollment,
+    PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
@@ -30,6 +31,7 @@ from test_utils.factories import (
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     PendingEnrollmentFactory,
+    PendingEnterpriseCustomerAdminUserFactory,
     PendingEnterpriseCustomerUserFactory,
     UserFactory,
 )
@@ -247,10 +249,207 @@ class TestDefaultContentFilter(unittest.TestCase):
 
 
 @mark.django_db
+class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
+    """
+    Test signals associated with PendingEnterpriseCustomerAdminUser.
+    """
+
+    def setUp(self):
+        """
+        Setup for `TestPendingEnterpriseAdminUserSignals` test.
+        """
+        self.admin_user = UserFactory(id=2, email='user@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        super(TestPendingEnterpriseAdminUserSignals, self).setUp()
+
+    def _assert_pending_ecus_exist(self, should_exist=True):
+        """
+        Assert whether ``PendingEnterpriseCustomerUser`` record(s) exist for the specified user
+        and enterprise customer.
+        """
+        pending_ecus = PendingEnterpriseCustomerUser.objects.filter(
+            user_email=self.admin_user.email,
+            enterprise_customer=self.enterprise_customer,
+        )
+        assert should_exist == pending_ecus.exists()
+
+    def test_create_pending_enterprise_admin_user(self):
+        """
+        Assert that creating a ``PendingEnterpriseCustomerAdminUser`` creates a ``PendingEnterpriseCustomerUser``.
+        """
+        # verify that PendingEnterpriseCustomerUser record does not yet exist.
+        self._assert_pending_ecus_exist(should_exist=False)
+
+        # create new PendingEnterpriseCustomerAdminUser
+        PendingEnterpriseCustomerAdminUserFactory(
+            user_email=self.admin_user.email,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # verify that PendingEnterpriseCustomerUser record was created.
+        self._assert_pending_ecus_exist()
+
+    def test_delete_pending_enterprise_admin_user(self):
+        """
+        Assert that deleting a ``PendingEnterpriseCustomerAdminUser`` deletes its ``PendingEnterpriseCustomerUser``.
+        """
+        # create new PendingEnterpriseCustomerAdminUser
+        PendingEnterpriseCustomerAdminUserFactory(
+            user_email=self.admin_user.email,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # verify that PendingEnterpriseCustomerUser record exists.
+        self._assert_pending_ecus_exist()
+
+        # delete the PendingEnterpriseCustomerAdminUser record and verify that the
+        # associated PendingEnterpriseCustomerUser is also deleted.
+        PendingEnterpriseCustomerAdminUser.objects.filter(
+            user_email=self.admin_user.email,
+            enterprise_customer=self.enterprise_customer,
+        ).delete()
+        self._assert_pending_ecus_exist(should_exist=False)
+
+
+@mark.django_db
+@ddt.ddt
+class TestEnterpriseAdminRoleSignals(unittest.TestCase):
+    """
+    Test signals associated with EnterpriseCustomerUser and the enterprise_admin role.
+    """
+
+    def setUp(self):
+        """
+        Setup for `TestEnterpriseAdminRoleSignals` test.
+        """
+        self.enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
+        self.admin_user = UserFactory(id=2, email='user@example.com')
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        super(TestEnterpriseAdminRoleSignals, self).setUp()
+
+    @ddt.data(
+        {'has_pending_admin_user': True},
+        {'has_pending_admin_user': False},
+    )
+    @ddt.unpack
+    def test_assign_enterprise_admin_role_success(self, has_pending_admin_user):
+        """
+        Test that when a new `EnterpriseCustomerUser` record is created, an enterprise admin role is created for
+        that user, assuming a `PendingEnterpriseCustomerAdminUser` record exists.
+        """
+        if has_pending_admin_user:
+            PendingEnterpriseCustomerAdminUserFactory(
+                user_email=self.admin_user.email,
+                enterprise_customer=self.enterprise_customer,
+            )
+
+        # verify that no EnterpriseCustomerUser exists.
+        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
+            user_id=self.admin_user.id,
+        )
+        self.assertFalse(enterprise_customer_user.exists())
+
+        # verify that no admin role assignment exists.
+        admin_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.admin_user,
+            role=self.enterprise_admin_role,
+        )
+        self.assertFalse(admin_role_assignment.exists())
+
+        # create a new EnterpriseCustomerUser record.
+        EnterpriseCustomerUserFactory(
+            user_id=self.admin_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # verify that a new admin user role assignment is created when appropriate.
+        admin_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.admin_user,
+            role=self.enterprise_admin_role,
+        )
+        assert admin_role_assignment.exists() == has_pending_admin_user
+
+    @ddt.data(
+        {'should_unlink_user': True, 'should_admin_role_exist': False},
+        {'should_unlink_user': False, 'should_admin_role_exist': True},
+    )
+    @ddt.unpack
+    def test_assign_enterprise_admin_role_post_save(self, should_unlink_user, should_admin_role_exist):
+        """
+        Verify that the enterprise_admin role is created on update.
+        When the EnterpriseCustomerUser record is unlinked, the role should be removed.
+        """
+        # create new PendingEnterpriseCustomerAdminUser and EnterpriseCustomerUser records.
+        PendingEnterpriseCustomerAdminUserFactory(
+            user_email=self.admin_user.email,
+            enterprise_customer=self.enterprise_customer,
+        )
+        EnterpriseCustomerUserFactory(
+            user_id=self.admin_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # update EnterpriseCustomerUser record.
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+            user_id=self.admin_user.id
+        )
+        if should_unlink_user:
+            enterprise_customer_user.linked = False
+        else:
+            enterprise_customer_user.active = False
+        enterprise_customer_user.save()
+
+        if should_admin_role_exist:
+            # verify that the enterprise_admin role exists.
+            admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.admin_user,
+                role=self.enterprise_admin_role,
+            )
+            self.assertTrue(admin_role_assignments.exists())
+        else:
+            # verify that the enterprise_admin role is deleted when unlinking an EnterpriseCustomerUser
+            admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                user=self.admin_user,
+                role=self.enterprise_admin_role,
+            )
+            self.assertFalse(admin_role_assignments.exists())
+
+    def test_delete_enterprise_admin_role_assignment_success(self):
+        """
+        Test that when `EnterpriseCustomerUser` record is deleted, the associated
+        enterprise admin user role assignment is also deleted.
+        """
+        # create new PendingEnterpriseCustomerAdminUser and EnterpriseCustomerUser records.
+        PendingEnterpriseCustomerAdminUserFactory(
+            user_email=self.admin_user.email,
+            enterprise_customer=self.enterprise_customer,
+        )
+        EnterpriseCustomerUserFactory(
+            user_id=self.admin_user.id,
+            enterprise_customer=self.enterprise_customer,
+        )
+
+        # verify that a new admin role assignment is created.
+        admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.admin_user,
+            role=self.enterprise_admin_role,
+        )
+        self.assertTrue(admin_role_assignments.exists())
+
+        # delete EnterpriseCustomerUser record and verify that admin role assignment is deleted as well.
+        EnterpriseCustomerUser.objects.filter(user_id=self.admin_user.id).delete()
+        admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.admin_user,
+            role=self.enterprise_admin_role,
+        )
+        self.assertFalse(admin_role_assignments.exists())
+
+
+@mark.django_db
 @ddt.ddt
 class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
     """
-    Tests signals associated with EnterpriseCustomerUser.
+    Tests signals associated with EnterpriseCustomerUser and the enterprise_learner role.
     """
     def setUp(self):
         """

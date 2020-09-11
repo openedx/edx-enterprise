@@ -13,10 +13,15 @@ Change Log
 
 Unreleased
 --------------------
-[3.7.9] 2020-09-10
+[3.8.1] 2020-09-11
 -------------------
 
 * Course and Course Run enrollment_url now points to learner portal course page if LP enabled.
+
+[3.8.0] 2020-09-09
+-------------------
+
+* Assign "enterprise_admin" system-wide role to pending admin users when registering their user account.
 
 [3.7.8] 2020-09-09
 -------------------
