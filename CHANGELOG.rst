@@ -18,6 +18,11 @@ Unreleased
 
 * Course and Course Run enrollment_url now points to learner portal course page if LP enabled.
 
+[3.8.1] 2020-09-10
+-------------------
+
+* Canvas channel discovery improvements assorted changes.
+
 [3.8.0] 2020-09-09
 -------------------
 

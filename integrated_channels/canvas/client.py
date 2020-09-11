@@ -50,6 +50,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('canvas')
         self.session = None
         self.expires_at = None
+        self.course_create_url = CanvasAPIClient.course_create_endpoint(
+            self.enterprise_configuration.canvas_base_url,
+            self.enterprise_configuration.canvas_account_id
+        )
 
     @staticmethod
     def course_create_endpoint(canvas_base_url, canvas_account_id):
@@ -75,29 +79,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         self._create_session()
 
         # step 1: create the course
-        url = CanvasAPIClient.course_create_endpoint(
-            self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id
-        )
-        status_code, response_text = self._post(url, serialized_data)
+        status_code, response_text = self._post(self.course_create_url, serialized_data)
+        created_course_id = json.loads(response_text)['id']
 
-        # step 2: upload image_url if present
-        try:
-            # there is no way to do this in a single request during create
-            # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
-            created_course_id = json.loads(response_text)['id']
-            content_metadata = json.loads(serialized_data.decode('utf-8'))[ContentType.COURSE]
-            if "image_url" in content_metadata:
-                url = CanvasAPIClient.course_update_endpoint(
-                    self.enterprise_configuration.canvas_base_url,
-                    created_course_id,
-                )
-                self._put(url, json.dumps({
-                    ContentType.COURSE: {'image_url': content_metadata['image_url']}
-                }).encode('utf-8'))
-        except Exception:  # pylint: disable=broad-except
-            # we do not want course image update to cause failures
-            pass
+        # step 2: upload image_url and any other details
+        self._update_course_details(created_course_id, serialized_data)
 
         return status_code, response_text
 
@@ -127,6 +113,62 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return self._delete(url)
 
+    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        learner_data = json.loads(payload)
+        self._create_session()
+
+        # Retrieve the Canvas user ID from the user's edx email (it is assumed that the learner's Edx
+        # and Canvas emails will match).
+        canvas_user_id = self._search_for_canvas_user_by_email(user_id)
+
+        # With the Canvas user ID, retrieve all courses for the user.
+        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
+
+        # Find the course who's integration ID matches the learner data course ID
+        course_id = None
+        for course in user_courses:
+            integration_id = course['integration_id']
+            if '+'.join(integration_id.split(":")[1].split("+")[:2]) == learner_data['courseID']:
+                course_id = course['id']
+                break
+
+        if not course_id:
+            raise CanvasClientError(
+                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
+                "/Canvas learner: {canvas_user_id}.".format(
+                    course_id=learner_data['courseID'],
+                    user_id=learner_data['userID'],
+                    canvas_user_id=canvas_user_id
+                ))
+
+        # Depending on if the assignment already exists, either retrieve or create it.
+        assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
+
+        # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
+        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
+                         '{assignment_id}/submissions/{user_id}'.format(
+                             base_url=self.enterprise_configuration.canvas_base_url,
+                             course_id=course_id,
+                             assignment_id=assignment_id,
+                             user_id=canvas_user_id
+                         )
+
+        # The percent grade from the grades api is represented as a decimal
+        submission_data = {
+            'submission': {
+                'posted_grade': learner_data['grade'] * 100
+            }
+        }
+        update_grade_response = self.session.put(submission_url, json=submission_data)
+        update_grade_response.raise_for_status()
+        return update_grade_response.status_code, update_grade_response.text
+
+    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        # Todo: There isn't a great way for users to delete course completion data
+        pass
+
+    # Private Methods
+
     def _create_session(self):
         """
         Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
@@ -143,6 +185,27 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
         session.headers['content-type'] = 'application/json'
         self.session = session
+
+    def _update_course_details(self, course_id, serialized_data):
+        """
+        Update a course for image_url (and possibly other settings in future)
+        This is used only for settings that are not settable in the initial course creation
+        """
+        try:
+            # there is no way to do this in a single request during create
+            # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
+            content_metadata_item = json.loads(serialized_data.decode('utf-8'))['course']
+            if "image_url" in content_metadata_item:
+                url = CanvasAPIClient.course_update_endpoint(
+                    self.enterprise_configuration.canvas_base_url,
+                    course_id,
+                )
+                self._put(url, json.dumps({
+                    'course': {'image_url': content_metadata_item['image_url']}
+                }).encode('utf-8'))
+        except Exception:  # pylint: disable=broad-except
+            # we do not want course image update to cause failures
+            pass
 
     def _post(self, url, data):
         """
@@ -363,57 +426,3 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             return data['access_token']
         except (KeyError, ValueError):
             raise requests.RequestException(response=auth_response)
-
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        learner_data = json.loads(payload)
-        self._create_session()
-
-        # Retrieve the Canvas user ID from the user's edx email (it is assumed that the learner's Edx
-        # and Canvas emails will match).
-        canvas_user_id = self._search_for_canvas_user_by_email(user_id)
-
-        # With the Canvas user ID, retrieve all courses for the user.
-        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
-
-        # Find the course who's integration ID matches the learner data course ID
-        course_id = None
-        for course in user_courses:
-            integration_id = course['integration_id']
-            if '+'.join(integration_id.split(":")[1].split("+")[:2]) == learner_data['courseID']:
-                course_id = course['id']
-                break
-
-        if not course_id:
-            raise CanvasClientError(
-                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
-                "/Canvas learner: {canvas_user_id}.".format(
-                    course_id=learner_data['courseID'],
-                    user_id=learner_data['userID'],
-                    canvas_user_id=canvas_user_id
-                ))
-
-        # Depending on if the assignment already exists, either retrieve or create it.
-        assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
-
-        # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
-        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
-                         '{assignment_id}/submissions/{user_id}'.format(
-                             base_url=self.enterprise_configuration.canvas_base_url,
-                             course_id=course_id,
-                             assignment_id=assignment_id,
-                             user_id=canvas_user_id
-                         )
-
-        # The percent grade from the grades api is represented as a decimal
-        submission_data = {
-            'submission': {
-                'posted_grade': learner_data['grade'] * 100
-            }
-        }
-        update_grade_response = self.session.put(submission_url, json=submission_data)
-        update_grade_response.raise_for_status()
-        return update_grade_response.status_code, update_grade_response.text
-
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        # Todo: There isn't a great way for users to delete course completion data
-        pass
