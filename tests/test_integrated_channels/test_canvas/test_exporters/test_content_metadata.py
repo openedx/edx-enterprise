@@ -15,6 +15,14 @@ from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import get_fake_content_metadata
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
+GENERIC_CONTENT_METADATA_ITEM = {
+    'enrollment_url': 'http://some/enrollment/url/',
+    'aggregation_key': 'course:edX+DemoX',
+    'title': 'edX Demonstration Course',
+    'key': 'edX+DemoX',
+    'content_type': 'course',
+}
+
 
 @mark.django_db
 @ddt.ddt
@@ -67,14 +75,16 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'short_description': 'Some short description.',
                 'full_description': 'Detailed description of edx demo course.',
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />Detailed description of edx demo course.'
+            '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
+            'Detailed description of edx demo course.'
         ),
         (
             {
                 'enrollment_url': 'http://some/enrollment/url/',
                 'title': 'edX Demonstration Course',
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />edX Demonstration Course'
+            '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
+            'edX Demonstration Course'
         ),
         (
             {
@@ -82,13 +92,14 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'title': 'edX Demonstration Course',
                 'short_description': 'Some short description.',
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />Some short description.'
+            '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
+            'Some short description.'
         ),
         (
             {
                 'enrollment_url': 'http://some/enrollment/url/'
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />'
+            '<a href=http://some/enrollment/url/>Go to edX course page</a><br />'
         )
 
     )
@@ -107,12 +118,24 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         """
         `CanvasContentMetadataExporter``'s ``transform_default_view` returns syllabus as value.
         """
-        content_metadata_item = {
-            'enrollment_url': 'http://some/enrollment/url/',
-            'aggregation_key': 'course:edX+DemoX',
-            'title': 'edX Demonstration Course',
-            'key': 'edX+DemoX',
-            'content_type': 'course',
-        }
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_default_view(content_metadata_item) == 'syllabus'
+
+    @responses.activate
+    def test_transform_is_public(self):
+        """
+        `CanvasContentMetadataExporter``'s ``transform_is_public_view` returns True.
+        """
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_is_public(content_metadata_item) is True
+
+    @responses.activate
+    def test_transform_self_enrollment(self):
+        """
+        `CanvasContentMetadataExporter``'s ``transform_self_enrollment` returns True.
+        """
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_self_enrollment(content_metadata_item) is True
