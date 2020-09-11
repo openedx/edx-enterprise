@@ -6,6 +6,7 @@ Utility functions for enterprise app.
 import datetime
 import logging
 import re
+from urllib.parse import urljoin
 from uuid import UUID
 
 import bleach
@@ -1093,15 +1094,59 @@ def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     TieredCache.delete_all_tiers(consent_cache_key)
 
 
-def get_enterprise_enrollment_url(content_key):
+def get_enterprise_enrollment_url(content_key, content_type, enterprise_uuid):
     """
     Get the enrollment_url for the constrained checkout experience offered
     by the edx-enterprise package.
 
     Args:
         content_key (str): Course, Course Run, or Program key.
-        content_type (str):
+        content_type (str): The type of content referred to by the content_key argument.
+                            Note: The ContentType class from enterprise.constants should be used here.
+        enterprise_uuid (str): The unique identifier for an enterprise customer.
 
     Returns:
-
+        enrollment_url (str): URL to enroll in the given content item OR
+                              Empty string if content_type is invalid.
     """
+    if content_type == ContentType.COURSE:
+        key = 'course_key'
+        viewname = 'enterprise_course_enrollment_page'
+    elif content_type == ContentType.COURSE_RUN:
+        key = 'course_id'
+        viewname = 'enterprise_course_run_enrollment_page'
+    elif content_type == ContentType.PROGRAM:
+        key = 'program_uuid'
+        viewname = 'enterprise_program_enrollment_page'
+    else:
+        return ''
+
+    return urljoin(
+        get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+        reverse(
+            viewname=viewname,
+            kwargs={'enterprise_uuid': enterprise_uuid, key: content_key}
+        )
+    )
+
+
+def get_learner_portal_enrollment_url(course_key, enterprise_slug):
+    """
+    Get the enrollment_url for the enterprise learner portal (LP) experience.
+
+    Args:
+        course_key (str): The id of the course to enroll in.
+        enterprise_slug (str): URL slug for the enterprise customer.
+        params (dict):
+
+    Returns:
+        enrollment_url (str): URL for the LP course page to enroll in.
+    """
+    return '{}/{}/course/{}'.format(
+        get_configuration_value(
+            'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
+            settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
+        ),
+        enterprise_slug,
+        course_key,
+    )

@@ -47,7 +47,7 @@ from enterprise.utils import (
     get_configuration_value,
     get_default_catalog_content_filter,
     get_enterprise_utm_context,
-    update_query_parameters,
+    update_query_parameters, get_learner_portal_enrollment_url, get_enterprise_enrollment_url,
 )
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
@@ -1053,10 +1053,6 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         parent_course_key = 'edX+DemoX'
         course_run_id = 'course-v1:{}+Demo_Course_1'.format(parent_course_key)
 
-        course_enrollment_url = reverse(
-            'enterprise_course_run_enrollment_page',
-            args=[self.enterprise_uuid, course_run_id],
-        )
         querystring_dict = QueryDict('', mutable=True)
         querystring_dict.update({
             'utm_medium': 'enterprise',
@@ -1077,18 +1073,19 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             parent_course_key=parent_course_key,
         )
         if learner_portal_enabled:
-            learner_portal_course_page_url = '{}/{}/course/{}'.format(
-                get_configuration_value(
-                    'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                    settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
-                ),
-                enterprise_catalog.enterprise_customer.slug,
+            learner_portal_course_page_url = get_learner_portal_enrollment_url(
                 parent_course_key,
+                enterprise_catalog.enterprise_customer.slug,
             )
             params = get_enterprise_utm_context(enterprise_catalog.enterprise_customer)
             params.update({'course_run_key': course_run_id})
             expected_course_enrollment_url = update_query_parameters(learner_portal_course_page_url, params)
         else:
+            course_enrollment_url = get_enterprise_enrollment_url(
+                course_run_id,
+                ContentType.COURSE_RUN,
+                self.enterprise_uuid
+            )
             expected_course_enrollment_url = '{course_enrollment_url}?{querystring}'.format(
                 course_enrollment_url=course_enrollment_url,
                 querystring=querystring_dict.urlencode()

@@ -19,7 +19,6 @@ from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
 from django.apps import apps
 from django.conf import settings
@@ -31,7 +30,6 @@ from django.core.files.storage import default_storage
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models
 from django.template import Context, Template
-from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlquote
@@ -51,9 +49,10 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
-    get_configuration_value,
     get_ecommerce_worker_user,
+    get_enterprise_enrollment_url,
     get_enterprise_worker_user,
+    get_learner_portal_enrollment_url,
 )
 from enterprise.validators import (
     validate_content_filter_fields,
@@ -398,22 +397,9 @@ class EnterpriseCustomer(TimeStampedModel):
             (str): Enterprise landing page url.
         """
         if self.enable_learner_portal:
-            url = '{}/{}/course/{}'.format(
-                get_configuration_value(
-                    'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                    settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
-                ),
-                self.slug,
-                course_key,
-            )
+            url = get_learner_portal_enrollment_url(course_key, self.slug)
         else:
-            url = urljoin(
-                get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
-                reverse(
-                    'enterprise_course_enrollment_page',
-                    kwargs={'enterprise_uuid': self.uuid, 'course_key': course_key}
-                )
-            )
+            url = get_enterprise_enrollment_url(course_key, ContentType.COURSE, self.uuid)
         return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def get_course_run_enrollment_url(self, course_run_key, parent_course_key):
@@ -429,22 +415,9 @@ class EnterpriseCustomer(TimeStampedModel):
         params = utils.get_enterprise_utm_context(self)
         if self.enable_learner_portal:
             params.update({'course_run_key': course_run_key})
-            url = '{}/{}/course/{}'.format(
-                get_configuration_value(
-                    'ENTERPRISE_LEARNER_PORTAL_BASE_URL',
-                    settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
-                ),
-                self.slug,
-                parent_course_key,
-            )
+            url = get_learner_portal_enrollment_url(parent_course_key, self.slug)
         else:
-            url = urljoin(
-                get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
-                reverse(
-                    'enterprise_course_run_enrollment_page',
-                    kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
-                )
-            )
+            url = get_enterprise_enrollment_url(course_run_key, ContentType.COURSE_RUN, self.uuid)
         return utils.update_query_parameters(url, params)
 
     def get_program_enrollment_url(self, program_uuid):
@@ -456,13 +429,7 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise program landing page url.
         """
-        url = urljoin(
-            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
-            reverse(
-                'enterprise_program_enrollment_page',
-                kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}
-            )
-        )
+        url = get_enterprise_enrollment_url(program_uuid, ContentType.PROGRAM, self.uuid)
         return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def catalog_contains_course(self, course_run_id):
