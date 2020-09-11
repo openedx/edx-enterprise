@@ -45,8 +45,10 @@ from enterprise.models import (
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     get_default_catalog_content_filter,
+    get_enterprise_enrollment_url,
     get_enterprise_utm_context,
-    update_query_parameters, get_learner_portal_enrollment_url, get_enterprise_enrollment_url,
+    get_learner_portal_enrollment_url,
+    update_query_parameters,
 )
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
