@@ -1787,12 +1787,13 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Returns:
             (str): Enterprise landing page url.
         """
+        params = {}
         url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key, parent_course_key)
         if self.publish_audit_enrollment_urls:
-            url = utils.update_query_parameters(url, {'audit': 'true'})
+            params.update({'audit': 'true'})
         if not self.enterprise_customer.enable_learner_portal:
-            url = utils.update_query_parameters(url, {'catalog': self.uuid})
-        return url
+            params.update({'catalog': self.uuid})
+        return utils.update_query_parameters(url, params)
 
     def get_program_enrollment_url(self, program_uuid):
         """

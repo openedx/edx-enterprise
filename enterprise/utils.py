@@ -1137,7 +1137,6 @@ def get_learner_portal_enrollment_url(course_key, enterprise_slug):
     Args:
         course_key (str): The id of the course to enroll in.
         enterprise_slug (str): URL slug for the enterprise customer.
-        params (dict):
 
     Returns:
         enrollment_url (str): URL for the LP course page to enroll in.
