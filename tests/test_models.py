@@ -44,7 +44,6 @@ from enterprise.models import (
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
-    get_configuration_value,
     get_default_catalog_content_filter,
     get_enterprise_utm_context,
     update_query_parameters, get_learner_portal_enrollment_url, get_enterprise_enrollment_url,
