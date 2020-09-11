@@ -38,6 +38,7 @@ from enterprise.admin.views import (
     TemplatePreviewView,
 )
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
+from enterprise.constants import ContentType
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -553,7 +554,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         """
         Redirect to preview the HTML template in the context of a course.
         """
-        return self.preview(obj, 'course')
+        return self.preview(obj, ContentType.COURSE)
 
     preview_as_course.label = _("Preview (course)")
     preview_as_course.short_description = _(
@@ -564,7 +565,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
         """
         Redirect to preview the HTML template in the context of a program.
         """
-        return self.preview(obj, 'program')
+        return self.preview(obj, ContentType.PROGRAM)
 
     preview_as_program.label = _("Preview (program)")
     preview_as_program.short_description = _(

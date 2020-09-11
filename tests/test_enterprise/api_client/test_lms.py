@@ -13,6 +13,7 @@ from pytest import raises
 from slumber.exceptions import HttpNotFoundError
 
 from enterprise.api_client import lms as lms_api
+from enterprise.constants import ContentType
 from enterprise.utils import NotConnectedToOpenEdX
 
 URL_BASE_NAMES = {
@@ -233,7 +234,7 @@ def test_doesnt_have_course_modes():
         json=response
     )
     client = lms_api.EnrollmentApiClient('some-user')
-    actual_response = client.has_course_mode(course_id, 'course')
+    actual_response = client.has_course_mode(course_id, ContentType.COURSE)
     assert actual_response is False
 
 

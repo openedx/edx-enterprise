@@ -38,6 +38,7 @@ from enterprise.api.v1.serializers import EnterpriseCustomerUserWriteSerializer
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EmbargoApiClient, EnrollmentApiClient
+from enterprise.constants import ContentType
 from enterprise.decorators import enterprise_login_required, force_fresh_session
 from enterprise.forms import (
     ENTERPRISE_LOGIN_SUBTITLE,
@@ -524,7 +525,7 @@ class GrantDataSharingPermissions(View):
         """
         Return a dict of data for the language on the page.
         """
-        item = 'course' if course_id else 'program'
+        item = ContentType.COURSE if course_id else ContentType.PROGRAM
         # Translators: bold_start and bold_end are HTML tags for specifying enterprise name in bold text.
         context_data = {
             'consent_request_prompt': _(
@@ -1479,7 +1480,7 @@ class CourseEnrollmentView(NonAtomicView):
                 messages.add_consent_declined_message(request, enterprise_customer, course_run.get('title', ''))
 
             if not is_course_run_enrollable(course_run):
-                messages.add_unenrollable_item_message(request, 'course')
+                messages.add_unenrollable_item_message(request, ContentType.COURSE)
                 course_enrollable = False
             context_data.update({
                 'course_enrollable': course_enrollable,
@@ -1971,7 +1972,7 @@ class ProgramEnrollmentView(NonAtomicView):
         one_click_purchase_eligibility = program_details.get('is_learner_eligible_for_one_click_purchase', False)
         # The following messages shouldn't both appear at the same time, and we prefer the eligibility message.
         if not one_click_purchase_eligibility:
-            messages.add_unenrollable_item_message(request, 'program')
+            messages.add_unenrollable_item_message(request, ContentType.PROGRAM)
         elif discount_data.get('total_incl_tax_excl_discounts') is None:
             messages.add_missing_price_information_message(request, program_title)
 

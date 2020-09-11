@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from enterprise.api_client.lms import parse_lms_api_datetime
+from enterprise.constants import ContentType
 
 UNIX_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
@@ -149,9 +150,9 @@ def get_image_url(content_metadata_item):
     Return the image URI of the content item.
     """
     image_url = ''
-    if content_metadata_item['content_type'] == 'program':
+    if content_metadata_item[ContentType.METADATA_KEY] == ContentType.PROGRAM:
         image_url = content_metadata_item.get('card_image_url')
-    elif content_metadata_item['content_type'] in ['course', 'courserun']:
+    elif content_metadata_item[ContentType.METADATA_KEY] in [ContentType.COURSE, ContentType.COURSE_RUN]:
         image_url = content_metadata_item.get('image_url')
 
     return image_url

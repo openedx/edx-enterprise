@@ -13,7 +13,7 @@ from pytest import mark
 from django.db import transaction
 from django.test import override_settings
 
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ContentType
 from enterprise.models import (
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
@@ -195,17 +195,17 @@ class TestDefaultContentFilter(unittest.TestCase):
     @ddt.data(
         (
             {
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'partner': 'edx'
             },
             {
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'partner': 'edx'
             }
         ),
         (
             {
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'level_type': [
                     'Introductory',
                     'Intermediate'
@@ -218,7 +218,7 @@ class TestDefaultContentFilter(unittest.TestCase):
                 'status': 'published'
             },
             {
-                'content_type': 'course',
+                ContentType.METADATA_KEY: ContentType.COURSE,
                 'level_type': [
                     'Introductory',
                     'Intermediate'
@@ -234,11 +234,11 @@ class TestDefaultContentFilter(unittest.TestCase):
         # if the value is not set is settings, it picks default value from constant.
         (
             {},
-            {'content_type': 'course'}
+            {ContentType.METADATA_KEY: ContentType.COURSE}
         )
     )
     @ddt.unpack
-    @mock.patch('enterprise.utils.DEFAULT_CATALOG_CONTENT_FILTER', {'content_type': 'course'})
+    @mock.patch('enterprise.utils.DEFAULT_CATALOG_CONTENT_FILTER', {ContentType.METADATA_KEY: ContentType.COURSE})
     def test_default_content_filter(self, default_content_filter, expected_content_filter):
         """
         Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
@@ -839,10 +839,10 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
         which is done through the mock api client.
         """
         content_filter_1 = OrderedDict({
-            'content_type': 'course1',
+            ContentType.METADATA_KEY: 'course1',
         })
         content_filter_2 = OrderedDict({
-            'content_type': 'course2',
+            ContentType.METADATA_KEY: 'course2',
         })
 
         test_query = EnterpriseCatalogQueryFactory(

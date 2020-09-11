@@ -11,6 +11,7 @@ from pytest import mark, raises
 
 from django.core.management import CommandError, call_command
 
+from enterprise.constants import ContentType
 from enterprise.utils import NotConnectedToOpenEdX
 from integrated_channels.exceptions import ClientError
 from test_utils import factories
@@ -307,10 +308,10 @@ class TestSendCourseCompletions(unittest.TestCase):
         from integrated_channels.xapi.management.commands.send_course_completions import Command
 
         xapi_transmission = mock.Mock(course_id='edX+DemoX')
-        assert Command.get_object_type(xapi_transmission) == 'course'
+        assert Command.get_object_type(xapi_transmission) == ContentType.COURSE
 
         xapi_transmission = mock.Mock(course_id='course-v1:edX+DemoX+Demo_Course')
-        assert Command.get_object_type(xapi_transmission) == 'courserun'
+        assert Command.get_object_type(xapi_transmission) == ContentType.COURSE_RUN
 
     @mock.patch(MODULE_PATH + 'XAPILearnerDataTransmissionAudit')
     def test_get_xapi_transmission_queryset(self, mock_transmission_audit):

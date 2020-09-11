@@ -11,6 +11,7 @@ import six
 from django.core.management.base import BaseCommand, CommandError
 
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from enterprise.constants import ContentType
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomer
 from enterprise.utils import NotConnectedToOpenEdX
 from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
@@ -161,7 +162,7 @@ class Command(BaseCommand):
         """
         Transmits an xAPI enrollment statement for a course object
         """
-        object_type = 'course'
+        object_type = ContentType.COURSE
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):
@@ -186,7 +187,7 @@ class Command(BaseCommand):
         """
         Transmits an xAPI enrollment statement for a courserun object
         """
-        object_type = 'courserun'
+        object_type = ContentType.COURSE_RUN
         response_fields = Command.transmit_enrollment_statement(lrs_configuration, user, course_overview, object_type)
 
         if is_success_response(response_fields):

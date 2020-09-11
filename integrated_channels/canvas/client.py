@@ -9,6 +9,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
+from enterprise.constants import ContentType
 from integrated_channels.exceptions import CanvasClientError, ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
@@ -193,14 +194,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         try:
             # there is no way to do this in a single request during create
             # https://canvas.instructure.com/doc/api/all_resources.html#method.courses.update
-            content_metadata_item = json.loads(serialized_data.decode('utf-8'))['course']
+            content_metadata_item = json.loads(serialized_data.decode('utf-8'))[ContentType.COURSE]
             if "image_url" in content_metadata_item:
                 url = CanvasAPIClient.course_update_endpoint(
                     self.enterprise_configuration.canvas_base_url,
                     course_id,
                 )
                 self._put(url, json.dumps({
-                    'course': {'image_url': content_metadata_item['image_url']}
+                    ContentType.COURSE: {'image_url': content_metadata_item['image_url']}
                 }).encode('utf-8'))
         except Exception:  # pylint: disable=broad-except
             # we do not want course image update to cause failures
@@ -256,7 +257,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         try:
             integration_id = json.loads(
                 data.decode("utf-8")
-            )['course']['integration_id']
+            )[ContentType.COURSE]['integration_id']
         except KeyError:
             raise CanvasClientError("Could not transmit data, no integration ID present.")
         except AttributeError:

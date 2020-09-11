@@ -34,6 +34,7 @@ from django.test.client import RequestFactory
 from django.urls import reverse
 
 from enterprise import utils
+from enterprise.constants import ContentType
 from test_utils import factories
 
 FAKE_UUIDS = [str(uuid.uuid4()) for i in range(5)]  # pylint: disable=no-member
@@ -193,12 +194,12 @@ def update_search_with_enterprise_context(search_result, add_utm_info):
     """
     search_result = copy.deepcopy(search_result)
     for item in search_result['results']:
-        content_type = item['content_type']
-        if content_type == 'program':
+        content_type = item[ContentType.METADATA_KEY]
+        if content_type == ContentType.PROGRAM:
             update_program_with_enterprise_context(item, add_utm_info)
-        elif content_type == 'course':
+        elif content_type == ContentType.COURSE:
             update_course_with_enterprise_context(item, add_utm_info)
-        elif content_type == 'courserun':
+        elif content_type == ContentType.COURSE_RUN:
             update_course_run_with_enterprise_context(item, add_utm_info)
     return search_result
 
