@@ -39,7 +39,7 @@ class TestMoodleApiClient(unittest.TestCase):
         self.token = 'token'
         self.password = 'pass'
         self.user = 'user'
-        self.MOODLE_API_PATH = '/webservice/rest/server.php'
+        self.moodle_api_path = '/webservice/rest/server.php'
         self.enterprise_config = factories.MoodleEnterpriseCustomerConfigurationFactory(
             moodle_base_url=self.moodle_base_url,
             username=self.user,
@@ -62,7 +62,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client = MoodleAPIClient(self.enterprise_config)
         responses.add(
             responses.GET,
-            urljoin(self.enterprise_config.moodle_base_url, self.MOODLE_API_PATH),
+            urljoin(self.enterprise_config.moodle_base_url, self.moodle_api_path),
             json={'courses': [{'id': 2}]},
             status=200
         )
