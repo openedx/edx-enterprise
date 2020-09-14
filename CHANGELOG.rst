@@ -12,7 +12,13 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
---------------------
+-------------------
+
+[3.8.4] 2020-09-14
+-------------------
+
+* Add a field for enabling analytics screen in the admin portal for an EnterpriseCustomer.
+
 [3.8.3] 2020-09-14
 -------------------
 

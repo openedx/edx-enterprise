@@ -521,6 +521,7 @@ class TestEnterpriseAPIViews(APITest):
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
                 'enable_portal_subscription_management_screen': False,
+                'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
             }],
@@ -559,6 +560,7 @@ class TestEnterpriseAPIViews(APITest):
                     'sync_learner_profile_data': False,
                     'enable_learner_portal': False,
                     'enable_portal_subscription_management_screen': False,
+                    'enable_analytics_screen': False,
                     'contact_email': 'fake@example.com',
                     'hide_course_original_price': False,
                 }
@@ -609,6 +611,7 @@ class TestEnterpriseAPIViews(APITest):
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
                 'enable_portal_subscription_management_screen': False,
+                'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
             }],
@@ -743,6 +746,7 @@ class TestEnterpriseAPIViews(APITest):
             'enable_portal_saml_configuration_screen': False,
             'site__domain': 'example.com', 'site__name': 'example.com',
             'enable_portal_subscription_management_screen': False,
+            'enable_analytics_screen': False,
             'contact_email': 'fake@example.com',
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
@@ -785,6 +789,7 @@ class TestEnterpriseAPIViews(APITest):
                 'sync_learner_profile_data': False,
                 'enable_learner_portal': False,
                 'enable_portal_subscription_management_screen': False,
+                'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
             }
