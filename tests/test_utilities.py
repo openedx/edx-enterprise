@@ -114,6 +114,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_portal_subscription_management_screen",
                 "enable_portal_saml_configuration_screen",
                 "enable_learner_portal",
+                "enable_analytics_screen",
                 "enable_slug_login",
                 "contact_email",
                 "default_contract_discount",
