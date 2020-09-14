@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.5] 2020-09-14
+-------------------
+
+* Add a field to EnterpriseCustomer to disable main menu navigation for integrated channel customer users.
+
 [3.8.4] 2020-09-14
 -------------------
 
