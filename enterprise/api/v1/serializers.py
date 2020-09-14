@@ -118,6 +118,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_learner_portal', 'enable_portal_reporting_config_screen',
             'enable_portal_saml_configuration_screen', 'contact_email',
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
+            'enable_integrated_customer_learner_portal_search',
         )
 
     site = SiteSerializer()
