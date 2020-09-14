@@ -287,6 +287,14 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the enterprise learner portal site should be made known to the learner.")
     )
 
+    enable_integrated_customer_learner_portal_search = models.BooleanField(  # pylint: disable=invalid-name
+        default=True,
+        help_text=_(
+            "Specifies whether a learner for an integrated channel customer can navigate the enterprise learner "
+            "portal site using the main menu."
+        )
+    )
+
     enable_analytics_screen = models.BooleanField(  # pylint: disable=invalid-name
         default=False,
         help_text=_("Specifies whether to allow access to the analytics screen in the admin portal.")
