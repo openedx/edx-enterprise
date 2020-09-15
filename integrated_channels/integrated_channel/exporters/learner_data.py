@@ -123,6 +123,11 @@ class LearnerExporter(Exporter):
 
         # Fetch course details from the Course API, and cache between calls.
         course_details = None
+
+        LOGGER.info(
+            '[Integrated Channel] Beginning export of enrollments: {}'.format(list(enrollment_queryset.values()))
+        )
+
         for enterprise_enrollment in enrollment_queryset:
 
             if TransmissionAudit and skip_transmitted and \
@@ -137,10 +142,22 @@ class LearnerExporter(Exporter):
 
             # Fetch course details from Courses API
             # pylint: disable=unsubscriptable-object
+            if course_details:
+                LOGGER.info(
+                    '[Integrated Channels] Currently exporting for course: {curr_course}. '
+                    'Course details already found: {course_details}'.format(
+                        curr_course=course_id,
+                        course_details=course_details
+                    )
+                )
+
             if course_details is None or course_details['course_id'] != course_id:
                 if self.course_api is None:
                     self.course_api = CourseApiClient()
                 course_details = self.course_api.get_course_details(course_id)
+                LOGGER.info('[Integrated Channel] Successfully retrieved course details for course: {}'.format(
+                    course_id
+                ))
 
             if course_details is None:
                 # Course not found, so we have nothing to report.
