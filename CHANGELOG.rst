@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.6] 2020-09-15
+-------------------
+
+* Using viewname in reverse as part of args to prevent IndexOutOfRange exception
+
 [3.8.5] 2020-09-14
 -------------------
 
