@@ -1124,7 +1124,7 @@ def get_enterprise_enrollment_url(content_key, content_type, enterprise_uuid):
     return urljoin(
         get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
         reverse(
-            viewname=viewname,
+            viewname,
             kwargs={'enterprise_uuid': enterprise_uuid, key: content_key}
         )
     )
