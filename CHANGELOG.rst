@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.7] 2020-09-15
+-------------------
+
+* Adding more informative logs to the integrated channels.
+
 [3.8.6] 2020-09-15
 -------------------
 

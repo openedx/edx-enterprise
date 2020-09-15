@@ -575,6 +575,8 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
             "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
             " IsPassing: False, User: None",
+            "[Integrated Channel] Beginning export of enrollments:",
+            "[Integrated Channel] Successfully retrieved course details for course:",
             "[Integrated Channel] Received data from certificate api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -599,6 +601,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
                 **expected_completion
             ),
             "{} enterprise enrollment 2".format(action2),
+            "Course details already found:",
             "[Integrated Channel] Received data from certificate api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -632,6 +635,8 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
             "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
             " IsPassing: False, User: None",
+            "[Integrated Channel] Beginning export of enrollments: ",
+            "[Integrated Channel] Successfully retrieved course details for course:",
             "[Integrated Channel] Received data from certificate api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -654,6 +659,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
                 timestamp=degreed_timestamp
             ),
             "{} enterprise enrollment 2".format(action2),
+            "Course details already found:",
             "[Integrated Channel] Received data from certificate api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -687,6 +693,8 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
             "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
             " IsPassing: False, User: None",
+            "[Integrated Channel] Beginning export of enrollments:",
+            "[Integrated Channel] Successfully retrieved course details for course:",
             "[Integrated Channel] Certificate data not found."
             " Course: {course_id}, EnterpriseEnrollment: 2, Username: {username}".format(
                 course_id=COURSE_ID,
@@ -716,6 +724,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
                 **expected_completion
             ),
             "{} enterprise enrollment 2".format(action2),
+            "Course details already found:",
             "[Integrated Channel] Certificate data not found."
             " Course: {course_id}, EnterpriseEnrollment: 3, Username: {username}".format(
                 course_id=COURSE_ID,
@@ -749,11 +758,13 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " Configuration: <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>, "
             "Duration: 0.0",
 
-            # Degreed
+            # Degreed 18
             "[Integrated Channel] Batch processing learners for integrated channel."
             " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
             "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
             " IsPassing: False, User: None",
+            "[Integrated Channel] Beginning export of enrollments:",
+            "[Integrated Channel] Successfully retrieved course details for course:",
             "[Integrated Channel] Certificate data not found."
             " Course: {course_id}, EnterpriseEnrollment: 2, Username: {username}".format(
                 course_id=COURSE_ID,
@@ -781,6 +792,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
                 timestamp=degreed_timestamp
             ),
             "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channels] Currently exporting for course:",
             "[Integrated Channel] Certificate data not found."
             " Course: {course_id}, EnterpriseEnrollment: 3, Username: {username}".format(
                 course_id=COURSE_ID,
@@ -824,6 +836,8 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " <SAPSuccessFactorsEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
             "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
             " IsPassing: False, User: None",
+            "[Integrated Channel] Beginning export of enrollments:",
+            "[Integrated Channel] Successfully retrieved course details for course:",
             "[Integrated Channel] Received data from grades api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -848,6 +862,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
                 **expected_completion
             ),
             "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channels] Currently exporting for course:",
             "[Integrated Channel] Received data from grades api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -881,6 +896,8 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
             " Configuration: <DegreedEnterpriseCustomerConfiguration for Enterprise Spaghetti Enterprise>",
             "[Integrated Channel] Starting Export. CompletedDate: None, Course: None, Grade: None,"
             " IsPassing: False, User: None",
+            "[Integrated Channel] Beginning export of enrollments:",
+            "[Integrated Channel] Successfully retrieved course details for course:",
             "[Integrated Channel] Received data from grades api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
@@ -903,6 +920,7 @@ def get_expected_output(cmd_kwargs, certificate, self_paced, passed, **expected_
                 timestamp=degreed_timestamp
             ),
             "{} enterprise enrollment 2".format(action2),
+            "[Integrated Channels] Currently exporting for course:",
             "[Integrated Channel] Received data from grades api.  CompletedDate:"
             " {completed_date}, Course: {course_id}, Enterprise: {enterprise_slug}, Grade: {grade},"
             " IsPassing: {is_passing}, User: {user_id}".format(
