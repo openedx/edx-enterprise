@@ -73,6 +73,7 @@ from enterprise.utils import (
     is_course_run_enrollable,
     track_enrollment,
     ungettext_min_max,
+    update_query_parameters,
 )
 from integrated_channels.cornerstone.utils import create_cornerstone_learner_data
 
@@ -1033,8 +1034,10 @@ class EnterpriseProxyLoginView(View):
             # Add the tpa_hint to the redirect's 'next' query parameter
             # Redirect will be to the Enterprise Customer's TPA provider
             tpa_hint = enterprise_customer.identity_provider
-            tpa_next_param = query_dict['next'] + '?tpa_hint=' + tpa_hint
-            query_dict['next'] = tpa_next_param
+            tpa_next_param = {
+                'tpa_hint': tpa_hint,
+            }
+            query_dict['next'] = update_query_parameters(str(query_dict['next']), tpa_next_param)
         else:
             # Add Enterprise Customer UUID and proxy_login to the redirect's query parameters
             # Redirect will be to the edX Logistration with Enterprise Proxy Login sidebar

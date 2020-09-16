@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.8] 2020-09-15
+-------------------
+
+* Fixing the construction of the next param in the proxy login view for SSO.
+
 [3.8.7] 2020-09-15
 -------------------
 
