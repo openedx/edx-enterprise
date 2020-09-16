@@ -1,4 +1,4 @@
-enterprise
+enterprise no op change cause i'm curious
 ==========
 
 .. image:: https://img.shields.io/pypi/v/edx-enterprise.svg
