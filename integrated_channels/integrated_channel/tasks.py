@@ -15,6 +15,7 @@ from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandUtils,
 )
+from integrated_channels.utils import generate_formatted_log
 
 LOGGER = get_task_logger(__name__)
 
@@ -68,20 +69,28 @@ def transmit_learner_data(username, channel_code, channel_pk):
     start = time.time()
     api_user = User.objects.get(username=username)
     integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel_code].objects.get(pk=channel_pk)
-    LOGGER.info('[Integrated Channel] Batch processing learners for integrated channel.'
-                ' Configuration: {configuration}'.format(configuration=integrated_channel))
+    generate_formatted_log(
+        'Batch processing learners for integrated channel. Configuration: {configuration}'.format(
+            configuration=integrated_channel,
+        ),
+        channel_name=channel_code,
+        enterprise_customer_identifier=api_user.username
+    )
 
     # Note: learner data transmission code paths don't raise any uncaught exception, so we don't need a broad
     # try-except block here.
     integrated_channel.transmit_learner_data(api_user)
 
     duration = time.time() - start
-    LOGGER.info(
-        '[Integrated Channel] Batch learner data transmission task finished. Configuration: {configuration},'
+    generate_formatted_log(
+        'Batch learner data transmission task finished. Configuration: {configuration},'
         ' Duration: {duration}'.format(
             configuration=integrated_channel,
             duration=duration
-        ))
+        ),
+        channel_name=channel_code,
+        enterprise_customer_identifier=api_user.username
+    )
 
 
 @shared_task

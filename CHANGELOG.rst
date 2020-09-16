@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.9] 2020-09-16
+-------------------
+
+* Standardizing log format in integrated channels learner data export.
+
 [3.8.8] 2020-09-15
 -------------------
 

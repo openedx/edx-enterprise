@@ -7,6 +7,7 @@ import datetime
 import math
 import re
 from itertools import islice
+from logging import getLogger
 from string import Formatter
 
 from six.moves import range
@@ -20,6 +21,8 @@ from enterprise.constants import ContentType
 UNIX_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
+
+LOGGER = getLogger(__name__)
 
 
 def parse_datetime_to_epoch(datestamp, magnitude=1.0):
@@ -221,3 +224,23 @@ def get_subjects_from_content_metadata(content_metadata_item):
             subjects.add(subject_name)
 
     return list(subjects)
+
+
+def generate_formatted_log(message, channel_name=None, enterprise_customer_identifier=None, is_error=False):
+    """
+    Formats and logs a message for the integrated channels.
+
+    Arguments:
+        - message (str): The string to be formatted and logged
+        - (OPTIONAL) channel_name (str): The name of the integrated channel which is being logged for
+        - (OPTIONAL) enterprise_customer_identifier (str): Either the ID or name of the Enterprise Customer
+        for whom the chanel is transmitting data.
+        - (OPTIONAL) is_error (bool): If specified, determines whether to log an error or info message.
+    """
+    log_message = '[Integrated Channel] [ENT CUSTOMER: {enterprise_customer_identifier}] ' \
+                  '[CHANNEL: {channel_name}]: {message}'.format(
+                      enterprise_customer_identifier=enterprise_customer_identifier,
+                      channel_name=channel_name,
+                      message=message,
+                  )
+    LOGGER.error(log_message) if is_error else LOGGER.info(log_message)  # pylint: disable=expression-not-assigned
