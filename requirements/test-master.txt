@@ -13,7 +13,7 @@ certifi==2020.6.20        # via -c requirements/edx-platform-constraints.txt, re
 cffi==1.14.2              # via -c requirements/edx-platform-constraints.txt, cryptography
 chardet==3.0.4            # via -c requirements/edx-platform-constraints.txt, requests
 click==7.1.2              # via -c requirements/edx-platform-constraints.txt, code-annotations
-code-annotations==0.6.0   # via -r requirements/base.in
+code-annotations==0.7.0   # via -r requirements/base.in
 cryptography==3.1         # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-fernet-fields, pyjwt
 defusedxml==0.6.0         # via -c requirements/edx-platform-constraints.txt, djangorestframework-xml
 django-config-models==2.0.2  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
@@ -71,7 +71,7 @@ six==1.15.0               # via -c requirements/edx-platform-constraints.txt, -r
 slumber==0.7.1            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rest-api-client
 sqlparse==0.3.1           # via -c requirements/edx-platform-constraints.txt, django
 stevedore==1.32.0         # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, edx-django-utils, edx-opaque-keys
-testfixtures==6.14.1      # via -r requirements/base.in
+testfixtures==6.14.2      # via -r requirements/base.in
 text-unidecode==1.3       # via -c requirements/edx-platform-constraints.txt, python-slugify
 unicodecsv==0.14.1        # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 urllib3==1.25.10          # via -c requirements/edx-platform-constraints.txt, requests
