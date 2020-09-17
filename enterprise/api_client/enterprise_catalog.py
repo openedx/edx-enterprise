@@ -216,15 +216,3 @@ class NoAuthEnterpriseCatalogClient:
             dict: Response containing enterprise catalog service health.
         """
         return self.client.health.get()
-
-    def enterprise_catalog_get_content_metadata(self, catalog_uuid):
-        """Returns all the content linked to the specified catalog, ordered by content key."""
-        endpoint = getattr(self.client, self.GET_CONTENT_METADATA_ENDPOINT)(catalog_uuid)
-        try:
-            return endpoint.get()
-        except (SlumberBaseException, ConnectionError, Timeout) as exc:
-            LOGGER.exception(
-                'Failed to get content metadata for Catalog [%s] in enterprise-catalog due to: [%s]',
-                catalog_uuid, str(exc)
-            )
-            return {}
