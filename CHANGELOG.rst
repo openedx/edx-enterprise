@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.11] 2020-09-18
+-------------------
+
+* Upgrading celery version to 4.4.7 for python 3.8 support
+
 [3.8.10] 2020-09-17
 -------------------
 
