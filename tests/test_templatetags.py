@@ -13,7 +13,6 @@ from django.contrib.sessions.backends import cache
 from django.template import Context, Template
 from django.test import RequestFactory
 
-from enterprise.constants import ContentType
 from test_utils.fake_catalog_api import FAKE_COURSE_RUN
 
 
@@ -216,7 +215,7 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
         The course_modal template tag returns the correct course modal contents given a specific course.
         """
         template = Template("{% load enterprise %} {% course_modal course %}")
-        rendered = template.render(Context({ContentType.COURSE: course, 'index': 0}))
+        rendered = template.render(Context({'course': course, 'index': 0}))
         for content in expected_modal_contents:
             assert content in rendered.strip()
 

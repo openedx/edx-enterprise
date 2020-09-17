@@ -9,7 +9,6 @@ from collections import OrderedDict
 import mock
 from six.moves import reduce as six_reduce
 
-from enterprise.constants import ContentType
 from test_utils import FAKE_UUIDS
 
 FAKE_URL = 'https://fake.url'
@@ -54,7 +53,7 @@ FAKE_COURSE_RUN = {
     'pacing_type': 'instructor_paced',
     'type': 'verified',
     'status': 'published',
-    ContentType.COURSE: 'edX+DemoX',
+    'course': 'edX+DemoX',
     'full_description': 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
     'announcement': None,
     'video': None,
@@ -93,7 +92,7 @@ FAKE_COURSE_RUN = {
     'hidden': False,
     'reporting_type': 'mooc',
     'eligible_for_financial_aid': True,
-    ContentType.METADATA_KEY: ContentType.COURSE_RUN,
+    'content_type': 'courserun',
     'has_enrollable_seats': True
 }
 FAKE_COURSE_RUN2 = copy.deepcopy(FAKE_COURSE_RUN)
@@ -131,7 +130,7 @@ FAKE_COURSE = {
     'sponsors': [],
     'modified': '2017-08-18T00:23:21.111991Z',
     'marketing_url': None,
-    ContentType.METADATA_KEY: ContentType.COURSE,
+    'content_type': 'course',
     'enrollment_url': FAKE_URL,
     'programs': []
 }
@@ -938,7 +937,6 @@ FAKE_SEARCH_ALL_COURSE_RESULT = {
     "number": "DemoX",
     "type": "verified",
     "key": "course-v1:edX+DemoX+Demo_Course",
-    ContentType.COURSE: 'edX+DemoX',
     "org": "edX",
     "level_type": None,
     "program_types": [],

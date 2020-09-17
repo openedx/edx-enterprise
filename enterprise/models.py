@@ -19,6 +19,7 @@ from jsonfield.encoder import JSONEncoder
 from jsonfield.fields import JSONField
 from multi_email_field.fields import MultiEmailField
 from simple_history.models import HistoricalRecords
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungrouped-imports
 
 from django.apps import apps
 from django.conf import settings
@@ -30,6 +31,7 @@ from django.core.files.storage import default_storage
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import IntegrityError, models
 from django.template import Context, Template
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
 from django.utils.http import urlquote
@@ -48,17 +50,15 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
-    ContentType,
     json_serialized_course_modes,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
+    get_configuration_value,
     get_ecommerce_worker_user,
-    get_enterprise_enrollment_url,
     get_enterprise_worker_user,
-    get_learner_portal_enrollment_url,
 )
 from enterprise.validators import (
     validate_content_filter_fields,
@@ -415,29 +415,32 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise landing page url.
         """
-        if self.enable_learner_portal:
-            url = get_learner_portal_enrollment_url(course_key, self.slug)
-        else:
-            url = get_enterprise_enrollment_url(course_key, ContentType.COURSE, self.uuid)
+        url = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            reverse(
+                'enterprise_course_enrollment_page',
+                kwargs={'enterprise_uuid': self.uuid, 'course_key': course_key}
+            )
+        )
         return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
-    def get_course_run_enrollment_url(self, course_run_key, parent_course_key):
+    def get_course_run_enrollment_url(self, course_run_key):
         """
         Return enterprise landing page url for the given course.
 
         Arguments:
             course_run_key (str): The course run id for the course to be displayed.
-            parent_course_key (str): The parent course id for the given course run.
         Returns:
             (str): Enterprise landing page url.
         """
-        params = utils.get_enterprise_utm_context(self)
-        if self.enable_learner_portal:
-            params.update({'course_run_key': course_run_key})
-            url = get_learner_portal_enrollment_url(parent_course_key, self.slug)
-        else:
-            url = get_enterprise_enrollment_url(course_run_key, ContentType.COURSE_RUN, self.uuid)
-        return utils.update_query_parameters(url, params)
+        url = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            reverse(
+                'enterprise_course_run_enrollment_page',
+                kwargs={'enterprise_uuid': self.uuid, 'course_id': course_run_key}
+            )
+        )
+        return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def get_program_enrollment_url(self, program_uuid):
         """
@@ -448,7 +451,13 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns:
             (str): Enterprise program landing page url.
         """
-        url = get_enterprise_enrollment_url(program_uuid, ContentType.PROGRAM, self.uuid)
+        url = urljoin(
+            get_configuration_value('LMS_ROOT_URL', settings.LMS_ROOT_URL),
+            reverse(
+                'enterprise_program_enrollment_page',
+                kwargs={'enterprise_uuid': self.uuid, 'program_uuid': program_uuid}
+            )
+        )
         return utils.update_query_parameters(url, utils.get_enterprise_utm_context(self))
 
     def catalog_contains_course(self, course_run_id):
@@ -565,7 +574,7 @@ class EnterpriseCustomer(TimeStampedModel):
                     enrolled_in={
                         'name': course_name,
                         'url': destination_url,
-                        'type': ContentType.COURSE,
+                        'type': 'course',
                         'start': course_start,
                     },
                     enterprise_customer=self,
@@ -1633,12 +1642,11 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         catalog_client = get_course_catalog_api_service_client(self.enterprise_customer.site)
         search_results = catalog_client.get_catalog_results(content_filter_query, query_params.dict())
         for content in search_results['results']:
-            if content[ContentType.METADATA_KEY] == ContentType.COURSE_RUN and content['has_enrollable_seats']:
+            if content['content_type'] == 'courserun' and content['has_enrollable_seats']:
                 results.append(content)
-            elif content[ContentType.METADATA_KEY] == ContentType.COURSE:
+            elif content['content_type'] == 'course':
                 results.append(content)
-            elif content[ContentType.METADATA_KEY] == ContentType.PROGRAM and \
-                    content['is_program_eligible_for_one_click_purchase']:
+            elif content['content_type'] == 'program' and content['is_program_eligible_for_one_click_purchase']:
                 results.append(content)
 
         response = {
@@ -1789,24 +1797,21 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
 
         return utils.update_query_parameters(url, {'catalog': self.uuid})
 
-    def get_course_run_enrollment_url(self, course_run_key, parent_course_key):
+    def get_course_run_enrollment_url(self, course_run_key):
         """
         Return enterprise course enrollment page url with the catalog information for the given course.
 
         Arguments:
             course_run_key (str): The course run id for the course to be displayed.
-            parent_course_key (str): The parent course id for the given course run.
 
         Returns:
             (str): Enterprise landing page url.
         """
-        params = {}
-        url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key, parent_course_key)
+        url = self.enterprise_customer.get_course_run_enrollment_url(course_run_key)
         if self.publish_audit_enrollment_urls:
-            params.update({'audit': 'true'})
-        if not self.enterprise_customer.enable_learner_portal:
-            params.update({'catalog': self.uuid})
-        return utils.update_query_parameters(url, params)
+            url = utils.update_query_parameters(url, {'audit': 'true'})
+
+        return utils.update_query_parameters(url, {'catalog': self.uuid})
 
     def get_program_enrollment_url(self, program_uuid):
         """

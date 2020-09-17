@@ -15,7 +15,6 @@ from enterprise.constants import (
     ENTERPRISE_DASHBOARD_ADMIN_ROLE,
     ENTERPRISE_ENROLLMENT_API_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
-    ContentType,
 )
 
 
@@ -188,7 +187,7 @@ USE_TZ = True
 MKTG_URLS = {}
 
 ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
-    ContentType.METADATA_KEY: ContentType.COURSE,
+    'content_type': 'course',
     'partner': 'edx',
     'level_type': [
         'Introductory',

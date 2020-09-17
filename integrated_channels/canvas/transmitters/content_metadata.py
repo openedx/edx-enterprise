@@ -1,7 +1,7 @@
 """
 Transmitter for Canvas content metadata
 """
-from enterprise.constants import ContentType
+
 from integrated_channels.canvas.client import CanvasAPIClient
 from integrated_channels.integrated_channel.transmitters.content_metadata import ContentMetadataTransmitter
 
@@ -25,5 +25,5 @@ class CanvasContentMetadataTransmitter(ContentMetadataTransmitter):
         # we have to investigate how to handle multiple
         # metadata items
         return {
-            ContentType.COURSE: channel_metadata_items[0],
+            'course': channel_metadata_items[0],
         }

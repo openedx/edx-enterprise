@@ -16,7 +16,6 @@ from django.http import HttpResponse
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from enterprise.constants import ContentType
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
 from test_utils import fake_render
 from test_utils.factories import (
@@ -950,7 +949,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
         get_data_sharing_consent_mock.return_value.consent_required.return_value = True
         get_data_sharing_consent_mock.return_value.enterprise_customer = self.enterprise_customer
         course_catalog_api_client_view_mock.return_value.get_course_run.return_value = self.course_run_details
-        item = ContentType.COURSE if view_for_course else ContentType.PROGRAM
+        item = 'course' if view_for_course else 'program'
         self._login()
         if existing_course_enrollment:
             EnterpriseCourseEnrollment.objects.create(
@@ -1047,7 +1046,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             params.update({'program_uuid': self.program_uuid})
         response = self.client.get(self.url, data=params)
         assert response.status_code == 200
-        item = ContentType.COURSE if view_for_course else ContentType.PROGRAM
+        item = 'course' if view_for_course else 'program'
         left_sidebar_text, top_paragraph, agreement_text, confirmation_modal_text = self._make_paragraphs(item)
         expected_context = {
             'platform_name': self.platform_name,
