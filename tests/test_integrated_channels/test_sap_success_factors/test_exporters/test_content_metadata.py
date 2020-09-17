@@ -11,7 +11,6 @@ import responses
 from pytest import mark
 
 from enterprise.api_client.lms import parse_lms_api_datetime
-from enterprise.constants import ContentType
 from integrated_channels.sap_success_factors.exporters.content_metadata import SapSuccessFactorsContentMetadataExporter
 from test_utils import factories
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
@@ -246,7 +245,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'aggregation_key': 'course:edX+DemoX',
                 'title': 'edX Demonstration Course',
                 'key': 'edX+DemoX',
-                ContentType.METADATA_KEY: ContentType.COURSE,
+                'content_type': 'course',
                 'image_url': 'https://edx.devstack.lms:18000/'
                              'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
                 'short_description': 'Some short description.',
@@ -262,7 +261,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'key': 'course-v1:edX+DemoX+Demo_Course',
                 'availability': 'Current',
                 'title': 'edX Demonstration Course',
-                ContentType.METADATA_KEY: ContentType.COURSE_RUN,
+                'content_type': 'courserun',
                 'image_url': 'https://edx.devstack.lms:18000/'
                              'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
             },
@@ -277,7 +276,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
                 'language': [],
                 'type': 'Verified Certificate',
                 'status': 'active',
-                ContentType.METADATA_KEY: ContentType.PROGRAM,
+                'content_type': 'program',
                 'card_image_url': 'https://edx.devstack.discovery/'
                                   'media/programs/banner_images/5742ec8d-25ce-43b7-a158-6dad82034ca2.jpg',
             },
@@ -286,7 +285,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         (
             {
                 'title': 'INVALID COURSE',
-                ContentType.METADATA_KEY: 'INVALID-CONTENT_TYPE',
+                'content_type': 'INVALID-CONTENT_TYPE',
             },
             '',
         ),
@@ -311,7 +310,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
             'aggregation_key': 'course:edX+DemoX',
             'title': 'edX Demonstration Course',
             'key': 'edX+DemoX',
-            ContentType.METADATA_KEY: ContentType.COURSE,
+            'content_type': 'course',
             'card_image_url': 'https://edx.devstack.lms:18000/'
                               'asset-v1:edX+DemoX+Demo_Course+type@asset+block@images_course_image.jpg',
             'short_description': 'Some short description.',

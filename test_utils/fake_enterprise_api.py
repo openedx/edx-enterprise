@@ -14,7 +14,6 @@ from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-
 from django.conf import settings
 from django.core.cache import cache
 
-from enterprise.constants import ContentType
 from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 
@@ -63,7 +62,7 @@ class EnterpriseMockMixin:
             'video': None,
             'min_effort': 5,
             'max_effort': 3,
-            ContentType.COURSE: '{org}+{course}'.format(org=course_run_key.org, course=course_run_key.course),
+            'course': '{org}+{course}'.format(org=course_run_key.org, course=course_run_key.course),
             'seats': [
                 {
                     'sku': self.generate_dummy_sku(course_run_key),
@@ -98,7 +97,7 @@ class EnterpriseMockMixin:
             'reporting_type': 'mooc',
             'mobile_available': False,
             'pacing_type': 'instructor_paced',
-            ContentType.METADATA_KEY: ContentType.COURSE_RUN,
+            'content_type': 'courserun',
         }
         return course_detail
 

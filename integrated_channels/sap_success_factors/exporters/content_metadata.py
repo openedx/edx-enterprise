@@ -8,7 +8,6 @@ from logging import getLogger
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise.api_client.lms import parse_lms_api_datetime
-from enterprise.constants import ContentType
 from enterprise.utils import get_closest_course_run, is_course_run_available_for_enrollment
 from enterprise.views import CourseEnrollmentView
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
@@ -260,6 +259,6 @@ class SapSuccessFactorsContentMetadataExporter(ContentMetadataExporter):  # pyli
         Return the id for the given content_metadata_item, `uuid` for programs or `key` for other content
         """
         content_id = content_metadata_item.get('key', '')
-        if content_metadata_item[ContentType.METADATA_KEY] == ContentType.PROGRAM:
+        if content_metadata_item['content_type'] == 'program':
             content_id = content_metadata_item.get('uuid', '')
         return content_id

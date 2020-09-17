@@ -10,7 +10,6 @@ from faker import Factory as FakerFactory
 from mock import Mock
 from pytest import mark
 
-from enterprise.constants import ContentType
 from integrated_channels.xapi.constants import X_API_ACTIVITY_COURSE, X_API_VERB_REGISTERED
 from integrated_channels.xapi.statements.learner_course_enrollment import LearnerCourseEnrollmentStatement
 from test_utils import factories
@@ -125,7 +124,7 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
             self.user,
             self.mock_social_auth,
             self.course_overview,
-            ContentType.COURSE,
+            'course',
         )
         self.assertDictEqual(json.loads(statement.to_json()), self.expected_course)
 
@@ -138,6 +137,6 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
             self.user,
             self.mock_social_auth,
             self.course_overview,
-            ContentType.COURSE_RUN,
+            'courserun',
         )
         self.assertDictEqual(json.loads(statement.to_json()), self.expected_courserun)

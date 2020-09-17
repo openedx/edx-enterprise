@@ -10,7 +10,6 @@ import mock
 import responses
 from pytest import mark
 
-from enterprise.constants import ContentType
 from integrated_channels.canvas.exporters.content_metadata import CanvasContentMetadataExporter
 from test_utils import FAKE_UUIDS, factories
 from test_utils.fake_catalog_api import get_fake_content_metadata
@@ -21,7 +20,7 @@ GENERIC_CONTENT_METADATA_ITEM = {
     'aggregation_key': 'course:edX+DemoX',
     'title': 'edX Demonstration Course',
     'key': 'edX+DemoX',
-    ContentType.METADATA_KEY: ContentType.COURSE,
+    'content_type': 'course',
 }
 
 

@@ -16,7 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
-from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, ContentType
+from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -257,19 +257,19 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         search_results = paginated_content['results']
 
         for item in search_results:
-            content_type = item[ContentType.METADATA_KEY]
+            content_type = item['content_type']
             marketing_url = item.get('marketing_url')
             if marketing_url:
                 item['marketing_url'] = utils.update_query_parameters(
                     marketing_url, utils.get_enterprise_utm_context(enterprise_customer)
                 )
             # Add the Enterprise enrollment URL to each content item returned from the discovery service.
-            if content_type == ContentType.COURSE:
+            if content_type == 'course':
                 item['enrollment_url'] = instance.get_course_enrollment_url(item['key'])
                 item['active'] = has_course_run_available_for_enrollment(item['course_runs'])
-            if content_type == ContentType.COURSE_RUN:
-                item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'], item[ContentType.COURSE])
-            if content_type == ContentType.PROGRAM:
+            if content_type == 'courserun':
+                item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'])
+            if content_type == 'program':
                 item['enrollment_url'] = instance.get_program_enrollment_url(item['uuid'])
 
         # Build pagination URLs
@@ -452,8 +452,7 @@ class CourseDetailSerializer(ImmutableStateSerializer):
         )
         for course_run in updated_course['course_runs']:
             course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                course_run['key'],
-                updated_course['key'],
+                course_run['key']
             )
         return updated_course
 
@@ -479,8 +478,7 @@ class CourseRunDetailSerializer(ImmutableStateSerializer):
         updated_course_run = copy.deepcopy(instance)
         enterprise_customer_catalog = self.context['enterprise_customer_catalog']
         updated_course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-            updated_course_run['key'],
-            updated_course_run[ContentType.COURSE],
+            updated_course_run['key']
         )
         return updated_course_run
 
@@ -512,8 +510,7 @@ class ProgramDetailSerializer(ImmutableStateSerializer):
             course['enrollment_url'] = enterprise_customer_catalog.get_course_enrollment_url(course['key'])
             for course_run in course['course_runs']:
                 course_run['enrollment_url'] = enterprise_customer_catalog.get_course_run_enrollment_url(
-                    course_run['key'],
-                    course['key'],
+                    course_run['key']
                 )
         return updated_program
 
