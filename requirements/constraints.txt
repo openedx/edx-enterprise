@@ -38,5 +38,5 @@ factory-boy<3.0
 # pytest version 6.0 causing test failures
 pytest<6.0
 
-# Python 3.8 isn't officially supported until 4.4 and 4.3 requires redis version 3.2.0 or above.
-celery<4.3
+# Python 3.5 is dropped in version 5.0
+celery<5.0
