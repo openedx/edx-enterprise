@@ -6,6 +6,7 @@ import json
 
 import requests
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from requests.utils import quote
 
 from django.apps import apps
 
@@ -272,9 +273,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Args:
             integration_id (string): The ID retrieved from the transmission payload.
         """
-        url = "{}/api/v1/accounts/{}/courses/".format(
+        url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
             self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id
+            self.enterprise_configuration.canvas_account_id,
+            quote(integration_id),
         )
         all_courses_response = self.session.get(url).json()
         course_id = None
