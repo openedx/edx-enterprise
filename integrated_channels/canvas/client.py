@@ -5,8 +5,8 @@ Client for connecting to Canvas.
 import json
 
 import requests
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from requests.utils import quote
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
@@ -90,7 +90,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     def update_content_metadata(self, serialized_data):
         self._create_session()
 
-        integration_id = self._get_integration_id_from_transmition_data(serialized_data)
+        integration_id = self._get_integration_id_from_transmission_data(serialized_data)
         course_id = self._get_course_id_from_integration_id(integration_id)
 
         url = CanvasAPIClient.course_update_endpoint(
@@ -103,7 +103,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     def delete_content_metadata(self, serialized_data):
         self._create_session()
 
-        integration_id = self._get_integration_id_from_transmition_data(serialized_data)
+        integration_id = self._get_integration_id_from_transmission_data(serialized_data)
         course_id = self._get_course_id_from_integration_id(integration_id)
 
         url = '{}/api/v1/courses/{}'.format(
@@ -244,7 +244,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return delete_response.status_code, delete_response.text
 
-    def _get_integration_id_from_transmition_data(self, data):
+    def _get_integration_id_from_transmission_data(self, data):
         """
         Retrieve the integration ID string from the encoded transmission data and apply appropriate
         error handling.
