@@ -39,6 +39,7 @@ from integrated_channels.degreed.models import (
     DegreedLearnerDataTransmissionAudit,
 )
 from integrated_channels.integrated_channel.models import LearnerDataTransmissionAudit
+from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
     SAPSuccessFactorsGlobalConfiguration,
@@ -663,3 +664,22 @@ class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFac
     active = True
     canvas_account_id = 2
     canvas_base_url = factory.LazyAttribute(lambda x: FAKER.url())
+
+
+class MoodleEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``MoodleEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``MoodleEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``MoodleGlobalConfigurationFactory``.
+        """
+
+        model = MoodleEnterpriseCustomerConfiguration
+
+    active = True
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    moodle_base_url = factory.LazyAttribute(lambda x: FAKER.url())

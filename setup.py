@@ -101,6 +101,7 @@ setup(
         "integrated_channels.degreed",
         "integrated_channels.canvas",
         "integrated_channels.cornerstone",
+        "integrated_channels.moodle",
         "integrated_channels.sap_success_factors",
         "integrated_channels.xapi",
         "enterprise_learner_portal",
