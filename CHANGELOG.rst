@@ -13,6 +13,10 @@ Change Log
 
 Unreleased
 -------------------
+[3.8.14] 2020-09-21
+-------------------
+
+* Add Moodle integration to integrated_channels.
 
 [3.8.13] 2020-09-20
 -------------------

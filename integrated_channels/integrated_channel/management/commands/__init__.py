@@ -12,6 +12,7 @@ from enterprise.models import EnterpriseCustomer
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.moodle.models import MoodleEnterpriseCustomerConfiguration
 from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnterpriseCustomerConfiguration
 
 # Mapping between the channel code and the channel configuration class
@@ -22,6 +23,7 @@ INTEGRATED_CHANNEL_CHOICES = OrderedDict([
         DegreedEnterpriseCustomerConfiguration,
         CornerstoneEnterpriseCustomerConfiguration,
         CanvasEnterpriseCustomerConfiguration,
+        MoodleEnterpriseCustomerConfiguration,
     )
 ])
 
@@ -67,6 +69,7 @@ class IntegratedChannelCommandMixin:
             'enterprise_customer__active': True,
         }
         enterprise_customer = self.get_enterprise_customer(options.get('enterprise_customer'))
+
         if enterprise_customer:
             filter_kwargs['enterprise_customer'] = enterprise_customer
 
