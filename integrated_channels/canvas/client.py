@@ -5,6 +5,7 @@ Client for connecting to Canvas.
 import json
 
 import requests
+from requests.utils import quote
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
@@ -89,7 +90,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     def update_content_metadata(self, serialized_data):
         self._create_session()
 
-        integration_id = self._get_integration_id_from_transmition_data(serialized_data)
+        integration_id = self._extract_integration_id(serialized_data)
         course_id = self._get_course_id_from_integration_id(integration_id)
 
         url = CanvasAPIClient.course_update_endpoint(
@@ -102,7 +103,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
     def delete_content_metadata(self, serialized_data):
         self._create_session()
 
-        integration_id = self._get_integration_id_from_transmition_data(serialized_data)
+        integration_id = self._extract_integration_id(serialized_data)
         course_id = self._get_course_id_from_integration_id(integration_id)
 
         url = '{}/api/v1/courses/{}'.format(
@@ -243,7 +244,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return delete_response.status_code, delete_response.text
 
-    def _get_integration_id_from_transmition_data(self, data):
+    def _extract_integration_id(self, data):
         """
         Retrieve the integration ID string from the encoded transmission data and apply appropriate
         error handling.
@@ -272,9 +273,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         Args:
             integration_id (string): The ID retrieved from the transmission payload.
         """
-        url = "{}/api/v1/accounts/{}/courses/".format(
+        url = "{}/api/v1/accounts/{}/courses/?search_term={}".format(
             self.enterprise_configuration.canvas_base_url,
-            self.enterprise_configuration.canvas_account_id
+            self.enterprise_configuration.canvas_account_id,
+            quote(integration_id),
         )
         all_courses_response = self.session.get(url).json()
         course_id = None
