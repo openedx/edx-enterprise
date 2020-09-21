@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.12] 2020-09-21
+-------------------
+
+* Fix column width issue for DSC and other pages
+
 [3.8.11] 2020-09-18
 -------------------
 

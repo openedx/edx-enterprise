@@ -61,10 +61,14 @@ body,
   color: $blue;
 }
 
-.row:after {
-  content: " ";
-  display: table;
-  clear: both;
+.row {
+  display: flex;
+
+  &:after {
+    content: " ";
+    display: table;
+    clear: both;
+  }
 }
 
 .enterprise-container {
