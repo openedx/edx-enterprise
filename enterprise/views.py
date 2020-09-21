@@ -346,7 +346,8 @@ class GrantDataSharingPermissions(View):
                     'including the total time spent in each course or program, the date when I last '
                     'logged in to each course or program and how much of the course or program content I have consumed'
                 ),
-                _('My performance in each course or program, including, for example, my score on each assignment and current average of correct answers out of total attempted answers'),
+                _('My performance in each course or program, including, for example, '
+                  'my score on each assignment and current average of correct answers out of total attempted answers'),
                 _('My final grade in each course or program, and the date when I completed each course or program'),
                 _('Whether I received a certificate in each course or program'),
             ],
