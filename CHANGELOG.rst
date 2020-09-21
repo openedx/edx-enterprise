@@ -14,6 +14,11 @@ Change Log
 Unreleased
 -------------------
 
+[3.8.13] 2020-09-20
+-------------------
+
+* Fix issue with canvas channel not finding a course, by using search endpoint
+
 [3.8.12] 2020-09-21
 -------------------
 
