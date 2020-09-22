@@ -2,8 +2,8 @@
 """
 Client for connecting to Canvas.
 """
-from datetime import datetime, timedelta
 import json
+from datetime import datetime, timedelta
 
 import requests
 from requests.utils import quote
