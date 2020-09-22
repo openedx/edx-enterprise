@@ -12,6 +12,13 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
+
+-------------------
+[3.8.15] 2020-09-22
+-------------------
+
+* Token expiration handling in canvas client.
+
 -------------------
 
 [3.8.15] 2020-09-22
