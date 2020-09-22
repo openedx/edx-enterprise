@@ -3,7 +3,6 @@
 Tests for clients in integrated_channels.
 """
 
-import time
 import datetime
 import json
 import random
@@ -93,6 +92,7 @@ class TestCanvasApiClient(unittest.TestCase):
             )
 
     def _token_response(self):
+        """Creates a token response with the stored access token, for testing"""
         return {'access_token': self.access_token, 'expires_in': 10}
 
     def test_expires_at_is_updated_after_session_expiry(self):
