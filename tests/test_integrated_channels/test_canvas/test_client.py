@@ -107,13 +107,13 @@ class TestCanvasApiClient(unittest.TestCase):
                 status=200
             )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
-            canvas_api_client._create_session()
+            canvas_api_client._create_session()  # pylint: disable=protected-access
             assert canvas_api_client.expires_at is not None
             orig_expires_at = canvas_api_client.expires_at
 
             # let's call again sometime later ensuring expiry
             with freeze_time(orig_time + datetime.timedelta(seconds=1.1)):
-                canvas_api_client._create_session()
+                canvas_api_client._create_session()  # pylint: disable=protected-access
                 assert canvas_api_client.expires_at > orig_expires_at
 
 
