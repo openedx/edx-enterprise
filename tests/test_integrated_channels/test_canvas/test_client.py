@@ -112,9 +112,9 @@ class TestCanvasApiClient(unittest.TestCase):
             orig_expires_at = canvas_api_client.expires_at
 
             # let's call again sometime later ensuring expiry
-            with freeze_time(orig_time + datetime.timedelta(seconds=0.5)):
+            with freeze_time(orig_time + datetime.timedelta(seconds=1.1)):
                 canvas_api_client._create_session()
-                assert canvas_api_client.expires_at >= orig_expires_at
+                assert canvas_api_client.expires_at > orig_expires_at
 
 
     def test_course_completion_with_no_canvas_user(self):
