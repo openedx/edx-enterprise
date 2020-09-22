@@ -116,7 +116,6 @@ class TestCanvasApiClient(unittest.TestCase):
                 canvas_api_client._create_session()  # pylint: disable=protected-access
                 assert canvas_api_client.expires_at > orig_expires_at
 
-
     def test_course_completion_with_no_canvas_user(self):
         """Test that we properly raise exceptions if the client can't find the edx user in Canvas"""
 
