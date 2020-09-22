@@ -13,6 +13,12 @@ Change Log
 
 Unreleased
 -------------------
+
+[3.8.15] 2020-09-22
+-------------------
+
+* Update Data Sharing Consent language.
+
 [3.8.14] 2020-09-21
 -------------------
 

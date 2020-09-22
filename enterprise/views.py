@@ -339,14 +339,15 @@ class GrantDataSharingPermissions(View):
                 ),
                 _(
                     'Whether I completed specific parts of each course or program (for example, whether '
-                    'I watched a given video or completed a given homework assignment)'
+                    'I watched a given video or attempted or completed a given homework assignment)'
                 ),
                 _(
                     'My overall percentage completion of each course or program on a periodic basis, '
-                    'including the total time spent in each course or program and the date when I last '
-                    'logged in to each course or program'
+                    'including the total time spent in each course or program, the date when I last '
+                    'logged in to each course or program and how much of the course or program content I have consumed'
                 ),
-                _('My performance in each course or program'),
+                _('My performance in each course or program, including, for example, '
+                  'my score on each assignment and current average of correct answers out of total attempted answers'),
                 _('My final grade in each course or program, and the date when I completed each course or program'),
                 _('Whether I received a certificate in each course or program'),
             ],
