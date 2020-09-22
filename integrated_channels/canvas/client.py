@@ -3,6 +3,7 @@
 Client for connecting to Canvas.
 """
 import json
+from datetime import datetime, timedelta
 
 import requests
 from requests.utils import quote
@@ -173,18 +174,25 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         """
         Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
         connecting to Canvas should have a single client session.
+        Will only create a new session if token expiry has been reached
         """
-        if self.session:
-            self.session.close()
-        # Create a new session with a valid token
-        oauth_access_token = self._get_oauth_access_token(
-            self.enterprise_configuration.client_id,
-            self.enterprise_configuration.client_secret,
-        )
-        session = requests.Session()
-        session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-        session.headers['content-type'] = 'application/json'
-        self.session = session
+        now = datetime.utcnow()
+        if self.session is None or self.expires_at is None or now >= self.expires_at:
+            # need new session if session expired, or not initialized
+            if self.session:
+                self.session.close()
+            # Create a new session with a valid token
+            oauth_access_token, expires_in = self._get_oauth_access_token(
+                self.enterprise_configuration.client_id,
+                self.enterprise_configuration.client_secret,
+            )
+            session = requests.Session()
+            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
+            session.headers['content-type'] = 'application/json'
+            self.session = session
+            # expiry expected after `expires_in` seconds
+            if expires_in is not None:
+                self.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
     def _update_course_details(self, course_id, serialized_data):
         """
@@ -394,6 +402,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         Returns:
             access_token (str): the OAuth access token to access the Canvas API as the user
+            expires_in (int): the number of seconds after which token will expire
         Raises:
             HTTPError: If we received a failure response code from Canvas.
             RequestException: If an unexpected response format was received that we could not parse.
@@ -424,6 +433,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         auth_response.raise_for_status()
         try:
             data = auth_response.json()
-            return data['access_token']
+            return data['access_token'], data["expires_in"]
         except (KeyError, ValueError):
             raise requests.RequestException(response=auth_response)
