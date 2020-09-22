@@ -14,7 +14,7 @@ Change Log
 Unreleased
 
 -------------------
-[3.8.15] 2020-09-22
+[3.8.16] 2020-09-22
 -------------------
 
 * Token expiration handling in canvas client.
