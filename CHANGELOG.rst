@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 
+[3.8.18] 2020-09-23
+-------------------
+
+* Initial setup for Blackboard Integrated Channel.
+
 [3.8.17] 2020-09-23
 -------------------
 

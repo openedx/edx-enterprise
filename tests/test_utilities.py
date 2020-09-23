@@ -90,6 +90,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "cornerstoneenterprisecustomerconfiguration",
                 "degreedenterprisecustomerconfiguration",
                 "canvasenterprisecustomerconfiguration",
+                "blackboardenterprisecustomerconfiguration",
                 "sapsuccessfactorsenterprisecustomerconfiguration",
                 "moodleenterprisecustomerconfiguration",
                 "xapilrsconfiguration",

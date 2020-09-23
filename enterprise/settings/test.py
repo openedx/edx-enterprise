@@ -59,6 +59,7 @@ INSTALLED_APPS = (
     "integrated_channels.cornerstone",
     "integrated_channels.degreed",
     "integrated_channels.canvas",
+    "integrated_channels.blackboard",
     "integrated_channels.moodle",
     "integrated_channels.sap_success_factors",
     "integrated_channels.xapi",

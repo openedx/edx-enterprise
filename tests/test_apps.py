@@ -137,6 +137,25 @@ class TestCanvasConfig(unittest.TestCase):
 
 
 @mark.django_db
+class TestBlackboardConfig(unittest.TestCase):
+    """
+    Test integrated_channels.blackboard app config.
+    """
+
+    def setUp(self):
+        """
+        Set up test environment
+        """
+        super(TestBlackboardConfig, self).setUp()
+        self.app_config = integrated_channels.blackboard.apps.BlackboardConfig(
+            'blackboard', integrated_channels.blackboard
+        )
+
+    def test_name(self):
+        assert self.app_config.name == 'blackboard'
+
+
+@mark.django_db
 class TestXAPIConfig(unittest.TestCase):
     """
     Test integrated_channels.xapi app config.
