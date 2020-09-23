@@ -10,6 +10,7 @@ from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactor
 from integrated_channels.blackboard.client import BlackboardAPIClient
 from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
 
+
 @pytest.mark.django_db
 class TestBlackboardApiClient(unittest.TestCase):
     """
