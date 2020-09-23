@@ -8,18 +8,18 @@ amqp==2.6.1               # via -r requirements/test-master.txt, kombu
 aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
 attrs==20.2.0             # via pytest
 billiard==3.6.3.0         # via -r requirements/test-master.txt, celery
-bleach==3.2.0             # via -r requirements/test-master.txt
+bleach==3.2.1             # via -r requirements/test-master.txt
 celery==4.4.7             # via -c requirements/constraints.txt, -r requirements/test-master.txt
 certifi==2020.6.20        # via -r requirements/test-master.txt, requests
-cffi==1.14.2              # via -r requirements/test-master.txt, cryptography
+cffi==1.14.3              # via -r requirements/test-master.txt, cryptography
 chardet==3.0.4            # via -r requirements/test-master.txt, requests
 click==7.1.2              # via -r requirements/test-master.txt, code-annotations
-code-annotations==0.7.0   # via -r requirements/test-master.txt
+code-annotations==0.8.0   # via -r requirements/test-master.txt
 coverage==5.3             # via pytest-cov
 cryptography==3.1         # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
 ddt==1.3.1                # via -r requirements/test.in
 defusedxml==0.6.0         # via -r requirements/test-master.txt, djangorestframework-xml
-diff-cover==4.0.0         # via -r requirements/test.in
+diff-cover==4.0.1         # via -r requirements/test.in
 django-config-models==2.0.2  # via -r requirements/test-master.txt
 django-countries==5.5     # via -r requirements/test-master.txt
 django-crum==0.7.7        # via -r requirements/test-master.txt, edx-rbac
@@ -33,7 +33,7 @@ django-simple-history==2.11.0  # via -r requirements/test-master.txt
 django-waffle==2.0.0      # via -r requirements/test-master.txt, edx-django-utils, edx-drf-extensions
 djangorestframework-xml==2.0.0  # via -r requirements/test-master.txt
 djangorestframework==3.9.4  # via -r requirements/test-master.txt, django-config-models, drf-jwt, edx-drf-extensions, rest-condition
-drf-jwt==1.17.1           # via -r requirements/test-master.txt, edx-drf-extensions
+drf-jwt==1.17.2           # via -r requirements/test-master.txt, edx-drf-extensions
 edx-django-utils==3.8.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.1.2  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.1  # via -r requirements/test-master.txt, edx-drf-extensions
@@ -55,7 +55,7 @@ kombu==4.6.11             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
 mock==3.0.5               # via -c requirements/constraints.txt, -r requirements/test.in
 more-itertools==8.5.0     # via -r requirements/test-master.txt, pytest, zipp
-newrelic==5.18.0.148      # via -r requirements/test-master.txt, edx-django-utils
+newrelic==5.20.0.149      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.4           # via -r requirements/test-master.txt, bleach, pytest
 path.py==12.5.0           # via -r requirements/test-master.txt
 path==13.1.0              # via -r requirements/test-master.txt, path.py
