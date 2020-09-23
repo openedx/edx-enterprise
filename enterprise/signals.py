@@ -3,6 +3,7 @@
 Django signal handlers.
 """
 
+import os
 from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -15,6 +16,7 @@ from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
     EnterpriseCatalogQuery,
+    EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerAdminUser,
@@ -95,6 +97,20 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         transaction.on_commit(_complete_user_enrollment)
     else:
         pending_ecu.delete()
+
+
+@receiver(post_save, sender=EnterpriseCustomerBrandingConfiguration)
+def update_logo_name(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Update logo name and path to replace None with instance id.
+    """
+    filename = instance.logo.name
+    if kwargs['created'] and 'None' in filename:
+        extension = os.path.splitext(filename)[1].lower()
+        instance_file = instance.logo.file
+        new_name = 'enterprise/branding/' + str(instance.id) + '/' + str(instance.id) + '_logo' + extension
+        instance.logo.save(new_name, instance_file)
+        instance.save()
 
 
 @receiver(post_save, sender=EnterpriseCustomerCatalog, dispatch_uid='default_content_filter')
