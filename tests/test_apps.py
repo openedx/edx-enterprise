@@ -135,6 +135,7 @@ class TestCanvasConfig(unittest.TestCase):
     def test_name(self):
         assert self.app_config.name == 'canvas'
 
+
 @mark.django_db
 class TestBlackboardConfig(unittest.TestCase):
     """
@@ -152,6 +153,7 @@ class TestBlackboardConfig(unittest.TestCase):
 
     def test_name(self):
         assert self.app_config.name == 'blackboard'
+
 
 @mark.django_db
 class TestXAPIConfig(unittest.TestCase):
