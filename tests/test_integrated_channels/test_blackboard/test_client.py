@@ -8,7 +8,7 @@ import pytest
 
 from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory
 from integrated_channels.blackboard.client import BlackboardAPIClient
-from integrated_channels.blackboard.apps import CHANNEL_NAME, VEROBSE_NAME
+from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
 
 @pytest.mark.django_db
 class TestBlackboardApiClient(unittest.TestCase):
@@ -29,5 +29,5 @@ class TestBlackboardApiClient(unittest.TestCase):
         api_client = BlackboardAPIClient(self.enterprise_config)
         assert api_client.config is not None
         assert api_client.config.name == CHANNEL_NAME
-        assert api_client.config.verbose_name == VEROBSE_NAME
+        assert api_client.config.verbose_name == VERBOSE_NAME
         assert api_client.enterprise_configuration == self.enterprise_config
