@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 
+[3.8.17] 2020-09-23
+-------------------
+
+* Update logo name and path after the instance is saved to replace None with instance id.
+
 [3.8.16] 2020-09-22
 -------------------
 
