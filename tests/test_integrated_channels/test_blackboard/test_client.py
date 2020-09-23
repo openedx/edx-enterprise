@@ -4,11 +4,12 @@ Tests for clients in integrated_channels.blackboard.
 """
 
 import unittest
+
 import pytest
 
-from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory
-from integrated_channels.blackboard.client import BlackboardAPIClient
 from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
+from integrated_channels.blackboard.client import BlackboardAPIClient
+from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory
 
 
 @pytest.mark.django_db

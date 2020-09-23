@@ -27,8 +27,8 @@ from enterprise.models import (
     PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
 )
-from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
