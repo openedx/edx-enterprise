@@ -28,6 +28,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
 )
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
+from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from integrated_channels.cornerstone.models import (
     CornerstoneEnterpriseCustomerConfiguration,
     CornerstoneGlobalConfiguration,
@@ -644,6 +645,25 @@ class XAPILearnerDataTransmissionAuditFactory(factory.django.DjangoModelFactory)
 
     user_id = factory.LazyAttribute(lambda x: FAKER.pyint())
     course_id = factory.LazyAttribute(lambda x: FAKER.slug())
+
+
+class BlackboardEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
+    """
+    ``BlackboardEnterpriseCustomerConfiguration`` factory.
+
+    Creates an instance of ``BlackboardEnterpriseCustomerConfiguration`` with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for ``BlackboardEnterpriseCustomerConfiguration``.
+        """
+
+        model = BlackboardEnterpriseCustomerConfiguration
+
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    active = True
+    blackboard_base_url = factory.LazyAttribute(lambda x: FAKER.url())
 
 
 class CanvasEnterpriseCustomerConfigurationFactory(factory.django.DjangoModelFactory):
