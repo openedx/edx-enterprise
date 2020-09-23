@@ -90,7 +90,13 @@ class LearnerTransmitter(Transmitter):
                 self.handle_transmission_error(learner_data, request_exception)
 
             learner_data.status = str(code)
-            learner_data.error_message = body if code >= 400 else ''
+
+            if code >= 400:
+                learner_data.error_message = body
+                self.handle_transmission_error(learner_data, body)
+            else:
+                learner_data.error_message = ''
+
             learner_data.save()
 
     def handle_transmission_error(self, learner_data, request_exception):

@@ -133,11 +133,16 @@ class TestCanvasApiClient(unittest.TestCase):
                 status=200
             )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
-            with pytest.raises(CanvasClientError) as client_error:
-                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
 
-            assert client_error.value.__str__() == 'Canvas Client Error: No Canvas user ID ' \
-                                                   'found associated with email: {}'.format(self.canvas_email)
+            assert canvas_api_client.create_course_completion(
+                self.canvas_email,
+                self.course_completion_payload,
+            ) == (
+                404,
+                'Canvas Client Error: No Canvas user ID found associated with email: {}'.format(
+                    self.canvas_email
+                )
+            )
 
     def test_course_completion_with_no_matching_canvas_course(self):
         """Test that we properly raise exceptions for when a course is not found in canvas."""
@@ -160,16 +165,18 @@ class TestCanvasApiClient(unittest.TestCase):
                 json=[]
             )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
-            with pytest.raises(CanvasClientError) as client_error:
-                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
-
-            assert client_error.value.__str__() == \
-                "Canvas Client Error: Course: {course_id} not found registered in Canvas for Edx " \
+            assert canvas_api_client.create_course_completion(
+                self.canvas_email,
+                self.course_completion_payload
+            ) == (
+                404,
+                "Course: {course_id} not found registered in Canvas for Edx "
                 "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
                     course_id=self.course_id,
                     canvas_email=self.canvas_email,
                     canvas_user_id=self.canvas_user_id
-                )  # noqa
+                )
+            )
 
     def test_course_completion_grade_submission_500s(self):
         """Test that we raise the error if Canvas experiences a 500 while posting course completion data"""
