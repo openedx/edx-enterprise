@@ -4,6 +4,7 @@ Tests for Cornerstone Learner Data exporters.
 """
 
 import datetime
+import re
 import unittest
 
 import ddt
@@ -218,6 +219,18 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
                 "certificates/{user}/courses/{course}/".format(course=course_id, user=self.user.username)
             ),
             json={"is_passing": "true", "created_date": "2019-06-21T12:58:17.428373Z", "grade": "0.8"},
+        )
+
+        responses.add(
+            responses.POST,
+            re.compile(
+                '{base_url}{callback}{completion_path}'.format(
+                    base_url=self.config.cornerstone_base_url,
+                    callback=self.callback_url,
+                    completion_path=self.global_config.completion_status_api_path
+                )
+            ),
+            json={}
         )
 
         transmissions = CornerstoneLearnerDataTransmissionAudit.objects.filter(user=self.user, course_completed=False)

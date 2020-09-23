@@ -140,13 +140,15 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             },
         )
 
-        response.raise_for_status()
         try:
             data = response.json()
             token = data['token']
             return token
         except (KeyError, ValueError):
-            raise requests.RequestException(response=response)
+            raise ClientError(
+                "Failed to post access token. Received message={} from Moodle".format(response.text),
+                response.status_code
+            )
 
     @moodle_request_wrapper
     def _get_courses(self, key):

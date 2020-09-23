@@ -41,10 +41,10 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
         kwargs['remote_user_id'] = 'sapsf_user_id'
         super(SapSuccessFactorsLearnerTransmitter, self).transmit(payload, **kwargs)
 
-    def handle_transmission_error(self, learner_data, request_exception):
+    def handle_transmission_error(self, learner_data, client_exception):
         """Handle the case where the employee on SAPSF's side is marked as inactive."""
         try:
-            sys_msg = six.text_type(request_exception.response.content)
+            sys_msg = six.text_type(client_exception.message)
         except AttributeError:
             pass
         else:
@@ -59,4 +59,4 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                     ecu.username, ecu.user_id, ecu.user_email, ecu.enterprise_customer
                 )
                 return
-        super(SapSuccessFactorsLearnerTransmitter, self).handle_transmission_error(learner_data, request_exception)
+        super(SapSuccessFactorsLearnerTransmitter, self).handle_transmission_error(learner_data, client_exception)

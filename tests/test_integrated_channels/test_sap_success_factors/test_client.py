@@ -101,7 +101,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
 
     @responses.activate
     def test_get_oauth_access_token_response_missing_fields(self):
-        with raises(requests.RequestException):
+        with raises(ClientError):
             responses.add(
                 responses.POST,
                 self.url_base + self.oauth_api_path,
@@ -120,7 +120,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
     @responses.activate
     def test_get_oauth_access_token_response_non_json(self):
         """ Test  get_oauth_access_token with non json type response"""
-        with raises(requests.RequestException):
+        with raises(ClientError):
             responses.add(
                 responses.POST,
                 urljoin(self.url_base, self.oauth_api_path),

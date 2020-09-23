@@ -5,10 +5,9 @@ Generic learner data transmitter for integrated channels.
 
 import logging
 
-from requests import RequestException
-
 from django.apps import apps
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 from integrated_channels.integrated_channel.transmitters import Transmitter
 from integrated_channels.utils import is_already_transmitted
@@ -84,36 +83,27 @@ class LearnerTransmitter(Transmitter):
                         enterprise_enrollment_id,
                     )
                 )
-            except RequestException as request_exception:
-                code = 500
-                body = str(request_exception)
-                self.handle_transmission_error(learner_data, request_exception)
+            except ClientError as client_error:
+                code = client_error.status_code
+                body = client_error.message
+                self.handle_transmission_error(learner_data, client_error)
 
             learner_data.status = str(code)
-
-            if code >= 400:
-                learner_data.error_message = body
-                self.handle_transmission_error(learner_data, body)
-            else:
-                learner_data.error_message = ''
+            learner_data.error_message = body if code >= 400 else ''
 
             learner_data.save()
 
-    def handle_transmission_error(self, learner_data, request_exception):
+    def handle_transmission_error(self, learner_data, client_exception):
         """Handle the case where the transmission fails."""
-        try:
-            sys_msg = request_exception.response.content
-        except AttributeError:
-            sys_msg = 'Not available'
         LOGGER.exception(
             (
                 'Failed to send completion status call for enterprise enrollment %s'
                 'with payload %s'
                 '\nError message: %s'
-                '\nSystem message: %s'
+                '\nError status code: %s'
             ),
             learner_data.enterprise_course_enrollment_id,
             learner_data,
-            str(request_exception),
-            sys_msg
+            client_exception.message,
+            client_exception.status_code
         )

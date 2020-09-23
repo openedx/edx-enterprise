@@ -64,7 +64,7 @@ class TestDegreedApiClient(unittest.TestCase):
     @responses.activate
     def test_oauth_with_non_json_response(self):
         """ Test  _get_oauth_access_token with non json type response"""
-        with pytest.raises(requests.RequestException):
+        with pytest.raises(ClientError):
             responses.add(
                 responses.POST,
                 self.oauth_url,

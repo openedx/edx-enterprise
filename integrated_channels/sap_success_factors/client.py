@@ -44,7 +44,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             tuple: Tuple containing access token string and expiration datetime.
         Raises:
             HTTPError: If we received a failure response code from SAP SuccessFactors.
-            RequestException: If an unexpected response format was received that we could not parse.
+            ClientError: If an unexpected response format was received that we could not parse.
         """
         SAPSuccessFactorsGlobalConfiguration = apps.get_model(  # pylint: disable=invalid-name
             'sap_success_factors',
@@ -68,12 +68,11 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             headers={'content-type': 'application/json'}
         )
 
-        response.raise_for_status()
         try:
             data = response.json()
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
         except (KeyError, ValueError):
-            raise requests.RequestException(response=response)
+            raise ClientError(response, response.status_code)
 
     def __init__(self, enterprise_configuration):
         """
@@ -299,7 +298,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             response = self.session.get(search_student_paginated_url)
             sap_inactive_learners = response.json()
         except ValueError:
-            raise requests.RequestException(response=response)
+            raise ClientError(response, response.status_code)
         except (ConnectionError, Timeout):
             LOGGER.warning(
                 'Unable to fetch inactive learners from SAP searchStudent API with url '

@@ -16,7 +16,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from django.utils import timezone
 
 from integrated_channels.canvas.client import CanvasAPIClient
-from integrated_channels.exceptions import CanvasClientError, ClientError
+from integrated_channels.exceptions import ClientError
 from test_utils import factories
 
 NOW = datetime.datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
@@ -106,7 +106,6 @@ class TestCanvasApiClient(unittest.TestCase):
                 json={'access_token': self.access_token, 'expires_in': 1},
                 status=200
             )
-            canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
             assert canvas_api_client.expires_at is not None
             orig_expires_at = canvas_api_client.expires_at
@@ -134,15 +133,15 @@ class TestCanvasApiClient(unittest.TestCase):
             )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
-            assert canvas_api_client.create_course_completion(
-                self.canvas_email,
-                self.course_completion_payload,
-            ) == (
-                404,
-                'Canvas Client Error: No Canvas user ID found associated with email: {}'.format(
-                    self.canvas_email
-                )
-            )
+            with pytest.raises(ClientError) as client_error:
+                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
+                assert client_error.value.message == \
+                    "Course: {course_id} not found registered in Canvas for Edx " \
+                    "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
+                        course_id=self.course_id,
+                        canvas_email=self.canvas_email,
+                        canvas_user_id=self.canvas_user_id
+                    )
 
     def test_course_completion_with_no_matching_canvas_course(self):
         """Test that we properly raise exceptions for when a course is not found in canvas."""
@@ -165,18 +164,16 @@ class TestCanvasApiClient(unittest.TestCase):
                 json=[]
             )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
-            assert canvas_api_client.create_course_completion(
-                self.canvas_email,
-                self.course_completion_payload
-            ) == (
-                404,
-                "Course: {course_id} not found registered in Canvas for Edx "
-                "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
-                    course_id=self.course_id,
-                    canvas_email=self.canvas_email,
-                    canvas_user_id=self.canvas_user_id
-                )
-            )
+
+            with pytest.raises(ClientError) as client_error:
+                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
+                assert client_error.value.message == \
+                    "Course: {course_id} not found registered in Canvas for Edx " \
+                    "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
+                        course_id=self.course_id,
+                        canvas_email=self.canvas_email,
+                        canvas_user_id=self.canvas_user_id
+                    )
 
     def test_course_completion_grade_submission_500s(self):
         """Test that we raise the error if Canvas experiences a 500 while posting course completion data"""
@@ -225,33 +222,33 @@ class TestCanvasApiClient(unittest.TestCase):
                 json=self._token_response(),
                 status=200
             )
-            canvas_api_client = CanvasAPIClient(self.enterprise_config)
-            assert canvas_api_client.expires_at is None
-            canvas_api_client._create_session()  # pylint: disable=protected-access
+            successful_canvas_api_client = CanvasAPIClient(self.enterprise_config)
+            assert successful_canvas_api_client.expires_at is None
+            successful_canvas_api_client._create_session()  # pylint: disable=protected-access
 
-            assert canvas_api_client.session.headers["Authorization"] == "Bearer " + self.access_token
-            assert canvas_api_client.expires_at is not None
+            assert successful_canvas_api_client.session.headers["Authorization"] == "Bearer " + self.access_token
+            assert successful_canvas_api_client.expires_at is not None
 
     def test_client_instantiation_fails_without_client_id(self):
         with pytest.raises(ClientError) as client_error:
             self.enterprise_config.client_id = None
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert client_error.value.__str__() == "Failed to generate oauth access token: Client ID required."
+        assert client_error.value.message == "Failed to generate oauth access token: Client ID required."
 
     def test_client_instantiation_fails_without_client_secret(self):
         with pytest.raises(ClientError) as client_error:
             self.enterprise_config.client_secret = None
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert client_error.value.__str__() == "Failed to generate oauth access token: Client secret required."
+        assert client_error.value.message == "Failed to generate oauth access token: Client secret required."
 
     def test_client_instantiation_fails_without_refresh_token(self):
         with pytest.raises(ClientError) as client_error:
             self.enterprise_config.refresh_token = None
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
             canvas_api_client._create_session()  # pylint: disable=protected-access
-        assert client_error.value.__str__() == "Failed to generate oauth access token: Refresh token required."
+        assert client_error.value.message == "Failed to generate oauth access token: Refresh token required."
 
     def test_create_course_success(self):
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
@@ -380,7 +377,7 @@ class TestCanvasApiClient(unittest.TestCase):
         poorly_formatted_data = 'this is a string, not a bytearray'
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
-        with pytest.raises(CanvasClientError) as client_error:
+        with pytest.raises(ClientError) as client_error:
             with responses.RequestsMock() as request_mock:
                 request_mock.add(
                     responses.POST,
@@ -391,7 +388,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(poorly_formatted_data)
 
-        assert client_error.value.__str__() == 'Canvas Client Error: Unable to decode data.'
+        assert client_error.value.message == 'Unable to decode data.'
 
     def update_fails_with_poorly_constructed_data(self, request_type):
         """
@@ -400,7 +397,7 @@ class TestCanvasApiClient(unittest.TestCase):
         bad_course_to_update = '{"course": {"name": "test_course"}}'.encode()
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
-        with pytest.raises(CanvasClientError) as client_error:
+        with pytest.raises(ClientError) as client_error:
             with responses.RequestsMock() as request_mock:
                 request_mock.add(
                     responses.POST,
@@ -411,8 +408,7 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(bad_course_to_update)
 
-        assert client_error.value.__str__() == 'Canvas Client Error: ' \
-                                               'Could not transmit data, no integration ID present.'
+        assert client_error.value.message == 'Could not transmit data, no integration ID present.'
 
     def update_fails_when_course_id_not_found(self, request_type):
         """
@@ -426,7 +422,7 @@ class TestCanvasApiClient(unittest.TestCase):
         ]
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
-        with pytest.raises(CanvasClientError) as client_error:
+        with pytest.raises(ClientError) as client_error:
             with responses.RequestsMock() as request_mock:
                 request_mock.add(
                     responses.GET,
@@ -443,8 +439,9 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(course_to_update)
 
-        assert client_error.value.__str__() == 'Canvas Client Error: No Canvas courses found' \
-                                               ' with associated integration ID: {}.'.format(self.integration_id)
+        assert client_error.value.message == 'No Canvas courses found with associated integration ID: {}.'.format(
+            self.integration_id
+        )
 
     def transmission_with_empty_data(self, request_type):
         """
@@ -453,7 +450,7 @@ class TestCanvasApiClient(unittest.TestCase):
         empty_data = ''
         canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
-        with pytest.raises(CanvasClientError) as client_error:
+        with pytest.raises(ClientError) as client_error:
             with responses.RequestsMock() as request_mock:
                 request_mock.add(
                     responses.POST,
@@ -464,4 +461,4 @@ class TestCanvasApiClient(unittest.TestCase):
                 transmitter_method = getattr(canvas_api_client, request_type)
                 transmitter_method(empty_data)
 
-        assert client_error.value.__str__() == 'Canvas Client Error: No data to transmit.'
+        assert client_error.value.message == 'No data to transmit.'
