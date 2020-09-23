@@ -9,8 +9,9 @@ from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from .transmitters.content_metadata import BlackboardContentMetadataTransmitter
+
 from .exporters.content_metadata import BlackboardContentMetadataExporter
+from .transmitters.content_metadata import BlackboardContentMetadataTransmitter
 
 
 @python_2_unicode_compatible
