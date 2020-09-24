@@ -4,6 +4,7 @@ Client for connecting to Canvas.
 """
 import json
 from datetime import datetime, timedelta
+from http import HTTPStatus
 
 import requests
 from requests.utils import quote
@@ -11,7 +12,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
-from integrated_channels.exceptions import CanvasClientError, ClientError
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 
@@ -134,16 +135,21 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 break
 
         if not course_id:
-            raise CanvasClientError(
+            raise ClientError(
                 "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
                 "/Canvas learner: {canvas_user_id}.".format(
                     course_id=learner_data['courseID'],
                     user_id=learner_data['userID'],
                     canvas_user_id=canvas_user_id
-                ))
+                ),
+                HTTPStatus.NOT_FOUND.value,
+            )
 
         # Depending on if the assignment already exists, either retrieve or create it.
-        assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
+        try:
+            assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
+        except ClientError as client_error:
+            return client_error.status_code, client_error.message
 
         # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
         submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
@@ -161,7 +167,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             }
         }
         update_grade_response = self.session.put(submission_url, json=submission_data)
-        update_grade_response.raise_for_status()
+
         return update_grade_response.status_code, update_grade_response.text
 
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
@@ -224,7 +230,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             data (bytearray): The json encoded payload to POST.
         """
         post_response = self.session.post(url, data=data)
-        post_response.raise_for_status()
+        if post_response.status_code >= 400:
+            raise ClientError(post_response.text, post_response.status_code)
         return post_response.status_code, post_response.text
 
     def _put(self, url, data):
@@ -237,7 +244,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             ID used to match a course with a course ID.
         """
         put_response = self.session.put(url, data=data)
-        put_response.raise_for_status()
+        if put_response.status_code >= 400:
+            raise ClientError(put_response.text, put_response.status_code)
         return put_response.status_code, put_response.text
 
     def _delete(self, url):
@@ -248,8 +256,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             url (str): The canvas url to send delete requests to.
         """
         delete_response = self.session.delete(url, data='{"event":"delete"}')
-        delete_response.raise_for_status()
-
+        if delete_response.status_code >= 400:
+            raise ClientError(delete_response.text, delete_response.status_code)
         return delete_response.status_code, delete_response.text
 
     def _extract_integration_id(self, data):
@@ -261,15 +269,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             data (bytearray): The json encoded payload intended for a Canvas endpoint.
         """
         if not data:
-            raise CanvasClientError("No data to transmit.")
+            raise ClientError("No data to transmit.", HTTPStatus.NOT_FOUND.value)
         try:
             integration_id = json.loads(
                 data.decode("utf-8")
             )['course']['integration_id']
         except KeyError:
-            raise CanvasClientError("Could not transmit data, no integration ID present.")
+            raise ClientError("Could not transmit data, no integration ID present.", HTTPStatus.NOT_FOUND.value)
         except AttributeError:
-            raise CanvasClientError("Unable to decode data.")
+            raise ClientError("Unable to decode data.", HTTPStatus.BAD_REQUEST.value)
 
         return integration_id
 
@@ -286,7 +294,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             self.enterprise_configuration.canvas_account_id,
             quote(integration_id),
         )
-        all_courses_response = self.session.get(url).json()
+        resp = self.session.get(url)
+        all_courses_response = resp.json()
+
+        if resp.status_code >= 400:
+            raise ClientError(
+                all_courses_response.reason,
+                all_courses_response.status_code
+            )
+
         course_id = None
         for course in all_courses_response:
             if course['integration_id'] == integration_id:
@@ -294,9 +310,12 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 break
 
         if not course_id:
-            raise CanvasClientError("No Canvas courses found with associated integration ID: {}.".format(
-                integration_id
-            ))
+            raise ClientError(
+                "No Canvas courses found with associated integration ID: {}.".format(
+                    integration_id
+                ),
+                HTTPStatus.NOT_FOUND.value
+            )
         return course_id
 
     def _search_for_canvas_user_by_email(self, user_email):
@@ -312,18 +331,21 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             email_address=user_email
         )
         rsps = self.session.get(get_user_id_from_email_url)
-        rsps.raise_for_status()
+
+        if rsps.status_code >= 400:
+            raise ClientError(
+                "Failed to retrieve user from Canvas: received response-[{}]".format(rsps.reason),
+                rsps.status_code
+            )
+
         get_users_by_email_response = rsps.json()
 
         try:
             canvas_user_id = get_users_by_email_response[0]['id']
         except (KeyError, IndexError):
-            # Trying to figure out how we should handle errors here- should we catch
-            # them in the in the transmitter? Should we return 400 but not raise?
-            # If we have multiple course completions to post, a raised exception here without
-            # anything else will prevent other transmissions to happen.
-            raise CanvasClientError(
-                "No Canvas user ID found associated with email: {}".format(user_email)
+            raise ClientError(
+                "No Canvas user ID found associated with email: {}".format(user_email),
+                HTTPStatus.NOT_FOUND.value
             )
         return canvas_user_id
 
@@ -334,7 +356,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             canvas_user_id=user_id
         )
         rsps = self.session.get(get_users_courses_url)
-        rsps.raise_for_status()
+
+        if rsps.status_code >= 400:
+            raise ClientError(
+                "Could not retrieve Canvas course list. Received exception: {}".format(
+                    rsps.reason
+                ),
+                rsps.status_code
+            )
+
         return rsps.json()
 
     def _handle_canvas_assignment_retrieval(self, integration_id, course_id):
@@ -355,7 +385,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             course_id=course_id
         )
         resp = self.session.get(canvas_assignments_url)
-        resp.raise_for_status()
+
         assignments_resp = resp.json()
         assignment_id = None
         for assignment in assignments_resp:
@@ -364,8 +394,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     assignment_id = assignment['id']
                     break
             except (KeyError, ValueError):
-                raise CanvasClientError(
-                    "Something went wrong retrieving assignments from Canvas. Got response: {}".format(resp.text)
+                raise ClientError(
+                    "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
+                        resp.text,
+                    ),
+                    resp.status_code
                 )
 
         # Canvas requires a course assignment for a learner to be assigned a grade.
@@ -381,15 +414,15 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 }
             }
             create_assignment_resp = self.session.post(canvas_assignments_url, json=assignment_creation_data)
-            create_assignment_resp.raise_for_status()
 
             try:
                 assignment_id = create_assignment_resp.json()['id']
             except (ValueError, KeyError):
-                raise CanvasClientError(
+                raise ClientError(
                     "Something went wrong creating an assignment on Canvas. Got response: {}".format(
-                        create_assignment_resp.text
-                    )
+                        create_assignment_resp.text,
+                    ),
+                    create_assignment_resp.status_code
                 )
         return assignment_id
 
@@ -405,17 +438,29 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             expires_in (int): the number of seconds after which token will expire
         Raises:
             HTTPError: If we received a failure response code from Canvas.
-            RequestException: If an unexpected response format was received that we could not parse.
+            ClientError: If an unexpected response format was received that we could not parse.
         """
         if not client_id:
-            raise ClientError("Failed to generate oauth access token: Client ID required.")
+            raise ClientError(
+                "Failed to generate oauth access token: Client ID required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         if not client_secret:
-            raise ClientError("Failed to generate oauth access token: Client secret required.")
+            raise ClientError(
+                "Failed to generate oauth access token: Client secret required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         if not self.enterprise_configuration.refresh_token:
-            raise ClientError("Failed to generate oauth access token: Refresh token required.")
+            raise ClientError(
+                "Failed to generate oauth access token: Refresh token required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR
+            )
 
         if not self.enterprise_configuration.canvas_base_url or not self.config.oauth_token_auth_path:
-            raise ClientError("Failed to generate oauth access token: Canvas oauth path missing from configuration.")
+            raise ClientError(
+                "Failed to generate oauth access token: Canvas oauth path missing from configuration.",
+                HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         auth_token_url = urljoin(
             self.enterprise_configuration.canvas_base_url,
             self.config.oauth_token_auth_path,
@@ -430,9 +475,10 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         }
 
         auth_response = requests.post(auth_token_url, auth_token_params)
-        auth_response.raise_for_status()
+        if auth_response.status_code >= 400:
+            raise ClientError(auth_response.text, auth_response.status_code)
         try:
             data = auth_response.json()
             return data['access_token'], data["expires_in"]
         except (KeyError, ValueError):
-            raise requests.RequestException(response=auth_response)
+            raise ClientError(auth_response.text, auth_response.status_code)

@@ -224,7 +224,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             tuple: Tuple containing access token string and expiration datetime.
         Raises:
             HTTPError: If we received a failure response code from Degreed.
-            RequestException: If an unexpected response format was received that we could not parse.
+            ClientError: If an unexpected response format was received that we could not parse.
         """
         response = requests.post(
             urljoin(self.enterprise_configuration.degreed_base_url, self.global_degreed_config.oauth_api_path),
@@ -238,10 +238,9 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             headers={'Content-Type': 'application/x-www-form-urlencoded'}
         )
 
-        response.raise_for_status()
         try:
             data = response.json()
             expires_at = data['expires_in'] + int(time.time())
             return data['access_token'], datetime.datetime.utcfromtimestamp(expires_at)
         except (KeyError, ValueError):
-            raise requests.RequestException(response=response)
+            raise ClientError(response.text, response.status_code)

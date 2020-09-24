@@ -127,10 +127,13 @@ class ContentMetadataTransmitter(Transmitter):
                 self.client.create_content_metadata(serialized_chunk)
             except ClientError as exc:
                 LOGGER.error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                    'Failed to create [%s] content metadata items for integrated channel [%s] [%s]. '
+                    'Task failed with message [%s] and status code [%s]',
                     len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code(),
+                    exc.message,
+                    exc.status_code
                 )
                 LOGGER.exception(exc)
             else:
@@ -150,10 +153,13 @@ class ContentMetadataTransmitter(Transmitter):
                 self.client.update_content_metadata(serialized_chunk)
             except ClientError as exc:
                 LOGGER.error(
-                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]',
+                    'Failed to update [%s] content metadata items for integrated channel [%s] [%s]. '
+                    'Task failed with message [%s] and status code [%s]',
                     len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code(),
+                    exc.message,
+                    exc.status_code
                 )
                 LOGGER.exception(exc)
             else:
@@ -173,10 +179,13 @@ class ContentMetadataTransmitter(Transmitter):
                 self.client.delete_content_metadata(serialized_chunk)
             except ClientError as exc:
                 LOGGER.error(
-                    'Failed to delete [%s] content metadata items for integrated channel [%s] [%s]',
+                    'Failed to delete [%s] content metadata items for integrated channel [%s] [%s]. '
+                    'Task failed with message [%s] and status code [%s]',
                     len(chunk),
                     self.enterprise_configuration.enterprise_customer.name,
                     self.enterprise_configuration.channel_code(),
+                    exc.message,
+                    exc.status_code
                 )
                 LOGGER.exception(exc)
             else:

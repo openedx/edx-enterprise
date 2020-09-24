@@ -9,8 +9,8 @@ import unittest
 import ddt
 import mock
 from pytest import mark
-from requests import RequestException
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.models import SapSuccessFactorsLearnerDataTransmissionAudit
 from integrated_channels.sap_success_factors.transmitters import learner_data
 from test_utils import factories
@@ -105,7 +105,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         """
         Learner data transmission fails for some reason and the payload is saved with the appropriate data.
         """
-        self.create_course_completion_mock.side_effect = RequestException('error occurred')
+        self.create_course_completion_mock.side_effect = ClientError('error occurred')
         payload = SapSuccessFactorsLearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             sapsf_user_id='sap_user',
@@ -129,10 +129,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
     def test_transmit_failure_user_inactive(self, content, ecu_active_expectation):
         """Learner data transmission fails because the user is inactive on the SAPSF side, so we mark them inactive
         internally."""
-        self.create_course_completion_mock.side_effect = RequestException(
-            'error occurred',
-            response=mock.MagicMock(content=content),
-        )
+        self.create_course_completion_mock.side_effect = ClientError(content)
         payload = SapSuccessFactorsLearnerDataTransmissionAudit(
             enterprise_course_enrollment_id=self.enterprise_course_enrollment.id,
             sapsf_user_id='sap_user',
@@ -148,7 +145,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         self.enterprise_customer_user.refresh_from_db()
         assert self.enterprise_customer_user.active == ecu_active_expectation
         assert payload.status == '500'
-        assert payload.error_message == 'error occurred'
+        assert payload.error_message == content
 
     def test_transmit_by_course_key_success(self):
         """
@@ -191,7 +188,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
         the transmission with the course run id is sent as well and succeeds.
         """
         self.create_course_completion_mock.side_effect = [
-            RequestException('error occurred'),
+            ClientError('error occurred'),
             (200, '{"success":"true"}')
         ]
         payloads = [
