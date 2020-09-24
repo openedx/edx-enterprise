@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 
+[3.8.19] 2020-09-24
+-------------------
+
+* Copy test from edx-platform over to enterprise to test migrations early.
+
 [3.8.18] 2020-09-23
 -------------------
 
