@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 
+[3.8.20] 2020-09-24
+-------------------
+
+* Better exception handling for integrated channels.
+
 [3.8.19] 2020-09-24
 -------------------
 
