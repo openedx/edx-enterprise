@@ -5,6 +5,8 @@ Tests for the `edx-enterprise` models module.
 
 import json
 import logging
+import os
+import shutil
 import unittest
 
 import ddt
@@ -740,6 +742,12 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         file_mock.size = size
         return file_mock
 
+    def cleanup(self):
+        """Remove the temp directory only if it exists."""
+        dir_name = os.path.abspath('enterprise/branding/')
+        if os.path.exists(dir_name):
+            shutil.rmtree(dir_name)
+
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
         """
@@ -781,6 +789,22 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             assert storage_mock.delete.call_count == (1 if delete_called else 0)
             if delete_called:
                 storage_mock.delete.assert_called_once_with('enterprise/branding/1/1_logo.png')
+
+    def test_logo_path_after_save(self):
+        """
+        Test that `EnterpriseCustomerBrandingConfiguration`.logo is saved at the correct path with correct id after the
+        model instance is saved.
+        """
+        file_mock = self._make_file_mock()
+        branding_config = EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=factories.EnterpriseCustomerFactory(),
+            logo=file_mock
+        )
+        branding_config.save()
+        saved_path = branding_config.logo.path  # pylint: disable=no-member
+        expected_path = os.path.abspath(logo_path(branding_config, branding_config.logo.name))
+        self.assertEqual(saved_path, expected_path)
+        self.addCleanup(self.cleanup)
 
     def test_branding_configuration_saving_successfully(self):
         """
