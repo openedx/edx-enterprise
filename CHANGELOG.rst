@@ -5,13 +5,20 @@ Change Log
    All enhancements and patches to edx-enterprise will be documented
    in this file.  It adheres to the structure of http://keepachangelog.com/ ,
    but in reStructuredText instead of Markdown (for ease of incorporation into
-   Sphinx documentation and the PyPI description).
+   Sphinx documentation and the PyPI description). Additionally, we no longer
+   track the date here since PyPi has its own history of dates based on when
+   the package is published.
 
    This project adheres to Semantic Versioning (http://semver.org/).
 
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
+
+[3.8.22]
+--------
+
+* Updated seed_enterprise_devstack_data to enable the test customer's subscription management screen
 
 [3.8.21] 2020-09-28
 -------------------
