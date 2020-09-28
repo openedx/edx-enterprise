@@ -13,6 +13,11 @@ Change Log
 
 Unreleased
 
+[3.8.21] 2020-09-28
+-------------------
+
+* Add functionality to save logo file at only one location when saving EnterpriseCustomerBrandingConfiguration instance
+
 [3.8.20] 2020-09-24
 -------------------
 

@@ -3,12 +3,11 @@
 Django signal handlers.
 """
 
-import os
 from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -33,6 +32,7 @@ except ImportError:
     CourseEnrollment = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+_UNSAVED_FILEFIELD = 'unsaved_filefield'
 
 
 @disable_for_loaddata
@@ -99,17 +99,24 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         pending_ecu.delete()
 
 
+@receiver(pre_save, sender=EnterpriseCustomerBrandingConfiguration)
+def skip_saving_logo_file(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    To avoid saving the logo image at an incorrect path, skip saving it.
+    """
+    if not instance.id and not hasattr(instance, _UNSAVED_FILEFIELD):
+        setattr(instance, _UNSAVED_FILEFIELD, instance.logo)
+        instance.logo = None
+
+
 @receiver(post_save, sender=EnterpriseCustomerBrandingConfiguration)
-def update_logo_name(sender, instance, **kwargs):     # pylint: disable=unused-argument
+def save_logo_file(sender, instance, **kwargs):            # pylint: disable=unused-argument
     """
-    Update logo name and path to replace None with instance id.
+    Now that the object is instantiated and instance.id exists, save the image at correct path and re-save the model.
     """
-    filename = instance.logo.name
-    if kwargs['created'] and 'None' in filename:
-        extension = os.path.splitext(filename)[1].lower()
-        instance_file = instance.logo.file
-        new_name = 'enterprise/branding/' + str(instance.id) + '/' + str(instance.id) + '_logo' + extension
-        instance.logo.save(new_name, instance_file)
+    if kwargs['created'] and hasattr(instance, _UNSAVED_FILEFIELD):
+        instance.logo = getattr(instance, _UNSAVED_FILEFIELD)
+        delattr(instance, _UNSAVED_FILEFIELD)
         instance.save()
 
 
