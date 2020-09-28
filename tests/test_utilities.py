@@ -1328,16 +1328,17 @@ class TestEnterpriseUtils(unittest.TestCase):
         assert utils.is_course_run_upgradeable(course_run) == expected_upgradeability
 
     @ddt.data(
-        ({"status": "published"}, True),
-        ({"status": "unpublished"}, False)
+        ({'key': 'value'}, False),  # test with missing `status` key
+        ({"status": "published"}, False),
+        ({"status": "unpublished"}, True),
     )
     @ddt.unpack
-    def test_is_course_published(self, course_run, expected_response):
+    def test_is_course_unpublished(self, course_run, expected_response):
         """
-        ``is_course_run_published`` returns whether the course run is considered "published"
+        ``is_course_run_unpublished`` returns whether the course run is considered "unpublished"
         given its metadata structure and values.
         """
-        assert utils.is_course_run_published(course_run) == expected_response
+        assert utils.is_course_run_unpublished(course_run) == expected_response
 
     @ddt.data(
         ({"start": "3000-10-13T13:11:04Z"}, utils.parse_datetime_handle_invalid("3000-10-13T13:11:04Z")),

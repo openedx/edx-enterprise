@@ -769,7 +769,7 @@ def is_course_run_enrollable(course_run):
     3. enrollment_end is greater than now, or undefined
     """
     # Check if the course run is unpublished (sometimes these sneak through)
-    if not is_course_run_published(course_run):
+    if is_course_run_unpublished(course_run):
         return False
 
     now = datetime.datetime.now(pytz.UTC)
@@ -822,12 +822,12 @@ def is_course_run_upgradeable(course_run):
     return False
 
 
-def is_course_run_published(course_run):
+def is_course_run_unpublished(course_run):
     """
-    Return True if the course run's status value is "published".
+    Return True if the course run's status value is "unpublished".
     """
     if course_run:
-        if course_run.get('status') == 'published':
+        if course_run.get('status') == 'unpublished':
             return True
     return False
 
