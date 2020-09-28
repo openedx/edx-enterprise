@@ -228,6 +228,10 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     @moodle_request_wrapper
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        import pdb;
+        pdb.set_trace()
+        placeholder = 1000
+
         pass
 
     @moodle_request_wrapper
