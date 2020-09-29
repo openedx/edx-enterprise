@@ -3,6 +3,7 @@
 Client for connecting to Blackboard.
 """
 import base64
+from datetime import datetime, timedelta
 
 from django.apps import apps
 
@@ -25,6 +26,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         super(BlackboardAPIClient, self).__init__(enterprise_configuration)
         self.config = apps.get_app_config('blackboard')
+        self.session = None
+        self.expires_at = None
 
     def create_content_metadata(self, serialized_data):
         """TODO"""
@@ -40,6 +43,28 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """TODO"""
+
+    def _create_session(self):
+        """
+        Will only create a new session if token expiry has been reached
+        """
+        now = datetime.utcnow()
+        if self.session is None or self.expires_at is None or now >= self.expires_at:
+            # need new session if session expired, or not initialized
+            if self.session:
+                self.session.close()
+            # Create a new session with a valid token
+            oauth_access_token, expires_in = self._get_oauth_access_token(
+                self.enterprise_configuration.client_id,
+                self.enterprise_configuration.client_secret,
+            )
+            session = requests.Session()
+            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
+            session.headers['Content-Type'] = 'application/json'
+            self.session = session
+            # expiry expected after `expires_in` seconds
+            if expires_in is not None:
+                self.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
     def _get_oauth_access_token(self, client_id, client_secret):
         """Fetch access token using refresh_token workflow from Blackboard
