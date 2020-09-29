@@ -1,5 +1,5 @@
 """
-Views containing APIs for Canvas integrated channel
+Views containing APIs for Blackboard integrated channel
 """
 
 import base64
