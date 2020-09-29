@@ -91,6 +91,11 @@ urlpatterns += [
         name='canvas',
     ),
     url(
+        r'^blackboard/',
+        include('integrated_channels.blackboard.urls'),
+        name='blackboard',
+    ),
+    url(
         r'^enterprise_learner_portal/',
         include('enterprise_learner_portal.urls'),
         name='enterprise_learner_portal_api'
