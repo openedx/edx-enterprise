@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.29]
+--------
+
+* Make email field optional for sftp delivery for enterprise reporting config
+
 [3.8.28]
 --------
 

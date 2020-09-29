@@ -538,8 +538,21 @@ class EnterpriseCustomerReportingConfigurationSerializer(serializers.ModelSerial
     )
     enterprise_customer_catalogs = EnterpriseCustomerCatalogSerializer(many=True, read_only=True)
     email = serializers.ListField(
+        default=[],
         child=serializers.EmailField()
     )
+
+    def validate(self, data):  # pylint: disable=arguments-differ
+        delivery_method = data.get('delivery_method')
+        if not delivery_method and self.instance:
+            delivery_method = self.instance.delivery_method
+
+        # in case of email delivery, email field should be populated with valid email(s)
+        if delivery_method == models.EnterpriseCustomerReportingConfiguration.DELIVERY_METHOD_EMAIL:
+            if 'email' in data and not bool(data['email']):
+                raise serializers.ValidationError({'email': ['This field is required']})
+
+        return data
 
 
 # pylint: disable=abstract-method
