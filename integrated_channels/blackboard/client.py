@@ -103,7 +103,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             headers={
                 'Authorization': self._create_auth_header(),
                 'Content-Type': 'application/x-www-form-urlencoded'
-            })
+            }
         )
         if auth_response.status_code >= 400:
             raise ClientError(auth_response.text, auth_response.status_code)
