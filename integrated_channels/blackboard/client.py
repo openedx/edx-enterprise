@@ -60,11 +60,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             # need new session if session expired, or not initialized
             if self.session:
                 self.session.close()
+
             # Create a new session with a valid token
-            oauth_access_token, expires_in = self._get_oauth_access_token(
-                self.enterprise_configuration.client_id,
-                self.enterprise_configuration.client_secret,
-            )
+            oauth_access_token, expires_in = self._get_oauth_access_token()
+
             session = requests.Session()
             session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
             session.headers['Content-Type'] = 'application/json'
@@ -73,12 +72,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             if expires_in is not None:
                 self.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
 
-    def _get_oauth_access_token(self, client_id, client_secret):
+    def _get_oauth_access_token(self):
         """Fetch access token using refresh_token workflow from Blackboard
-
-        Args:
-            client_id (str): API client ID or Application Key
-            client_secret (str): API client secret or Application Secret
 
         Returns:
             access_token (str): the OAuth access token to access the Blackboard server
@@ -87,23 +82,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             HTTPError: If we received a failure response code.
             ClientError: If an unexpected response format was received that we could not parse.
         """
-        if not client_id:
-            raise ClientError(
-                "Failed to generate oauth access token: Client ID required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-        if not client_secret:
-            raise ClientError(
-                "Failed to generate oauth access token: Client secret required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
-            )
+
         if not self.enterprise_configuration.refresh_token:
             raise ClientError(
                 "Failed to generate oauth access token: Refresh token required.",
                 HTTPStatus.INTERNAL_SERVER_ERROR
             )
 
-        if not self.enterprise_configuration.blackboard_base_url or not self.config.oauth_token_auth_path:
+        if (not self.enterprise_configuration.blackboard_base_url
+                or not self.config.oauth_token_auth_path):
             raise ClientError(
                 "Failed to generate oauth access token: oauth path missing from configuration.",
                 HTTPStatus.INTERNAL_SERVER_ERROR
@@ -130,6 +117,9 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             raise ClientError(auth_response.text, auth_response.status_code)
         try:
             data = auth_response.json()
+            # do not forget to save the new refresh token otherwise subsequent requests will fail
+            self.enterprise_configuration.refresh_token = data["refresh_token"]
+            self.enterprise_configuration.save()
             return data['access_token'], data["expires_in"]
         except (KeyError, ValueError):
             raise ClientError(auth_response.text, auth_response.status_code)
@@ -138,6 +128,16 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         auth header in oauth2 token format as required by blackboard doc
         """
+        if not self.enterprise_configuration.client_id:
+            raise ClientError(
+                "Failed to generate oauth access token: Client ID required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR
+            )
+        if not self.enterprise_configuration.client_secret:
+            raise ClientError(
+                "Failed to generate oauth access token: Client secret required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR
+            )
         return 'Basic {}'.format(
             base64.b64encode(u'{key}:{secret}'.format(
                 key=self.enterprise_configuration.client_id,
