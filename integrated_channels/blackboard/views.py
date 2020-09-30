@@ -3,6 +3,7 @@ Views containing APIs for Blackboard integrated channel
 """
 
 import base64
+
 import requests
 from rest_framework import generics
 from rest_framework.exceptions import APIException, NotFound, ParseError
@@ -14,6 +15,8 @@ from django.conf import settings
 
 from enterprise.utils import get_enterprise_customer
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
+
+# TODO: Refactor candidate (duplication with canvas views.py)
 
 
 class BlackboardCompleteOAuthView(generics.ListAPIView):
@@ -76,7 +79,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         enterprise_customer = get_enterprise_customer(enterprise_customer_uuid)
         if not enterprise_customer:
             raise NotFound("No enterprise data found for given uuid: {}."
-                .format(enterprise_customer_uuid))
+                           .format(enterprise_customer_uuid))
 
         try:
             enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(
@@ -84,7 +87,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             )
         except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
             raise NotFound("No Blackboard configuration found for enterprise: {}"
-                .format(enterprise_customer_uuid))
+                           .format(enterprise_customer_uuid))
 
         auth_header = self._create_auth_header(enterprise_config)
 
@@ -103,17 +106,6 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
                 'Content-Type': 'application/x-www-form-urlencoded'
             })
 
-        """
-        Expected response:
-        {
-            "access_token": "***",
-            "token_type": "bearer",
-            "expires_in": 3282,
-            "refresh_token": "***",
-            "scope": "*",
-            "user_id": "***"
-        }
-        """
         try:
             data = auth_response.json()
             refresh_token = data['refresh_token']
@@ -126,6 +118,9 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         return Response()
 
     def _create_auth_header(self, enterprise_config):
+        """
+        Auth header in oauth2 token format as per Blackboard doc
+        """
         return 'Basic {}'.format(
             base64.b64encode(u'{key}:{secret}'.format(
                 key=enterprise_config.client_id, secret=enterprise_config.client_secret

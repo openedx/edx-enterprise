@@ -4,10 +4,17 @@ Client for connecting to Blackboard.
 """
 import base64
 from datetime import datetime, timedelta
+from http import HTTPStatus
+
+import requests
+from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+# TODO: Refactor candidate (duplication with canvas client)
 
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
@@ -111,17 +118,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             'refresh_token': self.enterprise_configuration.refresh_token,
         }
 
-        """
-        Expected response shape:
-        {
-            "access_token": "***",
-            "token_type": "bearer",
-            "expires_in": 3599,
-            "refresh_token": "***",
-            "scope": "*",
-            "user_id": "***"
-        }
-        """
         auth_response = requests.post(
             auth_token_url,
             auth_token_params,
@@ -139,8 +135,12 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             raise ClientError(auth_response.text, auth_response.status_code)
 
     def _create_auth_header(self):
+        """
+        auth header in oauth2 token format as required by blackboard doc
+        """
         return 'Basic {}'.format(
             base64.b64encode(u'{key}:{secret}'.format(
-                key=self.enterprise_config.client_id, secret=self.enterprise_config.client_secret
+                key=self.enterprise_configuration.client_id,
+                secret=self.enterprise_configuration.client_secret
             ).encode('utf-8')).decode()
         )
