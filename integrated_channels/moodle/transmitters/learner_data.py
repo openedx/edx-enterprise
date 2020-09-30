@@ -3,8 +3,8 @@
 Class for transmitting learner data to Moodle.
 """
 
-from integrated_channels.moodle.client import MoodleAPIClient
 from integrated_channels.integrated_channel.transmitters.learner_data import LearnerTransmitter
+from integrated_channels.moodle.client import MoodleAPIClient
 
 
 class MoodleLearnerTransmitter(LearnerTransmitter):
@@ -24,10 +24,10 @@ class MoodleLearnerTransmitter(LearnerTransmitter):
 
     def transmit(self, payload, **kwargs):
         """
-        Send a completion status call to Canvas using the client.
+        Send a completion status call to Moodle using the client.
 
         Args:
-            payload: The learner completion data payload to send to Canvas
+            payload: The learner completion data payload to send to Moodle
         """
         kwargs['app_label'] = 'moodle'
         kwargs['model_name'] = 'MoodleLearnerDataTransmissionAudit'

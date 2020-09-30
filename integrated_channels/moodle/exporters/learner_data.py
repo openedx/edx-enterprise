@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""
+Learner data exporter for Enterprise Integrated Channel Moodle.
+"""
+
 from logging import getLogger
 
 from django.apps import apps
@@ -26,14 +31,15 @@ class MoodleLearnerExporter(LearnerExporter):
         If completed_date is None, then course completion has not been met.
         If no remote ID can be found, return None.
         """
+        enterprise_customer = enterprise_enrollment.enterprise_customer_user
         completed_timestamp = None
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        if enterprise_enrollment.enterprise_customer_user.user_email is None:
+        if enterprise_customer.user_email is None:
             LOGGER.debug(
                 'No learner data was sent for user [%s] because a Moodle user ID could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
+                enterprise_customer.username
             )
             return None
 
@@ -43,7 +49,7 @@ class MoodleLearnerExporter(LearnerExporter):
         )
 
         course_catalog_client = get_course_catalog_api_service_client(
-            site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
+            site=enterprise_customer.enterprise_customer.site
         )
 
         percent_grade = kwargs.get('grade_percent', None)
@@ -51,7 +57,7 @@ class MoodleLearnerExporter(LearnerExporter):
         return [
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                moodle_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
+                moodle_user_email=enterprise_customer.user_email,
                 course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                 course_completed=completed_date is not None and is_passing,
                 grade=percent_grade,
@@ -59,7 +65,7 @@ class MoodleLearnerExporter(LearnerExporter):
             ),
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                moodle_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
+                moodle_user_email=enterprise_customer.user_email,
                 course_id=enterprise_enrollment.course_id,
                 course_completed=completed_date is not None and is_passing,
                 grade=percent_grade,

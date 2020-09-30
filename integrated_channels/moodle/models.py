@@ -128,12 +128,17 @@ class MoodleLearnerDataTransmissionAudit(models.Model):
     The payload we send to Moodle at a given point in time for an enterprise course enrollment.
 
     """
-    moodle_user_email = models.CharField(max_length=255, blank=False, null=False)
+    moodle_user_email = models.EmailField(
+        max_length=255,
+        blank=False,
+        null=False,
+        help_text='The learner`s Moodle email. This must match the email on edX'
+    )
 
     enterprise_course_enrollment_id = models.PositiveIntegerField(blank=False, null=False, db_index=True)
     course_id = models.CharField(max_length=255, blank=False, null=False)
-    course_completed = models.BooleanField(default=True)
-    grade = models.CharField(max_length=100, blank=False, null=False)
+    course_completed = models.BooleanField(default=False)
+    grade = models.DecimalField(blank=True, null=True, max_digits=3, decimal_places=2)
     total_hours = models.FloatField(null=True, blank=True)
     course_completed = models.BooleanField(
         default=True,
