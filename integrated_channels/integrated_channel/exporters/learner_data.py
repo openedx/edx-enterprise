@@ -29,6 +29,7 @@ class LearnerExporter(Exporter):
     Base class for exporting learner completion data to integrated channels.
     """
 
+    GRADE_AUDIT = 'Audit'
     GRADE_PASSING = 'Pass'
     GRADE_FAILING = 'Fail'
     GRADE_INCOMPLETE = 'In Progress'
@@ -71,6 +72,13 @@ class LearnerExporter(Exporter):
         Returns the string used for an incomplete course grade.
         """
         return self.GRADE_INCOMPLETE
+
+    @property
+    def grade_audit(self):
+        """
+        Returns the string used for an audit course grade.
+        """
+        return self.GRADE_AUDIT
 
     def export(self, **kwargs):  # pylint: disable=R0915
         """
@@ -141,7 +149,7 @@ class LearnerExporter(Exporter):
         )
 
         for enterprise_enrollment in enrollment_queryset:
-
+            is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             if TransmissionAudit and skip_transmitted and \
                     is_already_transmitted(TransmissionAudit, enterprise_enrollment.id, grade):
                 # We've already sent a completion status for this enrollment
@@ -205,8 +213,8 @@ class LearnerExporter(Exporter):
             if not consent.granted or enterprise_enrollment.audit_reporting_disabled:
                 continue
 
-            # For instructor-paced courses, let the certificate determine course completion
-            if course_details.get('pacing') == 'instructor':
+            # For instructor-paced and not audit courses, let the certificate determine course completion
+            if course_details.get('pacing') == 'instructor' and not is_audit_enrollment:
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment)
                 generate_formatted_log(
@@ -225,7 +233,7 @@ class LearnerExporter(Exporter):
             # For self-paced courses, check the Grades API
             else:
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
-                    self._collect_grades_data(enterprise_enrollment, course_details)
+                    self._collect_grades_data(enterprise_enrollment, course_details, is_audit_enrollment)
                 generate_formatted_log(
                     'Received data from grades api. CompletedDate: {completed_date}, Course: {course_id}, '
                     'Enterprise: {enterprise}, Grade: {grade}, IsPassing: {is_passing}, User: {user_id}'.format(
@@ -364,7 +372,7 @@ class LearnerExporter(Exporter):
 
         return completed_date, grade, is_passing, percent_grade
 
-    def _collect_grades_data(self, enterprise_enrollment, course_details):
+    def _collect_grades_data(self, enterprise_enrollment, course_details, is_audit_enrollment):
         """
         Collect the learner completion data from the Grades API.
 
@@ -424,6 +432,7 @@ class LearnerExporter(Exporter):
         if course_end_date is not None and course_end_date < now:
             completed_date = course_end_date
             grade = self.grade_passing if is_passing else self.grade_failing
+            grade = self.grade_audit if is_audit_enrollment else grade
 
         # * Or, the learner has a passing grade (as of now)
         elif is_passing:
