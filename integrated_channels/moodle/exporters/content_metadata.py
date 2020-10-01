@@ -26,6 +26,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
     }
 
     LONG_STRING_LIMIT = 2000
+    SKIP_KEY_IF_NONE = True
 
     def transform_description(self, content_metadata_item):
         """

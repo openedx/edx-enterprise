@@ -110,7 +110,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         else:
             response = requests.post(
                 url='{url}{api_path}?{querystring}'.format(
-                    url=method_url if method_url else self.enterprise_configuration.moodle_base_url,
+                    url=self.enterprise_configuration.moodle_base_url,
                     api_path=self.MOODLE_API_PATH,
                     querystring=urlencode(params)
                 )
