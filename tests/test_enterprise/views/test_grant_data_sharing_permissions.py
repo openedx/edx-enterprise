@@ -17,6 +17,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from enterprise.models import EnterpriseCourseEnrollment, LicensedEnterpriseCourseEnrollment
+from integrated_channels.exceptions import ClientError
 from test_utils import fake_render
 from test_utils.factories import (
     DataSharingConsentFactory,
@@ -447,6 +448,64 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_id,
             course_mode
         )
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @ddt.unpack
+    def test_get_course_specific_data_sharing_consent_not_enabled_exception_handling(
+            self,
+            course_catalog_api_client_mock,
+            mock_enrollment_api_client,
+            *args
+    ):  # pylint: disable=unused-argument
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=False,
+        )
+        content_filter = {
+            'key': [
+                course_id,
+            ]
+        }
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        enterprise_enrollment = EnterpriseCourseEnrollment.objects.create(
+            enterprise_customer_user=ecu,
+            course_id=course_id,
+        )
+
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_catalog_api_client_mock.return_value.get_course_id.return_value = course_id
+
+        course_mode = 'verified'
+        mock_enrollment_api_client.return_value.get_course_modes.return_value = [{'slug': course_mode}]
+        mock_enrollment_api_client.return_value.enroll_user_in_course.side_effect = ClientError('error occurred')
+
+        license_uuid = str(uuid.uuid4())
+        params = {
+            'enterprise_customer_uuid': str(enterprise_customer.uuid),
+            'course_id': course_id,
+            'next': 'https://google.com',
+            'failure_url': 'https://facebook.com',
+            'license_uuid': license_uuid,
+        }
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 302
+        self.assertRedirects(response, 'https://facebook.com', fetch_redirect_response=False)
+
+        assert LicensedEnterpriseCourseEnrollment.objects.filter(
+            enterprise_course_enrollment=enterprise_enrollment,
+            license_uuid=license_uuid,
+        ).exists() is False
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
