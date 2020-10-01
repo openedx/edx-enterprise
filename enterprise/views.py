@@ -570,10 +570,10 @@ class GrantDataSharingPermissions(View):
         return context_data
 
     @staticmethod
-    def create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid=None):
+    def create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid=None):
         """Create EnterpriseCustomerUser and EnterpriseCourseEnrollment record if not already exists."""
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-            enterprise_customer=consent_record.enterprise_customer,
+            enterprise_customer=enterprise_customer,
             user_id=request.user.id
         )
         enterprise_customer_user.update_session(request)
@@ -584,6 +584,82 @@ class GrantDataSharingPermissions(View):
         )
         if created:
             track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
+
+    def _enroll_leaner_in_course(
+            self,
+            request,
+            enterprise_customer,
+            course_id,
+            program_uuid,
+            license_uuid
+    ):
+        """Enrolls an enterprise learner into a course."""
+        # Create EnterpriseCourseEnrollment if we found course_run_id instead of course_key in course_id param.
+        # Skip creating EnterpriseCourseEnrollment if we found course_key instead of course_run_id.
+
+        # EnterpriseCourseEnrollment will be created when the user will select a course run.
+        # A CourseEnrollment record will be created and on the post signal of the CourseEnrollment,
+        # an EnterpriseCourseEnrollment record will also get created.
+        if course_id and self.is_course_run_id(course_id):
+            if license_uuid:
+                enrollment_api_client = EnrollmentApiClient()
+                course_modes = [mode['slug'] for mode in enrollment_api_client.get_course_modes(course_id)]
+                LOGGER.info(
+                    'Retrieved Course Modes for Course {course_id}: {course_modes}'.format(
+                        course_id=course_id,
+                        course_modes=course_modes
+                    )
+                )
+                course_mode = 'verified' if 'verified' in course_modes \
+                    else 'professional' if 'professional' in course_modes \
+                    else 'no-id-professional' if 'no-id-professional' in course_modes \
+                    else 'audit'
+                try:
+                    enrollment_api_client.enroll_user_in_course(
+                        request.user.username,
+                        course_id,
+                        course_mode
+                    )
+                    LOGGER.info(
+                        'Created LMS enrollment for User {user} in Course {course_id} '
+                        'with License {license_uuid} in Course Mode {course_mode}.'.format(
+                            user=request.user.username,
+                            course_id=course_id,
+                            license_uuid=license_uuid,
+                            course_mode=course_mode
+                        )
+                    )
+                except Exception as exc:  # pylint: disable=broad-except
+                    LOGGER.error(
+                        'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
+                            exc=exc
+                        )
+                    )
+                    raise
+            try:
+                self.create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid)
+            except IntegrityError:
+                error_code = 'ENTGDS009'
+                log_message = (
+                    '[Enterprise DSC API] IntegrityError while creating EnterpriseCourseEnrollment.'
+                    'Course: {course_id}, '
+                    'Program: {program_uuid}, '
+                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                    'User: {user_id}, '
+                    'License UUID: {license_uuid}, '
+                    'ErrorCode: {error_code}'.format(
+                        course_id=course_id,
+                        program_uuid=program_uuid,
+                        enterprise_customer_uuid=enterprise_customer.uuid,
+                        user_id=request.user.id,
+                        license_uuid=license_uuid,
+                        error_code=error_code,
+                    )
+                )
+                LOGGER.exception(log_message)
+                raise
+            return True
+        return False
 
     @method_decorator(login_required)
     def get(self, request):  # pylint: disable=too-many-statements
@@ -642,6 +718,19 @@ class GrantDataSharingPermissions(View):
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
 
+            # If DSC is entirely disabled proceed to enroll the learner in the course
+            if not enterprise_customer.requests_data_sharing_consent:
+                try:
+                    successful_enrollment = self._enroll_leaner_in_course(
+                        request=request,
+                        enterprise_customer=enterprise_customer,
+                        course_id=course_id,
+                        program_uuid=program_uuid,
+                        license_uuid=license_uuid)
+                    return redirect(success_url) if successful_enrollment else redirect(failure_url)
+                except Exception:  # pylint: disable=broad-except
+                    return redirect(failure_url)
+            # Otherwise determine the learner's consent status
             try:
                 consent_record = get_data_sharing_consent(
                     request.user.username,
@@ -887,69 +976,15 @@ class GrantDataSharingPermissions(View):
         defer_creation = request.POST.get('defer_creation')
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required() and consent_provided:
-            # Create EnterpriseCourseEnrollment if we found course_run_id instead of course_key in course_id param.
-            # Skip creating EnterpriseCourseEnrollment if we found course_key instead of course_run_id.
-
-            # EnterpriseCourseEnrollment will be created when the user will select a course run.
-            # A CourseEnrollment record will be created and on the post signal of the CourseEnrollment,
-            # an EnterpriseCourseEnrollment record will also get created.
-            if course_id and self.is_course_run_id(course_id):
-                if license_uuid:
-                    enrollment_api_client = EnrollmentApiClient()
-                    course_modes = [mode['slug'] for mode in enrollment_api_client.get_course_modes(course_id)]
-                    LOGGER.info(
-                        'Retrieved Course Modes for Course {course_id}: {course_modes}'.format(
-                            course_id=course_id,
-                            course_modes=course_modes
-                        )
-                    )
-                    course_mode = 'verified' if 'verified' in course_modes \
-                        else 'professional' if 'professional' in course_modes \
-                        else 'no-id-professional' if 'no-id-professional' in course_modes \
-                        else 'audit'
-                    try:
-                        enrollment_api_client.enroll_user_in_course(
-                            request.user.username,
-                            course_id,
-                            course_mode
-                        )
-                        LOGGER.info(
-                            'Created LMS enrollment for User {user} in Course {course_id} '
-                            'with License {license_uuid} in Course Mode {course_mode}.'.format(
-                                user=request.user.username,
-                                course_id=course_id,
-                                license_uuid=license_uuid,
-                                course_mode=course_mode
-                            )
-                        )
-                    except Exception as exc:    # pylint: disable=broad-except
-                        LOGGER.error(
-                            'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
-                                exc=exc
-                            )
-                        )
-                        return redirect(failure_url)
-                try:
-                    self.create_enterprise_course_enrollment(request, consent_record, course_id, license_uuid)
-                except IntegrityError:
-                    error_code = 'ENTGDS009'
-                    log_message = (
-                        '[Enterprise DSC API] IntegrityError while creating EnterpriseCourseEnrollment.'
-                        'Course: {course_id}, '
-                        'Program: {program_uuid}, '
-                        'EnterpriseCustomer: {enterprise_customer_uuid}, '
-                        'User: {user_id}, '
-                        'License UUID: {license_uuid}, '
-                        'ErrorCode: {error_code}'.format(
-                            course_id=course_id,
-                            program_uuid=program_uuid,
-                            enterprise_customer_uuid=enterprise_uuid,
-                            user_id=request.user.id,
-                            license_uuid=license_uuid,
-                            error_code=error_code,
-                        )
-                    )
-                    LOGGER.exception(log_message)
+            try:
+                self._enroll_leaner_in_course(
+                    request=request,
+                    enterprise_customer=enterprise_customer,
+                    course_id=course_id,
+                    program_uuid=program_uuid,
+                    license_uuid=license_uuid)
+            except Exception:  # pylint: disable=broad-except
+                pass
             consent_record.granted = consent_provided
             consent_record.save()
 
