@@ -150,6 +150,16 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
             }
         )
 
+        # Enrollment API
+        responses.add(
+            responses.GET,
+            urljoin(
+                lms_api.EnrollmentApiClient.API_BASE_URL,
+                "enrollment/{username},{course_id}".format(username=self.user.username, course_id=self.course_id),
+            ),
+            json=dict(mode='verified')
+        )
+
         # Certificates API user's grade response
         responses.add(
             responses.GET,
@@ -191,7 +201,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     def test_transmit_single_learner_data_performs_only_one_transmission(self):
         """
-        Test sending single user's data sould only update one `CornerstoneLearnerDataTransmissionAudit` entry
+        Test sending single user's data should only update one `CornerstoneLearnerDataTransmissionAudit` entry
         """
         course_id = 'course-v1:edX+NmX+Demo_Course_2'
         course_key = 'edX+NmX'
@@ -209,6 +219,16 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
                 "pacing": "instructor",
                 "end": "2038-06-21T12:58:17.428373Z",
             }
+        )
+
+        # Enrollment API
+        responses.add(
+            responses.GET,
+            urljoin(
+                lms_api.EnrollmentApiClient.API_BASE_URL,
+                "enrollment/{username},{course_id}".format(username=self.user.username, course_id=course_id),
+            ),
+            json=dict(mode='verified')
         )
 
         # Certificates API user's grade response

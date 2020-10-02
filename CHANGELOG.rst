@@ -15,6 +15,12 @@ Change Log
 
 Unreleased
 
+[3.8.23] 2020-10-01
+-------------------
+
+* Added Audit grade for Audit mode enrollments in integrated channels.
+
+
 [3.8.22]
 --------
 

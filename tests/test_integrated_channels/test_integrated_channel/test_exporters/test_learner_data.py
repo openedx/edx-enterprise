@@ -37,7 +37,10 @@ class TestLearnerExporter(unittest.TestCase):
         self.user = factories.UserFactory(username='C3PO', id=1)
         self.course_id = 'course-v1:edX+DemoX+DemoCourse'
         self.course_key = 'edX+DemoX'
-        self.enterprise_customer = factories.EnterpriseCustomerFactory()
+        self.enterprise_customer = factories.EnterpriseCustomerFactory(
+            enable_audit_enrollment=True,
+            enable_audit_data_reporting=True
+        )
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             user_id=self.user.id,
             enterprise_customer=self.enterprise_customer,
@@ -128,8 +131,9 @@ class TestLearnerExporter(unittest.TestCase):
         assert not learner_data
         assert mock_grades_api.call_count == 0
 
+    @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    def test_collect_learner_data_no_course_details(self, mock_course_api):
+    def test_collect_learner_data_no_course_details(self, mock_course_api, mock_enrollment_api):
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
@@ -137,6 +141,9 @@ class TestLearnerExporter(unittest.TestCase):
 
         # Return no course details
         mock_course_api.return_value.get_course_details.return_value = None
+
+        # Return empty enrollment data
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = {}
 
         learner_data = list(self.exporter.export())
         assert not learner_data
@@ -301,17 +308,21 @@ class TestLearnerExporter(unittest.TestCase):
 
     @ddt.data(
         # passing grade with no course end date
-        (True, None, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING),
+        (True, None, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
         # passing grade with course end date in past
-        (True, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_PASSING),
+        (True, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
         # passing grade with course end date in future
-        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING),
+        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'verified'),
+        # passing grade with course end date in future
+        (True, TOMORROW, NOW_TIMESTAMP, LearnerExporter.GRADE_PASSING, 'audit'),
         # non-passing grade with no course end date
-        (False, None, None, LearnerExporter.GRADE_INCOMPLETE),
+        (False, None, None, LearnerExporter.GRADE_INCOMPLETE, 'verified'),
         # non-passing grade with course end date in past
-        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_FAILING),
+        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_FAILING, 'verified'),
+        # non-passing grade with course end date in past
+        (False, YESTERDAY, YESTERDAY_TIMESTAMP, LearnerExporter.GRADE_AUDIT, 'audit'),
         # non-passing grade with course end date in future
-        (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE),
+        (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE, 'verified'),
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnrollmentApiClient')
@@ -324,6 +335,7 @@ class TestLearnerExporter(unittest.TestCase):
             end_date,
             expected_completion,
             expected_grade,
+            course_enrollment_mode,
             mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
@@ -349,7 +361,7 @@ class TestLearnerExporter(unittest.TestCase):
 
         # Mock enrollment data
         mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode="verified"
+            mode=course_enrollment_mode,
         )
 
         # Collect the learner data, with time set to NOW
@@ -581,6 +593,6 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         assert not learner_data
-        assert mock_enrollment_api.call_count == 0
+        assert mock_enrollment_api.call_count == 1
         assert mock_course_api.call_count == 0
         assert mock_grades_api.call_count == 0
