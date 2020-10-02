@@ -15,11 +15,15 @@ Change Log
 
 Unreleased
 
+[3.8.24] 2020-10-02
+-------------------
+
+* Allow learners to enroll with their license in courses when DSC is disabled.
+
 [3.8.23] 2020-10-01
 -------------------
 
 * Added Audit grade for Audit mode enrollments in integrated channels.
-
 
 [3.8.22]
 --------
