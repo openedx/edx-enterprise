@@ -15,3 +15,4 @@ class BlackboardConfig(AppConfig):
     """
     name = CHANNEL_NAME
     verbose_name = VERBOSE_NAME
+    oauth_token_auth_path = "learn/api/public/v1/oauth2/token"

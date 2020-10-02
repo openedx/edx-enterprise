@@ -25,20 +25,20 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
     client_id = models.CharField(
         max_length=255,
         null=True,
-        verbose_name="API Client ID",
+        verbose_name="API Client ID or Blackboard Application Key",
         help_text=(
             "The API Client ID provided to edX by the enterprise customer to be used to make API "
-            "calls on behalf of the customer."
+            "calls on behalf of the customer. Called Application Key in Blackboard"
         )
     )
 
     client_secret = models.CharField(
         max_length=255,
         null=True,
-        verbose_name="API Client Secret",
+        verbose_name="API Client Secret or Application Secret",
         help_text=(
             "The API Client Secret provided to edX by the enterprise customer to be used to make "
-            " API calls on behalf of the customer."
+            " API calls on behalf of the customer. Called Application Secret in Blackboard"
         )
     )
 
