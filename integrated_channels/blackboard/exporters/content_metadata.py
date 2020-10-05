@@ -13,3 +13,9 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
     """
         Blackboard implementation of ContentMetadataExporter.
     """
+    DATA_TRANSFORM_MAPPING = {
+        'name': 'title',
+        'externalId': 'key',
+        'description': 'full_description',
+        'courseId': 'key',
+    }
