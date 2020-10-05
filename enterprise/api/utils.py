@@ -22,6 +22,9 @@ def get_service_usernames():
     """
     Return the set of service usernames that are given extended permissions in the API.
     """
+    if getattr(settings, 'ENTERPRISE_ALL_SERVICE_USERNAMES', None):
+        return set(settings.ENTERPRISE_ALL_SERVICE_USERNAMES)
+
     return {getattr(settings, username, None) for username in SERVICE_USERNAMES}
 
 
