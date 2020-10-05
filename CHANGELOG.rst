@@ -15,6 +15,12 @@ Change Log
 
 Unreleased
 
+[3.8.27]
+--------
+
+* Update ``get_service_usernames()`` to read from a list variable (that may not exist).
+
+
 [3.8.26] 2020-10-05
 -------------------
 

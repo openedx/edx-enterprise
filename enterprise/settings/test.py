@@ -173,6 +173,15 @@ TEST_SERVER = "http://testserver"
 ALLOWED_HOSTS = ["testserver.enterprise"]
 MEDIA_URL = "/"
 
+# Defines the usernames of service users who should be throttled
+# at a higher rate than normal users.
+ENTERPRISE_ALL_SERVICE_USERNAMES = [
+    'ecommerce_worker',
+    'enterprise_worker',
+    'license_manager_worker',
+    'enterprise_catalog_worker',
+]
+
 ECOMMERCE_SERVICE_WORKER_USERNAME = 'ecommerce_worker'
 ENTERPRISE_SERVICE_WORKER_USERNAME = 'enterprise_worker'
 
@@ -269,6 +278,8 @@ app.config_from_object('django.conf:settings')
 CELERY_ALWAYS_EAGER = True
 
 CLEAR_REQUEST_CACHE_ON_TASK_COMPLETION = False
+
+##### END CELERY #####
 
 JWT_AUTH = {
     'JWT_AUDIENCE': 'test-aud',
