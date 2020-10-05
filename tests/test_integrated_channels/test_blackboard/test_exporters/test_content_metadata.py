@@ -7,7 +7,6 @@ import unittest
 from collections import OrderedDict
 
 import mock
-import responses
 from pytest import mark
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
