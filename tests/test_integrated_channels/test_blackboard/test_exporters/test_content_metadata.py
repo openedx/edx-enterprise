@@ -4,16 +4,15 @@ Tests for Blackboard content metadata exporters.
 """
 
 import unittest
+from collections import OrderedDict
 
 import mock
 import responses
 from pytest import mark
-from collections import OrderedDict
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
-
 from test_utils import FAKE_UUIDS, factories
-from test_utils.fake_catalog_api import FAKE_COURSE_RUN, FAKE_COURSE
+from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
 
