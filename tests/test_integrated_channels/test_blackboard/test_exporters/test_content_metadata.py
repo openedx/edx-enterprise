@@ -11,7 +11,7 @@ import responses
 from pytest import mark
 
 from integrated_channels.blackboard.exporters.content_metadata import BlackboardContentMetadataExporter
-from test_utils import FAKE_UUIDS, factories
+from test_utils import factories
 from test_utils.fake_catalog_api import FAKE_COURSE, FAKE_COURSE_RUN
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
@@ -56,7 +56,7 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
             FAKE_COURSE['key'],
         ])
 
-        expected_keys = [field for field in exporter.DATA_TRANSFORM_MAPPING.keys()]
+        expected_keys = exporter.DATA_TRANSFORM_MAPPING.keys()
         for item in content_items.values():
             self.assertTrue(
                 set(expected_keys)
