@@ -4,6 +4,7 @@ Client for connecting to Moodle.
 """
 
 import json
+from http import HTTPStatus
 from urllib.parse import urlencode, urljoin
 
 import requests
@@ -12,6 +13,8 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+MOODLE_FINAL_GRADE_ASSIGNMENT_NAME = '(edX integration) Final Grade'
 
 
 def moodle_request_wrapper(method):
@@ -151,6 +154,92 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             )
 
     @moodle_request_wrapper
+    def _get_enrolled_users(self, course_id):
+        """
+        Helper method to make a request for all user enrollments under a Moodle course ID.
+        """
+        params = {
+            'wstoken': self.token,
+            'wsfunction': 'core_enrol_get_enrolled_users',
+            'courseid': course_id,
+            'moodlewsrestformat': 'json'
+        }
+        return self._post(params)
+
+    def get_creds_of_user_in_course(self, course_id, user_email):
+        """
+        Sort through a list of users in a Moodle course and find the ID matching a student's email.
+        """
+        response = self._get_enrolled_users(course_id)
+        parsed_response = response.json()
+        user_id = None
+
+        if isinstance(parsed_response, list):
+            for enrollment in parsed_response:
+                if enrollment.get('email') == user_email:
+                    user_id = enrollment.get('id')
+                    break
+        if not user_id:
+            raise ClientError(
+                "MoodleAPIClient request failed: 404 User enrollment not found under user={} in course={}.".format(
+                    user_email,
+                    course_id
+                ),
+                HTTPStatus.NOT_FOUND.value
+            )
+        return user_id
+
+    @moodle_request_wrapper
+    def _get_course_contents(self, course_id):
+        """
+        Retrieve the metadata of a Moodle course by ID.
+        """
+        params = {
+            'wstoken': self.token,
+            'wsfunction': 'core_course_get_contents',
+            'courseid': course_id,
+            'moodlewsrestformat': 'json'
+        }
+        response = requests.get(
+            urljoin(
+                self.enterprise_configuration.moodle_base_url,
+                self.MOODLE_API_PATH,
+            ),
+            params=params
+        )
+        return response
+
+    def get_course_final_grade_module(self, course_id):
+        """
+        Sort through a Moodle course's components for the specific shell assignment designated
+        to be the edX integrated Final Grade. This is currently done by module name.
+
+        Returns:
+            - course_module_id (int): The ID of the shell assignment
+            - module_name (string): The string name of the module. Required for sending a grade update request.
+        """
+        response = self._get_course_contents(course_id)
+
+        course_module_id = None
+        if isinstance(response.json(), list):
+            for course in response.json():
+                if course.get('name') == 'General':
+                    modules = course.get('modules')
+                    for module in modules:
+                        if module.get('name') == MOODLE_FINAL_GRADE_ASSIGNMENT_NAME:
+                            course_module_id = module.get('id')
+                            module_name = module.get('modname')
+
+        if not course_module_id:
+            raise ClientError(
+                'MoodleAPIClient request failed: 404 Completion course module not found in Moodle.'
+                ' The enterprise customer needs to create an activity within the course with the name '
+                '"(edX integration) Final Grade"',
+                HTTPStatus.NOT_FOUND.value
+            )
+        return course_module_id, module_name
+
+    @moodle_request_wrapper
     def _get_courses(self, key):
         """
         Gets courses from Moodle by key (because we cannot update/delete without it).
@@ -178,9 +267,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         response = self._get_courses(key)
         parsed_response = json.loads(response.text)
         if not parsed_response.get('courses'):
-            raise ClientError('MoodleAPIClient request failed: 404 Course key '
-                              '"{}" not found in Moodle.'.format(key))
-
+            raise ClientError(
+                'MoodleAPIClient request failed: 404 Course key '
+                '"{}" not found in Moodle.'.format(key),
+                HTTPStatus.NOT_FOUND.value
+            )
         return parsed_response['courses'][0]['id']
 
     @moodle_request_wrapper
@@ -228,7 +319,25 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     @moodle_request_wrapper
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        pass
+        completion_data = json.loads(payload)
+
+        course_id = self.get_course_id(completion_data['courseID'])
+        course_module_id, module_name = self.get_course_final_grade_module(course_id)
+        moodle_user_id = self.get_creds_of_user_in_course(course_id, user_id)
+
+        params = {
+            'wsfunction': 'core_grades_update_grades',
+            'source': module_name,
+            'courseid': course_id,
+            'component': 'mod_assign',
+            'activityid': course_module_id,
+            'itemnumber': 0,
+            'grades[0][studentid]': moodle_user_id,
+            # The grade is exported as a decimal between [0-1]
+            'grades[0][grade]': completion_data['grade'] * 100
+        }
+
+        return self._post(params)
 
     @moodle_request_wrapper
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument

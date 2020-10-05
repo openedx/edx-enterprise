@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.26] 2020-10-05
+-------------------
+
+* Moodle completion data implementation
+
 
 [3.8.25]
 --------
