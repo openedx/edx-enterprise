@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.30]
+--------
+
+* Moodle client bug fix
+
 [3.8.29]
 --------
 
@@ -30,12 +35,10 @@ Unreleased
 
 * Update ``get_service_usernames()`` to read from a list variable (that may not exist).
 
-
-[3.8.26] 2020-10-05
--------------------
+[3.8.26]
+--------
 
 * Moodle completion data implementation
-
 
 [3.8.25]
 --------
@@ -46,7 +49,6 @@ Unreleased
 -------------------
 
 * Allow learners to enroll with their license in courses when DSC is disabled.
-
 
 [3.8.23] 2020-10-01
 -------------------
