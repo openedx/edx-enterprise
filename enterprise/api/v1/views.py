@@ -258,6 +258,13 @@ class EnterpriseCourseEnrollmentViewSet(EnterpriseReadWriteModelViewSet):
         return serializers.EnterpriseCourseEnrollmentWriteSerializer
 
 
+class EnrollmentModificationException(Exception):
+    """
+    An exception that represents an error when modifying the state
+    of an enrollment via the EnrollmentApiClient.
+    """
+
+
 class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
     """
     API views for the ``licensed-enterprise-course-enrollment`` API endpoint.
@@ -266,7 +273,8 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
     queryset = models.LicensedEnterpriseCourseEnrollment.objects.all()
     serializer_class = serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
 
-    def _validate_license_revoke_data(self, request_data):
+    @staticmethod
+    def _validate_license_revoke_data(request_data):
         """
         Ensures the request data contains the necessary information.
 
@@ -281,6 +289,96 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             return Response(msg, status=status.HTTP_400_BAD_REQUEST)
 
         return None
+
+    @staticmethod
+    def _has_user_completed_course_run(enterprise_enrollment, course_overview):
+        """
+        Returns True if the user who is enrolled in the given course has already
+        completed this course, false otherwise.  The course may be "completed"
+        if the user earned a certificate, or if the course run has ended.
+
+        Args:
+            enterprise_enrollment (EnterpriseCourseEnrollment): The enrollment object for which we check
+                if the associated user has completed the given course.
+            course_overview (CourseOverview): The course overview of which we are checking completion.  We need this
+                to check certificate status.  It's a model defined in edx-platform.
+        """
+        certificate_info = get_certificate_for_user(
+            enterprise_enrollment.enterprise_customer_user.username,
+            course_overview.get('id'),
+        ) or {}
+        course_run_status = get_course_run_status(
+            course_overview,
+            certificate_info,
+            enterprise_enrollment,
+        )
+
+        return course_run_status == CourseRunProgressStatuses.COMPLETED
+
+    def _enrollments_by_course_for_licensed_user(self, enterprise_customer_user):
+        """
+        Helper method to return a dictionary mapping course ids to EnterpriseCourseEnrollments
+        for each licensed enrollment associated with the given enterprise user.
+
+        Args:
+            enterprise_customer_user (EnterpriseCustomerUser): The user for which we are fetching enrollments.
+        """
+        licensed_enrollments = models.LicensedEnterpriseCourseEnrollment.enrollments_for_user(
+            enterprise_customer_user
+        )
+        return {
+            enrollment.enterprise_course_enrollment.course_id: enrollment.enterprise_course_enrollment
+            for enrollment in licensed_enrollments
+        }
+
+    def _revoke_enrollment(self, enrollment_api_client, enterprise_enrollment, course_overview):
+        """
+        Helper method that switches the given enrollment to audit track, or, if
+        no audit track exists for the given course, deletes the enrollment.
+        Will do nothing if the user has already "completed" the course run.
+
+        Args:
+            enrollment_api_client (EnrollmentApiClient): The client with which we make requests to modify enrollments.
+            enterprise_enrollment (EnterpriseCourseEnrollment): The enterprise enrollment which we attempt to revoke.
+            course_overview (CourseOverview): The course overview object associated with the enrollment. Used
+                to check for course completion.
+        """
+        if self._has_user_completed_course_run(enterprise_enrollment, course_overview):
+            return
+
+        course_run_id = course_overview.get('id')
+        enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
+        audit_mode = CourseModes.AUDIT
+        enterprise_id = enterprise_customer_user.enterprise_customer.uuid
+
+        log_message_kwargs = {
+            'user': enterprise_customer_user.username,
+            'enterprise': enterprise_id,
+            'course_id': course_run_id,
+            'mode': audit_mode,
+        }
+        try:
+            enrollment_api_client.update_course_enrollment_mode_for_user(
+                username=enterprise_customer_user.username,
+                course_id=course_run_id,
+                mode=audit_mode,
+            )
+            LOGGER.info(
+                'Updated LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
+                'to Course Mode {mode}.'.format(**log_message_kwargs)
+            )
+        except Exception as exc:  # pylint: disable=broad-except
+            msg = (
+                'Unable to update LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
+                'to Course Mode {mode} because: {reason}'.format(
+                    reason=str(exc),
+                    **log_message_kwargs
+                )
+            )
+            LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
+            raise EnrollmentModificationException(msg)
+
+        enterprise_enrollment.license.revoke()
 
     @action(methods=['post'], detail=False)
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request: request.data.get('enterprise_id'))
@@ -299,75 +397,21 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
 
         user_id = request_data.get('user_id')
         enterprise_id = request_data.get('enterprise_id')
-        audit_mode = CourseModes.AUDIT
 
         enterprise_customer_user = get_object_or_404(
             models.EnterpriseCustomerUser,
             user_id=user_id,
             enterprise_customer=enterprise_id,
         )
-        licensed_enrollments = self.queryset.filter(
-            enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
-        )
-
-        enrollments_by_course_id = {
-            enrollment.enterprise_course_enrollment.course_id: enrollment.enterprise_course_enrollment
-            for enrollment in licensed_enrollments
-        }
-        course_overviews = get_course_overviews(list(enrollments_by_course_id.keys()))
+        enrollments_by_course_id = self._enrollments_by_course_for_licensed_user(enterprise_customer_user)
 
         enrollment_api_client = EnrollmentApiClient()
-        for course_overview in course_overviews:
-            course_run_id = course_overview.get('id')
-            enterprise_enrollment = enrollments_by_course_id.get(course_run_id)
-            certificate_info = get_certificate_for_user(enterprise_customer_user.username, course_run_id) or {}
-            course_run_status = get_course_run_status(
-                course_overview,
-                certificate_info,
-                enterprise_enrollment,
-            )
-
-            if course_run_status == CourseRunProgressStatuses.COMPLETED:
-                # skip updating the enrollment mode for this course as it is already completed, either
-                # meaning the user has earned a certificate or the course has ended.
-                continue
-
+        for course_overview in get_course_overviews(list(enrollments_by_course_id.keys())):
+            enterprise_enrollment = enrollments_by_course_id.get(course_overview.get('id'))
             try:
-                enrollment_api_client.update_course_enrollment_mode_for_user(
-                    username=enterprise_customer_user.username,
-                    course_id=course_run_id,
-                    mode=audit_mode,
-                )
-                LOGGER.info(
-                    'Updated LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
-                    'to Course Mode {mode}.'.format(
-                        user=enterprise_customer_user.username,
-                        enterprise=enterprise_id,
-                        course_id=course_run_id,
-                        mode=audit_mode,
-                    )
-                )
-            except Exception as exc:  # pylint: disable=broad-except
-                msg = (
-                    'Unable to update LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
-                    'to Course Mode {mode}'.format(
-                        user=enterprise_customer_user.username,
-                        enterprise=enterprise_id,
-                        course_id=course_run_id,
-                        mode=audit_mode,
-                    )
-                )
-                LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
-                return Response(msg, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-            # mark the licensed enterprise course enrollment as "revoked"
-            licensed_enrollment = enterprise_enrollment.license
-            licensed_enrollment.is_revoked = True
-            licensed_enrollment.save()
-
-            # mark the enterprise course enrollment as "saved for later"
-            enterprise_enrollment.saved_for_later = True
-            enterprise_enrollment.save()
+                self._revoke_enrollment(enrollment_api_client, enterprise_enrollment, course_overview)
+            except EnrollmentModificationException as exc:
+                return Response(str(exc), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
 

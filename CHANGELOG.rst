@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.31]
+--------
+
+* Refactors the revoke endpoint into smaller parts, so that implementing new logic is easier to manage.
+
 [3.8.30]
 --------
 

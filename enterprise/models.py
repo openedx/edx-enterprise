@@ -1473,6 +1473,26 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
 
     history = HistoricalRecords()
 
+    @classmethod
+    def enrollments_for_user(cls, enterprise_customer_user):
+        """
+        Returns a QuerySet of LicensedEnterpriseCourseEnrollments, along with their (hydrated) associated
+        EnterpriseCourseEnrollments, for the given enterprise user.
+        """
+        return cls.objects.filter(
+            enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
+        ).select_related('enterprise_course_enrollment')
+
+    def revoke(self):
+        """
+        Marks this object as revoked and marks the associated EnterpriseCourseEnrollment
+        as "saved for later".  This object and the associated EnterpriseCourseEnrollment are both saved.
+        """
+        self.is_revoked = True
+        self.enterprise_course_enrollment.saved_for_later = True
+        self.enterprise_course_enrollment.save()
+        self.save()
+
 
 @python_2_unicode_compatible
 class EnterpriseCatalogQuery(TimeStampedModel):
