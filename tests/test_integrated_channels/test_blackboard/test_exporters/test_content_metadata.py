@@ -68,7 +68,7 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
             'short_description': 'short desc',
         }
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
-        description = exporter.transform_description(content_metadata_item)
+        description = exporter.transform_enrollment_url(content_metadata_item)
         expected_description = exporter.DESCRIPTION_TEXT_TEMPLATE.format(
             enrollment_url='http://some/enrollment/url/')
         assert description == expected_description
