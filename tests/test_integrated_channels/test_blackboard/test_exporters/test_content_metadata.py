@@ -71,5 +71,4 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
         description = exporter.transform_description(content_metadata_item)
         expected_description = exporter.DESCRIPTION_TEXT_TEMPLATE.format(
             enrollment_url='http://some/enrollment/url/')
-        self.assertIn(expected_description, description)
-        self.assertIn('short desc', description)
+        assert description == expected_description

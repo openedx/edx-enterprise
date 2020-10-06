@@ -28,8 +28,4 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         """
         enrollment_url = content_metadata_item.get('enrollment_url', None)
         url_link = self.DESCRIPTION_TEXT_TEMPLATE.format(enrollment_url=enrollment_url)
-        short_description = content_metadata_item.get(
-            'short_description', content_metadata_item.get('title', '')
-        )
-        description = "<p>{}</p><p>{}</p>".format(short_description, url_link)
-        return description
+        return url_link
