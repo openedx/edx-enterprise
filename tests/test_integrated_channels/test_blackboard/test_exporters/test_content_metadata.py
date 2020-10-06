@@ -61,3 +61,15 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
                 set(expected_keys)
                 .issubset(set(item.channel_metadata.keys()))
             )
+
+    def test_transform_description(self):
+        content_metadata_item = {
+            'enrollment_url': 'http://some/enrollment/url/',
+            'short_description': 'short desc',
+        }
+        exporter = BlackboardContentMetadataExporter('fake-user', self.config)
+        description = exporter.transform_description(content_metadata_item)
+        expected_description = exporter.DESCRIPTION_TEXT_TEMPLATE.format(
+            enrollment_url='http://some/enrollment/url/')
+        self.assertIn(expected_description, description)
+        self.assertIn('short desc', description)
