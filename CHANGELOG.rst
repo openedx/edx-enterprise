@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.28]
+--------
+
+* Blackboard exporter
+
 [3.8.27]
 --------
 
