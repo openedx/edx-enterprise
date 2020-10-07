@@ -149,7 +149,11 @@ class TestMoodleApiClient(unittest.TestCase):
         client.get_creds_of_user_in_course = unittest.mock.MagicMock(name='get_user_in_course')
         client.get_creds_of_user_in_course.return_value = self.moodle_user_id
 
-        client.create_course_completion(self.user_email, self.learner_data_payload)
+        # The base transmitter expects the create course completion response to be a tuple of (code, body)
+        assert client.create_course_completion(self.user_email, self.learner_data_payload) == (
+            SUCCESSFUL_RESPONSE.status_code,
+            SUCCESSFUL_RESPONSE.text
+        )
 
         expected_params = {
             'wsfunction': 'core_grades_update_grades',

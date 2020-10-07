@@ -275,6 +275,31 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         return parsed_response['courses'][0]['id']
 
     @moodle_request_wrapper
+    def _wrapped_create_course_completion(self, user_id, payload):
+        """
+        Wrapped method to request and use Moodle course and user information in order
+        to post a final course grade for the user.
+        """
+        completion_data = json.loads(payload)
+
+        course_id = self.get_course_id(completion_data['courseID'])
+        course_module_id, module_name = self.get_course_final_grade_module(course_id)
+        moodle_user_id = self.get_creds_of_user_in_course(course_id, user_id)
+
+        params = {
+            'wsfunction': 'core_grades_update_grades',
+            'source': module_name,
+            'courseid': course_id,
+            'component': 'mod_assign',
+            'activityid': course_module_id,
+            'itemnumber': 0,
+            'grades[0][studentid]': moodle_user_id,
+            # The grade is exported as a decimal between [0-1]
+            'grades[0][grade]': completion_data['grade'] * 100
+        }
+        return self._post(params)
+
+    @moodle_request_wrapper
     def create_content_metadata(self, serialized_data):
         """
         The below assumes the data is dict/object.
@@ -317,27 +342,12 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             querystring=urlencode(course_ids_to_delete))
         return self._post(params, url)
 
-    @moodle_request_wrapper
-    def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        completion_data = json.loads(payload)
-
-        course_id = self.get_course_id(completion_data['courseID'])
-        course_module_id, module_name = self.get_course_final_grade_module(course_id)
-        moodle_user_id = self.get_creds_of_user_in_course(course_id, user_id)
-
-        params = {
-            'wsfunction': 'core_grades_update_grades',
-            'source': module_name,
-            'courseid': course_id,
-            'component': 'mod_assign',
-            'activityid': course_module_id,
-            'itemnumber': 0,
-            'grades[0][studentid]': moodle_user_id,
-            # The grade is exported as a decimal between [0-1]
-            'grades[0][grade]': completion_data['grade'] * 100
-        }
-
-        return self._post(params)
+    def create_course_completion(self, user_id, payload):
+        """Send course completion data to Moodle"""
+        # The base integrated channels transmitter expects a tuple of (code, body),
+        # but we need to wrap the requests
+        resp = self._wrapped_create_course_completion(user_id, payload)
+        return resp.status_code, resp.text
 
     @moodle_request_wrapper
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
