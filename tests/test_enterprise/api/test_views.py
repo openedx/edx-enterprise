@@ -2765,3 +2765,156 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
             response_content = self.load_json(response.content)
             assert response_content['enterprise_customer']['uuid'] == str(enterprise_customer.uuid)
             self._assert_config_response(expected_data, response_content)
+
+    @ddt.data(
+        {
+            'email': None,
+            'error': {'email': ['This field is required']},
+            'status_code': status.HTTP_400_BAD_REQUEST
+        },
+        {
+            'email': [],
+            'error': {'email': ['This field is required']},
+            'status_code': status.HTTP_400_BAD_REQUEST
+        },
+        {
+            'email': ['xyz'],
+            'error': {'email': {'0': ['Enter a valid email address.']}},
+            'status_code': status.HTTP_400_BAD_REQUEST
+        }
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_email_delivery(self, request_mock, email, error, status_code):
+        """
+        Tests that the POST endpoint raises error for email delivery type reporting config with incorrect email field.
+        """
+        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        post_data = {
+            'active': 'true',
+            'delivery_method': 'email',
+            'encrypted_password': 'testPassword',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'pgp_encryption_key': '',
+        }
+        if email is not None:
+            post_data['email'] = email
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+
+        response = client.post(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            ),
+            data=post_data,
+            format='json',
+        )
+
+        assert response.status_code == status_code
+        if error:
+            assert response.json() == error
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_sftp_delivery(self, request_mock):
+        """
+        Tests that the POST endpoint works as expected for sftp delivery type reporting config without email field.
+        """
+        user, __ = self._create_user_and_enterprise_customer('test_user', 'test_password')
+
+        post_data = {
+            'active': 'true',
+            'delivery_method': 'sftp',
+            'encrypted_password': 'testPassword',
+            'frequency': 'monthly',
+            'day_of_month': 1,
+            'day_of_week': 3,
+            'hour_of_day': 1,
+            'sftp_hostname': 'null',
+            'sftp_port': 22,
+            'sftp_username': 'test@test.com',
+            'sftp_file_path': 'null',
+            'data_type': 'progress',
+            'report_type': 'csv',
+            'pgp_encryption_key': ''
+        }
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        request_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+
+        response = client.post(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-list'
+                ),
+            ),
+            data=post_data,
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+
+    @mock.patch('enterprise.rules.crum.get_current_request')
+    def test_reporting_config_patch_with_email_delivery(self, request_or_stub_mock):
+        """
+        Tests that the PATCH endpoint respects the Feature Role permissions assigned.
+        """
+        user, enterprise_customer = self._create_user_and_enterprise_customer('test_user', 'test_password')
+        model_item = {
+            'active': True,
+            'delivery_method': 'email',
+            'day_of_month': 1,
+            'day_of_week': None,
+            'hour_of_day': 1,
+            'enterprise_customer': enterprise_customer,
+            'email': 'test@test.com\nfoo@test.com',
+            'decrypted_password': 'test_password',
+            'decrypted_sftp_password': 'test_password',
+            'frequency': 'monthly',
+            'report_type': 'csv',
+            'data_type': 'progress',
+        }
+        patch_data = {
+            'enterprise_customer_id': str(enterprise_customer.uuid),
+            'email': [],
+        }
+
+        test_config = factories.EnterpriseCustomerReportingConfigFactory.create(**model_item)
+
+        client = APIClient()
+        client.login(username='test_user', password='test_password')
+
+        self._add_feature_role(user, ENTERPRISE_REPORTING_CONFIG_ADMIN_ROLE)
+        request_or_stub_mock.return_value = self.get_request_with_jwt_cookie(system_wide_role=ENTERPRISE_ADMIN_ROLE)
+
+        response = client.patch(
+            '{server}{reverse_url}'.format(
+                server=settings.TEST_SERVER,
+                reverse_url=reverse(
+                    'enterprise-customer-reporting-detail',
+                    kwargs={'uuid': str(test_config.uuid)}
+                ),
+            ),
+            data=patch_data,
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
