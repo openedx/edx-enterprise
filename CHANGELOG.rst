@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.33]
+--------
+
+* During license revocation, if no audit track exists for the course, attempt to unenroll the learer from it.
+
 [3.8.32]
 --------
 

@@ -1476,12 +1476,16 @@ class LicensedEnterpriseCourseEnrollment(TimeStampedModel):
     @classmethod
     def enrollments_for_user(cls, enterprise_customer_user):
         """
-        Returns a QuerySet of LicensedEnterpriseCourseEnrollments, along with their (hydrated) associated
-        EnterpriseCourseEnrollments, for the given enterprise user.
+        Returns a QuerySet of LicensedEnterpriseCourseEnrollments, along with their associated (hydrated)
+        enterprise enrollments, users, and customers.
         """
         return cls.objects.filter(
             enterprise_course_enrollment__enterprise_customer_user=enterprise_customer_user
-        ).select_related('enterprise_course_enrollment')
+        ).select_related(
+            'enterprise_course_enrollment',
+            'enterprise_course_enrollment__enterprise_customer_user',
+            'enterprise_course_enrollment__enterprise_customer_user__enterprise_customer',
+        )
 
     def revoke(self):
         """
