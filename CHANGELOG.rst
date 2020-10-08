@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.32]
+--------
+
+* Catches/Handles error occurring with Moodle integrated channel.
+
 [3.8.31]
 --------
 

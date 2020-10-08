@@ -28,12 +28,13 @@ def moodle_request_wrapper(method):
         response = method(self, *args, **kwargs)
         try:
             body = response.json()
-        except AttributeError:
+        except (AttributeError, ValueError):
             # Moodle spits back an entire HTML page if something is wrong in our URL format.
             # This cannot be converted to JSON thus the above fails miserably.
+            # The above can fail with different errors depending on the format of the returned page.
             # Moodle of course does not tell us what is wrong in any part of this HTML.
             raise ClientError('Moodle API task "{method}" failed due to unknown error.'.format(
-                method=method.__name__))
+                method=method.__name__), response.status_code)
         if isinstance(body, list):
             # On course creation (and ONLY course creation) success,
             # Moodle returns a list of JSON objects, because of course it does.
