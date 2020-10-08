@@ -25,7 +25,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         'categoryid': 'categoryid',
     }
 
-    LONG_STRING_LIMIT = 2000
+    LONG_STRING_LIMIT = 1700  # Actual maximum value we can support for any individual course
     SKIP_KEY_IF_NONE = True
 
     def transform_description(self, content_metadata_item):
@@ -37,17 +37,21 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         base_description = "<a href={enrollment_url}>To edX Course Page</a><br />".format(
             enrollment_url=enrollment_url)
         full_description = content_metadata_item.get('full_description') or None
+        short_description = content_metadata_item.get('short_description') or None
         if full_description and len(full_description + enrollment_url) <= self.LONG_STRING_LIMIT:
             description = "{base_description}{full_description}".format(
                 base_description=base_description,
                 full_description=full_description
             )
-        else:
-            short_description = content_metadata_item.get(
-                'short_description', content_metadata_item.get('title', '')
-            )
+        elif short_description and len(short_description + enrollment_url) <= self.LONG_STRING_LIMIT:
+            short_description = content_metadata_item.get('short_description')
             description = "{base_description}{short_description}".format(
                 base_description=base_description, short_description=short_description
+            )
+        else:
+            description = "{base_description}{title}".format(
+                base_description=base_description,
+                title=content_metadata_item.get('title', '')
             )
 
         return description
