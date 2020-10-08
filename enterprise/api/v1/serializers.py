@@ -24,6 +24,11 @@ from enterprise.utils import (
     track_enrollment,
 )
 
+try:
+    from lms.djangoapps.branding.api import get_logo_url
+except ImportError:
+    get_logo_url = None
+
 LOGGER = getLogger(__name__)
 
 
@@ -123,6 +128,21 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
 
     site = SiteSerializer()
     branding_configuration = EnterpriseCustomerBrandingConfigurationSerializer()
+
+    def to_representation(self, instance):
+        result = super(EnterpriseCustomerSerializer, self).to_representation(instance)
+        # Add a default branding config object to the Customer record if null
+        if result.get('branding_configuration') is None:
+            default_branding = {
+                'enterprise_customer': result.get('uuid'),
+                'enterprise_slug': result.get('slug'),
+                'logo': get_logo_url(),
+                'primary_color': '#1f9fd9',
+                'secondary_color': '#136CA5',
+                'tertiary_color': '#1f9fd9',
+            }
+            result['branding_configuration'] = default_branding
+        return result
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
