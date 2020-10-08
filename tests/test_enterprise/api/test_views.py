@@ -27,6 +27,7 @@ from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
+from enterprise.api.v1.views import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
@@ -45,6 +46,8 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerUser,
 )
+from enterprise.utils import NotConnectedToOpenEdX
+from enterprise_learner_portal.utils import CourseRunProgressStatuses
 from test_utils import (
     FAKE_UUIDS,
     TEST_COURSE,
@@ -2323,43 +2326,119 @@ class TestEnterpriseAPIViews(APITest):
 
         assert response.status_code == expected_status
 
+    def test_validate_license_revoke_data_valid_data(self):
+        request_data = {
+            'user_id': 'anything',
+            'enterprise_id': 'something',
+        }
+        # pylint: disable=protected-access
+        self.assertIsNone(LicensedEnterpriseCourseEnrollmentViewSet._validate_license_revoke_data(request_data))
+
     @ddt.data(
-        {'has_permissions': True, 'is_completed': False, 'is_revoked': True, 'status_code': 204},
-        {'has_permissions': True, 'is_completed': True, 'is_revoked': False, 'status_code': 204},
-        {'has_permissions': False, 'is_completed': False, 'is_revoked': False, 'status_code': 403},
+        {},
+        {'user_id': 'foo'},
+        {'enterprise_id': 'bar'},
+    )
+    def test_validate_license_revoke_data_invalid_data(self, request_data):
+        # pylint: disable=protected-access
+        response = LicensedEnterpriseCourseEnrollmentViewSet._validate_license_revoke_data(request_data)
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual('user_id and enterprise_id must be provided.', response.data)
+
+    @ddt.data(
+        CourseRunProgressStatuses.IN_PROGRESS,
+        CourseRunProgressStatuses.UPCOMING,
+        CourseRunProgressStatuses.COMPLETED,
+        CourseRunProgressStatuses.SAVED_FOR_LATER,
+    )
+    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.get_course_run_status')
+    def test_revoke_has_user_completed_course_run(self, progress_status, mock_course_run_status, mock_cert_for_user):
+        enrollment = mock.Mock()
+        course_overview = {'id': 'some-course'}
+
+        mock_course_run_status.return_value = progress_status
+        expected_result = progress_status == CourseRunProgressStatuses.COMPLETED
+        # pylint: disable=protected-access
+        actual_result = LicensedEnterpriseCourseEnrollmentViewSet._has_user_completed_course_run(
+            enrollment, course_overview
+        )
+        self.assertEqual(expected_result, actual_result)
+        mock_cert_for_user.assert_called_once_with(
+            enrollment.enterprise_customer_user.username, 'some-course'
+        )
+        mock_course_run_status.assert_called_once_with(
+            course_overview, mock_cert_for_user.return_value, enrollment
+        )
+
+    def test_post_license_revoke_unplugged(self):
+        post_data = {
+            'user_id': 'bob',
+            'enterprise_id': 'bobs-burgers',
+        }
+        with self.assertRaises(NotConnectedToOpenEdX):
+            self.client.post(
+                settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+                data=post_data,
+            )
+
+    def test_post_license_revoke_invalid_data(self):
+        with mock.patch('enterprise.api.v1.views.CourseMode'), \
+             mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
+             mock.patch('enterprise.api.v1.views.get_course_overviews'):
+            post_data = {
+                'user_id': 'bob',
+            }
+            response = self.client.post(
+                settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+                data=post_data,
+            )
+            self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
+    def test_post_license_revoke_403(self):
+        with mock.patch('enterprise.api.v1.views.CourseMode'), \
+             mock.patch('enterprise.api.v1.views.get_certificate_for_user'), \
+             mock.patch('enterprise.api.v1.views.get_course_overviews'):
+
+            enterprise_customer = factories.EnterpriseCustomerFactory()
+            self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
+            post_data = {
+                'user_id': self.user.id,
+                'enterprise_id': enterprise_customer.uuid,
+            }
+            response = self.client.post(
+                settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+                data=post_data,
+            )
+            self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    @ddt.data(
+        {'is_course_completed': False, 'has_audit_mode': True},
+        {'is_course_completed': True, 'has_audit_mode': True},
+        {'is_course_completed': False, 'has_audit_mode': False},
+        {'is_course_completed': True, 'has_audit_mode': False},
     )
     @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.CourseMode')
     @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
     @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
     @mock.patch('enterprise.api.v1.views.get_course_overviews')
-    def test_post_licensed_course_enrollments_license_revoke(
+    def test_post_license_revoke_all_successes(
             self,
             mock_get_overviews,
             mock_get_certificate,
             mock_enrollment_client,
-            has_permissions,
-            is_completed,
-            is_revoked,
-            status_code,
+            mock_course_mode,
+            is_course_completed,
+            has_audit_mode,
     ):
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-
-        if not has_permissions:
-            self.set_jwt_cookie(ENTERPRISE_LEARNER_ROLE, str(enterprise_customer.uuid))
-
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer,
-        )
-        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=enterprise_customer_user,
-        )
-        licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
-            enterprise_course_enrollment=enterprise_course_enrollment,
-        )
-
-        assert not enterprise_course_enrollment.saved_for_later
-        assert not licensed_course_enrollment.is_revoked
+        mock_course_mode.mode_for_course.return_value = has_audit_mode
+        (
+            enterprise_customer,
+            enterprise_customer_user,
+            enterprise_course_enrollment,
+            licensed_course_enrollment,
+        ) = self._revocation_factory_objects()
 
         mock_get_overviews_response = {
             'id': enterprise_course_enrollment.course_id,
@@ -2367,8 +2446,8 @@ class TestEnterpriseAPIViews(APITest):
         }
         # update the mock response based on whether the course enrollment should be considered "completed"
         mock_get_overviews_response.update({
-            'has_started': not is_completed,
-            'has_ended': is_completed,
+            'has_started': not is_course_completed,
+            'has_ended': is_course_completed,
         })
 
         mock_get_overviews.return_value = [mock_get_overviews_response]
@@ -2386,13 +2465,166 @@ class TestEnterpriseAPIViews(APITest):
             data=post_data,
         )
 
-        assert response.status_code == status_code
+        course_id = enterprise_course_enrollment.course_id
+        expected_data = {
+            course_id: {
+                'success': True,
+            },
+        }
+        RevocationStatus = LicensedEnterpriseCourseEnrollmentViewSet.RevocationStatus
+
+        assert response.status_code == status.HTTP_200_OK
+        if is_course_completed:
+            expected_data[course_id]['message'] = RevocationStatus.COURSE_COMPLETED
+        else:
+            if has_audit_mode:
+                expected_data[course_id]['message'] = RevocationStatus.MOVED_TO_AUDIT
+            else:
+                expected_data[course_id]['message'] = RevocationStatus.UNENROLLED
+        self.assertEqual(expected_data, response.data)
 
         enterprise_course_enrollment.refresh_from_db()
         licensed_course_enrollment.refresh_from_db()
 
-        assert enterprise_course_enrollment.saved_for_later == is_revoked
-        assert licensed_course_enrollment.is_revoked == is_revoked
+        # if the course was completed, the enrollment should not have been revoked,
+        # and conversely, the enrollment should be revoked if the course was not completed
+        revocation_expectation = not is_course_completed
+        assert enterprise_course_enrollment.saved_for_later == revocation_expectation
+        assert licensed_course_enrollment.is_revoked == revocation_expectation
+
+        if not is_course_completed:
+            if has_audit_mode:
+                client_instance = mock_enrollment_client.return_value
+                client_instance.update_course_enrollment_mode_for_user.assert_called_once_with(
+                    username=enterprise_customer_user.username,
+                    course_id=enterprise_course_enrollment.course_id,
+                    mode=mock_course_mode.AUDIT,
+                )
+            else:
+                client_instance = mock_enrollment_client.return_value
+                client_instance.unenroll_user_from_course.assert_called_once_with(
+                    username=enterprise_customer_user.username,
+                    course_id=enterprise_course_enrollment.course_id,
+                )
+
+    @ddt.data(
+        {'has_audit_mode': True, 'enrollment_update_error': 'update exception',
+         'unenrollment_success': None, 'unenrollment_error': None},
+        {'has_audit_mode': False, 'enrollment_update_error': None,
+         'unenrollment_success': False, 'unenrollment_error': None},
+        {'has_audit_mode': False, 'enrollment_update_error': None,
+         'unenrollment_success': None, 'unenrollment_error': 'unenrollment exception'},
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.CourseMode')
+    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    def test_post_license_revoke_all_errors(
+            self,
+            mock_get_overviews,
+            mock_get_certificate,
+            mock_enrollment_client,
+            mock_course_mode,
+            has_audit_mode,
+            enrollment_update_error,
+            unenrollment_success,
+            unenrollment_error,
+    ):
+        mock_course_mode.mode_for_course.return_value = has_audit_mode
+        (
+            enterprise_customer,
+            enterprise_customer_user,
+            enterprise_course_enrollment,
+            licensed_course_enrollment,
+        ) = self._revocation_factory_objects()
+
+        mock_get_overviews_response = {
+            'id': enterprise_course_enrollment.course_id,
+            'pacing': 'instructor',
+        }
+        # update the mock response based on whether the course enrollment should be considered "completed"
+        # this course is always not completed
+        mock_get_overviews_response.update({
+            'has_started': True,
+            'has_ended': False,
+        })
+
+        mock_get_overviews.return_value = [mock_get_overviews_response]
+        mock_get_certificate.return_value = {'is_passing': False}
+        mock_enrollment_client.return_value = mock.Mock(
+            update_course_enrollment_mode_for_user=mock.Mock(),
+        )
+
+        client_instance = mock_enrollment_client.return_value
+        client_instance.unenroll_user_from_course.return_value = unenrollment_success
+        if enrollment_update_error:
+            client_instance.update_course_enrollment_mode_for_user.side_effect = Exception(enrollment_update_error)
+        if unenrollment_error:
+            client_instance.unenroll_user_from_course.side_effect = Exception(unenrollment_error)
+
+        post_data = {
+            'user_id': self.user.id,
+            'enterprise_id': enterprise_customer.uuid,
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
+            data=post_data,
+        )
+
+        course_id = enterprise_course_enrollment.course_id
+        RevocationStatus = LicensedEnterpriseCourseEnrollmentViewSet.RevocationStatus
+
+        self.assertEqual(status.HTTP_422_UNPROCESSABLE_ENTITY, response.status_code)
+        self.assertFalse(response.data[course_id]['success'])
+        if enrollment_update_error:
+            self.assertIn(enrollment_update_error, response.data[course_id]['message'])
+        if unenrollment_success is False:
+            self.assertIn(RevocationStatus.UNENROLL_FAILED, response.data[course_id]['message'])
+        if unenrollment_error:
+            self.assertIn(unenrollment_error, response.data[course_id]['message'])
+
+        enterprise_course_enrollment.refresh_from_db()
+        licensed_course_enrollment.refresh_from_db()
+
+        self.assertTrue(enterprise_course_enrollment.saved_for_later)
+        self.assertTrue(licensed_course_enrollment.is_revoked)
+
+        if has_audit_mode:
+            client_instance = mock_enrollment_client.return_value
+            client_instance.update_course_enrollment_mode_for_user.assert_called_once_with(
+                username=enterprise_customer_user.username,
+                course_id=enterprise_course_enrollment.course_id,
+                mode=mock_course_mode.AUDIT,
+            )
+        else:
+            client_instance = mock_enrollment_client.return_value
+            client_instance.unenroll_user_from_course.assert_called_once_with(
+                username=enterprise_customer_user.username,
+                course_id=enterprise_course_enrollment.course_id,
+            )
+
+    def _revocation_factory_objects(self):
+        """
+        Helper method to provide some testing objects for revocation tests.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+        )
+        licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=enterprise_course_enrollment,
+        )
+
+        assert not enterprise_course_enrollment.saved_for_later
+        assert not licensed_course_enrollment.is_revoked
+
+        return enterprise_customer, enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
 
 
 @ddt.ddt
