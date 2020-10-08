@@ -22,7 +22,7 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         'name': 'title',
         'externalId': 'key',
         'description': 'enrollment_url',
-        'courseId': 'key',
+        'courseId': 'course_unique_key',
     }
 
     DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url}>Go to edX course page</a><br />"
@@ -34,3 +34,10 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         enrollment_url = content_metadata_item.get('enrollment_url', None)
         url_link = self.DESCRIPTION_TEXT_TEMPLATE.format(enrollment_url=enrollment_url)
         return url_link
+
+    def transform_course_unique_key(self, content_metadata_item):
+        """
+        Blackboard courseId cannot contain some chars used in edX courseIds, so using hash
+        We can always look up courses by externalId whch is the same as edX courseId
+        """
+        return content_metadata_item.get('key').replace('+','').replace(':','').replace('/','')

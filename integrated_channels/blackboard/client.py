@@ -3,7 +3,9 @@
 Client for connecting to Blackboard.
 """
 import base64
+import copy
 import json
+import logging
 from datetime import datetime, timedelta
 from http import HTTPStatus
 
@@ -12,8 +14,11 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
+from integrated_channels.utils import refresh_session_if_expired
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+
+LOGGER = logging.getLogger(__name__)
 
 # TODO: Refactor candidate (duplication with canvas client)
 GRADEBOOK_PATH = '/learn/api/public/v1/courses/{course_id}/gradebook/columns'
@@ -40,9 +45,35 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('blackboard')
         self.session = None
         self.expires_at = None
+        self.create_course_url = "{}/learn/api/public/v3/courses".format(
+            self.enterprise_configuration.blackboard_base_url
+        )
 
     def create_content_metadata(self, serialized_data):
-        """TODO"""
+        """
+        Create a course from serialized course metadata
+        """
+        channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
+        if 'externalId' not in channel_metadata_item:
+            raise ClientError("No externalId found in metadata, please check json data format", 400)
+
+        external_id = channel_metadata_item['externalId']
+
+        # blackboard does not support all characters in our courseIds so let's gen a hash instead
+        course_id_generated = abs(hash(external_id))
+
+        copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
+        copy_of_channel_metadata['courseId'] = course_id_generated
+
+        serialized_channel_metadata = json.dumps(copy_of_channel_metadata)
+
+        LOGGER.info("Transmitting create_content_metadata with course_id: %s, %s",
+                    course_id_generated, serialized_channel_metadata)
+        self._create_session()
+
+        status_code, response_text = self._post(self.create_course_url, serialized_channel_metadata)
+
+        return status_code, response_text
 
     def update_content_metadata(self, serialized_data):
         """TODO"""
@@ -284,22 +315,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         Will only create a new session if token expiry has been reached
         """
-        now = datetime.utcnow()
-        if self.session is None or self.expires_at is None or now >= self.expires_at:
-            # need new session if session expired, or not initialized
-            if self.session:
-                self.session.close()
-
-            # Create a new session with a valid token
-            oauth_access_token, expires_in = self._get_oauth_access_token()
-
-            session = requests.Session()
-            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-            session.headers['Content-Type'] = 'application/json'
-            self.session = session
-            # expiry expected after `expires_in` seconds
-            if expires_in is not None:
-                self.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        self.session, self.expires_at = refresh_session_if_expired(
+            self._get_oauth_access_token,
+            self.session,
+            self.expires_at,
+        )
 
     def _get_oauth_access_token(self):
         """Fetch access token using refresh_token workflow from Blackboard
@@ -315,14 +335,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         if not self.enterprise_configuration.refresh_token:
             raise ClientError(
                 "Failed to generate oauth access token: Refresh token required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
 
         if (not self.enterprise_configuration.blackboard_base_url
                 or not self.config.oauth_token_auth_path):
             raise ClientError(
                 "Failed to generate oauth access token: oauth path missing from configuration.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
         auth_token_url = urljoin(
             self.enterprise_configuration.blackboard_base_url,
@@ -360,12 +380,12 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         if not self.enterprise_configuration.client_id:
             raise ClientError(
                 "Failed to generate oauth access token: Client ID required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
         if not self.enterprise_configuration.client_secret:
             raise ClientError(
                 "Failed to generate oauth access token: Client secret required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
             )
         return 'Basic {}'.format(
             base64.b64encode(u'{key}:{secret}'.format(
