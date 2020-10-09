@@ -72,6 +72,12 @@ try:
 except ImportError:
     update_user = None
 
+try:
+    from lms.djangoapps.branding.api import get_logo_url
+except ImportError:
+    get_logo_url = None
+
+
 LOGGER = getLogger(__name__)
 
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
@@ -394,6 +400,26 @@ class EnterpriseCustomer(TimeStampedModel):
         """Return a serialized version of this customer."""
         from enterprise.api.v1 import serializers  # pylint: disable=import-outside-toplevel
         return serializers.EnterpriseCustomerSerializer(self).data
+
+    @property
+    def branding_configuration(self):
+        """
+        Return the customer branding configuration or a default object if none exists.
+        """
+        try:
+            return self._branding_configuration
+        except EnterpriseCustomerBrandingConfiguration.DoesNotExist:
+            default_branding = EnterpriseCustomerBrandingConfiguration(
+                enterprise_customer=self,
+                primary_color='#1a337b',
+                secondary_color='#d7e3fc',
+                tertiary_color='#007d88',
+            )
+            return default_branding
+
+    @branding_configuration.setter
+    def branding_configuration(self, obj):
+        self._branding_configuration = obj
 
     def get_data_sharing_consent_text_overrides(self, published_only=True):
         """
@@ -1162,11 +1188,13 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name="branding_configuration",
+        related_name="_branding_configuration",
+        db_column="branding_configuration",
         on_delete=models.deletion.CASCADE
     )
-    logo = models.ImageField(
+    _logo = models.ImageField(
         upload_to=logo_path,
+        db_column="logo",
         help_text=_(u"Logo images must be in .png format."),
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
@@ -1212,6 +1240,24 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    @property
+    def logo(self):
+        """
+        Return the logo for an enterprise branding configuration OR the plaform logo URL if None
+        """
+        if not self._logo:
+            # Return fake URL for tests rather than mock get_logo_url for every test using EnterpriseCustomer
+            platform_logo_url = urljoin(
+                settings.LMS_ROOT_URL,
+                get_logo_url()
+            ) if get_logo_url else 'http://fake.url'
+            return platform_logo_url
+        return self._logo
+
+    @logo.setter
+    def logo(self, obj):
+        self._logo = obj
 
 
 @python_2_unicode_compatible

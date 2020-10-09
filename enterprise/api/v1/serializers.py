@@ -9,9 +9,7 @@ from logging import getLogger
 from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
 from rest_framework.settings import api_settings
-from urllib.parse import urljoin
 
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
@@ -25,11 +23,6 @@ from enterprise.utils import (
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
-
-try:
-    from lms.djangoapps.branding.api import get_logo_url
-except ImportError:
-    get_logo_url = None
 
 LOGGER = getLogger(__name__)
 
@@ -130,25 +123,6 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
 
     site = SiteSerializer()
     branding_configuration = EnterpriseCustomerBrandingConfigurationSerializer()
-
-    def to_representation(self, instance):
-        result = super(EnterpriseCustomerSerializer, self).to_representation(instance)
-        # Add a default branding config object to the Customer record if null
-        if result.get('branding_configuration') is None:
-            platform_logo_url = urljoin(
-                settings.LMS_ROOT_URL,
-                get_logo_url()
-            )
-            default_branding = {
-                'enterprise_customer': result.get('uuid'),
-                'enterprise_slug': result.get('slug'),
-                'logo': platform_logo_url,
-                'primary_color': '#1f9fd9',
-                'secondary_color': '#136CA5',
-                'tertiary_color': '#1f9fd9',
-            }
-            result['branding_configuration'] = default_branding
-        return result
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
