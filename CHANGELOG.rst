@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.36]
+--------
+
+* Authenticate user with Tableau.
+
 [3.8.35]
 --------
 
