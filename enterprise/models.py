@@ -1253,11 +1253,20 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
                 get_logo_url()
             ) if get_logo_url else 'http://fake.url'
             return platform_logo_url
-        return self._logo
+        return urljoin(
+            settings.LMS_ROOT_URL,
+            settings.MEDIA_URL + str(self._logo)
+        )
 
     @logo.setter
     def logo(self, obj):
         self._logo = obj
+
+    def get_logo_path(self):
+        """
+        For use when the logo path is needed rather than an absolute URL
+        """
+        return self._logo
 
 
 @python_2_unicode_compatible

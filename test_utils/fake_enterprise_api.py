@@ -171,3 +171,14 @@ def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], 
         'enterprise_customer': enterprise_customer_uuid,
         'results': paginated_content['results'],
     }
+
+
+def get_default_branding_object(customer_uuid, customer_slug):
+    return {
+        'enterprise_customer': customer_uuid,
+        'enterprise_slug': customer_slug,
+        'logo': 'http://fake.url',
+        'primary_color': '#1a337b',
+        'secondary_color': '#d7e3fc',
+        'tertiary_color': '#007d88',
+    }
