@@ -127,6 +127,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             EnterpriseCustomerUser,
             [
                 "enterprise_enrollments",
+                "enterpriseanalyticsuser",
                 "id",
                 "created",
                 "modified",

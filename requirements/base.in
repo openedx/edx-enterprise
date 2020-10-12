@@ -38,6 +38,7 @@ rules
 six
 slumber
 stevedore
+tableauserverclient
 testfixtures
 unicodecsv
 

@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.1]
+--------
+
+* Added the EnterpriseAnalyticsUser model and tableau integration functions.
+
 [3.9.0]
 --------
 

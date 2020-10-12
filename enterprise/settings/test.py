@@ -214,6 +214,10 @@ ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER = {
     'status': 'published'
 }
 
+TABLEAU_URL = 'http://localhost'
+TABLEAU_ADMIN_USER = 'edx'
+TABLEAU_ADMIN_USER_PASSWORD = 'edx'
+
 # For testing edx-rbac rules. This is not the actual value of the setting in prod.
 SYSTEM_TO_FEATURE_ROLE_MAPPING = {
     ENTERPRISE_ADMIN_ROLE: [

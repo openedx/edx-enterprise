@@ -7,13 +7,14 @@ from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.db.models.signals import post_delete, post_save, pre_save
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
+    EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
@@ -24,7 +25,14 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.tasks import create_enterprise_enrollment
-from enterprise.utils import NotConnectedToOpenEdX, get_default_catalog_content_filter, track_enrollment
+from enterprise.utils import (
+    NotConnectedToOpenEdX,
+    create_tableau_user,
+    delete_tableau_user,
+    delete_tableau_user_by_id,
+    get_default_catalog_content_filter,
+    track_enrollment,
+)
 
 try:
     from student.models import CourseEnrollment
@@ -134,6 +142,7 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
 def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Assign or delete enterprise_admin role for EnterpriseCustomerUser when updated.
+    Create third party analytics user.
 
     This only occurs if a PendingEnterpriseCustomerAdminUser record exists.
     """
@@ -154,6 +163,8 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
                 user=instance.user,
                 enterprise_customer=instance.enterprise_customer,
             )
+            # Also create the Enterprise admin user in third party analytics application
+            create_tableau_user(instance.user.username, instance)
         elif not kwargs['created'] and not instance.linked:
             # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_admin role.
             try:
@@ -161,6 +172,8 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
                     user=instance.user,
                     role=enterprise_admin_role
                 ).delete()
+                # Also delete the Enterprise admin user in the third party analytics application
+                delete_tableau_user(instance)
             except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
                 # Do nothing if no role assignment is present for the enterprise customer user.
                 pass
@@ -230,6 +243,15 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
         except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
+
+
+@receiver(pre_delete, sender=EnterpriseAnalyticsUser)
+def delete_enterprise_analytics_user(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Delete the associated enterprise analytics user in tableau.
+    """
+    if instance.analytics_user_id:
+        delete_tableau_user_by_id(instance.analytics_user_id)
 
 
 @receiver(post_save, sender=PendingEnterpriseCustomerAdminUser)
