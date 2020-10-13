@@ -12,8 +12,7 @@ LOGGER = getLogger(__name__)
 class BlackboardContentMetadataExporter(ContentMetadataExporter):
     """
         Blackboard implementation of ContentMetadataExporter.
-        Note: courseId is not being exported here (instead done in client), because it will be
-        a new value each time. Instead, we generate it in the client when creating a course.
+        Note: courseId is not being exported here (instead done in client during content send)
     """
     DATA_TRANSFORM_MAPPING = {
         'name': 'title',
