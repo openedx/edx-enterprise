@@ -6,7 +6,6 @@ import base64
 import copy
 import json
 import logging
-from datetime import datetime, timedelta
 from http import HTTPStatus
 
 import requests
