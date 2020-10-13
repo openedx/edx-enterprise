@@ -385,7 +385,8 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "enable_portal_saml_configuration_screen",
             "enable_slug_login",
             "contact_email",
-            "default_contract_discount"
+            "default_contract_discount",
+            "default_language",
         )
 
 

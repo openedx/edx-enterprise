@@ -120,6 +120,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "enable_slug_login",
                 "contact_email",
                 "default_contract_discount",
+                "default_language",
             ]
         ),
         (

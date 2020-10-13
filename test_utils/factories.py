@@ -8,7 +8,7 @@ from uuid import UUID
 import factory
 from faker import Factory as FakerFactory
 
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import AnonymousUser, Group, User
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
@@ -97,6 +97,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     hide_course_original_price = False
     country = 'US'
     contact_email = factory.LazyAttribute(lambda x: FAKER.email())
+    default_language = 'en'
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
@@ -194,6 +195,22 @@ class UserFactory(factory.DjangoModelFactory):
     is_staff = False
     is_active = False
     date_joined = factory.LazyAttribute(lambda x: FAKER.date_time_this_year(tzinfo=timezone.utc))
+
+
+class AnonymousUserFactory(factory.Factory):
+    """
+    Anonymous User factory.
+
+    Creates an instance of AnonymousUser with minimal boilerplate - uses this class' attributes as default
+    parameters for AnonymousUser constructor.
+    """
+
+    class Meta:
+        """
+        Meta for AnonymousUserFactory.
+        """
+
+        model = AnonymousUser
 
 
 class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactory):
