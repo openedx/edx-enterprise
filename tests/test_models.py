@@ -784,7 +784,7 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
         storage_mock = mock.MagicMock(spec=Storage, name="StorageMock")
         storage_mock.exists.return_value = file_exists
         with mock.patch("django.core.files.storage.default_storage._wrapped", storage_mock):
-            path = logo_path(branding_config, branding_config.logo.name)
+            path = logo_path(branding_config, branding_config.get_logo_path().name)
             self.assertEqual(path, "enterprise/branding/1/1_logo.png")
             assert storage_mock.delete.call_count == (1 if delete_called else 0)
             if delete_called:
@@ -801,8 +801,8 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo=file_mock
         )
         branding_config.save()
-        saved_path = branding_config.logo.path  # pylint: disable=no-member
-        expected_path = os.path.abspath(logo_path(branding_config, branding_config.logo.name))
+        saved_path = branding_config.get_logo_path().path  # pylint: disable=no-member
+        expected_path = os.path.abspath(logo_path(branding_config, branding_config.get_logo_path().name))
         self.assertEqual(saved_path, expected_path)
         self.addCleanup(self.cleanup)
 
@@ -840,10 +840,10 @@ class TestEnterpriseCustomerBrandingConfiguration(unittest.TestCase):
             logo="test1.png"
         )
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test1.png')  # pylint: disable=no-member
+        self.assertEqual(configuration.get_logo_path().url, '/test1.png')  # pylint: disable=no-member
         configuration.logo = 'test2.png'
         configuration.save()
-        self.assertEqual(configuration.logo.url, '/test2.png')  # pylint: disable=no-member
+        self.assertEqual(configuration.get_logo_path().url, '/test2.png')  # pylint: disable=no-member
 
     @ddt.data(
         (False, 2048),

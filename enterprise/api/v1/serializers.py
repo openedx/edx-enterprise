@@ -94,7 +94,14 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
             'tertiary_color',
         )
 
+    enterprise_customer = serializers.SerializerMethodField()
     enterprise_slug = serializers.SerializerMethodField()
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return a string representation of the associated enterprise customer's UUID.
+        """
+        return str(obj.enterprise_customer.uuid)
 
     def get_enterprise_slug(self, obj):
         """

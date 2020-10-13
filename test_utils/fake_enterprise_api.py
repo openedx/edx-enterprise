@@ -174,6 +174,9 @@ def build_fake_enterprise_catalog_detail(enterprise_catalog_uuid=FAKE_UUIDS[1], 
 
 
 def get_default_branding_object(customer_uuid, customer_slug):
+    """
+    Return a fake EnterpriseCustomerBrandingConfiguration object
+    """
     return {
         'enterprise_customer': customer_uuid,
         'enterprise_slug': customer_slug,
