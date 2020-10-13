@@ -64,6 +64,7 @@ from test_utils import (
     update_program_with_enterprise_context,
 )
 from test_utils.factories import FAKER
+from test_utils.fake_enterprise_api import get_default_branding_object
 
 ENTERPRISE_CATALOGS_LIST_ENDPOINT = reverse('enterprise-catalogs-list')
 ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
@@ -513,7 +514,7 @@ class TestEnterpriseAPIViews(APITest):
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
-                'branding_configuration': None,
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': True, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
@@ -552,7 +553,7 @@ class TestEnterpriseAPIViews(APITest):
                     'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                     'active': True, 'enable_data_sharing_consent': True,
                     'enforce_data_sharing_consent': 'at_enrollment',
-                    'branding_configuration': None,
+                    'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                     'enable_audit_enrollment': False, 'identity_provider': None,
                     'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                     'enable_portal_reporting_config_screen': False,
@@ -604,7 +605,7 @@ class TestEnterpriseAPIViews(APITest):
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
-                'branding_configuration': None,
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[1], TEST_SLUG),
                 'enable_audit_enrollment': False, 'identity_provider': FAKE_UUIDS[0],
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
@@ -637,7 +638,7 @@ class TestEnterpriseAPIViews(APITest):
             [{
                 'enterprise_customer': FAKE_UUIDS[0],
                 'enterprise_slug': TEST_SLUG,
-                'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
+                'logo': settings.LMS_ROOT_URL + settings.MEDIA_URL + 'enterprise/branding/1/1_logo.png',
                 'primary_color': '#000000',
                 'secondary_color': '#ffffff',
                 'tertiary_color': '#888888',
@@ -784,7 +785,7 @@ class TestEnterpriseAPIViews(APITest):
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment',
-                'branding_configuration': None,
+                'branding_configuration': get_default_branding_object(FAKE_UUIDS[0], TEST_SLUG),
                 'enable_audit_enrollment': False, 'enable_audit_data_reporting': False, 'identity_provider': None,
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': True,
                 'enable_portal_reporting_config_screen': False,
@@ -830,7 +831,7 @@ class TestEnterpriseAPIViews(APITest):
         expected_item = {
             'enterprise_customer': FAKE_UUIDS[0],
             'enterprise_slug': TEST_SLUG,
-            'logo': 'http://testserver/enterprise/branding/1/1_logo.png',
+            'logo': settings.LMS_ROOT_URL + settings.MEDIA_URL + 'enterprise/branding/1/1_logo.png',
             'primary_color': '#000000',
             'secondary_color': '#ffffff',
             'tertiary_color': '#888888',

@@ -14,6 +14,12 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
+
+[3.8.35]
+--------
+
+* Add default branding config object to the Customer record if null.
+
 [3.8.34]
 --------
 
