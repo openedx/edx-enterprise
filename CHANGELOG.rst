@@ -15,7 +15,7 @@ Change Log
 
 Unreleased
 
-[3.8.33]
+[3.8.35]
 --------
 
 * Add default branding config object to the Customer record if null.

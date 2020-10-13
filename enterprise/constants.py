@@ -50,6 +50,17 @@ class CourseModes:
     VERIFIED = 'verified'
 
 
+class DefaultColors:
+    """
+    Class to group the default branding color codes.
+
+    These color codes originated in the Enterprise Learner Portal.
+    """
+    PRIMARY = '#1a337b'
+    SECONDARY = '#d7e3fc'
+    TERTIARY = '#007d88'
+
+
 # Course mode sorting based on slug
 COURSE_MODE_SORT_ORDER = [
     CourseModes.VERIFIED,

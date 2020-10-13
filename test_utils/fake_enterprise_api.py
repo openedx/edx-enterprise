@@ -14,6 +14,7 @@ from six.moves.urllib.parse import urlencode, urljoin  # pylint: disable=import-
 from django.conf import settings
 from django.core.cache import cache
 
+from enterprise.constants import DefaultColors
 from test_utils import FAKE_UUIDS, fake_catalog_api, update_search_with_enterprise_context
 
 
@@ -181,7 +182,7 @@ def get_default_branding_object(customer_uuid, customer_slug):
         'enterprise_customer': customer_uuid,
         'enterprise_slug': customer_slug,
         'logo': 'http://fake.url',
-        'primary_color': '#1a337b',
-        'secondary_color': '#d7e3fc',
-        'tertiary_color': '#007d88',
+        'primary_color': DefaultColors.PRIMARY,
+        'secondary_color': DefaultColors.SECONDARY,
+        'tertiary_color': DefaultColors.TERTIARY,
     }

@@ -50,7 +50,7 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
-    json_serialized_course_modes,
+    json_serialized_course_modes, DefaultColors,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -411,9 +411,9 @@ class EnterpriseCustomer(TimeStampedModel):
         except EnterpriseCustomerBrandingConfiguration.DoesNotExist:
             default_branding = EnterpriseCustomerBrandingConfiguration(
                 enterprise_customer=self,
-                primary_color='#1a337b',
-                secondary_color='#d7e3fc',
-                tertiary_color='#007d88',
+                primary_color=DefaultColors.PRIMARY,
+                secondary_color=DefaultColors.SECONDARY,
+                tertiary_color=DefaultColors.TERTIARY,
             )
             return default_branding
 
