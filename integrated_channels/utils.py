@@ -5,11 +5,12 @@ Utilities common to different integrated channels.
 
 import math
 import re
+from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
-from datetime import datetime, timedelta
 
+import requests
 from six.moves import range
 
 from django.utils import timezone
@@ -244,14 +245,14 @@ def generate_formatted_log(message, channel_name=None, enterprise_customer_ident
                   )
     LOGGER.error(log_message) if is_error else LOGGER.info(log_message)  # pylint: disable=expression-not-assigned
 
-def refresh_session_if_expired(oauth_access_token_fetch_function, session=None, expires_at=None):
+def refresh_session_if_expired(oauth_access_token_function, session=None, expires_at=None):
     """
     Instantiate a new session object for use in connecting with integrated channel.
     Or, return an updated session if provided session has expired.
     Suitable for use with oauth supporting servers that use bearer token: Canvas, Blackboard etc.
 
     Arguments:
-        - oauth_access_token_fetch_function (function): access token fetch function
+        - oauth_access_token_function (function): access token fetch function
         - session (requests.Session): a session object. Pass None if creating new session
         - expires_at: the expiry date of the session if known. None is interpreted as expired.
 
@@ -271,12 +272,12 @@ def refresh_session_if_expired(oauth_access_token_fetch_function, session=None, 
         if session:
             session.close()
         # Create a new session with a valid token
-        oauth_access_token, expires_in = oauth_access_token_fetch_function()
+        oauth_access_token, expires_in = oauth_access_token_function()
         new_session = requests.Session()
         new_session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
         new_session.headers['content-type'] = 'application/json'
         # expiry expected after `expires_in` seconds
-        if new_expires_in is not None:
+        if expires_in is not None:
             new_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
         return new_session, new_expires_at
     return session, expires_at
