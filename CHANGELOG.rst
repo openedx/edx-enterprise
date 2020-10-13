@@ -20,6 +20,16 @@ Unreleased
 
 * Add default branding config object to the Customer record if null.
 
+[3.8.34]
+--------
+
+* Implementing Blackboard completion data tranmission.
+
+[3.8.33]
+--------
+
+* During license revocation, if no audit track exists for the course, attempt to unenroll the learer from it.
+
 [3.8.32]
 --------
 

@@ -45,17 +45,19 @@ from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
 from enterprise.api_client.lms import EnrollmentApiClient
-from enterprise.constants import COURSE_KEY_URL_PATTERN, CourseModes
+from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.errors import CodesAPIRequestError
 from enterprise.utils import NotConnectedToOpenEdX, get_request_value
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
 
 try:
+    from course_modes.models import CourseMode
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
 except ImportError:
     get_course_overviews = None
     get_certificate_for_user = None
+    CourseMode = None
 
 
 LOGGER = getLogger(__name__)
@@ -273,6 +275,15 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
     queryset = models.LicensedEnterpriseCourseEnrollment.objects.all()
     serializer_class = serializers.LicensedEnterpriseCourseEnrollmentReadOnlySerializer
 
+    class RevocationStatus:
+        """
+        Defines statuses related to enrollment states during the revocation process.
+        """
+        COURSE_COMPLETED = 'course already completed'
+        MOVED_TO_AUDIT = 'moved to audit'
+        UNENROLLED = 'unenrolled'
+        UNENROLL_FAILED = 'unenroll_user_from_course returned false.'
+
     @staticmethod
     def _validate_license_revoke_data(request_data):
         """
@@ -343,12 +354,9 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             course_overview (CourseOverview): The course overview object associated with the enrollment. Used
                 to check for course completion.
         """
-        if self._has_user_completed_course_run(enterprise_enrollment, course_overview):
-            return
-
         course_run_id = course_overview.get('id')
         enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
-        audit_mode = CourseModes.AUDIT
+        audit_mode = CourseMode.AUDIT
         enterprise_id = enterprise_customer_user.enterprise_customer.uuid
 
         log_message_kwargs = {
@@ -357,43 +365,95 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
             'course_id': course_run_id,
             'mode': audit_mode,
         }
-        try:
-            enrollment_api_client.update_course_enrollment_mode_for_user(
-                username=enterprise_customer_user.username,
-                course_id=course_run_id,
-                mode=audit_mode,
-            )
-            LOGGER.info(
-                'Updated LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
-                'to Course Mode {mode}.'.format(**log_message_kwargs)
-            )
-        except Exception as exc:  # pylint: disable=broad-except
-            msg = (
-                'Unable to update LMS enrollment for User {user} and Enterprise {enterprise} in Course {course_id} '
-                'to Course Mode {mode} because: {reason}'.format(
-                    reason=str(exc),
-                    **log_message_kwargs
-                )
-            )
-            LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
-            raise EnrollmentModificationException(msg)
 
-        enterprise_enrollment.license.revoke()
+        if self._has_user_completed_course_run(enterprise_enrollment, course_overview):
+            LOGGER.info(
+                'License revocation: not updating enrollment in {course_id} for User {user} '
+                'in Enterprise {enterprise}, course is already complete.'.format(**log_message_kwargs)
+            )
+            return self.RevocationStatus.COURSE_COMPLETED
+
+        if CourseMode.mode_for_course(course_run_id, audit_mode):
+            try:
+                enrollment_api_client.update_course_enrollment_mode_for_user(
+                    username=enterprise_customer_user.username,
+                    course_id=course_run_id,
+                    mode=audit_mode,
+                )
+                LOGGER.info(
+                    'License revocation: updated LMS enrollment for User {user} and Enterprise {enterprise} '
+                    'in Course {course_id} to Course Mode {mode}.'.format(**log_message_kwargs)
+                )
+                return self.RevocationStatus.MOVED_TO_AUDIT
+            except Exception as exc:  # pylint: disable=broad-except
+                msg = (
+                    'License revocation: unable to update LMS enrollment for User {user} and Enterprise {enterprise} '
+                    'in Course {course_id} to Course Mode {mode} because: {reason}'.format(
+                        reason=str(exc),
+                        **log_message_kwargs
+                    )
+                )
+                LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
+                raise EnrollmentModificationException(msg)
+            finally:
+                enterprise_enrollment.license.revoke()
+        else:
+            try:
+                successfully_unenrolled = enrollment_api_client.unenroll_user_from_course(
+                    username=enterprise_customer_user.username,
+                    course_id=course_run_id,
+                )
+                if not successfully_unenrolled:
+                    raise Exception(self.RevocationStatus.UNENROLL_FAILED)
+
+                LOGGER.info(
+                    'License revocation: successfully unenrolled User {user}, in Enterprise {enterprise} '
+                    'from Course {course_id} that contains no audit mode.'.format(**log_message_kwargs)
+                )
+                return self.RevocationStatus.UNENROLLED
+            except Exception as exc:  # pylint: disable=broad-except
+                msg = (
+                    'License revocation: unable to unenroll User {user} in Enterprise {enterprise} '
+                    'from Course {course_id}  because: {reason}'.format(
+                        reason=str(exc),
+                        **log_message_kwargs
+                    )
+                )
+                LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
+                raise EnrollmentModificationException(msg)
+            finally:
+                enterprise_enrollment.license.revoke()
 
     @action(methods=['post'], detail=False)
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request: request.data.get('enterprise_id'))
     def license_revoke(self, request, *args, **kwargs):
         """
-        Changes the mode for a user's licensed enterprise course enrollments to the "audit" course mode.
+        Changes the mode for a user's licensed enterprise course enrollments to the "audit" course mode,
+        or unenroll the user if no audit mode exists for a given course.
+
+        Will return a response with status 200 if no errors were encountered while modifying the course enrollment,
+        or a 422 if any errors were encountered.  The content of the response is of the form:
+
+        {
+            'course-v1:puppies': {'success': true, 'message': 'unenrolled'},
+            'course-v1:birds': {'success': true, 'message': 'moved to audit'},
+            'course-v1:kittens': {'success': true, 'message': 'course already completed'},
+            'course-v1:snakes': {'success': false, 'message': 'unenroll_user_from_course returned false'},
+            'course-v1:lizards': {'success': false, 'message': 'Some other exception'},
+        }
+
+        The first four messages are the values of constants that a client may expect to receive and parse accordingly.
         """
-        if get_course_overviews is None or get_certificate_for_user is None:
+        if not all([get_course_overviews, get_certificate_for_user, CourseMode]):
             raise NotConnectedToOpenEdX(
                 _('To use this endpoint, this package must be '
                   'installed in an Open edX environment.')
             )
 
         request_data = request.data.copy()
-        self._validate_license_revoke_data(request_data)
+        invalid_response = self._validate_license_revoke_data(request_data)
+        if invalid_response:
+            return invalid_response
 
         user_id = request_data.get('user_id')
         enterprise_id = request_data.get('enterprise_id')
@@ -406,14 +466,23 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
         enrollments_by_course_id = self._enrollments_by_course_for_licensed_user(enterprise_customer_user)
 
         enrollment_api_client = EnrollmentApiClient()
-        for course_overview in get_course_overviews(list(enrollments_by_course_id.keys())):
-            enterprise_enrollment = enrollments_by_course_id.get(course_overview.get('id'))
-            try:
-                self._revoke_enrollment(enrollment_api_client, enterprise_enrollment, course_overview)
-            except EnrollmentModificationException as exc:
-                return Response(str(exc), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        revocation_results = {}
+        any_failures = False
+        for course_overview in get_course_overviews(list(enrollments_by_course_id.keys())):
+            course_id = str(course_overview.get('id'))
+            enterprise_enrollment = enrollments_by_course_id.get(course_id)
+            try:
+                revocation_status = self._revoke_enrollment(
+                    enrollment_api_client, enterprise_enrollment, course_overview
+                )
+                revocation_results[course_id] = {'success': True, 'message': revocation_status}
+            except EnrollmentModificationException as exc:
+                revocation_results[course_id] = {'success': False, 'message': str(exc)}
+                any_failures = True
+
+        status_code = status.HTTP_200_OK if not any_failures else status.HTTP_422_UNPROCESSABLE_ENTITY
+        return Response(revocation_results, status=status_code)
 
 
 class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
