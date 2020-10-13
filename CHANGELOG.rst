@@ -14,6 +14,10 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
+[3.8.34]
+--------
+
+* Implementing Blackboard completion data tranmission.
 
 [3.8.33]
 --------
