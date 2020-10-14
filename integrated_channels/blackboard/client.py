@@ -126,7 +126,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         serialized_data = json.loads(serialized_data)
         externalId = serialized_data.get('courseID')
 
-        course_id = _resolve_blackboard_course_id(externalId)
+        course_id = self._resolve_blackboard_course_id(externalId)
 
         # Sanity check for course id
         if not course_id:
