@@ -15,11 +15,6 @@ Change Log
 
 Unreleased
 
-[3.8.37]
---------
-
-* Using python properties for EnterpriseCustomerBrandingConfiguration colors.
-
 [3.8.36]
 --------
 

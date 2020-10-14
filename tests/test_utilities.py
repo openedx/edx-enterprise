@@ -143,9 +143,9 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "modified",
                 "enterprise_customer",
                 "_logo",
-                "_primary_color",
-                "_secondary_color",
-                "_tertiary_color",
+                "primary_color",
+                "secondary_color",
+                "tertiary_color",
             ]
         ),
         (
