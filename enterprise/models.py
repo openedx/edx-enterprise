@@ -1200,21 +1200,24 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         null=True, blank=True, max_length=255,
         validators=[validate_image_extension, validate_image_size]
     )
-    primary_color = models.CharField(
+    _primary_color = models.CharField(
         null=True,
         blank=True,
+        db_column="primary_color",
         max_length=7,
         validators=[validate_hex_color],
     )
-    secondary_color = models.CharField(
+    _secondary_color = models.CharField(
         null=True,
         blank=True,
+        db_column="secondary_color",
         max_length=7,
         validators=[validate_hex_color],
     )
-    tertiary_color = models.CharField(
+    _tertiary_color = models.CharField(
         null=True,
         blank=True,
+        db_column="tertiary_color",
         max_length=7,
         validators=[validate_hex_color],
     )
@@ -1268,6 +1271,39 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         For use when the logo path is needed rather than an absolute URL
         """
         return self._logo
+
+    @property
+    def primary_color(self):
+        """
+        Return the primary color of the branding configuration OR a default value
+        """
+        return self._primary_color if self._primary_color else DefaultColors.PRIMARY
+
+    @primary_color.setter
+    def primary_color(self, obj):
+        self._primary_color = obj
+
+    @property
+    def secondary_color(self):
+        """
+        Return the secondary color of the branding configuration OR a default value
+        """
+        return self._secondary_color if self._secondary_color else DefaultColors.SECONDARY
+
+    @secondary_color.setter
+    def secondary_color(self, obj):
+        self._secondary_color = obj
+
+    @property
+    def tertiary_color(self):
+        """
+        Return the tertiary color of the branding configuration OR a default value
+        """
+        return self._tertiary_color if self._tertiary_color else DefaultColors.TERTIARY
+
+    @tertiary_color.setter
+    def tertiary_color(self, obj):
+        self._tertiary_color = obj
 
 
 @python_2_unicode_compatible
