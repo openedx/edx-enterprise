@@ -1,5 +1,5 @@
 # pylintrc tweaks for use with edx_lint.
 [MASTER]
-ignore = migrations
-load-plugins = edx_lint.pylint,pylint_django,pylint_celery
+ignore=migrations
+load-plugins=edx_lint.pylint,pylint_django,pylint_celery
 no-docstring-rgx=(__.*__)|Meta
