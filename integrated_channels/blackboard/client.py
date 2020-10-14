@@ -26,6 +26,7 @@ ENROLLMENT_PATH = '/learn/api/public/v1/courses/{course_id}/users'
 COURSE_PATH = '/learn/api/public/v1/courses'
 POST_GRADE_COLUMN_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns'
 POST_GRADE_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns/{column_id}/users/{user_id}'
+COURSE_V3_PATH = '/learn/api/public/v3/courses/{course_id}'
 
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
@@ -70,28 +71,49 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         LOGGER.info("Transmitting create_content_metadata with course_id: %s, %s",
                     course_id_generated, serialized_channel_metadata)
         self._create_session()
-
         status_code, response_text = self._post(self.create_course_url, serialized_channel_metadata)
-
         return status_code, response_text
 
+
     def update_content_metadata(self, serialized_data):
-        """TODO"""
+        """Apply changes to a course if applicable"""
+        self._create_session()
+        channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
+
+        self._raise_for_external_id(channel_metadata_item)
+        externalId = channel_metadata_item.get('externalId')
+        course_id = self._resolve_blackboard_course_id(externalId)
+        self._raise_for_course_id(course_id)
+
+        LOGGER.info("Updating course with courseId: {}", course_id)
+        response = self._patch(COURSE_V3_PATH.format(course_id=course_id), serialized_data)
+        return response.status_code, response.text
 
     def delete_content_metadata(self, serialized_data):
-        """TODO"""
+        """Delete course from blackboard (performs full delete as of now)"""
+        self._create_session()
+        channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
 
-    def create_course_completion(self, user_id, payload):
+        self._raise_for_external_id(channel_metadata_item)
+        externalId = channel_metadata_item.get('externalId')
+        course_id = self._resolve_blackboard_course_id(externalId)
+        self._raise_for_course_id(course_id)
+
+        LOGGER.info("Deleting course with courseId: {}", course_id)
+        url = COURSE_V3_PATH.format(course_id=course_id)
+        response = self._patch(url, serialized_data)
+        return response.status_code, response.text
+
+    def create_course_completion(self, user_id, serialized_data):
         """
         Post a final course grade to the integrated Blackboard course.
 
         Parameters:
         -----------
-            user_id (str): The shared email between a user's edX account and Blackboard account.
-            payload (str): The (string representation) of the necessary learner data information
-            in order to transmit learner data.
+            user_id (str): The shared email between a user's edX account and Blackboard account
+            serialized_data (str): The (string representation) of the learner data information
 
-        Example Payload:
+        Example serialized_data:
         ---------------
             '{
                 courseID: course-edx+555+3T2020,
@@ -101,18 +123,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         """
         self._create_session()
-        serialized_data = json.loads(payload)
-        course_response = self._get_courses_by_internal_id(serialized_data.get('courseID'))
-        course_id = None
-        for course in course_response:
-            if course.get('externalId') == serialized_data.get('courseID'):
-                course_id = course.get('id')
-                break
+        serialized_data = json.loads(serialized_data)
+        externalId = serialized_data.get('courseID')
+
+        course_id = _resolve_blackboard_course_id(externalId)
 
         # Sanity check for course id
         if not course_id:
             raise ClientError(
-                'Could not find course:{} on Blackboard'.format(serialized_data.get('courseID')),
+                'Could not find course:{} on Blackboard'.format(externalId),
                 HTTPStatus.NOT_FOUND.value
             )
 
@@ -134,7 +153,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         success_body = 'Successfully posted grade of {grade} to course:{course_id} for user:{user_email}.'.format(
             grade=grade,
-            course_id=serialized_data.get('courseID'),
+            course_id=externalId,
             user_email=user_id,
         )
         return response.status_code, success_body
@@ -145,6 +164,36 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
     """
     Helper and internal methods
     """
+    def _raise_for_external_id(channel_metadata_item):
+        """
+        Raise error if external_id invalid or not found
+        """
+        if 'externalId' not in channel_metadata_item:
+            raise ClientError("No externalId found in metadata, please check json data format", 400)
+
+    def _raise_for_course_id(course_id):
+        """
+        Raise error if course_id invalid
+        """
+        if not course_id:
+            raise ClientError(
+                'Could not find course:{} on Blackboard'.format(externalId),
+                HTTPStatus.NOT_FOUND.value
+            )
+
+    def _resolve_blackboard_course_id(externalId):
+        """
+        Extract course id from blackboard, given it's externalId
+        """
+        params = {'externalId': external_id}
+        courses_responses = self._get(self.generate_courses_url(), params).json()
+        course_response = courses_responses.get('results')
+
+        for course in course_response:
+            if course.get('externalId') == externalId:
+                course_id = course.get('id')
+                return course_id
+        return None
 
     def _create_session(self):
         """
@@ -310,15 +359,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response
-
-    def _get_courses_by_internal_id(self, internal_id):
-        """
-        Helper method to retrieve a course by it's Blackboard internal ID.
-        """
-        params = {'externalId': internal_id}
-
-        courses_response = self._get(self.generate_courses_url(), params).json()
-        return courses_response.get('results')
 
     def _get_bb_user_id_from_enrollments(self, user_id, course_id):
         """
