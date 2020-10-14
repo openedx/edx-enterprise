@@ -105,7 +105,7 @@ def skip_saving_logo_file(sender, instance, **kwargs):     # pylint: disable=unu
     To avoid saving the logo image at an incorrect path, skip saving it.
     """
     if not instance.id and not hasattr(instance, _UNSAVED_FILEFIELD):
-        setattr(instance, _UNSAVED_FILEFIELD, instance.get_logo_path())
+        setattr(instance, _UNSAVED_FILEFIELD, instance.logo)
         instance.logo = None
 
 
