@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.39]
+--------
+
+* Blackboard client update/delete and unit tests.
+
 [3.8.38]
 --------
 
