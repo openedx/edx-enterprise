@@ -6,7 +6,6 @@ import base64
 import copy
 import json
 import logging
-from datetime import datetime, timedelta
 from http import HTTPStatus
 
 import requests
@@ -69,8 +68,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         serialized_channel_metadata = json.dumps(copy_of_channel_metadata).encode('utf-8')
 
-        LOGGER.info("Transmitting create_content_metadata with course_id: %s, %s",
-                    course_id_generated, serialized_channel_metadata)
+        LOGGER.info("Creating course with courseId: %s", external_id)
         self._create_session()
         response = self._post(self.create_course_url, serialized_channel_metadata)
         return response.status_code, response.text
@@ -86,7 +84,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         course_id = self._resolve_blackboard_course_id(external_id)
         BlackboardAPIClient._raise_for_course_id(course_id, external_id)
 
-        LOGGER.info("Updating course with courseId: {}", course_id)
+        LOGGER.info("Updating course with courseId: %s", course_id)
         response = self._patch(COURSE_V3_PATH.format(course_id=course_id), serialized_data)
         return response.status_code, response.text
 
@@ -100,21 +98,21 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         course_id = self._resolve_blackboard_course_id(external_id)
         BlackboardAPIClient._raise_for_course_id(course_id, external_id)
 
-        LOGGER.info("Deleting course with courseId: {}", course_id)
+        LOGGER.info("Deleting course with courseId: %s", course_id)
         url = COURSE_V3_PATH.format(course_id=course_id)
         response = self._delete(url)
         return response.status_code, response.text
 
-    def create_course_completion(self, user_id, serialized_data):
+    def create_course_completion(self, user_id, payload):
         """
         Post a final course grade to the integrated Blackboard course.
 
         Parameters:
         -----------
             user_id (str): The shared email between a user's edX account and Blackboard account
-            serialized_data (str): The (string representation) of the learner data information
+            payload (str): The (string representation) of the learner data information
 
-        Example serialized_data:
+        Example payload:
         ---------------
             '{
                 courseID: course-edx+555+3T2020,
@@ -124,22 +122,22 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         """
         self._create_session()
-        serialized_data = json.loads(serialized_data)
-        externalId = serialized_data.get('courseID')
+        learner_data = json.loads(payload)
+        external_id = learner_data.get('courseID')
 
-        course_id = self._resolve_blackboard_course_id(externalId)
+        course_id = self._resolve_blackboard_course_id(external_id)
 
         # Sanity check for course id
         if not course_id:
             raise ClientError(
-                'Could not find course:{} on Blackboard'.format(externalId),
+                'Could not find course:{} on Blackboard'.format(external_id),
                 HTTPStatus.NOT_FOUND.value
             )
 
         blackboard_user_id = self._get_bb_user_id_from_enrollments(user_id, course_id)
         grade_column_id = self._get_or_create_integrated_grade_column(course_id)
 
-        grade = serialized_data.get('grade') * 100
+        grade = learner_data.get('grade') * 100
         grade_percent = {'score': grade}
         response = self._patch(
             self.generate_post_users_grade_url(course_id, grade_column_id, blackboard_user_id),
@@ -154,7 +152,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         success_body = 'Successfully posted grade of {grade} to course:{course_id} for user:{user_email}.'.format(
             grade=grade,
-            course_id=externalId,
+            course_id=external_id,
             user_email=user_id,
         )
         return response.status_code, success_body
@@ -162,9 +160,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
     def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """TODO: course completion deletion is currently not easily supported"""
 
-    """
-    Helper and internal methods
-    """
     @staticmethod
     def _raise_for_external_id(channel_metadata_item):
         """
@@ -174,13 +169,13 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             raise ClientError("No externalId found in metadata, please check json data format", 400)
 
     @staticmethod
-    def _raise_for_course_id(course_id, externalId):
+    def _raise_for_course_id(course_id, external_id):
         """
         Raise error if course_id invalid
         """
         if not course_id:
             raise ClientError(
-                'Could not find course:{} on Blackboard'.format(externalId),
+                'Could not find course:{} on Blackboard'.format(external_id),
                 HTTPStatus.NOT_FOUND.value
             )
 
