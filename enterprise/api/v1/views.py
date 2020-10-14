@@ -6,13 +6,15 @@ Views for enterprise api version 1 endpoint.
 from logging import getLogger
 from smtplib import SMTPException
 
+import requests
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
-from rest_framework import filters, permissions, status, viewsets
+from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action, detail_route, list_route
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
@@ -904,3 +906,25 @@ class CouponCodesView(APIView):
                 {'error': str('Request codes email could not be sent')},
                 status=HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+class TableauAuthViewSet(generics.GenericAPIView):
+    """
+    API to authenticate user with Tableau.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        """
+        Get the auth token against logged in user from tableau
+        """
+        url = settings.TABLEAU_URL + '/trusted'
+        enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
+        tableau_user = request.user.username + '.' + enterprise_customer_uuid
+        payload = {'username': tableau_user}
+        files = []
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        response = requests.request("POST", url, headers=headers, data=payload, files=files)
+        return Response(data=response.text)

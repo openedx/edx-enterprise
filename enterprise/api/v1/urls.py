@@ -42,6 +42,11 @@ urlpatterns = [
         views.CouponCodesView.as_view(),
         name='request-codes'
     ),
+    url(
+        r'^tableau_token$',
+        views.TableauAuthViewSet.as_view(),
+        name='tableau-token'
+    ),
 ]
 
 urlpatterns += router.urls
