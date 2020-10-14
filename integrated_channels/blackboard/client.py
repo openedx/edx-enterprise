@@ -80,10 +80,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self._create_session()
         channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
 
-        self._raise_for_external_id(channel_metadata_item)
-        externalId = channel_metadata_item.get('externalId')
-        course_id = self._resolve_blackboard_course_id(externalId)
-        self._raise_for_course_id(course_id)
+        BlackboardAPIClient._raise_for_external_id(channel_metadata_item)
+        external_id = channel_metadata_item.get('externalId')
+        course_id = self._resolve_blackboard_course_id(external_id)
+        BlackboardAPIClient._raise_for_course_id(course_id, external_id)
 
         LOGGER.info("Updating course with courseId: {}", course_id)
         response = self._patch(COURSE_V3_PATH.format(course_id=course_id), serialized_data)
@@ -94,10 +94,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self._create_session()
         channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
 
-        self._raise_for_external_id(channel_metadata_item)
-        externalId = channel_metadata_item.get('externalId')
-        course_id = self._resolve_blackboard_course_id(externalId)
-        self._raise_for_course_id(course_id)
+        BlackboardAPIClient._raise_for_external_id(channel_metadata_item)
+        external_id = channel_metadata_item.get('externalId')
+        course_id = self._resolve_blackboard_course_id(external_id)
+        BlackboardAPIClient._raise_for_course_id(course_id, external_id)
 
         LOGGER.info("Deleting course with courseId: {}", course_id)
         url = COURSE_V3_PATH.format(course_id=course_id)
@@ -164,6 +164,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
     """
     Helper and internal methods
     """
+    @staticmethod
     def _raise_for_external_id(channel_metadata_item):
         """
         Raise error if external_id invalid or not found
@@ -171,7 +172,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         if 'externalId' not in channel_metadata_item:
             raise ClientError("No externalId found in metadata, please check json data format", 400)
 
-    def _raise_for_course_id(course_id):
+    @staticmethod
+    def _raise_for_course_id(course_id, externalId):
         """
         Raise error if course_id invalid
         """
@@ -181,7 +183,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 HTTPStatus.NOT_FOUND.value
             )
 
-    def _resolve_blackboard_course_id(externalId):
+    def _resolve_blackboard_course_id(self, external_id):
         """
         Extract course id from blackboard, given it's externalId
         """
@@ -190,7 +192,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         course_response = courses_responses.get('results')
 
         for course in course_response:
-            if course.get('externalId') == externalId:
+            if course.get('externalId') == external_id:
                 course_id = course.get('id')
                 return course_id
         return None

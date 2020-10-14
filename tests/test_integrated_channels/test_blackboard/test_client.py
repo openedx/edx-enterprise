@@ -90,12 +90,9 @@ class TestBlackboardApiClient(unittest.TestCase):
         )
 
         # Mock the course ID request
-        client._get_courses_by_internal_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
-            name="_get_courses_by_internal_id",
-            return_value=[{
-                'externalId': self.course_id,
-                'id': self.blackboard_course_id
-            }]
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_resolve_blackboard_course_id",
+            return_value=self.course_id,
         )
 
         # Mock the enrollments request
