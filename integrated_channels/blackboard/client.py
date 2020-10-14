@@ -73,7 +73,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         response = self._post(self.create_course_url, serialized_channel_metadata)
         return response.status_code, response.text
 
-
     def update_content_metadata(self, serialized_data):
         """Apply changes to a course if applicable"""
         self._create_session()

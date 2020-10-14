@@ -85,7 +85,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     def test_create_content_metadata_success(self):
         client = self._create_new_mock_client()
         serialized_data = json.dumps({
-            "externalId":"a-course-id"
+            "externalId": "a-course-id"
         }).encode('utf-8')
         SUCCESS_CREATION_RESPONSE = unittest.mock.Mock(spec=Response)
         SUCCESS_CREATION_RESPONSE.status_code = 200
@@ -107,7 +107,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     def test_update_content_metadata_success(self):
         client = self._create_new_mock_client()
         serialized_data = json.dumps({
-            "externalId":"a-course-id"
+            "externalId": "a-course-id"
         }).encode('utf-8')
         SUCCESS_UPDATE_RESPONSE = unittest.mock.Mock(spec=Response)
         SUCCESS_UPDATE_RESPONSE.status_code = 200
@@ -134,7 +134,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     def test_delete_content_metadata(self):
         client = self._create_new_mock_client()
         serialized_data = json.dumps({
-            "externalId":"a-course-id"
+            "externalId": "a-course-id"
         }).encode('utf-8')
         SUCCESS_DELETE_RESPONSE = unittest.mock.Mock(spec=Response)
         SUCCESS_DELETE_RESPONSE.status_code = 202
