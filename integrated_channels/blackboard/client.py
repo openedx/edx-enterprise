@@ -14,9 +14,9 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
-from integrated_channels.utils import refresh_session_if_expired
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import refresh_session_if_expired
 
 LOGGER = logging.getLogger(__name__)
 
@@ -53,12 +53,13 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
     def create_content_metadata(self, serialized_data):
         """
         Create a course from serialized course metadata
+        Returns: (int, str) Status code, Status message
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
         if 'externalId' not in channel_metadata_item:
             raise ClientError("No externalId found in metadata, please check json data format", 400)
 
-        external_id = channel_metadata_item['externalId']
+        external_id = channel_metadata_item.get('externalId')
 
         # blackboard does not support all characters in our courseIds so let's gen a hash instead
         course_id_generated = abs(hash(external_id))
@@ -66,13 +67,13 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['courseId'] = course_id_generated
 
-        serialized_channel_metadata = json.dumps(copy_of_channel_metadata)
+        serialized_channel_metadata = json.dumps(copy_of_channel_metadata).encode('utf-8')
 
         LOGGER.info("Transmitting create_content_metadata with course_id: %s, %s",
                     course_id_generated, serialized_channel_metadata)
         self._create_session()
-        status_code, response_text = self._post(self.create_course_url, serialized_channel_metadata)
-        return status_code, response_text
+        response = self._post(self.create_course_url, serialized_channel_metadata)
+        return response.status_code, response.text
 
 
     def update_content_metadata(self, serialized_data):
@@ -101,7 +102,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         LOGGER.info("Deleting course with courseId: {}", course_id)
         url = COURSE_V3_PATH.format(course_id=course_id)
-        response = self._patch(url, serialized_data)
+        response = self._delete(url)
         return response.status_code, response.text
 
     def create_course_completion(self, user_id, serialized_data):
@@ -361,6 +362,15 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         if post_response.status_code >= 400:
             raise ClientError(post_response.text, post_response.status_code)
         return post_response
+
+    def _delete(self, url):
+        """
+        Returns request's delete response and raises Client Errors if appropriate.
+        """
+        response = self.session.delete(url)
+        if response.status_code >= 400:
+            raise ClientError(response.text, response.status_code)
+        return response
 
     def _get_bb_user_id_from_enrollments(self, user_id, course_id):
         """

@@ -3,6 +3,7 @@
 Tests for clients in integrated_channels.blackboard.
 """
 
+import json
 import random
 import unittest
 
@@ -50,6 +51,14 @@ class TestBlackboardApiClient(unittest.TestCase):
             'score': self.grade * 100
         }
 
+    def _create_new_mock_client(self):
+        client = BlackboardAPIClient(self.enterprise_config)
+        client._get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get_oauth_access_token",
+            return_value=(self.token, 10000)
+        )
+        return client
+
     def test_client_has_valid_configs(self):
         api_client = BlackboardAPIClient(self.enterprise_config)
         assert api_client.config is not None
@@ -59,11 +68,7 @@ class TestBlackboardApiClient(unittest.TestCase):
 
     def test_course_completion_with_no_course(self):
         """Test that we properly raise exceptions if the client receives a 404 from Blackboard"""
-        client = BlackboardAPIClient(self.enterprise_config)
-        client._get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
-            name="_get_oauth_access_token",
-            return_value=(self.token, 10000)
-        )
+        client = self._create_new_mock_client()
 
         # Create the session so that we can mock the requests made in the course completion transmission flow
         client._create_session()  # pylint: disable=protected-access
@@ -77,17 +82,88 @@ class TestBlackboardApiClient(unittest.TestCase):
         assert client_error.value.message == COURSE_NOT_FOUND_RESPONSE.text
         assert client_error.value.status_code == COURSE_NOT_FOUND_RESPONSE.status_code == 404
 
+    def test_create_content_metadata_success(self):
+        client = self._create_new_mock_client()
+        serialized_data = json.dumps({
+            "externalId":"a-course-id"
+        }).encode('utf-8')
+        SUCCESS_CREATION_RESPONSE = unittest.mock.Mock(spec=Response)
+        SUCCESS_CREATION_RESPONSE.status_code = 200
+        SUCCESS_CREATION_RESPONSE.text = "hooray"
+        SUCCESS_CREATION_RESPONSE.json.return_value = {}
+
+        client._create_session()
+        client._post = unittest.mock.MagicMock(
+            name="_post",
+            return_value=SUCCESS_CREATION_RESPONSE
+        )
+
+        status_code, status_text = client.create_content_metadata(serialized_data)
+
+        assert status_code == 200
+        assert status_text == "hooray"
+        assert client._post.called
+
+    def test_update_content_metadata_success(self):
+        client = self._create_new_mock_client()
+        serialized_data = json.dumps({
+            "externalId":"a-course-id"
+        }).encode('utf-8')
+        SUCCESS_UPDATE_RESPONSE = unittest.mock.Mock(spec=Response)
+        SUCCESS_UPDATE_RESPONSE.status_code = 200
+        SUCCESS_UPDATE_RESPONSE.text = "hooray"
+        SUCCESS_UPDATE_RESPONSE.json.return_value = {}
+
+        client._create_session()
+        client._patch = unittest.mock.MagicMock(
+            name="_patch",
+            return_value=SUCCESS_UPDATE_RESPONSE
+        )
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
+            name="_resolve_blackboard_course_id",
+            return_value="a-course-id"
+        )
+
+        status_code, status_text = client.update_content_metadata(serialized_data)
+
+        assert status_code == 200
+        assert status_text == "hooray"
+        assert client._patch.called
+        assert client._resolve_blackboard_course_id.called
+
+    def test_delete_content_metadata(self):
+        client = self._create_new_mock_client()
+        serialized_data = json.dumps({
+            "externalId":"a-course-id"
+        }).encode('utf-8')
+        SUCCESS_DELETE_RESPONSE = unittest.mock.Mock(spec=Response)
+        SUCCESS_DELETE_RESPONSE.status_code = 202
+        SUCCESS_DELETE_RESPONSE.text = ""
+        SUCCESS_DELETE_RESPONSE.json.return_value = {}
+
+        client._create_session()
+        client._delete = unittest.mock.MagicMock(
+            name="_delete",
+            return_value=SUCCESS_DELETE_RESPONSE
+        )
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
+            name="_resolve_blackboard_course_id",
+            return_value="a-course-id"
+        )
+
+        status_code, status_text = client.delete_content_metadata(serialized_data)
+
+        assert status_code == 202
+        assert status_text == ""
+        assert client._delete.called
+        assert client._resolve_blackboard_course_id.called
+
     def test_client_behavior_on_successful_learner_data_transmission(self):  # pylint: disable=protected-access
         """
         Test that given successful requests for Blackboard learner data,
         the client makes the appropriate _patch call to update a user's grade
         """
-        client = BlackboardAPIClient(self.enterprise_config)
-        # Mock the auth process
-        client._get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
-            name="_get_oauth_access_token",
-            return_value=(self.token, 10000)
-        )
+        client = self._create_new_mock_client()
 
         # Mock the course ID request
         client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
