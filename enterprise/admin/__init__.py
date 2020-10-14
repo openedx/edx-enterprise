@@ -164,6 +164,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         'site',
         'country',
         'active',
+        'has_logo',
         'enable_dsc',
         'has_identity_provider',
         'uuid',
@@ -225,6 +226,22 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     enable_dsc.boolean = True
     enable_dsc.short_description = u'Enable DSC'
+
+    def has_logo(self, instance):
+        """
+        Return True if EnterpriseCustomer has a logo.
+
+        Arguments:
+            instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
+        """
+        has_logo = False
+        if hasattr(instance, 'branding_configuration') and instance.branding_configuration.logo:
+            has_logo = True
+
+        return has_logo
+
+    has_logo.boolean = True
+    has_logo.short_description = u'Logo'
 
     def has_identity_provider(self, instance):
         """

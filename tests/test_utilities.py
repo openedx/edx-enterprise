@@ -78,7 +78,7 @@ class TestEnterpriseUtils(unittest.TestCase):
             [
                 "enterprise_customer_users",
                 "pendingenterprisecustomeruser",
-                "_branding_configuration",
+                "branding_configuration",
                 "enterprise_customer_identity_provider",
                 "enterprise_customer_catalogs",
                 "enterprise_enrollment_template",
@@ -142,7 +142,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "created",
                 "modified",
                 "enterprise_customer",
-                "_logo",
+                "logo",
                 "primary_color",
                 "secondary_color",
                 "tertiary_color",
