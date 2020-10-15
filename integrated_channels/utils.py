@@ -3,13 +3,14 @@
 Utilities common to different integrated channels.
 """
 
-import datetime
 import math
 import re
+from datetime import datetime, timedelta
 from itertools import islice
 from logging import getLogger
 from string import Formatter
 
+import requests
 from six.moves import range
 
 from django.utils import timezone
@@ -17,7 +18,7 @@ from django.utils.html import strip_tags
 
 from enterprise.api_client.lms import parse_lms_api_datetime
 
-UNIX_EPOCH = datetime.datetime(1970, 1, 1, tzinfo=timezone.utc)
+UNIX_EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 UNIX_MIN_DATE_STRING = '1970-01-01T00:00:00Z'
 UNIX_MAX_DATE_STRING = '2038-01-19T03:14:07Z'
 
@@ -243,3 +244,41 @@ def generate_formatted_log(message, channel_name=None, enterprise_customer_ident
                       message=message,
                   )
     LOGGER.error(log_message) if is_error else LOGGER.info(log_message)  # pylint: disable=expression-not-assigned
+
+
+def refresh_session_if_expired(oauth_access_token_function, session=None, expires_at=None):
+    """
+    Instantiate a new session object for use in connecting with integrated channel.
+    Or, return an updated session if provided session has expired.
+    Suitable for use with oauth supporting servers that use bearer token: Canvas, Blackboard etc.
+
+    Arguments:
+        - oauth_access_token_function (function): access token fetch function
+        - session (requests.Session): a session object. Pass None if creating new session
+        - expires_at: the expiry date of the session if known. None is interpreted as expired.
+
+    Each enterprise customer connecting to channel should have a single client session.
+    Will only create a new session if token expiry has been reached
+    If a new session is being created, closes the session first
+
+    Returns (tuple) with values:
+     - session: newly created session or an updated session (can be stored for later use)
+     - expires_at: new expiry date to be stored for later use
+    If session has not expired, or not updated for any reason, just returns the input values of
+    session and expires_at
+    """
+    now = datetime.utcnow()
+    if session is None or expires_at is None or now >= expires_at:
+        # need new session if session expired, or not initialized
+        if session:
+            session.close()
+        # Create a new session with a valid token
+        oauth_access_token, expires_in = oauth_access_token_function()
+        new_session = requests.Session()
+        new_session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
+        new_session.headers['content-type'] = 'application/json'
+        # expiry expected after `expires_in` seconds
+        if expires_in is not None:
+            new_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        return new_session, new_expires_at
+    return session, expires_at

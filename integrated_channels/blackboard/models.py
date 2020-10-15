@@ -63,6 +63,15 @@ class BlackboardEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfigur
                   "used to re-request the access tokens over multiple client sessions."
     )
 
+    # overriding base model field, to use chunk size 1 default
+    transmission_chunk_size = models.IntegerField(
+        default=1,
+        help_text=(
+            "The maximum number of data items to transmit to the integrated channel "
+            "with each request."
+        )
+    )
+
     history = HistoricalRecords()
 
     class Meta:

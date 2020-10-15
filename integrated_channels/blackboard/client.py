@@ -3,8 +3,9 @@
 Client for connecting to Blackboard.
 """
 import base64
+import copy
 import json
-from datetime import datetime, timedelta
+import logging
 from http import HTTPStatus
 
 import requests
@@ -14,6 +15,9 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import refresh_session_if_expired
+
+LOGGER = logging.getLogger(__name__)
 
 # TODO: Refactor candidate (duplication with canvas client)
 GRADEBOOK_PATH = '/learn/api/public/v1/courses/{course_id}/gradebook/columns'
@@ -21,6 +25,8 @@ ENROLLMENT_PATH = '/learn/api/public/v1/courses/{course_id}/users'
 COURSE_PATH = '/learn/api/public/v1/courses'
 POST_GRADE_COLUMN_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns'
 POST_GRADE_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns/{column_id}/users/{user_id}'
+COURSE_V3_PATH = '/learn/api/public/v3/courses/{course_id}'
+COURSES_V3_PATH = '/learn/api/public/v3/courses'
 
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
@@ -42,13 +48,235 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self.expires_at = None
 
     def create_content_metadata(self, serialized_data):
-        """TODO"""
+        """
+        Create a course from serialized course metadata
+        Returns: (int, str) Status code, Status message
+        """
+        channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
+        BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
+
+        external_id = channel_metadata_item.get('externalId')
+
+        # blackboard does not support all characters in our courseIds so let's gen a hash instead
+        course_id_generated = self.generate_blackboard_course_id(external_id)
+
+        copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
+        copy_of_channel_metadata['courseId'] = course_id_generated
+
+        LOGGER.info("Creating course with courseId: %s", external_id)
+        self._create_session()
+        create_url = self.generate_course_create_url()
+        response = self._post(create_url, copy_of_channel_metadata)
+        return response.status_code, response.text
 
     def update_content_metadata(self, serialized_data):
-        """TODO"""
+        """Apply changes to a course if applicable"""
+        self._create_session()
+        channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
+
+        BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
+        external_id = channel_metadata_item.get('externalId')
+        course_id = self._resolve_blackboard_course_id(external_id)
+        BlackboardAPIClient._validate_course_id(course_id, external_id)
+
+        LOGGER.info("Updating course with courseId: %s", course_id)
+        update_url = self.generate_course_update_url(course_id)
+        response = self._patch(update_url, channel_metadata_item)
+        return response.status_code, response.text
 
     def delete_content_metadata(self, serialized_data):
-        """TODO"""
+        """Delete course from blackboard (performs full delete as of now)"""
+        self._create_session()
+        channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
+
+        BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
+        external_id = channel_metadata_item.get('externalId')
+        course_id = self._resolve_blackboard_course_id(external_id)
+        BlackboardAPIClient._validate_course_id(course_id, external_id)
+
+        LOGGER.info("Deleting course with courseId: %s", course_id)
+        update_url = self.generate_course_update_url(course_id)
+        response = self._delete(update_url)
+        return response.status_code, response.text
+
+    def create_course_completion(self, user_id, payload):
+        """
+        Post a final course grade to the integrated Blackboard course.
+
+        Parameters:
+        -----------
+            user_id (str): The shared email between a user's edX account and Blackboard account
+            payload (str): The (string representation) of the learner data information
+
+        Example payload:
+        ---------------
+            '{
+                courseID: course-edx+555+3T2020,
+                score: 0.85,
+                completedTimestamp: 1602265162589,
+            }'
+
+        """
+        self._create_session()
+        learner_data = json.loads(payload)
+        external_id = learner_data.get('courseID')
+
+        course_id = self._resolve_blackboard_course_id(external_id)
+
+        # Sanity check for course id
+        if not course_id:
+            raise ClientError(
+                'Could not find course:{} on Blackboard'.format(external_id),
+                HTTPStatus.NOT_FOUND.value
+            )
+
+        blackboard_user_id = self._get_bb_user_id_from_enrollments(user_id, course_id)
+        grade_column_id = self._get_or_create_integrated_grade_column(course_id)
+
+        grade = learner_data.get('grade') * 100
+        grade_percent = {'score': grade}
+        response = self._patch(
+            self.generate_post_users_grade_url(course_id, grade_column_id, blackboard_user_id),
+            grade_percent
+        )
+
+        if response.json().get('score') != grade:
+            raise ClientError(
+                'Failed to post new grade for user={} enrolled in course={}'.format(user_id, course_id),
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+
+        success_body = 'Successfully posted grade of {grade} to course:{course_id} for user:{user_email}.'.format(
+            grade=grade,
+            course_id=external_id,
+            user_email=user_id,
+        )
+        return response.status_code, success_body
+
+    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
+        """TODO: course completion deletion is currently not easily supported"""
+
+    @staticmethod
+    def _validate_channel_metadata(channel_metadata_item):
+        """
+        Raise error if external_id invalid or not found
+        """
+        if 'externalId' not in channel_metadata_item:
+            raise ClientError("No externalId found in metadata, please check json data format", 400)
+
+    @staticmethod
+    def _validate_course_id(course_id, external_id):
+        """
+        Raise error if course_id invalid
+        """
+        if not course_id:
+            raise ClientError(
+                'Could not find course:{} on Blackboard'.format(external_id),
+                HTTPStatus.NOT_FOUND.value
+            )
+
+    def _resolve_blackboard_course_id(self, external_id):
+        """
+        Extract course id from blackboard, given it's externalId
+        """
+        params = {'externalId': external_id}
+        courses_responses = self._get(self.generate_courses_url(), params).json()
+        course_response = courses_responses.get('results')
+
+        for course in course_response:
+            if course.get('externalId') == external_id:
+                course_id = course.get('id')
+                return course_id
+        return None
+
+    def _create_session(self):
+        """
+        Will only create a new session if token expiry has been reached
+        """
+        self.session, self.expires_at = refresh_session_if_expired(
+            self._get_oauth_access_token,
+            self.session,
+            self.expires_at,
+        )
+
+    def _get_oauth_access_token(self):
+        """Fetch access token using refresh_token workflow from Blackboard
+
+        Returns:
+            access_token (str): the OAuth access token to access the Blackboard server
+            expires_in (int): the number of seconds after which token will expire
+        Raises:
+            HTTPError: If we received a failure response code.
+            ClientError: If an unexpected response format was received that we could not parse.
+        """
+
+        if not self.enterprise_configuration.refresh_token:
+            raise ClientError(
+                "Failed to generate oauth access token: Refresh token required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+
+        if (not self.enterprise_configuration.blackboard_base_url
+                or not self.config.oauth_token_auth_path):
+            raise ClientError(
+                "Failed to generate oauth access token: oauth path missing from configuration.",
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+        auth_token_url = urljoin(
+            self.enterprise_configuration.blackboard_base_url,
+            self.config.oauth_token_auth_path,
+        )
+
+        auth_token_params = {
+            'grant_type': 'refresh_token',
+            'refresh_token': self.enterprise_configuration.refresh_token,
+        }
+
+        auth_response = requests.post(
+            auth_token_url,
+            auth_token_params,
+            headers={
+                'Authorization': self._create_auth_header(),
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        )
+        if auth_response.status_code >= 400:
+            raise ClientError(auth_response.text, auth_response.status_code)
+        try:
+            data = auth_response.json()
+            # do not forget to save the new refresh token otherwise subsequent requests will fail
+            self.enterprise_configuration.refresh_token = data["refresh_token"]
+            self.enterprise_configuration.save()
+            return data['access_token'], data["expires_in"]
+        except (KeyError, ValueError):
+            raise ClientError(auth_response.text, auth_response.status_code)
+
+    def _create_auth_header(self):
+        """
+        auth header in oauth2 token format as required by blackboard doc
+        """
+        if not self.enterprise_configuration.client_id:
+            raise ClientError(
+                "Failed to generate oauth access token: Client ID required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+        if not self.enterprise_configuration.client_secret:
+            raise ClientError(
+                "Failed to generate oauth access token: Client secret required.",
+                HTTPStatus.INTERNAL_SERVER_ERROR.value
+            )
+        return 'Basic {}'.format(
+            base64.b64encode(u'{key}:{secret}'.format(
+                key=self.enterprise_configuration.client_id,
+                secret=self.enterprise_configuration.client_secret
+            ).encode('utf-8')).decode()
+        )
+
+    def generate_blackboard_course_id(self, external_id):
+        """
+        A course_id suitable for use with blackboard
+        """
+        return str(abs(hash(external_id)))
 
     def generate_gradebook_url(self, course_id):
         """
@@ -69,6 +297,24 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         return '{base}{path}?expand=user'.format(
             base=self.enterprise_configuration.blackboard_base_url,
             path=ENROLLMENT_PATH.format(course_id=course_id),
+        )
+
+    def generate_course_create_url(self):
+        """
+        Url to create a course
+        """
+        return "{base}{path}".format(
+            base=self.enterprise_configuration.blackboard_base_url,
+            path=COURSES_V3_PATH,
+        )
+
+    def generate_course_update_url(self, course_id):
+        """
+        Url to update one course
+        """
+        return '{base}{path}'.format(
+            base=self.enterprise_configuration.blackboard_base_url,
+            path=COURSE_V3_PATH.format(course_id=course_id),
         )
 
     def generate_courses_url(self):
@@ -132,14 +378,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             raise ClientError(post_response.text, post_response.status_code)
         return post_response
 
-    def _get_courses_by_internal_id(self, internal_id):
+    def _delete(self, url):
         """
-        Helper method to retrieve a course by it's Blackboard internal ID.
+        Returns request's delete response and raises Client Errors if appropriate.
         """
-        params = {'externalId': internal_id}
-
-        courses_response = self._get(self.generate_courses_url(), params).json()
-        return courses_response.get('results')
+        response = self.session.delete(url)
+        if response.status_code >= 400:
+            raise ClientError(response.text, response.status_code)
+        return response
 
     def _get_bb_user_id_from_enrollments(self, user_id, course_id):
         """
@@ -218,158 +464,3 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 )
 
         return grade_column_id
-
-    def create_course_completion(self, user_id, payload):
-        """
-        Post a final course grade to the integrated Blackboard course.
-
-        Parameters:
-        -----------
-            user_id (str): The shared email between a user's edX account and Blackboard account.
-            payload (str): The (string representation) of the necessary learner data information
-            in order to transmit learner data.
-
-        Example Payload:
-        ---------------
-            '{
-                courseID: course-edx+555+3T2020,
-                score: 0.85,
-                completedTimestamp: 1602265162589,
-            }'
-
-        """
-        self._create_session()
-        serialized_data = json.loads(payload)
-        course_response = self._get_courses_by_internal_id(serialized_data.get('courseID'))
-        course_id = None
-        for course in course_response:
-            if course.get('externalId') == serialized_data.get('courseID'):
-                course_id = course.get('id')
-                break
-
-        # Sanity check for course id
-        if not course_id:
-            raise ClientError(
-                'Could not find course:{} on Blackboard'.format(serialized_data.get('courseID')),
-                HTTPStatus.NOT_FOUND.value
-            )
-
-        blackboard_user_id = self._get_bb_user_id_from_enrollments(user_id, course_id)
-        grade_column_id = self._get_or_create_integrated_grade_column(course_id)
-
-        grade = serialized_data.get('grade') * 100
-        grade_percent = {'score': grade}
-        response = self._patch(
-            self.generate_post_users_grade_url(course_id, grade_column_id, blackboard_user_id),
-            grade_percent
-        )
-
-        if response.json().get('score') != grade:
-            raise ClientError(
-                'Failed to post new grade for user={} enrolled in course={}'.format(user_id, course_id),
-                HTTPStatus.INTERNAL_SERVER_ERROR.value
-            )
-
-        success_body = 'Successfully posted grade of {grade} to course:{course_id} for user:{user_email}.'.format(
-            grade=grade,
-            course_id=serialized_data.get('courseID'),
-            user_email=user_id,
-        )
-        return response.status_code, success_body
-
-    def delete_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
-        """TODO: course completion deletion is currently not easily supported"""
-
-    def _create_session(self):
-        """
-        Will only create a new session if token expiry has been reached
-        """
-        now = datetime.utcnow()
-        if self.session is None or self.expires_at is None or now >= self.expires_at:
-            # need new session if session expired, or not initialized
-            if self.session:
-                self.session.close()
-
-            # Create a new session with a valid token
-            oauth_access_token, expires_in = self._get_oauth_access_token()
-
-            session = requests.Session()
-            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-            session.headers['Content-Type'] = 'application/json'
-            self.session = session
-            # expiry expected after `expires_in` seconds
-            if expires_in is not None:
-                self.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
-
-    def _get_oauth_access_token(self):
-        """Fetch access token using refresh_token workflow from Blackboard
-
-        Returns:
-            access_token (str): the OAuth access token to access the Blackboard server
-            expires_in (int): the number of seconds after which token will expire
-        Raises:
-            HTTPError: If we received a failure response code.
-            ClientError: If an unexpected response format was received that we could not parse.
-        """
-
-        if not self.enterprise_configuration.refresh_token:
-            raise ClientError(
-                "Failed to generate oauth access token: Refresh token required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-
-        if (not self.enterprise_configuration.blackboard_base_url
-                or not self.config.oauth_token_auth_path):
-            raise ClientError(
-                "Failed to generate oauth access token: oauth path missing from configuration.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-        auth_token_url = urljoin(
-            self.enterprise_configuration.blackboard_base_url,
-            self.config.oauth_token_auth_path,
-        )
-
-        auth_token_params = {
-            'grant_type': 'refresh_token',
-            'refresh_token': self.enterprise_configuration.refresh_token,
-        }
-
-        auth_response = requests.post(
-            auth_token_url,
-            auth_token_params,
-            headers={
-                'Authorization': self._create_auth_header(),
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        )
-        if auth_response.status_code >= 400:
-            raise ClientError(auth_response.text, auth_response.status_code)
-        try:
-            data = auth_response.json()
-            # do not forget to save the new refresh token otherwise subsequent requests will fail
-            self.enterprise_configuration.refresh_token = data["refresh_token"]
-            self.enterprise_configuration.save()
-            return data['access_token'], data["expires_in"]
-        except (KeyError, ValueError):
-            raise ClientError(auth_response.text, auth_response.status_code)
-
-    def _create_auth_header(self):
-        """
-        auth header in oauth2 token format as required by blackboard doc
-        """
-        if not self.enterprise_configuration.client_id:
-            raise ClientError(
-                "Failed to generate oauth access token: Client ID required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-        if not self.enterprise_configuration.client_secret:
-            raise ClientError(
-                "Failed to generate oauth access token: Client secret required.",
-                HTTPStatus.INTERNAL_SERVER_ERROR
-            )
-        return 'Basic {}'.format(
-            base64.b64encode(u'{key}:{secret}'.format(
-                key=self.enterprise_configuration.client_id,
-                secret=self.enterprise_configuration.client_secret
-            ).encode('utf-8')).decode()
-        )

@@ -12,17 +12,12 @@ LOGGER = getLogger(__name__)
 class BlackboardContentMetadataExporter(ContentMetadataExporter):
     """
         Blackboard implementation of ContentMetadataExporter.
-        The odd choice of making enrollment_url into description with a link is best explained as:
-            Blackboard does not show description by default on home page.
-            However, description shows on the course search page.
-            This seems to be the only place to visibly place a link for now for learners to
-            find and visit the edX course page. But this can change as we explore blackboard more.
+        Note: courseId is not being exported here (instead done in client during content send)
     """
     DATA_TRANSFORM_MAPPING = {
         'name': 'title',
         'externalId': 'key',
         'description': 'enrollment_url',
-        'courseId': 'key',
     }
 
     DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url}>Go to edX course page</a><br />"
