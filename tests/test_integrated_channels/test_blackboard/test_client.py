@@ -52,6 +52,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         }
 
     def _create_new_mock_client(self):
+        """Test client instance with oauth token filled in"""
         client = BlackboardAPIClient(self.enterprise_config)
         client._get_oauth_access_token = unittest.mock.MagicMock(  # pylint: disable=protected-access
             name="_get_oauth_access_token",
@@ -87,39 +88,39 @@ class TestBlackboardApiClient(unittest.TestCase):
         serialized_data = json.dumps({
             "externalId": "a-course-id"
         }).encode('utf-8')
-        SUCCESS_CREATION_RESPONSE = unittest.mock.Mock(spec=Response)
-        SUCCESS_CREATION_RESPONSE.status_code = 200
-        SUCCESS_CREATION_RESPONSE.text = "hooray"
-        SUCCESS_CREATION_RESPONSE.json.return_value = {}
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        success_response.text = "hooray"
+        success_response.json.return_value = {}
 
-        client._create_session()
-        client._post = unittest.mock.MagicMock(
+        client._create_session()  # pylint: disable=protected-access
+        client._post = unittest.mock.MagicMock(  # pylint: disable=protected-access
             name="_post",
-            return_value=SUCCESS_CREATION_RESPONSE
+            return_value=success_response
         )
 
         status_code, status_text = client.create_content_metadata(serialized_data)
 
         assert status_code == 200
         assert status_text == "hooray"
-        assert client._post.called
+        assert client._post.called  # pylint: disable=protected-access
 
-    def test_update_content_metadata_success(self):
+    def test_update_content_metadata_success(self):  # pylint: disable=protected-access
         client = self._create_new_mock_client()
         serialized_data = json.dumps({
             "externalId": "a-course-id"
         }).encode('utf-8')
-        SUCCESS_UPDATE_RESPONSE = unittest.mock.Mock(spec=Response)
-        SUCCESS_UPDATE_RESPONSE.status_code = 200
-        SUCCESS_UPDATE_RESPONSE.text = "hooray"
-        SUCCESS_UPDATE_RESPONSE.json.return_value = {}
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        success_response.text = "hooray"
+        success_response.json.return_value = {}
 
-        client._create_session()
-        client._patch = unittest.mock.MagicMock(
+        client._create_session()  # pylint: disable=protected-access
+        client._patch = unittest.mock.MagicMock(  # pylint: disable=protected-access
             name="_patch",
-            return_value=SUCCESS_UPDATE_RESPONSE
+            return_value=success_response
         )
-        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
             name="_resolve_blackboard_course_id",
             return_value="a-course-id"
         )
@@ -128,25 +129,25 @@ class TestBlackboardApiClient(unittest.TestCase):
 
         assert status_code == 200
         assert status_text == "hooray"
-        assert client._patch.called
-        assert client._resolve_blackboard_course_id.called
+        assert client._patch.called  # pylint: disable=protected-access
+        assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
 
     def test_delete_content_metadata(self):
         client = self._create_new_mock_client()
         serialized_data = json.dumps({
             "externalId": "a-course-id"
         }).encode('utf-8')
-        SUCCESS_DELETE_RESPONSE = unittest.mock.Mock(spec=Response)
-        SUCCESS_DELETE_RESPONSE.status_code = 202
-        SUCCESS_DELETE_RESPONSE.text = ""
-        SUCCESS_DELETE_RESPONSE.json.return_value = {}
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 202
+        success_response.text = ""
+        success_response.json.return_value = {}
 
-        client._create_session()
-        client._delete = unittest.mock.MagicMock(
+        client._create_session()  # pylint: disable=protected-access
+        client._delete = unittest.mock.MagicMock(  # pylint: disable=protected-access
             name="_delete",
-            return_value=SUCCESS_DELETE_RESPONSE
+            return_value=success_response
         )
-        client._resolve_blackboard_course_id = unittest.mock.MagicMock(
+        client._resolve_blackboard_course_id = unittest.mock.MagicMock(  # pylint: disable=protected-access
             name="_resolve_blackboard_course_id",
             return_value="a-course-id"
         )
@@ -155,8 +156,8 @@ class TestBlackboardApiClient(unittest.TestCase):
 
         assert status_code == 202
         assert status_text == ""
-        assert client._delete.called
-        assert client._resolve_blackboard_course_id.called
+        assert client._delete.called  # pylint: disable=protected-access
+        assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
 
     def test_client_behavior_on_successful_learner_data_transmission(self):  # pylint: disable=protected-access
         """
