@@ -53,8 +53,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         Returns: (int, str) Status code, Status message
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        if 'externalId' not in channel_metadata_item:
-            raise ClientError("No externalId found in metadata, please check json data format", 400)
+        BlackboardAPIClient._raise_for_external_id(channel_metadata_item)
 
         external_id = channel_metadata_item.get('externalId')
 
