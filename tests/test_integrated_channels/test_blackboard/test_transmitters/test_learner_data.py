@@ -66,6 +66,9 @@ class TestBlackboardLearnerDataTransmitter(unittest.TestCase):
         transmitter = learner_data.BlackboardLearnerTransmitter(self.enterprise_config)
 
         transmitter.transmit(self.exporter([self.payload]))
-        self.create_course_completion_mock.assert_called_with(self.payload.blackboard_user_email, self.payload.serialize())
+        self.create_course_completion_mock.assert_called_with(
+            self.payload.blackboard_user_email,
+            self.payload.serialize()
+        )
         assert self.payload.status == '200'
         assert self.payload.error_message == ''
