@@ -53,7 +53,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         Returns: (int, str) Status code, Status message
         """
         channel_metadata_item = json.loads(serialized_data.decode('utf-8'))
-        BlackboardAPIClient._raise_for_external_id(channel_metadata_item)
+        BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
 
         external_id = channel_metadata_item.get('externalId')
 
@@ -63,12 +63,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['courseId'] = course_id_generated
 
-        serialized_channel_metadata = json.dumps(copy_of_channel_metadata).encode('utf-8')
-
         LOGGER.info("Creating course with courseId: %s", external_id)
         self._create_session()
         create_url = self.generate_course_create_url()
-        response = self._post(create_url, serialized_channel_metadata)
+        response = self._post(create_url, copy_of_channel_metadata)
         return response.status_code, response.text
 
     def update_content_metadata(self, serialized_data):
@@ -76,14 +74,14 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self._create_session()
         channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
 
-        BlackboardAPIClient._raise_for_external_id(channel_metadata_item)
+        BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
         external_id = channel_metadata_item.get('externalId')
         course_id = self._resolve_blackboard_course_id(external_id)
-        BlackboardAPIClient._raise_for_course_id(course_id, external_id)
+        BlackboardAPIClient._validate_course_id(course_id, external_id)
 
         LOGGER.info("Updating course with courseId: %s", course_id)
         update_url = self.generate_course_update_url(course_id)
-        response = self._patch(update_url, serialized_data)
+        response = self._patch(update_url, channel_metadata_item)
         return response.status_code, response.text
 
     def delete_content_metadata(self, serialized_data):
@@ -91,10 +89,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self._create_session()
         channel_metadata_item = json.loads(serialized_data.decode("utf-8"))
 
-        BlackboardAPIClient._raise_for_external_id(channel_metadata_item)
+        BlackboardAPIClient._validate_channel_metadata(channel_metadata_item)
         external_id = channel_metadata_item.get('externalId')
         course_id = self._resolve_blackboard_course_id(external_id)
-        BlackboardAPIClient._raise_for_course_id(course_id, external_id)
+        BlackboardAPIClient._validate_course_id(course_id, external_id)
 
         LOGGER.info("Deleting course with courseId: %s", course_id)
         update_url = self.generate_course_update_url(course_id)
@@ -159,7 +157,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """TODO: course completion deletion is currently not easily supported"""
 
     @staticmethod
-    def _raise_for_external_id(channel_metadata_item):
+    def _validate_channel_metadata(channel_metadata_item):
         """
         Raise error if external_id invalid or not found
         """
@@ -167,7 +165,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             raise ClientError("No externalId found in metadata, please check json data format", 400)
 
     @staticmethod
-    def _raise_for_course_id(course_id, external_id):
+    def _validate_course_id(course_id, external_id):
         """
         Raise error if course_id invalid
         """

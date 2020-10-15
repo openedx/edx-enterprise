@@ -110,7 +110,7 @@ class TestBlackboardApiClient(unittest.TestCase):
             "externalId": course_id,
             "courseId": client.generate_blackboard_course_id(course_id),
         }
-        expected_data = json.dumps(expected_channel_data).encode('utf-8')
+        expected_data = expected_channel_data
         client._post.assert_called_with(expected_url, expected_data)  # pylint: disable=protected-access
 
     def test_update_content_metadata_success(self):  # pylint: disable=protected-access
@@ -139,7 +139,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         assert status_text == "hooray"
 
         expected_url = client.generate_course_update_url("a-course-id")
-        client._patch.assert_called_with(expected_url, serialized_data)  # pylint: disable=protected-access
+        client._patch.assert_called_with(expected_url, json.loads(serialized_data.decode("utf-8")))  # pylint: disable=protected-access
         assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
 
     def test_delete_content_metadata(self):
