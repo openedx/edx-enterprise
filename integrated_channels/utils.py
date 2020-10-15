@@ -245,6 +245,7 @@ def generate_formatted_log(message, channel_name=None, enterprise_customer_ident
                   )
     LOGGER.error(log_message) if is_error else LOGGER.info(log_message)  # pylint: disable=expression-not-assigned
 
+
 def refresh_session_if_expired(oauth_access_token_function, session=None, expires_at=None):
     """
     Instantiate a new session object for use in connecting with integrated channel.
