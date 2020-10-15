@@ -278,7 +278,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         """
         A course_id suitable for use with blackboard
         """
-        return abs(hash(external_id))
+        return str(abs(hash(external_id)))
 
     def generate_gradebook_url(self, course_id):
         """
