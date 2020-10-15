@@ -3,7 +3,6 @@
 Tests for clients in integrated_channels.blackboard.
 """
 
-import copy
 import json
 import random
 import unittest
@@ -12,7 +11,7 @@ import pytest
 from requests.models import Response
 
 from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
-from integrated_channels.blackboard.client import COURSES_V3_PATH, BlackboardAPIClient
+from integrated_channels.blackboard.client import BlackboardAPIClient
 from integrated_channels.exceptions import ClientError
 from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory
 
