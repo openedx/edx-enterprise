@@ -3,6 +3,7 @@
 Tests for clients in integrated_channels.blackboard.
 """
 
+import copy
 import json
 import random
 import unittest
@@ -11,7 +12,7 @@ import pytest
 from requests.models import Response
 
 from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
-from integrated_channels.blackboard.client import BlackboardAPIClient
+from integrated_channels.blackboard.client import COURSES_V3_PATH, BlackboardAPIClient
 from integrated_channels.exceptions import ClientError
 from test_utils.factories import BlackboardEnterpriseCustomerConfigurationFactory
 
@@ -85,8 +86,9 @@ class TestBlackboardApiClient(unittest.TestCase):
 
     def test_create_content_metadata_success(self):
         client = self._create_new_mock_client()
+        course_id = "a-course-id"
         serialized_data = json.dumps({
-            "externalId": "a-course-id"
+            "externalId": course_id
         }).encode('utf-8')
         success_response = unittest.mock.Mock(spec=Response)
         success_response.status_code = 200
@@ -103,7 +105,14 @@ class TestBlackboardApiClient(unittest.TestCase):
 
         assert status_code == 200
         assert status_text == "hooray"
-        assert client._post.called  # pylint: disable=protected-access
+
+        expected_url = client.generate_course_create_url()
+        expected_channel_data = {
+            "externalId": course_id,
+            "courseId": client.generate_blackboard_course_id(course_id),
+        }
+        expected_data = json.dumps(expected_channel_data).encode('utf-8')
+        client._post.assert_called_with(expected_url, expected_data)  # pylint: disable=protected-access
 
     def test_update_content_metadata_success(self):  # pylint: disable=protected-access
         client = self._create_new_mock_client()
@@ -129,7 +138,9 @@ class TestBlackboardApiClient(unittest.TestCase):
 
         assert status_code == 200
         assert status_text == "hooray"
-        assert client._patch.called  # pylint: disable=protected-access
+
+        expected_url = client.generate_course_update_url("a-course-id")
+        client._patch.assert_called_with(expected_url, serialized_data)  # pylint: disable=protected-access
         assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
 
     def test_delete_content_metadata(self):
@@ -156,7 +167,9 @@ class TestBlackboardApiClient(unittest.TestCase):
 
         assert status_code == 202
         assert status_text == ""
-        assert client._delete.called  # pylint: disable=protected-access
+
+        expected_url = client.generate_course_update_url("a-course-id")
+        client._delete.assert_called_with(expected_url)  # pylint: disable=protected-access
         assert client._resolve_blackboard_course_id.called  # pylint: disable=protected-access
 
     def test_client_behavior_on_successful_learner_data_transmission(self):  # pylint: disable=protected-access

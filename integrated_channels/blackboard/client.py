@@ -26,6 +26,7 @@ COURSE_PATH = '/learn/api/public/v1/courses'
 POST_GRADE_COLUMN_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns'
 POST_GRADE_PATH = '/learn/api/public/v2/courses/{course_id}/gradebook/columns/{column_id}/users/{user_id}'
 COURSE_V3_PATH = '/learn/api/public/v3/courses/{course_id}'
+COURSES_V3_PATH = '/learn/api/public/v3/courses'
 
 
 class BlackboardAPIClient(IntegratedChannelApiClient):
@@ -45,9 +46,6 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         self.config = apps.get_app_config('blackboard')
         self.session = None
         self.expires_at = None
-        self.create_course_url = "{}/learn/api/public/v3/courses".format(
-            self.enterprise_configuration.blackboard_base_url
-        )
 
     def create_content_metadata(self, serialized_data):
         """
@@ -61,7 +59,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         external_id = channel_metadata_item.get('externalId')
 
         # blackboard does not support all characters in our courseIds so let's gen a hash instead
-        course_id_generated = abs(hash(external_id))
+        course_id_generated = self.generate_blackboard_course_id(external_id)
 
         copy_of_channel_metadata = copy.deepcopy(channel_metadata_item)
         copy_of_channel_metadata['courseId'] = course_id_generated
@@ -70,7 +68,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         LOGGER.info("Creating course with courseId: %s", external_id)
         self._create_session()
-        response = self._post(self.create_course_url, serialized_channel_metadata)
+        create_url = self.generate_course_create_url()
+        response = self._post(create_url, serialized_channel_metadata)
         return response.status_code, response.text
 
     def update_content_metadata(self, serialized_data):
@@ -84,7 +83,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         BlackboardAPIClient._raise_for_course_id(course_id, external_id)
 
         LOGGER.info("Updating course with courseId: %s", course_id)
-        response = self._patch(COURSE_V3_PATH.format(course_id=course_id), serialized_data)
+        update_url = self.generate_course_update_url(course_id)
+        response = self._patch(update_url, serialized_data)
         return response.status_code, response.text
 
     def delete_content_metadata(self, serialized_data):
@@ -98,8 +98,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         BlackboardAPIClient._raise_for_course_id(course_id, external_id)
 
         LOGGER.info("Deleting course with courseId: %s", course_id)
-        url = COURSE_V3_PATH.format(course_id=course_id)
-        response = self._delete(url)
+        update_url = self.generate_course_update_url(course_id)
+        response = self._delete(update_url)
         return response.status_code, response.text
 
     def create_course_completion(self, user_id, payload):
@@ -275,6 +275,12 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             ).encode('utf-8')).decode()
         )
 
+    def generate_blackboard_course_id(self, external_id):
+        """
+        A course_id suitable for use with blackboard
+        """
+        return abs(hash(external_id))
+
     def generate_gradebook_url(self, course_id):
         """
         Blackboard API url helper method.
@@ -294,6 +300,24 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         return '{base}{path}?expand=user'.format(
             base=self.enterprise_configuration.blackboard_base_url,
             path=ENROLLMENT_PATH.format(course_id=course_id),
+        )
+
+    def generate_course_create_url(self):
+        """
+        Url to create a course
+        """
+        return "{base}{path}".format(
+            base=self.enterprise_configuration.blackboard_base_url,
+            path=COURSES_V3_PATH,
+        )
+
+    def generate_course_update_url(self, course_id):
+        """
+        Url to update one course
+        """
+        return '{base}{path}'.format(
+            base=self.enterprise_configuration.blackboard_base_url,
+            path=COURSE_V3_PATH.format(course_id=course_id),
         )
 
     def generate_courses_url(self):
