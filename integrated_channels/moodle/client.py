@@ -40,6 +40,15 @@ def moodle_request_wrapper(method):
             # Moodle returns a list of JSON objects, because of course it does.
             # Otherwise, it fails instantly and returns actual JSON.
             return response
+        if isinstance(body, int):
+            # This only happens for grades AFAICT. Zero also doesn't necessarily mean success,
+            # but we have nothing else to go on
+            if body == 0:
+                return 200, ''
+            raise ClientError('Moodle API Grade Update failed with int code: {code}'.format(code=body), 500)
+        if isinstance(body, str):
+            # Grades + debug can sometimes produce lines with debug errors and also "0"
+            raise ClientError('Moodle API Grade Update failed with possible error: {body}'.format(body=body), 500)
         error_code = body.get('errorcode')
         warnings = body.get('warnings')
         if error_code and error_code == 'invalidtoken':
@@ -49,8 +58,9 @@ def moodle_request_wrapper(method):
             raise ClientError(
                 'Moodle API Client Task "{method}" failed with error code '
                 '"{code}" and message: "{msg}" '.format(
-                    method=method.__name__, code=error_code, msg=body.get('message')
-                )
+                    method=method.__name__, code=error_code, msg=body.get('message'),
+                ),
+                response.status_code
             )
         elif warnings:
             # More Moodle nonsense!
