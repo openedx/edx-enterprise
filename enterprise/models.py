@@ -51,6 +51,7 @@ from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     json_serialized_course_modes,
+    DefaultColors,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -59,6 +60,7 @@ from enterprise.utils import (
     get_configuration_value,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
+    get_platform_logo_url,
 )
 from enterprise.validators import (
     validate_content_filter_fields,
@@ -394,6 +396,28 @@ class EnterpriseCustomer(TimeStampedModel):
         """Return a serialized version of this customer."""
         from enterprise.api.v1 import serializers  # pylint: disable=import-outside-toplevel
         return serializers.EnterpriseCustomerSerializer(self).data
+
+    @property
+    def safe_branding_configuration(self):
+        """
+        Return the associated EnterpriseCustomerBrandingConfiguration object OR default branding config
+        """
+        try:
+            branding_config = self.branding_configuration
+        except EnterpriseCustomerBrandingConfiguration.DoesNotExist:
+            branding_config = self._get_default_branding_configuration()
+        return branding_config
+
+    def _get_default_branding_configuration(self):
+        """
+        Return the default EnterpriseCustomerBrandingConfiguration object
+        """
+        return EnterpriseCustomerBrandingConfiguration(
+            enterprise_customer=self,
+            primary_color=DefaultColors.PRIMARY,
+            secondary_color=DefaultColors.SECONDARY,
+            tertiary_color=DefaultColors.TERTIARY,
+        )
 
     def get_data_sharing_consent_text_overrides(self, published_only=True):
         """
@@ -1212,6 +1236,26 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
         Return uniquely identifying string representation.
         """
         return self.__str__()
+
+    @property
+    def safe_logo_url(self):
+        """
+        Returns an absolute URL for the branding configuration logo OR the platform logo absolute URL
+        """
+        if not self.logo:
+            return get_platform_logo_url()
+
+        # AWS S3 storage is used in stage/production environments but file system
+        # storage is used in devstack environment
+        if settings.DEFAULT_FILE_STORAGE == 'storages.backends.s3boto.S3BotoStorage':
+            media_base_url = 'https://' + settings.AWS_S3_CUSTOM_DOMAIN
+        else:
+            media_base_url = settings.LMS_ROOT_URL + settings.MEDIA_URL
+
+        return urljoin(
+            media_base_url,
+            str(self.logo)
+        )
 
 
 @python_2_unicode_compatible

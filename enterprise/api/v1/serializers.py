@@ -16,7 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
-from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS
+from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -94,13 +94,49 @@ class EnterpriseCustomerBrandingConfigurationSerializer(serializers.ModelSeriali
             'tertiary_color',
         )
 
+    enterprise_customer = serializers.SerializerMethodField()
     enterprise_slug = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
+    primary_color = serializers.SerializerMethodField()
+    secondary_color = serializers.SerializerMethodField()
+    tertiary_color = serializers.SerializerMethodField()
+
+    def get_enterprise_customer(self, obj):
+        """
+        Return a string representation of the associated enterprise customer's UUID.
+        """
+        return str(obj.enterprise_customer.uuid)
 
     def get_enterprise_slug(self, obj):
         """
         Return the slug of the associated enterprise customer.
         """
         return obj.enterprise_customer.slug
+
+    def get_logo(self, obj):
+        """
+        Use EnterpriseCustomerBrandingConfiguration.safe_logo_url to return an absolute
+        URL for either the saved customer logo or the platform logo by default
+        """
+        return obj.safe_logo_url
+
+    def get_primary_color(self, obj):
+        """
+        Return the primary color of the branding config OR the default primary color code
+        """
+        return obj.primary_color if obj.primary_color else DefaultColors.PRIMARY
+
+    def get_secondary_color(self, obj):
+        """
+        Return the secondary color of the branding config OR the default secondary color code
+        """
+        return obj.secondary_color if obj.secondary_color else DefaultColors.SECONDARY
+
+    def get_tertiary_color(self, obj):
+        """
+        Return the tertiary color of the branding config OR the default tertiary color code
+        """
+        return obj.tertiary_color if obj.tertiary_color else DefaultColors.TERTIARY
 
 
 class EnterpriseCustomerSerializer(serializers.ModelSerializer):
@@ -122,7 +158,13 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         )
 
     site = SiteSerializer()
-    branding_configuration = EnterpriseCustomerBrandingConfigurationSerializer()
+    branding_configuration = serializers.SerializerMethodField()
+
+    def get_branding_configuration(self, obj):
+        """
+        Return the serialized branding configuration object OR default object if null
+        """
+        return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):

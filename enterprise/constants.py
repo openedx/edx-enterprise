@@ -37,6 +37,16 @@ ENTERPRISE_WELCOME_TEXT = _(
 COURSE_KEY_URL_PATTERN = r'(?P<course_key>[^/+]+(/|\+)[^/+]+)'
 
 
+class DefaultColors:
+    """
+    Class to group the default branding color codes.
+    These color codes originated in the Enterprise Learner Portal.
+    """
+    PRIMARY = '#1a337b'
+    SECONDARY = '#d7e3fc'
+    TERTIARY = '#007d88'
+
+
 class CourseModes:
     """
     Class to group modes that a course might have.
