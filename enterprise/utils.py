@@ -4,6 +4,7 @@ Utility functions for enterprise app.
 """
 
 import datetime
+import json
 import logging
 import re
 from urllib.parse import urljoin
@@ -14,6 +15,7 @@ import pytz
 import tableauserverclient as TSC
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
+from edx_rest_api_client.exceptions import HttpClientError
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
 from tableauserverclient.server.endpoint.exceptions import ServerResponseError
@@ -22,7 +24,8 @@ from django.apps import apps
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.validators import validate_email
 from django.db.models import Subquery
 from django.http import Http404
 from django.shortcuts import get_object_or_404
@@ -56,6 +59,16 @@ try:
 except ImportError:
     get_url = None
 
+# Only create manual enrollments if running in edx-platform
+try:
+    from student.api import (
+        create_manual_enrollment_audit,
+        UNENROLLED_TO_ENROLLED,
+        UNENROLLED_TO_ALLOWEDTOENROLL,
+    )
+except ImportError:
+    create_manual_enrollment_audit = None
+
 LOGGER = logging.getLogger(__name__)
 
 try:
@@ -81,6 +94,62 @@ try:
     from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
 except ImportError:
     LANGUAGE_KEY = 'pref-lang'
+
+MANUAL_ENROLLMENT_ROLE = "Learner"
+
+
+class ValidationMessages:
+    """
+    Namespace class for validation messages.
+    """
+
+    # Keep this alphabetically sorted
+    BOTH_FIELDS_SPECIFIED = _(
+        "Either \"Email or Username\" or \"CSV bulk upload\" must be specified, "
+        "but both were.")
+    BULK_LINK_FAILED = _(
+        "Error: Learners could not be added. Correct the following errors.")
+    COURSE_MODE_INVALID_FOR_COURSE = _(
+        "Enrollment track {course_mode} is not available for course {course_id}.")
+    COURSE_WITHOUT_COURSE_MODE = _(
+        "Select a course enrollment track for the given course.")
+    INVALID_COURSE_ID = _(
+        "Could not retrieve details for the course ID {course_id}. Specify "
+        "a valid ID.")
+    INVALID_EMAIL = _(
+        "{argument} does not appear to be a valid email address.")
+    INVALID_EMAIL_OR_USERNAME = _(
+        "{argument} does not appear to be a valid email address or known "
+        "username")
+    MISSING_EXPECTED_COLUMNS = _(
+        "Expected a CSV file with [{expected_columns}] columns, but found "
+        "[{actual_columns}] columns instead."
+    )
+    MISSING_REASON = _(
+        "Reason field is required but was not filled."
+    )
+    NO_FIELDS_SPECIFIED = _(
+        "Either \"Email or Username\" or \"CSV bulk upload\" must be "
+        "specified, but neither were.")
+    PENDING_USER_ALREADY_LINKED = _(
+        "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
+        "you will be able to add the learner once the user creates account or other enterprise "
+        "deletes the pending user")
+    USER_ALREADY_REGISTERED = _(
+        "User with email address {email} is already registered with Enterprise "
+        "Customer {ec_name}")
+    USER_NOT_LINKED = _("User is not linked with Enterprise Customer")
+    USER_NOT_EXIST = _("User with email address {email} doesn't exist.")
+    COURSE_NOT_EXIST_IN_CATALOG = _("Course doesn't exist in Enterprise Customer's Catalog")
+    INVALID_CHANNEL_WORKER = _(
+        'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
+    )
+    INVALID_ENCODING = _(
+        "Unable to parse CSV file. Please make sure it is a CSV 'utf-8' encoded file."
+    )
+    INVALID_DISCOUNT = _(
+        'Discount percentage should be from 0 to 100.'
+    )
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -381,6 +450,27 @@ def enterprise_customer_model():
     Returns the ``EnterpriseCustomer`` class.
     """
     return apps.get_model('enterprise', 'EnterpriseCustomer')  # pylint: disable=invalid-name
+
+
+def enterprise_enrollment_source_model():
+    """
+    Returns the ``EnterpriseEnrollmentSource`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseEnrollmentSource')  # pylint: disable=invalid-name
+
+
+def enterprise_customer_user_model():
+    """
+    Returns the ``EnterpriseCustomerUser`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCustomerUser')  # pylint: disable=invalid-name
+
+
+def enterprise_course_enrollment_model():
+    """
+    Returns the ``EnterpriseCourseEnrollment`` class.
+    """
+    return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
 
 
 def get_enterprise_customer(uuid):
@@ -1110,6 +1200,242 @@ def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     # Deleting the DCS cache
     consent_cache_key = get_cache_key(type='data_sharing_consent_needed', user_id=user.id, course_id=course_id)
     TieredCache.delete_all_tiers(consent_cache_key)
+
+
+def validate_email_to_link(email, raw_email=None, message_template=None, ignore_existing=False):
+    """
+    Validate email to be linked to Enterprise Customer.
+
+    Performs two checks:
+        * Checks that email is valid
+        * Checks that it is not already linked to any Enterprise Customer
+
+    Arguments:
+        email (str): user email to link
+        raw_email (str): raw value as it was passed by user - used in error message.
+        message_template (str): Validation error template string.
+        ignore_existing (bool): If True to skip the check for an existing Enterprise Customer
+
+    Raises:
+        ValidationError: if email is invalid or already linked to Enterprise Customer.
+
+    Returns:
+        bool: Whether or not there is an existing record with the same email address.
+    """
+    raw_email = raw_email if raw_email is not None else email
+    message_template = message_template if message_template is not None else ValidationMessages.INVALID_EMAIL
+    try:
+        validate_email(email)
+    except ValidationError:
+        raise ValidationError(message_template.format(argument=raw_email))
+
+    existing_record = enterprise_customer_user_model().objects.get_link_by_email(email)
+    if existing_record and not ignore_existing:
+        raise ValidationError(ValidationMessages.USER_ALREADY_REGISTERED.format(
+            email=email, ec_name=existing_record.enterprise_customer.name
+        ))
+    return existing_record or False
+
+
+def get_idiff_list(list_a, list_b):
+    """
+    Returns a list containing lower case difference of list_b and list_a after case insensitive comparison.
+
+    Args:
+        list_a: list of strings
+        list_b: list of string
+
+    Returns:
+        List of unique lower case strings computed by subtracting list_b from list_a.
+    """
+    lower_list_a = [element.lower() for element in list_a]
+    lower_list_b = [element.lower() for element in list_b]
+    return list(set(lower_list_a) - set(lower_list_b))
+
+
+def get_users_by_email(emails):
+    """
+    Accept a list of emails, and separate them into users that exist on OpenEdX and users who don't.
+
+    Args:
+        emails: An iterable of email addresses to split between existing and nonexisting
+
+    Returns:
+        users: Queryset of users who exist in the OpenEdX platform and who were in the list of email addresses
+        unregistered_emails: List of unique emails which were in the original list, but do not yet exist as users
+    """
+    users = User.objects.filter(email__in=emails)
+    present_emails = users.values_list('email', flat=True)
+    unregistered_emails = get_idiff_list(emails, present_emails)
+    return users, unregistered_emails
+
+
+def is_user_enrolled(user, course_id, course_mode, enrollment_client=None):
+    """
+    Query the enrollment API and determine if a learner is enrolled in a given course run track.
+
+    Args:
+        user: The user whose enrollment needs to be checked
+        course_mode: The mode with which the enrollment should be checked
+        course_id: course id of the course where enrollment should be checked.
+        enrollment_client: An optional EnrollmentAPIClient if it's already been instantiated and should be passed in.
+
+    Returns:
+        Boolean: Whether or not enrollment exists
+
+    """
+    if not enrollment_client:
+        from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
+        enrollment_client = EnrollmentApiClient()
+    try:
+        enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
+        if enrollments and course_mode == enrollments.get('mode'):
+            return True
+    except HttpClientError as exc:
+        logging.error(
+            'Error while checking enrollment status of user %(user)s: %(message)s',
+            dict(user=user.username, message=str(exc))
+        )
+    except KeyError as exc:
+        logging.warning(
+            'Error while parsing enrollment data of user %(user)s: %(message)s',
+            dict(user=user.username, message=str(exc))
+        )
+    return False
+
+
+def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
+    """
+    Enroll a single user in any number of courses using a particular course mode.
+
+    Args:
+        enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
+        user: The user who needs to be enrolled in the course
+        course_mode: The mode with which the enrollment should be created
+        *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
+        kwargs: Should contain enrollment_client if it's already been instantiated and should be passed in.
+
+    Returns:
+        Boolean: Whether or not enrollment succeeded for all courses specified
+    """
+    enrollment_client = kwargs.pop('enrollment_client')
+    if not enrollment_client:
+        from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
+        enrollment_client = EnrollmentApiClient()
+    enterprise_customer_user, __ = enterprise_customer_user_model().objects.get_or_create(
+        enterprise_customer=enterprise_customer,
+        user_id=user.id
+    )
+    succeeded = True
+    for course_id in course_ids:
+        try:
+            enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
+        except HttpClientError as exc:
+            # Check if user is already enrolled then we should ignore exception
+            if is_user_enrolled(user, course_id, course_mode, enrollment_client=enrollment_client):
+                succeeded = True
+            else:
+                succeeded = False
+                default_message = 'No error message provided'
+                try:
+                    error_message = json.loads(exc.content.decode()).get('message', default_message)
+                except ValueError:
+                    error_message = default_message
+                logging.error(
+                    'Error while enrolling user %(user)s: %(message)s',
+                    dict(user=user.username, message=error_message)
+                )
+        if succeeded:
+            __, created = enterprise_course_enrollment_model().objects.get_or_create(
+                enterprise_customer_user=enterprise_customer_user,
+                course_id=course_id,
+                defaults={
+                    'source': enterprise_enrollment_source_model().get_source(
+                        enterprise_enrollment_source_model().MANUAL
+                    )
+                }
+            )
+            if created:
+                track_enrollment('admin-enrollment', user.id, course_id)
+    return succeeded
+
+
+def enroll_users_in_course(
+        enterprise_customer,
+        course_id,
+        course_mode,
+        emails,
+        enrollment_requester=None,
+        enrollment_reason=None,
+        discount=0.0,
+        sales_force_id=None,
+        enrollment_client=None,
+):
+    """
+    Enroll existing users in a course, and create a pending enrollment for nonexisting users.
+
+    Args:
+        enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
+        course_id (str): The unique identifier of the course in which we're enrolling
+        course_mode (str): The mode with which we're enrolling in the course
+        emails: An iterable of email addresses which need to be enrolled
+        enrollment_requester (User): Admin user who is requesting the enrollment.
+        enrollment_reason (str): A reason for enrollment.
+        discount (Decimal): Percentage discount for enrollment.
+        sales_force_id (str): Salesforce opportunity id.
+        enrollment_client: An optional EnrollmentAPIClient if it's already been instantiated and should be passed in.
+
+    Returns:
+        successes: A list of users who were successfully enrolled in the course
+        pending: A list of PendingEnterpriseCustomerUsers who were successfully linked and had
+            pending enrollments created for them in the database
+        failures: A list of users who could not be enrolled in the course
+    """
+    existing_users, unregistered_emails = get_users_by_email(emails)
+
+    successes = []
+    pending = []
+    failures = []
+
+    for user in existing_users:
+        succeeded = enroll_user(enterprise_customer, user, course_mode, course_id, enrollment_client=enrollment_client)
+        if succeeded:
+            successes.append(user)
+            if enrollment_requester and enrollment_reason:
+                create_manual_enrollment_audit(
+                    enrollment_requester,
+                    user.email,
+                    UNENROLLED_TO_ENROLLED,
+                    enrollment_reason,
+                    course_id,
+                    role=MANUAL_ENROLLMENT_ROLE,
+                )
+        else:
+            failures.append(user)
+
+    for email in unregistered_emails:
+        pending_user = enterprise_customer.enroll_user_pending_registration(
+            email,
+            course_mode,
+            course_id,
+            enrollment_source=enterprise_enrollment_source_model().get_source(
+                enterprise_enrollment_source_model().MANUAL
+            ),
+            discount=discount,
+            sales_force_id=sales_force_id,
+        )
+        pending.append(pending_user)
+        if enrollment_requester and enrollment_reason:
+            create_manual_enrollment_audit(
+                enrollment_requester,
+                email,
+                UNENROLLED_TO_ALLOWEDTOENROLL,
+                enrollment_reason,
+                course_id,
+                role=MANUAL_ENROLLMENT_ROLE,
+            )
+
+    return successes, pending, failures
 
 
 def get_platform_logo_url():

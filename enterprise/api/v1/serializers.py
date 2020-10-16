@@ -15,6 +15,7 @@ from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
+from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
 from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
 from enterprise.utils import (
@@ -913,4 +914,37 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
                 'lms_user_id, tpa_user_id, user_email'
             )
 
+        return data
+
+
+# pylint: disable=abstract-method
+class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
+    """
+    Serializes a email_csv or email field for bulk enrollment requests.
+    """
+    email = serializers.CharField(required=False)
+    email_csv = Base64EmailCSVField(required=False)
+    course_run_key = serializers.CharField(required=False)
+    course_mode = serializers.ChoiceField(
+        choices=[
+            ("audit", _("Audit")),
+            ("verified", _("Verified")),
+            ("professional", _("Professional Education")),
+            ("no-id-professional", _("Professional Education (no ID)")),
+            ("credit", _("Credit")),
+            ("honor", _("Honor")),
+        ],
+        required=False,
+    )
+    reason = serializers.CharField(required=False)
+    salesforce_id = serializers.CharField(required=False)
+    discount = serializers.DecimalField(None, 5, required=False)
+    notify = serializers.BooleanField(default=False)
+
+    def create(self, validated_data):
+        return validated_data
+
+    def validate(self, data):  # pylint: disable=arguments-differ
+        if not data.get('email') and not data.get('email_csv'):
+            raise serializers.ValidationError('Must include either email or email_csv in request.')
         return data
