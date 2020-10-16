@@ -15,10 +15,15 @@ Change Log
 
 Unreleased
 
-[3.8.40]
+[3.8.41]
 --------
 
 * ENT-3460: Adding properties to safely use branding config.
+
+[3.8.40]
+--------
+
+* Bug fix: SAML stripping for unlinking was not properly removing saml prefix.
 
 [3.8.39]
 --------
