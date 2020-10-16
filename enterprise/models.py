@@ -50,8 +50,8 @@ from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
-    json_serialized_course_modes,
     DefaultColors,
+    json_serialized_course_modes,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
