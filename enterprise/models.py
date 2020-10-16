@@ -401,6 +401,9 @@ class EnterpriseCustomer(TimeStampedModel):
     def safe_branding_configuration(self):
         """
         Return the associated EnterpriseCustomerBrandingConfiguration object OR default branding config
+
+        This function should always be used to access the customer's branding_configuration and prevent
+        uncaught RelatedObjectDoesNotExist exceptions when accessed directly.
         """
         try:
             branding_config = self.branding_configuration  # pylint: disable=no-member
