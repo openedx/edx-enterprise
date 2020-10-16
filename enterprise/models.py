@@ -403,7 +403,7 @@ class EnterpriseCustomer(TimeStampedModel):
         Return the associated EnterpriseCustomerBrandingConfiguration object OR default branding config
         """
         try:
-            branding_config = self.branding_configuration
+            branding_config = self.branding_configuration  # pylint: disable=no-member
         except EnterpriseCustomerBrandingConfiguration.DoesNotExist:
             branding_config = self._get_default_branding_configuration()
         return branding_config
