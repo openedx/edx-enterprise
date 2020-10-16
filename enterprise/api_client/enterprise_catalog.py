@@ -27,6 +27,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
     GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
+    REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     APPEND_SLASH = True
 
@@ -100,6 +101,14 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
         """
         return EnterpriseCatalogApiClient.API_BASE_URL + \
             EnterpriseCatalogApiClient.GET_CONTENT_METADATA_ENDPOINT.format(uuid)
+
+    @staticmethod
+    def get_refresh_catalog_url(uuid):
+        """
+        Get the url for the preview information for an enterprise catalog
+        """
+        return EnterpriseCatalogApiClient.API_BASE_URL + \
+            EnterpriseCatalogApiClient.REFRESH_CATALOG_ENDPOINT.format(uuid)
 
     @JwtLmsApiClient.refresh_token
     def update_enterprise_catalog(self, catalog_uuid, **kwargs):

@@ -712,6 +712,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         'enterprise_customer',
         'title',
         'preview_catalog_url',
+        'refresh_catalog_button',
     )
 
     search_fields = (
@@ -742,8 +743,20 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
             url=catalog_content_metadata_url
         )
 
+    def refresh_catalog_button(self, obj):
+        """
+        Return enterprise catalog url for refreshing the catalog.
+        """
+        refresh_catalog_url = \
+            EnterpriseCatalogApiClient.get_refresh_catalog_url(obj.uuid)
+        return format_html(
+            '<input type="button" value="Refresh" url="{url}" name="refresh_catalog_button">',
+            url=refresh_catalog_url
+        )
+
     readonly_fields = ('preview_catalog_url',)
     preview_catalog_url.short_description = 'Preview Catalog Courses'
+    refresh_catalog_button.short_description = 'Refresh Catalog'
 
     def uuid_nowrap(self, obj):
         """

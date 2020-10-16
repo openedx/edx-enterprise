@@ -24,5 +24,14 @@
             // Turn on the logic to extract content_filter.
             numTriggeredUpdates += 1;
         }).change();
+        $("[name='refresh_catalog_button']").on("click", function(event){
+            const refreshUrl = $(event.target).attr("url");
+            if (refreshUrl) {
+                $.ajax({
+                    url: refreshUrl,
+                    method: "post"
+                });
+            }
+        });
     });
 })(jQuery);
