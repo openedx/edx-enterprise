@@ -121,7 +121,7 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         except ValueError as exception:
             raise ParseError(
                 "BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response)
-            )
+            ) from exception
 
         enterprise_config.refresh_token = refresh_token
         enterprise_config.save()
