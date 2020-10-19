@@ -6,6 +6,7 @@ Utility functions for enterprise app.
 import datetime
 import logging
 import re
+from urllib.parse import urljoin
 from uuid import UUID
 
 import bleach
@@ -41,6 +42,11 @@ try:
     from openedx.core.djangoapps.catalog.models import CatalogIntegration
 except ImportError:
     CatalogIntegration = None
+
+try:
+    from lms.djangoapps.branding.api import get_logo_url
+except ImportError:
+    get_logo_url = None
 
 try:
     from lms.djangoapps.branding.api import get_url
@@ -1091,3 +1097,14 @@ def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     # Deleting the DCS cache
     consent_cache_key = get_cache_key(type='data_sharing_consent_needed', user_id=user.id, course_id=course_id)
     TieredCache.delete_all_tiers(consent_cache_key)
+
+
+def get_platform_logo_url():
+    """
+    Return an absolute URL of the platform logo using the branding api
+    """
+    # Return fake URL for tests rather than mock get_logo_url for every test using EnterpriseCustomer
+    return urljoin(
+        settings.LMS_ROOT_URL,
+        get_logo_url()
+    ) if get_logo_url else 'http://fake.url'

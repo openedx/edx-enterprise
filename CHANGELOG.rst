@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.42]
+--------
+
+* ENT-3460: Adding properties to safely use branding config.
+
 [3.8.41]
 --------
 
