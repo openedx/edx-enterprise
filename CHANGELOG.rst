@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.43]
+--------
+
+* ENT-3557: Improve blackboard view logging to better report root cause of auth failure.
+
 [3.8.42]
 --------
 

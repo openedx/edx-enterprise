@@ -109,8 +109,19 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
         try:
             data = auth_response.json()
             refresh_token = data['refresh_token']
-        except (KeyError, ValueError):
-            raise requests.RequestException(response=auth_response)
+        except KeyError as exception:
+            raise ParseError(
+                "BLACKBOARD: failed to find refresh_token in auth response. "
+                "Auth response text: {}, Response code: {}, JSON response: {}".format(
+                    auth_response.text,
+                    auth_response.status_code,
+                    data,
+                )
+            ) from exception
+        except ValueError as exception:
+            raise ParseError(
+                "BLACKBOARD: auth response is invalid json. auth_response: {}".format(auth_response)
+            ) from exception
 
         enterprise_config.refresh_token = refresh_token
         enterprise_config.save()
