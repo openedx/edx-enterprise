@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.8.41]
+--------
+
+* Authenticate tableau user without enterprise
+
 [3.8.40]
 --------
 
