@@ -21,7 +21,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
-from enterprise.admin.actions import export_as_csv_action
+from enterprise.admin.actions import export_as_csv_action, refresh_catalog
 from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
     EnterpriseCustomerCatalogAdminForm,
@@ -700,6 +700,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     Django admin model for EnterpriseCustomerCatalog.
     """
     ordering = ('enterprise_customer__name', 'title')
+    actions = [refresh_catalog]
 
     class Meta:
         model = EnterpriseCustomerCatalog

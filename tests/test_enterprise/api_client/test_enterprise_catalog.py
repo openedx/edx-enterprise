@@ -8,8 +8,12 @@ import json
 import mock
 import requests
 import responses
+from pytest import mark
+from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 
 from enterprise.api_client import enterprise_catalog
+from enterprise.models import EnterpriseCustomerCatalog
+from test_utils.factories import EnterpriseCustomerCatalogFactory
 
 TEST_ENTERPRISE_ID = '1840e1dc-59cf-4a78-82c5-c5bbc0b5df0f'
 TEST_ENTERPRISE_CATALOG_UUID = 'cde8287a-1001-457c-b9d5-f9f5bd535427'
@@ -165,3 +169,60 @@ def test_enterprise_contains_content_items():
     client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
     actual_response = client.enterprise_contains_content_items(TEST_ENTERPRISE_ID, ['demoX'])
     assert actual_response == expected_response['contains_content_items']
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_successful_refresh_catalog():
+    catalog = EnterpriseCustomerCatalogFactory()
+    task_id = '17812314511'
+    responses.add(
+        responses.POST,
+        _url("enterprise-catalogs/{catalog_uuid}/refresh_metadata/".format(catalog_uuid=catalog.uuid)),
+        json={'async_task_id': task_id},
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    refreshed_catalogs, failed_to_refresh_catalogs = client.refresh_catalogs(EnterpriseCustomerCatalog.objects.all())
+    assert refreshed_catalogs.get(catalog.uuid) == task_id
+    assert len(failed_to_refresh_catalogs) == 0
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_failing_refresh_catalog():
+    catalog = EnterpriseCustomerCatalogFactory()
+    responses.add(
+        responses.POST,
+        _url("enterprise-catalogs/{catalog_uuid}/refresh_metadata/".format(catalog_uuid=catalog.uuid)),
+        body=ConnectionError(),
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    refreshed_catalogs, failed_to_refresh_catalogs = client.refresh_catalogs(EnterpriseCustomerCatalog.objects.all())
+    assert failed_to_refresh_catalogs[0] == catalog.uuid
+    assert len(refreshed_catalogs.items()) == 0
+
+
+@responses.activate
+@mark.django_db
+@mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
+def test_partial_successful_refresh_catalog():
+    catalog1 = EnterpriseCustomerCatalogFactory()
+    catalog2 = EnterpriseCustomerCatalogFactory()
+    task_id = '17812314511'
+    responses.add(
+        responses.POST,
+        _url("enterprise-catalogs/{catalog_uuid}/refresh_metadata/".format(catalog_uuid=catalog1.uuid)),
+        json={'async_task_id': task_id},
+    )
+    responses.add(
+        responses.POST,
+        _url("enterprise-catalogs/{catalog_uuid}/refresh_metadata/".format(catalog_uuid=catalog2.uuid)),
+        body=ConnectionError(),
+    )
+    client = enterprise_catalog.EnterpriseCatalogApiClient('staff-user-goes-here')
+    refreshed_catalogs, failed_to_refresh_catalogs = client.refresh_catalogs(EnterpriseCustomerCatalog.objects.all())
+    assert failed_to_refresh_catalogs[0] == catalog2.uuid
+    assert len(refreshed_catalogs.items()) == 1
+    assert refreshed_catalogs.get(catalog1.uuid) == task_id

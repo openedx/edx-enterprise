@@ -8,7 +8,11 @@ Custom `Django Admin actions`_ used in enterprise app.
 import unicodecsv
 from six import string_types
 
+from django.contrib import messages
 from django.http import HttpResponse
+from django.utils.safestring import mark_safe
+
+from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 
 
 def export_as_csv_action(description="Export selected objects as CSV file", fields=None, header=True):
@@ -59,3 +63,34 @@ def export_as_csv_action(description="Export selected objects as CSV file", fiel
 
     export_as_csv.short_description = description
     return export_as_csv
+
+
+def refresh_catalog(self, request, queryset):  # pylint: disable=unused-argument
+    """
+    Kicks off background running tasks for refreshing catalogs
+    """
+    catalog_client = EnterpriseCatalogApiClient(user=request.user)
+    refreshed_catalogs, failed_to_refresh_catalogs = catalog_client.refresh_catalogs(queryset)
+
+    # display catalog and task ids that were successfully started refreshing
+    updated_message = ''
+    if refreshed_catalogs.items():
+        updated_message = '<b>The following catalogs are being refreshed:</b><ul>'
+        for uuid, task_id in refreshed_catalogs.items():
+            updated_message = updated_message + '<li>' + str(uuid) + ' with task id: ' + str(task_id) + '</li>'
+        updated_message = updated_message + '</ul>'
+
+    # display catalog ids that failed to start refreshing
+    if failed_to_refresh_catalogs:
+        updated_message = updated_message + '<b>Failed to refresh catalogs with the following ids:</b><ul>'
+        for failed_catalog_uuid in failed_to_refresh_catalogs:
+            updated_message = updated_message + '<li class="error">' + str(failed_catalog_uuid) + '</li>'
+        updated_message = updated_message + '</ul>'
+
+    # Info level based on how successful refreshing catalogs was overall
+    level = messages.INFO
+    if failed_to_refresh_catalogs:
+        level = messages.ERROR
+        if refreshed_catalogs.items():
+            level = messages.WARNING
+    self.message_user(request, mark_safe(updated_message), level=level)
