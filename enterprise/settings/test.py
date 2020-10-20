@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 These settings are here to use during tests, because django requires them.
 
@@ -312,3 +313,5 @@ JWT_AUTH = {
 INTEGRATED_CHANNELS_API_CHUNK_TRANSMISSION_LIMIT = {
     'SAP': 1,
 }
+
+LANGUAGE_COOKIE = 'openedx-language-preference'

@@ -160,3 +160,9 @@ def json_serialized_course_modes():
     :return: serialized course modes.
     """
     return json.dumps(COURSE_MODE_SORT_ORDER)
+
+
+AVAILABLE_LANGUAGES = [
+    ('en', u'English'),
+    ('es-419', u'Español (Latinoamérica)'),  # Spanish (Latin America)
+]

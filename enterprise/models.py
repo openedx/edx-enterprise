@@ -48,6 +48,7 @@ from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClient, parse_lms_api_datetime
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
+    AVAILABLE_LANGUAGES,
     ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     DefaultColors,
@@ -322,6 +323,16 @@ class EnterpriseCustomer(TimeStampedModel):
             "Specifies the discount percent used for enrollments from the enrollment API "
             "where capturing the discount per order is not possible. "
             "This is passed to ecommerce when creating orders for financial data reporting."
+        )
+    )
+    default_language = models.CharField(
+        max_length=25,
+        null=True,
+        blank=True,
+        choices=AVAILABLE_LANGUAGES,
+        default=None,
+        help_text=_(
+            "Specifies the default language for all the learners of this enterprise customer."
         )
     )
 

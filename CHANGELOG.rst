@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.0]
+--------
+
+* Enable enterprise to have a default language configuration for its learners.
+
 [3.8.43]
 --------
 
