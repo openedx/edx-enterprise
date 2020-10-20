@@ -33,7 +33,8 @@ Unreleased
 [3.8.41]
 --------
 
-* Authenticate tableau user without enterprise
+* Embedded enterprise in the username was removed for tableau trusted authentication.
+
 
 [3.8.40]
 --------
