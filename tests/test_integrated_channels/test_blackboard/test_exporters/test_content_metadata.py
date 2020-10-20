@@ -62,13 +62,43 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
                 .issubset(set(item.channel_metadata.keys()))
             )
 
-    def test_transform_description(self):
+    def test_transform_course_metadata(self):
         content_metadata_item = {
+            'title': 'test title',
+            'key': 'test key',
             'enrollment_url': 'http://some/enrollment/url/',
             'short_description': 'short desc',
         }
         exporter = BlackboardContentMetadataExporter('fake-user', self.config)
-        description = exporter.transform_enrollment_url(content_metadata_item)
-        expected_description = exporter.DESCRIPTION_TEXT_TEMPLATE.format(
-            enrollment_url='http://some/enrollment/url/')
+        description = exporter.transform_course_metadata(content_metadata_item)
+        expected_description = {
+            'description': exporter.DESCRIPTION_TEXT_TEMPLATE.format(enrollment_url='http://some/enrollment/url/'),
+            'name': content_metadata_item['title'],
+            'externalId': content_metadata_item['key'],
+        }
+
+        assert description == expected_description
+
+    def test_transform_course_child_content_metadata(self):
+        content_metadata_item = {
+            'title': 'test title',
+            'enrollment_url': 'http://some/enrollment/url/',
+            'full_description': 'short desc',
+            'image_url': 'image_url',
+        }
+        exporter = BlackboardContentMetadataExporter('fake-user', self.config)
+        description = exporter.transform_course_child_content_metadata(content_metadata_item)
+        expected_description = {
+            'title': content_metadata_item.get('title'),
+            'availability': 'Yes',
+            'contentHandler': {
+                'id': 'resource/x-bb-externallink',
+                'url': content_metadata_item.get('enrollment_url', None),
+            },
+            'body': '<div>{title}</div><div>{description}</div><img src={image_url} />'.format(
+                title=content_metadata_item.get('title'),
+                description=content_metadata_item.get('full_description', None),
+                image_url=content_metadata_item.get('image_url', None),
+            )
+        }
         assert description == expected_description

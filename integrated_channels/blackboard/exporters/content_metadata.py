@@ -7,6 +7,7 @@ from logging import getLogger
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
 LOGGER = getLogger(__name__)
+BLACKBOARD_COURSE_CONTENT_NAME = 'edX Integration'
 
 
 class BlackboardContentMetadataExporter(ContentMetadataExporter):
@@ -15,17 +16,51 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         Note: courseId is not being exported here (instead done in client during content send)
     """
     DATA_TRANSFORM_MAPPING = {
-        'name': 'title',
         'externalId': 'key',
-        'description': 'enrollment_url',
+        'course_metadata': 'course_metadata',
+        'course_content_metadata': 'course_content_metadata',
+        'course_child_content_metadata': 'course_child_content_metadata',
     }
 
     DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url}>Go to edX course page</a><br />"
 
-    def transform_enrollment_url(self, content_metadata_item):
+    def transform_course_metadata(self, content_metadata_item):
         """
-        This will show a link to edX course on blackboard course description
+        Formats the metadata necessary to create a base course object in Blackboard
         """
-        enrollment_url = content_metadata_item.get('enrollment_url', None)
-        url_link = self.DESCRIPTION_TEXT_TEMPLATE.format(enrollment_url=enrollment_url)
-        return url_link
+        return {
+            'name': content_metadata_item.get('title', None),
+            'externalId': content_metadata_item.get('key', None),
+            'description': self.DESCRIPTION_TEXT_TEMPLATE.format(
+                enrollment_url=content_metadata_item.get('enrollment_url', None)
+            )
+        }
+
+    def transform_course_content_metadata(self, content_metadata_item):  # pylint: disable=unused-argument
+        """
+        Formats the metadata necessary to create a course content object in Blackboard
+        """
+        return {
+            'title': BLACKBOARD_COURSE_CONTENT_NAME,
+            'position': 0,
+            "contentHandler": {"id": "resource/x-bb-folder"}
+        }
+
+    def transform_course_child_content_metadata(self, content_metadata_item):
+        """
+        Formats the metadata necessary to create a course content object in Blackboard
+        """
+        title = content_metadata_item.get('title', None)
+        return {
+            'title': title,
+            'availability': 'Yes',
+            'contentHandler': {
+                'id': 'resource/x-bb-externallink',
+                'url': content_metadata_item.get('enrollment_url', None),
+            },
+            'body': '<div>{title}</div><div>{description}</div><img src={image_url} />'.format(
+                title=title,
+                description=content_metadata_item.get('full_description', None),
+                image_url=content_metadata_item.get('image_url', None),
+            )
+        }
