@@ -25,6 +25,8 @@ enterprise.HistoricalEnterpriseCustomerCatalog:
     ".. no_pii:": ""
 enterprise.HistoricalEnterpriseCustomerEntitlement:
     ".. no_pii:": ""
+enterprise.HistoricalEnterpriseAnalyticsUser:
+    ".. no_pii:": ""
 enterprise.HistoricalPendingEnterpriseCustomerUser:
     ".. no_pii:": ""
 enterprise.HistoricalPendingEnterpriseCustomerAdminUser:

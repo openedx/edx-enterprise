@@ -11,10 +11,12 @@ from uuid import UUID
 
 import bleach
 import pytz
+import tableauserverclient as TSC
 from edx_django_utils.cache import TieredCache
 from edx_django_utils.cache import get_cache_key as get_django_cache_key
 # pylint: disable=import-error,wrong-import-order,ungrouped-imports
 from six.moves.urllib.parse import parse_qs, urlencode, urlparse, urlsplit, urlunsplit
+from tableauserverclient.server.endpoint.exceptions import ServerResponseError
 
 from django.apps import apps
 from django.conf import settings
@@ -1108,3 +1110,120 @@ def get_platform_logo_url():
         settings.LMS_ROOT_URL,
         get_logo_url()
     ) if get_logo_url else 'http://fake.url'
+
+
+def create_tableau_user(username, enterprise_customer_user):
+    """
+    Create the user in tableau and store the tableau user in the EnterpriseAnalyticsUser model.
+    """
+    from enterprise.models import EnterpriseAnalyticsUser  # pylint: disable=import-outside-toplevel
+    tableau_auth, server = get_tableau_server()
+    if tableau_auth and server and enterprise_customer_user:
+        enterprise_uuid = enterprise_customer_user.enterprise_customer.uuid
+        try:
+            with server.auth.sign_in(tableau_auth):
+                user_item = TSC.UserItem(username, TSC.UserItem.Roles.Viewer)
+                user = server.users.add(user_item)
+                EnterpriseAnalyticsUser.objects.get_or_create(
+                    enterprise_customer_user=enterprise_customer_user,
+                    analytics_user_id=user.id
+                )
+                add_user_to_tableau_group(user.id, str(enterprise_uuid))
+        except ServerResponseError as exc:
+            LOGGER.error(
+                '[TABLEAU USER SYNC] Could not sync enterprise admin user %s in tableau.'
+                'Server returned: %s', username, str(exc),
+            )
+    else:
+        LOGGER.warning(
+            '[TABLEAU USER SYNC] Could not create user %s in tableau.',
+            username,
+        )
+
+
+def get_tableau_server():
+    """
+    Return Tableau ServerAuth and Server instances or None
+    """
+    try:
+        tableau_auth = TSC.TableauAuth(settings.TABLEAU_ADMIN_USER, settings.TABLEAU_ADMIN_USER_PASSWORD)
+        server = TSC.Server(settings.TABLEAU_URL)
+        return tableau_auth, server
+    except AttributeError as err:
+        LOGGER.error(
+            '[TABLEAU USER SYNC] Could not sync enterprise admin user in tableau.'
+            'Error detail: %s', str(err),
+        )
+        return None, None
+
+
+def add_user_to_tableau_group(tableau_user_id, tableau_group):
+    """
+    Associate a user with the group in tableau. The function attempts to create the group, except when
+    the server responds with an exception code of 409009, indicating that the group already
+    exists. In the latter case, the user is associated with the existing group.
+    """
+    tableau_auth, server = get_tableau_server()
+    if tableau_auth and server:
+        try:
+            with server.auth.sign_in(tableau_auth):
+                group_to_create = TSC.GroupItem(tableau_group)
+                group = server.groups.create(group_to_create)
+                server.groups.add_user(group, tableau_user_id)
+        except ServerResponseError as exc:
+            if exc.code == '409009':  # Code returned by tableau server when group already exists
+                try:
+                    with server.auth.sign_in(tableau_auth):
+                        enterprise_group = TSC.GroupItem(tableau_group)
+                        server.groups.add_user(enterprise_group, tableau_user_id)
+                except ServerResponseError as exc:
+                    LOGGER.error(
+                        '[TABLEAU USER SYNC] Could not associate user %s with group %s in tableau.'
+                        'Server returned: %s', tableau_user_id, tableau_group, str(exc),
+                    )
+            else:
+                raise
+    else:
+        LOGGER.warning(
+            '[TABLEAU USER SYNC] Could not add tableau user %s to tableau group %s.',
+            tableau_user_id,
+            tableau_group,
+        )
+
+
+def delete_tableau_user(enterprise_customer_user):
+    """
+    Delete the user in tableau.
+    """
+    from enterprise.models import EnterpriseAnalyticsUser  # pylint: disable=import-outside-toplevel
+    enterprise_analytics_user = EnterpriseAnalyticsUser.objects.filter(
+        enterprise_customer_user=enterprise_customer_user
+    ).first()
+    if enterprise_analytics_user:
+        delete_tableau_user_by_id(enterprise_analytics_user.analytics_user_id)
+    else:
+        LOGGER.warning(
+            '[TABLEAU USER SYNC] Could not find the associated tableau user id for enterprise customer user %s.',
+            enterprise_customer_user.user_id,
+        )
+
+
+def delete_tableau_user_by_id(tableau_user_id):
+    """
+    Delete the user in tableau.
+    """
+    tableau_auth, server = get_tableau_server()
+    if tableau_user_id and tableau_auth and server:
+        try:
+            with server.auth.sign_in(tableau_auth):
+                server.users.remove(tableau_user_id)
+        except ServerResponseError as exc:
+            LOGGER.info(
+                '[TABLEAU USER SYNC] Could not delete enterprise admin user in tableau.'
+                'Server returned: %s', str(exc),
+            )
+    else:
+        LOGGER.warning(
+            '[TABLEAU USER SYNC] Could not delete the tableau user %s.',
+            tableau_user_id,
+        )

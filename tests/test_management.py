@@ -1101,12 +1101,16 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
         )
         self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
         self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
-        learner = factories.EnterpriseCustomerUserFactory(
+        self.learner = factories.EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
             user_id=self.user.id
         )
+        factories.EnterpriseAnalyticsUserFactory(
+            enterprise_customer_user=self.learner,
+            analytics_user_id='9999'
+        )
         factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=learner,
+            enterprise_customer_user=self.learner,
             course_id=self.course_run_id,
         )
         factories.DataSharingConsentFactory(
@@ -1167,16 +1171,18 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_user_from_social_auth')
     @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_identity_provider')
+    @mock.patch('enterprise.signals.delete_tableau_user')
     def test_unlink_inactive_sap_learners_task_success(
             self,
             lms_learners,
             inactive_sap_learners,
             unlinked_sap_learners,
+            mock_delete_tableau_user,
             get_identity_provider_mock,
             get_user_from_social_auth_mock,
             sapsf_update_content_metadata_mock,
             sapsf_get_oauth_access_token_mock,
-    ):  # pylint: disable=invalid-name
+    ):  # pylint: disable=invalid-name, unused-argument
         """
         Test the unlink inactive sap learners task with valid inactive learners.
         """
