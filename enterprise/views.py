@@ -585,7 +585,7 @@ class GrantDataSharingPermissions(View):
         if created:
             track_enrollment('data-consent-page-enrollment', request.user.id, course_id, request.path)
 
-    def _enroll_leaner_in_course(
+    def _enroll_learner_in_course(
             self,
             request,
             enterprise_customer,
@@ -636,27 +636,27 @@ class GrantDataSharingPermissions(View):
                         )
                     )
                     raise
-                try:
-                    self.create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid)
-                except IntegrityError:
-                    error_code = 'ENTGDS009'
-                    log_message = (
-                        '[Enterprise DSC API] IntegrityError while creating EnterpriseCourseEnrollment.'
-                        'Course: {course_id}, '
-                        'Program: {program_uuid}, '
-                        'EnterpriseCustomer: {enterprise_customer_uuid}, '
-                        'User: {user_id}, '
-                        'License UUID: {license_uuid}, '
-                        'ErrorCode: {error_code}'.format(
-                            course_id=course_id,
-                            program_uuid=program_uuid,
-                            enterprise_customer_uuid=enterprise_customer.uuid,
-                            user_id=request.user.id,
-                            license_uuid=license_uuid,
-                            error_code=error_code,
-                        )
+            try:
+                self.create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid)
+            except IntegrityError:
+                error_code = 'ENTGDS009'
+                log_message = (
+                    '[Enterprise DSC API] IntegrityError while creating EnterpriseCourseEnrollment.'
+                    'Course: {course_id}, '
+                    'Program: {program_uuid}, '
+                    'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                    'User: {user_id}, '
+                    'License UUID: {license_uuid}, '
+                    'ErrorCode: {error_code}'.format(
+                        course_id=course_id,
+                        program_uuid=program_uuid,
+                        enterprise_customer_uuid=enterprise_customer.uuid,
+                        user_id=request.user.id,
+                        license_uuid=license_uuid,
+                        error_code=error_code,
                     )
-                    LOGGER.exception(log_message)
+                )
+                LOGGER.exception(log_message)
 
     @method_decorator(login_required)
     def get(self, request):  # pylint: disable=too-many-statements
@@ -718,7 +718,7 @@ class GrantDataSharingPermissions(View):
             # If DSC is entirely disabled proceed to enroll the learner in the course
             if not enterprise_customer.requests_data_sharing_consent:
                 try:
-                    self._enroll_leaner_in_course(
+                    self._enroll_learner_in_course(
                         request=request,
                         enterprise_customer=enterprise_customer,
                         course_id=course_id,
@@ -974,7 +974,7 @@ class GrantDataSharingPermissions(View):
         consent_provided = bool(request.POST.get('data_sharing_consent', False))
         if defer_creation is None and consent_record.consent_required() and consent_provided:
             try:
-                self._enroll_leaner_in_course(
+                self._enroll_learner_in_course(
                     request=request,
                     enterprise_customer=enterprise_customer,
                     course_id=course_id,
