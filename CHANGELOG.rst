@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.2]
+--------
+
+* Re-add check for license uuid when enrolling learners into a course
+
 [3.9.1]
 --------
 

@@ -391,8 +391,13 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @ddt.data(
+        str(uuid.uuid4()),
+        '',
+    )
     def test_get_course_specific_data_sharing_consent_not_enabled(
             self,
+            license_uuid,
             course_catalog_api_client_mock,
             mock_enrollment_api_client,
             *args
@@ -416,17 +421,12 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        enterprise_enrollment = EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=ecu,
-            course_id=course_id,
-        )
 
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = course_id
 
         course_mode = 'verified'
         mock_enrollment_api_client.return_value.get_course_modes.return_value = [{'slug': course_mode}]
-        license_uuid = str(uuid.uuid4())
         params = {
             'enterprise_customer_uuid': str(enterprise_customer.uuid),
             'course_id': course_id,
@@ -438,21 +438,26 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         assert response.status_code == 302
         self.assertRedirects(response, 'https://google.com', fetch_redirect_response=False)
 
-        assert LicensedEnterpriseCourseEnrollment.objects.filter(
-            enterprise_course_enrollment=enterprise_enrollment,
-            license_uuid=license_uuid,
-        ).exists() is True
+        if license_uuid:
+            assert LicensedEnterpriseCourseEnrollment.objects.filter(
+                license_uuid=license_uuid,
+            ).exists() is True
 
-        mock_enrollment_api_client.return_value.enroll_user_in_course.assert_called_once_with(
-            self.user.username,
-            course_id,
-            course_mode
-        )
+            mock_enrollment_api_client.return_value.enroll_user_in_course.assert_called_once_with(
+                self.user.username,
+                course_id,
+                course_mode
+            )
+        else:
+            # Verify a user without a license has no course enrollments
+            assert EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=ecu,
+            ).exists() is False
+            assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
-    @ddt.unpack
     def test_get_course_specific_data_sharing_consent_not_enabled_exception_handling(
             self,
             course_catalog_api_client_mock,
@@ -556,10 +561,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             user_id=self.user.id,
             enterprise_customer=enterprise_customer
         )
-        enterprise_enrollment = EnterpriseCourseEnrollment.objects.create(
-            enterprise_customer_user=ecu,
-            course_id=course_id,
-        )
         dsc = DataSharingConsentFactory(
             username=self.user.username,
             course_id=course_id,
@@ -601,7 +602,6 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         # (3) we provide a license_uuid, and (4) we provide a course _run_ id
         if not defer_creation and not consent_provided and license_uuid and course_id.endswith('Demo_Course'):
             assert LicensedEnterpriseCourseEnrollment.objects.filter(
-                enterprise_course_enrollment=enterprise_enrollment,
                 license_uuid=license_uuid,
             ).exists() is True
 
@@ -612,6 +612,11 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
 
         if not license_uuid:
+            # Verify a user with no license_uuid has no course enrollments
+            assert EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=ecu,
+                course_id=course_id,
+            ).exists() is False
             assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
