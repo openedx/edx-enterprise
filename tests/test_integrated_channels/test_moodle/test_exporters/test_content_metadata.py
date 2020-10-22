@@ -104,7 +104,7 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     @responses.activate
     def test_transform_start(self):
         """
-        `MoodleContentMetadataExporter``'s ``transform_start` returns int timestamp.
+        `MoodleContentMetadataExporter``'s ``transform_start`` returns int timestamp.
         """
         content_metadata_item = {
             'title': 'edX Demonstration Course',
@@ -119,7 +119,7 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
     @responses.activate
     def test_transform_end(self):
         """
-        `MoodleContentMetadataExporter``'s ``transform_start` returns int timestamp.
+        `MoodleContentMetadataExporter``'s ``transform_end`` returns int timestamp.
         """
         content_metadata_item = {
             'title': 'edX Demonstration Course',
@@ -130,3 +130,37 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         }
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_end(content_metadata_item) == 1898553600  # Jan 1, 2030 UTC
+
+    @responses.activate
+    def test_transform_shortname(self):
+        """
+        `MoodleContentMetadataExporter``'s ``transform_shortname`` returns
+        a str combination  of title and key.
+        """
+        content_metadata_item = {
+            'title': 'edX Demonstration Course',
+            'key': 'edX+DemoXT0220'
+        }
+        expected_name = '{} ({})'.format(content_metadata_item['title'], content_metadata_item['key'])
+        exporter = MoodleContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_shortname(content_metadata_item) == expected_name
+
+    @responses.activate
+    def test_transform_title(self):
+        """
+        `MoodleContentMetadataExporter``'s ``transform_title`` returns a str
+        featuring the title and partners/organizations
+        """
+        content_metadata_item = {
+            'title': 'edX Demonstration Course',
+            'organizations': [
+                'HarvardX:Harvard University',
+                'MIT:MIT'
+            ]
+        }
+        expected_title = '{} ({})'.format(
+            content_metadata_item['title'],
+            ', '.join(content_metadata_item['organizations'])
+        )
+        exporter = MoodleContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_title(content_metadata_item) == expected_title
