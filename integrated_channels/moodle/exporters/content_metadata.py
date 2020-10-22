@@ -17,7 +17,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
     """
     DATA_TRANSFORM_MAPPING = {
         'fullname': 'title',
-        'shortname': 'key',
+        'shortname': 'shortname',
         'idnumber': 'key',
         'summary': 'description',
         'startdate': 'start',
@@ -27,6 +27,38 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
 
     LONG_STRING_LIMIT = 1700  # Actual maximum value we can support for any individual course
     SKIP_KEY_IF_NONE = True
+
+    def transform_shortname(self, content_metadata_item):
+        """
+        We're prefixing Title to the key to make shortname a little nicer in Moodle's UI.
+        But because we use key elsewhere, I mapped this to itself
+        so it doesn't override all "key" references
+        """
+        return '{} ({})'.format(
+            content_metadata_item.get('title'),
+            content_metadata_item.get('key')
+        )
+
+    def transform_title(self, content_metadata_item):
+        """
+        Returns the course title with all organizations (partners) appended in parantheses
+        """
+        formatted_orgs = []
+        for org in content_metadata_item.get('organizations', []):
+            split_org = org.partition(': ')  # results in: ['first_part', 'delim', 'latter part']
+            if split_org[2] == '':  # Occurs when the delimiter isn't present in the string.
+                formatted_orgs.append(split_org[0])  # Returns the original string
+            else:
+                formatted_orgs.append(split_org[2])
+        if not formatted_orgs:
+            final_orgs = ''
+        else:
+            final_orgs = ' ({})'.format(', '.join(formatted_orgs))
+
+        return '{}{}'.format(
+            content_metadata_item.get('title'),
+            final_orgs
+        )
 
     def transform_description(self, content_metadata_item):
         """

@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.4]
+--------
+
+* Style/UX changes for Moodle integration.
+
 [3.9.3]
 --------
 
