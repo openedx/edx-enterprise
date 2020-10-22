@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.3]
+--------
+
+* Adding integrated course customization for Blackboard courses.
+
 [3.9.2]
 --------
 
