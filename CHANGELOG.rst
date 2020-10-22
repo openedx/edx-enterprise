@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.7]
+--------
+
+* Unset learners language so that default_language from enterprise customer may take effect.
+
 [3.9.6]
 --------
 
