@@ -27,6 +27,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
     API_BASE_URL = settings.ENTERPRISE_CATALOG_INTERNAL_ROOT_URL + '/api/v1/'
     ENTERPRISE_CATALOG_ENDPOINT = 'enterprise-catalogs'
     GET_CONTENT_METADATA_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/get_content_metadata'
+    REFRESH_CATALOG_ENDPOINT = ENTERPRISE_CATALOG_ENDPOINT + '/{}/refresh_metadata'
     ENTERPRISE_CUSTOMER_ENDPOINT = 'enterprise-customer'
     APPEND_SLASH = True
 
@@ -168,6 +169,35 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
                 )
 
         return list(content_metadata.values())
+
+    @JwtLmsApiClient.refresh_token
+    def refresh_catalogs(self, enterprise_catalogs):
+        """
+        Kicks off async tasks to refresh catalogs so recent changes will populate to production without needing to wait
+        for the daily jobs to run
+
+        Arguments:
+            enterprise_catalogs (EnterpriseCustomerCatalog): List of EnterpriseCustomerCatalog objects to refresh
+
+        Returns:
+            Dict: Dict of async task ids for each catalog id
+        """
+        refreshed_catalogs = {}
+        failed_to_refresh_catalogs = []
+        for enterprise_customer_catalog in enterprise_catalogs:
+            catalog_uuid = enterprise_customer_catalog.uuid
+            endpoint = getattr(self.client, self.REFRESH_CATALOG_ENDPOINT.format(catalog_uuid))
+            try:
+                response = endpoint.post()
+                refreshed_catalogs[catalog_uuid] = response['async_task_id']
+            except (SlumberBaseException, ConnectionError, Timeout) as exc:
+                LOGGER.exception(
+                    'Failed to refresh catalog data for catalog [%s] in enterprise-catalog due to: [%s]',
+                    catalog_uuid, str(exc)
+                )
+                failed_to_refresh_catalogs.append(catalog_uuid)
+
+        return refreshed_catalogs, failed_to_refresh_catalogs
 
     @JwtLmsApiClient.refresh_token
     def contains_content_items(self, catalog_uuid, content_ids):

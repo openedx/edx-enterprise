@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.5]
+--------
+
+* ENT-2450: Add action to kick off jobs to refresh enterprise catalogs so changes will be immediately visible
+
 [3.9.4]
 --------
 
