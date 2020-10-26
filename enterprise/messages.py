@@ -96,29 +96,6 @@ def add_unenrollable_item_message(request, item):
     )
 
 
-def add_generic_info_message_for_error(request):
-    """
-    Add message to request indicating that there was an issue processing request.
-
-    Arguments:
-        request: The current request.
-
-    """
-    messages.info(
-        request,
-        _(
-            '{strong_start}Something happened.{strong_end} '
-            '{span_start}This course link is currently invalid. '
-            'Please reach out to your Administrator for assistance to this course.{span_end}'
-        ).format(
-            span_start='<span>',
-            span_end='</span>',
-            strong_start='<strong>',
-            strong_end='</strong>',
-        )
-    )
-
-
 def add_generic_error_message_with_code(request, error_code):
     """
     Add message to request indicating that there was an issue processing request.
@@ -136,8 +113,10 @@ def add_generic_error_message_with_code(request, error_code):
             '{span_start}Please reach out to your learning administrator with '
             'the following error code and they will be able to help you out.{span_end}'
             '{span_start}Error code: {error_code}{span_end}'
+            '{span_start}Username: {username}{span_end}'
         ).format(
             error_code=error_code,
+            username=request.user.username,
             strong_start='<strong>',
             strong_end='</strong>',
             span_start='<span>',

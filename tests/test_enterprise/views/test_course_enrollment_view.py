@@ -436,10 +436,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
         expected_log_messages = [
             (
-                messages.INFO,
-                '<strong>Something happened.</strong> '
-                '<span>This course link is currently invalid. '
-                'Please reach out to your Administrator for assistance to this course.</span>'
+                messages.ERROR,
+                self._get_expected_generic_error_message('ENTCEV002', self.user),
             )
         ]
         response = self.client.get(enterprise_landing_page_url)
@@ -523,10 +521,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
         expected_log_messages = [
             (
-                messages.INFO,
-                '<strong>Something happened.</strong> '
-                '<span>This course link is currently invalid. '
-                'Please reach out to your Administrator for assistance to this course.</span>'
+                messages.ERROR,
+                self._get_expected_generic_error_message('ENTCEV001', self.user),
             )
         ]
         response = self.client.get(enterprise_landing_page_url)
@@ -1012,10 +1008,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         assert response.status_code == 200
         expected_log_messages = [
             (
-                messages.INFO,
-                '<strong>Something happened.</strong> '
-                '<span>This course link is currently invalid. '
-                'Please reach out to your Administrator for assistance to this course.</span>'
+                messages.ERROR,
+                self._get_expected_generic_error_message('ENTCEV004', self.user),
             )
         ]
         self._assert_django_test_client_messages(response, expected_log_messages)
@@ -1061,10 +1055,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         assert response.status_code == 200
         expected_log_messages = [
             (
-                messages.INFO,
-                '<strong>Something happened.</strong> '
-                '<span>This course link is currently invalid. '
-                'Please reach out to your Administrator for assistance to this course.</span>'
+                messages.ERROR,
+                self._get_expected_generic_error_message('ENTCEV003', self.user),
             )
         ]
         self._assert_django_test_client_messages(response, expected_log_messages)
@@ -1110,10 +1102,8 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
 
         expected_log_messages = [
             (
-                messages.INFO,
-                '<strong>Something happened.</strong> '
-                '<span>This course link is currently invalid. '
-                'Please reach out to your Administrator for assistance to this course.</span>'
+                messages.ERROR,
+                self._get_expected_generic_error_message('ENTCEV000', self.user),
             )
         ]
         self._assert_django_test_client_messages(response, expected_log_messages)

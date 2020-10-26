@@ -14,6 +14,13 @@ Change Log
 .. There should always be an "Unreleased" section for changes pending release.
 
 Unreleased
+-----------
+
+
+[3.9.8]
+--------
+
+* added error_codes in the logging/error messages for the CourseEnrollmentView for better debugging capability.
 
 [3.9.7]
 --------

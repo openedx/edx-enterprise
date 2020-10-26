@@ -15,6 +15,16 @@ class MessagesMixin:
     Mixin for testing expected Django messages.
     """
 
+    def _get_expected_generic_error_message(self, error_code, username):
+        """
+        Returns the expected generic error message with code.
+        """
+        return '<strong>Something happened.</strong> ' \
+               '<span>Please reach out to your learning administrator with ' \
+               'the following error code and they will be able to help you out.</span>' \
+               '<span>Error code: {error_code}</span>' \
+               '<span>Username: {username}</span>'.format(error_code=error_code, username=username)
+
     def _get_messages_from_response_cookies(self, response):
         """
         Get django messages set in response cookies.

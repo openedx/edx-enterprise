@@ -23,3 +23,9 @@ ENTPEV004 - No program type available
 
 ENTRV000 - No course_run_id available
 ENTRV001 - No course_run_id available, or course catalog configuration error
+
+ENTCEV000 - Unable to get course modes
+ENTCEV001 - Matching course modes were not found in EnterpriseCustomerCatalog
+ENTCEV002 - EnterpriseCustomerCatalog does not exist
+ENTCEV003 - CourseCatalogApiServiceClient is improperly configured
+ENTCEV004 - Failed to fetch details for course or course run
