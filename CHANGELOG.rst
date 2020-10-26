@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 
+[3.9.6]
+--------
+
+* Fix DSC tests to verify enrolling a learner with a license_uuid
+
 [3.9.5]
 --------
 
