@@ -4,9 +4,6 @@
 #
 #    make upgrade
 #
---index-url http://edx.devstack.devpi:3141/root/pypi/+simple/
---extra-index-url https://pypi.python.org/simple
---trusted-host edx.devstack.devpi
 
 appdirs==1.4.4            # via virtualenv
 certifi==2020.6.20        # via requests

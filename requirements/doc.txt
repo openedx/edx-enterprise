@@ -4,9 +4,6 @@
 #
 #    make upgrade
 #
---index-url http://edx.devstack.devpi:3141/root/pypi/+simple/
---extra-index-url https://pypi.python.org/simple
---trusted-host edx.devstack.devpi
 
 alabaster==0.7.12         # via sphinx
 amqp==2.6.1               # via -r requirements/test-master.txt, kombu

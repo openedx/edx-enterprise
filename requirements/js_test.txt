@@ -4,9 +4,6 @@
 #
 #    make upgrade
 #
---index-url http://edx.devstack.devpi:3141/root/pypi/+simple/
---extra-index-url https://pypi.python.org/simple
---trusted-host edx.devstack.devpi
 
 cheroot==8.4.5            # via cherrypy
 cherrypy==18.6.0          # via jasmine
