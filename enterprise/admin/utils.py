@@ -8,11 +8,9 @@ import unicodecsv
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger
-from django.core.validators import validate_email
-from django.utils.translation import ugettext as _
 
 from enterprise.admin.paginator import CustomPaginator
-from enterprise.models import EnterpriseCustomerUser
+from enterprise.utils import ValidationMessages
 
 DOT = '.'
 PAGES_ON_EACH_SIDE = 3
@@ -28,60 +26,6 @@ class UrlNames:
     MANAGE_LEARNERS_DSC = URL_PREFIX + "manage_learners_data_sharing_consent"
     TRANSMIT_COURSES_METADATA = URL_PREFIX + "transmit_courses_metadata"
     PREVIEW_EMAIL_TEMPLATE = URL_PREFIX + "preview_email_template"
-
-
-class ValidationMessages:
-    """
-    Namespace class for validation messages.
-    """
-
-    # Keep this alphabetically sorted
-    BOTH_FIELDS_SPECIFIED = _(
-        "Either \"Email or Username\" or \"CSV bulk upload\" must be specified, "
-        "but both were.")
-    BULK_LINK_FAILED = _(
-        "Error: Learners could not be added. Correct the following errors.")
-    COURSE_MODE_INVALID_FOR_COURSE = _(
-        "Enrollment track {course_mode} is not available for course {course_id}.")
-    COURSE_WITHOUT_COURSE_MODE = _(
-        "Select a course enrollment track for the given course.")
-    INVALID_COURSE_ID = _(
-        "Could not retrieve details for the course ID {course_id}. Specify "
-        "a valid ID.")
-    INVALID_EMAIL = _(
-        "{argument} does not appear to be a valid email address.")
-    INVALID_EMAIL_OR_USERNAME = _(
-        "{argument} does not appear to be a valid email address or known "
-        "username")
-    MISSING_EXPECTED_COLUMNS = _(
-        "Expected a CSV file with [{expected_columns}] columns, but found "
-        "[{actual_columns}] columns instead."
-    )
-    MISSING_REASON = _(
-        "Reason field is required but was not filled."
-    )
-    NO_FIELDS_SPECIFIED = _(
-        "Either \"Email or Username\" or \"CSV bulk upload\" must be "
-        "specified, but neither were.")
-    PENDING_USER_ALREADY_LINKED = _(
-        "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
-        "you will be able to add the learner once the user creates account or other enterprise "
-        "deletes the pending user")
-    USER_ALREADY_REGISTERED = _(
-        "User with email address {email} is already registered with Enterprise "
-        "Customer {ec_name}")
-    USER_NOT_LINKED = _("User is not linked with Enterprise Customer")
-    USER_NOT_EXIST = _("User with email address {email} doesn't exist.")
-    COURSE_NOT_EXIST_IN_CATALOG = _("Course doesn't exist in Enterprise Customer's Catalog")
-    INVALID_CHANNEL_WORKER = _(
-        'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
-    )
-    INVALID_ENCODING = _(
-        "Unable to parse CSV file. Please make sure it is a CSV 'utf-8' encoded file."
-    )
-    INVALID_DISCOUNT = _(
-        'Discount percentage should be from 0 to 100.'
-    )
 
 
 def validate_csv(file_stream, expected_columns=None):
@@ -145,57 +89,6 @@ def email_or_username__to__email(email_or_username):
         return user.email
     except User.DoesNotExist:
         return email_or_username
-
-
-def get_idiff_list(list_a, list_b):
-    """
-    Returns a list containing lower case difference of list_b and list_a after case insensitive comparison.
-
-    Args:
-        list_a: list of strings
-        list_b: list of string
-
-    Returns:
-        List of unique lower case strings computed by subtracting list_b from list_a.
-    """
-    lower_list_a = [element.lower() for element in list_a]
-    lower_list_b = [element.lower() for element in list_b]
-    return list(set(lower_list_a) - set(lower_list_b))
-
-
-def validate_email_to_link(email, raw_email=None, message_template=None, ignore_existing=False):
-    """
-    Validate email to be linked to Enterprise Customer.
-
-    Performs two checks:
-        * Checks that email is valid
-        * Checks that it is not already linked to any Enterprise Customer
-
-    Arguments:
-        email (str): user email to link
-        raw_email (str): raw value as it was passed by user - used in error message.
-        message_template (str): Validation error template string.
-        ignore_existing (bool): If True to skip the check for an existing Enterprise Customer
-
-    Raises:
-        ValidationError: if email is invalid or already linked to Enterprise Customer.
-
-    Returns:
-        bool: Whether or not there is an existing record with the same email address.
-    """
-    raw_email = raw_email if raw_email is not None else email
-    message_template = message_template if message_template is not None else ValidationMessages.INVALID_EMAIL
-    try:
-        validate_email(email)
-    except ValidationError:
-        raise ValidationError(message_template.format(argument=raw_email))
-
-    existing_record = EnterpriseCustomerUser.objects.get_link_by_email(email)
-    if existing_record and not ignore_existing:
-        raise ValidationError(ValidationMessages.USER_ALREADY_REGISTERED.format(
-            email=email, ec_name=existing_record.enterprise_customer.name
-        ))
-    return existing_record or False
 
 
 def split_usernames_and_emails(email_field):

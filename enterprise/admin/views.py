@@ -4,10 +4,7 @@ Custom Django Admin views used in enterprise app.
 """
 
 import datetime
-import json
 import logging
-
-from edx_rest_api_client.exceptions import HttpClientError
 
 from django.conf import settings
 from django.contrib import admin, messages
@@ -30,38 +27,33 @@ from enterprise.admin.forms import (
 )
 from enterprise.admin.utils import (
     UrlNames,
-    ValidationMessages,
     email_or_username__to__email,
-    get_idiff_list,
     paginated_list,
     parse_csv,
     split_usernames_and_emails,
-    validate_email_to_link,
 )
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
-    EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerUser,
-    EnterpriseEnrollmentSource,
     PendingEnterpriseCustomerUser,
 )
-from enterprise.utils import delete_data_sharing_consent, get_ecommerce_worker_user, track_enrollment
+from enterprise.utils import (
+    ValidationMessages,
+    delete_data_sharing_consent,
+    enroll_users_in_course,
+    get_ecommerce_worker_user,
+    validate_email_to_link,
+)
 
 # Only create manual enrollments if running in edx-platform
 try:
-    from student.api import (
-        create_manual_enrollment_audit,
-        UNENROLLED_TO_ENROLLED,
-        UNENROLLED_TO_ALLOWEDTOENROLL,
-    )
+    from student.api import create_manual_enrollment_audit
 except ImportError:
     create_manual_enrollment_audit = None
-
-MANUAL_ENROLLMENT_ROLE = "Learner"
 
 
 class TemplatePreviewView(View):
@@ -502,179 +494,6 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         return all_processable_emails
 
     @classmethod
-    def enroll_user(cls, enterprise_customer, user, course_mode, *course_ids):
-        """
-        Enroll a single user in any number of courses using a particular course mode.
-
-        Args:
-            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
-            user: The user who needs to be enrolled in the course
-            course_mode: The mode with which the enrollment should be created
-            *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
-
-        Returns:
-            Boolean: Whether or not enrollment succeeded for all courses specified
-        """
-        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-            enterprise_customer=enterprise_customer,
-            user_id=user.id
-        )
-        enrollment_client = EnrollmentApiClient()
-        succeeded = True
-        for course_id in course_ids:
-            try:
-                enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
-            except HttpClientError as exc:
-                # Check if user is already enrolled then we should ignore exception
-                if cls.is_user_enrolled(user, course_id, course_mode):
-                    succeeded = True
-                else:
-                    succeeded = False
-                    default_message = 'No error message provided'
-                    try:
-                        error_message = json.loads(exc.content.decode()).get('message', default_message)
-                    except ValueError:
-                        error_message = default_message
-                    logging.error(
-                        'Error while enrolling user %(user)s: %(message)s',
-                        dict(user=user.username, message=error_message)
-                    )
-            if succeeded:
-                __, created = EnterpriseCourseEnrollment.objects.get_or_create(
-                    enterprise_customer_user=enterprise_customer_user,
-                    course_id=course_id,
-                    defaults={
-                        'source': EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL)
-                    }
-                )
-                if created:
-                    track_enrollment('admin-enrollment', user.id, course_id)
-        return succeeded
-
-    @classmethod
-    def is_user_enrolled(cls, user, course_id, course_mode):
-        """
-        Query the enrollment API and determine if a learner is enrolled in a given course run track.
-
-        Args:
-            user: The user whose enrollment needs to be checked
-            course_mode: The mode with which the enrollment should be checked
-            course_id: course id of the course where enrollment should be checked.
-
-        Returns:
-            Boolean: Whether or not enrollment exists
-
-        """
-        enrollment_client = EnrollmentApiClient()
-        try:
-            enrollments = enrollment_client.get_course_enrollment(user.username, course_id)
-            if enrollments and course_mode == enrollments.get('mode'):
-                return True
-        except HttpClientError as exc:
-            logging.error(
-                'Error while checking enrollment status of user %(user)s: %(message)s',
-                dict(user=user.username, message=str(exc))
-            )
-        except KeyError as exc:
-            logging.warning(
-                'Error while parsing enrollment data of user %(user)s: %(message)s',
-                dict(user=user.username, message=str(exc))
-            )
-        return False
-
-    @classmethod
-    def get_users_by_email(cls, emails):
-        """
-        Accept a list of emails, and separate them into users that exist on OpenEdX and users who don't.
-
-        Args:
-            emails: An iterable of email addresses to split between existing and nonexisting
-
-        Returns:
-            users: Queryset of users who exist in the OpenEdX platform and who were in the list of email addresses
-            unregistered_emails: List of unique emails which were in the original list, but do not yet exist as users
-        """
-        users = User.objects.filter(email__in=emails)
-        present_emails = users.values_list('email', flat=True)
-        unregistered_emails = get_idiff_list(emails, present_emails)
-        return users, unregistered_emails
-
-    @classmethod
-    def enroll_users_in_course(
-            cls,
-            enterprise_customer,
-            course_id,
-            course_mode,
-            emails,
-            enrollment_requester=None,
-            enrollment_reason=None,
-            discount=0.0,
-            sales_force_id=None,
-    ):
-        """
-        Enroll existing users in a course, and create a pending enrollment for nonexisting users.
-
-        Args:
-            enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
-            course_id (str): The unique identifier of the course in which we're enrolling
-            course_mode (str): The mode with which we're enrolling in the course
-            emails: An iterable of email addresses which need to be enrolled
-            enrollment_requester (User): Admin user who is requesting the enrollment.
-            enrollment_reason (str): A reason for enrollment.
-            discount (Decimal): Percentage discount for enrollment.
-            sales_force_id (str): Salesforce opportunity id.
-
-        Returns:
-            successes: A list of users who were successfully enrolled in the course
-            pending: A list of PendingEnterpriseCustomerUsers who were successfully linked and had
-                pending enrollments created for them in the database
-            failures: A list of users who could not be enrolled in the course
-        """
-        existing_users, unregistered_emails = cls.get_users_by_email(emails)
-
-        successes = []
-        pending = []
-        failures = []
-
-        for user in existing_users:
-            succeeded = cls.enroll_user(enterprise_customer, user, course_mode, course_id)
-            if succeeded:
-                successes.append(user)
-                if enrollment_requester and enrollment_reason:
-                    create_manual_enrollment_audit(
-                        enrollment_requester,
-                        user.email,
-                        UNENROLLED_TO_ENROLLED,
-                        enrollment_reason,
-                        course_id,
-                        role=MANUAL_ENROLLMENT_ROLE,
-                    )
-            else:
-                failures.append(user)
-
-        for email in unregistered_emails:
-            pending_user = enterprise_customer.enroll_user_pending_registration(
-                email,
-                course_mode,
-                course_id,
-                enrollment_source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.MANUAL),
-                discount=discount,
-                sales_force_id=sales_force_id,
-            )
-            pending.append(pending_user)
-            if enrollment_requester and enrollment_reason:
-                create_manual_enrollment_audit(
-                    enrollment_requester,
-                    email,
-                    UNENROLLED_TO_ALLOWEDTOENROLL,
-                    enrollment_reason,
-                    course_id,
-                    role=MANUAL_ENROLLMENT_ROLE,
-                )
-
-        return successes, pending, failures
-
-    @classmethod
     def send_messages(cls, http_request, message_requests):
         """
         Deduplicate any outgoing message requests, and send the remainder.
@@ -791,8 +610,9 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         """
         pending_messages = []
         paid_modes = ['verified', 'professional']
+        enrollment_client = EnrollmentApiClient()
 
-        succeeded, pending, failed = cls.enroll_users_in_course(
+        succeeded, pending, failed = enroll_users_in_course(
             enterprise_customer=enterprise_customer,
             course_id=course_id,
             course_mode=mode,
@@ -801,6 +621,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             enrollment_reason=enrollment_reason,
             discount=discount,
             sales_force_id=sales_force_id,
+            enrollment_client=enrollment_client,
         )
         all_successes = succeeded + pending
         if notify:

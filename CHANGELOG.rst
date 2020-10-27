@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.9.10]
+--------
+
+* added POST enterprise-customer/<uuid>/enterprise_learner endpoint to mimic Manage Learners admin form functionality
+
 [3.9.9]
 --------
 

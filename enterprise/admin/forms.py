@@ -18,12 +18,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
 from enterprise import utils
-from enterprise.admin.utils import (
-    ValidationMessages,
-    email_or_username__to__email,
-    split_usernames_and_emails,
-    validate_email_to_link,
-)
+from enterprise.admin.utils import email_or_username__to__email, split_usernames_and_emails
 from enterprise.admin.widgets import SubmitInput
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
@@ -34,6 +29,7 @@ from enterprise.models import (
     EnterpriseFeatureUserRoleAssignment,
     SystemWideEnterpriseUserRoleAssignment,
 )
+from enterprise.utils import ValidationMessages, validate_email_to_link
 
 try:
     from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration

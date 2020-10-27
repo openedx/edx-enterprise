@@ -17,7 +17,13 @@ from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK, HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_500_INTERNAL_SERVER_ERROR
+from rest_framework.status import (
+    HTTP_200_OK,
+    HTTP_202_ACCEPTED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_404_NOT_FOUND,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+)
 from rest_framework.views import APIView
 from rest_framework_xml.renderers import XMLRenderer
 from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import-error,ungrouped-imports
@@ -46,10 +52,17 @@ from enterprise.api.utils import (
 from enterprise.api.v1 import serializers
 from enterprise.api.v1.decorators import require_at_least_one_query_parameter
 from enterprise.api.v1.permissions import IsInEnterpriseGroup
+from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.errors import CodesAPIRequestError
-from enterprise.utils import NotConnectedToOpenEdX, get_request_value
+from enterprise.utils import (
+    NotConnectedToOpenEdX,
+    enroll_users_in_course,
+    get_ecommerce_worker_user,
+    get_request_value,
+    validate_email_to_link,
+)
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
 
 try:
@@ -199,6 +212,97 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             return Response(serializer.data, status=HTTP_200_OK)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
+    # pylint: disable=invalid-name,unused-argument
+    def enterprise_learners(self, request, pk):
+        """
+        Creates a set of enterprise_learners by enrolling them in the specified course.
+        """
+        enterprise_customer = self.get_object()
+        serializer = serializers.EnterpriseCustomerBulkEnrollmentsSerializer(
+            data=request.data,
+            context={
+                'enterprise_customer': enterprise_customer,
+                'request_user': request.user,
+            }
+        )
+        if serializer.is_valid(raise_exception=True):
+            singular_email = serializer.validated_data.get('email')
+            emails = set()
+            already_linked_emails = []
+            duplicate_emails = []
+            errors = []
+            if singular_email:
+                emails.add(singular_email)
+            try:
+                for email in emails:
+                    try:
+                        already_linked = validate_email_to_link(email, ignore_existing=True)
+                    except ValidationError as error:
+                        errors.append(error)
+                    else:
+                        if already_linked:
+                            already_linked_emails.append((email, already_linked.enterprise_customer))
+                        elif email in emails:
+                            duplicate_emails.append(email)
+                        else:
+                            emails.add(email)
+            except ValidationError as exc:
+                errors.append(exc)
+
+            if errors:
+                return Response(errors, status=HTTP_400_BAD_REQUEST)
+
+            for email in emails:
+                models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+
+            course_run_key = serializer.validated_data.get('course_run_key')
+            mode = serializer.validated_data.get('course_mode')
+            if course_run_key:
+                this_customer_linked_emails = [
+                    email for email, customer in already_linked_emails if customer == enterprise_customer
+                ]
+                linked_learners = list(emails) + this_customer_linked_emails
+                if linked_learners:
+                    enrollment_client = EnrollmentApiClient()
+                    discount = serializer.validated_data.get('discount', 0.0)
+                    enrollment_reason = serializer.validated_data.get('reason')
+                    succeeded, pending, _ = enroll_users_in_course(
+                        enterprise_customer=enterprise_customer,
+                        course_id=course_run_key,
+                        course_mode=mode,
+                        emails=emails,
+                        enrollment_requester=request.user,
+                        enrollment_reason=enrollment_reason,
+                        discount=discount,
+                        sales_force_id=serializer.validated_data.get('salesforce_id'),
+                        enrollment_client=enrollment_client,
+                    )
+                    if serializer.validated_data.get('notify'):
+                        enterprise_customer.notify_enrolled_learners(
+                            catalog_api_user=request.user,
+                            course_id=course_run_key,
+                            users=succeeded + pending,
+                        )
+
+                    paid_modes = ['verified', 'professional']
+                    if mode in paid_modes:
+                        enrollments = [{
+                            "lms_user_id": success.id,
+                            "email": success.email,
+                            "username": success.username,
+                            "course_run_key": course_run_key,
+                            "discount_percentage": float(discount),
+                            "enterprise_customer_name": enterprise_customer.name,
+                            "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                            "mode": mode,
+                            "sales_force_id": serializer.validated_data.get('salesforce_id'),
+                        } for success in succeeded]
+                        EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
+            return Response(status=HTTP_202_ACCEPTED)
+        return Response(status=HTTP_400_BAD_REQUEST)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
     @list_route(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup])
