@@ -13,15 +13,17 @@ from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
 
 from django.conf import settings
+from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import User
 from django.contrib.messages import constants as messages
 from django.core import mail
-from django.test import Client, TestCase, override_settings
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from consent.models import DataSharingConsent
 from enterprise import admin as enterprise_admin
 from enterprise.admin import (
+    EnterpriseCustomerAdmin,
     EnterpriseCustomerManageLearnerDataSharingConsentView,
     EnterpriseCustomerManageLearnersView,
     EnterpriseCustomerTransmitCoursesView,
@@ -1812,3 +1814,33 @@ class TestEnterpriseCustomerTransmitCoursesViewPost(BaseTestEnterpriseCustomerTr
                 )
             ]
         }
+
+
+class TestEnterpriseCustomerAdmin(TestCase):
+    """
+    Validate the behavior of Enterprise Customer Admin.
+    """
+
+    def setUp(self):
+        """
+        Setup admin site and model admin.
+        """
+        super(TestEnterpriseCustomerAdmin, self).setUp()
+
+        self.site = AdminSite()
+        self.enterprise_customer = EnterpriseCustomerFactory()
+        self.admin = EnterpriseCustomerAdmin(EnterpriseCustomerAdmin.Meta.model, self.site)
+
+    def test_save_model(self):
+        """
+        Validate that the enhancements to save_model functionality work as expected.
+        """
+        request = RequestFactory().get('/admin/enterprise/enterprise-customer')
+        request.user = UserFactory()
+
+        self.admin.save_model(
+            request=request,
+            obj=self.enterprise_customer,
+            form=mock.MagicMock(changed_data={'default_language': 'es-417'}),
+            change=True
+        )

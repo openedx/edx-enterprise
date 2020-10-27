@@ -23,6 +23,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Subquery
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -70,6 +71,16 @@ except ImportError as exception:
     LOGGER.warning("Could not import segment from common.djangoapps.track")
     LOGGER.warning(exception)
     segment = None
+
+try:
+    from openedx.core.djangoapps.user_api.models import UserPreference
+except ImportError:
+    UserPreference = None
+
+try:
+    from openedx.core.djangoapps.lang_pref import LANGUAGE_KEY
+except ImportError:
+    LANGUAGE_KEY = 'pref-lang'
 
 
 class NotConnectedToOpenEdX(Exception):
@@ -1226,4 +1237,35 @@ def delete_tableau_user_by_id(tableau_user_id):
         LOGGER.warning(
             '[TABLEAU USER SYNC] Could not delete the tableau user %s.',
             tableau_user_id,
+        )
+
+
+def unset_language_of_all_enterprise_learners(enterprise_customer):
+    """
+    Unset the language preference of all the learners belonging to the given enterprise customer.
+
+    Arguments:
+        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
+    """
+    if UserPreference:
+        UserPreference.objects.filter(
+            key=LANGUAGE_KEY,
+            user_id__in=Subquery(enterprise_customer.enterprise_customer_users.values('user_id'))
+        ).update(
+            value=None
+        )
+
+
+def unset_enterprise_learner_language(enterprise_customer_user):
+    """
+    Unset the language preference of the given enterprise learners.
+
+    Arguments:
+        enterprise_customer_user (EnterpriseCustomerUser): Instance of the enterprise customer user.
+    """
+    if UserPreference:
+        UserPreference.objects.update_or_create(
+            key=LANGUAGE_KEY,
+            user_id=enterprise_customer_user.user_id,
+            defaults={'value': None}
         )

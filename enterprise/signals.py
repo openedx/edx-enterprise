@@ -32,6 +32,7 @@ from enterprise.utils import (
     delete_tableau_user_by_id,
     get_default_catalog_content_filter,
     track_enrollment,
+    unset_enterprise_learner_language,
 )
 
 try:
@@ -243,6 +244,18 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
         except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
             # Do nothing if no role assignment is present for the enterprise customer user.
             pass
+
+
+@receiver(post_save, sender=EnterpriseCustomerUser)
+def update_learner_language_preference(sender, instance, created, **kwargs):     # pylint: disable=unused-argument
+    """
+    Update the language preference of the learner.
+    Set the language preference to the value enterprise customer has used as the `default_language`.
+    """
+    # Unset the language preference when a new learner is linked with the enterprise customer.
+    # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
+    if created and instance.enterprise_customer.default_language:
+        unset_enterprise_learner_language(instance)
 
 
 @receiver(pre_delete, sender=EnterpriseAnalyticsUser)
