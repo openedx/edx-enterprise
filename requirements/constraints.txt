@@ -36,7 +36,7 @@ responses<0.10.16
 factory-boy<3.0
 
 # pytest version 6.0 causing test failures
-pytest<6.0
+pytest<7.0
 
 # Python 3.5 is dropped in version 5.0
 celery<5.0
