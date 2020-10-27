@@ -4,6 +4,10 @@
 #
 #    make upgrade
 #
+--index-url http://edx.devstack.devpi:3141/root/pypi/+simple/
+--extra-index-url https://pypi.python.org/simple
+--trusted-host edx.devstack.devpi
+
 amqp==2.6.1               # via -r requirements/test-master.txt, kombu
 aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
 attrs==20.2.0             # via pytest
@@ -34,7 +38,7 @@ django-waffle==2.0.0      # via -r requirements/test-master.txt, edx-django-util
 djangorestframework-xml==2.0.0  # via -r requirements/test-master.txt
 djangorestframework==3.9.4  # via -r requirements/test-master.txt, django-config-models, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.17.2           # via -r requirements/test-master.txt, edx-drf-extensions
-edx-django-utils==3.8.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
+edx-django-utils==3.9.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.2.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.1  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.3.3           # via -r requirements/test-master.txt
@@ -45,7 +49,7 @@ faker==4.14.0             # via factory-boy
 freezegun==0.3.14         # via -c requirements/constraints.txt, -r requirements/test.in
 future==0.18.2            # via -r requirements/test-master.txt, pyjwkest
 idna==2.10                # via -r requirements/test-master.txt, requests
-importlib-metadata==2.0.0  # via -r requirements/test-master.txt, kombu, path, pluggy, pytest
+importlib-metadata==2.0.0  # via inflect
 inflect==3.0.2            # via -c requirements/constraints.txt, jinja2-pluralize
 jinja2-pluralize==0.3.0   # via diff-cover
 jinja2==2.11.2            # via -r requirements/test-master.txt, code-annotations, diff-cover, jinja2-pluralize
@@ -54,7 +58,7 @@ jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements
 kombu==4.6.11             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
 mock==3.0.5               # via -c requirements/constraints.txt, -r requirements/test.in
-more-itertools==8.5.0     # via -r requirements/test-master.txt, pytest, zipp
+more-itertools==8.5.0     # via pytest
 newrelic==5.20.1.150      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.4           # via -r requirements/test-master.txt, bleach, pytest
 path.py==12.5.0           # via -r requirements/test-master.txt
@@ -73,8 +77,8 @@ pymongo==3.10.1           # via -r requirements/test-master.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -r requirements/test-master.txt, packaging
 pytest-catchlog==1.2.2    # via -r requirements/test.in
 pytest-cov==2.10.1        # via -r requirements/test.in
-pytest-django==4.0.0      # via -r requirements/test.in
-pytest==5.4.3             # via -c requirements/constraints.txt, pytest-catchlog, pytest-cov, pytest-django
+pytest-django==4.1.0      # via -r requirements/test.in
+pytest==6.1.1             # via -c requirements/constraints.txt, pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensions, faker, freezegun
 python-slugify==4.0.1     # via -r requirements/test-master.txt, code-annotations
 pytz==2020.1              # via -r requirements/test-master.txt, celery, django, edx-tincan-py35
@@ -96,4 +100,4 @@ urllib3==1.25.11          # via -r requirements/test-master.txt, requests
 vine==1.3.0               # via -r requirements/test-master.txt, amqp, celery
 wcwidth==0.2.5            # via pytest
 webencodings==0.5.1       # via -r requirements/test-master.txt, bleach
-zipp==1.0.0               # via -c requirements/constraints.txt, -r requirements/test-master.txt, importlib-metadata
+zipp==1.0.0               # via -c requirements/constraints.txt, importlib-metadata
