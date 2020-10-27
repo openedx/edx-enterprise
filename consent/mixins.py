@@ -2,11 +2,14 @@
 """
 Mixins for edX Enterprise's Consent application.
 """
+import logging
 
 from django.contrib.auth.models import User
 from django.utils.encoding import python_2_unicode_compatible
 
 from enterprise.models import EnterpriseCourseEnrollment
+
+LOGGER = logging.getLogger(__name__)
 
 
 @python_2_unicode_compatible
@@ -42,10 +45,22 @@ class ConsentModelMixin:
         if self.granted:
             return False
 
-        return bool(
+        required = bool(
             (self.enterprise_customer.enforces_data_sharing_consent('at_enrollment')) and
             (self.enterprise_customer.catalog_contains_course(self.course_id))
         )
+
+        if not required and self.enterprise_customer.enforces_data_sharing_consent('at_enrollment'):
+            LOGGER.info(
+                '[ENTERPRISE DSC] Consent not required becuase catalog does not contain course. '
+                'Course: [%s], Username: [%s], Enterprise: [%s], Exists: [%s]',
+                self.course_id,
+                self.username,
+                self.enterprise_customer.uuid,
+                self.exists,
+            )
+
+        return required
 
     @property
     def enterprise_enrollment_exists(self):
