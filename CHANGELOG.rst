@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.9.11]
+--------
+
+* add logs to know if data sharing consent is failing because catalog does not contain the course
+
 [3.9.10]
 --------
 
