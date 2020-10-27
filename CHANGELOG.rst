@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.9.13]
+--------
+
+* Adding Blackboard customization to integrated channel content metadata creation.
+
 [3.9.12]
 --------
 

@@ -22,7 +22,26 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         'course_child_content_metadata': 'course_child_content_metadata',
     }
 
-    DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url}>Go to edX course page</a><br />"
+    DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url}>Go to edX course page</a><br/>"
+    LARGE_DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url} style='font-size:150%'>Go to edX course page</a><br/>"
+
+    COURSE_TITLE_TEMPLATE = '<h1 style="font-size:xxx-large; margin-bottom:0; margin-top:0">{title}</h1>'
+
+    COURSE_DESCRIPTION_TEMPLATE = '<p style="width:60%;">{description}</p>'
+
+    COURSE_CONTENT_IMAGE_TEMPLATE = '<img src={image_url} width="30%" height="25%" border="40px"/>'
+
+    COURSE_CONTENT_BODY_TEMPLATE = '<div><div style="display: inline-block">' \
+                                   '{course_title}{large_description_text}<hr/></div>' \
+                                   '<br/>{course_content_image}' \
+                                   '<br/><br/><br/>{course_description}' \
+                                   '<br/>{description_text}</div>'.format(
+                                       course_title=COURSE_TITLE_TEMPLATE,
+                                       large_description_text=LARGE_DESCRIPTION_TEXT_TEMPLATE,
+                                       course_content_image=COURSE_CONTENT_IMAGE_TEMPLATE,
+                                       course_description=COURSE_DESCRIPTION_TEMPLATE,
+                                       description_text=DESCRIPTION_TEXT_TEMPLATE,
+                                   )
 
     def transform_course_metadata(self, content_metadata_item):
         """
@@ -52,15 +71,15 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         """
         title = content_metadata_item.get('title', None)
         return {
-            'title': title,
+            'title': 'edX Course Details',
             'availability': 'Yes',
             'contentHandler': {
-                'id': 'resource/x-bb-externallink',
-                'url': content_metadata_item.get('enrollment_url', None),
+                'id': 'resource/x-bb-document',
             },
-            'body': '<div>{title}</div><div>{description}</div><img src={image_url} />'.format(
+            'body': self.COURSE_CONTENT_BODY_TEMPLATE.format(
                 title=title,
                 description=content_metadata_item.get('full_description', None),
                 image_url=content_metadata_item.get('image_url', None),
+                enrollment_url=content_metadata_item.get('enrollment_url', None)
             )
         }

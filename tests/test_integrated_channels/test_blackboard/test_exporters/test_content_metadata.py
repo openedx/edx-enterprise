@@ -81,7 +81,7 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
 
     def test_transform_course_child_content_metadata(self):
         content_metadata_item = {
-            'title': 'test title',
+            'title': 'edX Course Details',
             'enrollment_url': 'http://some/enrollment/url/',
             'full_description': 'short desc',
             'image_url': 'image_url',
@@ -92,13 +92,13 @@ class TestBlackboardContentMetadataExporter(unittest.TestCase, EnterpriseMockMix
             'title': content_metadata_item.get('title'),
             'availability': 'Yes',
             'contentHandler': {
-                'id': 'resource/x-bb-externallink',
-                'url': content_metadata_item.get('enrollment_url', None),
+                'id': 'resource/x-bb-document',
             },
-            'body': '<div>{title}</div><div>{description}</div><img src={image_url} />'.format(
+            'body': exporter.COURSE_CONTENT_BODY_TEMPLATE.format(
                 title=content_metadata_item.get('title'),
                 description=content_metadata_item.get('full_description', None),
                 image_url=content_metadata_item.get('image_url', None),
+                enrollment_url=content_metadata_item.get('enrollment_url', None),
             )
         }
         assert description == expected_description
