@@ -1297,24 +1297,40 @@ class CourseEnrollmentView(NonAtomicView):
         """
         modes = EnrollmentApiClient().get_course_modes(course_run_id)
         if not modes:
-            LOGGER.warning('[Enterprise Enrollment] Unable to get course modes. '
-                           'CourseRun: {course_run_id}'.format(course_run_id=course_run_id))
-            messages.add_generic_info_message_for_error(request)
+            error_code = 'ENTCEV000'
+            LOGGER.warning(
+                '[Enterprise Enrollment] Unable to get course modes. '
+                'ErrorCode: {error_code}, '
+                'CourseRun: {course_run_id}, '
+                'Username: {username}, '
+                'EnterpruseCatalog: {enterprise_catalog}'.format(
+                    error_code=error_code,
+                    course_run_id=course_run_id,
+                    username=request.user.username,
+                    enterprise_catalog=enterprise_catalog,
+                )
+            )
+            messages.add_generic_error_message_with_code(request, error_code)
 
         if enterprise_catalog:
             # filter and order course modes according to the enterprise catalog
             modes = [mode for mode in modes if mode['slug'] in enterprise_catalog.enabled_course_modes]
             modes.sort(key=lambda course_mode: enterprise_catalog.enabled_course_modes.index(course_mode['slug']))
             if not modes:
+                error_code = 'ENTCEV001'
                 LOGGER.info(
                     '[Enterprise Enrollment] Matching course modes were not found in EnterpriseCustomerCatalog. '
+                    'ErrorCode: {error_code}, '
                     'CourseRun: {course_run_id}, '
+                    'Username: {username}, '
                     'EnterpriseCatalog: {enterprise_catalog_uuid}'.format(
+                        error_code=error_code,
                         course_run_id=course_run_id,
+                        username=request.user.username,
                         enterprise_catalog_uuid=enterprise_catalog,
                     )
                 )
-                messages.add_generic_info_message_for_error(request)
+                messages.add_generic_error_message_with_code(request, error_code)
 
         return modes
 
@@ -1339,13 +1355,22 @@ class CourseEnrollmentView(NonAtomicView):
                     uuid=enterprise_catalog_uuid
                 )
             except (ValueError, EnterpriseCustomerCatalog.DoesNotExist):
+                error_code = 'ENTCEV002'
                 LOGGER.warning(
                     '[Enterprise Enrollment] EnterpriseCustomerCatalog does not exist. '
-                    'EnterpriseCatalog: {enterprise_catalog_uuid}'.format(
+                    'ErrorCode: {error_code}, '
+                    'EnterpriseCatalog: {enterprise_catalog_uuid}, '
+                    'EnterpriseCustomer: {enterprise_uuid}, '
+                    'CourseRun: {course_run_id}, '
+                    'Username: {username}.'.format(
+                        error_code=error_code,
                         enterprise_catalog_uuid=enterprise_catalog_uuid,
+                        enterprise_uuid=enterprise_uuid,
+                        course_run_id=course_run_id,
+                        username=request.user.username,
                     )
                 )
-                messages.add_generic_info_message_for_error(request)
+                messages.add_generic_error_message_with_code(request, error_code)
 
         course = None
         course_run = None
@@ -1358,13 +1383,26 @@ class CourseEnrollmentView(NonAtomicView):
                     enterprise_customer.site
                 ).get_course_and_course_run(course_run_id)
             except ImproperlyConfigured:
-                LOGGER.warning('[Enterprise Enrollment] CourseCatalogApiServiceClient is improperly configured. '
-                               'Site: {enterprise_customer_site}'.format(
-                                   enterprise_customer_site=enterprise_customer.site.domain))
-                messages.add_generic_info_message_for_error(request)
+                error_code = 'ENTCEV003'
+                LOGGER.warning(
+                    '[Enterprise Enrollment] CourseCatalogApiServiceClient is improperly configured. '
+                    'ErrorCode: {error_code}, '
+                    'Site: {enterprise_customer_site} '
+                    'EnterpriseCustomer: {enterprise_uuid}, '
+                    'CourseRun: {course_run_id}, '
+                    'Username: {username}.'.format(
+                        enterprise_customer_site=enterprise_customer.site.domain,
+                        error_code=error_code,
+                        enterprise_uuid=enterprise_uuid,
+                        course_run_id=course_run_id,
+                        username=request.user.username,
+                    )
+                )
+                messages.add_generic_error_message_with_code(request, error_code)
                 return enterprise_customer, course, course_run, course_modes
 
         if not course or not course_run:
+            error_code = 'ENTCEV004'
             course_id = course['key'] if course else "Not Found"
             course_title = course['title'] if course else "Not Found"
             course_run_title = course_run['title'] if course_run else "Not Found"
@@ -1374,25 +1412,29 @@ class CourseEnrollmentView(NonAtomicView):
             # discovery service.
             LOGGER.warning(
                 '[Enterprise Enrollment] Failed to fetch details for course or course run. '
+                'ErrorCode: {error_code}, '
                 'Course: {course_id}, '
                 'CourseRun: {course_run_id}, '
                 'CourseRunTitle: {course_run_title}, '
                 'CourseTitle: {course_title}, '
+                'Username: {username}, '
                 'EnterpriseCatalog: {enterprise_catalog_uuid}, '
                 'EnterpriseCatalogTitle: {enterprise_catalog_title}, '
                 'EnterpriseCustomer: {enterprise_uuid}, '
                 'EnterpriseName: {enterprise_name}'.format(
+                    error_code=error_code,
                     course_title=course_title,
                     course_id=course_id,
                     course_run_title=course_run_title,
                     course_run_id=course_run_id,
+                    username=request.user.username,
                     enterprise_name=enterprise_customer.name,
                     enterprise_uuid=enterprise_customer.uuid,
                     enterprise_catalog_title=enterprise_catalog_title,
                     enterprise_catalog_uuid=enterprise_catalog_uuid,
                 )
             )
-            messages.add_generic_info_message_for_error(request)
+            messages.add_generic_error_message_with_code(request, error_code)
             return enterprise_customer, course, course_run, course_modes
 
         if enterprise_catalog_uuid and not enterprise_catalog:
