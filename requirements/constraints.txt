@@ -32,8 +32,7 @@ freezegun==0.3.14
 # version 0.10.16 is having version conflict in make upgrade
 responses<0.10.16
 
-# version 3.0 is causing test failures
-factory-boy<3.0
+factory-boy<4.0
 
 # pytest version 6.0 causing test failures
 pytest<7.0
