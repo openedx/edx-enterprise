@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.9.12]
+--------
+
+* change username with user_id for tableau trusted authentication and tableau user creation.
+
 [3.9.11]
 --------
 
