@@ -34,7 +34,7 @@ django-waffle==2.0.0      # via -r requirements/test-master.txt, edx-django-util
 djangorestframework-xml==2.0.0  # via -r requirements/test-master.txt
 djangorestframework==3.9.4  # via -r requirements/test-master.txt, django-config-models, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.17.2           # via -r requirements/test-master.txt, edx-drf-extensions
-edx-django-utils==3.8.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
+edx-django-utils==3.9.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.2.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.1  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.3.3           # via -r requirements/test-master.txt
@@ -45,7 +45,7 @@ faker==4.14.0             # via factory-boy
 freezegun==0.3.14         # via -c requirements/constraints.txt, -r requirements/test.in
 future==0.18.2            # via -r requirements/test-master.txt, pyjwkest
 idna==2.10                # via -r requirements/test-master.txt, requests
-importlib-metadata==2.0.0  # via -r requirements/test-master.txt, kombu, path, pluggy, pytest
+importlib-metadata==1.7.0  # via -r requirements/test-master.txt, kombu, path, pluggy, pytest
 inflect==3.0.2            # via -c requirements/constraints.txt, jinja2-pluralize
 jinja2-pluralize==0.3.0   # via diff-cover
 jinja2==2.11.2            # via -r requirements/test-master.txt, code-annotations, diff-cover, jinja2-pluralize
@@ -59,6 +59,7 @@ newrelic==5.20.1.150      # via -r requirements/test-master.txt, edx-django-util
 packaging==20.4           # via -r requirements/test-master.txt, bleach, pytest
 path.py==12.5.0           # via -r requirements/test-master.txt
 path==13.1.0              # via -r requirements/test-master.txt, path.py
+pathlib2==2.3.5           # via pytest
 pbr==5.5.1                # via -r requirements/test-master.txt, stevedore
 pillow==7.2.0             # via -r requirements/test-master.txt
 pluggy==0.13.1            # via diff-cover, pytest
@@ -66,14 +67,14 @@ psutil==5.7.2             # via -r requirements/test-master.txt, edx-django-util
 py==1.9.0                 # via pytest, pytest-catchlog
 pycparser==2.20           # via -r requirements/test-master.txt, cffi
 pycryptodomex==3.9.8      # via -r requirements/test-master.txt, pyjwkest
-pygments==2.7.1           # via diff-cover
+pygments==2.7.2           # via diff-cover
 pyjwkest==1.4.2           # via -r requirements/test-master.txt, edx-drf-extensions
 pyjwt[crypto]==1.7.1      # via -r requirements/test-master.txt, drf-jwt, edx-rest-api-client
 pymongo==3.10.1           # via -r requirements/test-master.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -r requirements/test-master.txt, packaging
 pytest-catchlog==1.2.2    # via -r requirements/test.in
 pytest-cov==2.10.1        # via -r requirements/test.in
-pytest-django==4.0.0      # via -r requirements/test.in
+pytest-django==4.1.0      # via -r requirements/test.in
 pytest==5.4.3             # via -c requirements/constraints.txt, pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensions, faker, freezegun
 python-slugify==4.0.1     # via -r requirements/test-master.txt, code-annotations
