@@ -11,6 +11,7 @@ from faker import Factory as FakerFactory
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.contrib.sites.models import Site
 from django.utils import timezone
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
@@ -52,6 +53,14 @@ from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XA
 FAKER = FakerFactory.create()
 
 
+@factory.django.mute_signals(pre_save, post_save)
+class BaseModelFactoryNoSignals(factory.django.DjangoModelFactory):
+    """
+    Base DjangoModelFactory with signals turned off for use in unit tests.
+    As of pytest 6, factoryboy mocks seems to not turn off signals automatically?
+    """
+
+
 # pylint: disable=no-member
 # pylint: disable=invalid-name
 class SiteFactory(factory.django.DjangoModelFactory):
@@ -71,7 +80,7 @@ class SiteFactory(factory.django.DjangoModelFactory):
     name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
-class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
+class EnterpriseCustomerFactory(BaseModelFactoryNoSignals):
     """
     EnterpriseCustomer factory.
 
@@ -329,7 +338,7 @@ class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactor
     is_revoked = False
 
 
-class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
+class EnterpriseCustomerCatalogFactory(BaseModelFactoryNoSignals):
     """
     EnterpriseCustomerCatalog factory.
 
