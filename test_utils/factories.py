@@ -80,7 +80,7 @@ class SiteFactory(factory.django.DjangoModelFactory):
     name = factory.LazyAttribute(lambda x: FAKER.company())
 
 
-class EnterpriseCustomerFactory(BaseModelFactoryNoSignals):
+class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     """
     EnterpriseCustomer factory.
 
@@ -338,7 +338,15 @@ class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactor
     is_revoked = False
 
 
-class EnterpriseCustomerCatalogFactory(BaseModelFactoryNoSignals):
+def enterprise_customer_catalog_factory_no_signals(*args, **kwargs):
+    """
+    Returns a context wrapped version of EnterpriseCustomerCatalogFactory with signals turned off
+    """
+    with factory.django.mute_signals(pre_save, post_save):
+        return EnterpriseCustomerCatalogFactory(*args, **kwargs)
+
+
+class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
     """
     EnterpriseCustomerCatalog factory.
 

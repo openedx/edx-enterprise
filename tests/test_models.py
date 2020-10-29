@@ -225,7 +225,7 @@ class TestEnterpriseCustomer(unittest.TestCase):
         Test EnterpriseCustomer.catalog_contains_course with a related EnterpriseCustomerCatalog.
         """
         enterprise_customer = factories.EnterpriseCustomerFactory()
-        factories.EnterpriseCustomerCatalogFactory(enterprise_customer=enterprise_customer)
+        factories.enterprise_customer_catalog_factory_no_signals(enterprise_customer=enterprise_customer)
 
         # Test when content is in the enterprise customer's catalog(s)
         api_client_mock.return_value.enterprise_contains_content_items.return_value = True
@@ -1172,7 +1172,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_customer_catalog = factories.enterprise_customer_catalog_factory_no_signals()
         assert enterprise_customer_catalog.get_course_and_course_run('fake-course-run-id') == (None, None)
 
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
@@ -1182,7 +1182,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_customer_catalog = factories.enterprise_customer_catalog_factory_no_signals()
         assert enterprise_customer_catalog.get_course_run('fake-course-run-id') is None
 
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
@@ -1192,7 +1192,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_customer_catalog = factories.enterprise_customer_catalog_factory_no_signals()
         assert enterprise_customer_catalog.get_course('fake-course-id') is None
 
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
@@ -1202,7 +1202,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         """
         api_client_mock.return_value.contains_content_items.return_value = False
 
-        enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_customer_catalog = factories.enterprise_customer_catalog_factory_no_signals()
         assert enterprise_customer_catalog.get_program('fake-uuid') is None
 
     @factory.django.mute_signals(pre_save, post_save)  # needed as of pytest 6 to turn off signals that fail the test
@@ -1260,7 +1260,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         the discovery service API
         """
         mock_catalog_api = mock_catalog_api_class.return_value
-        enterprise_catalog = factories.EnterpriseCustomerCatalogFactory()
+        enterprise_catalog = factories.enterprise_customer_catalog_factory_no_signals()
         enterprise_catalog.get_paginated_content(QueryDict())
         default_catalog_content_filter = get_default_catalog_content_filter()
         query_param = {"exclude_expired_course_run": True}
