@@ -10,7 +10,7 @@ from faker import Factory as FakerFactory
 
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.contrib.sites.models import Site
-from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
+from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
