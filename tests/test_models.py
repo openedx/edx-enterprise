@@ -10,6 +10,7 @@ import shutil
 import unittest
 
 import ddt
+import factory
 import mock
 from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
@@ -21,6 +22,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files import File
 from django.core.files.storage import Storage
+from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.db.utils import IntegrityError
 from django.http import QueryDict
 from django.test.testcases import TransactionTestCase
@@ -1203,6 +1205,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_customer_catalog = factories.EnterpriseCustomerCatalogFactory()
         assert enterprise_customer_catalog.get_program('fake-uuid') is None
 
+    @factory.django.mute_signals(pre_save, post_save)  # needed as of pytest 6 to turn of signals that fail the test
     def test_title_length(self):
         """
         Test `EnterpriseCustomerCatalog.title` field can take 255 characters.
@@ -1210,6 +1213,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         faker = FakerFactory.create()
         uuid = faker.uuid4()  # pylint: disable=no-member
         title = faker.text(max_nb_chars=255)  # pylint: disable=no-member
+
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=uuid,
             enterprise_customer=factories.EnterpriseCustomerFactory(),
@@ -1218,6 +1222,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         enterprise_catalog.save()
         assert EnterpriseCustomerCatalog.objects.get(uuid=uuid).title == title
 
+    @factory.django.mute_signals(pre_save, post_save)  # needed as of pytest 6 to turn of signals that fail the test
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_get_paginated_content_uses_total_count_from_response(self, mock_catalog_api_class):
         """
@@ -1237,6 +1242,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         faker = FakerFactory.create()
         uuid = faker.uuid4()  # pylint: disable=no-member
         title = faker.text(max_nb_chars=255)  # pylint: disable=no-member
+
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=uuid,
             enterprise_customer=factories.EnterpriseCustomerFactory(),
@@ -1274,6 +1280,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         mock_catalog_api.get_catalog_results.return_value = {}
         assert catalog.contains_programs([fake_catalog_api.FAKE_PROGRAM_RESPONSE1['uuid']]) is False
 
+    @factory.django.mute_signals(pre_save, post_save)  # needed as of pytest 6 to turn of signals that fail the test
     def test_get_content_filter(self):
         """
         Test `get_content_filter` method of `EnterpriseCustomerCatalog` model should return content filter
