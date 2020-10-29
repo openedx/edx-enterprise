@@ -8,6 +8,7 @@ import random
 import unittest
 
 import pytest
+import responses
 from requests.models import Response
 
 from integrated_channels.blackboard.apps import CHANNEL_NAME, VERBOSE_NAME
@@ -118,7 +119,6 @@ class TestBlackboardApiClient(unittest.TestCase):
 
     def test_update_content_metadata_success(self):  # pylint: disable=protected-access
         client = self._create_new_mock_client()
-        bb_course_id = 'test_course_id'
         content_metadata = {
             'externalId': 'a-course-id',
             'course_metadata': 'test course metadata'
@@ -127,7 +127,7 @@ class TestBlackboardApiClient(unittest.TestCase):
         success_response = unittest.mock.Mock(spec=Response)
         success_response.status_code = 200
         success_response.text = 'hooray'
-        success_response.json.return_value = {'id': bb_course_id}
+        success_response.json.return_value = {'id': self.blackboard_course_id}
 
         course_content_success_response = unittest.mock.Mock(spec=Response)
         course_content_success_response.status_code = 200
@@ -239,3 +239,135 @@ class TestBlackboardApiClient(unittest.TestCase):
             self.user_email,
             self.learner_data_payload
         ) == (SUCCESSFUL_RESPONSE.status_code, expected_success_body)
+
+    def test_content_customization_failure(self):
+        """
+        Test that when content customization for either update and create, fails, we
+        properly log and handle the clean up.
+        """
+        client = self._create_new_mock_client()
+        client._create_session()  # pylint: disable=protected-access
+        content_metadata = {
+            'course_content_metadata': {'test': 'a-course-id'}
+        }
+
+        successful_response = unittest.mock.Mock(spec=Response)
+        successful_response.status_code = 200
+        successful_response.text = 'course deleted'
+        successful_response.json.return_value = {}
+
+        client.delete_course_from_blackboard = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='delete blackboard course',
+            return_value=successful_response
+        )
+
+        content_url = client.generate_create_course_content_url(self.blackboard_course_id)
+        with responses.RequestsMock() as rsps:
+            # Stub the content creation request to fail
+            rsps.add(
+                responses.POST,
+                content_url,
+                json={'error': 'something went wrong'},
+                status=400
+            )
+
+            with pytest.raises(ClientError) as client_error:
+                client.create_integration_content_for_course(self.blackboard_course_id, content_metadata)
+                assert client_error.value.message == 'Something went wrong while creating course content object on ' \
+                                                     'Blackboard. Could not retrieve content ID and received error' \
+                                                     ' response={}. Deleted course with response (status_code={},' \
+                                                     ' body={})'.format(
+                                                         client_error.message,
+                                                         successful_response.status_code,
+                                                         successful_response.text
+                                                     )
+
+                # Assert that the client attempted to delete the course.
+                client.delete_course_from_blackboard.assert_called_with(self.blackboard_course_id)
+
+            with pytest.raises(ClientError) as client_error:
+                client.update_integration_content_for_course(self.blackboard_course_id, content_metadata)
+                assert client_error.value.message == 'Something went wrong while creating course content object on ' \
+                                                     'Blackboard. Could not retrieve content ID and received error ' \
+                                                     'response={}.'.format(
+                                                         client_error.message
+                                                     )
+
+                # Assert that the client made no attempt to delete anything.
+                assert not client.delete_course_from_blackboard.called
+                assert not client.delete_course_content_from_blackboard.called
+
+    def test_content_child_customization_failure(self):
+        """
+        Test that when content child customization for either update and create, fails, we
+        properly log and handle the clean up.
+        """
+        client = self._create_new_mock_client()
+        client._create_session()  # pylint: disable=protected-access
+        bb_content_id = 'test_bb_content_id'
+        content_metadata = {
+            'course_content_metadata': {'test': 'a-course-id'}
+        }
+
+        successful_response = unittest.mock.Mock(spec=Response)
+        successful_response.status_code = 200
+        successful_response.text = 'delete request successful'
+        successful_response.json.return_value = {}
+
+        client.delete_course_from_blackboard = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='delete blackboard course',
+            return_value=successful_response
+        )
+
+        client.delete_course_content_from_blackboard = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name='delete blackboard content',
+            return_value=successful_response
+        )
+
+        content_url = client.generate_create_course_content_url(self.blackboard_course_id)
+        content_child_url = client.generate_create_course_content_child_url(self.blackboard_course_id, bb_content_id)
+        with responses.RequestsMock() as rsps:
+            # Stub the content request to be successful
+            rsps.add(
+                responses.POST,
+                content_url,
+                json={'id': bb_content_id},
+                status=200
+            )
+
+            # Stub the content child request to fail
+            rsps.add(
+                responses.POST,
+                content_child_url,
+                json={'error': 'something went wrong'},
+                status=400
+            )
+
+            with pytest.raises(ClientError) as client_error:
+                client.create_integration_content_for_course(self.blackboard_course_id, content_metadata)
+                assert client_error.value.message == 'Something went wrong while creating course content object on ' \
+                                                     'Blackboard. Could not retrieve content child ID and received ' \
+                                                     'error response={}. Deleted associated course and content with ' \
+                                                     'response (status_code={}, body={})'.format(
+                                                         client_error.message,
+                                                         successful_response.status_code,
+                                                         successful_response.text
+                                                     )
+
+                # Assert that the client attempted to delete the entire course
+                client.delete_course_from_blackboard.assert_called_with(self.blackboard_course_id, bb_content_id)
+
+            with pytest.raises(ClientError) as client_error:
+                client.update_integration_content_for_course(self.blackboard_course_id, content_metadata)
+                assert client_error.value.message == 'Something went wrong while creating course content object on' \
+                                                     ' Blackboard. Could not retrieve content ID and received error ' \
+                                                     'response={}.'.format(
+                                                         client_error.message
+                                                     )
+
+                # Assert that the client attempted to delete the content child and NOT the whole course.
+                client.delete_course_content_from_blackboard.assert_called_with(
+                    self.blackboard_course_id,
+                    bb_content_id
+                )
+                assert not client.delete_course_from_blackboard.called

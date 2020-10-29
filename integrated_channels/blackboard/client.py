@@ -130,7 +130,10 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             course_content_delete_url = self.generate_course_content_delete_url(bb_course_id, bb_content_id)
             self._delete(course_content_delete_url)
 
-        course_updated_response = self.create_integration_content_for_course(bb_course_id, channel_metadata_item)
+        course_updated_response = self.update_integration_content_for_course(
+            bb_course_id,
+            channel_metadata_item,
+        )
 
         return course_updated_response.status_code, course_updated_response.text
 
@@ -560,18 +563,28 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
 
         return grade_column_id
 
+    def delete_course_content_from_blackboard(self, bb_course_id, bb_content_id):
+        """
+        Error handling Helper method that will delete any successful content posts that occurred during
+        the error'd transmission.
+        """
+        delete_course_content_url = urljoin(
+            self.enterprise_configuration.blackboard_base_url,
+            COURSE_CONTENT_DELETE_PATH.format(course_id=bb_course_id, content_id=bb_content_id),
+        )
+        resp = self._delete(delete_course_content_url)
+        return resp
+
     def delete_course_from_blackboard(self, bb_course_id, bb_content_id=None):
         """
-        Error handling Helper method that will delete any previously successful posts that occurred previously during
-        the current transmission.
+        Error handling Helper method that will delete any already made, successful post requests that occurred during
+        the content creation flow.
         """
+        # Remove the content if it exists
         if bb_content_id:
-            delete_course_content_url = urljoin(
-                self.enterprise_configuration.blackboard_base_url,
-                COURSE_CONTENT_DELETE_PATH.format(course_id=bb_course_id, content_id=bb_content_id),
-            )
-            self._delete(delete_course_content_url)
+            self.delete_course_content_from_blackboard(bb_course_id, bb_content_id)
 
+        # Remove the course
         delete_course_path = urljoin(
             self.enterprise_configuration.blackboard_base_url,
             COURSE_V3_PATH.format(course_id=bb_course_id),
@@ -579,23 +592,75 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         resp = self._delete(delete_course_path)
         return resp
 
-    def create_integration_content_for_course(self, bb_course_id, channel_metadata_item):
+    def update_integration_content_for_course(self, bb_course_id, channel_metadata_item):
         """
-        Helper method to generate the default blackboard course content page with the integration custom information.
+        Helper method to update the blackboard course content page with the integration custom information.
+        Differs from course customization creation in that we don't delete the course if things fail.
         """
         content_url = self.generate_create_course_content_url(bb_course_id)
+        error_message = ''
         try:
             content_resp = self._post(content_url, channel_metadata_item.get('course_content_metadata'))
             bb_content_id = content_resp.json().get('id')
         except ClientError as error:
             bb_content_id = None
+            error_message = ' and received error response={}'.format(error.message)
+
+        if not bb_content_id:
+            error_message = '' if not error_message else error_message
+            raise ClientError(
+                'Something went wrong while creating course content object on Blackboard. Could not retrieve content '
+                'ID{}.'.format(error_message),
+                HTTPStatus.NOT_FOUND.value
+            )
+
+        try:
+            content_child_url = self.generate_create_course_content_child_url(bb_course_id, bb_content_id)
+            course_fully_created_response = self._post(
+                content_child_url, channel_metadata_item.get('course_child_content_metadata')
+            )
+            content_child_id = course_fully_created_response.json().get('id')
+        except ClientError as error:
+            content_child_id = None
+            error_message = ' and received error response={}'.format(error.message)
+
+        if not content_child_id:
+            error_message = '' if not error_message else error_message
+            error_handling_response = self.delete_course_content_from_blackboard(bb_course_id, bb_content_id)
+
+            raise ClientError(
+                'Something went wrong while creating course content child object on Blackboard. Could not retrieve a '
+                'content child ID and got error response={}. Deleted associated course content shell with response: '
+                '(status_code={}, body={})'.format(
+                    error_message,
+                    error_handling_response.status_code,
+                    error_handling_response.text
+                ),
+                HTTPStatus.NOT_FOUND.value
+            )
+
+        return course_fully_created_response
+
+    def create_integration_content_for_course(self, bb_course_id, channel_metadata_item):
+        """
+        Helper method to generate the default blackboard course content page with the integration custom information.
+        """
+        content_url = self.generate_create_course_content_url(bb_course_id)
+        error_message = ''
+        try:
+            content_resp = self._post(content_url, channel_metadata_item.get('course_content_metadata'))
+            bb_content_id = content_resp.json().get('id')
+        except ClientError as error:
+            bb_content_id = None
+            error_message = ' and received error response={}'.format(error.message)
 
         if not bb_content_id:
             error_handling_response = self.delete_course_from_blackboard(bb_course_id)
+            error_message = '' if not error_message else error_message
             raise ClientError(
-                'Something went wrong while creating course content object on Blackboard. Could not retrieve content ID'
-                'and received error response={}. Deleted course with response (status_code={}, body={})'.format(
-                    error.message,
+                'Something went wrong while creating course content object on Blackboard. Could not retrieve content '
+                'ID{}. Deleted course with response (status_code={}, body={})'.format(
+                    error_message,
                     error_handling_response.status_code,
                     error_handling_response.text
                 ),
@@ -610,14 +675,16 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             content_child_id = course_fully_created_response.json().get('id')
         except ClientError as error:
             content_child_id = None
+            error_message = ' and received error response={}'.format(error.message)
 
         if not content_child_id:
+            error_message = '' if not error_message else error_message
             error_handling_response = self.delete_course_from_blackboard(bb_course_id, bb_content_id)
             raise ClientError(
                 'Something went wrong while creating course content child object on Blackboard. Could not retrieve a '
                 'content child ID and got error response={}. Deleted associated course and content with response: '
                 '(status_code={}, body={})'.format(
-                    error.message,
+                    error_message,
                     error_handling_response.status_code,
                     error_handling_response.text
                 ),
