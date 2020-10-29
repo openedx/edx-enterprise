@@ -1266,6 +1266,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         query_param = {"exclude_expired_course_run": True}
         mock_catalog_api.get_catalog_results.assert_called_with(default_catalog_content_filter, query_param)
 
+    @factory.django.mute_signals(pre_save, post_save)  # needed as of pytest 6 to turn of signals that fail the test
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_contains_programs(self, mock_catalog_api_class):
         """
@@ -1315,6 +1316,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
             'error': ["Content filter 'key' must contain values of type <class 'str'>"]
         }
     )
+    @factory.django.mute_signals(pre_save, post_save)  # needed as of pytest 6 to turn of signals that fail the test
     @ddt.unpack
     def test_save_content_filter_fail(self, content_filter, error):
         fail_catalog = factories.EnterpriseCustomerCatalogFactory(content_filter=content_filter)
