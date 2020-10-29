@@ -1449,7 +1449,7 @@ def get_platform_logo_url():
     ) if get_logo_url else 'http://fake.url'
 
 
-def create_tableau_user(username, enterprise_customer_user):
+def create_tableau_user(user_id, enterprise_customer_user):
     """
     Create the user in tableau and store the tableau user in the EnterpriseAnalyticsUser model.
     """
@@ -1459,7 +1459,7 @@ def create_tableau_user(username, enterprise_customer_user):
         enterprise_uuid = enterprise_customer_user.enterprise_customer.uuid
         try:
             with server.auth.sign_in(tableau_auth):
-                user_item = TSC.UserItem(username, TSC.UserItem.Roles.Viewer)
+                user_item = TSC.UserItem(user_id, TSC.UserItem.Roles.Viewer)
                 user = server.users.add(user_item)
                 EnterpriseAnalyticsUser.objects.get_or_create(
                     enterprise_customer_user=enterprise_customer_user,
@@ -1469,12 +1469,12 @@ def create_tableau_user(username, enterprise_customer_user):
         except ServerResponseError as exc:
             LOGGER.error(
                 '[TABLEAU USER SYNC] Could not sync enterprise admin user %s in tableau.'
-                'Server returned: %s', username, str(exc),
+                'Server returned: %s', user_id, str(exc),
             )
     else:
         LOGGER.warning(
             '[TABLEAU USER SYNC] Could not create user %s in tableau.',
-            username,
+            user_id,
         )
 
 

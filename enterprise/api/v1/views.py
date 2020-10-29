@@ -1023,7 +1023,7 @@ class TableauAuthViewSet(generics.GenericAPIView):
         Get the auth token against logged in user from tableau
         """
         url = settings.TABLEAU_URL + '/trusted'
-        payload = {'username': request.user.username}
+        payload = {'username': request.user.id}
         files = []
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
