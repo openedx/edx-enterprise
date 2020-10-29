@@ -10,8 +10,8 @@ from faker import Factory as FakerFactory
 
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.contrib.sites.models import Site
-from django.utils import timezone
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
+from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
 from enterprise.models import (
@@ -338,17 +338,27 @@ class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactor
     is_revoked = False
 
 
-def enterprise_customer_catalog_factory_no_signals(*args, **kwargs):
-    """
-    Returns a context wrapped version of EnterpriseCustomerCatalogFactory with signals turned off
-    """
-    with factory.django.mute_signals(pre_save, post_save):
-        return EnterpriseCustomerCatalogFactory(*args, **kwargs)
-
-
-class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
+class EnterpriseCustomerCatalogFactoryWithSignals(factory.django.DjangoModelFactory):
     """
     EnterpriseCustomerCatalog factory.
+
+    Creates an instance of EnterpriseCustomerCatalog with minimal boilerplate.
+    """
+
+    class Meta:
+        """
+        Meta for EnterpriseCustomerCatalog.
+        """
+
+        model = EnterpriseCustomerCatalog
+
+    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+
+
+class EnterpriseCustomerCatalogFactory(BaseModelFactoryNoSignals):
+    """
+    EnterpriseCustomerCatalog factory with signals muted.
 
     Creates an instance of EnterpriseCustomerCatalog with minimal boilerplate.
     """
