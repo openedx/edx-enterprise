@@ -76,7 +76,7 @@ pyparsing==2.4.7          # via -r requirements/test-master.txt, packaging
 pytest-catchlog==1.2.2    # via -r requirements/test.in
 pytest-cov==2.10.1        # via -r requirements/test.in
 pytest-django==4.1.0      # via -r requirements/test.in
-pytest==6.1.1             # via -c requirements/constraints.txt, pytest-catchlog, pytest-cov, pytest-django
+pytest==6.1.2             # via -c requirements/constraints.txt, pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensions, faker, freezegun
 python-slugify==4.0.1     # via -r requirements/test-master.txt, code-annotations
 pytz==2020.1              # via -r requirements/test-master.txt, celery, django, edx-tincan-py35

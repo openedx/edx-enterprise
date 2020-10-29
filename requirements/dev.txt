@@ -103,7 +103,7 @@ pyparsing==2.4.7          # via -r requirements/doc.txt, -r requirements/test-ma
 pytest-catchlog==1.2.2    # via -r requirements/test.txt
 pytest-cov==2.10.1        # via -r requirements/test.txt
 pytest-django==4.1.0      # via -r requirements/test.txt
-pytest==6.1.1             # via -c requirements/constraints.txt, -r requirements/test.txt, pytest-catchlog, pytest-cov, pytest-django
+pytest==6.1.2             # via -c requirements/constraints.txt, -r requirements/test.txt, pytest-catchlog, pytest-cov, pytest-django
 python-dateutil==2.4.0    # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, edx-drf-extensions, faker, freezegun
 python-slugify==4.0.1     # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, code-annotations
 pytz==2020.1              # via -r requirements/doc.txt, -r requirements/test-master.txt, -r requirements/test.txt, babel, celery, django, edx-tincan-py35
