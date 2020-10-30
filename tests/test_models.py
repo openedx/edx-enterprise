@@ -10,7 +10,6 @@ import shutil
 import unittest
 
 import ddt
-import factory
 import mock
 from edx_rest_api_client.exceptions import HttpClientError
 from faker import Factory as FakerFactory
