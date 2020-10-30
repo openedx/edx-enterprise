@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.10.0]
+--------
+
+* Tests only: upgrade to pytest 6+ and factoryboy 3+ to bring up to date with edx-platform.
+
 [3.9.13]
 --------
 
