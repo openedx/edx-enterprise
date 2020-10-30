@@ -331,7 +331,9 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
         else:
             response = catalog_client.get_enterprise_catalog(catalog_uuid=catalog_uuid)
     except NotConnectedToOpenEdX as exc:
-        logger.exception('Unable to update Enterprise Catalog {}'.format(str(catalog_uuid)))
+        logger.exception(
+            'Unable to update Enterprise Catalog {}'.format(str(catalog_uuid)), exc_info=exc
+        )
     else:
         if not response:
             # catalog with matching uuid does NOT exist in enterprise-catalog
@@ -369,7 +371,10 @@ def delete_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
         catalog_client = EnterpriseCatalogApiClient()
         catalog_client.delete_enterprise_catalog(catalog_uuid)
     except NotConnectedToOpenEdX as exc:
-        logger.exception('Unable to delete Enterprise Catalog {}'.format(str(catalog_uuid)), exc)
+        logger.exception(
+            'Unable to delete Enterprise Catalog {}'.format(str(catalog_uuid)),
+            exc_info=exc
+        )
 
 
 def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
