@@ -28,7 +28,6 @@ from enterprise.signals import create_enterprise_enrollment_receiver, handle_use
 from test_utils.factories import (
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
-    EnterpriseCustomerCatalogFactoryWithSignals,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
     PendingEnrollmentFactory,
@@ -245,7 +244,7 @@ class TestDefaultContentFilter(unittest.TestCase):
         Test that `EnterpriseCustomerCatalog`.content_filter is saved with correct default content filter.
         """
         with override_settings(ENTERPRISE_CUSTOMER_CATALOG_DEFAULT_CONTENT_FILTER=default_content_filter):
-            enterprise_catalog = EnterpriseCustomerCatalogFactoryWithSignals()
+            enterprise_catalog = EnterpriseCustomerCatalogFactory()
             assert enterprise_catalog.content_filter == expected_content_filter
 
 
@@ -784,7 +783,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_delete_catalog(self, api_client_mock):
-        enterprise_catalog = EnterpriseCustomerCatalogFactoryWithSignals()
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
         enterprise_catalog_uuid = enterprise_catalog.uuid
         api_client_mock.return_value.get_enterprise_catalog.return_value = True
         enterprise_catalog.delete()
@@ -796,7 +795,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_create_catalog(self, api_client_mock):
         api_client_mock.return_value.get_enterprise_catalog.return_value = {}
-        enterprise_catalog = EnterpriseCustomerCatalogFactoryWithSignals()
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
 
         # Verify the API was called and the catalog "was created" (even though it already was)
         # This method is a little weird in that the object is sort of created / not-created at the same time
@@ -812,7 +811,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_update_catalog_without_existing_service_catalog(self, api_client_mock):
-        enterprise_catalog = EnterpriseCustomerCatalogFactoryWithSignals()
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
         api_client_mock.return_value.get_enterprise_catalog.return_value = {}
 
         enterprise_catalog.title = 'New title'
@@ -831,7 +830,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_update_catalog_with_existing_service_catalog(self, api_client_mock):
-        enterprise_catalog = EnterpriseCustomerCatalogFactoryWithSignals()
+        enterprise_catalog = EnterpriseCustomerCatalogFactory()
         api_client_mock.return_value.get_enterprise_catalog.return_value = True
 
         enterprise_catalog.title = 'New title'

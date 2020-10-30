@@ -10,7 +10,6 @@ from faker import Factory as FakerFactory
 
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.contrib.sites.models import Site
-from django.db.models.signals import post_save, pre_save
 from django.utils import timezone
 
 from consent.models import DataSharingConsent, DataSharingConsentTextOverrides
@@ -51,14 +50,6 @@ from integrated_channels.sap_success_factors.models import (
 from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
 
 FAKER = FakerFactory.create()
-
-
-@factory.django.mute_signals(pre_save, post_save)
-class BaseModelFactoryNoSignals(factory.django.DjangoModelFactory):
-    """
-    Base DjangoModelFactory with signals turned off for use in unit tests.
-    As of pytest 6, factoryboy mocks seems to not turn off signals automatically?
-    """
 
 
 # pylint: disable=no-member
@@ -338,27 +329,9 @@ class LicensedEnterpriseCourseEnrollmentFactory(factory.django.DjangoModelFactor
     is_revoked = False
 
 
-class EnterpriseCustomerCatalogFactoryWithSignals(factory.django.DjangoModelFactory):
+class EnterpriseCustomerCatalogFactory(factory.django.DjangoModelFactory):
     """
     EnterpriseCustomerCatalog factory.
-
-    Creates an instance of EnterpriseCustomerCatalog with minimal boilerplate.
-    """
-
-    class Meta:
-        """
-        Meta for EnterpriseCustomerCatalog.
-        """
-
-        model = EnterpriseCustomerCatalog
-
-    uuid = factory.LazyAttribute(lambda x: UUID(FAKER.uuid4()))
-    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
-
-
-class EnterpriseCustomerCatalogFactory(BaseModelFactoryNoSignals):
-    """
-    EnterpriseCustomerCatalog factory with signals muted.
 
     Creates an instance of EnterpriseCustomerCatalog with minimal boilerplate.
     """
