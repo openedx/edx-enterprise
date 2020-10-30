@@ -331,7 +331,7 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
         else:
             response = catalog_client.get_enterprise_catalog(catalog_uuid=catalog_uuid)
     except NotConnectedToOpenEdX as exc:
-        logger.exception('Unable to update Enterprise Catalog {}'.format(str(catalog_uuid)), exc)
+        logger.exception('Unable to update Enterprise Catalog {}'.format(str(catalog_uuid)))
     else:
         if not response:
             # catalog with matching uuid does NOT exist in enterprise-catalog
