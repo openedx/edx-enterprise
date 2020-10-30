@@ -32,11 +32,10 @@ freezegun==0.3.14
 # version 0.10.16 is having version conflict in make upgrade
 responses<0.10.16
 
-# version 3.0 is causing test failures
-factory-boy<3.0
+factory-boy<4.0
 
 # pytest version 6.0 causing test failures
-pytest<6.0
+pytest<7.0
 
 # Python 3.5 is dropped in version 5.0
 celery<5.0

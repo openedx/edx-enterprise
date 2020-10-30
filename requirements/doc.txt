@@ -4,6 +4,7 @@
 #
 #    make upgrade
 #
+
 alabaster==0.7.12         # via sphinx
 amqp==2.6.1               # via -r requirements/test-master.txt, kombu
 aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
@@ -35,7 +36,7 @@ djangorestframework==3.9.4  # via -r requirements/test-master.txt, django-config
 doc8==0.8.1               # via -r requirements/doc.in
 docutils==0.16            # via -r requirements/doc.in, doc8, readme-renderer, restructuredtext-lint, sphinx
 drf-jwt==1.17.2           # via -r requirements/test-master.txt, edx-drf-extensions
-edx-django-utils==3.8.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
+edx-django-utils==3.9.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.2.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.1  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.3.3           # via -r requirements/test-master.txt
@@ -45,13 +46,11 @@ edx-tincan-py35==0.0.9    # via -r requirements/test-master.txt
 future==0.18.2            # via -r requirements/test-master.txt, pyjwkest
 idna==2.10                # via -r requirements/test-master.txt, requests
 imagesize==1.2.0          # via sphinx
-importlib-metadata==2.0.0  # via -r requirements/test-master.txt, kombu, path
 jinja2==2.11.2            # via -r requirements/test-master.txt, code-annotations, sphinx
 jsondiff==1.2.0           # via -r requirements/test-master.txt
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements/test-master.txt
 kombu==4.6.11             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
-more-itertools==8.5.0     # via -r requirements/test-master.txt, zipp
 newrelic==5.20.1.150      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.4           # via -r requirements/test-master.txt, bleach, sphinx
 path.py==12.5.0           # via -r requirements/test-master.txt
@@ -62,7 +61,7 @@ pockets==0.9.1            # via sphinxcontrib-napoleon
 psutil==5.7.2             # via -r requirements/test-master.txt, edx-django-utils
 pycparser==2.20           # via -r requirements/test-master.txt, cffi
 pycryptodomex==3.9.8      # via -r requirements/test-master.txt, pyjwkest
-pygments==2.7.1           # via doc8, readme-renderer, sphinx
+pygments==2.7.2           # via doc8, readme-renderer, sphinx
 pyjwkest==1.4.2           # via -r requirements/test-master.txt, edx-drf-extensions
 pyjwt[crypto]==1.7.1      # via -r requirements/test-master.txt, drf-jwt, edx-rest-api-client
 pymongo==3.10.1           # via -r requirements/test-master.txt, edx-opaque-keys
@@ -71,7 +70,7 @@ python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensi
 python-slugify==4.0.1     # via -r requirements/test-master.txt, code-annotations
 pytz==2020.1              # via -r requirements/test-master.txt, babel, celery, django, edx-tincan-py35
 pyyaml==5.3.1             # via -r requirements/test-master.txt, code-annotations
-readme-renderer==27.0     # via -r requirements/doc.in
+readme-renderer==28.0     # via -r requirements/doc.in
 requests==2.24.0          # via -r requirements/test-master.txt, edx-drf-extensions, edx-rest-api-client, pyjwkest, slumber, sphinx, tableauserverclient
 rest-condition==1.0.3     # via -r requirements/test-master.txt, edx-drf-extensions
 restructuredtext-lint==1.3.1  # via doc8
@@ -97,7 +96,6 @@ unicodecsv==0.14.1        # via -r requirements/test-master.txt
 urllib3==1.25.11          # via -r requirements/test-master.txt, requests
 vine==1.3.0               # via -r requirements/test-master.txt, amqp, celery
 webencodings==0.5.1       # via -r requirements/test-master.txt, bleach
-zipp==1.0.0               # via -c requirements/constraints.txt, -r requirements/test-master.txt, importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

@@ -180,7 +180,7 @@ class PendingEnterpriseCustomerAdminUserFactory(factory.django.DjangoModelFactor
     user_email = factory.LazyAttribute(lambda x: FAKER.email())
 
 
-class GroupFactory(factory.DjangoModelFactory):
+class GroupFactory(factory.django.DjangoModelFactory):
     """
     Group factory.
 
@@ -194,7 +194,7 @@ class GroupFactory(factory.DjangoModelFactory):
     name = factory.Sequence(u'group{0}'.format)
 
 
-class UserFactory(factory.DjangoModelFactory):
+class UserFactory(factory.django.DjangoModelFactory):
     """
     User factory.
 

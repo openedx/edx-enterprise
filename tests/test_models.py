@@ -1210,6 +1210,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         faker = FakerFactory.create()
         uuid = faker.uuid4()  # pylint: disable=no-member
         title = faker.text(max_nb_chars=255)  # pylint: disable=no-member
+
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=uuid,
             enterprise_customer=factories.EnterpriseCustomerFactory(),
@@ -1237,6 +1238,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         faker = FakerFactory.create()
         uuid = faker.uuid4()  # pylint: disable=no-member
         title = faker.text(max_nb_chars=255)  # pylint: disable=no-member
+
         enterprise_catalog = EnterpriseCustomerCatalog(
             uuid=uuid,
             enterprise_customer=factories.EnterpriseCustomerFactory(),
