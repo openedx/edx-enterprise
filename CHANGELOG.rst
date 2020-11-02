@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.10.1]
+--------
+
+* change username with enterprise_customer_uuid for tableau trusted authentication and tableau user creation.
+
 [3.10.0]
 --------
 
