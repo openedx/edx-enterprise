@@ -332,12 +332,10 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         {'has_pending_admin_user': False},
     )
     @ddt.unpack
-    @mock.patch('enterprise.signals.delete_tableau_user')
     @mock.patch('enterprise.signals.create_tableau_user')
     def test_assign_enterprise_admin_role_success(
             self,
             mock_create_tableau_user,  # pylint: disable=unused-argument
-            mock_delete_tableau_user,  # pylint: disable=unused-argument
             has_pending_admin_user
     ):
         """
@@ -380,12 +378,10 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         {'should_unlink_user': False, 'should_admin_role_exist': True},
     )
     @ddt.unpack
-    @mock.patch('enterprise.signals.delete_tableau_user')
     @mock.patch('enterprise.signals.create_tableau_user')
     def test_assign_enterprise_admin_role_post_save(
             self,
             mock_create_tableau_user,  # pylint: disable=unused-argument
-            mock_delete_tableau_user,  # pylint: disable=unused-argument
             should_unlink_user,
             should_admin_role_exist
     ):
@@ -428,12 +424,10 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
             )
             self.assertFalse(admin_role_assignments.exists())
 
-    @mock.patch('enterprise.signals.delete_tableau_user')
     @mock.patch('enterprise.signals.create_tableau_user')
     def test_delete_enterprise_admin_role_assignment_success(
             self,
             mock_create_tableau_user,  # pylint: disable=unused-argument
-            mock_delete_tableau_user,  # pylint: disable=unused-argument
     ):
         """
         Test that when `EnterpriseCustomerUser` record is deleted, the associated
@@ -947,68 +941,3 @@ class TestEnterpriseAnalyticsUserSignals(unittest.TestCase):
             mock_create_tableau_user.assert_called_once()
         else:
             mock_create_tableau_user.assert_not_called()
-
-    @ddt.data(
-        {'should_unlink_user': True, 'should_tableau_user_be_deleted': True},
-        {'should_unlink_user': False, 'should_tableau_user_be_deleted': False},
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.signals.delete_tableau_user')
-    @mock.patch('enterprise.signals.create_tableau_user')
-    def test_delete_tableau_user_on_unlink_post_save(
-            self,
-            mock_create_tableau_user,  # pylint: disable=unused-argument
-            mock_delete_tableau_user,
-            should_unlink_user,
-            should_tableau_user_be_deleted
-    ):
-        """
-        Verify that when the EnterpriseCustomerUser record is unlinked, the associated tableau user should be removed.
-        """
-        # create new PendingEnterpriseCustomerAdminUser and EnterpriseCustomerUser records.
-        PendingEnterpriseCustomerAdminUserFactory(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
-        EnterpriseCustomerUserFactory(
-            user_id=self.admin_user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-        # update EnterpriseCustomerUser record.
-        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
-            user_id=self.admin_user.id
-        )
-        if should_unlink_user:
-            enterprise_customer_user.linked = False
-        else:
-            enterprise_customer_user.active = False
-        enterprise_customer_user.save()
-
-        if should_tableau_user_be_deleted:
-            mock_delete_tableau_user.assert_called_once()
-        else:
-            mock_delete_tableau_user.assert_not_called()
-
-    @mock.patch('enterprise.signals.delete_tableau_user_by_id')
-    @mock.patch('enterprise.signals.create_tableau_user')
-    def test_delete_tableau_user_success(
-            self,
-            mock_delete_tableau_user,
-            mock_create_tableau_user  # pylint: disable=unused-argument
-    ):
-        """
-        Test that when `EnterpriseCustomerUser` record is deleted, the associated
-        tableau user is also deleted.
-        """
-        # create new PendingEnterpriseCustomerAdminUser and EnterpriseCustomerUser records.
-        PendingEnterpriseCustomerAdminUserFactory(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
-        EnterpriseCustomerUserFactory(
-            user_id=self.admin_user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-        # delete EnterpriseCustomerUser record and verify that admin role assignment is deleted as well.
-        EnterpriseCustomerUser.objects.filter(user_id=self.admin_user.id).delete()
-        mock_delete_tableau_user.assert_called_once()

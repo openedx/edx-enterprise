@@ -1171,13 +1171,11 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_user_from_social_auth')
     @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_identity_provider')
-    @mock.patch('enterprise.signals.delete_tableau_user')
     def test_unlink_inactive_sap_learners_task_success(
             self,
             lms_learners,
             inactive_sap_learners,
             unlinked_sap_learners,
-            mock_delete_tableau_user,
             get_identity_provider_mock,
             get_user_from_social_auth_mock,
             sapsf_update_content_metadata_mock,

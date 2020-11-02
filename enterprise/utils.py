@@ -1467,10 +1467,11 @@ def create_tableau_user(user_id, enterprise_customer_user):
                 )
                 add_user_to_tableau_group(user.id, str(enterprise_uuid))
         except ServerResponseError as exc:
-            LOGGER.error(
-                '[TABLEAU USER SYNC] Could not sync enterprise admin user %s in tableau.'
-                'Server returned: %s', user_id, str(exc),
-            )
+            if not exc.code == '409017':
+                LOGGER.error(
+                    '[TABLEAU USER SYNC] Could not sync enterprise admin user %s in tableau.'
+                    'Server returned: %s', user_id, str(exc),
+                )
     else:
         LOGGER.warning(
             '[TABLEAU USER SYNC] Could not create user %s in tableau.',

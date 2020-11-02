@@ -28,7 +28,6 @@ from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     create_tableau_user,
-    delete_tableau_user,
     delete_tableau_user_by_id,
     get_default_catalog_content_filter,
     track_enrollment,
@@ -174,8 +173,6 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
                     user=instance.user,
                     role=enterprise_admin_role
                 ).delete()
-                # Also delete the Enterprise admin user in the third party analytics application
-                delete_tableau_user(instance)
             except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
                 # Do nothing if no role assignment is present for the enterprise customer user.
                 pass
