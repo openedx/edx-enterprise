@@ -334,6 +334,9 @@ def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: d
 def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
     Send data changes to Enterprise Catalogs to the Enterprise Catalog Service.
+
+    Additionally sends a request to update the catalog's metadata from discovery, and index any relevant content for
+    Algolia.
     """
     catalog_uuid = instance.uuid
     try:
@@ -376,6 +379,8 @@ def update_enterprise_catalog_data(sender, instance, **kwargs):     # pylint: di
                 'publish_audit_enrollment_urls': instance.publish_audit_enrollment_urls,
             }
             catalog_client.update_enterprise_catalog(catalog_uuid, **update_fields)
+        # Refresh catalog on all creates and updates
+        catalog_client.refresh_catalogs([instance])
 
 
 @receiver(post_delete, sender=EnterpriseCustomerCatalog)

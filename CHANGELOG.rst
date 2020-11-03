@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.12.2]
+--------
+
+* Refresh catalog metadata on create and update
+
 [3.12.1]
 --------
 
