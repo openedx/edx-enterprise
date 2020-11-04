@@ -66,14 +66,16 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'short_description': 'Some short description.',
                 'full_description': 'Detailed description of edx demo course.',
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />Detailed description of edx demo course.'
+            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />'
+            'Detailed description of edx demo course.'
         ),
         (
             {
                 'enrollment_url': 'http://some/enrollment/url/',
                 'title': 'edX Demonstration Course',
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />edX Demonstration Course'
+            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />'
+            'edX Demonstration Course'
         ),
         (
             {
@@ -81,13 +83,13 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'title': 'edX Demonstration Course',
                 'short_description': 'Some short description.',
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />Some short description.'
+            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />Some short description.'
         ),
         (
             {
                 'enrollment_url': 'http://some/enrollment/url/'
             },
-            '<a href=http://some/enrollment/url/>To edX Course Page</a><br />'
+            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />'
         )
 
     )
