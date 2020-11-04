@@ -39,7 +39,7 @@ def moodle_request_wrapper(method):
             # On course creation (and ONLY course creation) success,
             # Moodle returns a list of JSON objects, because of course it does.
             # Otherwise, it fails instantly and returns actual JSON.
-            return response
+            return body
         if isinstance(body, int):
             # This only happens for grades AFAICT. Zero also doesn't necessarily mean success,
             # but we have nothing else to go on
@@ -311,6 +311,52 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         return self._post(params)
 
     @moodle_request_wrapper
+    def _wrapped_create_content_metadata(self, payload):
+        return self._post(payload)
+
+    @moodle_request_wrapper
+    def _get_course_forum(self, course_id):
+        """
+        Obtains a list of forums for a given course id.
+        """
+        params = {
+            'wsfunction': 'mod_forum_get_forums_by_courses',
+            'courseids[]': course_id,
+            'moodlewsrestformat': 'json',
+            'wstoken': self.token,
+        }
+        response = requests.get(
+            urljoin(
+                self.enterprise_configuration.moodle_base_url,
+                self.MOODLE_API_PATH,
+            ),
+            params=params
+        )
+        return response
+
+    def get_announcement_forum(self, course_id):
+        """
+        The response is a list type, because of course it is.
+        For new courses, there should only be 1 forum and it should be Announcements
+        """
+        response = self._get_course_forum(course_id)
+        return response[0]['id']
+
+    def _create_forum_post(self, course_id, announcement):
+        """
+        Creates a new Announcement post featuring edX course details and link.
+        """
+        forum_id = self.get_announcement_forum(course_id)
+        params = {
+            'wsfunction': 'mod_forum_add_discussion',
+            'forumid': forum_id,
+            'subject': 'Welcome! Click here for course details and edX link',
+            'options[0][name]': 'discussionpinned',
+            'options[0][value]': 'true',
+            'message': announcement
+        }
+        return self._post(params)
+
     def create_content_metadata(self, serialized_data):
         """
         The below assumes the data is dict/object.
@@ -325,8 +371,24 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
         """
         serialized_data['wsfunction'] = 'core_course_create_courses'
-        response = self._post(serialized_data)
-        return response
+        announcements = serialized_data.pop('announcements')
+        response = self._wrapped_create_content_metadata(serialized_data)
+        # Response format should be [{"id":1, "shortname": "name"},{...}]
+        for course in response:
+            if course.get('id', None):
+                post = self._create_forum_post(
+                    course.get('id'),
+                    announcements[course.get('shortname')]
+                )
+                if post.json()['warnings']:
+                    raise ClientError(
+                        'Moodle Client failed to create post for course {}'.format(
+                            course.get('shortname')
+                        ),
+                        HTTPStatus.BAD_REQUEST.value
+                    )
+        return 200, ''
+
 
     @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):
@@ -338,6 +400,12 @@ class MoodleAPIClient(IntegratedChannelApiClient):
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
         moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
+        import pdb; pdb.set_trace()
+        course_ids_to_delete = []
+        for key in list(serialized_data):
+            if 'shortname' in key:
+                moodle_course_id = self.get_course_id(serialized_data[key])
+                course_ids_to_delete.append(('courseids[]', moodle_course_id))
         params = {
             'wsfunction': 'core_course_delete_courses',
             'courseids[]': moodle_course_id

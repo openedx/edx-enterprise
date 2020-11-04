@@ -1697,6 +1697,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         """
         Return content filter of the linked catalog query otherwise content filter of catalog itself.
         """
+        import pdb; pdb.set_trace()
         return self.enterprise_catalog_query.content_filter if self.enterprise_catalog_query else self.content_filter
 
     @cached_property
@@ -1755,6 +1756,7 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         Returns:
             list: The list of content IDs that are members of the catalog.
         """
+        import pdb; pdb.set_trace()
         updated_content_filter = self.get_content_filter().copy()
         updated_content_filter[content_id_field_name] = content_id_values
         response = get_course_catalog_api_service_client(self.enterprise_customer.site).get_catalog_results(

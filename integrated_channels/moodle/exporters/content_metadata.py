@@ -16,17 +16,25 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         Moodle implementation of ContentMetadataExporter.
     """
     DATA_TRANSFORM_MAPPING = {
-        'fullname': 'title',
+        'fullname': 'fullname',
         'shortname': 'shortname',
         'idnumber': 'key',
-        'summary': 'description',
         'startdate': 'start',
         'enddate': 'end',
         'categoryid': 'categoryid',
+        'format': 'format',
+        'announcement': 'announcement',
     }
+
 
     LONG_STRING_LIMIT = 1700  # Actual maximum value we can support for any individual course
     SKIP_KEY_IF_NONE = True
+
+    ANNOUNCEMENT_TEMPLATE = '<div><div style="display: inline-block">' \
+        '<h1 style="font-size:xxx-large; margin-bottom:0; margin-top:0">{title}</h1>' \
+        '<a href={enrollment_url} style="font-size:150%">Go to edX course page</a><br/><hr/>' \
+        '</div><br/><img src={image_url} style="max-width:400px" width="30%" border="40px"/>' \
+        '<br/><br/><br/><p style="width:60%;">{description}</p></div>'
 
     def transform_shortname(self, content_metadata_item):
         """
@@ -39,7 +47,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
             content_metadata_item.get('key')
         )
 
-    def transform_title(self, content_metadata_item):
+    def transform_fullname(self, content_metadata_item):
         """
         Returns the course title with all organizations (partners) appended in parantheses
         """
@@ -60,40 +68,18 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
             final_orgs
         )
 
-    def transform_description(self, content_metadata_item):
-        """
-        Return the course description and enrollment url as Moodle' syllabus body attribute.
-        This will display in the Syllabus tab in Moodle.
-        """
-        enrollment_url = content_metadata_item.get('enrollment_url', None)
-        base_description = '<a href={enrollment_url} target="_blank">Go to edX course page</a><br />'.format(
-            enrollment_url=enrollment_url)
-        full_description = content_metadata_item.get('full_description') or None
-        short_description = content_metadata_item.get('short_description') or None
-        if full_description and len(full_description + enrollment_url) <= self.LONG_STRING_LIMIT:
-            description = "{base_description}{full_description}".format(
-                base_description=base_description,
-                full_description=full_description
-            )
-        elif short_description and len(short_description + enrollment_url) <= self.LONG_STRING_LIMIT:
-            short_description = content_metadata_item.get('short_description')
-            description = "{base_description}{short_description}".format(
-                base_description=base_description, short_description=short_description
-            )
-        else:
-            description = "{base_description}{title}".format(
-                base_description=base_description,
-                title=content_metadata_item.get('title', '')
-            )
-
-        return description
-
     def transform_categoryid(self, content_metadata_item):  # pylint: disable=unused-argument
         """
         Returns the Moodle category id configured in the model.
         ID 1 is Miscellaneous and is the default/basic category.
         """
         return self.enterprise_configuration.category_id or 1
+
+    def transform_format(self, content_metadata_item):  # pylint: disable=unused-argument
+        """
+        Return Moodle course format specific for displaying Announcement posts.
+        """
+        return "singleactivity"
 
     def transform_start(self, content_metadata_item):
         """
@@ -112,3 +98,27 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         if end_date:
             return int(parse(end_date).timestamp())
         return None
+
+    def transform_announcement(self, content_metadata_item):
+        """
+        Formats a post in a course's Announcement forum with
+        edX's course summary and enrollment link
+        """
+        full_description = content_metadata_item.get('full_description') or None
+        short_description = content_metadata_item.get('short_description') or None
+
+        if full_description and len(full_description) <= (self.LONG_STRING_LIMIT-400):
+            description = full_description
+        else:
+            description = short_description
+
+        announcement = self.ANNOUNCEMENT_TEMPLATE.format(
+            title=content_metadata_item.get('title', None),
+            enrollment_url=content_metadata_item.get('enrollment_url', None),
+            image_url=content_metadata_item.get('image_url', None),
+            description=description
+        )
+        shortname = self.transform_shortname(content_metadata_item)
+        return {shortname: announcement}
+
+
