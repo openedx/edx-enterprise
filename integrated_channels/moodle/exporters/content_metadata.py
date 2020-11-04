@@ -66,7 +66,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         This will display in the Syllabus tab in Moodle.
         """
         enrollment_url = content_metadata_item.get('enrollment_url', None)
-        base_description = "<a href={enrollment_url}>To edX Course Page</a><br />".format(
+        base_description = '<a href={enrollment_url} target="_blank">Go to edX course page</a><br />'.format(
             enrollment_url=enrollment_url)
         full_description = content_metadata_item.get('full_description') or None
         short_description = content_metadata_item.get('short_description') or None
