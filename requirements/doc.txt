@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
-
 alabaster==0.7.12         # via sphinx
 amqp==2.6.1               # via -r requirements/test-master.txt, kombu
 aniso8601==8.0.0          # via -r requirements/test-master.txt, edx-tincan-py35
@@ -16,12 +15,12 @@ certifi==2020.6.20        # via -r requirements/test-master.txt, requests
 cffi==1.14.3              # via -r requirements/test-master.txt, cryptography
 chardet==3.0.4            # via -r requirements/test-master.txt, doc8, requests
 click==7.1.2              # via -r requirements/test-master.txt, code-annotations
-code-annotations==0.9.0   # via -r requirements/test-master.txt
-cryptography==3.1.1       # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
+code-annotations==0.10.0  # via -r requirements/test-master.txt
+cryptography==3.2.1       # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
 defusedxml==0.6.0         # via -r requirements/test-master.txt, djangorestframework-xml
 django-config-models==2.0.3  # via -r requirements/test-master.txt
 django-countries==5.5     # via -r requirements/test-master.txt
-django-crum==0.7.7        # via -r requirements/test-master.txt, edx-rbac
+django-crum==0.7.7        # via -r requirements/test-master.txt, edx-django-utils, edx-rbac
 django-fernet-fields==0.6  # via -r requirements/test-master.txt
 django-filter==2.4.0      # via -r requirements/test-master.txt
 django-ipware==2.1.0      # via -r requirements/test-master.txt
@@ -30,13 +29,13 @@ django-multi-email-field==0.6.2  # via -r requirements/test-master.txt
 django-object-actions==3.0.1  # via -r requirements/test-master.txt
 django-simple-history==2.12.0  # via -r requirements/test-master.txt
 django-waffle==2.0.0      # via -r requirements/test-master.txt, edx-django-utils, edx-drf-extensions
-django==2.2.16            # via -r requirements/test-master.txt, code-annotations, django-config-models, django-crum, django-fernet-fields, django-filter, django-model-utils, django-multi-email-field, drf-jwt, edx-django-utils, edx-drf-extensions, edx-opaque-keys, edx-rbac, jsonfield2, rest-condition
+django==2.2.17            # via -r requirements/test-master.txt, code-annotations, django-config-models, django-crum, django-fernet-fields, django-filter, django-model-utils, django-multi-email-field, drf-jwt, edx-django-utils, edx-drf-extensions, edx-opaque-keys, edx-rbac, jsonfield2, rest-condition
 djangorestframework-xml==2.0.0  # via -r requirements/test-master.txt
 djangorestframework==3.9.4  # via -r requirements/test-master.txt, django-config-models, drf-jwt, edx-drf-extensions, rest-condition
 doc8==0.8.1               # via -r requirements/doc.in
 docutils==0.16            # via -r requirements/doc.in, doc8, readme-renderer, restructuredtext-lint, sphinx
 drf-jwt==1.17.2           # via -r requirements/test-master.txt, edx-drf-extensions
-edx-django-utils==3.9.0   # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
+edx-django-utils==3.11.0  # via -r requirements/test-master.txt, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.2.0  # via -r requirements/test-master.txt, edx-rbac
 edx-opaque-keys[django]==2.1.1  # via -r requirements/test-master.txt, edx-drf-extensions
 edx-rbac==1.3.3           # via -r requirements/test-master.txt
@@ -46,21 +45,23 @@ edx-tincan-py35==0.0.9    # via -r requirements/test-master.txt
 future==0.18.2            # via -r requirements/test-master.txt, pyjwkest
 idna==2.10                # via -r requirements/test-master.txt, requests
 imagesize==1.2.0          # via sphinx
+importlib-metadata==1.7.0  # via -r requirements/test-master.txt, kombu, path
 jinja2==2.11.2            # via -r requirements/test-master.txt, code-annotations, sphinx
 jsondiff==1.2.0           # via -r requirements/test-master.txt
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements/test-master.txt
 kombu==4.6.11             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
-newrelic==5.20.1.150      # via -r requirements/test-master.txt, edx-django-utils
+more-itertools==8.6.0     # via -r requirements/test-master.txt, zipp
+newrelic==5.22.1.152      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.4           # via -r requirements/test-master.txt, bleach, sphinx
 path.py==12.5.0           # via -r requirements/test-master.txt
 path==13.1.0              # via -r requirements/test-master.txt, path.py
 pbr==5.5.1                # via -r requirements/test-master.txt, stevedore
 pillow==7.2.0             # via -r requirements/test-master.txt
 pockets==0.9.1            # via sphinxcontrib-napoleon
-psutil==5.7.2             # via -r requirements/test-master.txt, edx-django-utils
+psutil==5.7.3             # via -r requirements/test-master.txt, edx-django-utils
 pycparser==2.20           # via -r requirements/test-master.txt, cffi
-pycryptodomex==3.9.8      # via -r requirements/test-master.txt, pyjwkest
+pycryptodomex==3.9.9      # via -r requirements/test-master.txt, pyjwkest
 pygments==2.7.2           # via doc8, readme-renderer, sphinx
 pyjwkest==1.4.2           # via -r requirements/test-master.txt, edx-drf-extensions
 pyjwt[crypto]==1.7.1      # via -r requirements/test-master.txt, drf-jwt, edx-rest-api-client
@@ -68,7 +69,7 @@ pymongo==3.10.1           # via -r requirements/test-master.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -r requirements/test-master.txt, packaging
 python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensions
 python-slugify==4.0.1     # via -r requirements/test-master.txt, code-annotations
-pytz==2020.1              # via -r requirements/test-master.txt, babel, celery, django, edx-tincan-py35
+pytz==2020.4              # via -r requirements/test-master.txt, babel, celery, django, edx-tincan-py35
 pyyaml==5.3.1             # via -r requirements/test-master.txt, code-annotations
 readme-renderer==28.0     # via -r requirements/doc.in
 requests==2.24.0          # via -r requirements/test-master.txt, edx-drf-extensions, edx-rest-api-client, pyjwkest, slumber, sphinx, tableauserverclient
@@ -96,6 +97,7 @@ unicodecsv==0.14.1        # via -r requirements/test-master.txt
 urllib3==1.25.11          # via -r requirements/test-master.txt, requests
 vine==1.3.0               # via -r requirements/test-master.txt, amqp, celery
 webencodings==0.5.1       # via -r requirements/test-master.txt, bleach
+zipp==1.0.0               # via -c requirements/constraints.txt, -r requirements/test-master.txt, importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
