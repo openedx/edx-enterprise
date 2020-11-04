@@ -16,6 +16,7 @@ from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
     EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
+    EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -32,6 +33,7 @@ from enterprise.utils import (
     get_default_catalog_content_filter,
     track_enrollment,
     unset_enterprise_learner_language,
+    unset_language_of_all_enterprise_learners,
 )
 
 try:
@@ -105,6 +107,22 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         transaction.on_commit(_complete_user_enrollment)
     else:
         pending_ecu.delete()
+
+
+@receiver(pre_save, sender=EnterpriseCustomer)
+def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    Update the language preference of all the learners belonging to the enterprise customer.
+    Set the language preference to the value enterprise customer has used as the `default_language`.
+    """
+    # Unset the language preference when a new learner is linked with the enterprise customer.
+    # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
+    if instance.default_language:
+        prev_state = EnterpriseCustomer.objects.filter(uuid=instance.uuid).first()
+        if prev_state is None or prev_state.default_language != instance.default_language:
+            # Unset the language preference of all the learners linked with the enterprise customer.
+            # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
+            unset_language_of_all_enterprise_learners(instance)
 
 
 @receiver(pre_save, sender=EnterpriseCustomerBrandingConfiguration)

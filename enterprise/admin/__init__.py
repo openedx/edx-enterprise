@@ -55,12 +55,7 @@ from enterprise.models import (
     PendingEnterpriseCustomerUser,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.utils import (
-    discovery_query_url,
-    get_all_field_names,
-    get_default_catalog_content_filter,
-    unset_language_of_all_enterprise_learners,
-)
+from enterprise.utils import discovery_query_url, get_all_field_names, get_default_catalog_content_filter
 
 try:
     from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
@@ -197,18 +192,6 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
 
     class Meta:
         model = EnterpriseCustomer
-
-    def save_model(self, request, obj, form, change):
-        """
-        Check if `default_language` has changed or not, if it is changed then update language preference of all the
-        learners belonging to this enterprise customer.
-        """
-        super(EnterpriseCustomerAdmin, self).save_model(request, obj, form, change)
-
-        if 'default_language' in form.changed_data and obj.default_language:
-            # Unset the language preference when all the learners linked with the enterprise customer.
-            # The middleware in the enterprise will handle the cases for setting a proper language for the learner.
-            unset_language_of_all_enterprise_learners(obj)
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         catalog_uuid = EnterpriseCustomerCatalogAdminForm.get_catalog_preview_uuid(request.POST)
