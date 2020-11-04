@@ -26,7 +26,6 @@ from django.contrib.auth.models import User
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
-from django.db.models import Subquery
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -1575,9 +1574,11 @@ def unset_language_of_all_enterprise_learners(enterprise_customer):
         enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
     """
     if UserPreference:
+        user_ids = list(enterprise_customer.enterprise_customer_users.values_list('user_id', flat=True))
+
         UserPreference.objects.filter(
             key=LANGUAGE_KEY,
-            user_id__in=Subquery(enterprise_customer.enterprise_customer_users.values('user_id'))
+            user_id__in=user_ids
         ).update(
             value=None
         )

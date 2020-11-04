@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.10.3]
+--------
+
+* Fix timout on update.
+
 [3.10.2]
 --------
 
