@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.10.2]
+--------
+
+* Updated the logic to clear enterprise learner language in a way that db lock does not happen.
+
 [3.10.1]
 --------
 

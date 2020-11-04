@@ -233,6 +233,31 @@ class TestEnterpriseCustomer(unittest.TestCase):
         api_client_mock.return_value.enterprise_contains_content_items.return_value = False
         assert enterprise_customer.catalog_contains_course(fake_catalog_api.FAKE_COURSE_RUN['key']) is False
 
+    @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
+    def test_unset_language_of_all_enterprise_learners(self, user_preference_mock):
+        """
+        Validate that unset_language_of_all_enterprise_learners is called whenever default_language changes.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        user_preference_mock.objects.filter.assert_called_once()
+
+        # Make sure `unset_language_of_all_enterprise_learners` is called each time `default_language` changes.
+        enterprise_customer.default_language = 'es-417'
+        enterprise_customer.save()
+        assert user_preference_mock.objects.filter.call_count == 2
+
+        # make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
+        # not changed.
+        enterprise_customer.default_language = 'es-417'
+        enterprise_customer.save()
+        assert user_preference_mock.objects.filter.call_count == 2
+
+        # Make sure `unset_language_of_all_enterprise_learners` is not called if `default_language` is
+        # set to `None`.
+        enterprise_customer.default_language = None
+        enterprise_customer.save()
+        assert user_preference_mock.objects.filter.call_count == 2
+
 
 @mark.django_db
 @ddt.ddt
@@ -701,6 +726,25 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
                         enterprise_customer=enterprise_customer_user.enterprise_customer,
                         user_id=enterprise_customer_user.user_id
                     )
+
+    @mock.patch('enterprise.utils.UserPreference', return_value=mock.MagicMock())
+    def test_unset_enterprise_learner_language(self, user_preference_mock):
+        """
+        Validate that unset_enterprise_learner_language is called whenever a nwe learner is linked to an enterprise
+        customer with Non-Null default language.
+        """
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory()
+        user_preference_mock.objects.update_or_create.assert_called_once()
+
+        # Make sure `unset_enterprise_learner_language` is not called if the enterprise customer does not have a
+        # default_language.
+        enterprise_customer_user.enterprise_customer.default_language = None
+        enterprise_customer_user.enterprise_customer.save()
+        factories.EnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer_user.enterprise_customer
+        )
+
+        assert user_preference_mock.objects.update_or_create.call_count == 1
 
 
 @mark.django_db
