@@ -183,7 +183,8 @@ def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # py
             )
             # Also create the Enterprise admin user in third party analytics application with the enterprise
             # customer uuid as username.
-            create_tableau_user(str(instance.enterprise_customer.uuid), instance)
+            tableau_username = str(instance.enterprise_customer.uuid).replace('-', '')
+            create_tableau_user(tableau_username, instance)
         elif not kwargs['created'] and not instance.linked:
             # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_admin role.
             try:
