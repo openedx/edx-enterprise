@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.10.4]
+--------
+
+* Remove hyphens from  enterprise_customer_uuid for admin user creation and tableau authentication.
+
 [3.10.3]
 --------
 

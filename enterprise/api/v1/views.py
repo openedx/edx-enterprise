@@ -1024,7 +1024,9 @@ class TableauAuthViewSet(generics.GenericAPIView):
         """
         url = settings.TABLEAU_URL + '/trusted'
         enterprise_customer_uuid = get_enterprise_customer_from_user_id(request.user.id)
-        payload = {'username': enterprise_customer_uuid}
+        # Enterprise customer uuid is being store without hyphens in tableau
+        tableau_username = enterprise_customer_uuid.replace('-', '')
+        payload = {'username': tableau_username}
         files = []
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
