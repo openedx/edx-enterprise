@@ -16,6 +16,12 @@ Change Log
 Unreleased
 -----------
 
+[3.13.0]
+--------
+
+* Use full paths for edx-platform/common/djangoapps imports, as described in
+  `edx-platform ADR #7 <https://github.com/edx/edx-platform/blob/master/docs/decisions/0007-sys-path-modification-removal.rst>`_.
+
 [3.12.4]
 --------
 

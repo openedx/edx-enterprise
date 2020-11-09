@@ -34,7 +34,7 @@ from enterprise.models import (
 )
 
 try:
-    from student.models import UserProfile
+    from common.djangoapps.student.models import UserProfile
 except ImportError:
     UserProfile = None
 

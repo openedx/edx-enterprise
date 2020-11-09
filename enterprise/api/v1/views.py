@@ -66,7 +66,7 @@ from enterprise.utils import (
 from enterprise_learner_portal.utils import CourseRunProgressStatuses, get_course_run_status
 
 try:
-    from course_modes.models import CourseMode
+    from common.djangoapps.course_modes.models import CourseMode
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
 except ImportError:

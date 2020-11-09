@@ -75,7 +75,7 @@ LOGGER = logging.getLogger(__name__)
 try:
     from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
 except ImportError as exception:
-    LOGGER.warning("Could not import Registry from third_party_auth.provider")
+    LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
     LOGGER.warning(exception)
     Registry = None
 
@@ -200,9 +200,9 @@ def get_identity_provider(provider_id):
     """
     try:
         # pylint: disable=redefined-outer-name,import-outside-toplevel
-        from third_party_auth.provider import Registry
+        from common.djangoapps.third_party_auth.provider import Registry
     except ImportError as exception:
-        LOGGER.warning("Could not import Registry from third_party_auth.provider")
+        LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
         LOGGER.warning(exception)
         Registry = None  # pylint: disable=redefined-outer-name
 
@@ -221,9 +221,9 @@ def get_idp_choices():
     """
     try:
         # pylint: disable=redefined-outer-name,import-outside-toplevel
-        from third_party_auth.provider import Registry
+        from common.djangoapps.third_party_auth.provider import Registry
     except ImportError as exception:
-        LOGGER.warning("Could not import Registry from third_party_auth.provider")
+        LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
         LOGGER.warning(exception)
         Registry = None  # pylint: disable=redefined-outer-name
 
