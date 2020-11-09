@@ -330,28 +330,19 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):
-        for key in list(serialized_data):
-            if 'shortname' in key:
-                moodle_course_id = self.get_course_id(serialized_data[key])
-                serialized_data[key.replace('shortname', 'id')] = moodle_course_id
+        moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
+        serialized_data['courses[0][id]'] = moodle_course_id
         serialized_data['wsfunction'] = 'core_course_update_courses'
         return self._post(serialized_data)
 
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
-        course_ids_to_delete = []
-        for key in list(serialized_data):
-            if 'shortname' in key:
-                moodle_course_id = self.get_course_id(serialized_data[key])
-                course_ids_to_delete.append(('courseids[]', moodle_course_id))
+        moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
         params = {
             'wsfunction': 'core_course_delete_courses',
+            'courseids[]': moodle_course_id
         }
-        url = '{url}{api_path}?{querystring}'.format(
-            url=self.enterprise_configuration.moodle_base_url,
-            api_path=self.MOODLE_API_PATH,
-            querystring=urlencode(course_ids_to_delete))
-        return self._post(params, url)
+        return self._post(params)
 
     def create_course_completion(self, user_id, payload):
         """Send course completion data to Moodle"""
