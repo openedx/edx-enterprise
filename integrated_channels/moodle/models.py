@@ -84,7 +84,7 @@ class MoodleEnterpriseCustomerConfiguration(EnterpriseCustomerPluginConfiguratio
     )
 
     transmission_chunk_size = models.IntegerField(
-        default=4,
+        default=1,
         help_text=_("The maximum number of data items to transmit to the integrated channel with each request.")
     )
 

@@ -5,7 +5,7 @@ Tests for clients in integrated_channels.
 
 import random
 import unittest
-from urllib.parse import quote, urljoin
+from urllib.parse import urljoin
 
 import pytest
 import responses
@@ -97,9 +97,7 @@ class TestMoodleApiClient(unittest.TestCase):
         """
         Test core logic for formatting a delete request to Moodle.
         """
-        expected_data = {'wsfunction': 'core_course_delete_courses'}
-        expected_url = self.moodle_base_url + \
-            self.moodle_api_path + quote('?courseids[]={0}'.format(self.moodle_course_id), safe='?=')
+        expected_data = {'wsfunction': 'core_course_delete_courses', 'courseids[]': self.moodle_course_id}
 
         client = MoodleAPIClient(self.enterprise_config)
         client._post = unittest.mock.MagicMock(name='_post', return_value=SUCCESSFUL_RESPONSE)  # pylint: disable=protected-access
@@ -107,7 +105,7 @@ class TestMoodleApiClient(unittest.TestCase):
         client.get_course_id.return_value = self.moodle_course_id
         client.delete_content_metadata(SERIALIZED_DATA)
 
-        client._post.assert_called_once_with(expected_data, expected_url)  # pylint: disable=protected-access
+        client._post.assert_called_once_with(expected_data)  # pylint: disable=protected-access
 
     def test_course_completion_with_no_course(self):
         """Test that we properly raise exceptions if the client receives a 404 from Moodle"""

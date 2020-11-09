@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.10.5]
+--------
+
+* Update Moodle integration to single transmission to handle responses properly.
+
 [3.10.4]
 --------
 

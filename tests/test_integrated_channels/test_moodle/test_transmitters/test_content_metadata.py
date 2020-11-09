@@ -39,13 +39,6 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
                 'start': '2030-01-01T00:00:00Z',
                 'end': '2030-03-01T00:00:00Z'
             },
-            {
-                'title': 'edX Demonstration Course',
-                'key': 'edX+DemoX2',
-                'content_type': 'course',
-                'start': '2030-01-01T00:00:00Z',
-                'end': '2030-03-01T00:00:00Z'
-            }
         ]
 
         expected_prepared_items = {
@@ -54,11 +47,6 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
             'courses[0][content_type]': 'course',
             'courses[0][start]': '2030-01-01T00:00:00Z',
             'courses[0][end]': '2030-03-01T00:00:00Z',
-            'courses[1][title]': 'edX Demonstration Course',
-            'courses[1][key]': 'edX+DemoX2',
-            'courses[1][content_type]': 'course',
-            'courses[1][start]': '2030-01-01T00:00:00Z',
-            'courses[1][end]': '2030-03-01T00:00:00Z'
         }
 
         transmitter = MoodleContentMetadataTransmitter(self.enterprise_config)
