@@ -365,6 +365,11 @@ class GrantDataSharingPermissions(View):
                 _('If you decline to consent, that fact may be shared with {enterprise_customer_name}.').format(
                     enterprise_customer_name=enterprise_customer.name
                 ),
+                _(
+                    'Any version of this Data Sharing Policy in a language other than English is provided '
+                    'for convenience and you understand and agree that the English language version will '
+                    'control if there is any conflict.'
+                )
             ],
             'confirmation_modal_header': _('Are you aware...'),
             'confirmation_modal_affirm_decline_text': _('I decline'),
