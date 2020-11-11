@@ -1,0 +1,1642 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-11-10 03:32-0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: enterprise/admin/__init__.py:558
+msgid "Preview (course)"
+msgstr ""
+
+#: enterprise/admin/__init__.py:560
+msgid ""
+"Preview the HTML template rendered in the context of a course enrollment."
+msgstr ""
+
+#: enterprise/admin/__init__.py:569
+msgid "Preview (program)"
+msgstr ""
+
+#: enterprise/admin/__init__.py:571
+msgid ""
+"Preview the HTML template rendered in the context of a program enrollment."
+msgstr ""
+
+#: enterprise/admin/forms.py:48
+msgid "To add a single learner, enter an email address or username."
+msgstr ""
+
+#: enterprise/admin/forms.py:52
+msgid ""
+"To add multiple learners, upload a .csv file that contains a column of email "
+"addresses."
+msgstr ""
+
+#: enterprise/admin/forms.py:57
+msgid ""
+"The .csv file must have a column of email addresses, indicated by the "
+"heading 'email' in the first row."
+msgstr ""
+
+#: enterprise/admin/forms.py:62
+msgid "Enroll these learners in this course"
+msgstr ""
+
+#: enterprise/admin/forms.py:63
+msgid "To enroll learners in a course, enter a course ID."
+msgstr ""
+
+#: enterprise/admin/forms.py:66
+msgid "Course enrollment track"
+msgstr ""
+
+#: enterprise/admin/forms.py:68 enterprise/api/v1/serializers.py:930
+msgid "Audit"
+msgstr ""
+
+#: enterprise/admin/forms.py:69 enterprise/api/v1/serializers.py:931
+msgid "Verified"
+msgstr ""
+
+#: enterprise/admin/forms.py:70 enterprise/api/v1/serializers.py:932
+msgid "Professional Education"
+msgstr ""
+
+#: enterprise/admin/forms.py:71 enterprise/api/v1/serializers.py:933
+msgid "Professional Education (no ID)"
+msgstr ""
+
+#: enterprise/admin/forms.py:72 enterprise/api/v1/serializers.py:934
+msgid "Credit"
+msgstr ""
+
+#: enterprise/admin/forms.py:73 enterprise/api/v1/serializers.py:935
+msgid "Honor"
+msgstr ""
+
+#: enterprise/admin/forms.py:76
+msgid "Reason for manual enrollment"
+msgstr ""
+
+#: enterprise/admin/forms.py:77
+msgid "Salesforce Opportunity ID"
+msgstr ""
+
+#: enterprise/admin/forms.py:79
+msgid "Discount percentage for manual enrollment"
+msgstr ""
+
+#: enterprise/admin/forms.py:80
+msgid "Discount percentage should be from 0 to 100"
+msgstr ""
+
+#: enterprise/admin/forms.py:95
+msgid "Notify learners of enrollment"
+msgstr ""
+
+#: enterprise/admin/forms.py:97
+msgid "Send email"
+msgstr ""
+
+#: enterprise/admin/forms.py:98
+msgid "Do not notify"
+msgstr ""
+
+#: enterprise/admin/forms.py:284
+msgid "Email/Username"
+msgstr ""
+
+#: enterprise/admin/forms.py:285
+msgid "Enter an email address or username."
+msgstr ""
+
+#: enterprise/admin/forms.py:289
+msgid "Course"
+msgstr ""
+
+#: enterprise/admin/forms.py:290
+msgid "Enter the course run key."
+msgstr ""
+
+#: enterprise/admin/forms.py:397
+msgid "Preview"
+msgstr ""
+
+#: enterprise/admin/forms.py:398
+msgid "Hold Ctrl when clicking on button to open Preview in new tab"
+msgstr ""
+
+#: enterprise/admin/forms.py:461
+msgid "Identity Provider"
+msgstr ""
+
+#: enterprise/admin/forms.py:485
+msgid ""
+"The specified Identity Provider does not exist. For more information, "
+"contact a system administrator."
+msgstr ""
+
+#: enterprise/admin/forms.py:496
+#, python-brace-format
+msgid ""
+"The site for the selected identity provider ({identity_provider_site}) does "
+"not match the site for this enterprise customer "
+"({enterprise_customer_site}). To correct this problem, select a site that "
+"has a domain of '{identity_provider_site}', or update the identity provider "
+"to '{enterprise_customer_site}'."
+msgstr ""
+
+#: enterprise/admin/forms.py:565
+#, python-brace-format
+msgid ""
+"These catalogs for reporting do not match enterprisecustomer "
+"{enterprise_customer}: {invalid_catalogs}"
+msgstr ""
+
+#: enterprise/admin/forms.py:579
+msgid "Enter enterprise channel worker username."
+msgstr ""
+
+#: enterprise/admin/views.py:203
+msgid "Successfully requested the Data Sharing consent from learner."
+msgstr ""
+
+#: enterprise/admin/views.py:421
+#, python-brace-format
+msgid "Error at line {line}: {message}\n"
+msgstr ""
+
+#: enterprise/admin/views.py:448
+#, python-brace-format
+msgid "{count} new learner was added to {enterprise_customer_name}."
+msgid_plural "{count} new learners were added to {enterprise_customer_name}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: enterprise/admin/views.py:462
+#, python-brace-format
+msgid ""
+"The following learners were already associated with this Enterprise "
+"Customer: {list_of_emails}"
+msgstr ""
+
+#: enterprise/admin/views.py:472
+#, python-brace-format
+msgid ""
+"The following learners are already associated with another Enterprise "
+"Customer. These learners were not added to {enterprise_customer_name}: "
+"{list_of_emails}"
+msgstr ""
+
+#: enterprise/admin/views.py:484
+#, python-brace-format
+msgid ""
+"The following duplicate email addresses were not added: {list_of_emails}"
+msgstr ""
+
+#: enterprise/admin/views.py:527
+#, python-brace-format
+msgid "{enrolled_count} learner was enrolled in {enrolled_in}."
+msgid_plural "{enrolled_count} learners were enrolled in {enrolled_in}."
+msgstr[0] ""
+msgstr[1] ""
+
+#: enterprise/admin/views.py:552
+#, python-brace-format
+msgid ""
+"The following learners could not be enrolled in {enrolled_in}: {user_list}"
+msgstr ""
+
+#: enterprise/admin/views.py:575
+#, python-brace-format
+msgid ""
+"The following learners do not have an account on {platform_name}. They have "
+"not been enrolled in {enrolled_in}. When these learners create an account, "
+"they will be enrolled automatically: {pending_email_list}"
+msgstr ""
+
+#: enterprise/admin/views.py:788
+#, python-brace-format
+msgid "Email {email} is not associated with Enterprise Customer {ec_name}"
+msgstr ""
+
+#: enterprise/api/utils.py:66
+#, python-brace-format
+msgid ""
+"{token_email} from {token_enterprise_name} has requested "
+"{token_number_codes} additional codes. Please reach out to them.\n"
+"Additional Notes:\n"
+"{token_notes}."
+msgstr ""
+
+#: enterprise/api/utils.py:73
+#, python-brace-format
+msgid ""
+"{token_email} from {token_enterprise_name} has requested "
+"{token_number_codes} additional codes. Please reach out to them."
+msgstr ""
+
+#: enterprise/api/utils.py:79
+#, python-brace-format
+msgid ""
+"{token_email} from {token_enterprise_name} has requested additional codes. "
+"Please reach out to them.\n"
+"Additional Notes:\n"
+"{token_notes}."
+msgstr ""
+
+#: enterprise/api/utils.py:85
+#, python-brace-format
+msgid ""
+"{token_email} from {token_enterprise_name} has requested additional codes. "
+"Please reach out to them."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:52
+msgid "Total count of items."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:53
+msgid "URL to fetch next page of items."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:54
+msgid "URL to fetch previous page of items."
+msgstr ""
+
+#: enterprise/api/v1/serializers.py:55
+msgid "List of items."
+msgstr ""
+
+#: enterprise/api/v1/views.py:555 enterprise_learner_portal/api/v1/views.py:39
+#: enterprise_learner_portal/api/v1/views.py:76
+msgid ""
+"To use this endpoint, this package must be installed in an Open edX "
+"environment."
+msgstr ""
+
+#: enterprise/api/v1/views.py:750
+#, python-brace-format
+msgid ""
+"[Enterprise API] CourseKey not found in the Catalog. Course: {course_key}, "
+"Catalog: {catalog_id}"
+msgstr ""
+
+#: enterprise/api/v1/views.py:778
+#, python-brace-format
+msgid ""
+"[Enterprise API] CourseRun not found in the Catalog. CourseRun: {course_id}, "
+"Catalog: {catalog_id}"
+msgstr ""
+
+#: enterprise/api/v1/views.py:806
+#, python-brace-format
+msgid ""
+"[Enterprise API] Program not found in the Catalog. Program: {program_uuid}, "
+"Catalog: {catalog_id}"
+msgstr ""
+
+#: enterprise/api/v1/views.py:976
+#, python-brace-format
+msgid "Code Management - Request for Codes by {token_enterprise_name}"
+msgstr ""
+
+#: enterprise/api/v1/views.py:1001
+#, python-brace-format
+msgid ""
+"[Enterprise API] Failure in sending e-mail to support. SupportEmail: "
+"{token_cs_email}, UserEmail: {token_email}, EnterpriseName: "
+"{token_enterprise_name}"
+msgstr ""
+
+#: enterprise/api_client/discovery.py:52
+msgid ""
+"To get a Catalog API client, this package must be installed in an Open edX "
+"environment."
+msgstr ""
+
+#: enterprise/api_client/discovery.py:84 enterprise/api_client/discovery.py:419
+#: enterprise/utils.py:1172
+msgid ""
+"To get a CatalogIntegration object, this package must be installed in an "
+"Open edX environment."
+msgstr ""
+
+#: enterprise/api_client/discovery.py:89
+msgid ""
+"To parse a Catalog API response, this package must be installed in an Open "
+"edX environment."
+msgstr ""
+
+#: enterprise/api_client/discovery.py:429
+msgid "The configured CatalogIntegration service user does not exist."
+msgstr ""
+
+#: enterprise/api_client/discovery.py:431
+msgid "There is no active CatalogIntegration."
+msgstr ""
+
+#: enterprise/api_client/ecommerce.py:40
+msgid ""
+"To get a ecommerce_api_client, this package must be installed in an Open edX "
+"environment."
+msgstr ""
+
+#: enterprise/constants.py:17
+#, python-brace-format
+msgid ""
+"To log in using this SSO identity provider and access special course offers, "
+"you must first consent to share your learning achievements with "
+"{enterprise_customer_name}."
+msgstr ""
+
+#: enterprise/constants.py:21
+#, python-brace-format
+msgid ""
+"In order to sign in and access special offers, you must consent to share "
+"your course data with {enterprise_customer_name}."
+msgstr ""
+
+#: enterprise/constants.py:25
+#, python-brace-format
+msgid ""
+"If you do not consent to share your course data, that information may be "
+"shared with {enterprise_customer_name}."
+msgstr ""
+
+#: enterprise/constants.py:28
+#, python-brace-format
+msgid "Welcome to {platform_name}."
+msgstr ""
+
+#: enterprise/constants.py:30
+#, python-brace-format
+msgid ""
+"You have left the {strong_start}{enterprise_customer_name}{strong_end} "
+"website and are now on the {platform_name} site. {enterprise_customer_name} "
+"has partnered with {platform_name} to offer you high-quality, always "
+"available learning programs to help you advance your knowledge and career. "
+"{line_break}Please note that {platform_name} has a different "
+"{privacy_policy_link_start}Privacy Policy {privacy_policy_link_end} from "
+"{enterprise_customer_name}."
+msgstr ""
+
+#: enterprise/constants.py:80
+msgid ""
+"A series of Master’s-level courses to advance your career, created by top "
+"universities and recognized by companies. MicroMasters Programs are credit-"
+"eligible, provide in-demand knowledge and may be applied to accelerate a "
+"Master’s Degree."
+msgstr ""
+
+#: enterprise/constants.py:86
+msgid ""
+"Designed by industry leaders and top universities to enhance professional "
+"skills, Professional Certificates develop the proficiency and expertise that "
+"employers are looking for with specialized training and professional "
+"education."
+msgstr ""
+
+#: enterprise/constants.py:92
+msgid ""
+"Created by world-renowned experts and top universities, XSeries are designed "
+"to provide a deep understanding of key subjects through a series of courses. "
+"Complete the series to earn a valuable XSeries Certificate that illustrates "
+"your achievement."
+msgstr ""
+
+#: enterprise/forms.py:13
+msgid ""
+"You have access to multiple organizations. Select the organization that you "
+"will use to sign up for courses. If you want to change organizations, sign "
+"out and sign back in."
+msgstr ""
+
+#: enterprise/forms.py:16
+msgid "Enter the organization name"
+msgstr ""
+
+#: enterprise/forms.py:18
+msgid ""
+"Have an account through your company, school, or organization? Enter your "
+"organization’s name below to sign in."
+msgstr ""
+
+#: enterprise/forms.py:21
+msgid ""
+"The attempt to login with this organization name was not successful. Please "
+"try again, or contact our support."
+msgstr ""
+
+#: enterprise/forms.py:53
+msgid "Enterprise not found"
+msgstr ""
+
+#: enterprise/forms.py:57
+msgid "Wrong Enterprise"
+msgstr ""
+
+#: enterprise/management/commands/migrate_enterprise_catalogs.py:30
+msgid "Username of a user authorized to access the Enterprise Catalog API."
+msgstr ""
+
+#: enterprise/management/commands/migrate_enterprise_catalogs.py:36
+msgid "Comma separated list of uuids of enterprise catalogs to migrate."
+msgstr ""
+
+#: enterprise/management/commands/migrate_enterprise_catalogs.py:45
+#, python-brace-format
+msgid "A user with the username {username} was not found."
+msgstr ""
+
+#: enterprise/messages.py:25
+#, python-brace-format
+msgid ""
+"{strong_start}We could not enroll you in {em_start}{item}{em_end}."
+"{strong_end} {span_start}If you have questions or concerns about sharing "
+"your data, please contact your learning manager at "
+"{enterprise_customer_name}, or contact {link_start}{platform_name} "
+"support{link_end}.{span_end}"
+msgstr ""
+
+#: enterprise/messages.py:56
+#, python-brace-format
+msgid ""
+"{strong_start}We could not gather price information for {em_start}{item}"
+"{em_end}.{strong_end} {span_start}If you continue to have these issues, "
+"please contact {link_start}{platform_name} support{link_end}.{span_end}"
+msgstr ""
+
+#: enterprise/messages.py:86
+#, python-brace-format
+msgid ""
+"{strong_start}Something happened.{strong_end} {span_start}This {item} is not "
+"currently open to new learners. Please start over and select a different "
+"{item}.{span_end}"
+msgstr ""
+
+#: enterprise/messages.py:112
+#, python-brace-format
+msgid ""
+"{strong_start}Something happened.{strong_end} {span_start}Please reach out "
+"to your learning administrator with the following error code and they will "
+"be able to help you out.{span_end}{span_start}Error code: {error_code}"
+"{span_end}{span_start}Username: {username}{span_end}"
+msgstr ""
+
+#: enterprise/models.py:112
+msgid "Enterprise Customer Type"
+msgstr ""
+
+#: enterprise/models.py:113
+msgid "Enterprise Customer Types"
+msgstr ""
+
+#: enterprise/models.py:120 enterprise/models.py:264
+msgid "Specifies enterprise customer type."
+msgstr ""
+
+#: enterprise/models.py:169 enterprise/models.py:2071
+msgid "Enterprise Customer"
+msgstr ""
+
+#: enterprise/models.py:170
+msgid "Enterprise Customers"
+msgstr ""
+
+#: enterprise/models.py:177
+msgid "Enterprise Customer name."
+msgstr ""
+
+#: enterprise/models.py:190
+msgid ""
+"Specify whether display the course original price on enterprise course "
+"landing page or not."
+msgstr ""
+
+#: enterprise/models.py:210
+msgid ""
+"Specifies whether data sharing consent is enabled or disabled for learners "
+"signing in through this enterprise customer. If disabled, consent will not "
+"be requested, and eligible data will not be shared."
+msgstr ""
+
+#: enterprise/models.py:223
+msgid ""
+"Specifies whether data sharing consent is optional, is required at login, or "
+"is required at enrollment."
+msgstr ""
+
+#: enterprise/models.py:231
+msgid ""
+"Specifies whether the audit track enrollment option will be displayed in the "
+"course enrollment view."
+msgstr ""
+
+#: enterprise/models.py:238
+msgid ""
+"Specifies whether to pass-back audit track enrollment data through an "
+"integrated channel."
+msgstr ""
+
+#: enterprise/models.py:245
+msgid ""
+"Specifies whether to replace the display of potentially sensitive SSO "
+"usernames with a more generic name, e.g. EnterpriseLearner."
+msgstr ""
+
+#: enterprise/models.py:256
+msgid ""
+"Specifies whether the customer is able to assign learners to cohorts upon "
+"enrollment."
+msgstr ""
+
+#: enterprise/models.py:261
+msgid "Customer Type"
+msgstr ""
+
+#: enterprise/models.py:270
+msgid ""
+"Specifies whether to allow access to the code management screen in the admin "
+"portal."
+msgstr ""
+
+#: enterprise/models.py:275
+msgid ""
+"Specifies whether to allow access to the reporting configurations screen in "
+"the admin portal."
+msgstr ""
+
+#: enterprise/models.py:280
+msgid ""
+"Specifies whether to allow access to the subscription management screen in "
+"the admin portal."
+msgstr ""
+
+#: enterprise/models.py:285
+msgid ""
+"Specifies whether to allow access to the saml configuration screen in the "
+"admin portal"
+msgstr ""
+
+#: enterprise/models.py:290
+msgid ""
+"Specifies whether the enterprise learner portal site should be made known to "
+"the learner."
+msgstr ""
+
+#: enterprise/models.py:296
+msgid ""
+"Specifies whether a learner for an integrated channel customer can navigate "
+"the enterprise learner portal site using the main menu."
+msgstr ""
+
+#: enterprise/models.py:303
+msgid ""
+"Specifies whether to allow access to the analytics screen in the admin "
+"portal."
+msgstr ""
+
+#: enterprise/models.py:308
+msgid ""
+"Specifies whether the learner should be able to login through enterprise's "
+"slug login"
+msgstr ""
+
+#: enterprise/models.py:314
+msgid "Email to be displayed as public point of contact for enterprise."
+msgstr ""
+
+#: enterprise/models.py:323
+msgid ""
+"Specifies the discount percent used for enrollments from the enrollment API "
+"where capturing the discount per order is not possible. This is passed to "
+"ecommerce when creating orders for financial data reporting."
+msgstr ""
+
+#: enterprise/models.py:335
+msgid ""
+"Specifies the default language for all the learners of this enterprise "
+"customer."
+msgstr ""
+
+#: enterprise/models.py:573
+msgid ""
+"Course details were not found for course key {} - Course Catalog API "
+"returned nothing. Proceeding with enrollment, but notifications won't be sent"
+msgstr ""
+
+#: enterprise/models.py:767
+msgid "Enterprise Customer Learner"
+msgstr ""
+
+#: enterprise/models.py:768
+msgid "Enterprise Customer Learners"
+msgstr ""
+
+#: enterprise/models.py:1208
+msgid "Logo images must be in .png format."
+msgstr ""
+
+#: enterprise/models.py:1235
+msgid "Branding Configuration"
+msgstr ""
+
+#: enterprise/models.py:1236
+msgid "Branding Configurations"
+msgstr ""
+
+#: enterprise/models.py:1391
+msgid "The enterprise learner to which this enrollment is attached."
+msgstr ""
+
+#: enterprise/models.py:1398
+msgid "The ID of the course in which the learner was enrolled."
+msgstr ""
+
+#: enterprise/models.py:1405
+msgid ""
+"Specifies whether a user marked this course as saved for later in the "
+"learner portal."
+msgstr ""
+
+#: enterprise/models.py:1521
+msgid "The course enrollment the associated license is for."
+msgstr ""
+
+#: enterprise/models.py:1528
+msgid ""
+"Whether the licensed enterprise course enrollment is revoked, e.g., when a "
+"user's license is revoked."
+msgstr ""
+
+#: enterprise/models.py:1583
+msgid ""
+"Query parameters which will be used to filter the discovery service's search/"
+"all endpoint results, specified as a JSON object. An empty JSON object means "
+"that all available content items will be included in the catalog."
+msgstr ""
+
+#: enterprise/models.py:1591
+msgid "Enterprise Catalog Query"
+msgstr ""
+
+#: enterprise/models.py:1592
+msgid "Enterprise Catalog Queries"
+msgstr ""
+
+#: enterprise/models.py:1650
+msgid ""
+"Query parameters which will be used to filter the discovery service's search/"
+"all endpoint results, specified as a Json object. An empty Json object means "
+"that all available content items will be included in the catalog."
+msgstr ""
+
+#: enterprise/models.py:1658
+msgid ""
+"Ordered list of enrollment modes which can be displayed to learners for "
+"course runs in this catalog."
+msgstr ""
+
+#: enterprise/models.py:1664
+msgid ""
+"Specifies whether courses should be published with direct-to-audit "
+"enrollment URLs."
+msgstr ""
+
+#: enterprise/models.py:1671
+msgid "Enterprise Customer Catalog"
+msgstr ""
+
+#: enterprise/models.py:1672 enterprise/models.py:2185
+msgid "Enterprise Customer Catalogs"
+msgstr ""
+
+#: enterprise/models.py:1940
+msgid ""
+"Fill in a standard Django template that, when rendered, produces the email "
+"you want sent to newly-enrolled Enterprise Customer learners. The following "
+"variables may be available:\n"
+"<ul><li>user_name: A human-readable name for the person being emailed. Be "
+"sure to handle the case where this is not defined, as it may be missing in "
+"some cases. It may also be a username, if the learner hasn't configured "
+"their \"real\" name in the system.</li>    <li>organization_name: The name "
+"of the organization sponsoring the enrollment.</li>    <li>enrolled_in: "
+"Details of the course or program that was enrolled in. It may contain:    "
+"<ul><li>name: The name of the enrollable item (e.g., \"Demo Course\").</"
+"li>        <li>url: A link to the homepage of the enrolled-in item.</"
+"li>        <li>branding: A custom branding name for the enrolled-in item. "
+"For example, the branding of a MicroMasters program would be \"MicroMasters"
+"\".</li>     <li>start: The date the enrolled-in item becomes available. "
+"Render this to text using the Django `date` template filter (see <a href="
+"\"https://docs.djangoproject.com/en/1.8/ref/templates/builtins/#date\">the "
+"Django documentation</a>).</li><li>type: Whether the enrolled-in item is a "
+"course, a program, or something else.</li></ul></ul>"
+msgstr ""
+
+#: enterprise/models.py:1958
+#, python-brace-format
+msgid ""
+"Enter a string that can be used to generate a dynamic subject line for "
+"notification emails. The placeholder {course_name} will be replaced with the "
+"name of the course or program that was enrolled in."
+msgstr ""
+
+#: enterprise/models.py:2073
+msgid "Active"
+msgstr ""
+
+#: enterprise/models.py:2074
+msgid "Include Date"
+msgstr ""
+
+#: enterprise/models.py:2075
+msgid "Include date in the report file name"
+msgstr ""
+
+#: enterprise/models.py:2081
+msgid "Delivery Method"
+msgstr ""
+
+#: enterprise/models.py:2082
+msgid "The method in which the data should be sent."
+msgstr ""
+
+#: enterprise/models.py:2087
+msgid "PGP Encryption Key"
+msgstr ""
+
+#: enterprise/models.py:2088
+msgid "The key for encryption, if PGP encrypted file is required."
+msgstr ""
+
+#: enterprise/models.py:2095
+msgid "Data Type"
+msgstr ""
+
+#: enterprise/models.py:2096
+msgid "The type of data this report should contain."
+msgstr ""
+
+#: enterprise/models.py:2103
+msgid "Report Type"
+msgstr ""
+
+#: enterprise/models.py:2104
+msgid "The type this report should be sent as, e.g. CSV."
+msgstr ""
+
+#: enterprise/models.py:2108
+msgid "Email"
+msgstr ""
+
+#: enterprise/models.py:2109
+msgid "The email(s), one per line, where the report should be sent."
+msgstr ""
+
+#: enterprise/models.py:2116
+msgid "Frequency"
+msgstr ""
+
+#: enterprise/models.py:2117
+msgid ""
+"The frequency interval (daily, weekly, or monthly) that the report should be "
+"sent."
+msgstr ""
+
+#: enterprise/models.py:2122
+msgid "Day of Month"
+msgstr ""
+
+#: enterprise/models.py:2123
+msgid ""
+"The day of the month to send the report. This field is required and only "
+"valid when the frequency is monthly."
+msgstr ""
+
+#: enterprise/models.py:2131
+msgid "Day of Week"
+msgstr ""
+
+#: enterprise/models.py:2132
+msgid ""
+"The day of the week to send the report. This field is required and only "
+"valid when the frequency is weekly."
+msgstr ""
+
+#: enterprise/models.py:2136
+msgid "Hour of Day"
+msgstr ""
+
+#: enterprise/models.py:2137
+msgid ""
+"The hour of the day to send the report, in Eastern Standard Time (EST). This "
+"is required for all frequency settings."
+msgstr ""
+
+#: enterprise/models.py:2145
+msgid ""
+"This password will be used to secure the zip file. It will be encrypted when "
+"stored in the database."
+msgstr ""
+
+#: enterprise/models.py:2152
+msgid "SFTP Host name"
+msgstr ""
+
+#: enterprise/models.py:2153
+msgid "If the delivery method is sftp, the host to deliver the report to."
+msgstr ""
+
+#: enterprise/models.py:2158
+msgid "SFTP Port"
+msgstr ""
+
+#: enterprise/models.py:2159
+msgid "If the delivery method is sftp, the port on the host to connect to."
+msgstr ""
+
+#: enterprise/models.py:2166
+msgid "SFTP username"
+msgstr ""
+
+#: enterprise/models.py:2167
+msgid ""
+"If the delivery method is sftp, the username to use to securely access the "
+"host."
+msgstr ""
+
+#: enterprise/models.py:2173
+msgid ""
+"If the delivery method is sftp, the password to use to securely access the "
+"host. The password will be encrypted when stored in the database."
+msgstr ""
+
+#: enterprise/models.py:2180
+msgid "SFTP file path"
+msgstr ""
+
+#: enterprise/models.py:2181
+msgid ""
+"If the delivery method is sftp, the path on the host to deliver the report "
+"to."
+msgstr ""
+
+#: enterprise/models.py:2264
+msgid "Day of week must be set if the frequency is weekly."
+msgstr ""
+
+#: enterprise/models.py:2268
+msgid "Day of month must be set if the frequency is monthly."
+msgstr ""
+
+#: enterprise/models.py:2271
+msgid "Frequency must be set to either daily, weekly, or monthly."
+msgstr ""
+
+#: enterprise/models.py:2277
+msgid "Email(s) must be set if the delivery method is email."
+msgstr ""
+
+#: enterprise/models.py:2281
+msgid "Decrypted password must be set if the delivery method is email."
+msgstr ""
+
+#: enterprise/models.py:2285
+msgid "SFTP Hostname must be set if the delivery method is sftp."
+msgstr ""
+
+#: enterprise/models.py:2287
+msgid "SFTP username must be set if the delivery method is sftp."
+msgstr ""
+
+#: enterprise/models.py:2289
+msgid "SFTP File Path must be set if the delivery method is sftp."
+msgstr ""
+
+#: enterprise/models.py:2292
+msgid "Decrypted SFTP password must be set if the delivery method is SFTP."
+msgstr ""
+
+#: enterprise/models.py:2529
+msgid "User id in the third party analytics system."
+msgstr ""
+
+#: enterprise/templates/enterprise/_data_sharing_decline_modal.html:7
+#: enterprise/views.py:1607 enterprise/views.py:2079
+msgid "Close"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/clear_learners_data_sharing_consent.html:18
+#: enterprise/templates/enterprise/admin/manage_learners.html:47
+#: enterprise/templates/enterprise/admin/transmit_courses_metadata.html:18
+msgid "Home"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/clear_learners_data_sharing_consent.html:33
+#: enterprise/templates/enterprise/admin/clear_learners_data_sharing_consent.html:40
+msgid "Clear Data Sharing Consent"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:65
+msgid "Manage Learners"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:68
+msgid "Search Term: "
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:87
+msgid "Search email address or username"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:98
+msgid "User Email"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:99
+msgid "Username"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:100
+msgid "Linked Date"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:101
+#: enterprise/templates/enterprise/admin/manage_learners.html:141
+msgid "Enroll"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:139
+msgid "Learner Email"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:140
+msgid "Date Added"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/manage_learners.html:162
+msgid "Link learners"
+msgstr ""
+
+#: enterprise/templates/enterprise/admin/transmit_courses_metadata.html:33
+#: enterprise/templates/enterprise/admin/transmit_courses_metadata.html:40
+msgid "Transmit Courses Metadata"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:3
+#: enterprise/templates/enterprise/emails/user_notification.txt:1
+#, python-format
+msgid "Dear %(user_name)s,"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:3
+#: enterprise/templates/enterprise/emails/user_notification.txt:1
+msgid "Hi!"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:5
+#, python-format
+msgid ""
+"You have been enrolled in <a href=\"%(program_url)s\">%(program_name)s</a>, "
+"a %(program_branding)s program offered by %(organization_name)s. This "
+"program begins %(start_date)s. For more information, see <a href="
+"\"%(program_url)s\">%(program_name)s</a>."
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:6
+#, python-format
+msgid ""
+"You have been enrolled in <a href=\"%(course_url)s\">%(course_name)s</a>, a "
+"course offered by %(organization_name)s. This course begins %(start_date)s. "
+"For more information, see <a href=\"%(course_url)s\">%(course_name)s</a>."
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.html:8
+#, python-format
+msgid ""
+"<p>\n"
+"Thanks,\n"
+"</p>\n"
+"<p>\n"
+"The %(enrolled_in_name)s team\n"
+"</p>"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.txt:3
+#, python-format
+msgid ""
+"You have been enrolled in %(program_name)s, a %(program_branding)s program "
+"offered by %(organization_name)s. This program begins %(start_date)s. For "
+"more information, see the following link:\n"
+"\n"
+"%(program_url)s"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.txt:6
+#, python-format
+msgid ""
+"You have been enrolled in %(course_name)s, a course offered by "
+"%(organization_name)s. This course begins %(start_date)s. For more "
+"information, see the following link:\n"
+"\n"
+"%(course_url)s"
+msgstr ""
+
+#: enterprise/templates/enterprise/emails/user_notification.txt:9
+#, python-format
+msgid ""
+"\n"
+"Thanks,\n"
+"\n"
+"The %(enrolled_in_name)s team"
+msgstr ""
+
+#: enterprise/templates/enterprise/enterprise_customer_login_page.html:43
+msgid "Login"
+msgstr ""
+
+#: enterprise/templates/enterprise/enterprise_customer_select_form.html:50
+#: enterprise/views.py:1603
+msgid "Continue"
+msgstr ""
+
+#: enterprise/utils.py:107
+msgid ""
+"Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
+"both were."
+msgstr ""
+
+#: enterprise/utils.py:110
+msgid "Error: Learners could not be added. Correct the following errors."
+msgstr ""
+
+#: enterprise/utils.py:112
+#, python-brace-format
+msgid "Enrollment track {course_mode} is not available for course {course_id}."
+msgstr ""
+
+#: enterprise/utils.py:114
+msgid "Select a course enrollment track for the given course."
+msgstr ""
+
+#: enterprise/utils.py:116
+#, python-brace-format
+msgid ""
+"Could not retrieve details for the course ID {course_id}. Specify a valid ID."
+msgstr ""
+
+#: enterprise/utils.py:119
+#, python-brace-format
+msgid "{argument} does not appear to be a valid email address."
+msgstr ""
+
+#: enterprise/utils.py:121
+#, python-brace-format
+msgid ""
+"{argument} does not appear to be a valid email address or known username"
+msgstr ""
+
+#: enterprise/utils.py:124
+#, python-brace-format
+msgid ""
+"Expected a CSV file with [{expected_columns}] columns, but found "
+"[{actual_columns}] columns instead."
+msgstr ""
+
+#: enterprise/utils.py:128
+msgid "Reason field is required but was not filled."
+msgstr ""
+
+#: enterprise/utils.py:131
+msgid ""
+"Either \"Email or Username\" or \"CSV bulk upload\" must be specified, but "
+"neither were."
+msgstr ""
+
+#: enterprise/utils.py:134
+#, python-brace-format
+msgid ""
+"Pending user with email address {user_email} is already linked with another "
+"Enterprise {ec_name}, you will be able to add the learner once the user "
+"creates account or other enterprise deletes the pending user"
+msgstr ""
+
+#: enterprise/utils.py:138
+#, python-brace-format
+msgid ""
+"User with email address {email} is already registered with Enterprise "
+"Customer {ec_name}"
+msgstr ""
+
+#: enterprise/utils.py:140
+msgid "User is not linked with Enterprise Customer"
+msgstr ""
+
+#: enterprise/utils.py:141
+#, python-brace-format
+msgid "User with email address {email} doesn't exist."
+msgstr ""
+
+#: enterprise/utils.py:142
+msgid "Course doesn't exist in Enterprise Customer's Catalog"
+msgstr ""
+
+#: enterprise/utils.py:144
+#, python-brace-format
+msgid ""
+"Enterprise channel worker user with the username "
+"\"{channel_worker_username}\" was not found."
+msgstr ""
+
+#: enterprise/utils.py:147
+msgid ""
+"Unable to parse CSV file. Please make sure it is a CSV 'utf-8' encoded file."
+msgstr ""
+
+#: enterprise/utils.py:150
+msgid "Discount percentage should be from 0 to 100."
+msgstr ""
+
+#: enterprise/utils.py:358
+#, python-brace-format
+msgid "You've been enrolled in {course_name}!"
+msgstr ""
+
+#: enterprise/utils.py:415
+msgid "`user` must have one of either `email` or `user_email`."
+msgstr ""
+
+#: enterprise/validators.py:29
+msgid "Value entered is not a valid hex color code."
+msgstr ""
+
+#: enterprise/validators.py:40
+msgid "Unsupported file extension."
+msgstr ""
+
+#: enterprise/validators.py:51
+#, python-format
+msgid "The logo image file size must be less than or equal to %s KB."
+msgstr ""
+
+#: enterprise/views.py:120
+msgid ""
+"The following method from the Open edX platform is necessary for this view "
+"but isn't available."
+msgstr ""
+
+#: enterprise/views.py:142
+#, python-brace-format
+msgid "{platform_name} home page"
+msgstr ""
+
+#: enterprise/views.py:287
+msgid "Data sharing consent required"
+msgstr "Consentimiento para compartir tu información"
+
+#: enterprise/views.py:288
+msgid "Consent to share your data"
+msgstr "Consentimiento para compartir tu información"
+
+#: enterprise/views.py:290
+#, python-brace-format
+msgid ""
+"Per the {start_link}Data Sharing Policy{end_link}, {bold_start}"
+"{enterprise_customer_name}{bold_end} would like to know about:"
+msgstr ""
+"De acuerdo con la {start_link} Política de intercambio de "
+"información{end_link}, a {bold_start} {enterprise_customer_name}{bold_end} "
+"le gustaría saber acerca de:"
+
+#: enterprise/views.py:301
+#, python-brace-format
+msgid ""
+"I agree to allow {platform_name} to share data about my enrollment, "
+"completion and performance in all {platform_name} courses and programs where "
+"my enrollment is sponsored by {enterprise_customer_name}."
+msgstr ""
+"Estoy de acuerdo en permitir a {platform_name} que comparta información "
+"sobre mi inscripción, finalización y desempeño en todos los cursos y "
+"programas de {platform_name} para los cuales mi inscripción es promocionada "
+"por {enterprise_customer_name}."
+
+#: enterprise/views.py:307
+msgid "Yes, continue"
+msgstr "Si, continuar"
+
+#: enterprise/views.py:308
+msgid "No, take me back."
+msgstr "No, regresar"
+
+#: enterprise/views.py:309
+msgid "Data Sharing Policy"
+msgstr "Política de intercambio de información"
+
+#: enterprise/views.py:311
+#, python-brace-format
+msgid ""
+"Enrollment, completion, and performance data that may be shared with "
+"{enterprise_customer_name} (or its designee) for these courses and programs "
+"are limited to the following:"
+msgstr ""
+"La información acerca de la inscripción, finalización y desempeño que podría "
+"ser compartida con {enterprise_customer_name} (o su designado) para estos "
+"cursos y programas, está limitada a lo siguiente:"
+
+#: enterprise/views.py:318
+#, python-brace-format
+msgid ""
+"My email address for my {platform_name} account, and the date when I created "
+"my {platform_name} account"
+msgstr ""
+"Mi dirección de correo electrónico para mi cuenta de {platform_name}, y la "
+"fecha en la que yo registre mi cuenta en {platform_name}."
+
+#: enterprise/views.py:324
+#, python-brace-format
+msgid ""
+"My {platform_name} ID, and if I log in via single sign-on, my "
+"{enterprise_customer_name} SSO user-ID"
+msgstr ""
+"Mi ID de {platform_name}, y si yo inicio sesión mediante inicio de sesión "
+"único (single sign on), mi {enterprise_customer_name} ID de usuario de SSO"
+
+#: enterprise/views.py:330
+#, python-brace-format
+msgid "My {platform_name} username"
+msgstr "Mi nombre de usuario de {platform_name}"
+
+#: enterprise/views.py:331
+msgid "My country or region of residence"
+msgstr "Mi país o región de residencia"
+
+#: enterprise/views.py:333
+msgid ""
+"What courses and/or programs I've enrolled in or unenrolled from, what track "
+"I enrolled in (audit or verified) and the date when I enrolled in each "
+"course or program"
+msgstr ""
+"En cuáles cursos y/o programas me he inscripto o cancelado la inscripción, "
+"en que modo me he inscripto, (gratis o verificado) y la fecha en la que me "
+"inscribí en cada curso o programa"
+
+#: enterprise/views.py:337
+msgid ""
+"Information about each course or program I've enrolled in, including its "
+"duration and level of effort required"
+msgstr ""
+"La información acerca de cada curso o programa en los cuales me he "
+"inscripto, incluyendo su duración y el nivel de esfuerzo requerido."
+
+#: enterprise/views.py:341
+msgid ""
+"Whether I completed specific parts of each course or program (for example, "
+"whether I watched a given video or attempted or completed a given homework "
+"assignment)"
+msgstr ""
+"Si he completado partes específicas de cada curso o programa (por ejemplo, "
+"si he revisado uno de los videos incluidos en el curso o completado una "
+"tarea asignada)"
+
+#: enterprise/views.py:345
+msgid ""
+"My overall percentage completion of each course or program on a periodic "
+"basis, including the total time spent in each course or program, the date "
+"when I last logged in to each course or program and how much of the course "
+"or program content I have consumed"
+msgstr ""
+"Periódicamente, mi porcentaje general de finalización de cada curso o "
+"programa, incluyendo el tiempo total dedicado a cada curso o programa, la "
+"fecha en la cual ingresé por última vez a cada curso o programa, y cuánto "
+"contenido del curso o programa he consumido"
+
+#: enterprise/views.py:349
+msgid ""
+"My performance in each course or program, including, for example, my score "
+"on each assignment and current average of correct answers out of total "
+"attempted answers"
+msgstr ""
+"Mi desempeño en cada curso o programa, incluyendo, por ejemplo, mi puntaje "
+"en cada tarea y el promedio actual de respuestas correctas dentro del total "
+"de intentos de respuestas"
+
+#: enterprise/views.py:351
+msgid ""
+"My final grade in each course or program, and the date when I completed each "
+"course or program"
+msgstr ""
+"Mi calificación final en cada curso o programa, y la fecha en la que "
+"completé cada curso o programa"
+
+#: enterprise/views.py:352
+msgid "Whether I received a certificate in each course or program"
+msgstr "Si he recibido un certificado en cada curso o programa"
+
+#: enterprise/views.py:355
+#, python-brace-format
+msgid ""
+"My permission applies only to data from courses or programs that are "
+"sponsored by {enterprise_customer_name}, and not to data from any "
+"{platform_name} courses or programs that I take on my own. I understand that "
+"I may withdraw my permission only by fully unenrolling from any courses or "
+"programs that are sponsored by {enterprise_customer_name}."
+msgstr ""
+"Mi permiso aplica solamente a la información sobre los cursos o programas "
+"promocionados por {enterprise_customer_name}, y no a la información de "
+"cursos o programas de cualquier {platform_name} que tomo por mi cuenta. "
+"Entiendo que una vez que otorgue mi permiso para compartir mi información "
+"con {enterprise_customer_name}, no será posible retractar mi permiso, aunque "
+"podría elegir cancelar mi inscripción a cualquiera de los cursos "
+"promocionados por {enterprise_customer_name}."
+
+#: enterprise/views.py:363
+msgid "Please note"
+msgstr "Por favor notar"
+
+#: enterprise/views.py:365
+#, python-brace-format
+msgid ""
+"If you decline to consent, that fact may be shared with "
+"{enterprise_customer_name}."
+msgstr ""
+"Si no aceptas, tu decisión podría ser compartida con "
+"{enterprise_customer_name}."
+
+#: enterprise/views.py:369
+msgid ""
+"Any version of this Data Sharing Policy in a language other than English is "
+"provided for convenience and you understand and agree that the English "
+"language version will control if there is any conflict."
+msgstr ""
+"Cualquier versión de esta Política de intercambio de information en "
+"otro idioma que no sea inglés se ha hecho disponible para tu conveniencia "
+"y tú entiendes y acuerdas que la versión en idioma inglés estará en efecto si "
+"hubiera algún conflicto. "
+
+#: enterprise/views.py:374
+msgid "Are you aware..."
+msgstr "¿Lo sabes…?"
+
+#: enterprise/views.py:375
+msgid "I decline"
+msgstr "No acepto"
+
+#: enterprise/views.py:376
+msgid "View the data sharing policy"
+msgstr "Ver la política de intercambio de información"
+
+#: enterprise/views.py:377
+#, python-brace-format
+msgid "View the {start_link}data sharing policy{end_link}."
+msgstr "Ver la {start_link} política de intercambio de información{end_link}."
+
+#: enterprise/views.py:382
+msgid "Return to Top"
+msgstr "Volver arriba"
+
+#: enterprise/views.py:538
+#, python-brace-format
+msgid ""
+"To access this {item}, you must first consent to share your learning "
+"achievements with {bold_start}{enterprise_customer_name}{bold_end}."
+msgstr ""
+"Para acceder a este {item}, tú debes primero aceptar a compartir tus logros "
+"de aprendizaje con {bold_start}{enterprise_customer_name}{bold_end}."
+
+#: enterprise/views.py:547
+#, python-brace-format
+msgid ""
+"In order to start this {item} and use your discount, {bold_start}you "
+"must{bold_end} consent to share your {item} data with "
+"{enterprise_customer_name}."
+msgstr ""
+"Para iniciar este {item}, y utilizar tu descuento, {bold_start}tú "
+"debes{bold_end} aceptar a compartir tu información de {item} con "
+"{enterprise_customer_name}."
+
+#: enterprise/views.py:560
+#, python-brace-format
+msgid "your enrollment in this {item}"
+msgstr "tu inscripción en este {item}"
+
+#: enterprise/views.py:561
+msgid "your learning progress"
+msgstr "tu progreso de aprendizaje"
+
+#: enterprise/views.py:562
+msgid "course completion"
+msgstr "finalización del curso"
+
+#: enterprise/views.py:1008
+msgid "Enterprise Slug Login"
+msgstr ""
+
+#: enterprise/views.py:1121
+msgid "Select Organization"
+msgstr ""
+
+#: enterprise/views.py:1122
+msgid "Select an organization"
+msgstr ""
+
+#: enterprise/views.py:1275
+msgid "Instructor-Paced"
+msgstr ""
+
+#: enterprise/views.py:1276
+msgid "Self-Paced"
+msgstr ""
+
+#: enterprise/views.py:1462
+msgid "FREE"
+msgstr ""
+
+#: enterprise/views.py:1464
+msgid "Not eligible for a certificate."
+msgstr ""
+
+#: enterprise/views.py:1466
+msgid "Earn a verified certificate!"
+msgstr ""
+
+#: enterprise/views.py:1525
+#, python-brace-format
+msgid "{num_weeks}, starting on {start_date} and ending at {end_date}"
+msgstr ""
+
+#: enterprise/views.py:1527 enterprise/views.py:1900
+msgid "{} week"
+msgid_plural "{} weeks"
+msgstr[0] ""
+msgstr[1] ""
+
+#: enterprise/views.py:1587
+#, python-brace-format
+msgid ""
+"Discount provided by {strong_start}{enterprise_customer_name}{strong_end}"
+msgstr ""
+
+#: enterprise/views.py:1597 enterprise/views.py:1598
+msgid "Confirm your course"
+msgstr ""
+
+#: enterprise/views.py:1599
+msgid "Starts"
+msgstr ""
+
+#: enterprise/views.py:1600
+msgid "View Course Details"
+msgstr ""
+
+#: enterprise/views.py:1601
+msgid "Please select one:"
+msgstr ""
+
+#: enterprise/views.py:1602 enterprise/views.py:2073
+msgid "Price"
+msgstr ""
+
+#: enterprise/views.py:1604 enterprise/views.py:2076
+msgid "Level"
+msgstr ""
+
+#: enterprise/views.py:1605 enterprise/views.py:2075
+msgid "Effort"
+msgstr ""
+
+#: enterprise/views.py:1606
+msgid "Duration"
+msgstr ""
+
+#: enterprise/views.py:1608 enterprise/views.py:2065
+msgid "What you'll learn"
+msgstr ""
+
+#: enterprise/views.py:1609 enterprise/views.py:2077
+msgid "About This Course"
+msgstr ""
+
+#: enterprise/views.py:1610 enterprise/views.py:2078
+msgid "Course Staff"
+msgstr ""
+
+#: enterprise/views.py:2017
+#, python-brace-format
+msgid "{count} Course"
+msgid_plural "{count} Courses"
+msgstr[0] ""
+msgstr[1] ""
+
+#: enterprise/views.py:2024
+msgid "{}-{} hours per week, per course"
+msgstr ""
+
+#: enterprise/views.py:2031
+msgid "{}-{} weeks per course"
+msgstr ""
+
+#: enterprise/views.py:2038
+msgid "Purchase all unenrolled courses"
+msgstr ""
+
+#: enterprise/views.py:2039
+msgid "enrollment"
+msgstr ""
+
+#: enterprise/views.py:2041
+msgid "Pursue the program"
+msgstr ""
+
+#: enterprise/views.py:2042
+msgid "program enrollment"
+msgstr ""
+
+#: enterprise/views.py:2063
+msgid "enrolled"
+msgstr ""
+
+#: enterprise/views.py:2064
+msgid "already enrolled, must pay for certificate"
+msgstr ""
+
+#: enterprise/views.py:2067
+msgid "Real Career Impact"
+msgstr ""
+
+#: enterprise/views.py:2069
+msgid "See More"
+msgstr ""
+
+#: enterprise/views.py:2070
+msgid "See Less"
+msgstr ""
+
+#: enterprise/views.py:2071
+msgid "Confirm Program"
+msgstr ""
+
+#: enterprise/views.py:2072
+msgid "Program Summary"
+msgstr ""
+
+#: enterprise/views.py:2074
+msgid "Length"
+msgstr ""
+
+#: enterprise/views.py:2080
+msgid "Program not eligible for one-click purchase."
+msgstr ""
+
+#: enterprise/views.py:2081
+#, python-brace-format
+msgid "What is an {platform_name} {program_type}?"
+msgstr ""
+
+#: enterprise/views.py:2085
+#, python-brace-format
+msgid "What is {platform_name}?"
+msgstr ""
+
+#: enterprise/views.py:2090
+#, python-brace-format
+msgid "Presented by {organization}"
+msgstr ""
+
+#: enterprise/views.py:2091
+#, python-brace-format
+msgid "Confirm your {item}"
+msgstr ""
+
+#: enterprise/views.py:2103
+msgid "Credit- and Certificate-eligible"
+msgstr ""
+
+#: enterprise/views.py:2104
+msgid "Self-paced; courses can be taken in any order"
+msgstr ""
+
+#: enterprise/views.py:2106
+#, python-brace-format
+msgid "{purchase_action} for"
+msgstr ""
+
+#: enterprise_learner_portal/api/v1/serializers.py:34
+msgid ""
+"To use this EnterpriseCourseEnrollmentSerializer, this package must be "
+"installed in an Open edX environment."
+msgstr ""

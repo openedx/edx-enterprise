@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.11.0]
+--------
+
+* Added spanish translations for data sharing consent page.
+
 [3.10.5]
 --------
 
