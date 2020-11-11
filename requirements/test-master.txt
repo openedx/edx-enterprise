@@ -4,22 +4,21 @@
 #
 #    make upgrade
 #
-
 amqp==2.6.1               # via kombu
 aniso8601==8.0.0          # via -c requirements/edx-platform-constraints.txt, edx-tincan-py35
 billiard==3.6.3.0         # via celery
 bleach==3.2.1             # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 celery==4.4.7             # via -c requirements/constraints.txt, -r requirements/base.in
-certifi==2020.6.20        # via -c requirements/edx-platform-constraints.txt, requests
+certifi==2020.11.8        # via -c requirements/edx-platform-constraints.txt, requests
 cffi==1.14.3              # via -c requirements/edx-platform-constraints.txt, cryptography
 chardet==3.0.4            # via -c requirements/edx-platform-constraints.txt, requests
 click==7.1.2              # via -c requirements/edx-platform-constraints.txt, code-annotations
-code-annotations==0.9.0   # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
-cryptography==3.1.1       # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-fernet-fields, pyjwt
+code-annotations==0.10.1  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
+cryptography==3.2.1       # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-fernet-fields, pyjwt
 defusedxml==0.6.0         # via -c requirements/edx-platform-constraints.txt, djangorestframework-xml
 django-config-models==2.0.3  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 django-countries==5.5     # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
-django-crum==0.7.7        # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rbac
+django-crum==0.7.9        # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-django-utils, edx-rbac
 django-fernet-fields==0.6  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 django-filter==2.4.0      # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 django-ipware==2.1.0      # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
@@ -28,11 +27,11 @@ django-multi-email-field==0.6.2  # via -r requirements/base.in
 django-object-actions==3.0.1  # via -r requirements/base.in
 django-simple-history==2.12.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 django-waffle==2.0.0      # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-django-utils, edx-drf-extensions
-django==2.2.16            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, django-config-models, django-crum, django-fernet-fields, django-filter, django-model-utils, django-multi-email-field, drf-jwt, edx-django-utils, edx-drf-extensions, edx-opaque-keys, edx-rbac, jsonfield2, rest-condition
+django==2.2.17            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, django-config-models, django-crum, django-fernet-fields, django-filter, django-model-utils, django-multi-email-field, drf-jwt, edx-django-utils, edx-drf-extensions, edx-opaque-keys, edx-rbac, jsonfield2, rest-condition
 djangorestframework-xml==2.0.0  # via -r requirements/base.in
 djangorestframework==3.9.4  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-config-models, drf-jwt, edx-drf-extensions, rest-condition
 drf-jwt==1.17.2           # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
-edx-django-utils==3.9.0   # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-config-models, edx-drf-extensions, edx-rest-api-client
+edx-django-utils==3.11.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, django-config-models, edx-drf-extensions, edx-rest-api-client
 edx-drf-extensions==6.2.0  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rbac
 edx-opaque-keys[django]==2.1.1  # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-drf-extensions
 edx-rbac==1.3.3           # via -r requirements/base.in
@@ -40,27 +39,29 @@ edx-rest-api-client==5.2.1  # via -c requirements/edx-platform-constraints.txt, 
 edx-tincan-py35==0.0.9    # via -r requirements/base.in
 future==0.18.2            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, pyjwkest
 idna==2.10                # via -c requirements/edx-platform-constraints.txt, requests
+importlib-metadata==1.7.0  # via -c requirements/edx-platform-constraints.txt, kombu, path
 jinja2==2.11.2            # via -c requirements/edx-platform-constraints.txt, code-annotations
 jsondiff==1.2.0           # via -r requirements/base.in
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 kombu==4.6.11             # via celery
 markupsafe==1.1.1         # via -c requirements/edx-platform-constraints.txt, jinja2
-newrelic==5.20.1.150      # via -c requirements/edx-platform-constraints.txt, edx-django-utils
+more-itertools==8.6.0     # via -c requirements/edx-platform-constraints.txt, zipp
+newrelic==5.22.1.152      # via -c requirements/edx-platform-constraints.txt, edx-django-utils
 packaging==20.4           # via -c requirements/edx-platform-constraints.txt, bleach
 path.py==12.5.0           # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 path==13.1.0              # via -c requirements/edx-platform-constraints.txt, path.py
 pbr==5.5.1                # via -c requirements/edx-platform-constraints.txt, stevedore
 pillow==7.2.0             # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
-psutil==5.7.2             # via -c requirements/edx-platform-constraints.txt, edx-django-utils
+psutil==5.7.3             # via -c requirements/edx-platform-constraints.txt, edx-django-utils
 pycparser==2.20           # via -c requirements/edx-platform-constraints.txt, cffi
-pycryptodomex==3.9.8      # via -c requirements/edx-platform-constraints.txt, pyjwkest
+pycryptodomex==3.9.9      # via -c requirements/edx-platform-constraints.txt, pyjwkest
 pyjwkest==1.4.2           # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
 pyjwt[crypto]==1.7.1      # via -c requirements/edx-platform-constraints.txt, drf-jwt, edx-rest-api-client
 pymongo==3.10.1           # via -c requirements/edx-platform-constraints.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -c requirements/edx-platform-constraints.txt, packaging
 python-dateutil==2.4.0    # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-drf-extensions
 python-slugify==4.0.1     # via -c requirements/edx-platform-constraints.txt, code-annotations
-pytz==2020.1              # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, celery, django, edx-tincan-py35
+pytz==2020.4              # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, celery, django, edx-tincan-py35
 pyyaml==5.3.1             # via -c requirements/edx-platform-constraints.txt, code-annotations
 requests==2.24.0          # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-drf-extensions, edx-rest-api-client, pyjwkest, slumber, tableauserverclient
 rest-condition==1.0.3     # via -c requirements/edx-platform-constraints.txt, edx-drf-extensions
@@ -70,10 +71,11 @@ six==1.15.0               # via -c requirements/edx-platform-constraints.txt, -r
 slumber==0.7.1            # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, edx-rest-api-client
 sqlparse==0.4.1           # via -c requirements/edx-platform-constraints.txt, django
 stevedore==1.32.0         # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in, code-annotations, edx-django-utils, edx-opaque-keys
-tableauserverclient==0.13  # via -r requirements/base.in
+tableauserverclient==0.14.0  # via -r requirements/base.in
 testfixtures==6.15.0      # via -r requirements/base.in
 text-unidecode==1.3       # via -c requirements/edx-platform-constraints.txt, python-slugify
 unicodecsv==0.14.1        # via -c requirements/edx-platform-constraints.txt, -r requirements/base.in
 urllib3==1.25.11          # via -c requirements/edx-platform-constraints.txt, requests
 vine==1.3.0               # via -c requirements/edx-platform-constraints.txt, amqp, celery
 webencodings==0.5.1       # via -c requirements/edx-platform-constraints.txt, bleach
+zipp==1.0.0               # via -c requirements/constraints.txt, -c requirements/edx-platform-constraints.txt, importlib-metadata
