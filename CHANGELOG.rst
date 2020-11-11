@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.11.1]
+--------
+
+* Fixes the issue where user preference value can not be null.
+
 [3.11.0]
 --------
 

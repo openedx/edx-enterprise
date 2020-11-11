@@ -1580,7 +1580,7 @@ def unset_language_of_all_enterprise_learners(enterprise_customer):
             key=LANGUAGE_KEY,
             user_id__in=user_ids
         ).update(
-            value=None
+            value=''
         )
 
 
@@ -1595,5 +1595,5 @@ def unset_enterprise_learner_language(enterprise_customer_user):
         UserPreference.objects.update_or_create(
             key=LANGUAGE_KEY,
             user_id=enterprise_customer_user.user_id,
-            defaults={'value': None}
+            defaults={'value': ''}
         )
