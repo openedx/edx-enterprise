@@ -393,14 +393,17 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
 
     def _handle_bulk_upload_errors(self, manage_learners_form, errors):
         """
-        TODO
+        Handles adding errors to the ``manager_learners_form``.
+
+        Arguments:
+            manage_learners_form (ManageLearnersForm): bound ManageLearners form instance
+            errors (list): List of validation errors from parsing the uploaded CSV.
         """
         manage_learners_form.add_error(
             ManageLearnersForm.Fields.GENERAL_ERRORS, ValidationMessages.BULK_LINK_FAILED
         )
         for error in errors:
             manage_learners_form.add_error(ManageLearnersForm.Fields.BULK_UPLOAD, error)
-        return [], {}
 
     def _process_bulk_upload_data(
             self,
@@ -409,10 +412,18 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             emails,
             already_linked_emails,
             duplicate_emails,
-            course_id_with_emails
     ):
         """
-        TODO
+        Processes the parsed data from bulk csv upload, adding the appropriate success and warning messages.
+
+        Arguments:
+            request: A request instance
+            enterprise_customer (EnterpriseCustomer): An instance of an EnterpriseCustomer record.
+            emails (list): List of valid, non-duplicate emails.
+            already_linked_emails (list): List of emails that are already linked with the EnterpriseCustomer.
+            duplicate_emails (list): List of emails that are duplicate entries.
+
+        Returns: List of processable email addresses.
         """
         count = len(emails)
         messages.success(request, ungettext(
@@ -461,7 +472,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         # Build a list of all the emails that we can act on further; that is,
         # emails that we either linked to this customer, or that were linked already.
         all_processable_emails = list(emails) + this_customer_linked_emails
-        return all_processable_emails, course_id_with_emails
+        return all_processable_emails
 
     @classmethod
     def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request, email_list=None):
@@ -515,18 +526,16 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             errors.append(exc)
 
         if errors:
-            return cls._handle_bulk_upload_errors(
-                cls,
-                manage_learners_form=manage_learners_form,
-                errors=errors
-            )
+            cls._handle_bulk_upload_errors(cls, manage_learners_form=manage_learners_form, errors=errors)
+            # There were validation errors, so prevent any further action.
+            return [], {}
 
         # There were no errors. Now do the actual linking:
         for email in emails:
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
 
         # Process the bulk uploaded data:
-        return cls._process_bulk_upload_data(
+        processable_emails = cls._process_bulk_upload_data(
             cls,
             request=request,
             enterprise_customer=enterprise_customer,
@@ -535,6 +544,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             duplicate_emails=duplicate_emails,
             course_id_with_emails=course_id_with_emails,
         )
+        return processable_emails, course_id_with_emails
 
     @classmethod
     def send_messages(cls, http_request, message_requests):
