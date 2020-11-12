@@ -113,10 +113,14 @@ class ValidationMessages:
     COURSE_MODE_INVALID_FOR_COURSE = _(
         "Enrollment track {course_mode} is not available for course {course_id}.")
     COURSE_WITHOUT_COURSE_MODE = _(
-        "Select a course enrollment track for the given course.")
+        "Select a course enrollment track for the given course(s).")
     INVALID_COURSE_ID = _(
         "Could not retrieve details for the course ID {course_id}. Specify "
         "a valid ID.")
+    BOTH_COURSE_FIELDS_SPECIFIED = _(
+        "Either \"CSV bulk upload\" or a singular course ID may be used for manual enrollments, "
+        "but not both together."
+    )
     INVALID_EMAIL = _(
         "{argument} does not appear to be a valid email address.")
     INVALID_EMAIL_OR_USERNAME = _(
@@ -1597,6 +1601,7 @@ def unset_enterprise_learner_language(enterprise_customer_user):
             user_id=enterprise_customer_user.user_id,
             defaults={'value': ''}
         )
+
 
 def validate_course_exists_for_enterprise(enterprise_customer, course_id, **kwargs):
     """

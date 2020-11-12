@@ -48,6 +48,7 @@ class TestManageLearnersForm(unittest.TestCase):
     def _make_bound_form(
             email,
             file_attached=False,
+            file_has_courses=False,
             course="",
             course_mode="",
             notify="",
@@ -69,7 +70,10 @@ class TestManageLearnersForm(unittest.TestCase):
         if file_attached:
             mock_file = mock.Mock(spec=File)
             mock_file.name = "some_file.csv"
-            mock_file.read.return_value = "fake file contents"
+            if file_has_courses:
+                mock_file.read.return_value = b'email,course_id\nfake@example.com,course-v1:edX+DemoX_Demo_Course'
+            else:
+                mock_file.read.return_value = b'email\nfake@example.com'
             file_data = {ManageLearnersForm.Fields.BULK_UPLOAD: mock_file}
 
         customer = EnterpriseCustomerFactory()
@@ -287,6 +291,77 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.is_valid()
         cleaned_data = form.clean()
         assert cleaned_data[ManageLearnersForm.Fields.REASON] == expected_reason
+
+    @ddt.data(
+        {
+            'course': 'fake-course-id',
+            'course_mode': None,
+            'reason': None,
+            'error': ValidationMessages.BOTH_COURSE_FIELDS_SPECIFIED,
+            'file_has_courses': True,
+        },
+        {
+            'course': None,
+            'course_mode': None,
+            'reason': None,
+            'error': ValidationMessages.COURSE_WITHOUT_COURSE_MODE,
+            'file_has_courses': True,
+        },
+        {
+            'course': None,
+            'course_mode': 'audit',
+            'reason': None,
+            'error': ValidationMessages.MISSING_REASON,
+            'file_has_courses': True,
+        },
+        {
+            'course': None,
+            'course_mode': 'audit',
+            'reason': 'tests',
+            'error': None,
+            'file_has_courses': True,
+        },
+        {
+            'course': 'fake-course-id',
+            'course_mode': 'audit',
+            'reason': 'tests',
+            'error': None,
+            'file_has_courses': False,
+        },
+    )
+    @ddt.unpack
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    def test_validate_bulk_upload_fields(
+            self,
+            enrollment_client,
+            enterprise_catalog_client,
+            course,
+            course_mode,
+            reason,
+            error,
+            file_has_courses,
+    ):
+        enrollment_instance = enrollment_client.return_value
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enrollment_instance.get_course_details.return_value = fake_enrollment_api.get_course_details(course_id)
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        form = self._make_bound_form(
+            "",
+            course=course,
+            course_mode=course_mode,
+            reason=reason,
+            file_attached=True,
+            file_has_courses=file_has_courses,
+        )
+        if not error:
+            assert form.is_valid()
+        else:
+            assert not form.is_valid()
+            assert form.errors == {
+                "__all__": [error]
+            }
 
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")

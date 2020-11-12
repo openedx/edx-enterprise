@@ -1462,28 +1462,28 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         line_error_message = ValidationMessages.INVALID_EMAIL.format(argument=invalid_email)
         self._assert_line_message(bulk_upload_errors[0], 3, line_error_message)
 
+    @ddt.data(
+        {'valid_course_id': False, 'course_in_catalog': False, 'expected_status_code': 200},
+        {'valid_course_id': False, 'course_in_catalog': True, 'expected_status_code': 200},
+        {'valid_course_id': True, 'course_in_catalog': False, 'expected_status_code': 200},
+        {'valid_course_id': True, 'course_in_catalog': True, 'expected_status_code': 302},
+    )
+    @ddt.unpack
     @mock.patch("enterprise.admin.views.create_manual_enrollment_audit")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     @mock.patch("enterprise.admin.views.enroll_users_in_course")
-    @ddt.data(
-        (False, False, 200),
-        (False, True, 200),
-        (True, False, 200),
-        (True, True, 302),  # input is valid, expect a redirect
-    )
-    @ddt.unpack
     def test_post_create_course_enrollments(
             self,
-            valid_course_id,
-            course_in_catalog,
-            expected_status_code,
             enroll_users_in_course_mock,
             enterprise_catalog_client,
             enrollment_client,
             course_catalog_client,
             create_enrollment_audit_mock,
+            valid_course_id,
+            course_in_catalog,
+            expected_status_code,
     ):
         self._login()
         user = UserFactory()
@@ -1557,7 +1557,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             # assert correct users are enrolled in the proper courses based on the csv data
             enroll_users_in_course_mock.assert_any_call(
                 course_id=course_id,
-                emails=[user.email, second_email],
+                emails=sorted([user.email, second_email]),
                 course_mode=ANY,
                 discount=ANY,
                 enrollment_reason=ANY,

@@ -19,7 +19,7 @@ Unreleased
 [3.12.0]
 --------
 
-* Support a "course_id" column in the "Manage Learners" CSV bulk upload to allow manual enrollments in multiple courses at once.
+* Support uploading a ``course_id`` column in the "Manage Learners" CSV bulk upload to allow manual enrollments in multiple courses at once.
 
 [3.11.1]
 --------

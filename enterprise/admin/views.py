@@ -542,7 +542,6 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             emails=emails,
             already_linked_emails=already_linked_emails,
             duplicate_emails=duplicate_emails,
-            course_id_with_emails=course_id_with_emails,
         )
         return processable_emails, course_id_with_emails
 
@@ -668,7 +667,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             enterprise_customer=enterprise_customer,
             course_id=course_id,
             course_mode=mode,
-            emails=emails,
+            emails=sorted(emails),
             enrollment_requester=request.user,
             enrollment_reason=enrollment_reason,
             discount=discount,
@@ -806,9 +805,6 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                         discount=discount
                     )
             else:
-                if not manual_enrollment_reason:
-                    raise ValidationError(ValidationMessages.MISSING_REASON)
-
                 for course_id in course_id_with_emails:
                     emails_to_enroll = course_id_with_emails[course_id]
                     if emails_to_enroll:
