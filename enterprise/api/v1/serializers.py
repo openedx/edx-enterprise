@@ -6,12 +6,16 @@ Serializers for enterprise api version 1.
 import copy
 from logging import getLogger
 
+from django_countries.serializer_fields import CountryField
 from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.contrib.sites.shortcuts import get_current_site
+from django.db import IntegrityError
+from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 
 from enterprise import models, utils
@@ -155,17 +159,57 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_learner_portal', 'enable_portal_reporting_config_screen',
             'enable_portal_saml_configuration_screen', 'contact_email',
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
-            'enable_integrated_customer_learner_portal_search',
+            'enable_integrated_customer_learner_portal_search', 'country',
         )
 
-    site = SiteSerializer()
+    site = SiteSerializer(required=False)
     branding_configuration = serializers.SerializerMethodField()
+    country = CountryField(required=False)
 
     def get_branding_configuration(self, obj):
         """
         Return the serialized branding configuration object OR default object if null
         """
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
+
+    def create(self, validated_data):
+        # enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
+        #     name=name,
+        #     site_id=site.id,
+        #     slug=slugify(name),
+        #     country='US',
+        #     defaults={
+        #         'country': 'US',
+        #         'enable_learner_portal': True,
+        #         'enable_data_sharing_consent': True,
+        #         'enable_portal_code_management_screen': True,
+        #         'enable_portal_reporting_config_screen': True,
+        #         'enable_portal_saml_configuration_screen': True,
+        #         'enable_portal_subscription_management_screen': True,
+        #     },
+        # )
+        import pdb; pdb.set_trace()
+        request = self.context.get('request')
+        provided_site = validated_data.get('site')
+        site = provided_site or get_current_site(request)
+
+        provided_name = validated_data.get('name')
+        provided_slug = validated_data.get('slug')
+        # Auto-generate a slug from the name if one wasn't explicitly provided
+        slug = provided_slug or slugify(provided_name)
+        try:
+            customer = models.EnterpriseCustomer.objects.create(
+                **validated_data,
+                slug=slug,
+                site=site,
+            )
+        except IntegrityError as exc:
+            message = 'Encountered the following error in the EnterpriseCustomer create serializer {exc}'.format(
+                exc=exc,
+            )
+            LOGGER.error(message)
+            raise exc
+        return customer
 
 
 class EnterpriseCustomerBasicSerializer(serializers.ModelSerializer):
