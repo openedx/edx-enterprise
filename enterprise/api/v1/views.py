@@ -278,7 +278,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         enrollment_reason=enrollment_reason,
                         discount=discount,
                         sales_force_id=serializer.validated_data.get('salesforce_id'),
-                        enrollment_client=enrollment_client,
                     )
                     if serializer.validated_data.get('notify'):
                         enterprise_customer.notify_enrolled_learners(

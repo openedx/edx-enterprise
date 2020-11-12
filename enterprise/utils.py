@@ -67,6 +67,8 @@ try:
     )
 except ImportError:
     create_manual_enrollment_audit = None
+    UNENROLLED_TO_ENROLLED = None
+    UNENROLLED_TO_ALLOWEDTOENROLL = None
 
 LOGGER = logging.getLogger(__name__)
 
@@ -139,7 +141,7 @@ class ValidationMessages:
         "Customer {ec_name}")
     USER_NOT_LINKED = _("User is not linked with Enterprise Customer")
     USER_NOT_EXIST = _("User with email address {email} doesn't exist.")
-    COURSE_NOT_EXIST_IN_CATALOG = _("Course doesn't exist in Enterprise Customer's Catalog")
+    COURSE_NOT_EXIST_IN_CATALOG = _("Course ID {course_id} doesn't exist in Enterprise Customer's Catalog")
     INVALID_CHANNEL_WORKER = _(
         'Enterprise channel worker user with the username "{channel_worker_username}" was not found.'
     )
@@ -1317,7 +1319,7 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     Returns:
         Boolean: Whether or not enrollment succeeded for all courses specified
     """
-    enrollment_client = kwargs.pop('enrollment_client')
+    enrollment_client = kwargs.pop('enrollment_client', None)
     if not enrollment_client:
         from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
         enrollment_client = EnrollmentApiClient()
@@ -1331,7 +1333,7 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
             enrollment_client.enroll_user_in_course(user.username, course_id, course_mode)
         except HttpClientError as exc:
             # Check if user is already enrolled then we should ignore exception
-            if is_user_enrolled(user, course_id, course_mode, enrollment_client=enrollment_client):
+            if is_user_enrolled(user, course_id, course_mode):
                 succeeded = True
             else:
                 succeeded = False
@@ -1368,7 +1370,6 @@ def enroll_users_in_course(
         enrollment_reason=None,
         discount=0.0,
         sales_force_id=None,
-        enrollment_client=None,
 ):
     """
     Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -1382,7 +1383,6 @@ def enroll_users_in_course(
         enrollment_reason (str): A reason for enrollment.
         discount (Decimal): Percentage discount for enrollment.
         sales_force_id (str): Salesforce opportunity id.
-        enrollment_client: An optional EnrollmentAPIClient if it's already been instantiated and should be passed in.
 
     Returns:
         successes: A list of users who were successfully enrolled in the course
@@ -1397,7 +1397,7 @@ def enroll_users_in_course(
     failures = []
 
     for user in existing_users:
-        succeeded = enroll_user(enterprise_customer, user, course_mode, course_id, enrollment_client=enrollment_client)
+        succeeded = enroll_user(enterprise_customer, user, course_mode, course_id)
         if succeeded:
             successes.append(user)
             if enrollment_requester and enrollment_reason:
@@ -1597,3 +1597,23 @@ def unset_enterprise_learner_language(enterprise_customer_user):
             user_id=enterprise_customer_user.user_id,
             defaults={'value': ''}
         )
+
+def validate_course_exists_for_enterprise(enterprise_customer, course_id, **kwargs):
+    """
+    Validates that a specified course id exists within the LMS and within the enterprise_customer's catalog(s).
+
+    Arguments:
+        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
+        course_id (string): The unique identifier of a course.
+        kwargs: Should contain enrollment_client if it's already been instantiated and is passed in.
+    """
+    enrollment_client = kwargs.pop('enrollment_client', None)
+    if not enrollment_client:
+        from enterprise.api_client.lms import EnrollmentApiClient  # pylint: disable=import-outside-toplevel
+        enrollment_client = EnrollmentApiClient()
+    course_details = enrollment_client.get_course_details(course_id)
+    if not course_details:
+        raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
+    if not enterprise_customer.catalog_contains_course(course_id):
+        raise ValidationError(ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG.format(course_id=course_id))
+    return course_details or False
