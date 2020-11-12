@@ -181,8 +181,6 @@ class BaseEnterpriseCustomerView(TestCase):
         expected_context.update(self.default_context)
         expected_context.update(context_overrides or {})
 
-        print('common_context', actual_context, expected_context)
-
         for context_key, expected_value in six.iteritems(expected_context):
             assert actual_context[context_key] == expected_value
 
@@ -931,7 +929,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 1
 
-    def _post_multi_enroll(self, enterprise_catalog_client, enrollment_client, course_catalog_client, track_enrollment, create_user):
+    def _post_multi_enroll(
+            self,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+            create_user,
+    ):
         """
         Enroll an enterprise learner or pending learner in multiple courses.
         """
@@ -1014,7 +1019,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         Test that an existing learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(enterprise_catalog_client, enrollment_client, course_catalog_client, track_enrollment, True)
+        self._post_multi_enroll(
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+            True,
+        )
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
@@ -1030,7 +1041,13 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         Test that a pending learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(enterprise_catalog_client, enrollment_client, course_catalog_client, track_enrollment, False)
+        self._post_multi_enroll(
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+            False,
+        )
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
@@ -1349,11 +1366,13 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert response.status_code == expected_status_code
 
         # response.context is ``None`` when the POST request is successful, without any errors in form validation.
-        if response.context:
-            self._test_common_context(response.context)
-            manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
-            assert manage_learners_form.is_bound
-            return manage_learners_form
+        if not response.context:
+            return None
+
+        self._test_common_context(response.context)
+        manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
+        assert manage_learners_form.is_bound
+        return manage_learners_form
 
     @staticmethod
     def _assert_line_message(actual_message, lineno, expected_message):
@@ -1443,7 +1462,6 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         line_error_message = ValidationMessages.INVALID_EMAIL.format(argument=invalid_email)
         self._assert_line_message(bulk_upload_errors[0], 3, line_error_message)
 
-    @mock.patch("enterprise.utils.create_manual_enrollment_audit")
     @mock.patch("enterprise.admin.views.create_manual_enrollment_audit")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
     @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
@@ -1453,25 +1471,27 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         (False, False, 200),
         (False, True, 200),
         (True, False, 200),
-        (True, True, 302),  # all input is valid, expect a redirect
+        (True, True, 302),  # input is valid, expect a redirect
     )
     @ddt.unpack
     def test_post_create_course_enrollments(
-        self,
-        valid_course_id,
-        course_in_catalog,
-        expected_status_code,
-        enroll_users_in_course_mock,
-        enterprise_catalog_client,
-        enrollment_client,
-        course_catalog_client,
-        create_manual_enrollment_audit_mock,
-        utils_manual_enrollment_audit_mock,
+            self,
+            valid_course_id,
+            course_in_catalog,
+            expected_status_code,
+            enroll_users_in_course_mock,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            create_enrollment_audit_mock,
     ):
-        course_id = "course-v1:edX+DemoX+Demo_Course"
-        should_expect_enrollment_creation = False
         self._login()
         user = UserFactory()
+        second_email = FAKER.email()  # pylint: disable=no-member
+        third_email = FAKER.email()  # pylint: disable=no-member
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        second_course_id = "course-v1:edX+DemoX+Demo_Course_2"
+        should_create_enrollments = False
 
         enrollment_instance = enrollment_client.return_value
         course_catalog_instance = course_catalog_client.return_value
@@ -1493,6 +1513,8 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         columns = [ManageLearnersForm.CsvColumns.EMAIL, ManageLearnersForm.CsvColumns.COURSE_ID]
         data = [
             (user.email, course_id),
+            (second_email, course_id),
+            (third_email, another_course_id),
         ]
         response = self._perform_request(columns, data, notify=False)
 
@@ -1504,7 +1526,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         if valid_course_id and course_in_catalog:
             # valid input, no errors
             assert not bulk_upload_errors
-            should_expect_enrollment_creation = True
+            should_create_enrollments = True
 
         if not valid_course_id:
             line_error_message = ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)
@@ -1513,10 +1535,21 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             line_error_message = ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG.format(course_id=course_id)
             self._assert_line_message(bulk_upload_errors[0], 1, line_error_message)
 
-        if should_expect_enrollment_creation:
+        if should_create_enrollments:
+            # assert correct users are enrolled in the proper courses based on the csv data
             enroll_users_in_course_mock.assert_called_once_with(
                 course_id=course_id,
-                emails=[user.email],
+                emails=[user.email, second_email],
+                course_mode=ANY,
+                discount=ANY,
+                enrollment_reason=ANY,
+                enrollment_requester=ANY,
+                enterprise_customer=ANY,
+                sales_force_id=ANY,
+            )
+            enroll_users_in_course_mock.assert_called_once_with(
+                course_id=another_course_id,
+                emails=[third_email],
                 course_mode=ANY,
                 discount=ANY,
                 enrollment_reason=ANY,
