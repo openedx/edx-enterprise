@@ -266,7 +266,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 ]
                 linked_learners = list(emails) + this_customer_linked_emails
                 if linked_learners:
-                    enrollment_client = EnrollmentApiClient()
                     discount = serializer.validated_data.get('discount', 0.0)
                     enrollment_reason = serializer.validated_data.get('reason')
                     succeeded, pending, _ = enroll_users_in_course(
@@ -278,7 +277,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         enrollment_reason=enrollment_reason,
                         discount=discount,
                         sales_force_id=serializer.validated_data.get('salesforce_id'),
-                        enrollment_client=enrollment_client,
                     )
                     if serializer.validated_data.get('notify'):
                         enterprise_customer.notify_enrolled_learners(

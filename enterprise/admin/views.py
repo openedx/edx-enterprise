@@ -33,7 +33,6 @@ from enterprise.admin.utils import (
     split_usernames_and_emails,
 )
 from enterprise.api_client.ecommerce import EcommerceApiClient
-from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.constants import PAGE_SIZE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
@@ -46,6 +45,7 @@ from enterprise.utils import (
     delete_data_sharing_consent,
     enroll_users_in_course,
     get_ecommerce_worker_user,
+    validate_course_exists_for_enterprise,
     validate_email_to_link,
 )
 
@@ -391,58 +391,40 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]
 
-    @classmethod
-    def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request, email_list=None):
+    def _handle_bulk_upload_errors(self, manage_learners_form, errors):
         """
-        Bulk link users by email.
+        Handles adding errors to the ``manager_learners_form``.
 
         Arguments:
-            enterprise_customer (EnterpriseCustomer): learners will be linked to this Enterprise Customer instance
             manage_learners_form (ManageLearnersForm): bound ManageLearners form instance
-            request (django.http.request.HttpRequest): HTTP Request instance
-            email_list (iterable): A list of pre-processed email addresses to handle using the form
+            errors (list): List of validation errors from parsing the uploaded CSV.
         """
-        errors = []
-        emails = set()
-        already_linked_emails = []
-        duplicate_emails = []
-        csv_file = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.BULK_UPLOAD]
-        if email_list:
-            parsed_csv = [{ManageLearnersForm.CsvColumns.EMAIL: email} for email in email_list]
-        else:
-            parsed_csv = parse_csv(csv_file, expected_columns={ManageLearnersForm.CsvColumns.EMAIL})
+        manage_learners_form.add_error(
+            ManageLearnersForm.Fields.GENERAL_ERRORS, ValidationMessages.BULK_LINK_FAILED
+        )
+        for error in errors:
+            manage_learners_form.add_error(ManageLearnersForm.Fields.BULK_UPLOAD, error)
 
-        try:
-            for index, row in enumerate(parsed_csv):
-                email = row[ManageLearnersForm.CsvColumns.EMAIL]
-                try:
-                    already_linked = validate_email_to_link(email, ignore_existing=True)
-                except ValidationError as exc:
-                    message = _("Error at line {line}: {message}\n").format(line=index + 1, message=exc)
-                    errors.append(message)
-                else:
-                    if already_linked:
-                        already_linked_emails.append((email, already_linked.enterprise_customer))
-                    elif email in emails:
-                        duplicate_emails.append(email)
-                    else:
-                        emails.add(email)
-        except ValidationError as exc:
-            errors.append(exc)
+    def _process_bulk_upload_data(
+            self,
+            request,
+            enterprise_customer,
+            emails,
+            already_linked_emails,
+            duplicate_emails,
+    ):
+        """
+        Processes the parsed data from bulk csv upload, adding the appropriate success and warning messages.
 
-        if errors:
-            manage_learners_form.add_error(
-                ManageLearnersForm.Fields.GENERAL_ERRORS, ValidationMessages.BULK_LINK_FAILED
-            )
-            for error in errors:
-                manage_learners_form.add_error(ManageLearnersForm.Fields.BULK_UPLOAD, error)
-            return None
+        Arguments:
+            request: A request instance
+            enterprise_customer (EnterpriseCustomer): An instance of an EnterpriseCustomer record.
+            emails (list): List of valid, non-duplicate emails.
+            already_linked_emails (list): List of emails that are already linked with the EnterpriseCustomer.
+            duplicate_emails (list): List of emails that are duplicate entries.
 
-        # There were no errors. Now do the actual linking:
-        for email in emails:
-            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
-
-        # Report what happened:
+        Returns: List of processable email addresses.
+        """
         count = len(emails)
         messages.success(request, ungettext(
             "{count} new learner was added to {enterprise_customer_name}.",
@@ -490,8 +472,78 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         # Build a list of all the emails that we can act on further; that is,
         # emails that we either linked to this customer, or that were linked already.
         all_processable_emails = list(emails) + this_customer_linked_emails
-
         return all_processable_emails
+
+    @classmethod
+    def _handle_bulk_upload(cls, enterprise_customer, manage_learners_form, request, email_list=None):
+        """
+        Bulk link users by email.
+
+        Arguments:
+            enterprise_customer (EnterpriseCustomer): learners will be linked to this Enterprise Customer instance
+            manage_learners_form (ManageLearnersForm): bound ManageLearners form instance
+            request (django.http.request.HttpRequest): HTTP Request instance
+            email_list (iterable): A list of pre-processed email addresses to handle using the form
+        """
+        errors = []
+        emails = set()
+        course_id_with_emails = {}
+        already_linked_emails = []
+        duplicate_emails = []
+        csv_file = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.BULK_UPLOAD]
+        if email_list:
+            parsed_csv = [{ManageLearnersForm.CsvColumns.EMAIL: email} for email in email_list]
+        else:
+            parsed_csv = parse_csv(csv_file, expected_columns={ManageLearnersForm.CsvColumns.EMAIL})
+
+        try:
+            for index, row in enumerate(parsed_csv):
+                email = row[ManageLearnersForm.CsvColumns.EMAIL]
+                course_id = row.get(ManageLearnersForm.CsvColumns.COURSE_ID, None)  # optional column
+                course_details = None
+                try:
+                    already_linked = validate_email_to_link(email, ignore_existing=True)
+                    if course_id:
+                        course_details = validate_course_exists_for_enterprise(enterprise_customer, course_id)
+                except ValidationError as exc:
+                    message = _("Error at line {line}: {message}\n").format(line=index + 1, message=exc)
+                    errors.append(message)
+                else:
+                    if already_linked:
+                        already_linked_emails.append((email, already_linked.enterprise_customer))
+                    elif email in emails:
+                        duplicate_emails.append(email)
+                    else:
+                        emails.add(email)
+
+                    # course column exists for row, is a valid course id, and exists in the enterprise's catalog(s).
+                    if course_details:
+                        if course_details['course_id'] not in course_id_with_emails:
+                            course_id_with_emails[course_details['course_id']] = {email}
+                        else:
+                            course_id_with_emails[course_details['course_id']].add(email)
+        except ValidationError as exc:
+            errors.append(exc)
+
+        if errors:
+            cls._handle_bulk_upload_errors(cls, manage_learners_form=manage_learners_form, errors=errors)
+            # There were validation errors, so prevent any further action.
+            return [], {}
+
+        # There were no errors. Now do the actual linking:
+        for email in emails:
+            EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+
+        # Process the bulk uploaded data:
+        processable_emails = cls._process_bulk_upload_data(
+            cls,
+            request=request,
+            enterprise_customer=enterprise_customer,
+            emails=emails,
+            already_linked_emails=already_linked_emails,
+            duplicate_emails=duplicate_emails,
+        )
+        return processable_emails, course_id_with_emails
 
     @classmethod
     def send_messages(cls, http_request, message_requests):
@@ -610,18 +662,16 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         """
         pending_messages = []
         paid_modes = ['verified', 'professional']
-        enrollment_client = EnrollmentApiClient()
 
         succeeded, pending, failed = enroll_users_in_course(
             enterprise_customer=enterprise_customer,
             course_id=course_id,
             course_mode=mode,
-            emails=emails,
+            emails=sorted(emails),
             enrollment_requester=request.user,
             enrollment_reason=enrollment_reason,
             discount=discount,
             sales_force_id=sales_force_id,
-            enrollment_client=enrollment_client,
         )
         all_successes = succeeded + pending
         if notify:
@@ -693,6 +743,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             user=request.user,
             enterprise_customer=enterprise_customer
         )
+        course_id_with_emails = {}
 
         # initial form validation - check that form data is well-formed
         if manage_learners_form.is_valid():
@@ -705,19 +756,21 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             if mode == ManageLearnersForm.Modes.MODE_SINGULAR and not is_bulk_entry:
                 linked_learners = self._handle_singular(request, enterprise_customer, manage_learners_form)
             elif mode == ManageLearnersForm.Modes.MODE_SINGULAR:
-                linked_learners = self._handle_bulk_upload(
+                linked_learners, __ = self._handle_bulk_upload(
                     enterprise_customer,
                     manage_learners_form,
                     request,
                     email_list=email_field_as_bulk_input
                 )
             else:
-                linked_learners = self._handle_bulk_upload(enterprise_customer, manage_learners_form, request)
+                linked_learners, course_id_with_emails = self._handle_bulk_upload(
+                    enterprise_customer,
+                    manage_learners_form,
+                    request,
+                )
 
         # _handle_form might add form errors, so we check if it is still valid
         if manage_learners_form.is_valid():
-            course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE)
-
             # If we aren't installed in Open edX, blank out enrollment reason so downstream methods don't attempt to
             # create audit items
             if create_manual_enrollment_audit is not None:
@@ -733,11 +786,13 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             notify = notification_type == ManageLearnersForm.NotificationTypes.BY_EMAIL
             discount = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.DISCOUNT)
             sales_force_id = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.SALES_FORCE_ID)
-            course_id = course_details['course_id'] if course_details else None
+            course_mode = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE_MODE)
+            course_id = None
 
-            if course_id:
-                course_mode = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.COURSE_MODE]
-                if linked_learners:
+            if not course_id_with_emails:
+                course_details = manage_learners_form.cleaned_data.get(ManageLearnersForm.Fields.COURSE) or {}
+                course_id = course_details.get('course_id')
+                if course_id and linked_learners:
                     self._enroll_users(
                         request=request,
                         enterprise_customer=enterprise_customer,
@@ -749,6 +804,21 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                         sales_force_id=sales_force_id,
                         discount=discount
                     )
+            else:
+                for course_id in course_id_with_emails:
+                    emails_to_enroll = course_id_with_emails[course_id]
+                    if emails_to_enroll:
+                        self._enroll_users(
+                            request=request,
+                            enterprise_customer=enterprise_customer,
+                            emails=list(emails_to_enroll),
+                            mode=course_mode,
+                            course_id=course_id,
+                            notify=notify,
+                            enrollment_reason=manual_enrollment_reason,
+                            sales_force_id=sales_force_id,
+                            discount=discount
+                        )
 
             # Redirect to GET if everything went smooth.
             manage_learners_url = reverse("admin:" + UrlNames.MANAGE_LEARNERS, args=(customer_uuid,))

@@ -48,6 +48,7 @@ class TestManageLearnersForm(unittest.TestCase):
     def _make_bound_form(
             email,
             file_attached=False,
+            file_has_courses=False,
             course="",
             course_mode="",
             notify="",
@@ -69,7 +70,10 @@ class TestManageLearnersForm(unittest.TestCase):
         if file_attached:
             mock_file = mock.Mock(spec=File)
             mock_file.name = "some_file.csv"
-            mock_file.read.return_value = "fake file contents"
+            if file_has_courses:
+                mock_file.read.return_value = b'email,course_id\nfake@example.com,course-v1:edX+DemoX_Demo_Course'
+            else:
+                mock_file.read.return_value = b'email\nfake@example.com'
             file_data = {ManageLearnersForm.Fields.BULK_UPLOAD: mock_file}
 
         customer = EnterpriseCustomerFactory()
@@ -194,10 +198,13 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.is_valid()
         assert form.cleaned_data[form.Fields.COURSE] is None
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_clean_course_valid(self, enrollment_client):
-        instance = enrollment_client.return_value
-        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    def test_clean_course_valid(self, enrollment_client, enterprise_catalog_client):
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_details = fake_enrollment_api.COURSE_DETAILS[course_id]
         course_mode = "audit"
@@ -206,7 +213,7 @@ class TestManageLearnersForm(unittest.TestCase):
         assert form.cleaned_data[form.Fields.COURSE] == course_details
 
     @ddt.data("course-v1:does+not+exist", "invalid_course_id")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     def test_clean_course_invalid(self, course_id, enrollment_client):
         instance = enrollment_client.return_value
         instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
@@ -216,19 +223,25 @@ class TestManageLearnersForm(unittest.TestCase):
             form.Fields.COURSE: [ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)],
         }
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_clean_valid_course_empty_mode(self, enrollment_client):
-        instance = enrollment_client.return_value
-        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    def test_clean_valid_course_empty_mode(self, enrollment_client, enterprise_catalog_client):
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
         course_id = "course-v1:edX+DemoX+Demo_Course"
         form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode="")
         assert not form.is_valid()
         assert form.errors == {"__all__": [ValidationMessages.COURSE_WITHOUT_COURSE_MODE]}
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_clean_valid_course_invalid_mode(self, enrollment_client):
-        instance = enrollment_client.return_value
-        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    def test_clean_valid_course_invalid_mode(self, enrollment_client, enterprise_catalog_client):
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
         course_id = "course-v1:edX+DemoX+Demo_Course"
         course_mode = "verified"
         form = self._make_bound_form("irrelevant@example.com", course=course_id, course_mode=course_mode)
@@ -279,10 +292,84 @@ class TestManageLearnersForm(unittest.TestCase):
         cleaned_data = form.clean()
         assert cleaned_data[ManageLearnersForm.Fields.REASON] == expected_reason
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
-    def test_validate_reason(self, enrollment_client):
-        instance = enrollment_client.return_value
-        instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+    @ddt.data(
+        {
+            'course': 'fake-course-id',
+            'course_mode': None,
+            'reason': None,
+            'error': ValidationMessages.BOTH_COURSE_FIELDS_SPECIFIED,
+            'file_has_courses': True,
+        },
+        {
+            'course': None,
+            'course_mode': None,
+            'reason': None,
+            'error': ValidationMessages.COURSE_WITHOUT_COURSE_MODE,
+            'file_has_courses': True,
+        },
+        {
+            'course': None,
+            'course_mode': 'audit',
+            'reason': None,
+            'error': ValidationMessages.MISSING_REASON,
+            'file_has_courses': True,
+        },
+        {
+            'course': None,
+            'course_mode': 'audit',
+            'reason': 'tests',
+            'error': None,
+            'file_has_courses': True,
+        },
+        {
+            'course': 'fake-course-id',
+            'course_mode': 'audit',
+            'reason': 'tests',
+            'error': None,
+            'file_has_courses': False,
+        },
+    )
+    @ddt.unpack
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    def test_validate_bulk_upload_fields(
+            self,
+            enrollment_client,
+            enterprise_catalog_client,
+            course,
+            course_mode,
+            reason,
+            error,
+            file_has_courses,
+    ):
+        enrollment_instance = enrollment_client.return_value
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enrollment_instance.get_course_details.return_value = fake_enrollment_api.get_course_details(course_id)
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+        form = self._make_bound_form(
+            "",
+            course=course,
+            course_mode=course_mode,
+            reason=reason,
+            file_attached=True,
+            file_has_courses=file_has_courses,
+        )
+        if not error:
+            assert form.is_valid()
+        else:
+            assert not form.is_valid()
+            assert form.errors == {
+                "__all__": [error]
+            }
+
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    def test_validate_reason(self, enrollment_client, enterprise_catalog_client):
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
         course_id = "course-v1:edX+DemoX+Demo_Course"
         reason = ""
         form = self._make_bound_form("irrelevant@example.com", course=course_id, reason=reason, course_mode="audit")
@@ -326,7 +413,7 @@ class TestManageLearnersDataSharingConsentForm(unittest.TestCase):
         cleaned_data = form.clean()
         assert cleaned_data[field_name] == expected_field_value
 
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
     def test_clean(self, enrollment_client):
         """
         Test clean_email_or_username and clean_course methods.

@@ -5,6 +5,7 @@ Tests for the `edx-enterprise` admin forms module.
 
 import json
 from math import ceil
+from unittest.mock import ANY
 
 import ddt
 import mock
@@ -250,9 +251,9 @@ class TestEnterpriseCustomerManageLearnersDSCViewPost(BaseTestEnterpriseCustomer
             ManageLearnersDataSharingConsentForm.Fields.EMAIL_OR_USERNAME: email_or_username,
             ManageLearnersDataSharingConsentForm.Fields.COURSE: course_id
         }
-        with mock.patch("enterprise.admin.forms.EnrollmentApiClient") as mock_enrollment_client:
-            forms_instance = mock_enrollment_client.return_value
-            forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        with mock.patch("enterprise.api_client.lms.EnrollmentApiClient") as mock_enrollment_client:
+            enrollment_instance = mock_enrollment_client.return_value
+            enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
             return self.client.post(self.view_url, data=data)
 
     def assert_error(self, response, field, expected_error_message):
@@ -334,7 +335,7 @@ class TestEnterpriseCustomerManageLearnersDSCViewPost(BaseTestEnterpriseCustomer
             self.assert_error(
                 response,
                 ManageLearnersForm.Fields.COURSE,
-                ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG
+                ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG.format(course_id=course_id)
             )
 
     def test_post_valid_request(self):
@@ -856,8 +857,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch("enterprise.admin.views.EcommerceApiClient")
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     @ddt.data(
         (True, True),
         (False, True),
@@ -869,8 +870,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             self,
             enrollment_exists,
             audit_mode,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
             ecommerce_api_client_mock
@@ -881,10 +882,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             "start": "2017-01-01T12:00:00Z",
             "marketing_url": "http://lms.example.com/courses/course-v1:HarvardX+CoolScience+2016"
         }
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "audit" if audit_mode else "verified"
@@ -902,7 +905,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             ecommerce_api_client_mock.assert_not_called()
         else:
             ecommerce_api_client_mock.assert_called_once()
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
@@ -926,7 +929,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         num_messages = len(mail.outbox)
         assert num_messages == 1
 
-    def _post_multi_enroll(self, forms_client, views_client, course_catalog_client, track_enrollment, create_user):
+    def _post_multi_enroll(
+            self,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+            create_user,
+    ):
         """
         Enroll an enterprise learner or pending learner in multiple courses.
         """
@@ -945,10 +955,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             }
         }
         catalog_instance = course_catalog_client.return_value
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         enrollment_count = 0
         user = None
         user_email = FAKER.email()  # pylint: disable=no-member
@@ -963,9 +975,9 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             if user:
                 response = self._enroll_user_request(user, mode, course_id=course_id)
                 if enrollment_count == 1:
-                    views_instance.enroll_user_in_course.assert_called_once()
+                    enrollment_instance.enroll_user_in_course.assert_called_once()
                     track_enrollment.assert_called_once()
-                views_instance.enroll_user_in_course.assert_called_with(
+                enrollment_instance.enroll_user_in_course.assert_called_with(
                     user.username,
                     course_id,
                     mode,
@@ -995,59 +1007,72 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_multi_enroll_user(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
         """
         Test that an existing learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(forms_client, views_client, course_catalog_client, track_enrollment, True)
+        self._post_multi_enroll(
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+            True,
+        )
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_multi_enroll_pending_user(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
         """
         Test that a pending learner can be enrolled in multiple courses.
         """
-        self._post_multi_enroll(forms_client, views_client, course_catalog_client, track_enrollment, False)
+        self._post_multi_enroll(
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
+            False,
+        )
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enroll_no_course_detail(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
@@ -1067,12 +1092,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enroll_course_when_enrollment_closed(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
@@ -1082,19 +1107,20 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
         )
-        views_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
@@ -1114,10 +1140,10 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enroll_course_when_enrollment_closed_mode_changed(
-            self, forms_client, views_client, course_catalog_client, track_enrollment
+            self, enterprise_catalog_client, enrollment_client, course_catalog_client, track_enrollment
     ):
         """
         Tests scenario when user being enrolled has already SCE(student CourseEnrollment) record
@@ -1126,19 +1152,20 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
         )
-        views_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance.get_course_enrollment.side_effect = fake_enrollment_api.get_course_enrollment
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "audit"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
@@ -1150,10 +1177,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enroll_course_when_enrollment_closed_no_sce_exists(
-            self, forms_client, views_client, course_catalog_client, track_enrollment
+            self,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            track_enrollment,
     ):
         """
         Tests scenario when user being enrolled has no SCE(student CourseEnrollment) record
@@ -1161,19 +1192,20 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         """
         catalog_instance = course_catalog_client.return_value
         catalog_instance.get_course_run.return_value = {}
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "Enrollment closed"}).encode()
         )
-        views_instance.get_course_enrollment.return_value = None
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance.get_course_enrollment.return_value = None
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
 
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
@@ -1185,12 +1217,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enroll_with_missing_course_start_date(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
@@ -1207,15 +1239,17 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             "start": None,
             "marketing_url": "http://lms.example.com/courses/course-v1:HarvardX+CoolScience+2016"
         }
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
         response = self._enroll_user_request(user, mode, course_id=course_id)
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             mode,
@@ -1235,12 +1269,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enrollment_error(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             reverse_mock,
     ):
@@ -1250,12 +1284,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             "name": "Cool Science",
             "start": "2017-01-01T12:00:00Z",
         }
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content=json.dumps({"message": "test"}).encode()
         )
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
@@ -1267,12 +1303,12 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
     @mock.patch('enterprise.admin.views.logging.error')
     @mock.patch("enterprise.utils.reverse")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_enrollment_error_bad_error_string(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             reverse_mock,
             logging_mock,
@@ -1283,12 +1319,14 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             "name": "Cool Science",
             "start": "2017-01-01T12:00:00Z",
         }
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = HttpClientError(
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = HttpClientError(
             "Client Error", content='This is not JSON'.encode()
         )
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         user = UserFactory()
         course_id = "course-v1:HarvardX+CoolScience+2016"
         mode = "verified"
@@ -1310,22 +1348,28 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
     Tests for EnterpriseCustomerManageLearnersView POST endpoint - bulk user linking.
     """
 
-    def _get_form(self, response):
+    def _get_form(self, response, expected_status_code=200):
         """
         Utility function to capture common parts of assertions on form errors.
 
         Arguments:
             response (HttpResponse): View response.
+            expected_status_code: The expected status code, e.g. 200.
 
         Returns:
-            ManageLearnersForm: bound instance of ManageLearnersForm used to render the response.
+            ManageLearnersForm: bound instance of ManageLearnersForm used to render the response,
+                or None if the response is a 302 redirect.
 
         Raises:
-            AssertionError: if response status code is not 200 or form is unbound.
+            AssertionError: if response status code mismatches the expected status code or form is unbound.
         """
-        assert response.status_code == 200
-        self._test_common_context(response.context)  # pylint: disable=no-member
-        # pylint: disable=no-member
+        assert response.status_code == expected_status_code
+
+        # response.context is ``None`` when the POST request is successful, without any errors in form validation.
+        if not response.context:
+            return None
+
+        self._test_common_context(response.context)
         manage_learners_form = response.context[self.context_parameters.MANAGE_LEARNERS_FORM]
         assert manage_learners_form.is_bound
         return manage_learners_form
@@ -1418,6 +1462,122 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         line_error_message = ValidationMessages.INVALID_EMAIL.format(argument=invalid_email)
         self._assert_line_message(bulk_upload_errors[0], 3, line_error_message)
 
+    @ddt.data(
+        {'valid_course_id': False, 'course_in_catalog': False, 'expected_status_code': 200},
+        {'valid_course_id': False, 'course_in_catalog': True, 'expected_status_code': 200},
+        {'valid_course_id': True, 'course_in_catalog': False, 'expected_status_code': 200},
+        {'valid_course_id': True, 'course_in_catalog': True, 'expected_status_code': 302},
+    )
+    @ddt.unpack
+    @mock.patch("enterprise.admin.views.create_manual_enrollment_audit")
+    @mock.patch("enterprise.models.CourseCatalogApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
+    @mock.patch("enterprise.admin.views.enroll_users_in_course")
+    def test_post_create_course_enrollments(
+            self,
+            enroll_users_in_course_mock,
+            enterprise_catalog_client,
+            enrollment_client,
+            course_catalog_client,
+            create_enrollment_audit_mock,
+            valid_course_id,
+            course_in_catalog,
+            expected_status_code,
+    ):
+        self._login()
+        user = UserFactory()
+        second_email = FAKER.email()  # pylint: disable=no-member
+        third_email = FAKER.email()  # pylint: disable=no-member
+        course_id = "course-v1:edX+DemoX+Demo_Course"
+        second_course_id = "course-v1:HarvardX+CoolScience+2016"
+        should_create_enrollments = False
+
+        enrollment_instance = enrollment_client.return_value
+        course_catalog_instance = course_catalog_client.return_value
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = course_in_catalog
+        create_enrollment_audit_mock.return_value = True
+        enroll_users_in_course_mock.return_value = [user], [], []
+
+        csv_columns = [ManageLearnersForm.CsvColumns.EMAIL, ManageLearnersForm.CsvColumns.COURSE_ID]
+        csv_data = [
+            (user.email, course_id),
+            (second_email, course_id),
+            (third_email, second_course_id),
+        ]
+
+        if valid_course_id:
+            enrollment_instance.get_course_details.side_effect = [
+                fake_enrollment_api.get_course_details(course_id),
+                fake_enrollment_api.get_course_details(course_id),
+                fake_enrollment_api.get_course_details(second_course_id),
+            ]
+            course_catalog_instance.get_course_run.side_effect = [
+                {
+                    'key': course_id,
+                    'title': 'Fake Course',
+                    'start': '2020-11-01T00:00:00Z',
+                },
+                {
+                    'key': course_id,
+                    'title': 'Fake Course',
+                    'start': '2020-11-01T00:00:00Z',
+                },
+                {
+                    'key': second_course_id,
+                    'title': 'Fake Course 2',
+                    'start': '2019-10-01T00:00:00Z',
+                },
+            ]
+        else:
+            enrollment_instance.get_course_details.return_value = {}
+
+        response = self._perform_request(csv_columns, csv_data, notify=False)
+
+        manage_learners_form = self._get_form(response, expected_status_code=expected_status_code)
+        bulk_upload_errors = []
+        if manage_learners_form:
+            bulk_upload_errors = manage_learners_form.errors[ManageLearnersForm.Fields.BULK_UPLOAD]
+            print('bulk_upload_errors', bulk_upload_errors)
+
+        if valid_course_id and course_in_catalog:
+            # valid input, no errors
+            assert not bulk_upload_errors
+            should_create_enrollments = True
+
+        if not valid_course_id:
+            line_error_message = ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id)
+            self._assert_line_message(bulk_upload_errors[0], 1, line_error_message)
+        elif not course_in_catalog:
+            line_error_message = ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG.format(course_id=course_id)
+            self._assert_line_message(bulk_upload_errors[0], 1, line_error_message)
+
+        if should_create_enrollments:
+            # assert correct users are enrolled in the proper courses based on the csv data
+            enroll_users_in_course_mock.assert_any_call(
+                course_id=course_id,
+                emails=sorted([user.email, second_email]),
+                course_mode=ANY,
+                discount=ANY,
+                enrollment_reason=ANY,
+                enrollment_requester=ANY,
+                enterprise_customer=ANY,
+                sales_force_id=ANY,
+            )
+            enroll_users_in_course_mock.assert_any_call(
+                course_id=second_course_id,
+                emails=[third_email],
+                course_mode=ANY,
+                discount=ANY,
+                enrollment_reason=ANY,
+                enrollment_requester=ANY,
+                enterprise_customer=ANY,
+                sales_force_id=ANY,
+            )
+        else:
+            enroll_users_in_course_mock.assert_not_called()
+
     def test_post_existing_and_duplicates(self):
         """
         Test that duplicates and existing links are handled correctly.
@@ -1505,12 +1665,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_link_and_enroll(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
@@ -1527,10 +1687,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
             "start": "2017-01-01T12:00:00Z",
             "marketing_url": "http://localhost/course-v1:EnterpriseX+Training+2017"
         }
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         self._login()
         user = UserFactory.create()
         unknown_email = FAKER.email()  # pylint: disable=no-member
@@ -1541,7 +1703,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             course_mode
@@ -1566,12 +1728,12 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
     @mock.patch("enterprise.utils.track_enrollment")
     @mock.patch("enterprise.models.CourseCatalogApiClient")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_link_and_enroll_no_course_details(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             course_catalog_client,
             track_enrollment,
     ):
@@ -1580,10 +1742,11 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         """
         course_catalog_instance = course_catalog_client.return_value
         course_catalog_instance.get_course_run.return_value = {}
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
 
         self._login()
         user = UserFactory.create()
@@ -1595,7 +1758,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course=course_id, course_mode=course_mode)
 
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             course_mode
@@ -1616,21 +1779,23 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         assert num_messages == 0
 
     @mock.patch("enterprise.utils.track_enrollment")
-    @mock.patch("enterprise.admin.views.EnrollmentApiClient")
-    @mock.patch("enterprise.admin.forms.EnrollmentApiClient")
+    @mock.patch("enterprise.api_client.lms.EnrollmentApiClient")
+    @mock.patch("enterprise.models.EnterpriseCatalogApiClient")
     def test_post_link_and_enroll_no_notification(
             self,
-            forms_client,
-            views_client,
+            enterprise_catalog_client,
+            enrollment_client,
             track_enrollment,
     ):
         """
         Test bulk upload with linking and enrolling
         """
-        views_instance = views_client.return_value
-        views_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
-        forms_instance = forms_client.return_value
-        forms_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enrollment_instance = enrollment_client.return_value
+        enrollment_instance.enroll_user_in_course.side_effect = fake_enrollment_api.enroll_user_in_course
+        enrollment_instance.get_course_details.side_effect = fake_enrollment_api.get_course_details
+        enterprise_catalog_instance = enterprise_catalog_client.return_value
+        enterprise_catalog_instance.enterprise_contains_content_items.return_value = True
+
         self._login()
         user = UserFactory.create()
         unknown_email = FAKER.email()  # pylint: disable=no-member
@@ -1641,7 +1806,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
 
         response = self._perform_request(columns, data, course=course_id, course_mode=course_mode, notify=False)
 
-        views_instance.enroll_user_in_course.assert_called_once_with(
+        enrollment_instance.enroll_user_in_course.assert_called_once_with(
             user.username,
             course_id,
             course_mode

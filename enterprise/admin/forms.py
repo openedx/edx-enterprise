@@ -20,7 +20,6 @@ from django.utils.translation import ugettext as _
 from enterprise import utils
 from enterprise.admin.utils import email_or_username__to__email, split_usernames_and_emails
 from enterprise.admin.widgets import SubmitInput
-from enterprise.api_client.lms import EnrollmentApiClient
 from enterprise.models import (
     EnterpriseCustomer,
     EnterpriseCustomerCatalog,
@@ -55,7 +54,9 @@ class ManageLearnersForm(forms.Form):
         required=False,
         help_text=_(
             "The .csv file must have a column of email addresses, indicated "
-            "by the heading 'email' in the first row."
+            "by the heading 'email' in the first row. Optionally, the .csv file may contain "
+            "a column of course run keys, indicated by the heading 'course_id' in the first row, to "
+            "enroll learners in multiple courses."
         )
     )
     course = forms.CharField(
@@ -129,6 +130,7 @@ class ManageLearnersForm(forms.Form):
         Namespace class for CSV column names.
         """
         EMAIL = "email"
+        COURSE_ID = "course_id"
 
     def __init__(self, *args, **kwargs):
         """
@@ -194,11 +196,8 @@ class ManageLearnersForm(forms.Form):
         course_id = self.cleaned_data[self.Fields.COURSE].strip()
         if not course_id:
             return None
-
-        client = EnrollmentApiClient()
-        course_details = client.get_course_details(course_id)
-        if not course_details:
-            raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
+        enterprise_customer = utils.get_enterprise_customer(self._enterprise_customer.uuid)
+        course_details = utils.validate_course_exists_for_enterprise(enterprise_customer, course_id)
         return course_details
 
     def clean_reason(self):
@@ -241,14 +240,33 @@ class ManageLearnersForm(forms.Form):
         cleaned_data[self.Fields.MODE] = mode
         cleaned_data[self.Fields.NOTIFY] = self.clean_notify()
 
+        self._validate_bulk_upload()
         self._validate_course()
         self._validate_reason()
 
         return cleaned_data
 
+    def _validate_bulk_upload(self):
+        """
+        Verify that when a csv file contains a "course_id" column, there is not a singular course ID
+        specified. Also verify that a course mode is specified, which is applied to all enrollments.
+        """
+        bulk_upload_csv = self.cleaned_data.get(self.Fields.BULK_UPLOAD)
+        if bulk_upload_csv:
+            bulk_csv_contents = bulk_upload_csv.read()
+            csv_column_names = bulk_csv_contents.decode('utf-8').split('\n', 1)[0].split(',')
+            if self.CsvColumns.COURSE_ID in csv_column_names:
+                # course id column exists in csv, so validate conditionally required fields
+                if self.cleaned_data.get(self.Fields.COURSE):
+                    raise ValidationError(ValidationMessages.BOTH_COURSE_FIELDS_SPECIFIED)
+                if not self.cleaned_data.get(self.Fields.COURSE_MODE):
+                    raise ValidationError(ValidationMessages.COURSE_WITHOUT_COURSE_MODE)
+                if not self.cleaned_data.get(self.Fields.REASON):
+                    raise ValidationError(ValidationMessages.MISSING_REASON)
+
     def _validate_course(self):
         """
-        Verify that the selected mode is valid for the given course .
+        Verify that the selected mode is valid for the given course.
         """
         # Verify that the selected mode is valid for the given course .
         course_details = self.cleaned_data.get(self.Fields.COURSE)
@@ -313,14 +331,10 @@ class ManageLearnersDataSharingConsentForm(forms.Form):
         Verify course ID has an associated course in LMS.
         """
         course_id = self.cleaned_data[self.Fields.COURSE].strip()
-        client = EnrollmentApiClient()
-        # Checks whether a course exist in lms with the given course id.
-        if not client.get_course_details(course_id):
-            raise ValidationError(ValidationMessages.INVALID_COURSE_ID.format(course_id=course_id))
-
-        # Checks whether a course exists in customer catalog.
-        if not self.is_course_in_catalog(course_id):
-            raise ValidationError(ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG)
+        if not course_id:
+            return None
+        enterprise_customer = utils.get_enterprise_customer(self._enterprise_customer.uuid)
+        utils.validate_course_exists_for_enterprise(enterprise_customer, course_id)
         return course_id
 
     def clean_email_or_username(self):

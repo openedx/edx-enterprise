@@ -33,7 +33,6 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 LMS_API_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 LMS_API_DATETIME_FORMAT_WITHOUT_TIMEZONE = '%Y-%m-%dT%H:%M:%S'
-MANUAL_ENROLLMENT_ROLE = "Learner"
 
 
 class NoAuthenticationLmsApiClient:
