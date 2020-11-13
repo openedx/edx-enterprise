@@ -21,7 +21,13 @@ from django.utils.translation import ugettext_lazy as _
 from enterprise import models, utils
 from enterprise.api.v1.fields import Base64EmailCSVField
 from enterprise.api_client.lms import ThirdPartyAuthApiClient
-from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
+from enterprise.constants import (
+    BULK_PURCHASE_PURCHASE_TYPE,
+    ENTERPRISE_PERMISSION_GROUPS,
+    PURCHASE_TYPE_CHOICES,
+    SUBSCRIPTION_PURCHASE_TYPE,
+    DefaultColors,
+)
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
@@ -159,12 +165,17 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_learner_portal', 'enable_portal_reporting_config_screen',
             'enable_portal_saml_configuration_screen', 'contact_email',
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
-            'enable_integrated_customer_learner_portal_search', 'country',
+            'enable_integrated_customer_learner_portal_search', 'country', 'purchase_type',
         )
 
     site = SiteSerializer(required=False)
     branding_configuration = serializers.SerializerMethodField()
     country = CountryField(required=False)
+    purchase_type = serializers.ChoiceField(
+        choices=PURCHASE_TYPE_CHOICES,
+        required=False,
+        write_only=True,
+    )
 
     def get_branding_configuration(self, obj):
         """
@@ -173,21 +184,6 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
 
     def create(self, validated_data):
-        # enterprise_customer, __ = EnterpriseCustomer.objects.get_or_create(  # pylint: disable=no-member
-        #     name=name,
-        #     site_id=site.id,
-        #     slug=slugify(name),
-        #     country='US',
-        #     defaults={
-        #         'country': 'US',
-        #         'enable_learner_portal': True,
-        #         'enable_data_sharing_consent': True,
-        #         'enable_portal_code_management_screen': True,
-        #         'enable_portal_reporting_config_screen': True,
-        #         'enable_portal_saml_configuration_screen': True,
-        #         'enable_portal_subscription_management_screen': True,
-        #     },
-        # )
         import pdb; pdb.set_trace()
         request = self.context.get('request')
         provided_site = validated_data.get('site')
@@ -197,9 +193,22 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         provided_slug = validated_data.get('slug')
         # Auto-generate a slug from the name if one wasn't explicitly provided
         slug = provided_slug or slugify(provided_name)
+
+        # Enable the appropriate features based on the purchase type the created customer is to be associated with,
+        # if any. This is used for self-service enterprise creation.
+        purchase_options = {}
+        purchase_type = validated_data.pop('purchase_type')
+        if purchase_type == SUBSCRIPTION_PURCHASE_TYPE:
+            purchase_options['enable_learner_portal'] = True
+            purchase_options['enable_portal_subscription_management_screen'] = True
+        elif purchase_type == BULK_PURCHASE_PURCHASE_TYPE:
+            # TODO: Should the learner portal exist here? We don't have a great user experience for this case yet
+            purchase_options['enable_portal_code_management_screen'] = True
+
         try:
             customer = models.EnterpriseCustomer.objects.create(
                 **validated_data,
+                **purchase_options,
                 slug=slug,
                 site=site,
             )
@@ -209,6 +218,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             )
             LOGGER.error(message)
             raise exc
+
         return customer
 
 

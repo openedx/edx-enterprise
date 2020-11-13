@@ -166,3 +166,12 @@ AVAILABLE_LANGUAGES = [
     ('en', u'English'),
     ('es-419', u'Español (Latinoamérica)'),  # Spanish (Latin America)
 ]
+
+
+# Constants for self-service creation of enterprise customers from an enterprise purchase
+SUBSCRIPTION_PURCHASE_TYPE = 'subscription'
+BULK_PURCHASE_PURCHASE_TYPE = 'bulk_purchase'
+PURCHASE_TYPE_CHOICES = (
+    (SUBSCRIPTION_PURCHASE_TYPE, SUBSCRIPTION_PURCHASE_TYPE),
+    (BULK_PURCHASE_PURCHASE_TYPE, BULK_PURCHASE_PURCHASE_TYPE),
+)
