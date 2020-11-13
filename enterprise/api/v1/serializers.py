@@ -194,10 +194,11 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         # Auto-generate a slug from the name if one wasn't explicitly provided
         slug = provided_slug or slugify(provided_name)
 
-        # Enable the appropriate features based on the purchase type the created customer is to be associated with,
-        # if any. This is used for self-service enterprise creation.
+        # Enable the appropriate features based on the type of purchase the customer is making (if any)
+        # This is used for self-service enterprise creation
         purchase_options = {}
-        purchase_type = validated_data.pop('purchase_type')
+        # Pop `purchase_type` from the data as it's not used on the model
+        purchase_type = validated_data.pop('purchase_type', None)
         if purchase_type == SUBSCRIPTION_PURCHASE_TYPE:
             purchase_options['enable_learner_portal'] = True
             purchase_options['enable_portal_subscription_management_screen'] = True
