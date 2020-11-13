@@ -60,7 +60,7 @@ except ImportError:
 
 # Only create manual enrollments if running in edx-platform
 try:
-    from student.api import (
+    from common.djangoapps.student.api import (
         create_manual_enrollment_audit,
         UNENROLLED_TO_ENROLLED,
         UNENROLLED_TO_ALLOWEDTOENROLL,
@@ -73,14 +73,14 @@ except ImportError:
 LOGGER = logging.getLogger(__name__)
 
 try:
-    from third_party_auth.provider import Registry  # pylint: disable=unused-import
+    from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
 except ImportError as exception:
-    LOGGER.warning("Could not import Registry from third_party_auth.provider")
+    LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
     LOGGER.warning(exception)
     Registry = None
 
 try:
-    from track import segment
+    from common.djangoapps.track import segment
 except ImportError as exception:
     LOGGER.warning("Could not import segment from common.djangoapps.track")
     LOGGER.warning(exception)
@@ -200,9 +200,9 @@ def get_identity_provider(provider_id):
     """
     try:
         # pylint: disable=redefined-outer-name,import-outside-toplevel
-        from third_party_auth.provider import Registry
+        from common.djangoapps.third_party_auth.provider import Registry
     except ImportError as exception:
-        LOGGER.warning("Could not import Registry from third_party_auth.provider")
+        LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
         LOGGER.warning(exception)
         Registry = None  # pylint: disable=redefined-outer-name
 
@@ -221,9 +221,9 @@ def get_idp_choices():
     """
     try:
         # pylint: disable=redefined-outer-name,import-outside-toplevel
-        from third_party_auth.provider import Registry
+        from common.djangoapps.third_party_auth.provider import Registry
     except ImportError as exception:
-        LOGGER.warning("Could not import Registry from third_party_auth.provider")
+        LOGGER.warning("Could not import Registry from common.djangoapps.third_party_auth.provider")
         LOGGER.warning(exception)
         Registry = None  # pylint: disable=redefined-outer-name
 

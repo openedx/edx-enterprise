@@ -17,7 +17,7 @@ from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XA
 from integrated_channels.xapi.utils import is_success_response, send_course_enrollment_statement
 
 try:
-    from student.models import CourseEnrollment
+    from common.djangoapps.student.models import CourseEnrollment
 except ImportError:
     CourseEnrollment = None
 

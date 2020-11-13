@@ -802,6 +802,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.enabled_course_modes,
             enterprise_catalog.publish_audit_enrollment_urls
         )
+        api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_update_catalog_without_existing_service_catalog(self, api_client_mock):
@@ -821,6 +822,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enterprise_catalog.enabled_course_modes,
             enterprise_catalog.publish_audit_enrollment_urls
         )
+        api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_update_catalog_with_existing_service_catalog(self, api_client_mock):
@@ -840,6 +842,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enabled_course_modes=enterprise_catalog.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog.publish_audit_enrollment_urls
         )
+        api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog])
 
     @mock.patch('enterprise.signals.EnterpriseCatalogApiClient')
     def test_update_enterprise_catalog_query(self, api_client_mock):
@@ -893,6 +896,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             enabled_course_modes=enterprise_catalog_2.enabled_course_modes,
             publish_audit_enrollment_urls=enterprise_catalog_2.publish_audit_enrollment_urls
         )
+        api_client_mock.return_value.refresh_catalogs.assert_called_with([enterprise_catalog_2])
 
 
 @mark.django_db

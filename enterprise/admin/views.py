@@ -51,7 +51,7 @@ from enterprise.utils import (
 
 # Only create manual enrollments if running in edx-platform
 try:
-    from student.api import create_manual_enrollment_audit
+    from common.djangoapps.student.api import create_manual_enrollment_audit
 except ImportError:
     create_manual_enrollment_audit = None
 

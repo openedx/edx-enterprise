@@ -16,6 +16,32 @@ Change Log
 Unreleased
 -----------
 
+[3.13.0]
+--------
+
+* Use full paths for edx-platform/common/djangoapps imports, as described in
+  `edx-platform ADR #7 <https://github.com/edx/edx-platform/blob/master/docs/decisions/0007-sys-path-modification-removal.rst>`_.
+
+[3.12.4]
+--------
+
+* Fix silent exception in catalog api call.
+
+[3.12.3]
+--------
+
+* Add code_owner custom attribute for celery tasks.
+
+[3.12.2]
+--------
+
+* Refresh catalog metadata on create and update
+
+[3.12.1]
+--------
+
+* added support for grade, completion and course_structure type reports in enterprise report configurations. Added validation to allow these reports for Pearson enterprises only.
+
 [3.12.0]
 --------
 

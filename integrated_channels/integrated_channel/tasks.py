@@ -6,6 +6,7 @@ import time
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
+from edx_django_utils.monitoring import set_code_owner_attribute
 
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -21,6 +22,7 @@ LOGGER = get_task_logger(__name__)
 
 
 @shared_task
+@set_code_owner_attribute
 def transmit_content_metadata(username, channel_code, channel_pk):
     """
     Task to send content metadata to each linked integrated channel.
@@ -56,6 +58,7 @@ def transmit_content_metadata(username, channel_code, channel_pk):
 
 
 @shared_task
+@set_code_owner_attribute
 def transmit_learner_data(username, channel_code, channel_pk):
     """
     Task to send learner data to each linked integrated channel.
@@ -94,6 +97,7 @@ def transmit_learner_data(username, channel_code, channel_pk):
 
 
 @shared_task
+@set_code_owner_attribute
 def transmit_single_learner_data(username, course_run_id):
     """
     Task to send single learner data to each linked integrated channel.
@@ -138,6 +142,7 @@ def transmit_single_learner_data(username, course_run_id):
 
 
 @shared_task
+@set_code_owner_attribute
 def unlink_inactive_learners(channel_code, channel_pk):
     """
     Task to unlink inactive learners of provided integrated channel.
