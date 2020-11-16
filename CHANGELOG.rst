@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.12.5]
+--------
+
+* README updated to use build status badge from travis-ci.com
+
 [3.12.4]
 --------
 

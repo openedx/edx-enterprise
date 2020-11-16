@@ -5,8 +5,8 @@ enterprise
     :target: https://pypi.python.org/pypi/edx-enterprise/
     :alt: PyPI
 
-.. image:: https://travis-ci.org/edx/edx-enterprise.svg?branch=master
-    :target: https://travis-ci.org/edx/edx-enterprise
+.. image:: https://travis-ci.com/edx/edx-enterprise.svg?branch=master
+    :target: https://travis-ci.com/edx/edx-enterprise
     :alt: Travis
 
 .. image:: http://codecov.io/github/edx/edx-enterprise/coverage.svg?branch=master
