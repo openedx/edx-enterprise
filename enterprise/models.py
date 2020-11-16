@@ -1275,12 +1275,12 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
 @python_2_unicode_compatible
 class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     """
-    EnterpriseCustomerIdentityProvider is a One to One relationship between Enterprise Customer and Identity Provider.
+    EnterpriseCustomerIdentityProvider is a One to Many relationship between Enterprise Customer and Identity Provider.
 
     There should be a link between an enterprise customer and its Identity Provider. This relationship has
     following constraints
         1. An enterprise customer may or may not have an identity provider.
-        2. An enterprise customer can not have more than one identity providers.
+        2. An enterprise customer can have more than one identity providers.
         3. Enterprise customer site should match with identity provider's site. (i.e. same domain names)
 
     Fields:
@@ -1290,11 +1290,11 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     .. no_pii:
     """
 
-    enterprise_customer = models.OneToOneField(
+    enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name="enterprise_customer_identity_provider", on_delete=models.CASCADE
+        related_name="enterprise_customer_identity_providers", on_delete=models.CASCADE
     )
     provider_id = models.SlugField(
         null=False,
