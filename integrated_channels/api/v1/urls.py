@@ -7,5 +7,6 @@ from django.conf.urls import include, url
 
 app_name = 'v1'
 urlpatterns = [
+    url(r'^canvas/', include('integrated_channels.api.v1.canvas.urls')),
     url(r'^moodle/', include('integrated_channels.api.v1.moodle.urls')),
 ]

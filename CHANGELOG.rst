@@ -16,6 +16,10 @@ Change Log
 Unreleased
 -----------
 
+[3.14.1]
+--------
+* Adds new API for Canvas LMS configurations.
+
 [3.14.0]
 --------
 
