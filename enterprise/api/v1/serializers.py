@@ -184,13 +184,12 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
 
     def create(self, validated_data):
-        import pdb; pdb.set_trace()
         request = self.context.get('request')
         provided_site = validated_data.get('site')
         site = provided_site or get_current_site(request)
 
         provided_name = validated_data.get('name')
-        provided_slug = validated_data.get('slug')
+        provided_slug = validated_data.pop('slug', None)
         # Auto-generate a slug from the name if one wasn't explicitly provided
         slug = provided_slug or slugify(provided_name)
 
