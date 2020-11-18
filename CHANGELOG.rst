@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.12.1]
+--------
+
+* added support for grade, completion and course_structure type reports in enterprise report configurations. Added validation to allow these reports for Pearson enterprises only.
+
 [3.12.0]
 --------
 

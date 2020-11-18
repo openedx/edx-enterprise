@@ -566,6 +566,18 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
         """
         cleaned_data = super(EnterpriseCustomerReportingConfigAdminForm, self).clean()
         report_customer = cleaned_data.get('enterprise_customer')
+        data_type = cleaned_data.get('data_type')
+
+        if data_type in EnterpriseCustomerReportingConfiguration.PEARSON_ONLY_REPORTS \
+                and report_customer.name != 'Pearson':
+            message = _(
+                'This data_type "{data_type}" is not supported for enterprise'
+                'customer {enterprise_customer}. Please select a different data_type.',
+            ).format(
+                enterprise_customer=report_customer,
+                data_type=data_type,
+            )
+            self.add_error('data_type', message)
 
         # Check that any selected catalogs are tied to the selected enterprise.
         invalid_catalogs = [

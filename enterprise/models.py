@@ -2038,12 +2038,23 @@ class EnterpriseCustomerReportingConfiguration(TimeStampedModel):
     DATA_TYPE_PROGRESS_V2 = 'progress_v2'  # Refers to gathering progress data from the Analytics Data API
     DATA_TYPE_CATALOG = 'catalog'
     DATA_TYPE_ENGAGEMENT = 'engagement'  # Refers to gathering engagement data from the Analytics Data API
+    DATA_TYPE_GRADE = 'grade'
+    DATA_TYPE_COMPLETION = 'completion'
+    DATA_TYPE_COURSE_STRUCTURE = 'course_structure'
     DATA_TYPE_CHOICES = (
         (DATA_TYPE_PROGRESS, DATA_TYPE_PROGRESS),
         (DATA_TYPE_PROGRESS_V2, DATA_TYPE_PROGRESS_V2),
         (DATA_TYPE_CATALOG, DATA_TYPE_CATALOG),
         (DATA_TYPE_ENGAGEMENT, DATA_TYPE_ENGAGEMENT),
+        (DATA_TYPE_GRADE, DATA_TYPE_GRADE),
+        (DATA_TYPE_COMPLETION, DATA_TYPE_COMPLETION),
+        (DATA_TYPE_COURSE_STRUCTURE, DATA_TYPE_COURSE_STRUCTURE),
+
     )
+
+    # These types are only valid for the enterprise customer named `Pearson`. We are adding these Reports temporarily
+    # and will be reverted after Aurora based reports will be available.
+    PEARSON_ONLY_REPORTS = (DATA_TYPE_GRADE, DATA_TYPE_COMPLETION, DATA_TYPE_COURSE_STRUCTURE,)
 
     REPORT_TYPE_CSV = 'csv'
     REPORT_TYPE_JSON = 'json'
