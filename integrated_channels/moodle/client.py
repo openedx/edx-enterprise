@@ -371,22 +371,21 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
         """
         serialized_data['wsfunction'] = 'core_course_create_courses'
-        announcements = serialized_data.pop('announcements')
+        announcement = serialized_data.pop('announcement')
         response = self._wrapped_create_content_metadata(serialized_data)
         # Response format should be [{"id":1, "shortname": "name"},{...}]
-        for course in response:
-            if course.get('id', None):
-                post = self._create_forum_post(
-                    course.get('id'),
-                    announcements[course.get('shortname')]
+        if response[0].get('id', None):
+            post = self._create_forum_post(
+                response[0].get('id'),
+                announcement[response[0].get('shortname')]
+            )
+            if post.json()['warnings']:
+                raise ClientError(
+                    'Moodle Client failed to create post for course {}'.format(
+                        response[0].get('shortname')
+                    ),
+                    HTTPStatus.BAD_REQUEST.value
                 )
-                if post.json()['warnings']:
-                    raise ClientError(
-                        'Moodle Client failed to create post for course {}'.format(
-                            course.get('shortname')
-                        ),
-                        HTTPStatus.BAD_REQUEST.value
-                    )
         return 200, ''
 
 
@@ -399,13 +398,9 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
-        moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
-        import pdb; pdb.set_trace()
-        course_ids_to_delete = []
-        for key in list(serialized_data):
-            if 'shortname' in key:
-                moodle_course_id = self.get_course_id(serialized_data[key])
-                course_ids_to_delete.append(('courseids[]', moodle_course_id))
+        metadata_item = json.loads(serialized_data.decode('utf-8'))
+        moodle_course_id = self.get_course_id(metadata_item['courses[0][shortname]'])
+
         params = {
             'wsfunction': 'core_course_delete_courses',
             'courseids[]': moodle_course_id

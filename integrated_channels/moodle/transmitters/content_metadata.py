@@ -35,33 +35,4 @@ class MoodleContentMetadataTransmitter(ContentMetadataTransmitter):
             for key in item:
                 new_key = 'courses[0][{0}]'.format(key)
                 items[new_key] = item[key]
-                if key == 'announcement':
-                    if 'announcements' not in items:
-                        items['announcements'] = {}
-                    items['announcements'][next(iter(item[key]))] = item[key][next(iter(item[key]))]
-                else:
-                    new_key = 'courses[{0}][{1}]'.format(index, key)
-                    items[new_key] = item[key]
-
         return items
-
-    def _prepare_items_for_update_transmission(self, channel_metadata_items):
-        """
-        updates use same format sort of.
-        """
-        items = {}
-        for index, item in enumerate(channel_metadata_items):
-            for key in item:
-                if key != 'announcement':
-                    new_key = 'courses[{0}][{1}]'.format(index, key)
-                    items[new_key] = item[key]
-        return items
-
-    def _serialize_create_items(self, channel_metadata_items):
-        """
-        Overrides the base class to return an object and to use special prepare method.
-        """
-        return self._prepare_items_for_create_transmission(channel_metadata_items)
-
-    def _serialize_update_items(self, channel_metadata_items):
-        return self._prepare_items_for_update_transmission(channel_metadata_items)
