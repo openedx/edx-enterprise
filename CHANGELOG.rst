@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.12.3]
+--------
+
+* Add code_owner custom attribute for celery tasks.
+
 [3.12.2]
 --------
 

@@ -6,6 +6,7 @@ Django tasks.
 from logging import getLogger
 
 from celery import shared_task
+from edx_django_utils.monitoring import set_code_owner_attribute
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
 
@@ -13,6 +14,7 @@ LOGGER = getLogger(__name__)
 
 
 @shared_task
+@set_code_owner_attribute
 def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
     """
     Create enterprise enrollment for user if course_id part of catalog for the ENT customer.
