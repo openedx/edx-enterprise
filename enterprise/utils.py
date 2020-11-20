@@ -7,7 +7,6 @@ import datetime
 import json
 import logging
 import re
-from urllib.parse import urljoin
 from uuid import UUID
 
 import bleach
