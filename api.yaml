@@ -133,6 +133,11 @@ endpoints:
             name: page_size
             required: false
             type: number
+          -
+            in: query
+            name: detail_fields
+            required: false
+            type: string
         produces:
           - application/json
           - application/csv

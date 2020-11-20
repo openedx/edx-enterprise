@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.12.1]
+--------
+
+* Plumb ``detail_fields`` query param from the api ``enterpriseCustomerCatalogByUuid`` gateway.
+
 [3.12.0]
 --------
 

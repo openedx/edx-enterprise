@@ -212,6 +212,12 @@ page_size_qs_parameter: &page_size_qs_parameter
   required: false
   type: "number"
 
+detail_fields_qs_parameter: &detail_fields_qs_parameter
+  in: "query"
+  name: "detail_fields"
+  required: false
+  type: "string"
+
 # AWS API Gateway vendor extension point. This information is used
 #  by https://github.com/awslabs/aws-apigateway-importer.
 x-amazon-apigateway-integration-id-response: &apigateway_integration_id
@@ -323,6 +329,7 @@ endpoints:
             - *uuid_parameter
             - *page_qs_parameter
             - *page_size_qs_parameter
+            - *detail_fields_qs_parameter
           operationId: "get_enterprise_customer_catalog_by_uuid"
           responses: *responses
           x-amazon-apigateway-integration:
