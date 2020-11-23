@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.12.4]
+--------
+
+* Fix silent exception in catalog api call.
+
 [3.12.3]
 --------
 
