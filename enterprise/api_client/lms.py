@@ -468,6 +468,42 @@ class GradesApiClient(JwtLmsApiClient):
 
         raise HttpNotFoundError('No grade record found for course={}, username={}'.format(course_id, username))
 
+    @JwtLmsApiClient.refresh_token
+    def get_course_assessment_grades(self, course_id, username):
+        """
+        Retrieve the assessment grades for the given username for the given course_id.
+
+        Args:
+        * ``course_id`` (str): The string value of the course's unique identifier
+        * ``username`` (str): The username ID identifying the user for which to retrieve the grade.
+
+        Raises:
+
+        HttpNotFoundError if no grade found for the given user+course.
+
+        Returns:
+
+        a list of dicts containing:
+
+        * ``attempted``: A boolean representing whether the learner has attempted the subsection yet.
+        * ``subsection_name``: String representation of the subsection's name.
+        * ``category``: String representation of the subsection's category.
+        * ``label``: String representation of the subsection's label.
+        * ``score_possible``: The total amount of points that the learner could have earned on the subsection.
+        * ``score_earned``: The total amount of points that the learner earned on the subsection.
+        * ``percent``: A float representing the overall grade for the course.
+        * ``module_id``: The ID of the subsection.
+        """
+        results = self.client.gradebook(course_id).get(user_contains=username).get('results')
+        for row in results:
+            if row.get('username') == username:
+                return row.get('section_breakdown')
+
+        raise HttpNotFoundError('No assessment grade record found for course={}, username={}'.format(
+            course_id,
+            username
+        ))
+
 
 class CertificatesApiClient(JwtLmsApiClient):
     """

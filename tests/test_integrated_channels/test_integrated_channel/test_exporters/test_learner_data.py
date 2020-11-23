@@ -105,6 +105,39 @@ class TestLearnerExporter(unittest.TestCase):
         assert learner_data_record.completed_timestamp == (self.NOW_TIMESTAMP if completed_date is not None else None)
         assert learner_data_record.grade == 'A+'
 
+    def test_get_learner_subsection_data_records(self):
+        """
+        Test that the base learner subsection data exporter generates appropriate learner records from assessment grade
+        data.
+        """
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+        exporter = LearnerExporter('fake-user', self.config)
+
+        assessment_grade_data = {
+            'subsection_1': {
+                'grade': 0.9,
+                'subsection_id': 'sub_1'
+            },
+            'subsection_2': {
+                'grade': 1.0,
+                'subsection_id': 'sub_2'
+            }
+        }
+
+        learner_subsection_data_records = exporter.get_learner_assessment_data_records(
+            enterprise_course_enrollment,
+            assessment_grade_data
+        )
+
+        for subsection_record in learner_subsection_data_records:
+            if subsection_record.subsection_id == 'sub_1':
+                assert subsection_record.grade == 0.9
+            else:
+                assert subsection_record.grade == 1.0
+
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
@@ -129,6 +162,10 @@ class TestLearnerExporter(unittest.TestCase):
 
         learner_data = list(self.exporter.export())
         assert not learner_data
+        assert mock_grades_api.call_count == 0
+
+        learner_assessment_data = list(self.exporter.bulk_assessment_level_export())
+        assert not learner_assessment_data
         assert mock_grades_api.call_count == 0
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
@@ -377,6 +414,47 @@ class TestLearnerExporter(unittest.TestCase):
             assert report.course_completed == (passing and expected_completion is not None)
             assert report.completed_timestamp == expected_completion
             assert report.grade == expected_grade
+
+    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    def test_learner_assessment_data_export(
+            self,
+            mock_course_catalog_api,
+            mock_grades_api,
+            mock_enrollment_api
+    ):
+        enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=self.enterprise_customer_user,
+            course_id=self.course_id,
+        )
+
+        mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+
+        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
+            mode='verified',
+        )
+
+        # Mock grades data
+        assessment_grade_data = [dict(
+            attempted=True,
+            subsection_name='subsection_1',
+            category='subsection_category',
+            percent=1.0,
+            label='subsection_label',
+            score_earned=10,
+            score_possible=10,
+            module_id='subsection_id_1'
+        )]
+
+        mock_grades_api.return_value.get_course_assessment_grades.return_value = assessment_grade_data
+
+        learner_data = list(self.exporter.bulk_assessment_level_export())
+
+        assert learner_data[0].course_id == self.course_id
+        assert learner_data[0].enterprise_course_enrollment_id == enrollment.id
+        assert learner_data[0].grade == 1.0
+        assert learner_data[0].subsection_id == 'subsection_id_1'
 
     @ddt.data(
         ('self', LearnerExporter.GRADE_PASSING),

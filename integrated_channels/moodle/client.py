@@ -344,6 +344,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
         return self._post(params)
 
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Not implemented yet
+        """
+
     def create_course_completion(self, user_id, payload):
         """Send course completion data to Moodle"""
         # The base integrated channels transmitter expects a tuple of (code, body),

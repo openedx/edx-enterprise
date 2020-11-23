@@ -152,6 +152,11 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
         response = self._delete(update_url)
         return response.status_code, response.text
 
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Not implemented yet
+        """
+
     def create_course_completion(self, user_id, payload):
         """
         Post a final course grade to the integrated Blackboard course.

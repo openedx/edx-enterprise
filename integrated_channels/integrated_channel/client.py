@@ -60,3 +60,9 @@ class IntegratedChannelApiClient:
         Delete content metadata using the integrated channel's API.
         """
         raise NotImplementedError()
+
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Send a request to the integrated channel's grade API to update the assessment level reporting status for a user.
+        """
+        raise NotImplementedError()

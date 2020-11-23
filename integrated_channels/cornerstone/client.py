@@ -85,6 +85,11 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
         )
         return response.status_code, response.text
 
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Not implemented yet
+        """
+
     @property
     def authorization_header(self):
         """

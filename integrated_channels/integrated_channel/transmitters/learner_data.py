@@ -32,6 +32,100 @@ class LearnerTransmitter(Transmitter):
             client=client
         )
 
+    def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
+        """
+        Send a single assessment level grade information to the integrated channel using the client.
+
+        Args:
+            exporter: The learner assessment data exporter used to send to the integrated channel.
+            kwargs: Contains integrated channel-specific information for customized transmission variables.
+                - app_label: The app label of the integrated channel for whom to store learner data records for.
+                - model_name: The name of the specific learner data record model to use.
+                - remote_user_id: The remote ID field name of the learner on the audit model.
+        """
+        TransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+            app_label=kwargs.get('app_label', 'integrated_channel'),
+            model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
+        )
+        kwargs.update(
+            TransmissionAudit=TransmissionAudit,
+        )
+
+        # Even though we're transmitting a single learner, they can have records per assessment (multiple per course).
+        for learner_data in exporter.single_assessment_level_export(**kwargs):
+            serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
+            try:
+                code, body = self.client.create_course_completion(
+                    getattr(learner_data, kwargs.get('remote_user_id')),
+                    serialized_payload
+                )
+            except ClientError as client_error:
+                code = client_error.status_code
+                body = client_error.message
+                self.handle_transmission_error(learner_data, client_error)
+
+            learner_data.status = str(code)
+            learner_data.error_message = body if code >= 400 else ''
+
+            learner_data.save()
+
+    def assessment_level_transmit(self, exporter, **kwargs):
+        """
+        Send all assessment level grade information under an enterprise enrollment to the integrated channel using the
+        client.
+
+        Args:
+            exporter: The learner assessment data exporter used to send to the integrated channel.
+            kwargs: Contains integrated channel-specific information for customized transmission variables.
+                - app_label: The app label of the integrated channel for whom to store learner data records for.
+                - model_name: The name of the specific learner data record model to use.
+                - remote_user_id: The remote ID field name of the learner on the audit model.
+        """
+        TransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
+            app_label=kwargs.get('app_label', 'integrated_channel'),
+            model_name=kwargs.get('model_name', 'LearnerDataTransmissionAudit'),
+        )
+        kwargs.update(
+            TransmissionAudit=TransmissionAudit,
+        )
+
+        # Retrieve learner data for each existing enterprise enrollment under the enterprise customer
+        # and transmit the data according to the current enterprise configuration.
+        for learner_data in exporter.bulk_assessment_level_export():
+            serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
+            enterprise_enrollment_id = learner_data.enterprise_course_enrollment_id
+
+            # Check the last transmission for the current enrollment and see if the old grades match the new ones
+            if is_already_transmitted(
+                    TransmissionAudit,
+                    enterprise_enrollment_id,
+                    learner_data.grade,
+                    learner_data.subsection_id
+            ):
+                # We've already sent a completion status for this enrollment
+                LOGGER.info('Skipping previously sent enterprise enrollment {}'.format(enterprise_enrollment_id))
+                continue
+
+            try:
+                code, body = self.client.create_assessment_reporting(
+                    getattr(learner_data, kwargs.get('remote_user_id')),
+                    serialized_payload
+                )
+                LOGGER.info(
+                    'Successfully sent completion status call for enterprise enrollment {}'.format(
+                        enterprise_enrollment_id,
+                    )
+                )
+            except ClientError as client_error:
+                code = client_error.status_code
+                body = client_error.message
+                self.handle_transmission_error(learner_data, client_error)
+
+            learner_data.status = str(code)
+            learner_data.error_message = body if code >= 400 else ''
+
+            learner_data.save()
+
     def transmit(self, payload, **kwargs):
         """
         Send a completion status call to the integrated channel using the client.
