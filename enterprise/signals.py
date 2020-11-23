@@ -37,7 +37,7 @@ from enterprise.utils import (
 )
 
 try:
-    from student.models import CourseEnrollment
+    from common.djangoapps.student.models import CourseEnrollment
 except ImportError:
     CourseEnrollment = None
 
