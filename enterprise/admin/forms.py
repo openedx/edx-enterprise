@@ -31,7 +31,7 @@ from enterprise.models import (
 from enterprise.utils import ValidationMessages, validate_email_to_link
 
 try:
-    from third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
+    from common.djangoapps.third_party_auth.models import SAMLProviderConfig as saml_provider_configuration
 except ImportError:
     saml_provider_configuration = None
 
