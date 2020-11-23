@@ -36,3 +36,6 @@ class MoodleContentMetadataTransmitter(ContentMetadataTransmitter):
                 new_key = 'courses[0][{0}]'.format(key)
                 items[new_key] = item[key]
         return items
+
+    def _serialize_items(self, channel_metadata_items):
+        return self._prepare_items_for_transmission(channel_metadata_items)

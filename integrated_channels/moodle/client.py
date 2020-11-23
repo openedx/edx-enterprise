@@ -15,6 +15,7 @@ from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
 
 MOODLE_FINAL_GRADE_ASSIGNMENT_NAME = '(edX integration) Final Grade'
+ANNOUNCEMENT_POST_SUBJECT = 'Welcome! Click here for course details and edX link'
 
 
 def moodle_request_wrapper(method):
@@ -315,6 +316,10 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         return self._post(payload)
 
     @moodle_request_wrapper
+    def _wrapped_update_content_metadata(self, payload):
+        return self._post(payload)
+
+    @moodle_request_wrapper
     def _get_course_forum(self, course_id):
         """
         Obtains a list of forums for a given course id.
@@ -342,6 +347,42 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         response = self._get_course_forum(course_id)
         return response[0]['id']
 
+    @moodle_request_wrapper
+    def _get_forum_discussions(self, forum_id):
+        """
+        Returns discussion posts found in the specified forum
+        """
+        params = {
+            'wsfunction': 'mod_forum_get_forum_discussions',
+            'forumid': forum_id,
+            'moodlewsrestformat': 'json',
+            'wstoken': self.token,
+        }
+        return self._post(params)
+
+    def get_announcement_post(self, forum_id):
+        """
+        Returns the id of the discussion post matching our announcement or returns nothing.
+        """
+        response = self._get_forum_discussions(forum_id)
+        for index, discussion in enumerate(response):
+            if discussion['subject'] == ANNOUNCEMENT_POST_SUBJECT:
+                return response[index]['id']
+        return ''
+
+    def _update_announcement_post(self, course_id, announcement):
+        """
+        Updates announcement post with announcement text composed in the exporter.
+        """
+        forum_id = self.get_announcement_forum(course_id)
+        post_id = self.get_announcement_post(forum_id)
+        params = {
+            'wsfunction': 'mod_forum_update_discussion_post',
+            'postid': post_id,
+            'message': announcement,
+        }
+        return self._post(params)
+
     def _create_forum_post(self, course_id, announcement):
         """
         Creates a new Announcement post featuring edX course details and link.
@@ -350,7 +391,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params = {
             'wsfunction': 'mod_forum_add_discussion',
             'forumid': forum_id,
-            'subject': 'Welcome! Click here for course details and edX link',
+            'subject': ANNOUNCEMENT_POST_SUBJECT,
             'options[0][name]': 'discussionpinned',
             'options[0][value]': 'true',
             'message': announcement
@@ -389,15 +430,31 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         return 200, ''
 
 
-    @moodle_request_wrapper
     def update_content_metadata(self, serialized_data):
+        announcement = serialized_data.pop('courses[0][announcement]')
         moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
         serialized_data['courses[0][id]'] = moodle_course_id
         serialized_data['wsfunction'] = 'core_course_update_courses'
-        return self._post(serialized_data)
+
+        response = self._wrapped_update_content_metadata(serialized_data)
+        response_text = json.loads(response.text)
+        if response_text.get('exception', None) or response_text.get('warnings', None):
+            raise ClientError(
+                'Moodle Client failed to update content metadata for course {}'.format(
+                    serialized_data['courses[0][shortname]']
+                )
+            )
+        post_response = self._update_announcement_post(moodle_course_id, announcement)
+        if post_response.get('exception', None) or post_response.get('warnings', None):
+            raise ClientError(
+                'Moodle Client failed to update content metadata for course {}'.format(
+                    serialized_data['courses[0][shortname]']
+                )
+            )
 
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
+        import pdb; pdb.set_trace()
         metadata_item = json.loads(serialized_data.decode('utf-8'))
         moodle_course_id = self.get_course_id(metadata_item['courses[0][shortname]'])
 
