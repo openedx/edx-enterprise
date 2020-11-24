@@ -327,17 +327,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         params = {
             'wsfunction': 'mod_forum_get_forums_by_courses',
             'courseids[]': course_id,
-            'moodlewsrestformat': 'json',
-            'wstoken': self.token,
         }
-        response = requests.get(
-            urljoin(
-                self.enterprise_configuration.moodle_base_url,
-                self.MOODLE_API_PATH,
-            ),
-            params=params
-        )
-        return response
+        return self._post(params)
 
     def get_announcement_forum(self, course_id):
         """

@@ -77,6 +77,12 @@ class TestMoodleApiClient(unittest.TestCase):
         )
         assert client.get_course_id('course:test_course') == 2
 
+    def test_get_announcement_post(self):
+        pass
+
+    def test_create_content_metadata(self):
+        pass
+
     def test_update_content_metadata(self):
         """
         Test core logic of update_content_metadata to ensure
