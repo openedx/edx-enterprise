@@ -112,13 +112,9 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         else:
             description = short_description
 
-        announcement = self.ANNOUNCEMENT_TEMPLATE.format(
+        return self.ANNOUNCEMENT_TEMPLATE.format(
             title=content_metadata_item.get('title', None),
             enrollment_url=content_metadata_item.get('enrollment_url', None),
             image_url=content_metadata_item.get('image_url', None),
             description=description
         )
-        shortname = self.transform_shortname(content_metadata_item)
-        return {shortname: announcement}
-
-

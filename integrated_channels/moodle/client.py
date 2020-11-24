@@ -365,9 +365,10 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         Returns the id of the discussion post matching our announcement or returns nothing.
         """
         response = self._get_forum_discussions(forum_id)
-        for index, discussion in enumerate(response):
+        response_text = json.loads(response.text)
+        for _, discussion in enumerate(response_text['discussions']):
             if discussion['subject'] == ANNOUNCEMENT_POST_SUBJECT:
-                return response[index]['id']
+                return discussion['id']
         return ''
 
     def _update_announcement_post(self, course_id, announcement):
@@ -400,33 +401,54 @@ class MoodleAPIClient(IntegratedChannelApiClient):
 
     def create_content_metadata(self, serialized_data):
         """
-        The below assumes the data is dict/object.
-        Format should look like:
-        {
-          courses[0][shortname]: 'value',
-          courses[0][fullname]: 'value',
-          [...]
-          courses[1][shortname]: 'value',
-          courses[1][fullname]: 'value',
-          [...]
-        }
+        This content metadata creation has 3 phases:
+        1. Create the course in Moodle with most information
+        2. Create announcement post with course summary and details
+        3. Update the course format to "singleactivity" to show course details.
         """
         serialized_data['wsfunction'] = 'core_course_create_courses'
-        announcement = serialized_data.pop('announcement')
+        announcement = serialized_data.pop('courses[0][announcement]')
+        course_format = serialized_data.pop('courses[0][format]')
         response = self._wrapped_create_content_metadata(serialized_data)
         # Response format should be [{"id":1, "shortname": "name"},{...}]
         if response[0].get('id', None):
             post = self._create_forum_post(
                 response[0].get('id'),
-                announcement[response[0].get('shortname')]
+                announcement
             )
-            if post.json()['warnings']:
+            if post.json().get('warnings', None) or post.json().get('exception', None):
+                params = {
+                    'wsfunction': 'core_course_delete_courses',
+                    'courseids[]': response[0].get('id')
+                }
+                self._post(params)
                 raise ClientError(
-                    'Moodle Client failed to create post for course {}'.format(
+                    'Moodle Client Course Creation failed to create post for course {}'.format(
                         response[0].get('shortname')
                     ),
                     HTTPStatus.BAD_REQUEST.value
                 )
+            format_params = {
+                'wsfunction': 'core_course_update_courses',
+                'courses[0][id]': response[0].get('id'),
+                'courses[0][format]': course_format,
+            }
+            course_update_response = self._post(format_params)
+            if course_update_response.json().get('warnings', None) or \
+                course_update_response.json().get('exception', None):
+                self._post(params)
+                raise ClientError(
+                    'Moodle Client Course Creation failed to update course format for course {}. '
+                    'Changes rolled back. '.format(response[0].get('shortname')),
+                    HTTPStatus.BAD_REQUEST.value
+                )
+        else:
+            raise ClientError(
+                'Moodle Client Course Creation failed to create course {}'
+                .format(serialized_data['courses[0][shortname]']),
+                HTTPStatus.BAD_REQUEST.value
+            )
+
         return 200, ''
 
 
@@ -442,21 +464,22 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             raise ClientError(
                 'Moodle Client failed to update content metadata for course {}'.format(
                     serialized_data['courses[0][shortname]']
-                )
+                ),
+                HTTPStatus.BAD_REQUEST.value
             )
         post_response = self._update_announcement_post(moodle_course_id, announcement)
-        if post_response.get('exception', None) or post_response.get('warnings', None):
+        post_text = json.loads(post_response.text)
+        if post_text.get('exception', None) or post_text.get('warnings', None):
             raise ClientError(
-                'Moodle Client failed to update content metadata for course {}'.format(
-                    serialized_data['courses[0][shortname]']
-                )
+                'Moodle Client failed to update content metadata [Annoucement] for course {}'
+                .format(serialized_data['courses[0][shortname]']),
+                HTTPStatus.BAD_REQUEST.value
             )
+        return 200, ''
 
     @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
-        import pdb; pdb.set_trace()
-        metadata_item = json.loads(serialized_data.decode('utf-8'))
-        moodle_course_id = self.get_course_id(metadata_item['courses[0][shortname]'])
+        moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
 
         params = {
             'wsfunction': 'core_course_delete_courses',
