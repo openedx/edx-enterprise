@@ -384,6 +384,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         }
         return self._post(params)
 
+    @moodle_request_wrapper
     def _create_forum_post(self, course_id, announcement):
         """
         Creates a new Announcement post featuring edX course details and link.
@@ -396,6 +397,18 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             'options[0][name]': 'discussionpinned',
             'options[0][value]': 'true',
             'message': announcement
+        }
+        return self._post(params)
+
+    @moodle_request_wrapper
+    def _delete_content_metadata(self, course_id):
+        """
+        unified deletion parameters and call.
+        For main delete content metadata task and for cleanup.
+        """
+        params = {
+            'wsfunction': 'core_course_delete_courses',
+            'courseids[]': course_id
         }
         return self._post(params)
 
@@ -412,20 +425,32 @@ class MoodleAPIClient(IntegratedChannelApiClient):
         response = self._wrapped_create_content_metadata(serialized_data)
         # Response format should be [{"id":1, "shortname": "name"},{...}]
         if response[0].get('id', None):
-            post = self._create_forum_post(
-                response[0].get('id'),
-                announcement
-            )
-            if post.json().get('warnings', None) or post.json().get('exception', None):
-                params = {
-                    'wsfunction': 'core_course_delete_courses',
-                    'courseids[]': response[0].get('id')
-                }
-                self._post(params)
+            try:
+                post = self._create_forum_post(
+                    response[0].get('id'),
+                    announcement
+                )
+            except (TypeError, IndexError):
+                self._delete_content_metadata(response[0].get('id'))
                 raise ClientError(
-                    'Moodle Client Course Creation failed to create post for course {}'.format(
-                        response[0].get('shortname')
+                    'Moodle Client Content Metadata Creation failed to create post for course {} '
+                    'as forum could not be found'.format(
+                        response[0].get('shortname'),
                     ),
+                    HTTPStatus.NOT_FOUND.value
+                )
+            except Exception as exc:
+                self._delete_content_metadata(response[0].get('id'))
+                raise ClientError(
+                    'Moodle Client Content Metadata Creation failed to create post for course {} '
+                    'due to exception: {}'.format(response[0].get('shortname'), str(exc)),
+                    HTTPStatus.INTERNAL_SERVER_ERROR.value
+                )
+            if post.json().get('warnings', None) or post.json().get('exception', None):
+                self._delete_content_metadata(response[0].get('id'))
+                raise ClientError(
+                    'Moodle Client Content Metadata Creation failed to create post for course {}'
+                    .format(response[0].get('shortname')),
                     HTTPStatus.BAD_REQUEST.value
                 )
             format_params = {
@@ -436,7 +461,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             course_update_response = self._post(format_params)
             if course_update_response.json().get('warnings', None) or \
                 course_update_response.json().get('exception', None):
-                self._post(params)
+                self._delete_content_metadata(response[0].get('id'))
                 raise ClientError(
                     'Moodle Client Course Creation failed to update course format for course {}. '
                     'Changes rolled back. '.format(response[0].get('shortname')),
@@ -477,15 +502,10 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             )
         return 200, ''
 
-    @moodle_request_wrapper
     def delete_content_metadata(self, serialized_data):
         moodle_course_id = self.get_course_id(serialized_data['courses[0][shortname]'])
-
-        params = {
-            'wsfunction': 'core_course_delete_courses',
-            'courseids[]': moodle_course_id
-        }
-        return self._post(params)
+        resp = self._delete_content_metadata(moodle_course_id)
+        return resp.status_code, resp.text
 
     def create_course_completion(self, user_id, payload):
         """Send course completion data to Moodle"""
