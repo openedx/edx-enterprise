@@ -54,54 +54,30 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         ])
         for item in content_items.values():
             self.assertTrue(
-                set(['categoryid', 'summary'])
+                set(['categoryid', 'fullname', 'shortname', 'format', 'announcement'])
                 .issubset(set(item.channel_metadata.keys()))
             )
 
-    @ddt.data(
-        (
-            {
-                'enrollment_url': 'http://some/enrollment/url/',
-                'title': 'edX Demonstration Course',
-                'short_description': 'Some short description.',
-                'full_description': 'Detailed description of edx demo course.',
-            },
-            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />'
-            'Detailed description of edx demo course.'
-        ),
-        (
-            {
-                'enrollment_url': 'http://some/enrollment/url/',
-                'title': 'edX Demonstration Course',
-            },
-            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />'
-            'edX Demonstration Course'
-        ),
-        (
-            {
-                'enrollment_url': 'http://some/enrollment/url/',
-                'title': 'edX Demonstration Course',
-                'short_description': 'Some short description.',
-            },
-            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />Some short description.'
-        ),
-        (
-            {
-                'enrollment_url': 'http://some/enrollment/url/'
-            },
-            '<a href=http://some/enrollment/url/ target="_blank">Go to edX course page</a><br />'
-        )
-
-    )
-    @responses.activate
-    @ddt.unpack
-    def test_transform_description_includes_url(self, content_metadata_item, expected_description):
+    def test_transform_announcement(self):
         """
-        ``MoodleContentMetadataExporter``'s ``transform_description`` returns correct syllabus_body
+        ``MoodleContentMetadataExporter``'s ``transform_announcement`` returns an HTML formatted
+        forum post body
         """
+        content_metadata_item = {
+            'enrollment_url': 'http://some/enrollment/url/',
+            'title': 'edX Demonstration Course',
+            'short_description': 'Some short description.',
+            'full_description': 'Detailed description of edx demo course.',
+            'image_url': 'http://testing/image.png'
+        }
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
-        description = exporter.transform_description(content_metadata_item)
-        assert description == expected_description
+        description = exporter.transform_announcement(content_metadata_item)
+        assert description == exporter.ANNOUNCEMENT_TEMPLATE.format(
+            title=content_metadata_item['title'],
+            enrollment_url=content_metadata_item['enrollment_url'],
+            image_url=content_metadata_item['image_url'],
+            description=content_metadata_item['full_description']
+        )
 
     @responses.activate
     def test_transform_start(self):
@@ -148,9 +124,9 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         assert exporter.transform_shortname(content_metadata_item) == expected_name
 
     @responses.activate
-    def test_transform_title(self):
+    def test_transform_fullname(self):
         """
-        `MoodleContentMetadataExporter``'s ``transform_title`` returns a str
+        `MoodleContentMetadataExporter``'s ``transform_fullname`` returns a str
         featuring the title and partners/organizations
         """
         content_metadata_item = {
@@ -160,9 +136,9 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
                 'MIT:MIT'
             ]
         }
-        expected_title = '{} ({})'.format(
+        expected_fullname = '{} ({})'.format(
             content_metadata_item['title'],
             ', '.join(content_metadata_item['organizations'])
         )
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
-        assert exporter.transform_title(content_metadata_item) == expected_title
+        assert exporter.transform_fullname(content_metadata_item) == expected_fullname

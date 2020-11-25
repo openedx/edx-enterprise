@@ -26,8 +26,9 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         'announcement': 'announcement',
     }
 
-
-    LONG_STRING_LIMIT = 1700  # Actual maximum value we can support for any individual course
+# default url length = 8000 bytes / max char size of 4 bytes = 2000 char limit
+# subtracted arbitrary char buffer for template HTML, token, and other query params we send.
+    LONG_STRING_LIMIT = 1500
     SKIP_KEY_IF_NONE = True
 
     ANNOUNCEMENT_TEMPLATE = '<div><div style="display: inline-block">' \
@@ -107,7 +108,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         full_description = content_metadata_item.get('full_description') or None
         short_description = content_metadata_item.get('short_description') or None
 
-        if full_description and len(full_description) <= (self.LONG_STRING_LIMIT-400):
+        if full_description and len(full_description) <= self.LONG_STRING_LIMIT:
             description = full_description
         else:
             description = short_description

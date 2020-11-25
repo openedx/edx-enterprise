@@ -38,4 +38,9 @@ class MoodleContentMetadataTransmitter(ContentMetadataTransmitter):
         return items
 
     def _serialize_items(self, channel_metadata_items):
+        """
+        Overrides base serialize function because we do not want a JSON dump here.
+        We need to modify and append data and change it into a query string,
+        so a binary string is not useful.
+        """
         return self._prepare_items_for_transmission(channel_metadata_items)
