@@ -6,6 +6,7 @@ Tests for the ``EnterpriseLoginView`` view of the Enterprise app.
 import ddt
 import mock
 from pytest import mark
+from testfixtures import LogCapture
 
 from django.test import Client
 from django.urls import reverse
@@ -16,6 +17,8 @@ from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerId
 
 IDENTITY_PROVIDER_PATH = 'enterprise.models.EnterpriseCustomerIdentityProvider.identity_provider'
 GET_PROVIDER_LOGIN_URL_PATH = 'enterprise.views.get_provider_login_url'
+
+LOGGER_NAME = 'enterprise.forms'
 
 
 @mark.django_db
@@ -67,56 +70,81 @@ class TestEnterpriseLoginView(EnterpriseFormViewTestCase):
         {
             'create_enterprise_customer': False,
             'create_enterprise_customer_idp': False,
+            'no_of_enterprise_customer_idp': 1,
             'enable_slug_login': False,
             'enterprise_slug': 'incorrect_slug',
             'expected_response': [ERROR_MESSAGE_FOR_SLUG_LOGIN],
             'status_code': 400,
+            'expected_logger_message': '[Enterprise Slug Login] Not found enterprise: {}'
         },
         # Raise error if enable_slug_login is not enable.
         {
             'create_enterprise_customer': True,
             'create_enterprise_customer_idp': False,
+            'no_of_enterprise_customer_idp': 1,
             'enable_slug_login': False,
             'enterprise_slug': 'ec_slug',
             'expected_response': [ERROR_MESSAGE_FOR_SLUG_LOGIN],
             'status_code': 400,
+            'expected_logger_message': '[Enterprise Slug Login] slug login not enabled for enterprise: {}'
         },
         # Raise error if enterprise_customer is not linked to an idp.
         {
             'create_enterprise_customer': True,
             'create_enterprise_customer_idp': False,
+            'no_of_enterprise_customer_idp': 1,
             'enable_slug_login': True,
             'enterprise_slug': 'ec_slug_other',
             'expected_response': [ERROR_MESSAGE_FOR_SLUG_LOGIN],
             'status_code': 400,
+            'expected_logger_message': '[Enterprise Slug Login] No IDP found or enterprise_customer linked to idp'
+                                       ' which is not in the Registry class for enterprise: {}'
         },
         # Raise error if enterprise_customer is linked to an idp which not in the Registry Class.
         {
             'create_enterprise_customer': True,
             'create_enterprise_customer_idp': True,
+            'no_of_enterprise_customer_idp': 1,
             'enable_slug_login': True,
             'enterprise_slug': 'ec_slug_other',
             'expected_response': [ERROR_MESSAGE_FOR_SLUG_LOGIN],
             'status_code': 400,
+            'expected_logger_message': '[Enterprise Slug Login] No IDP found or enterprise_customer linked to idp'
+                                       ' which is not in the Registry class for enterprise: {}'
+        },
+        # Raise error if enterprise_customer is linked to multiple IDPs.
+        {
+            'create_enterprise_customer': True,
+            'create_enterprise_customer_idp': True,
+            'no_of_enterprise_customer_idp': 2,
+            'enable_slug_login': True,
+            'enterprise_slug': 'ec_slug_other',
+            'expected_response': [ERROR_MESSAGE_FOR_SLUG_LOGIN],
+            'status_code': 400,
+            'expected_logger_message': '[Enterprise Slug Login] Multiple IDPs configured for enterprise: {}'
         },
         # Valid request.
         {
             'create_enterprise_customer': True,
             'create_enterprise_customer_idp': True,
+            'no_of_enterprise_customer_idp': 1,
             'enable_slug_login': True,
             'enterprise_slug': 'ec_slug_other',
             'expected_response': u'http://provider.login-url.com',
             'status_code': 200,
+            'expected_logger_message': None
         },
     )
     def test_view_post(
             self,
             create_enterprise_customer,
             create_enterprise_customer_idp,
+            no_of_enterprise_customer_idp,
             enable_slug_login,
             enterprise_slug,
             expected_response,
-            status_code
+            status_code,
+            expected_logger_message,
     ):
         """
         Test that view HTTP POST works as expected.
@@ -126,6 +154,16 @@ class TestEnterpriseLoginView(EnterpriseFormViewTestCase):
             enterprise_customer = EnterpriseCustomerFactory(slug=enterprise_slug, enable_slug_login=enable_slug_login)
 
         if enterprise_customer and create_enterprise_customer_idp:
-            EnterpriseCustomerIdentityProviderFactory(enterprise_customer=enterprise_customer)
+            for _ in range(no_of_enterprise_customer_idp):
+                EnterpriseCustomerIdentityProviderFactory(enterprise_customer=enterprise_customer)
 
-        self._assert_post_request(enterprise_slug, status_code, expected_response)
+        with LogCapture(LOGGER_NAME) as log:
+            self._assert_post_request(enterprise_slug, status_code, expected_response)
+            if expected_logger_message:
+                log.check_present(
+                    (
+                        LOGGER_NAME,
+                        'ERROR',
+                        expected_logger_message.format(enterprise_slug),
+                    )
+                )
