@@ -94,24 +94,30 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     enterprise_customer_user.update_session(request)
 
 
-def get_user_from_social_auth(tpa_provider, user_id):
+def get_user_from_social_auth(tpa_providers, user_id):
     """
     Find the LMS user from the LMS model `UserSocialAuth`.
 
     Arguments:
-        tpa_provider (third_party_auth.provider): third party auth provider object
+        tpa_providers (third_party_auth.provider): list of third party auth provider objects
         user_id (str): User id of user in third party LMS
 
     """
-    # We attach the auth type to the slug at some point in this flow,
-    # so to match the original slug, we need to chop off that backend name.
-    # We only use saml here, so we are removing the first 5 characters, ie 'saml-'
-    provider_slug = tpa_provider.provider_id[5:]
-    social_auth_uid = '{0}:{1}'.format(provider_slug, user_id)
+    providers_backend_names = []
+    social_auth_uids = []
+    for idp in tpa_providers:
+        tpa_provider = get_identity_provider(idp.provider_id)
+        # We attach the auth type to the slug at some point in this flow,
+        # so to match the original slug, we need to chop off that backend name.
+        # We only use saml here, so we are removing the first 5 characters, ie 'saml-'
+        provider_slug = tpa_provider.provider_id[5:]
+        social_auth_uid = '{0}:{1}'.format(provider_slug, user_id)
+        providers_backend_names.append(tpa_provider.backend_name)
+        social_auth_uids.append(social_auth_uid)
     # we are filtering by both `provider` and `uid` to make use of provider,uid composite index
     # filtering only on `uid` makes query extremely slow since we don't have index on `uid`
     user_social_auth = UserSocialAuth.objects.select_related('user').filter(
-        provider=tpa_provider.backend_name, uid=social_auth_uid
+        provider__in=providers_backend_names, uid__in=social_auth_uids
     ).first()
 
     return user_social_auth.user if user_social_auth else None
@@ -126,12 +132,11 @@ def get_user_social_auth(user, enterprise_customer):
         enterprise_customer (EnterpriseCustomer): User id of user in third party LMS
 
     """
-    provider_id = enterprise_customer.identity_provider
-    tpa_provider = get_identity_provider(provider_id)
-    user_social_auth = UserSocialAuth.objects.filter(
-        user=user,
-        provider=tpa_provider.backend_name
-    ).first()
+    provider_backend_names = []
+    for idp in enterprise_customer.identity_providers:
+        tpa_provider = get_identity_provider(idp.provider_id)
+        provider_backend_names.append(tpa_provider.backend_name)
+    user_social_auth = UserSocialAuth.objects.filter(provider__in=provider_backend_names, user=user).first()
 
     return user_social_auth
 

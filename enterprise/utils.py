@@ -536,23 +536,6 @@ def get_enterprise_customer_user(user_id, enterprise_uuid):
         return None
 
 
-def get_enterprise_customer_idp(enterprise_customer_slug):
-    """
-    Return the identity provider for the given enterprise customer's slug if exists otherwise None.
-
-    Arguments:
-        enterprise_customer_slug (str): enterprise customer's slug.
-
-    Returns:
-        (EnterpriseCustomerIdentityProvider): enterprise customer identity provider record.
-    """
-    EnterpriseCustomerIdentityProvider = apps.get_model(    # pylint: disable=invalid-name
-        'enterprise',
-        'EnterpriseCustomerIdentityProvider'
-    )
-    return EnterpriseCustomerIdentityProvider.objects.filter(enterprise_customer__slug=enterprise_customer_slug).first()
-
-
 def get_course_track_selection_url(course_run, query_parameters):
     """
     Return track selection url for the given course.

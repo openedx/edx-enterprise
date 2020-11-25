@@ -1170,7 +1170,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
     @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_user_from_social_auth')
-    @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_identity_provider')
+    @mock.patch('enterprise.utils.get_identity_provider')
     def test_unlink_inactive_sap_learners_task_success(
             self,
             lms_learners,
@@ -1242,7 +1242,10 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
                 User.objects.get(username='Only-Edx-Learner').email, self.enterprise_customer.name
             ),
             'No social auth data found for inactive user with SAP student id [Only-Inactive-Sap-Learner] '
-            'of enterprise customer [{}] with identity provider [saml-default]'.format(self.enterprise_customer.name),
+            'of enterprise customer [{}] with identity providers [{}]'.format(
+                self.enterprise_customer.name,
+                ', '.join(provider.provider_id for provider in self.enterprise_customer.identity_providers)
+            ),
             'Unlink inactive learners task for integrated channel configuration '
             '[{}] took [0.0] seconds'.format(self.sapsf)
         ]
@@ -1288,7 +1291,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
     @mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.get_oauth_access_token')
     @mock.patch('integrated_channels.sap_success_factors.client.SAPSuccessFactorsAPIClient.update_content_metadata')
-    @mock.patch('integrated_channels.sap_success_factors.exporters.learner_data.get_identity_provider')
+    @mock.patch('enterprise.utils.get_identity_provider')
     def test_unlink_inactive_sap_learners_task_identity_failure(
             self,
             get_identity_provider_mock,

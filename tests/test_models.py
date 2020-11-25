@@ -200,22 +200,24 @@ class TestEnterpriseCustomer(unittest.TestCase):
         )
         self.assertEqual(method(customer), expected_to_str)
 
-    def test_identity_provider(self):
+    def test_identity_providers(self):
         """
-        Test identity_provider property returns correct value without errors.
+        Test identity_provider and identity_providers property returns correct value without errors.
         """
         customer = factories.EnterpriseCustomerFactory()
-        ent_idp = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
-        assert customer.identity_provider == ent_idp.provider_id
+        ent_idp_one = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
+        ent_idp_two = factories.EnterpriseCustomerIdentityProviderFactory(enterprise_customer=customer)
+        assert customer.identity_providers[0] == ent_idp_one
+        assert customer.identity_providers[1] == ent_idp_two
 
     def test_no_identity_provider(self):
         """
         Test identity_provider property returns correct value without errors.
 
-        Test that identity_provider property does not raise ObjectDoesNotExist and returns None
+        Test that identity_provider property does not raise ObjectDoesNotExist and returns False
         if enterprise customer does not have an associated identity provider.
         """
-        assert factories.EnterpriseCustomerFactory().identity_provider is None
+        assert factories.EnterpriseCustomerFactory().has_identity_providers is False
 
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient', return_value=mock.MagicMock())
     def test_catalog_contains_course_with_enterprise_customer_catalog(self, api_client_mock):
