@@ -461,8 +461,8 @@ class MoodleAPIClient(IntegratedChannelApiClient):
                 'courses[0][format]': course_format,
             }
             course_update_response = self._post(format_params)
-            if course_update_response.json().get('warnings', None) or \
-            course_update_response.json().get('exception', None):
+            if (course_update_response.json().get('warnings', None)
+                    or course_update_response.json().get('exception', None)):
                 self._delete_content_metadata(course_id)
                 raise ClientError(
                     'Moodle Client Content Metadata Creation failed to update course '
