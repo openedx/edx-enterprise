@@ -21,6 +21,7 @@ from enterprise.constants import ENTERPRISE_PERMISSION_GROUPS, DefaultColors
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
+    get_last_course_run_end_date,
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
@@ -310,6 +311,7 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
             if content_type == 'course':
                 item['enrollment_url'] = instance.get_course_enrollment_url(item['key'])
                 item['active'] = has_course_run_available_for_enrollment(item['course_runs'])
+                item['end_date'] = get_last_course_run_end_date(item['course_runs'])
             if content_type == 'courserun':
                 item['enrollment_url'] = instance.get_course_run_enrollment_url(item['key'])
             if content_type == 'program':

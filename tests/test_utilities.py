@@ -1317,6 +1317,44 @@ class TestEnterpriseUtils(unittest.TestCase):
         assert utils.has_course_run_available_for_enrollment(course_runs) == expected_enrollment_eligibility
 
     @ddt.data(
+        (
+            [],
+            None,
+        ),
+        (
+            [
+                {
+                    "end": "2020-09-13T13:11:01Z",
+                },
+                {
+                    "end": "2020-10-13T01:11:01Z",
+                },
+                {
+                    "end": "2019-07-13T01:11:01Z",
+                },
+            ],
+            "2020-10-13T01:11:01Z",
+        ),
+        (
+            [
+                {
+                    "end": "3000-05-29T12:11:01Z",
+                },
+                {
+                    "end": "3000-10-13T13:11:01Z",
+                },
+            ],
+            "3000-10-13T13:11:01Z",  # future dates
+        ),
+    )
+    @ddt.unpack
+    def test_course_end_date(self, course_runs, expected_end_date):
+        """
+        Tests that course end_date is always equal to latest course run's end date.
+        """
+        assert utils.get_last_course_run_end_date(course_runs) == expected_end_date
+
+    @ddt.data(
         ({"seats": [{"type": "verified", "upgrade_deadline": "3000-10-13T13:11:04Z"}]}, True),
         ({"seats": [{"type": "verified", "upgrade_deadline": None}]}, True),
         ({"seats": [{"type": "verified"}]}, True),

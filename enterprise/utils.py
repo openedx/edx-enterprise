@@ -924,6 +924,16 @@ def has_course_run_available_for_enrollment(course_runs):
     return False
 
 
+def get_last_course_run_end_date(course_runs):
+    """
+    Returns the end date of the course run that falls at the end.
+    """
+    latest_end_date = None
+    if course_runs:
+        latest_end_date = max(course_run['end'] for course_run in course_runs)
+    return latest_end_date
+
+
 def is_course_run_upgradeable(course_run):
     """
     Return true if the course run has a verified seat with an unexpired upgrade deadline, false otherwise.

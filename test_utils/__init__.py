@@ -121,7 +121,8 @@ def update_course_with_enterprise_context(
         course,
         add_utm_info=True,
         enterprise_catalog_uuid=None,
-        add_active_info=True
+        add_active_info=True,
+        add_end_date_info=True
 ):
     """
     Populate a fake course response with any necessary Enterprise context for testing purposes.
@@ -144,6 +145,8 @@ def update_course_with_enterprise_context(
 
     if add_active_info:
         course['active'] = utils.has_course_run_available_for_enrollment(course_runs)
+    if add_end_date_info:
+        course['end_date'] = utils.get_last_course_run_end_date(course_runs)
     for course_run in course_runs:
         update_course_run_with_enterprise_context(
             course_run,
@@ -178,6 +181,7 @@ def update_program_with_enterprise_context(program, add_utm_info=True, enterpris
             add_utm_info=add_utm_info,
             enterprise_catalog_uuid=enterprise_catalog_uuid,
             add_active_info=False,
+            add_end_date_info=False
         )
 
     return program
