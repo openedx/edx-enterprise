@@ -3,11 +3,14 @@
 User-facing forms for the Enterprise app.
 """
 
+import logging
+
 from django import forms
 from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
-from enterprise.utils import get_enterprise_customer_idp
+
+LOGGER = logging.getLogger(__name__)
 
 ENTERPRISE_SELECT_SUBTITLE = _(
     u'You have access to multiple organizations. Select the organization that you will use '
@@ -77,14 +80,26 @@ class EnterpriseLoginForm(forms.Form):
         try:
             enterprise_customer = EnterpriseCustomer.objects.get(slug=enterprise_slug)
         except EnterpriseCustomer.DoesNotExist:
+            LOGGER.error("[Enterprise Slug Login] Not found enterprise: {}".format(enterprise_slug))
             raise forms.ValidationError(ERROR_MESSAGE_FOR_SLUG_LOGIN)
 
         # verify that enterprise customer has enabled the slug login feature.
         if not enterprise_customer.enable_slug_login:
+            LOGGER.error("[Enterprise Slug Login] slug login not enabled for enterprise: {}".format(enterprise_slug))
+            raise forms.ValidationError(ERROR_MESSAGE_FOR_SLUG_LOGIN)
+
+        # verify that there are not multiple IDPs attached to the enterprise customer.
+        enterprise_customer_idps = enterprise_customer.identity_providers
+        if enterprise_customer_idps.count() > 1:
+            LOGGER.error("[Enterprise Slug Login] Multiple IDPs configured for enterprise: {}".format(enterprise_slug))
             raise forms.ValidationError(ERROR_MESSAGE_FOR_SLUG_LOGIN)
 
         # verify that a valid idp is linked to the enterprise customer.
-        enterprise_customer_idp = get_enterprise_customer_idp(enterprise_slug)
+        enterprise_customer_idp = enterprise_customer_idps.first()
         if enterprise_customer_idp is None or enterprise_customer_idp.identity_provider is None:
+            LOGGER.error("[Enterprise Slug Login] No IDP found or enterprise_customer linked to idp which is not in"
+                         " the Registry class for enterprise: {}".format(enterprise_slug))
             raise forms.ValidationError(ERROR_MESSAGE_FOR_SLUG_LOGIN)
+
+        cleaned_data['provider_id'] = enterprise_customer_idp.provider_id
         return cleaned_data

@@ -337,17 +337,22 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     @property
-    def identity_provider(self):
+    def identity_providers(self):
+        """
+        Return the identity providers associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.all()
+
+    @property
+    def has_identity_providers(self):
         """
         Return the unique slug for the identity provider associated with this enterprise customer.
 
         Returns `None` if enterprise customer does not have any identity provider.
         """
-        try:
-            # pylint: disable=no-member
-            return self.enterprise_customer_identity_provider and self.enterprise_customer_identity_provider.provider_id
-        except ObjectDoesNotExist:
-            return None
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.exists()
 
     @property
     def sync_learner_profile_data(self):

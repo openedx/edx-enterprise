@@ -65,7 +65,6 @@ from enterprise.utils import (
     get_configuration_value,
     get_current_course_run,
     get_enterprise_customer_by_slug_or_404,
-    get_enterprise_customer_idp,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
     get_program_type_description,
@@ -1031,7 +1030,7 @@ class EnterpriseLoginView(FormView):
             {
                 "url": get_provider_login_url(
                     self.request,
-                    get_enterprise_customer_idp(form.cleaned_data['enterprise_slug']).provider_id
+                    form.cleaned_data['provider_id'],
                 )
             }
         )
