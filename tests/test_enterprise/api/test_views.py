@@ -1548,6 +1548,9 @@ class TestEnterpriseAPIViews(APITest):
             name="test_enterprise",
             enable_autocohorting=enable_autocohorting
         )
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=enterprise_customer
+        )
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
