@@ -842,14 +842,14 @@ class EnterpriseCustomerCourseEnrollmentsSerializer(serializers.Serializer):
 
         try:
             tpa_client = ThirdPartyAuthApiClient(self.context['request_user'])
-            username = tpa_client.get_username_from_remote_id(
-                enterprise_customer.identity_provider, value
-            )
-            user = User.objects.get(username=username)
-            return models.EnterpriseCustomerUser.objects.get(
-                user_id=user.id,
-                enterprise_customer=enterprise_customer
-            )
+            for identity_provider in enterprise_customer.identity_providers:
+                username = tpa_client.get_username_from_remote_id(identity_provider, value)
+                if username:
+                    user = User.objects.get(username=username)
+                    return models.EnterpriseCustomerUser.objects.get(
+                        user_id=user.id,
+                        enterprise_customer=enterprise_customer
+                    )
         except (models.EnterpriseCustomerUser.DoesNotExist, User.DoesNotExist):
             pass
 
