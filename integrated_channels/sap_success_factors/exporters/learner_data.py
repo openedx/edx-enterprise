@@ -133,9 +133,8 @@ class SapSuccessFactorsLearnerManger:
         if not sap_inactive_learners:
             return None
 
-        provider_id = enterprise_customer.identity_provider
-        tpa_provider = get_identity_provider(provider_id)
-        if not tpa_provider:
+        providers = enterprise_customer.identity_providers
+        if not enterprise_customer.has_identity_providers:
             LOGGER.info(
                 'Enterprise customer [%s] has no associated identity provider',
                 enterprise_customer.name
@@ -144,12 +143,12 @@ class SapSuccessFactorsLearnerManger:
 
         for sap_inactive_learner in sap_inactive_learners:
             sap_student_id = sap_inactive_learner['studentID']
-            social_auth_user = get_user_from_social_auth(tpa_provider, sap_student_id)
+            social_auth_user = get_user_from_social_auth(providers, sap_student_id)
             if not social_auth_user:
                 LOGGER.info(
                     'No social auth data found for inactive user with SAP student id [%s] of enterprise '
-                    'customer [%s] with identity provider [%s]',
-                    sap_student_id, enterprise_customer.name, tpa_provider.provider_id
+                    'customer [%s] with identity providers [%s]',
+                    sap_student_id, enterprise_customer.name, ','.join(provider.provider_id for provider in providers)
                 )
                 continue
 
