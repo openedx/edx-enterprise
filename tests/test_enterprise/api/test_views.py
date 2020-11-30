@@ -78,16 +78,16 @@ ENTERPRISE_CATALOGS_CONTAINS_CONTENT_ENDPOINT = reverse(
 )
 ENTERPRISE_CATALOGS_COURSE_ENDPOINT = reverse(
     # pylint: disable=anomalous-backslash-in-string
-    r'enterprise-catalogs-courses/(?P<course-key>[^/+]+(/|\+)[^/+]+)',
+    r'enterprise-catalogs-courses',
     kwargs={'pk': FAKE_UUIDS[1], 'course_key': TEST_COURSE_KEY}
 )
 ENTERPRISE_CATALOGS_COURSE_RUN_ENDPOINT = reverse(
     # pylint: disable=anomalous-backslash-in-string
-    r'enterprise-catalogs-course-runs/(?P<course-id>[^/+]+(/|\+)[^/+]+(/|\+)[^/?]+)',
+    r'enterprise-catalogs-course_runs',
     kwargs={'pk': FAKE_UUIDS[1], 'course_id': TEST_COURSE}
 )
 ENTERPRISE_CATALOGS_PROGRAM_ENDPOINT = reverse(
-    r'enterprise-catalogs-programs/(?P<program-uuid>[^/]+)',
+    r'enterprise-catalogs-programs',
     kwargs={'pk': FAKE_UUIDS[1], 'program_uuid': FAKE_UUIDS[3]}
 )
 ENTERPRISE_COURSE_ENROLLMENT_LIST_ENDPOINT = reverse('enterprise-course-enrollment-list')
