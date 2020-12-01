@@ -117,8 +117,58 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
     def create_assessment_reporting(self, user_id, payload):
         """
-        Not implemented yet
+        Send assessment level learner data, retrieved by the integrated channels exporter, to Canvas in the form of
+        an assignment and submission.
         """
+        learner_data = json.loads(payload)
+        self._create_session()
+
+        # Retrieve the Canvas user ID from the user's edx email (it is assumed that the learner's Edx
+        # and Canvas emails will match).
+        canvas_user_id = self._search_for_canvas_user_by_email(user_id)
+
+        # With the Canvas user ID, retrieve all courses for the user.
+        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
+
+        # Find the course who's integration ID matches the learner data course ID. Raise if no course found.
+        course_id = None
+        for course in user_courses:
+            integration_id = course['integration_id']
+            if integration_id == learner_data['courseID']:
+                course_id = course['id']
+                break
+
+        if not course_id:
+            raise ClientError(
+                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
+                "/Canvas learner: {canvas_user_id}.".format(
+                    course_id=learner_data['courseID'],
+                    user_id=learner_data['userID'],
+                    canvas_user_id=canvas_user_id
+                ),
+                HTTPStatus.NOT_FOUND.value,
+            )
+
+        # Depending on if the assignment already exists, either retrieve or create it.
+        # Assessment level reporting Canvas assignments use the subsection ID as the primary identifier, whereas
+        # course level reporting assignments rely on the course run key.
+        assignment_id = self._handle_canvas_assignment_retrieval(
+            learner_data['subsectionID'],
+            course_id,
+            learner_data['subsection_name'],
+            learner_data['points_possible']
+        )
+
+        # The percent grade from the grades api is represented as a decimal, but we can report the percent in the
+        # request body as the string: `<int percent grade>%`
+        update_grade_response = self._handle_canvas_assignment_submission(
+            "{}%".format(str(learner_data['grade'] * 100)),
+            course_id,
+            assignment_id,
+            canvas_user_id
+        )
+
+        return update_grade_response.status_code, update_grade_response.text
 
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         learner_data = json.loads(payload)
@@ -131,7 +181,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # With the Canvas user ID, retrieve all courses for the user.
         user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
 
-        # Find the course who's integration ID matches the learner data course ID
+        # Find the course who's integration ID matches the learner data course ID. This integration ID can be either
+        # an edX course run ID or course ID. Raise if no course found.
         course_id = None
         for course in user_courses:
             integration_id = course['integration_id']
@@ -151,27 +202,19 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             )
 
         # Depending on if the assignment already exists, either retrieve or create it.
-        try:
-            assignment_id = self._handle_canvas_assignment_retrieval(integration_id, course_id)
-        except ClientError as client_error:
-            return client_error.status_code, client_error.message
+        assignment_id = self._handle_canvas_assignment_retrieval(
+            integration_id,
+            course_id,
+            '(Edx integration) Final Grade'
+        )
 
-        # Post a grade for the assignment. This shouldn't create a submission for the user, but still update the grade.
-        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
-                         '{assignment_id}/submissions/{user_id}'.format(
-                             base_url=self.enterprise_configuration.canvas_base_url,
-                             course_id=course_id,
-                             assignment_id=assignment_id,
-                             user_id=canvas_user_id
-                         )
-
-        # The percent grade from the grades api is represented as a decimal
-        submission_data = {
-            'submission': {
-                'posted_grade': learner_data['grade'] * 100
-            }
-        }
-        update_grade_response = self.session.put(submission_url, json=submission_data)
+        # Course completion percentage grades are exported as decimals but reported to Canvas as integer percents.
+        update_grade_response = self._handle_canvas_assignment_submission(
+            learner_data['grade'] * 100,
+            course_id,
+            assignment_id,
+            canvas_user_id
+        )
 
         return update_grade_response.status_code, update_grade_response.text
 
@@ -372,7 +415,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return rsps.json()
 
-    def _handle_canvas_assignment_retrieval(self, integration_id, course_id):
+    def _handle_canvas_assignment_retrieval(self, integration_id, course_id, assignment_name, points_possible=100):
         """
         Helper method to handle course assignment creation or retrieval. Canvas requires an assignment
         in order for a user to get a grade, so first check the course for the "final grade"
@@ -391,6 +434,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         )
         resp = self.session.get(canvas_assignments_url)
 
+        if resp.status_code >= 400:
+            raise ClientError(
+                "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
+                    resp.text,
+                ),
+                resp.status_code
+            )
+
         assignments_resp = resp.json()
         assignment_id = None
         for assignment in assignments_resp:
@@ -398,7 +449,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 if assignment['integration_id'] == integration_id:
                     assignment_id = assignment['id']
                     break
-            except (KeyError, ValueError):
+            # The validation check above should ensure that we have a 200 response from Canvas, but sanity catch if we
+            # have a unexpected response format
+            except (KeyError, ValueError, TypeError):
                 raise ClientError(
                     "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
                         resp.text,
@@ -411,11 +464,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         if not assignment_id:
             assignment_creation_data = {
                 'assignment': {
-                    'name': '(Edx integration) Final Grade',
+                    'name': assignment_name,
                     'submission_types': 'none',
                     'integration_id': integration_id,
                     'published': True,
-                    'points_possible': 100
+                    'points_possible': points_possible
                 }
             }
             create_assignment_resp = self.session.post(canvas_assignments_url, json=assignment_creation_data)
@@ -430,6 +483,38 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     create_assignment_resp.status_code
                 )
         return assignment_id
+
+    def _handle_canvas_assignment_submission(self, grade, course_id, assignment_id, canvas_user_id):
+        """
+        Helper method to take necessary learner data and post to Canvas as a submission to the correlated assignment.
+        """
+        submission_url = '{base_url}/api/v1/courses/{course_id}/assignments/' \
+                         '{assignment_id}/submissions/{user_id}'.format(
+                             base_url=self.enterprise_configuration.canvas_base_url,
+                             course_id=course_id,
+                             assignment_id=assignment_id,
+                             user_id=canvas_user_id
+                         )
+
+        # The percent grade from the grades api is represented as a decimal
+        submission_data = {
+            'submission': {
+                'posted_grade': grade
+            }
+        }
+        submission_response = self.session.put(submission_url, json=submission_data)
+
+        if submission_response.status_code >= 400:
+            raise ClientError(
+                "Something went wrong while posting a submission to Canvas assignment: {} under Canvas course: {}."
+                " Recieved response {} with the status code: {}".format(
+                    assignment_id,
+                    course_id,
+                    submission_response.text,
+                    submission_response.status_code
+                )
+            )
+        return submission_response
 
     def _get_oauth_access_token(self, client_id, client_secret):
         """Uses the client id, secret and refresh token to request the user's auth token from Canvas.

@@ -56,6 +56,11 @@ class TestCanvasApiClient(unittest.TestCase):
             course_id=self.canvas_course_id
         )
         self.canvas_assignment_url = \
+            "{base}/api/v1/courses/{course_id}/assignments".format(
+                base=self.url_base,
+                course_id=self.canvas_course_id,
+            )
+        self.canvas_submission_url = \
             "{base}/api/v1/courses/{course_id}/assignments/{assignment_id}/submissions/{user_id}".format(
                 base=self.url_base,
                 course_id=self.canvas_course_id,
@@ -115,9 +120,11 @@ class TestCanvasApiClient(unittest.TestCase):
                 canvas_api_client._create_session()  # pylint: disable=protected-access
                 assert canvas_api_client.expires_at > orig_expires_at
 
-    def test_course_completion_with_no_canvas_user(self):
-        """Test that we properly raise exceptions if the client can't find the edx user in Canvas"""
-
+    def test_search_for_canvas_user_with_400(self):
+        """
+        Test that we properly raise exceptions if the client can't find the edx user in Canvas while reporting
+        grades (assessment and course level reporting both use the same method of retrieval).
+        """
         with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.GET,
@@ -125,16 +132,59 @@ class TestCanvasApiClient(unittest.TestCase):
                 body="[]",
                 status=200
             )
+            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+
+            # Searching for canvas users will require the session to be created
             rsps.add(
                 responses.POST,
                 self.oauth_url,
                 json=self._token_response(),
                 status=200
             )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+
+            with pytest.raises(ClientError) as client_error:
+                canvas_api_client._search_for_canvas_user_by_email(self.canvas_email)  # pylint: disable=protected-access
+                assert client_error.value.message == \
+                    "Course: {course_id} not found registered in Canvas for Edx " \
+                    "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
+                        course_id=self.course_id,
+                        canvas_email=self.canvas_email,
+                        canvas_user_id=self.canvas_user_id
+                    )
+
+    def test_assessment_reporting_with_no_canvas_course_found(self):
+        """
+        Test that reporting assessment level data raises the proper exception when no Canvas course is found.
+
+        **NOTE**
+        This process is nearly identical to course level reporting except for the fact that course level reporting
+        accounts for retrieved Canvas integration ID's that match both course IDs and course run IDs. As such, a common
+        handler function is not ideal and the integration ID to course run ID matching is done on the
+        create_assessment_reporting level.
+        """
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            rsps.add(
+                responses.GET,
+                self.canvas_users_url,
+                json=[{'sortable_name': 'test user', 'login_id': self.canvas_email, 'id': self.canvas_user_id}],
+                status=200
+            )
+            rsps.add(
+                responses.GET,
+                self.canvas_user_courses_url,
+                json=[]
+            )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
 
             with pytest.raises(ClientError) as client_error:
-                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
+                canvas_api_client.create_assessment_reporting(self.canvas_email, self.course_completion_payload)
                 assert client_error.value.message == \
                     "Course: {course_id} not found registered in Canvas for Edx " \
                     "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
@@ -144,7 +194,15 @@ class TestCanvasApiClient(unittest.TestCase):
                     )
 
     def test_course_completion_with_no_matching_canvas_course(self):
-        """Test that we properly raise exceptions for when a course is not found in canvas."""
+        """
+        Test that reporting course completion data raises the proper exception when no Canvas course is found.
+
+        **NOTE**
+        This process is nearly identical to assessment level grade reporting except for the fact that course level
+        reporting accounts for retrieved Canvas integration ID's that match both course IDs and course run IDs. As such,
+        a common handler function is not ideal and the integration ID to course/course run ID matching is done on the
+        create_course_completion level.
+        """
         with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.POST,
@@ -175,43 +233,116 @@ class TestCanvasApiClient(unittest.TestCase):
                         canvas_user_id=self.canvas_user_id
                     )
 
-    def test_course_completion_grade_submission_500s(self):
-        """Test that we raise the error if Canvas experiences a 500 while posting course completion data"""
+    def test_grade_reporting_get_assignment_500s(self):
+        """
+        Test that the client raises the appropriate error if Canvas responds with an error after the client requests
+        course assignments.
+        """
         with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                self.canvas_assignment_url,
+                json={'error': 'something went wrong'},
+                status=400
+            )
+            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+
+            # Creating a Canvas assignment will require the session to be created
             rsps.add(
                 responses.POST,
                 self.oauth_url,
                 json=self._token_response(),
                 status=200
             )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+
+            with pytest.raises(ClientError) as client_error:
+                canvas_api_client._handle_canvas_assignment_retrieval(  # pylint: disable=protected-access
+                    'integration_id_1',
+                    self.canvas_course_id,
+                    'assignment_name'
+                )
+
+            assert client_error.value.message == 'Something went wrong retrieving assignments from Canvas. Got' \
+                                                 ' response: {"error": "something went wrong"}'
+
+    def test_grade_reporting_post_assignment_500s(self):
+        """
+        Test that the client raises the appropriate error if Canvas returns an error after the client posts an
+        assignment.
+        """
+        with responses.RequestsMock() as rsps:
             rsps.add(
                 responses.GET,
-                self.canvas_users_url,
-                json=[{'sortable_name': 'test user', 'login_id': self.canvas_email, 'id': self.canvas_user_id}],
-                status=200
-            )
-            rsps.add(
-                responses.GET,
-                self.canvas_user_courses_url,
-                json=[{
-                    'integration_id': self.integration_id,
-                    'id': self.canvas_course_id
-                }]
-            )
-            rsps.add(
-                responses.GET,
-                self.canvas_course_assignments_url,
-                json=[{'integration_id': self.integration_id, 'id': self.canvas_assignment_id}]
-            )
-            rsps.add(
-                responses.PUT,
                 self.canvas_assignment_url,
-                body=Exception('something went wrong')
+                json=[]
+            )
+            rsps.add(
+                responses.POST,
+                self.canvas_assignment_url,
+                json={'errors': [{'message': 'The specified resource does not exist.'}]}
             )
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
-            with pytest.raises(Exception) as client_error:
-                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
-            assert client_error.value.__str__() == 'something went wrong'
+
+            # Creating a Canvas assignment will require the session to be created
+            rsps.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+
+            with pytest.raises(ClientError) as client_error:
+                canvas_api_client._handle_canvas_assignment_retrieval(  # pylint: disable=protected-access
+                    'integration_id_1',
+                    self.canvas_course_id,
+                    'assignment_name'
+                )
+
+            assert client_error.value.message == 'Something went wrong creating an assignment on Canvas. Got ' \
+                                                 'response: {"errors": [{"message": "The specified resource does not ' \
+                                                 'exist."}]}'
+
+    def test_grade_reporting_post_submission_500s(self):
+        """
+        Test that the client raises the appropriate error if Canvas returns an error after the client posts grade data
+        in the form of a Canvas submission.
+        """
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.PUT,
+                self.canvas_submission_url,
+                json={'errors': [{'message': 'Something went wrong.'}]},
+                status=400
+            )
+            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+
+            # Submitting a Canvas assignment will require the session to be created
+            rsps.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+
+            with pytest.raises(ClientError) as client_error:
+                canvas_api_client._handle_canvas_assignment_submission(  # pylint: disable=protected-access
+                    '100',
+                    self.canvas_course_id,
+                    self.canvas_assignment_id,
+                    self.canvas_user_id
+                )
+            assert client_error.value.message == (
+                'Something went wrong while posting a submission to Canvas '
+                'assignment: {} under Canvas course: {}. Recieved response '
+                '{{"errors": [{{"message": "Something went wrong."}}]}} with the '
+                'status code: 400'
+            ).format(
+                str(self.canvas_assignment_id),
+                str(self.canvas_course_id)
+            )
 
     def test_create_client_session_with_oauth_access_key(self):
         """ Test instantiating the client will fetch and set the session's oauth access key"""
