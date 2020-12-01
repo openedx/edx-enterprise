@@ -26,7 +26,7 @@ class TestEnterpriseProxyLoginView(TestCase):
         super().setUpTestData()
         cls.client = Client()
         cls.enterprise_customer = EnterpriseCustomerFactory()
-        cls.identity_provider = EnterpriseCustomerIdentityProviderFactory(enterprise_customer=cls.enterprise_customer)
+        cls.identity_providers = EnterpriseCustomerIdentityProviderFactory(enterprise_customer=cls.enterprise_customer)
 
     def _get_url_with_params(self, use_enterprise_slug=True, use_next=True, enterprise_slug_override=None,
                              next_override=None):
@@ -97,6 +97,7 @@ class TestEnterpriseProxyLoginView(TestCase):
         else:
             learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
             next_url = learner_portal_url + '/' + self.enterprise_customer.slug
-        query_params['next'] = next_url + '?tpa_hint=' + self.enterprise_customer.identity_provider
+        query_params['next'] = next_url + '?tpa_hint=' + str(self.enterprise_customer.identity_providers.first().
+                                                             provider_id)
         expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)
