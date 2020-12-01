@@ -163,6 +163,22 @@ class EnterpriseCustomerPluginConfiguration(TimeStampedModel):
         transmitter = self.get_content_metadata_transmitter()
         transmitter.transmit(exporter.export())
 
+    def transmit_single_subsection_learner_data(self, **kwargs):
+        """
+        Transmit a single subsection learner data record to the integrated channel.
+        """
+        exporter = self.get_learner_data_exporter(self.channel_worker_user)
+        transmitter = self.get_learner_data_transmitter()
+        transmitter.single_learner_assessment_grade_transmit(exporter, **kwargs)
+
+    def transmit_subsection_learner_data(self, user):
+        """
+        Iterate over each assessment learner data record and transmit them to the integrated channel.
+        """
+        exporter = self.get_learner_data_exporter(user)
+        transmitter = self.get_learner_data_transmitter()
+        transmitter.assessment_level_transmit(exporter)
+
 
 @python_2_unicode_compatible
 class LearnerDataTransmissionAudit(models.Model):
@@ -181,6 +197,8 @@ class LearnerDataTransmissionAudit(models.Model):
     status = models.CharField(max_length=100, blank=False, null=False)
     error_message = models.TextField(blank=True)
     created = models.DateTimeField(auto_now_add=True)
+
+    subsection_id = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
         app_label = 'integrated_channel'

@@ -115,6 +115,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return self._delete(url)
 
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Not implemented yet
+        """
+
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         learner_data = json.loads(payload)
         self._create_session()

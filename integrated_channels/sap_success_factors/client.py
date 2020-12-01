@@ -112,6 +112,11 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             self.session = session
             self.expires_at = expires_at
 
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Not implemented yet
+        """
+
     def create_course_completion(self, user_id, payload):
         """
         Send a completion status payload to the SuccessFactors OCN Completion Status endpoint

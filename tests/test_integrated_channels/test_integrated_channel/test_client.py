@@ -54,3 +54,11 @@ class TestIntegratedChannelApiClient(unittest.TestCase):
         """
         with self.assertRaises(NotImplementedError):
             IntegratedChannelApiClient('fake-config').delete_content_metadata('fake-payload')
+
+    def test_create_assessment_reporting(self):
+        """
+        The ``create_assessment_reporting`` method isn't implemented at the base, and should raise
+        ``NotImplementedError``.
+        """
+        with self.assertRaises(NotImplementedError):
+            IntegratedChannelApiClient('fake-config').create_assessment_reporting('fake-user', 'fake-payload')

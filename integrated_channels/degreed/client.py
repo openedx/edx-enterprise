@@ -40,6 +40,11 @@ class DegreedAPIClient(IntegratedChannelApiClient):
         self.session = None
         self.expires_at = None
 
+    def create_assessment_reporting(self, user_id, payload):
+        """
+        Not implemented yet.
+        """
+
     def create_course_completion(self, user_id, payload):  # pylint: disable=unused-argument
         """
         Send a completion status payload to the Degreed Completion Status endpoint
