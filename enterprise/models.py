@@ -361,14 +361,11 @@ class EnterpriseCustomer(TimeStampedModel):
 
         Returns False if enterprise customer does not have any identity provider.
         """
-        try:
-            # pylint: disable=no-member
-            return (
-                self.enterprise_customer_identity_provider and
-                self.enterprise_customer_identity_provider.sync_learner_profile_data
-            )
-        except ObjectDoesNotExist:
-            return False
+        # pylint: disable=no-member
+        return all(
+            identity_provider.sync_learner_profile_data
+            for identity_provider in self.identity_providers
+        ) if self.has_identity_providers else False
 
     def __str__(self):
         """
