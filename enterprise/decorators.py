@@ -127,6 +127,10 @@ def enterprise_login_required(view):
 
         enterprise_uuid = kwargs['enterprise_uuid']
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
+        query_params = request.GET
+        # Check if tpa_hint was passed as query param
+        tpa_hint = query_params.get('tpa_hint') or enterprise_customer.identity_providers.first().provider_id if \
+            enterprise_customer.identity_providers.count() == 1 else ''
 
         # Now verify if the user is logged in. If user is not logged in then
         # send the user to the login screen to sign in with an
@@ -135,7 +139,7 @@ def enterprise_login_required(view):
             parsed_current_url = urlparse(request.get_full_path())
             parsed_query_string = parse_qs(parsed_current_url.query)
             parsed_query_string.update({
-                'tpa_hint': enterprise_customer.identity_provider,
+                'tpa_hint': tpa_hint,
                 FRESH_LOGIN_PARAMETER: 'yes'
             })
             next_url = '{current_path}?{query_string}'.format(
@@ -198,7 +202,8 @@ def force_fresh_session(view):
             # log out and then come back here - the enterprise_login_required decorator will
             # then take effect prior to us arriving back here again.
             enterprise_customer = get_enterprise_customer_or_404(kwargs.get('enterprise_uuid'))
-            provider_id = enterprise_customer.identity_provider or ''
+            provider_id = enterprise_customer.identity_providers.first().provider_id if \
+                enterprise_customer.identity_providers.count() == 1 else ''
             sso_provider = get_identity_provider(provider_id)
             if sso_provider:
                 # Parse the current request full path, quote just the path portion,
