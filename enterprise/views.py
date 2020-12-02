@@ -1066,15 +1066,20 @@ class EnterpriseProxyLoginView(View):
             )
             query_dict['next'] = learner_portal_base_url + '/' + enterprise_slug
 
-        if enterprise_customer.identity_provider:
+        # Check if tpa_hint was passed as query param then redirect to that IDP login
+        # Otherwise check if enterprise is linked to one IDP, then page will be redirected there
+        tpa_hint = query_params.get('tpa_hint') or enterprise_customer.identity_providers.first().provider_id if \
+            enterprise_customer.identity_providers.count() == 1 else None
+
+        if tpa_hint:
             # Add the tpa_hint to the redirect's 'next' query parameter
             # Redirect will be to the Enterprise Customer's TPA provider
-            tpa_hint = enterprise_customer.identity_provider
             tpa_next_param = {
                 'tpa_hint': tpa_hint,
             }
             query_dict['next'] = update_query_parameters(str(query_dict['next']), tpa_next_param)
         else:
+            # If there's no linked IDP or multiple IDPs are linked and no tpa_hint provided in query_param
             # Add Enterprise Customer UUID and proxy_login to the redirect's query parameters
             # Redirect will be to the edX Logistration with Enterprise Proxy Login sidebar
             query_dict['enterprise_customer'] = [str(enterprise_customer.uuid)]
