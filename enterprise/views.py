@@ -1066,15 +1066,14 @@ class EnterpriseProxyLoginView(View):
             )
             query_dict['next'] = learner_portal_base_url + '/' + enterprise_slug
 
-        tpa_hint = query_params.get('tpa_hint')
+        # Check if tpa_hint was passed as query param then redirect to that IDP login
+        # Otherwise check if enterprise is linked to one IDP, then page will be redirected there
+        tpa_hint = query_params.get('tpa_hint') or enterprise_customer.identity_providers.first().provider_id if \
+            enterprise_customer.identity_providers.count() == 1 else None
+
         if tpa_hint:
-            # If there is tpa_hint already in the query_string then no need to update it in query_dict
-            pass
-        elif enterprise_customer.identity_providers and enterprise_customer.identity_providers.count() == 1:
-            # If there's only one linked IDP and no tpa_hint provided in query_params, then redirect to that IDP login
             # Add the tpa_hint to the redirect's 'next' query parameter
             # Redirect will be to the Enterprise Customer's TPA provider
-            tpa_hint = enterprise_customer.identity_providers.first().provider_id
             tpa_next_param = {
                 'tpa_hint': tpa_hint,
             }
