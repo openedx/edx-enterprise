@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.3]
+--------
+
+* Course end date bugfix.
+
 [3.13.2]
 --------
 
