@@ -1346,6 +1346,20 @@ class TestEnterpriseUtils(unittest.TestCase):
             ],
             "3000-10-13T13:11:01Z",  # future dates
         ),
+        (
+            [
+                {
+                    "end": "3000-05-29T12:11:01Z",
+                },
+                {
+                    "end": "2020-05-29T12:11:01Z",
+                },
+                {
+                    "end": None,
+                },
+            ],
+            "3000-05-29T12:11:01Z",  # future dates
+        ),
     )
     @ddt.unpack
     def test_course_end_date(self, course_runs, expected_end_date):
