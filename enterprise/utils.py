@@ -7,6 +7,7 @@ import datetime
 import json
 import logging
 import re
+from urllib.parse import urljoin
 from uuid import UUID
 
 import bleach
@@ -1455,22 +1456,23 @@ def enroll_users_in_course(
 
 
 def is_valid_url(url):
-  try:
-    result = urlparse(url)
-    return all([result.scheme, result.netloc])
-  except ValueError:
-    return False
+    """
+    Return where the specified URL is a valid absolute url.
+    """
+    try:
+        result = urlparse(url)
+        return all([result.scheme, result.netloc])
+    except ValueError:
+        return False
 
 
 def get_platform_logo_url():
     """
     Return an absolute URL of the platform logo using the branding api.
     """
-    # Return fake URL for tests rather than mock get_logo_url for every test using EnterpriseCustomer
-    fake_url = 'http://fake.url'
-    logo_url = get_logo_url() 
+    logo_url = get_logo_url() if get_logo_url else None
     if not logo_url:
-        return fake_url
+        return None
 
     is_abs_url = is_valid_url(logo_url)
     if is_abs_url:
