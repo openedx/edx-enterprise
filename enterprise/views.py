@@ -1593,6 +1593,22 @@ class CourseEnrollmentView(NonAtomicView):
             })
             html_template_for_rendering = 'enterprise/enterprise_course_enrollment_page.html'
 
+            LOGGER.info(
+                '[ENTERPRISE ENROLLMENT PAGE] Context Data. Data: [%s]',
+                {
+                    'enterprise_customer_name': enterprise_customer.name,
+                    'user': request.user.username,
+                    'course': course.get('key'),
+                    'course_run': course_run.get('key'),
+                    'course_enrollable': course_enrollable,
+                    'course_start_date': course_start_date,
+                    'course_modes': course_modes,
+                    'premium_modes': premium_modes,
+                    'catalog': enterprise_catalog_uuid,
+                    'hide_course_original_price': enterprise_customer.hide_course_original_price
+                }
+            )
+
         context_data.update({
             'page_title': _('Confirm your course'),
             'confirmation_text': _('Confirm your course'),
