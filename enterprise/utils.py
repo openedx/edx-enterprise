@@ -930,7 +930,11 @@ def get_last_course_run_end_date(course_runs):
     """
     latest_end_date = None
     if course_runs:
-        latest_end_date = max(course_run['end'] for course_run in course_runs if course_run['end'] is not None)
+        try:
+            latest_end_date = max(course_run.get('end') for course_run in course_runs if
+                                  parse_datetime_handle_invalid(course_run.get('end')) is not None)
+        except ValueError:
+            latest_end_date = None
     return latest_end_date
 
 
