@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.4]
+--------
+
+* Empty sequence bugfix in catalog api.
+
 [3.13.3]
 --------
 

@@ -1322,18 +1322,25 @@ class TestEnterpriseUtils(unittest.TestCase):
             None,
         ),
         (
+            None,
+            None,
+        ),
+        (
             [
                 {
                     "end": "2020-09-13T13:11:01Z",
                 },
                 {
-                    "end": "2020-10-13T01:11:01Z",
+                    "end": "2020-10-13T04:45:00Z",
+                },
+                {
+                    "end": "2020-10-13T13:11:15Z",
                 },
                 {
                     "end": "2019-07-13T01:11:01Z",
                 },
             ],
-            "2020-10-13T01:11:01Z",
+            "2020-10-13T13:11:15Z",
         ),
         (
             [
@@ -1358,7 +1365,40 @@ class TestEnterpriseUtils(unittest.TestCase):
                     "end": None,
                 },
             ],
-            "3000-05-29T12:11:01Z",  # future dates
+            "3000-05-29T12:11:01Z",  # one of the end date is None
+        ),
+        (
+            [
+                {
+                    "end": None,
+                },
+            ],
+            None,
+        ),
+        (
+            [
+                {
+                    "end": None,
+                },
+                {
+                    "end": None,
+                },
+                {
+                    "end": None,
+                },
+            ],
+            None,  # all of the end dates are None
+        ),
+        (
+            [
+                {
+                    "end": "3000-05-29T12:11:01Z",
+                },
+                {
+                    "end": "3000-05-29T12:11:01Z",
+                },
+            ],
+            "3000-05-29T12:11:01Z",  # end dates fall on same date
         ),
     )
     @ddt.unpack
