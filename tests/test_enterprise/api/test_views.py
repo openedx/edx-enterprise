@@ -645,10 +645,12 @@ class TestEnterpriseAPIViews(APITest):
         ),
     )
     @ddt.unpack
-    def test_api_views(self, factory, url, sorting_key, model_items, expected_json):
+    @mock.patch('enterprise.utils.get_logo_url')
+    def test_api_views(self, factory, url, sorting_key, model_items, expected_json, mock_get_logo_url):
         """
         Make sure API end point returns all of the expected fields.
         """
+        mock_get_logo_url.return_value = 'http://fake.url'
         self.create_items(factory, model_items)
         response = self.client.get(settings.TEST_SERVER + url)
         response = self.load_json(response.content)
@@ -731,6 +733,7 @@ class TestEnterpriseAPIViews(APITest):
          {'count': 0, 'next': None, 'previous': None, 'results': []}),
     )
     @ddt.unpack
+    @mock.patch('enterprise.utils.get_logo_url')
     def test_enterprise_customer_with_access_to(
             self,
             is_staff,
@@ -738,12 +741,14 @@ class TestEnterpriseAPIViews(APITest):
             user_groups,
             query_params,
             has_access_to_enterprise,
-            expected_error
+            expected_error,
+            mock_get_logo_url,
     ):
         """
         ``enterprise_customer``'s detail list endpoint ``with_access_to`` should validate permissions
          and serialize the ``EnterpriseCustomer`` objects the user has access to.
         """
+        mock_get_logo_url.return_value = 'http://fake.url'
         enterprise_customer_data = {
             'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
             'active': True, 'enable_data_sharing_consent': True,
