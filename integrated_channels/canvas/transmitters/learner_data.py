@@ -33,3 +33,27 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
         kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'canvas_user_email'
         super(CanvasLearnerTransmitter, self).transmit(payload, **kwargs)
+
+    def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
+        """
+        Send an assessment level grade update status call for a single enterprise learner to Canvas using the client.
+
+        Args:
+            payload: The learner completion data payload to send to Canvas
+        """
+        kwargs['app_label'] = 'canvas'
+        kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
+        kwargs['remote_user_id'] = 'canvas_user_email'
+        super(CanvasLearnerTransmitter, self).single_learner_assessment_grade_transmit(exporter, **kwargs)
+
+    def assessment_level_transmit(self, exporter, **kwargs):
+        """
+        Send a bulk assessment level grade update status call to Canvas using the client.
+
+        Args:
+            payload: The learner completion data payload to send to Canvas
+        """
+        kwargs['app_label'] = 'canvas'
+        kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
+        kwargs['remote_user_id'] = 'canvas_user_email'
+        super(CanvasLearnerTransmitter, self).assessment_level_transmit(exporter, **kwargs)
