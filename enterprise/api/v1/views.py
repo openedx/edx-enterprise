@@ -12,7 +12,7 @@ from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
 from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.decorators import action, detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -151,7 +151,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             return serializers.EnterpriseCustomerBasicSerializer
         return self.serializer_class
 
-    @list_route()
+    @action(detail=False)
     # pylint: disable=invalid-name,unused-argument
     def basic_list(self, request, *arg, **kwargs):
         """
@@ -165,7 +165,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return Response(serializer.data)
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
-    @detail_route()
+    @action(detail=True)
     @permission_required('enterprise.can_view_catalog', fn=lambda request, pk, course_run_ids, program_uuids: pk)
     # pylint: disable=invalid-name,unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
@@ -191,7 +191,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         return Response({'contains_content_items': contains_content_items})
 
-    @detail_route(methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(methods=['post'], permission_classes=[permissions.IsAuthenticated], detail=True)
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
     # pylint: disable=invalid-name,unused-argument
     def course_enrollments(self, request, pk):
@@ -213,7 +213,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
     # pylint: disable=invalid-name,unused-argument
     def enterprise_learners(self, request, pk):
@@ -303,7 +303,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         return Response(status=HTTP_400_BAD_REQUEST)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
-    @list_route(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup])
+    @action(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup], detail=False)
     def with_access_to(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
         """
         Returns the list of enterprise customers the user has a specified group permission access to.
@@ -321,7 +321,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             self.queryset = self.queryset.filter(name__icontains=enterprise_name)
         return self.list(request, *args, **kwargs)
 
-    @list_route()
+    @action(detail=False)
     @permission_required('enterprise.can_access_admin_dashboard')
     def dashboard_list(self, request, *args, **kwargs):  # pylint: disable=invalid-name,unused-argument
         """
@@ -704,7 +704,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         return serializers.EnterpriseCustomerCatalogSerializer
 
     @method_decorator(require_at_least_one_query_parameter('course_run_ids', 'program_uuids'))
-    @detail_route()
+    @action(detail=True)
     # pylint: disable=invalid-name,unused-argument
     def contains_content_items(self, request, pk, course_run_ids, program_uuids):
         """
@@ -730,7 +730,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
         return Response({'contains_content_items': contains_content_items})
 
-    @detail_route(url_path='courses/{}'.format(COURSE_KEY_URL_PATTERN))
+    @action(detail=True, url_path='courses/{}'.format(COURSE_KEY_URL_PATTERN))
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, pk, course_key: get_enterprise_customer_from_catalog_id(pk))
@@ -758,7 +758,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         serializer = serializers.CourseDetailSerializer(course, context=context)
         return Response(serializer.data)
 
-    @detail_route(url_path='course_runs/{}'.format(settings.COURSE_ID_PATTERN))
+    @action(detail=True, url_path='course_runs/{}'.format(settings.COURSE_ID_PATTERN))
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, pk, course_id: get_enterprise_customer_from_catalog_id(pk))
@@ -786,7 +786,7 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
         serializer = serializers.CourseRunDetailSerializer(course_run, context=context)
         return Response(serializer.data)
 
-    @detail_route(url_path='programs/(?P<program_uuid>[^/]+)')
+    @action(detail=True, url_path='programs/(?P<program_uuid>[^/]+)')
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, pk, program_uuid: get_enterprise_customer_from_catalog_id(pk))

@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.5]
+--------
+
+* Fixed deprecation warnings related with drf methods (detail_route, list_route).
+
 [3.13.4]
 --------
 
