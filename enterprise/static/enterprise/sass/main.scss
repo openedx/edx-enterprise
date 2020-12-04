@@ -2,10 +2,10 @@
 // The ordering matters!
 // Bootstrap imports should come after edx-bootstrap imports.
 // Bootstrap's modals require Bootstrap variables & mixins.
-@import '~@edx/edx-bootstrap/sass/open-edx/theme';
-@import '~bootstrap/scss/variables';
-@import '~bootstrap/scss/mixins';
-@import '~bootstrap/scss/modal';
+@import "@edx/brand/paragon/fonts";
+@import "@edx/brand/paragon/variables";
+@import "@edx/paragon/scss/core/core";
+@import "@edx/brand/paragon/overrides";
 
 /* Utilities */
 @import 'partials/utilities/variables';

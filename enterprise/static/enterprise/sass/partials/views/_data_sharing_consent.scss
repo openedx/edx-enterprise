@@ -4,18 +4,13 @@
   min-width: 300px;
   margin: 0 auto;
 
-  * {
-      font-size: 16px;
-  }
-
   p {
     margin-bottom: 15px;
   }
 }
 
 .consent-input-container {
-  border-radius: 10px;
-  border: 1px solid #e5e5e5;
+  border: 1px solid $gray-200;
   padding: 15px 20px;
   margin-bottom: 20px;
 }
@@ -26,41 +21,6 @@
   font-weight: 600;
 }
 
-.consent-agreement-button {
-  border-color: transparent;
-  height: auto;
-  max-width: 180px;
-  min-width: 125px;
-  border-radius: 5px;
-  font-size: 16px;
-  font-weight: bold;
-  background: #0075B4;
-  border: none;
-  color: #fff;
-  margin-right: 10px;
-  padding: 10px 15px;
-  box-shadow: none;
-  width: auto;
-
-  &:hover {
-    cursor: pointer;
-    background: #0b5177;
-  }
-
-  &:focus {
-    background-color: #065683;
-  }
-
-  &:active {
-    background-color: #0075B4;
-  }
-
-  &:disabled {
-    background-color: #a0a0a0;
-    color: #d9d9d9;
-  }
-}
-
 .consent-policy-dropdown-bar {
   text-align: left;
   border: none;
@@ -68,8 +28,7 @@
   height: 60px;
   font-weight: 600;
   display: block;
-  background: #f2f8fb;
-  border-radius: 5px;
+  background: $gray-100;
 
   &:focus,
   &:hover,
@@ -82,28 +41,11 @@
   text-decoration: underline;
 }
 
-.failure-link {
-  color: #0075B4;
-  display: inline-block;
-  text-decoration: underline;
-  border: none;
-  background-color: rgba(0, 0, 0, 0);
-  padding: 10px 15px;
-  vertical-align: bottom;
-  font-size: 16px;
-
-  &:hover,
-  &:focus {
-    font-weight: normal;
-  }
-}
-
 .dropdown-text {
   line-height: 60px;
   white-space: nowrap;
   padding-left: 2%;
   font-size: 18px;
-  color: $blue;
 }
 
 .dropdown-icon-container {
@@ -114,12 +56,12 @@
 
 #consent-policy-dropdown-icon-surround {
   font-size: 40px;
-  color: white;
+  color: $white;
 }
 
 #consent-policy-dropdown-icon {
   font-size: 18px;
-  color: $blue;
+  color: $primary;
   padding-top: 12%;
   padding-left: 5%;
 }
@@ -134,16 +76,10 @@
   float: left;
   margin-top: 4px;
   margin-right: 10px;
+  font-size: $font-size-sm;
 }
 
 /* Enterprise */
-
-.consent-title {
-  font-size: 20px !important;
-  color: $blue !important;
-  font-weight: normal;
-  margin-bottom: 10px;
-}
 
 .caption {
   margin-bottom: 15px;

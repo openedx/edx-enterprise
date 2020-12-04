@@ -7,8 +7,8 @@
     <p class="agreement-text">
       <label for="data-consent-checkbox">{{ agreement_text }}</label>
     </p>
-    <button type="submit" class="background-input consent-agreement-button" id="consent-button" disabled>{{ continue_text }}</button>
-    <button type="button" class="failure-link background-input" id="failure-link" data-toggle="modal" data-target="#consent-confirmation-modal">
+    <button type="submit" class="background-input btn btn-primary" id="consent-button" disabled>{{ continue_text }}</button>
+    <button type="button" class="btn btn-link background-input" id="failure-link" data-toggle="modal" data-target="#consent-confirmation-modal">
       {{ abort_text }}
     </button>
     <input type="hidden" name="enterprise_customer_uuid" value="{{ enterprise_customer.uuid }}" />

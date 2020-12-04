@@ -7,7 +7,9 @@
     "url": "git://github.com/edx/edx-enterprise"
   },
   "dependencies": {
-    "@edx/edx-bootstrap": "^0.3.0"
+    "@edx/brand": "npm:@edx/brand-edx.org@^1.3.0",
+    "@edx/edx-bootstrap": "^0.3.0",
+    "@edx/paragon": "^12.3.0"
   },
   "devDependencies": {
     "css-loader": "^0.28.7",
