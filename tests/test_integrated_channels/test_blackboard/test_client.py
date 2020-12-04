@@ -42,9 +42,11 @@ class TestBlackboardApiClient(unittest.TestCase):
         )
         self.user_email = 'testemail@example.com'
         self.course_id = 'course-edx+{}'.format(str(random.randint(100, 999)))
+        self.course_subsection_id = 'subsection_id:{}'.format(str(random.randint(100, 999)))
         self.blackboard_course_id = random.randint(100, 999)
         self.blackboard_user_id = random.randint(100, 999)
         self.blackboard_grade_column_id = random.randint(100, 999)
+        self.blackboard_grade_column_name = 'ayylmao'
         self.grade = round(random.uniform(0, 1), 2)
         self.learner_data_payload = '{{"courseID": "{}", "grade": {}}}'.format(self.course_id, self.grade)
 
@@ -67,6 +69,318 @@ class TestBlackboardApiClient(unittest.TestCase):
         assert api_client.config.name == CHANNEL_NAME
         assert api_client.config.verbose_name == VERBOSE_NAME
         assert api_client.enterprise_configuration == self.enterprise_config
+
+    def test_get_blackboard_course_404s(self):
+        """Test that we properly handle failure cases when retrieving the blackboard course ID for a learner."""
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        response_404 = unittest.mock.Mock(spec=Response)
+        response_404.status_code = 404
+        response_404.text = "{'error': 'No course found.'}"
+
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=response_404
+        )
+
+        with pytest.raises(ClientError) as client_error:
+            client._resolve_blackboard_course_id(self.course_id)  # pylint: disable=protected-access
+
+        assert client_error.value.message == response_404.text
+        assert client_error.value.status_code == response_404.status_code
+
+    def test_get_blackboard_course_success(self):
+        """
+        Test that we properly return the BB course ID matching the external ID, even if multiple courses are
+        returned.
+        """
+        wrong_course_external_id = 'external_id_2'
+        wrong_bb_course_id = 2
+
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        success_response.json.return_value = {
+            'results': [
+                {'externalId': self.course_id, 'id': self.blackboard_course_id},
+                {'externalId': wrong_course_external_id, 'id': wrong_bb_course_id}
+            ]
+        }
+
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+
+        assert client._resolve_blackboard_course_id(self.course_id) == self.blackboard_course_id  # pylint: disable=protected-access
+
+    def test_get_blackboard_user_404s(self):
+        """Test that we properly handle failure cases when retrieving the blackboard user ID."""
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        response_404 = unittest.mock.Mock(spec=Response)
+        response_404.status_code = 404
+        response_404.text = "{'error': 'No user found.'}"
+
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=response_404
+        )
+
+        with pytest.raises(ClientError) as client_error:
+            client._get_bb_user_id_from_enrollments(self.user_email, self.blackboard_course_id)  # pylint: disable=protected-access
+
+        assert client_error.value.message == response_404.text
+        assert client_error.value.status_code == response_404.status_code
+
+    def test_get_blackboard_user_success(self):
+        """Test that we properly return the user ID given a successful response from Blackboard."""
+        wrong_user_email = 'ayy@lmao.com'
+        wrong_bb_user_id = 111
+
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        success_response = unittest.mock.Mock(spec=Response)
+        success_response.status_code = 200
+        success_response.json.return_value = {
+            'results': [
+                {
+                    'courseRoleId': 'Student',
+                    'user': {'contact': {'email': wrong_user_email}},
+                    'userId': wrong_bb_user_id
+                },
+                {
+                    'courseRoleId': 'Student',
+                    'user': {'contact': {'email': self.user_email}},
+                    'userId': self.blackboard_user_id
+                }
+            ]
+        }
+
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_response
+        )
+
+        assert client._get_bb_user_id_from_enrollments(  # pylint: disable=protected-access
+            self.user_email,
+            self.blackboard_course_id
+        ) == self.blackboard_user_id
+
+    def test_retrieve_blackboard_grade_column_fails(self):
+        """Test that we properly handle an error response from Blackboard when requesting course grade columns."""
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        response_500 = unittest.mock.Mock(spec=Response)
+        response_500.status_code = 500
+        response_500.text = "{'error': 'Something went wrong'}"
+
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=response_500
+        )
+
+        with pytest.raises(ClientError) as client_error:
+            client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+                self.blackboard_course_id,
+                self.blackboard_grade_column_name,
+                self.course_subsection_id,
+                points_possible=100
+            )
+
+        assert client_error.value.message == response_500.text
+        assert client_error.value.status_code == response_500.status_code
+
+    def test_create_blackboard_grade_column_fails(self):
+        """
+        Test that when successfully failing (lol) to not find an existing grade column, we properly handle failure
+        cases when posting a new Blackboard grade column.
+        """
+        client = self._create_new_mock_client()
+
+        wrong_bb_user_id = 1
+        wrong_external_id = 'ayylmao'
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        success_get_response = unittest.mock.Mock(spec=Response)
+        success_get_response.status_code = 200
+        success_get_response.json.return_value = {
+            'results': [
+                {
+                    'externalId': wrong_external_id,
+                    'id': wrong_bb_user_id
+                },
+            ]
+        }
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_get_response
+        )
+
+        failed_post_response = unittest.mock.Mock(spec=Response)
+        failed_post_response.status_code = 500
+        failed_post_response.text = "{'error': 'Something went wrong'}"
+        client.session.post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_post",
+            return_value=failed_post_response
+        )
+
+        with pytest.raises(ClientError) as client_error:
+            client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+                self.blackboard_course_id,
+                self.blackboard_grade_column_name,
+                self.course_subsection_id,
+                points_possible=100
+            )
+
+        assert client_error.value.message == failed_post_response.text
+        assert client_error.value.status_code == failed_post_response.status_code
+
+    def test_retrieve_existing_blackboard_grade_column(self):
+        """Test that we properly return an existing Blackboard grade column."""
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        success_get_response = unittest.mock.Mock(spec=Response)
+        success_get_response.status_code = 200
+        success_get_response.json.return_value = {
+            'results': [
+                {
+                    'externalId': self.course_subsection_id,
+                    'id': self.blackboard_grade_column_id
+                },
+            ]
+        }
+
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_get_response
+        )
+
+        result = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+            self.blackboard_course_id,
+            self.blackboard_grade_column_name,
+            self.course_subsection_id,
+            points_possible=100
+        )
+        assert result == self.blackboard_grade_column_id
+
+    def test_retrieve_created_blackboard_grade_column(self):
+        """Test that we properly return after successfully posting a new grade column to Blackboard."""
+        client = self._create_new_mock_client()
+
+        wrong_bb_user_id = 1
+        wrong_external_id = 'ayylmao'
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        success_get_response = unittest.mock.Mock(spec=Response)
+        success_get_response.status_code = 200
+        success_get_response.json.return_value = {
+            'results': [
+                {
+                    'externalId': wrong_external_id,
+                    'id': wrong_bb_user_id
+                },
+            ]
+        }
+        client.session.get = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_get",
+            return_value=success_get_response
+        )
+
+        success_post_response = unittest.mock.Mock(spec=Response)
+        success_post_response.status_code = 200
+        success_post_response.json.return_value = {
+            'id': self.blackboard_grade_column_id
+        }
+        client.session.post = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_post",
+            return_value=success_post_response
+        )
+
+        result = client._get_or_create_integrated_grade_column(  # pylint: disable=protected-access
+            self.blackboard_course_id,
+            self.blackboard_grade_column_name,
+            self.course_subsection_id,
+            points_possible=100
+        )
+
+        assert result == self.blackboard_grade_column_id
+
+    def test_submitting_grade_fails(self):
+        """Test that we properly handle failure cases when submitting grade scores to Blackboard."""
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        failed_patch_response = unittest.mock.Mock(spec=Response)
+        failed_patch_response.status_code = 500
+        failed_patch_response.text = "{'error': 'Something went wrong'}"
+        client.session.patch = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_patch",
+            return_value=failed_patch_response
+        )
+
+        with pytest.raises(ClientError) as client_error:
+            client._submit_grade_to_blackboard(  # pylint: disable=protected-access
+                100,
+                self.blackboard_course_id,
+                self.blackboard_grade_column_id,
+                self.blackboard_user_id
+            )
+
+        assert client_error.value.message == failed_patch_response.text
+        assert client_error.value.status_code == failed_patch_response.status_code
+
+    def test_blackboard_grade_submission_success(self):
+        """Test that we properly return responses when successfully posting grade scores to Blackboard."""
+        client = self._create_new_mock_client()
+
+        # Create the session so that we can mock the requests made in the course completion transmission flow
+        client._create_session()  # pylint: disable=protected-access
+
+        grade = 100
+
+        success_patch_response = unittest.mock.Mock(spec=Response)
+        success_patch_response.status_code = 200
+        success_patch_response.json.return_value = {'score': grade}
+        client.session.patch = unittest.mock.MagicMock(  # pylint: disable=protected-access
+            name="_patch",
+            return_value=success_patch_response
+        )
+
+        result = client._submit_grade_to_blackboard(  # pylint: disable=protected-access
+            grade,
+            self.blackboard_course_id,
+            self.blackboard_grade_column_id,
+            self.blackboard_user_id
+        )
+
+        assert result.status_code == success_patch_response.status_code
+        assert result.json() == success_patch_response.json.return_value
 
     def test_course_completion_with_no_course(self):
         """Test that we properly raise exceptions if the client receives a 404 from Blackboard"""
