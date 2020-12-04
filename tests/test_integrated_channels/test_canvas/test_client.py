@@ -156,75 +156,27 @@ class TestCanvasApiClient(unittest.TestCase):
     def test_assessment_reporting_with_no_canvas_course_found(self):
         """
         Test that reporting assessment level data raises the proper exception when no Canvas course is found.
-
-        **NOTE**
-        This process is nearly identical to course level reporting except for the fact that course level reporting
-        accounts for retrieved Canvas integration ID's that match both course IDs and course run IDs. As such, a common
-        handler function is not ideal and the integration ID to course run ID matching is done on the
-        create_assessment_reporting level.
         """
         with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.GET,
+                self.canvas_user_courses_url,
+                json=[]
+            )
+
+            # Creating a Canvas assignment will require the session to be created
             rsps.add(
                 responses.POST,
                 self.oauth_url,
                 json=self._token_response(),
                 status=200
             )
-            rsps.add(
-                responses.GET,
-                self.canvas_users_url,
-                json=[{'sortable_name': 'test user', 'login_id': self.canvas_email, 'id': self.canvas_user_id}],
-                status=200
-            )
-            rsps.add(
-                responses.GET,
-                self.canvas_user_courses_url,
-                json=[]
-            )
+
             canvas_api_client = CanvasAPIClient(self.enterprise_config)
+            canvas_api_client._create_session()  # pylint: disable=protected-access
 
             with pytest.raises(ClientError) as client_error:
-                canvas_api_client.create_assessment_reporting(self.canvas_email, self.course_completion_payload)
-                assert client_error.value.message == \
-                    "Course: {course_id} not found registered in Canvas for Edx " \
-                    "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(
-                        course_id=self.course_id,
-                        canvas_email=self.canvas_email,
-                        canvas_user_id=self.canvas_user_id
-                    )
-
-    def test_course_completion_with_no_matching_canvas_course(self):
-        """
-        Test that reporting course completion data raises the proper exception when no Canvas course is found.
-
-        **NOTE**
-        This process is nearly identical to assessment level grade reporting except for the fact that course level
-        reporting accounts for retrieved Canvas integration ID's that match both course IDs and course run IDs. As such,
-        a common handler function is not ideal and the integration ID to course/course run ID matching is done on the
-        create_course_completion level.
-        """
-        with responses.RequestsMock() as rsps:
-            rsps.add(
-                responses.POST,
-                self.oauth_url,
-                json=self._token_response(),
-                status=200
-            )
-            rsps.add(
-                responses.GET,
-                self.canvas_users_url,
-                json=[{'sortable_name': 'test user', 'login_id': self.canvas_email, 'id': self.canvas_user_id}],
-                status=200
-            )
-            rsps.add(
-                responses.GET,
-                self.canvas_user_courses_url,
-                json=[]
-            )
-            canvas_api_client = CanvasAPIClient(self.enterprise_config)
-
-            with pytest.raises(ClientError) as client_error:
-                canvas_api_client.create_course_completion(self.canvas_email, self.course_completion_payload)
+                canvas_api_client._handle_get_user_canvas_course(self.canvas_user_id, self.course_id)  # pylint: disable=protected-access
                 assert client_error.value.message == \
                     "Course: {course_id} not found registered in Canvas for Edx " \
                     "learner: {canvas_email}/Canvas learner: {canvas_user_id}.".format(

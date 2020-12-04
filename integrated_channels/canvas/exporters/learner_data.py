@@ -59,14 +59,6 @@ class CanvasLearnerExporter(LearnerExporter):
                 completed_timestamp=completed_timestamp,
                 grade=percent_grade
             ),
-            CanvasLearnerDataTransmissionAudit(
-                enterprise_course_enrollment_id=enterprise_enrollment.id,
-                canvas_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                course_id=enterprise_enrollment.course_id,
-                course_completed=completed_date is not None and is_passing,
-                completed_timestamp=completed_timestamp,
-                grade=percent_grade
-            )
         ]
 
     def get_learner_assessment_data_records(
@@ -114,7 +106,7 @@ class CanvasLearnerExporter(LearnerExporter):
             transmission_audit = CanvasLearnerAssessmentDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                course_id=enterprise_enrollment.course_id,
+                course_id=enterprise_enrollment.get_course_id(enterprise_enrollment.course_id),
                 subsection_id=subsection_id,
                 grade=subsection_percent_grade,
                 grade_point_score=subsection_data.get('grade_point_score'),

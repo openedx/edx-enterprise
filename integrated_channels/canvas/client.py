@@ -127,34 +127,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # and Canvas emails will match).
         canvas_user_id = self._search_for_canvas_user_by_email(user_id)
 
-        # With the Canvas user ID, retrieve all courses for the user.
-        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
-
-        # Find the course who's integration ID matches the learner data course ID. Raise if no course found.
-        course_id = None
-        for course in user_courses:
-            integration_id = course['integration_id']
-            if integration_id == learner_data['courseID']:
-                course_id = course['id']
-                break
-
-        if not course_id:
-            raise ClientError(
-                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
-                "/Canvas learner: {canvas_user_id}.".format(
-                    course_id=learner_data['courseID'],
-                    user_id=learner_data['userID'],
-                    canvas_user_id=canvas_user_id
-                ),
-                HTTPStatus.NOT_FOUND.value,
-            )
+        canvas_course_id = self._handle_get_user_canvas_course(canvas_user_id, learner_data['courseID'])
 
         # Depending on if the assignment already exists, either retrieve or create it.
         # Assessment level reporting Canvas assignments use the subsection ID as the primary identifier, whereas
         # course level reporting assignments rely on the course run key.
         assignment_id = self._handle_canvas_assignment_retrieval(
             learner_data['subsectionID'],
-            course_id,
+            canvas_course_id,
             learner_data['subsection_name'],
             learner_data['points_possible']
         )
@@ -163,7 +143,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # request body as the string: `<int percent grade>%`
         update_grade_response = self._handle_canvas_assignment_submission(
             "{}%".format(str(learner_data['grade'] * 100)),
-            course_id,
+            canvas_course_id,
             assignment_id,
             canvas_user_id
         )
@@ -178,40 +158,19 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         # and Canvas emails will match).
         canvas_user_id = self._search_for_canvas_user_by_email(user_id)
 
-        # With the Canvas user ID, retrieve all courses for the user.
-        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
-
-        # Find the course who's integration ID matches the learner data course ID. This integration ID can be either
-        # an edX course run ID or course ID. Raise if no course found.
-        course_id = None
-        for course in user_courses:
-            integration_id = course['integration_id']
-            if '+'.join(integration_id.split(":")[1].split("+")[:2]) == learner_data['courseID']:
-                course_id = course['id']
-                break
-
-        if not course_id:
-            raise ClientError(
-                "Course: {course_id} not found registered in Canvas for Edx learner: {user_id}"
-                "/Canvas learner: {canvas_user_id}.".format(
-                    course_id=learner_data['courseID'],
-                    user_id=learner_data['userID'],
-                    canvas_user_id=canvas_user_id
-                ),
-                HTTPStatus.NOT_FOUND.value,
-            )
+        canvas_course_id = self._handle_get_user_canvas_course(canvas_user_id, learner_data['courseID'])
 
         # Depending on if the assignment already exists, either retrieve or create it.
         assignment_id = self._handle_canvas_assignment_retrieval(
-            integration_id,
-            course_id,
+            learner_data['courseID'],
+            canvas_course_id,
             '(Edx integration) Final Grade'
         )
 
         # Course completion percentage grades are exported as decimals but reported to Canvas as integer percents.
         update_grade_response = self._handle_canvas_assignment_submission(
             learner_data['grade'] * 100,
-            course_id,
+            canvas_course_id,
             assignment_id,
             canvas_user_id
         )
@@ -515,6 +474,32 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                 )
             )
         return submission_response
+
+    def _handle_get_user_canvas_course(self, canvas_user_id, learner_data_course_id):
+        """
+        Helper method to take the Canvas user ID and edX course ID to find the matching Canvas course information.
+        """
+        # With the Canvas user ID, retrieve all courses for the user.
+        user_courses = self._get_canvas_user_courses_by_id(canvas_user_id)
+
+        # Find the course who's integration ID matches the learner data course ID. This integration ID can be either
+        # an edX course run ID or course ID. Raise if no course found.
+        canvas_course_id = None
+        for course in user_courses:
+            if course['integration_id'] == learner_data_course_id:
+                canvas_course_id = course['id']
+                break
+
+        if not canvas_course_id:
+            raise ClientError(
+                "Course: {course_id} not found registered in Canvas for Canvas learner: {canvas_user_id}.".format(
+                    course_id=learner_data_course_id,
+                    canvas_user_id=canvas_user_id,
+                ),
+                HTTPStatus.NOT_FOUND.value,
+            )
+
+        return canvas_course_id
 
     def _get_oauth_access_token(self, client_id, client_secret):
         """Uses the client id, secret and refresh token to request the user's auth token from Canvas.
