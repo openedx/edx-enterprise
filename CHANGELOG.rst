@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.6]
+--------
+
+* Add log for enterprise enrollment page.
+
 [3.13.5]
 --------
 
