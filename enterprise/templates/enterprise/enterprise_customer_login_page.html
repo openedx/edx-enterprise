@@ -13,7 +13,7 @@
     <div class="enterprise-container">
       <div class="enterprise-login-container">
 
-          <h2 class="enterprise-login-title">{{ enterprise_login_title_message|safe }}</h2>
+          <h1 class="h2 enterprise-login-title">{{ enterprise_login_title_message|safe }}</h2>
           <div class="enterprise-login-message">
             <p>{{ enterprise_login_subtitle_message|safe }}</p>
           </div>
@@ -29,7 +29,8 @@
             </div>
 
             {% for field in form.visible_fields %}
-              <div>
+              <div class="form-group">
+              {{ field.label_tag }}
               {{ field.errors }}
               {{ field }}
               {{ field.help_text }}
@@ -38,9 +39,9 @@
 
             <button
               type="submit"
-              class="background-input enterprise-login-submit-button"
+              class="background-input btn btn-primary"
               id="enterprise-login-submit">
-              {% trans "Login" %}
+              {% trans "Continue" %}
             </button>
             <span id="activate-progress-icon" class="icon fa fa-spinner fa-spin is-hidden" aria-hidden="true"></span>
           </form>

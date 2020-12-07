@@ -65,7 +65,7 @@
             {% if is_learner_eligible_for_one_click_purchase %}
               <form method="POST">
                 <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}" />
-                <button class="btn-confirm">{{ confirm_button_text }}</button>
+                <button class="btn btn-primary">{{ confirm_button_text }}</button>
               </form>
             {% endif %}
           </div>

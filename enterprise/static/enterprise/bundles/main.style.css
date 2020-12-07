@@ -11741,7 +11741,7 @@ body,
   border-top: 2px solid #9CD2E6; }
 
 #header-tagline {
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-left: 0.5em;
   width: 300px;
   display: inline-block;
@@ -11774,12 +11774,9 @@ body,
   height: 47px; }
 
 .partnered-text {
-  font-size: 16px;
   color: #454545;
   margin-top: 5px;
   margin-bottom: 20px; }
-  .partnered-text strong {
-    font-size: 1.05em; }
 
 .media {
   margin-bottom: 10px;
@@ -11796,7 +11793,6 @@ body,
     padding-left: 15px; }
     .media .media-content .course-title {
       margin-bottom: 5px;
-      font-size: 16px;
       font-weight: bold; }
 
 .radio-block {
@@ -11955,7 +11951,8 @@ h2.modal-header-text {
 .agreement-text {
   overflow: hidden;
   margin-bottom: 15px;
-  font-weight: 600; }
+  font-weight: 600;
+  font-size: 0.875rem; }
 
 .consent-policy-dropdown-bar {
   text-align: left;
@@ -12020,44 +12017,33 @@ h2.modal-header-text {
   .enterprise-container ul.consent-items li {
     margin-bottom: 4px; }
 
-.course-confirmation-title {
-  font-size: 20px;
-  color: #126F9A;
-  font-weight: normal;
-  margin-bottom: 6px; }
-
 .course-image {
   width: auto;
   height: 50px; }
 
 .course-detail {
-  font-size: 14px;
+  font-size: 0.875rem;
   margin-bottom: 10px; }
   .course-detail .course-org {
     font-size: 18px; }
 
-.course-info {
-  font-size: 1em; }
-  .course-info .fa,
-  .course-info span {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 5px; }
-  .course-info span {
-    font-size: 1em; }
+.course-info .fa,
+.course-info span {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px; }
 
 .course-in-future {
-  font-size: 17px;
+  font-size: 1.40625rem;
   margin-bottom: 40px; }
 
 .caption {
-  margin-bottom: 15px;
-  font-size: 16px; }
+  margin-bottom: 15px; }
 
 .media {
   margin-bottom: 40px; }
   .media .media-content .course-info {
-    font-size: .8em;
+    font-size: 0.875rem;
     margin: 8px 0; }
     .media .media-content .course-info .fa,
     .media .media-content .course-info span {
@@ -12300,20 +12286,13 @@ table.program-summary {
   max-width: 500px;
   min-width: 300px;
   margin: 0 auto; }
-  .enterprise-login-container * {
-    font-size: 16px; }
   .enterprise-login-container p {
     margin-bottom: 15px; }
-  .enterprise-login-container .enterprise-login-title {
-    font-size: 20px !important;
-    color: #126F9A !important;
-    font-weight: normal;
-    margin-bottom: 10px; }
   .enterprise-login-container label {
     margin-right: 10px; }
   .enterprise-login-container .enterprise-login.errorlist {
     display: list-item;
-    color: #cb0712;
+    color: #AB0D02;
     margin-left: 40px;
     margin-bottom: 20px; }
   .enterprise-login-container .is-hidden {
@@ -12324,28 +12303,3 @@ table.program-summary {
     width: 100%;
     margin: 0 0 15px;
     padding: 0px 10px; }
-  .enterprise-login-container button.enterprise-login-submit-button {
-    border-color: transparent;
-    height: auto;
-    max-width: 170px;
-    min-width: 110px;
-    border-radius: 2px;
-    font-size: 16px;
-    font-weight: bold;
-    background: #0075B4;
-    border: none;
-    color: #fff;
-    margin-right: 10px;
-    padding: 10px 15px;
-    box-shadow: none;
-    width: auto; }
-    .enterprise-login-container button.enterprise-login-submit-button:hover {
-      cursor: pointer;
-      background: #0b5177; }
-    .enterprise-login-container button.enterprise-login-submit-button:focus {
-      background-color: #065683; }
-    .enterprise-login-container button.enterprise-login-submit-button:active {
-      background-color: #0075B4; }
-    .enterprise-login-container button.enterprise-login-submit-button:disabled {
-      background-color: #a0a0a0;
-      color: #d9d9d9; }

@@ -64,7 +64,12 @@ class EnterpriseLoginForm(forms.Form):
     Enterprise Slug Login Form.
     """
 
-    enterprise_slug = forms.CharField(label='Company Name')
+    enterprise_slug = forms.CharField(
+        label='Organization name',
+        widget=forms.TextInput(
+            attrs={'class': 'form-control'}
+        )
+    )
 
     def clean(self):
         """

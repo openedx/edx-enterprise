@@ -44,7 +44,7 @@ body,
 }
 
 #header-tagline {
-  font-size: 14px;
+  font-size: $font-size-sm;
   margin-left: 0.5em;
   width: 300px;
   display: inline-block;
@@ -87,14 +87,9 @@ body,
 }
 
 .partnered-text {
-  font-size: 16px;
   color: $gray-700;
   margin-top: 5px;
   margin-bottom: 20px;
-
-  strong {
-    font-size: 1.05em;
-  }
 }
 
 .media {
@@ -118,7 +113,6 @@ body,
 
     .course-title {
       margin-bottom: 5px;
-      font-size: 16px;
       font-weight: bold;
     }
   }
