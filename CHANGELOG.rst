@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.7]
+--------
+
+* Rebranding update: move to more robust ``get_platform_logo_url`` and update default branding colors.
+
 [3.13.6]
 --------
 
