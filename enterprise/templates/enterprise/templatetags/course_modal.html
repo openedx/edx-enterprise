@@ -1,6 +1,6 @@
 {% load i18n enterprise %}
 
-<div id="course-details-modal-{{ index }}" class="modal fade" role="dialog" aria-modal="true" aria-labelledby="modal-header-text-{{ index }}" aria-hidden="true" tabindex="-1">
+<div id="course-details-modal-{{ index }}" class="modal fade modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-header-text-{{ index }}" aria-hidden="true" tabindex="-1">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -22,7 +22,7 @@
           </div>
         </header>
         <div class="details">
-          <ol>
+          <ul class="details-list">
             {% if premium_modes|length > 0 %}
               {% with course_mode=premium_modes.0 %}
                 {% if course_mode.original_price %}
@@ -86,19 +86,15 @@
                 </div>
               </li>
             {% endif %}
-          </ol>
+          </ul>
         </div>
         <div class="overview">
           {% if course_full_description %}
-            <div class="header-wrapper">
-              <h2>{{ course_full_description_text }}</h2>
-            </div>
+            <h2 class="h3">{{ course_full_description_text }}</h2>
             <div>{% autoescape off %}{{ course_full_description }}{% endautoescape %}</div>
           {% endif %}
           {% if expected_learning_items %}
-            <div class="header-wrapper">
-              <h2>{{ expected_learning_items_text }}</h2>
-            </div>
+            <h2 class="h3">{{ expected_learning_items_text }}</h2>
             <ul>
             {% for item in expected_learning_items %}
               <li>{{ item }}</li>
@@ -106,17 +102,15 @@
             </ul>
           {% endif %}
           {% if staff %}
-            <div class="header-wrapper">
-              <h2>{{ staff_text }}</h2>
-            </div>
+            <h2 class="h3">{{ staff_text }}</h2>
             <div class="staff-container">
               {% for person in staff %}
-                <div class="row">
+                <div class="row no-gutters">
                   {% if person.profile_image_url %}
                     <img src="{{ person.profile_image_url }}" alt="{{ person.given_name }} {{ person.family_name }}" />
                   {% endif %}
                   <div class="col-7">
-                    <h2>{{ person.given_name }} {{ person.family_name }}</h2>
+                    <h3 class="h4">{{ person.given_name }} {{ person.family_name }}</h3>
                     {% if person.position %}
                       <p>{{ person.position.title }} at {{ person.position.organization_name }}</p>
                     {% endif %}

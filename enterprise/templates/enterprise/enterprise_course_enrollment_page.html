@@ -8,7 +8,7 @@
 
 {% block contents %}
   <div class="enterprise-container">
-    <div class="row">
+    <div class="row no-gutters">
       <div class="col-3">
         {% include "enterprise/_enterprise_customer_sidebar.html" %}
       </div>
@@ -18,7 +18,7 @@
         {% alert_messages messages %}
 
         {% if course_enrollable %}
-          <h1 class="h2">{{ confirmation_text }}</h1>
+          <h2 class="h2">{{ confirmation_text }}</h2>
         {% endif %}
 
         <div class="media">

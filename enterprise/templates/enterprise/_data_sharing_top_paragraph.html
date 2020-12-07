@@ -5,7 +5,7 @@
     {{ top_paragraph|only_safe_html }}
   </div>
 {% else %}
-  <h1 class="h2">{{ consent_message_header }}</h1>
+  <h2 class="h2">{{ consent_message_header }}</h2>
   <div class="consent-message">
     {% autoescape off %}
       <p>{{ consent_request_prompt|safe }} {{ policy_link_template }}</p>

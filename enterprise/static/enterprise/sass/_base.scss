@@ -196,8 +196,17 @@ body,
   }
 
   .enterprise-container {
-      padding: 0 30px 30px 30px;
+      padding: 0 15px 30px 15px;
+
+      .row {
+        flex-direction: column;
+      }
   }
+
+  .partnered-text {
+    font-size: $font-size-sm;
+  }
+
 }
 
 @media (min-width: map-get($container-max-widths, md)) {
@@ -206,22 +215,22 @@ body,
     display: inline;
 
     &.col-3 {
-      width: 30%;
       padding-left: 0;
       padding-right: 30px;
     }
-
-    &.col-7 {
-      padding-left: 30px;
-      width: 70%;
-    }
   }
 
-  .border-left {
-      border-left: 1px solid $light-300;
+  .enterprise-container .border-left {
+    padding-left: 30px!important;
   }
 
   .enterprise-logo {
       display: block;
+  }
+}
+
+@media (max-width: map-get($container-max-widths, md)) {
+  .enterprise-container .border-left {
+    border-left: none!important;
   }
 }

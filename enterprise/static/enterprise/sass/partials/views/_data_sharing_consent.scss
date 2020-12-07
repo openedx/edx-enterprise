@@ -107,3 +107,11 @@
     }
   }
 }
+
+@media (max-width: map-get($container-max-widths, md)) {
+  .enterprise-container .row {
+    [class*='col-'] {
+      max-width: 100%;
+    }
+  }
+}

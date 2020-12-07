@@ -11849,23 +11849,27 @@ body,
   #header-tagline {
     text-align: left; }
   .enterprise-container {
-    padding: 0 30px 30px 30px; } }
+    padding: 0 15px 30px 15px; }
+    .enterprise-container .row {
+      flex-direction: column; }
+  .partnered-text {
+    font-size: 0.875rem; } }
 
 @media (min-width: 720px) {
   [class*='col-'] {
     float: left;
     display: inline; }
     [class*='col-'].col-3 {
-      width: 30%;
       padding-left: 0;
       padding-right: 30px; }
-    [class*='col-'].col-7 {
-      padding-left: 30px;
-      width: 70%; }
-  .border-left {
-    border-left: 1px solid #F2F0EF; }
+  .enterprise-container .border-left {
+    padding-left: 30px !important; }
   .enterprise-logo {
     display: block; } }
+
+@media (max-width: 720px) {
+  .enterprise-container .border-left {
+    border-left: none !important; } }
 
 /* Components */
 /* Course Modal styling built atop of Bootstrap modals */
@@ -11890,34 +11894,85 @@ button.close {
   button.close:hover {
     color: #ced4da; }
 
-h2.modal-header-text {
-  margin: 0;
-  font-weight: bold;
-  font-size: 1.40625rem; }
-
 .header-wrapper {
   border-bottom: 1px groove #000;
   padding-bottom: 5px;
   margin-bottom: 20px; }
 
-.staff-container .row {
+.staff-container {
   display: flex;
   margin-bottom: 40px; }
-  .staff-container .row img {
+  .staff-container img {
     width: 110px;
     height: 110px;
     margin-right: 30px; }
-  .staff-container .row h2 {
-    font-weight: bold; }
-  .staff-container .row .col-7 {
-    flex-grow: 100; }
-  .staff-container .row:last-child {
+  .staff-container:last-child {
     margin-bottom: 0; }
+  .staff-container .col-7 {
+    flex-grow: 100; }
+
+.modal-content .modal-header-wrapper {
+  display: flex; }
+  .modal-content .modal-header-wrapper .image {
+    flex-basis: 33%; }
+
+.modal-content .modal-header-wrapper {
+  margin-bottom: 10px; }
+  .modal-content .modal-header-wrapper .image img {
+    border: 1px solid #126F9A;
+    max-width: 210px; }
+  .modal-content .modal-header-wrapper .details h1.modal-header-text {
+    font-weight: bold;
+    margin-bottom: 0;
+    text-align: left; }
+  .modal-content .modal-header-wrapper .details .organization img {
+    height: 25px; }
+  .modal-content .modal-header-wrapper .details .short-description {
+    margin-bottom: 10px; }
+
+.modal-content .modal-body > .details {
+  border: 1px solid #126F9A;
+  margin-bottom: 20px; }
+  .modal-content .modal-body > .details .icon {
+    font-weight: bold;
+    margin-right: 10px;
+    opacity: .6; }
+  .modal-content .modal-body > .details .title,
+  .modal-content .modal-body > .details .text,
+  .modal-content .modal-body > .details .discount {
+    font-size: 0.875rem; }
+  .modal-content .modal-body > .details .detail-container {
+    display: flex; }
+  .modal-content .modal-body > .details .detail-title-container {
+    flex-basis: 25%; }
+  .modal-content .modal-body > .details .detail-value-container {
+    flex-shrink: 1; }
+  .modal-content .modal-body > .details .text strike {
+    font-size: 0.875rem; }
+  .modal-content .modal-body > .details .text .discount {
+    color: #0D7D4D; }
+  .modal-content .modal-body > .details .details-list li span {
+    font-size: 0.875rem; }
+  .modal-content .modal-body > .details .details-list {
+    list-style: none;
+    margin: 0;
+    padding: 0 10px; }
+  .modal-content .modal-body > .details li {
+    border-bottom: 1px dotted #e9ecef;
+    padding: 15px 10px; }
+    .modal-content .modal-body > .details li:last-child {
+      border-bottom: none; }
+    .modal-content .modal-body > .details li:after {
+      content: "";
+      display: table;
+      clear: both; }
 
 @media (max-width: 720px) {
   .modal-header-wrapper .image,
   .modal-header-wrapper .organization img {
     display: none; }
+  .staff-container .row {
+    font-size: 0.875rem; }
   .staff-container .row img {
     margin-bottom: 10px; } }
 
@@ -12016,6 +12071,10 @@ h2.modal-header-text {
   margin-left: 25px; }
   .enterprise-container ul.consent-items li {
     margin-bottom: 4px; }
+
+@media (max-width: 720px) {
+  .enterprise-container .row [class*='col-'] {
+    max-width: 100%; } }
 
 .course-image {
   width: auto;
