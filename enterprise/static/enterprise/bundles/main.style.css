@@ -11896,7 +11896,7 @@ h2.modal-header-text {
   font-size: 1.40625rem; }
 
 .header-wrapper {
-  border-bottom: 1px groove black;
+  border-bottom: 1px groove #000;
   padding-bottom: 5px;
   margin-bottom: 20px; }
 
@@ -11946,7 +11946,7 @@ h2.modal-header-text {
 .consent-input-container {
   border: 1px solid #e9ecef;
   padding: 15px 20px;
-  margin-bottom: 20px; }
+  margin-bottom: 10px; }
 
 .agreement-text {
   overflow: hidden;
@@ -11972,7 +11972,7 @@ h2.modal-header-text {
   line-height: 60px;
   white-space: nowrap;
   padding-left: 2%;
-  font-size: 18px; }
+  font-size: 1.40625rem; }
 
 .dropdown-icon-container {
   float: right;
@@ -12034,7 +12034,6 @@ h2.modal-header-text {
   margin-right: 5px; }
 
 .course-in-future {
-  font-size: 1.40625rem;
   margin-bottom: 40px; }
 
 .caption {
@@ -12230,13 +12229,6 @@ table.program-summary {
   margin: 0 auto; }
   .select-enterprise-container p {
     margin-bottom: 15px; }
-  .select-enterprise-container .select-enterprise-title {
-    font-size: 20px !important;
-    color: #126F9A !important;
-    font-weight: normal;
-    margin-bottom: 10px; }
-  .select-enterprise-container label {
-    margin-right: 10px; }
   .select-enterprise-container .select-enterprise.errorlist {
     display: list-item;
     color: #AB0D02;

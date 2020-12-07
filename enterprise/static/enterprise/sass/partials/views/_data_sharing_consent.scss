@@ -5,19 +5,19 @@
   margin: 0 auto;
 
   p {
-    margin-bottom: 15px;
+    margin-bottom: $margin-md;
   }
 }
 
 .consent-input-container {
   border: 1px solid $gray-200;
   padding: 15px 20px;
-  margin-bottom: 20px;
+  margin-bottom: $margin-sm;
 }
 
 .agreement-text {
   overflow: hidden;
-  margin-bottom: 15px;
+  margin-bottom: $margin-md;
   font-weight: 600;
   font-size: $font-size-sm;
 }
@@ -46,7 +46,7 @@
   line-height: 60px;
   white-space: nowrap;
   padding-left: 2%;
-  font-size: 18px;
+  font-size: $font-size-lg;
 }
 
 .dropdown-icon-container {
@@ -83,7 +83,7 @@
 /* Enterprise */
 
 .caption {
-  margin-bottom: 15px;
+  margin-bottom: $margin-md;
   font-size: 1.1em;
 }
 

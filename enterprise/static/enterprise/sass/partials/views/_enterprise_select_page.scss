@@ -5,25 +5,15 @@
   margin: 0 auto;
 
   p {
-    margin-bottom: 15px;
+    margin-bottom: $margin-md;
   }
 
-  .select-enterprise-title {
-    font-size: 20px !important;
-    color: $blue !important;
-    font-weight: normal;
-    margin-bottom: 10px;
-  }
-
-  label {
-    margin-right: 10px;
-  }
 
   .select-enterprise.errorlist {
     display: list-item;
     color: $danger-500;
-    margin-left: 40px;
-    margin-bottom: 20px;
+    margin-left: $margin-xl;
+    margin-bottom: $margin-lg;
   }
 
   .is-hidden {

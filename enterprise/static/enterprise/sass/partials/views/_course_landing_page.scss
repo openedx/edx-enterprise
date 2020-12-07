@@ -22,16 +22,15 @@
 }
 
 .course-in-future {
-  font-size: $font-size-lg;
-  margin-bottom: 40px;
+  margin-bottom: $margin-xl;
 }
 
 .caption {
-  margin-bottom: 15px;
+  margin-bottom: $margin-md;
 }
 
 .media {
-  margin-bottom: 40px;
+  margin-bottom: $margin-xl;
 
   .media-content .course-info {
     font-size: $font-size-sm;
