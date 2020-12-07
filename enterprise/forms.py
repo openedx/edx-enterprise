@@ -27,7 +27,12 @@ class EnterpriseSelectionForm(forms.Form):
     Enterprise Selection Form.
     """
 
-    enterprise = forms.ChoiceField(choices=(), label='Organization')
+    enterprise = forms.ChoiceField(
+        choices=(),
+        label='Organization',
+        widget=forms.Select(
+            attrs={'class': 'form-control', 'type': 'select'}
+        ))
     success_url = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):

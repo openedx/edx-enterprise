@@ -12228,8 +12228,6 @@ table.program-summary {
   max-width: 600px;
   min-width: 300px;
   margin: 0 auto; }
-  .select-enterprise-container * {
-    font-size: 16px; }
   .select-enterprise-container p {
     margin-bottom: 15px; }
   .select-enterprise-container .select-enterprise-title {
@@ -12239,47 +12237,13 @@ table.program-summary {
     margin-bottom: 10px; }
   .select-enterprise-container label {
     margin-right: 10px; }
-  .select-enterprise-container select {
-    width: 60%;
-    max-width: 350px;
-    background-color: white;
-    color: #333;
-    box-sizing: border-box;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    font-size: large; }
   .select-enterprise-container .select-enterprise.errorlist {
     display: list-item;
-    color: #cb0712;
+    color: #AB0D02;
     margin-left: 40px;
     margin-bottom: 20px; }
   .select-enterprise-container .is-hidden {
     display: none !important; }
-  .select-enterprise-container button.select-enterprise-submit-button {
-    border-color: transparent;
-    height: auto;
-    max-width: 180px;
-    min-width: 125px;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: bold;
-    background: #0075B4;
-    border: none;
-    color: #fff;
-    margin-right: 10px;
-    padding: 10px 15px;
-    box-shadow: none;
-    width: auto; }
-    .select-enterprise-container button.select-enterprise-submit-button:hover {
-      cursor: pointer;
-      background: #0b5177; }
-    .select-enterprise-container button.select-enterprise-submit-button:focus {
-      background-color: #065683; }
-    .select-enterprise-container button.select-enterprise-submit-button:active {
-      background-color: #0075B4; }
-    .select-enterprise-container button.select-enterprise-submit-button:disabled {
-      background-color: #a0a0a0;
-      color: #d9d9d9; }
 
 .enterprise-login-container {
   width: auto;

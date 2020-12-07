@@ -13,7 +13,7 @@
     <div class="enterprise-container">
       <div class="select-enterprise-container">
 
-          <h2 class="select-enterprise-title">{{ select_enterprise_message_title|safe }}</h2>
+          <h1>{{ select_enterprise_message_title|safe }}</h2>
           <div class="select-enterprise-message">
             <p>{{ select_enterprise_message_subtitle|safe }}</p>
           </div>
@@ -29,7 +29,7 @@
             </div>
 
             {% for field in form.visible_fields %}
-              <div>
+              <div class="form-group">
               {{ field.label_tag }}
               {{ field.errors }}
               {{ field }}
@@ -45,7 +45,7 @@
 
             <button
               type="submit"
-              class="background-input select-enterprise-submit-button"
+              class="background-input btn btn-primary"
               id="select-enterprise-submit">
               {% trans "Continue" %}
             </button>

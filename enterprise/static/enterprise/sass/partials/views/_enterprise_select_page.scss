@@ -4,10 +4,6 @@
   min-width: 300px;
   margin: 0 auto;
 
-  * {
-      font-size: 16px;
-  }
-
   p {
     margin-bottom: 15px;
   }
@@ -23,60 +19,14 @@
     margin-right: 10px;
   }
 
-  select {
-    width: 60%;
-    max-width: 350px;
-    background-color: white;
-    color: #333;
-    box-sizing: border-box;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    font-size: large;
-  }
-
   .select-enterprise.errorlist {
     display: list-item;
-    color: rgb(203, 7, 18);
+    color: $danger-500;
     margin-left: 40px;
     margin-bottom: 20px;
   }
 
   .is-hidden {
     display: none !important;
-  }
-
-  button.select-enterprise-submit-button {
-    border-color: transparent;
-    height: auto;
-    max-width: 180px;
-    min-width: 125px;
-    border-radius: 5px;
-    font-size: 16px;
-    font-weight: bold;
-    background: #0075B4;
-    border: none;
-    color: #fff;
-    margin-right: 10px;
-    padding: 10px 15px;
-    box-shadow: none;
-    width: auto;
-
-    &:hover {
-      cursor: pointer;
-      background: #0b5177;
-    }
-
-    &:focus {
-      background-color: #065683;
-    }
-
-    &:active {
-      background-color: #0075B4;
-    }
-
-    &:disabled {
-      background-color: #a0a0a0;
-      color: #d9d9d9;
-    }
   }
 }
