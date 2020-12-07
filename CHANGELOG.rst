@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.8]
+--------
+
+* Bug fix with course key lookup in the Canvas assessment level grade reporting flow.
+
 [3.13.7]
 --------
 

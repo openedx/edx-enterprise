@@ -103,10 +103,14 @@ class CanvasLearnerExporter(LearnerExporter):
             if not subsection_percent_grade or not subsection_id:
                 continue
 
+            course_catalog_client = get_course_catalog_api_service_client(
+                site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
+            )
+
             transmission_audit = CanvasLearnerAssessmentDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                course_id=enterprise_enrollment.get_course_id(enterprise_enrollment.course_id),
+                course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                 subsection_id=subsection_id,
                 grade=subsection_percent_grade,
                 grade_point_score=subsection_data.get('grade_point_score'),
