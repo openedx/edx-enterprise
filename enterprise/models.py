@@ -342,8 +342,11 @@ class EnterpriseCustomer(TimeStampedModel):
         Return the identity providers associated with this enterprise customer.
         """
         # pylint: disable=no-member
-
-        return self.enterprise_customer_identity_providers.first()
+        try:
+            # pylint: disable=no-member
+            return self.enterprise_customer_identity_providers.first() and self.enterprise_customer_identity_providers.first().provider_id
+        except ObjectDoesNotExist:
+            return None
 
     @property
     def identity_providers(self):

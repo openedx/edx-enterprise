@@ -131,8 +131,8 @@ def enterprise_login_required(view):
         # Check if tpa_hint was passed as query param
         tpa_hint = query_params.get('tpa_hint')
         if not tpa_hint and not enterprise_customer.has_multiple_idps:
-            tpa_hint = enterprise_customer.identity_provider.provider_id\
-                if enterprise_customer.identity_provider else ''
+            tpa_hint = enterprise_customer.identity_provider\
+                if enterprise_customer.identity_provider else None
 
         # Now verify if the user is logged in. If user is not logged in then
         # send the user to the login screen to sign in with an
@@ -205,7 +205,7 @@ def force_fresh_session(view):
             # then take effect prior to us arriving back here again.
             enterprise_customer = get_enterprise_customer_or_404(kwargs.get('enterprise_uuid'))
             if not enterprise_customer.has_multiple_idps:
-                provider_id = enterprise_customer.identity_provider.provider_id \
+                provider_id = enterprise_customer.identity_provider \
                     if enterprise_customer.identity_provider else ''
             else:
                 provider_id = ''
