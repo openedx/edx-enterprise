@@ -337,6 +337,15 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     @property
+    def identity_provider(self):
+        """
+        Return the identity providers associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+
+        return self.enterprise_customer_identity_providers.first()
+
+    @property
     def identity_providers(self):
         """
         Return the identity providers associated with this enterprise customer.
@@ -351,6 +360,14 @@ class EnterpriseCustomer(TimeStampedModel):
         """
         # pylint: disable=no-member
         return self.enterprise_customer_identity_providers.exists()
+
+    @property
+    def has_multiple_idps(self):
+        """
+        Return True if there are any identity providers associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.count() > 1
 
     @property
     def sync_learner_profile_data(self):
