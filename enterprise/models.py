@@ -362,6 +362,7 @@ class EnterpriseCustomer(TimeStampedModel):
         except ObjectDoesNotExist:
             return None
 
+    @property
     def identity_providers(self):
         """
         Return the identity providers associated with this enterprise customer.
