@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.14.0]
+--------
+
+* Rebranding update: Change fonts and colors, change mobile layout
+
 [3.13.12]
 ---------
 
