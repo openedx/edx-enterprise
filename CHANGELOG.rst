@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.11]
+---------
+
+* Add new API for external LMS configurations.
+
 [3.13.10]
 ---------
 

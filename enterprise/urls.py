@@ -100,4 +100,8 @@ urlpatterns += [
         include('enterprise_learner_portal.urls'),
         name='enterprise_learner_portal_api'
     ),
+    url(
+        r'^integrated_channels/api/',
+        include('integrated_channels.api.urls')
+    )
 ]

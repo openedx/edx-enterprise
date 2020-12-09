@@ -2,6 +2,6 @@
 Your project description goes here.
 """
 
-__version__ = "3.13.10"
+__version__ = "3.13.11"
 
 default_app_config = "enterprise.apps.EnterpriseConfig"  # pylint: disable=invalid-name
