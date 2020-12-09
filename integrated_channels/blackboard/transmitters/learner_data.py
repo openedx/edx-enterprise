@@ -33,3 +33,26 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
         kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'blackboard_user_email'
         super(BlackboardLearnerTransmitter, self).transmit(payload, **kwargs)
+
+    def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
+        """
+        Send an assessment level grade update status call for a single enterprise learner to blackboard using the
+        client.
+        Args:
+            exporter: The learner completion data payload to send to blackboard
+        """
+        kwargs['app_label'] = 'blackboard'
+        kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
+        kwargs['remote_user_id'] = 'blackboard_user_email'
+        super(BlackboardLearnerTransmitter, self).single_learner_assessment_grade_transmit(exporter, **kwargs)
+
+    def assessment_level_transmit(self, exporter, **kwargs):
+        """
+        Send a bulk assessment level grade update status call to blackboard using the client.
+        Args:
+            exporter: The learner completion data payload to send to blackboard
+        """
+        kwargs['app_label'] = 'blackboard'
+        kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
+        kwargs['remote_user_id'] = 'blackboard_user_email'
+        super(BlackboardLearnerTransmitter, self).assessment_level_transmit(exporter, **kwargs)

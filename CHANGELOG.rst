@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.9]
+--------
+
+* Adding Blackboard support for assessment level reporting in the integrated channels.
+
 [3.13.8]
 --------
 
