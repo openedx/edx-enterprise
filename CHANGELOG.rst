@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.12]
+---------
+
+* Adding decorators to missed integrated channel tasks.
+
 [3.13.11]
 ---------
 

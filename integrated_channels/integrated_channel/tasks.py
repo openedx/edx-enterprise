@@ -133,6 +133,7 @@ def transmit_single_learner_data(username, course_run_id):
 
 
 @shared_task
+@set_code_owner_attribute
 def transmit_single_subsection_learner_data(username, course_run_id, subsection_id, grade):
     """
     Task to send a single assessment level learner data record to each linked integrated channel. This task is fired off
@@ -172,6 +173,7 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
 
 
 @shared_task
+@set_code_owner_attribute
 def transmit_subsection_learner_data(username, channel_code, channel_pk):
     """
     Task to send assessment level learner data to each linked integrated channel.
