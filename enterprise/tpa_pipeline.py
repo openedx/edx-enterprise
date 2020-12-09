@@ -132,9 +132,8 @@ def get_user_social_auth(user, enterprise_customer):
         enterprise_customer (EnterpriseCustomer): User id of user in third party LMS
 
     """
-    enterprise_customer_identity_providers = enterprise_customer.identity_providers
     provider_backend_names = []
-    for idp in enterprise_customer_identity_providers:
+    for idp in enterprise_customer.identity_providers:
         tpa_provider = get_identity_provider(idp.provider_id)
         provider_backend_names.append(tpa_provider.backend_name)
     user_social_auth = UserSocialAuth.objects.filter(provider__in=provider_backend_names, user=user).first()

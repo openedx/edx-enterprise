@@ -12,7 +12,6 @@ from django.apps import apps
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
-from enterprise.utils import get_identity_provider
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
@@ -148,7 +147,7 @@ class SapSuccessFactorsLearnerManger:
                 LOGGER.info(
                     'No social auth data found for inactive user with SAP student id [%s] of enterprise '
                     'customer [%s] with identity providers [%s]',
-                    sap_student_id, enterprise_customer.name, ','.join(provider.provider_id for provider in providers)
+                    sap_student_id, enterprise_customer.name, ', '.join(provider.provider_id for provider in providers)
                 )
                 continue
 

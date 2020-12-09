@@ -34,7 +34,7 @@ from django.template import Context, Template
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
-from django.utils.http import urlquote, urlencode
+from django.utils.http import urlencode, urlquote
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
@@ -344,7 +344,8 @@ class EnterpriseCustomer(TimeStampedModel):
         # pylint: disable=no-member
         try:
             # pylint: disable=no-member
-            return self.enterprise_customer_identity_providers.first() and self.enterprise_customer_identity_providers.first().provider_id
+            identity_provider = self.enterprise_customer_identity_providers.first()
+            return identity_provider and identity_provider.provider_id
         except ObjectDoesNotExist:
             return None
 
