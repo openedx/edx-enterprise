@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.13.10]
+---------
+
+* Use logo from ``get_platform_logo_url`` in the legacy Django templates
+
 [3.13.9]
 --------
 
