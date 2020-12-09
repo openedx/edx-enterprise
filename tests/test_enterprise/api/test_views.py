@@ -518,6 +518,7 @@ class TestEnterpriseAPIViews(APITest):
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
+                'enable_portal_lms_configurations_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },
@@ -557,6 +558,7 @@ class TestEnterpriseAPIViews(APITest):
                     'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                     'enable_portal_reporting_config_screen': False,
                     'enable_portal_saml_configuration_screen': False,
+                    'enable_portal_lms_configurations_screen': False,
                     'enable_audit_data_reporting': False,
                     'site': {
                         'domain': 'example.com', 'name': 'example.com'
@@ -609,6 +611,7 @@ class TestEnterpriseAPIViews(APITest):
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': False,
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
+                'enable_portal_lms_configurations_screen': False,
                 'enable_audit_data_reporting': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
@@ -755,6 +758,7 @@ class TestEnterpriseAPIViews(APITest):
             'enforce_data_sharing_consent': 'at_enrollment', 'enable_portal_code_management_screen': True,
             'enable_portal_reporting_config_screen': False,
             'enable_portal_saml_configuration_screen': False,
+            'enable_portal_lms_configurations_screen': False,
             'site__domain': 'example.com', 'site__name': 'example.com',
             'enable_portal_subscription_management_screen': False,
             'enable_analytics_screen': False,
@@ -794,6 +798,7 @@ class TestEnterpriseAPIViews(APITest):
                 'replace_sensitive_sso_username': False, 'enable_portal_code_management_screen': True,
                 'enable_portal_reporting_config_screen': False,
                 'enable_portal_saml_configuration_screen': False,
+                'enable_portal_lms_configurations_screen': False,
                 'site': {
                     'domain': 'example.com', 'name': 'example.com'
                 },

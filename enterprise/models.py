@@ -303,6 +303,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether to allow access to the analytics screen in the admin portal.")
     )
 
+    enable_portal_lms_configurations_screen = models.BooleanField(  # pylint: disable=invalid-name
+        default=False,
+        help_text=_("Specifies whether to allow access to the external LMS configuration screen in the admin portal.")
+    )
+
     enable_slug_login = models.BooleanField(
         default=False,
         help_text=_("Specifies whether the learner should be able to login through enterprise's slug login")
