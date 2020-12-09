@@ -68,6 +68,7 @@ from enterprise.utils import (
     get_enterprise_customer_idp,
     get_enterprise_customer_or_404,
     get_enterprise_customer_user,
+    get_platform_logo_url,
     get_program_type_description,
     is_course_run_enrollable,
     track_enrollment,
@@ -141,6 +142,7 @@ def get_global_context(request, enterprise_customer=None):
         'platform_name': platform_name,
         'header_logo_alt_text': _('{platform_name} home page').format(platform_name=platform_name),
         'welcome_text': constants.WELCOME_TEXT.format(platform_name=platform_name),
+        'logo_url': get_platform_logo_url(),
     }
 
     if enterprise_customer is not None:

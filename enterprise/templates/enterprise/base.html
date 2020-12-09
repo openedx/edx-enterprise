@@ -34,7 +34,9 @@
     {% block header %}
       <header class="logo-container">
         <h1>
-          <a href="{{ LMS_ROOT_URL }}"><img class='header-logo' src="{% static 'images/logo.png' %}" alt="{{ header_logo_alt_text }}" /></a>
+          <a href="{{ LMS_ROOT_URL }}">
+            <img class='header-logo' src="{{ logo_url }}" alt="{{ header_logo_alt_text }}" />
+          </a>
           {% if tagline %}
             <span id="header-tagline">{{ tagline }}</span>
           {% endif %}
