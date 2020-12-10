@@ -27,7 +27,12 @@ class EnterpriseSelectionForm(forms.Form):
     Enterprise Selection Form.
     """
 
-    enterprise = forms.ChoiceField(choices=(), label='Organization')
+    enterprise = forms.ChoiceField(
+        choices=(),
+        label='Organization',
+        widget=forms.Select(
+            attrs={'class': 'form-control', 'type': 'select'}
+        ))
     success_url = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     def __init__(self, *args, **kwargs):
@@ -64,7 +69,12 @@ class EnterpriseLoginForm(forms.Form):
     Enterprise Slug Login Form.
     """
 
-    enterprise_slug = forms.CharField(label='Company Name')
+    enterprise_slug = forms.CharField(
+        label='Organization name',
+        widget=forms.TextInput(
+            attrs={'class': 'form-control'}
+        )
+    )
 
     def clean(self):
         """

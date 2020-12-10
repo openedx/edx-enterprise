@@ -7,7 +7,7 @@
 }
 
 .modal-header {
-  background-color: $blue;
+  background-color: $primary;
   padding: 5px;
 }
 
@@ -24,10 +24,4 @@ button.close {
   &:hover {
     color: $gray-400;
   }
-}
-
-h2.modal-header-text {
-  margin: 0;
-  font-weight: bold;
-  font-size: 18px;
 }

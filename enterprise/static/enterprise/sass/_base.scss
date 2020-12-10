@@ -1,11 +1,6 @@
 /* Base CSS files for Enterprise templates. */
 // TODO: Continue to take advantage of SASS features and refactor our CSS.
 
-* {
-  font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 16px;
-}
-
 strong {
   font-weight: 600;
 }
@@ -21,7 +16,7 @@ q {
 body,
 .zebra-stripe > :nth-child(2n+1),
 .depth-0 {
-  background-color: white;
+  background-color: $white;
   padding-bottom: 100px;
 }
 
@@ -41,25 +36,25 @@ body,
   min-width: 300px;
   height: auto;
   margin: 0 auto;
-  color: #383838;
+  color: $brand-500;
+
+  a {
+    text-decoration: none;
+  }
 }
 
 .pinstripe {
-  border-top: 2px solid #0075b4;
+  border-top: 2px solid $primary-200;
 }
 
 #header-tagline {
-  font-size: 14px;
+  font-size: $font-size-sm;
   margin-left: 0.5em;
   width: 300px;
   display: inline-block;
   vertical-align: middle;
 }
 
-.consent-title {
-  font-size: 24px;
-  color: $blue;
-}
 
 .row {
   display: flex;
@@ -76,25 +71,12 @@ body,
   max-width: 768px;
   margin: 0 auto;
   line-height: 1.5;
-  font-size: 14px;
-  color: #383838;
+  color: $primary-500;
 
   &:after {
     content: " ";
     display: table;
     clear: both;
-  }
-
-  * {
-    font-size: 14px;
-  }
-
-  a {
-    color: $blue;
-
-    &:hover {
-      color: #0b5c8a;
-    }
   }
 }
 
@@ -109,14 +91,9 @@ body,
 }
 
 .partnered-text {
-  font-size: 16px;
-  color: #414141;
+  color: $gray-700;
   margin-top: 5px;
   margin-bottom: 20px;
-
-  strong {
-    font-size: 1.05em;
-  }
 }
 
 .media {
@@ -140,7 +117,6 @@ body,
 
     .course-title {
       margin-bottom: 5px;
-      font-size: 16px;
       font-weight: bold;
     }
   }
@@ -165,22 +141,6 @@ body,
   }
 }
 
-.btn-confirm {
-  background: $blue;
-  border: none;
-  color: #fff;
-  border-radius: 5px;
-  margin: 10px 0;
-  padding: 10px 15px;
-  box-shadow: none;
-  font-weight: bold;
-
-  &:hover,
-  &:focus {
-    cursor: pointer;
-    background: #0b5177;
-  }
-}
 
 /* Move into its own file. */
 
@@ -206,27 +166,27 @@ body,
   }
 
   .success {
-    background-color: #ecfaec;
-    border-color: #b9edb9;
-    color: #3c763d;
+    background-color: $success-100;
+    border-color: $success-200;
+    color: $success-500;
   }
 
   .info {
-    background-color: #f2f8fb;
-    border-color: #cce3f0;
-    color: #31708f;
+    background-color: $info-100;
+    border-color: $info-200;
+    color: $info-500;
   }
 
   .warning {
-    background-color: #fcf8e3;
-    border-color: #faebcc;
-    color: #8a6d3b;
+    background-color: $warning-100;
+    border-color: $warning-200;
+    color: $warning-500;
   }
 
   .error {
-    background-color: #f2dede;
-    border-color: #ebccd1;
-    color: #a94442;
+    background-color: $danger-100;
+    border-color: $danger-200;
+    color: $danger-500;
   }
 }
 
@@ -240,8 +200,17 @@ body,
   }
 
   .enterprise-container {
-      padding: 0 30px 30px 30px;
+      padding: 0 15px 30px 15px;
+
+      .row {
+        flex-direction: column;
+      }
   }
+
+  .partnered-text {
+    font-size: $font-size-sm;
+  }
+
 }
 
 @media (min-width: map-get($container-max-widths, md)) {
@@ -250,22 +219,22 @@ body,
     display: inline;
 
     &.col-3 {
-      width: 30%;
       padding-left: 0;
       padding-right: 30px;
     }
-
-    &.col-7 {
-      padding-left: 30px;
-      width: 70%;
-    }
   }
 
-  .border-left {
-      border-left: 1px solid #D9D9D9;
+  .enterprise-container .border-left {
+    padding-left: 30px !important;
   }
 
   .enterprise-logo {
       display: block;
+  }
+}
+
+@media (max-width: map-get($container-max-widths, md)) {
+  .enterprise-container .border-left {
+    border-left: none !important;
   }
 }

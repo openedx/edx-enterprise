@@ -7,10 +7,11 @@
             </div>
             <form action="" method="POST" id="enterprise-login-form">
                 <div role="alert" aria-live="assertive" class="enterprise-login errorlist is-hidden" id="enterprise-login-form-error"></div>
-                <div>
-                    <input type="text" name="enterprise_slug" required="" id="id_enterprise_slug" value="dummy">
+                <div class="form-group">
+                    <label for="id_enterprise_slug">Organization name</label>
+                    <input class="form-control" type="text" name="enterprise_slug" required="" id="id_enterprise_slug" value="dummy">
                 </div>
-                <button type="submit" class="background-input enterprise-login-submit-button" id="enterprise-login-submit">Login</button>
+                <button type="submit" class="background-input btn btn-primary" id="enterprise-login-submit">Continue</button>
                 <span id="activate-progress-icon" class="icon fa fa-spinner fa-spin is-hidden" aria-hidden="true"></span>
             </form>
         </div>

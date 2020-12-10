@@ -38,7 +38,8 @@ cache:
 
 install:
   - pip install -r requirements/travis.txt
-  - npm install
+  - npm i -g npm@latest
+  - npm ci
 
 script:
   - if [[ -v RUNJSHINT ]]; then make jshint; else tox; fi

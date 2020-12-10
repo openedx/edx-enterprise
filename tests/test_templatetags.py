@@ -151,9 +151,9 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
                 '<span class="title">level_text</span>',
                 '<span class="title">effort_text</span>',
                 '<span class="title">duration_text</span>',
-                '<h2>course_full_description_text</h2>',
-                '<h2>expected_learning_items_text</h2>',
-                '<h2>staff_text</h2>',
+                '<h2 class="h3">course_full_description_text</h2>',
+                '<h2 class="h3">expected_learning_items_text</h2>',
+                '<h2 class="h3">staff_text</h2>',
             ]
         ),
     )
@@ -203,7 +203,7 @@ class EnterpriseTemplateTagsTest(unittest.TestCase):
                 '<li>XBlocks</li>', '<li>Cool stuff</li>',
                 '<img src="https://www.edx.org/sites/default/files/executive/photo/anant-agarwal.jpg" '
                 'alt="Anant Agarwal" />',
-                '<h2>Anant Agarwal</h2>',
+                '<h3 class="h4">Anant Agarwal</h3>',
                 '<p>CEO at edX</p>',
                 '<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>',
             ],
