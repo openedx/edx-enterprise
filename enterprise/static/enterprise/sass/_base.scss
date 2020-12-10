@@ -37,6 +37,10 @@ body,
   height: auto;
   margin: 0 auto;
   color: $brand-500;
+
+  a {
+    text-decoration: none
+  }
 }
 
 .pinstripe {
