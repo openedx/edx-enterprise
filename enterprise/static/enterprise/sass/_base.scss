@@ -44,7 +44,7 @@ body,
 }
 
 .pinstripe {
-  border-top: 2px solid $info-200;
+  border-top: 2px solid $primary-200;
 }
 
 #header-tagline {
@@ -225,7 +225,7 @@ body,
   }
 
   .enterprise-container .border-left {
-    padding-left: 30px!important;
+    padding-left: 30px !important;
   }
 
   .enterprise-logo {
@@ -235,6 +235,6 @@ body,
 
 @media (max-width: map-get($container-max-widths, md)) {
   .enterprise-container .border-left {
-    border-left: none!important;
+    border-left: none !important;
   }
 }
