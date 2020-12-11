@@ -86,7 +86,14 @@ check_pins: ## check that our local copy of edx-platform pins is accurate
 	sed -i.tmp '/^billiard==/d' $(LOCAL_EDX_PINS)
 	sed -i.tmp '/^celery==/d' $(LOCAL_EDX_PINS)
 	sed -i.tmp '/^kombu==/d' $(LOCAL_EDX_PINS)
-	sed -i.tmp '/^amqp==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^click-didyoumean==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^click-repl==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^click==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^prompt-toolkit==/d' $(LOCAL_EDX_PINS)
+	sed -i.tmp '/^vine==/d' $(LOCAL_EDX_PINS)
+
+
+
 	rm requirements/*.txt.tmp
 	python requirements/check_pins.py requirements/test-master.txt $(LOCAL_EDX_PINS)
 
@@ -102,8 +109,20 @@ upgrade: check_pins	## update the requirements/*.txt files with the latest packa
 	# This section removes django from test.txt to
 	# let tox control the Django version for tests
 	grep -e "^django==" requirements/test.txt > requirements/django.txt
-	sed '/^[dD]jango==/d' requirements/test.txt > requirements/test.tmp
-	mv requirements/test.tmp requirements/test.txt
+	grep -e "^amqp==\|^anyjson==\|^billiard==\|^celery==\|^kombu==\|^click-didyoumean==\|^click-repl==\|^click==\|^prompt-toolkit==\|^vine==" requirements/dev.txt > requirements/celery44.txt
+	sed -i.tmp '/^[d|D]jango==/d' requirements/test.txt
+	sed -i.tmp '/^amqp==/d' requirements/test.txt
+	sed -i.tmp '/^anyjson==/d' requirements/test.txt
+	sed -i.tmp '/^billiard==/d' requirements/test.txt
+	sed -i.tmp '/^celery==/d' requirements/test.txt
+	sed -i.tmp '/^kombu==/d' requirements/test.txt
+	sed -i.tmp '/^click-didyoumean==/d' requirements/test.txt
+	sed -i.tmp '/^click-repl==/d' requirements/test.txt
+	sed -i.tmp '/^click==/d' requirements/test.txt
+	sed -i.tmp '/^click==/d' requirements/test.txt
+	sed -i.tmp '/^prompt-toolkit==/d' requirements/test.txt
+	sed -i.tmp '/^vine==/d' requirements/test.txt
+	rm requirements/test.txt.tmp
 
 requirements.js: ## install JS requirements for local development
 	npm install
