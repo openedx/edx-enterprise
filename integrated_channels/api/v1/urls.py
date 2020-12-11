@@ -10,3 +10,7 @@ urlpatterns = [
     url(r'^canvas/', include('integrated_channels.api.v1.canvas.urls')),
     url(r'^moodle/', include('integrated_channels.api.v1.moodle.urls')),
 ]
+
+urlpatterns = [
+    url(r'^blackboard/', include('integrated_channels.api.v1.blackboard.urls')),
+]
