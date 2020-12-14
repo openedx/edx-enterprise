@@ -540,7 +540,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
                 "name": grade_column_name,
                 "displayName": grade_column_name,
                 "description": "edX learner's grade.",
-                "externalGrade": True,
+                "externalGrade": False,
                 "score": {
                     "possible": points_possible
                 },
