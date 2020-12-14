@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-URL definitions for enterprise API endpoint.
+URL definitions for integrated_channels API endpoint.
 """
 
 from django.conf.urls import include, url

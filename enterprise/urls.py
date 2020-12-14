@@ -103,5 +103,5 @@ urlpatterns += [
     url(
         r'^integrated_channels/api/',
         include('integrated_channels.api.urls')
-    )
+    ),
 ]
