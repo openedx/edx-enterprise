@@ -26,6 +26,7 @@ matrix:
         - mkdir geckodriver
         - tar -xzf geckodriver-v0.26.0-linux64.tar.gz -C geckodriver
         - export PATH=$PATH:$PWD/geckodriver
+        - pip install wheel
       before_script:
         - "export DISPLAY=:99.0"
       addons:
