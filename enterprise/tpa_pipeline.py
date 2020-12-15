@@ -46,7 +46,7 @@ def get_enterprise_customer_for_sso(sso_provider_id):
     """
     try:
         return EnterpriseCustomer.objects.get(  # pylint: disable=no-member
-            enterprise_customer_identity_provider__provider_id=sso_provider_id
+            enterprise_customer_identity_providers__provider_id=sso_provider_id
         )
     except EnterpriseCustomer.DoesNotExist:
         return None
