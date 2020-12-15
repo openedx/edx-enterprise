@@ -17,7 +17,7 @@ services:
 matrix:
   include:
     - python: 3.8
-      dist: xenial
+      dist: bionic
       env:
         - TOXENV=jasmine
       before_install:
