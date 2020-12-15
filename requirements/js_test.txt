@@ -20,7 +20,7 @@ more-itertools==8.5.0     # via cheroot, cherrypy, jaraco.functools
 ordereddict==1.1          # via jasmine-core
 portend==2.6              # via cherrypy
 pytz==2020.1              # via tempora
-pyyaml==3.13              # via jasmine
+pyyaml==5.1.2              # via jasmine
 selenium==3.141.0         # via jasmine
 six==1.15.0               # via cheroot, jaraco.classes, jaraco.collections, jaraco.text, tempora
 tempora==1.14.1           # via -r requirements/js_test.in, portend
