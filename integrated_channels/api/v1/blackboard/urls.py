@@ -1,5 +1,5 @@
 """
-    url mappings for integrated_channels/v1/moodle/
+    url mappings for integrated_channels/v1/blackboard/
 """
 
 from rest_framework import routers

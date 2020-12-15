@@ -16,7 +16,6 @@ from .serializers import BlackboardConfigSerializer
 
 
 class BlackboardConfigurationViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
-    authentication_classes = (JwtAuthentication, SessionAuthentication,)
     permission_classes = (permissions.IsAuthenticated,)
     serializer_class = BlackboardConfigSerializer
     permission_required = 'enterprise.can_access_admin_dashboard'
