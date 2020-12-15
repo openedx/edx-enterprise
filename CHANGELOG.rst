@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.15.0]
+--------
+
+* Converted relation between enterprise customer and identity provider to a one-to-many.
+
 [3.14.1]
 --------
 * Adds new API for Canvas LMS configurations.

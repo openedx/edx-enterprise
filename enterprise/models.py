@@ -342,6 +342,14 @@ class EnterpriseCustomer(TimeStampedModel):
     )
 
     @property
+    def enterprise_customer_identity_provider(self):  # pylint: disable=invalid-name
+        """
+        Returns the first instance from EnterpriseCustomerIdentityProvider relation.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.first()
+
+    @property
     def identity_provider(self):
         """
         Return the unique slug for the identity provider associated with this enterprise customer.
@@ -349,7 +357,6 @@ class EnterpriseCustomer(TimeStampedModel):
         Returns `None` if enterprise customer does not have any identity provider.
         """
         try:
-            # pylint: disable=no-member
             return self.enterprise_customer_identity_provider and self.enterprise_customer_identity_provider.provider_id
         except ObjectDoesNotExist:
             return None
@@ -364,7 +371,7 @@ class EnterpriseCustomer(TimeStampedModel):
         try:
             # pylint: disable=no-member
             return (
-                self.enterprise_customer_identity_provider and
+                self.enterprise_customer_identity_provider is not None and
                 self.enterprise_customer_identity_provider.sync_learner_profile_data
             )
         except ObjectDoesNotExist:
@@ -1295,11 +1302,11 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     .. no_pii:
     """
 
-    enterprise_customer = models.OneToOneField(
+    enterprise_customer = models.ForeignKey(
         EnterpriseCustomer,
         blank=False,
         null=False,
-        related_name="enterprise_customer_identity_provider", on_delete=models.CASCADE
+        related_name="enterprise_customer_identity_providers", on_delete=models.CASCADE
     )
     provider_id = models.SlugField(
         null=False,
