@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.5']
+        django-version: ['django22']
+        toxenv: ['django22', 'quality', 'docs', 'pii-annotations']
+    env:
+      RUNJSHINT: true
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.5'
+          architecture: x64
+      - run: pip install -r requirements/ci.txt
+      - name: Run tox
+        env:
+          TOXENV: ${{ matrix.toxenv }}
+        run: tox
+      - name: Run code coverage
+        if: matrix.toxenv=='django22' # Only run this once as part of tests
+        run: codecov
+      - name: Run jshint
+        if: matrix.toxenv=='django22' # Only run this once as part of tests
+        run: |
+          npm i
+          make jshint

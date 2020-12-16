@@ -97,7 +97,7 @@ upgrade: check_pins	## update the requirements/*.txt files with the latest packa
 	$(PIP_COMPILE) -o requirements/doc.txt requirements/doc.in
 	$(PIP_COMPILE) -o requirements/test.txt requirements/test.in
 	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
-	$(PIP_COMPILE) -o requirements/travis.txt requirements/travis.in
+	$(PIP_COMPILE) -o requirements/ci.txt requirements/ci
 	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
 	# This section removes django from test.txt to
 	# let tox control the Django version for tests
