@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 -----------
+[3.16.0]
+--------
+
+* Added the ability to enable multiple Identity Providers for a single enterprise customer.
 
 [3.15.0]
 --------
