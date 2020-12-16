@@ -378,20 +378,25 @@ class EnterpriseCustomer(TimeStampedModel):
         return self.enterprise_customer_identity_providers.exists()
 
     @property
+    def has_multiple_idps(self):
+        """
+        Return True if there are any identity providers associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.count() > 1
+
+    @property
     def sync_learner_profile_data(self):
         """
         Return the sync_learner_profile data flag for the identity provider associated with this enterprise customer.
 
         Returns False if enterprise customer does not have any identity provider.
         """
-        try:
-            # pylint: disable=no-member
-            return (
-                self.enterprise_customer_identity_provider is not None and
-                self.enterprise_customer_identity_provider.sync_learner_profile_data
-            )
-        except ObjectDoesNotExist:
-            return False
+        # pylint: disable=no-member
+        return all(
+            identity_provider.sync_learner_profile_data
+            for identity_provider in self.identity_providers
+        ) if self.has_identity_providers else False
 
     def __str__(self):
         """
