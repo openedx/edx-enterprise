@@ -105,6 +105,9 @@ PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('pending-enterprise-learner-l
 LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-license-revoke'
 )
+EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
+    'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
+)
 
 
 def side_effect(url, query_parameters):
@@ -2447,7 +2450,6 @@ class TestEnterpriseAPIViews(APITest):
     ):
         mock_course_mode.mode_for_course.return_value = has_audit_mode
         (
-            enterprise_customer,
             enterprise_customer_user,
             enterprise_course_enrollment,
             licensed_course_enrollment,
@@ -2471,7 +2473,7 @@ class TestEnterpriseAPIViews(APITest):
 
         post_data = {
             'user_id': self.user.id,
-            'enterprise_id': enterprise_customer.uuid,
+            'enterprise_id': enterprise_customer_user.enterprise_customer.uuid,
         }
         response = self.client.post(
             settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
@@ -2484,16 +2486,16 @@ class TestEnterpriseAPIViews(APITest):
                 'success': True,
             },
         }
-        RevocationStatus = LicensedEnterpriseCourseEnrollmentViewSet.RevocationStatus
+        EnrollmentTerminationStatus = LicensedEnterpriseCourseEnrollmentViewSet.EnrollmentTerminationStatus
 
         assert response.status_code == status.HTTP_200_OK
         if is_course_completed:
-            expected_data[course_id]['message'] = RevocationStatus.COURSE_COMPLETED
+            expected_data[course_id]['message'] = EnrollmentTerminationStatus.COURSE_COMPLETED
         else:
             if has_audit_mode:
-                expected_data[course_id]['message'] = RevocationStatus.MOVED_TO_AUDIT
+                expected_data[course_id]['message'] = EnrollmentTerminationStatus.MOVED_TO_AUDIT
             else:
-                expected_data[course_id]['message'] = RevocationStatus.UNENROLLED
+                expected_data[course_id]['message'] = EnrollmentTerminationStatus.UNENROLLED
         self.assertEqual(expected_data, response.data)
 
         enterprise_course_enrollment.refresh_from_db()
@@ -2546,7 +2548,6 @@ class TestEnterpriseAPIViews(APITest):
     ):
         mock_course_mode.mode_for_course.return_value = has_audit_mode
         (
-            enterprise_customer,
             enterprise_customer_user,
             enterprise_course_enrollment,
             licensed_course_enrollment,
@@ -2578,7 +2579,7 @@ class TestEnterpriseAPIViews(APITest):
 
         post_data = {
             'user_id': self.user.id,
-            'enterprise_id': enterprise_customer.uuid,
+            'enterprise_id': enterprise_customer_user.enterprise_customer.uuid,
         }
         response = self.client.post(
             settings.TEST_SERVER + LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT,
@@ -2586,14 +2587,14 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         course_id = enterprise_course_enrollment.course_id
-        RevocationStatus = LicensedEnterpriseCourseEnrollmentViewSet.RevocationStatus
+        EnrollmentTerminationStatus = LicensedEnterpriseCourseEnrollmentViewSet.EnrollmentTerminationStatus
 
         self.assertEqual(status.HTTP_422_UNPROCESSABLE_ENTITY, response.status_code)
         self.assertFalse(response.data[course_id]['success'])
         if enrollment_update_error:
             self.assertIn(enrollment_update_error, response.data[course_id]['message'])
         if unenrollment_success is False:
-            self.assertIn(RevocationStatus.UNENROLL_FAILED, response.data[course_id]['message'])
+            self.assertIn(EnrollmentTerminationStatus.UNENROLL_FAILED, response.data[course_id]['message'])
         if unenrollment_error:
             self.assertIn(unenrollment_error, response.data[course_id]['message'])
 
@@ -2677,6 +2678,90 @@ class TestEnterpriseAPIViews(APITest):
             response_content_string = json.dumps(self.load_json(response.content))
             self.assertIn(expected_body, response_content_string)
 
+    @ddt.data(
+        {'is_course_completed': False, 'has_audit_mode': True},
+        {'is_course_completed': True, 'has_audit_mode': True},
+        {'is_course_completed': False, 'has_audit_mode': False},
+        {'is_course_completed': True, 'has_audit_mode': False},
+    )
+    @ddt.unpack
+    @mock.patch('enterprise.api.v1.views.CourseMode')
+    @mock.patch('enterprise.api.v1.views.get_certificate_for_user')
+    @mock.patch('enterprise.api.v1.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api.v1.views.get_course_overviews')
+    def test_unenroll_expired_licensed_enrollments(
+            self,
+            mock_get_overviews,
+            mock_enrollment_client,
+            mock_cert_for_user,
+            mock_course_mode,
+            is_course_completed,
+            has_audit_mode,
+    ):
+        (
+            enterprise_customer_user,
+            enterprise_course_enrollment,
+            licensed_course_enrollment,
+        ) = self._revocation_factory_objects()
+        expired_license_uuid = licensed_course_enrollment.license_uuid
+
+        mock_course_mode.mode_for_course.return_value = has_audit_mode
+        mock_get_overviews.return_value = [{
+            'id': enterprise_course_enrollment.course_id,
+            'pacing': 'instructor',
+            'has_started': not is_course_completed,
+            'has_ended': is_course_completed,
+        }]
+        mock_cert_for_user.return_value = {'is_passing': False}
+        mock_enrollment_client.return_value = mock.Mock(
+            update_course_enrollment_mode_for_user=mock.Mock(),
+        )
+
+        post_data = {
+            'expired_license_uuids': [str(expired_license_uuid), uuid.uuid4()]
+        }
+        self.client.post(
+            settings.TEST_SERVER + EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT,
+            data=post_data,
+            format='json',
+        )
+
+        licensed_course_enrollment.refresh_from_db()
+        enterprise_course_enrollment.refresh_from_db()
+
+        assert not licensed_course_enrollment.is_revoked
+
+        if not is_course_completed:
+            if has_audit_mode:
+                client_instance = mock_enrollment_client.return_value
+                client_instance.update_course_enrollment_mode_for_user.assert_called_once_with(
+                    username=enterprise_customer_user.username,
+                    course_id=enterprise_course_enrollment.course_id,
+                    mode=mock_course_mode.AUDIT,
+                )
+            else:
+                client_instance = mock_enrollment_client.return_value
+                client_instance.unenroll_user_from_course.assert_called_once_with(
+                    username=enterprise_customer_user.username,
+                    course_id=enterprise_course_enrollment.course_id,
+                )
+            assert enterprise_course_enrollment.saved_for_later
+        else:
+            assert not enterprise_course_enrollment.saved_for_later
+
+    def test_unenroll_expired_licensed_enrollments_no_license_ids(self):
+        post_data = {
+            'user_id': self.user.id,
+            'expired_license_uuids': []
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT,
+            data=post_data,
+            format='json',
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     def _revocation_factory_objects(self):
         """
         Helper method to provide some testing objects for revocation tests.
@@ -2697,7 +2782,7 @@ class TestEnterpriseAPIViews(APITest):
         assert not enterprise_course_enrollment.saved_for_later
         assert not licensed_course_enrollment.is_revoked
 
-        return enterprise_customer, enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
+        return enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
 
 
 @ddt.ddt

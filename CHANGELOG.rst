@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.17.1]
+--------
+
+* Add management command to process expired subscriptions and field on subscriptions to persist that the subscription expiration has been processed
+
 [3.17.0]
 --------
 
