@@ -90,6 +90,7 @@ class EnterpriseCustomerIdentityProviderInline(admin.StackedInline):
 
     model = EnterpriseCustomerIdentityProvider
     form = EnterpriseCustomerIdentityProviderAdminForm
+    extra = 0
 
 
 class EnterpriseCustomerCatalogInline(admin.TabularInline):
@@ -250,7 +251,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Arguments:
             instance (enterprise.models.EnterpriseCustomer): `EnterpriseCustomer` model instance
         """
-        return hasattr(instance, 'enterprise_customer_identity_provider')
+        return hasattr(instance, 'enterprise_customer_identity_providers')
 
     has_identity_provider.boolean = True
     has_identity_provider.short_description = u'Identity provider'

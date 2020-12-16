@@ -34,7 +34,7 @@ from django.template import Context, Template
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
 from django.utils.functional import cached_property, lazy
-from django.utils.http import urlquote
+from django.utils.http import urlencode, urlquote
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext
 from django.utils.translation import ugettext_lazy as _
@@ -352,14 +352,38 @@ class EnterpriseCustomer(TimeStampedModel):
     @property
     def identity_provider(self):
         """
-        Return the unique slug for the identity provider associated with this enterprise customer.
-
-        Returns `None` if enterprise customer does not have any identity provider.
+        Return the identity providers associated with this enterprise customer.
         """
+        # pylint: disable=no-member
         try:
-            return self.enterprise_customer_identity_provider and self.enterprise_customer_identity_provider.provider_id
+            # pylint: disable=no-member
+            identity_provider = self.enterprise_customer_identity_providers.first()
+            return identity_provider and identity_provider.provider_id
         except ObjectDoesNotExist:
             return None
+
+    @property
+    def identity_providers(self):
+        """
+        Return the identity providers associated with this enterprise customer.
+        """
+        return self.enterprise_customer_identity_providers.all()
+
+    @property
+    def has_identity_providers(self):
+        """
+        Return True if there are any identity providers associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.exists()
+
+    @property
+    def has_multiple_idps(self):
+        """
+        Return True if there are any identity providers associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.count() > 1
 
     @property
     def sync_learner_profile_data(self):
@@ -368,14 +392,11 @@ class EnterpriseCustomer(TimeStampedModel):
 
         Returns False if enterprise customer does not have any identity provider.
         """
-        try:
-            # pylint: disable=no-member
-            return (
-                self.enterprise_customer_identity_provider is not None and
-                self.enterprise_customer_identity_provider.sync_learner_profile_data
-            )
-        except ObjectDoesNotExist:
-            return False
+        # pylint: disable=no-member
+        return all(
+            identity_provider.sync_learner_profile_data
+            for identity_provider in self.identity_providers
+        ) if self.has_identity_providers else False
 
     def __str__(self):
         """
@@ -587,12 +608,13 @@ class EnterpriseCustomer(TimeStampedModel):
             )
             return
 
-        course_path = urlquote(
-            '/courses/{course_id}/course/?tpa_hint={tpa_hint}'.format(
-                course_id=course_id,
-                tpa_hint=self.identity_provider,
-            )
-        )
+        course_path = '/courses/{course_id}/course'.format(course_id=course_id)
+        params = {}
+        # add tap_hint if there is only one IdP attached with enterprise_customer
+        if self.identity_providers.count() == 1:
+            params = {'tpa_hint': self.identity_providers.first().provider_id}
+        course_path = urlquote("{}?{}".format(course_path, urlencode(params)))
+
         lms_root_url = utils.get_configuration_value_for_site(
             self.site,
             'LMS_ROOT_URL',
@@ -1287,12 +1309,12 @@ class EnterpriseCustomerBrandingConfiguration(TimeStampedModel):
 @python_2_unicode_compatible
 class EnterpriseCustomerIdentityProvider(TimeStampedModel):
     """
-    EnterpriseCustomerIdentityProvider is a One to One relationship between Enterprise Customer and Identity Provider.
+    EnterpriseCustomerIdentityProvider is a One to Many relationship between Enterprise Customer and Identity Provider.
 
     There should be a link between an enterprise customer and its Identity Provider. This relationship has
     following constraints
         1. An enterprise customer may or may not have an identity provider.
-        2. An enterprise customer can not have more than one identity providers.
+        2. An enterprise customer can have more than one identity providers.
         3. Enterprise customer site should match with identity provider's site. (i.e. same domain names)
 
     Fields:
