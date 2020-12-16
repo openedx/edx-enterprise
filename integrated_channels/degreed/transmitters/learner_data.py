@@ -17,7 +17,7 @@ class DegreedLearnerTransmitter(LearnerTransmitter):
         """
         By default, use the ``DegreedAPIClient`` for learner data transmission to Degreed.
         """
-        super(DegreedLearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )
@@ -32,4 +32,4 @@ class DegreedLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'degreed'
         kwargs['model_name'] = 'DegreedLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'degreed_user_email'
-        super(DegreedLearnerTransmitter, self).transmit(payload, **kwargs)
+        super().transmit(payload, **kwargs)

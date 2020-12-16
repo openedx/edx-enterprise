@@ -38,7 +38,7 @@ class TestUserPreferenceMiddleware(unittest.TestCase):
         """
         self.mock_imports()
 
-        super(TestUserPreferenceMiddleware, self).setUp()
+        super().setUp()
         self.middleware = EnterpriseLanguagePreferenceMiddleware()
         self.session_middleware = SessionMiddleware()
         self.user = UserFactory.create()

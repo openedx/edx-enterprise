@@ -67,7 +67,7 @@ class TestEnterpriseUtils(unittest.TestCase):
         """
         Set up test environment.
         """
-        super(TestEnterpriseUtils, self).setUp()
+        super().setUp()
         faker = FakerFactory.create()
         self.provider_id = faker.slug()  # pylint: disable=no-member
         self.uuid = faker.uuid4()  # pylint: disable=no-member
@@ -1745,7 +1745,7 @@ class TestSAPSuccessFactorsUtils(unittest.TestCase):
         """
         Set up test environment.
         """
-        super(TestSAPSuccessFactorsUtils, self).setUp()
+        super().setUp()
         faker = FakerFactory.create()
         self.user = UserFactory()
         self.uuid = faker.uuid4()  # pylint: disable=no-member

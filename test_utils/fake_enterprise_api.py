@@ -27,7 +27,7 @@ class EnterpriseMockMixin:
         """
         DRY method for EnterpriseMockMixin.
         """
-        super(EnterpriseMockMixin, self).setUp()
+        super().setUp()
         cache.clear()
 
     def build_enterprise_api_url(self, resource, *args, **kwargs):

@@ -4,7 +4,7 @@
 xAPI statement for course completion.
 """
 
-from tincan import LanguageMap, Result, Score, Verb
+from tincan import LanguageMap, Result, Score, Verb  # pylint: disable=E0401
 
 from integrated_channels.xapi.constants import MAX_SCORE, MIN_SCORE, X_API_VERB_COMPLETED
 from integrated_channels.xapi.statements.base import EnterpriseStatement
@@ -31,7 +31,7 @@ class LearnerCourseCompletionStatement(EnterpriseStatement):
             object=self.get_object(site.domain, course_overview, object_type),
             result=self.get_result(course_grade),
         )
-        super(LearnerCourseCompletionStatement, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_verb(self):
         """

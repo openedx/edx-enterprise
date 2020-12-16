@@ -6,7 +6,7 @@ import json
 import logging
 import textwrap
 
-from django.contrib.auth.models import Group, User
+from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
@@ -39,7 +39,8 @@ except ImportError:
     UserProfile = None
 
 LOGGER = logging.getLogger(__name__)
-
+User = auth.get_user_model()
+Group = auth.models.Group
 CATALOG_CONTENT_FILTER = {
     'content_type': 'courserun',
 }

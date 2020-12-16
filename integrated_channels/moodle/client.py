@@ -28,13 +28,14 @@ def moodle_request_wrapper(method):
         response = method(self, *args, **kwargs)
         try:
             body = response.json()
-        except (AttributeError, ValueError):
+        except (AttributeError, ValueError) as error:
             # Moodle spits back an entire HTML page if something is wrong in our URL format.
             # This cannot be converted to JSON thus the above fails miserably.
             # The above can fail with different errors depending on the format of the returned page.
             # Moodle of course does not tell us what is wrong in any part of this HTML.
             raise ClientError('Moodle API task "{method}" failed due to unknown error.'.format(
-                method=method.__name__), response.status_code)
+                method=method.__name__), response.status_code
+            ) from error
         if isinstance(body, list):
             # On course creation (and ONLY course creation) success,
             # Moodle returns a list of JSON objects, because of course it does.
@@ -101,7 +102,7 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             enterprise_configuration (MoodleEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with Moodle
         """
-        super(MoodleAPIClient, self).__init__(enterprise_configuration)
+        super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('moodle')
         self.token = enterprise_configuration.token or self._get_access_token()
 
@@ -158,11 +159,11 @@ class MoodleAPIClient(IntegratedChannelApiClient):
             data = response.json()
             token = data['token']
             return token
-        except (KeyError, ValueError):
+        except (KeyError, ValueError) as error:
             raise ClientError(
                 "Failed to post access token. Received message={} from Moodle".format(response.text),
                 response.status_code
-            )
+            ) from error
 
     @moodle_request_wrapper
     def _get_enrolled_users(self, course_id):

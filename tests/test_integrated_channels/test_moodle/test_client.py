@@ -36,7 +36,7 @@ class TestMoodleApiClient(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestMoodleApiClient, self).setUp()
+        super().setUp()
         self.moodle_base_url = 'http://testing/'
         self.token = 'token'
         self.password = 'pass'

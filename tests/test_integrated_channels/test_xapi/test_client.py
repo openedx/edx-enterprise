@@ -21,7 +21,7 @@ class TestXAPILRSConfiguration(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestXAPILRSConfiguration, self).setUp()
+        super().setUp()
         self.x_api_lrs_config = factories.XAPILRSConfigurationFactory()
         self.x_api_client = EnterpriseXAPIClient(self.x_api_lrs_config)
         self.statement = EnterpriseStatement()

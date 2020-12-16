@@ -4,7 +4,7 @@
 Statements base for xAPI.
 """
 
-from tincan import Activity, ActivityDefinition, Agent, LanguageMap, Statement
+from tincan import Activity, ActivityDefinition, Agent, LanguageMap, Statement  # pylint: disable=E0401
 
 from integrated_channels.xapi.constants import X_API_ACTIVITY_COURSE
 

@@ -17,7 +17,7 @@ class MoodleLearnerTransmitter(LearnerTransmitter):
         """
         By default, use the ``MoodleAPIClient`` for learner data transmission to Moodle.
         """
-        super(MoodleLearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )
@@ -32,4 +32,4 @@ class MoodleLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'moodle'
         kwargs['model_name'] = 'MoodleLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'moodle_user_email'
-        super(MoodleLearnerTransmitter, self).transmit(payload, **kwargs)
+        super().transmit(payload, **kwargs)

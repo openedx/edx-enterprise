@@ -34,7 +34,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         self.enterprise_customer = EnterpriseCustomerFactory(
             name='Veridian Dynamics',
         )
-        super(TestEnterpriseApiClient, self).setUp()
+        super().setUp()
         self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
         self.user = UserFactory(is_staff=True)
 
@@ -43,7 +43,7 @@ class TestEnterpriseApiClient(unittest.TestCase, EnterpriseMockMixin, CourseDisc
         Clear any existing cache.
         """
         cache.clear()
-        super(TestEnterpriseApiClient, self).tearDown()
+        super().tearDown()
 
     def _assert_enterprise_courses_api_response(self, content_ids, content_metadata, expected_count):
         """

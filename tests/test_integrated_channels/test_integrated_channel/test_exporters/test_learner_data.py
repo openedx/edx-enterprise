@@ -68,7 +68,7 @@ class TestLearnerExporter(unittest.TestCase):
         self.addCleanup(tpa_client_mock.stop)
         self.exporter = self.config.get_learner_data_exporter('dummy-user')
         assert isinstance(self.exporter, LearnerExporter)
-        super(TestLearnerExporter, self).setUp()
+        super().setUp()
 
     def test_collect_learner_data_no_enrollments(self):
         learner_data = list(self.exporter.export())

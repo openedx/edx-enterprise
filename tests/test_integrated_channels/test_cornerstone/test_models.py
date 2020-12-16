@@ -48,7 +48,7 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         )
         self.demo_course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
 
-        super(TestCornerstoneEnterpriseCustomerConfiguration, self).setUp()
+        super().setUp()
 
     @freeze_time(NOW)
     @mock.patch(

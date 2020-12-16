@@ -29,7 +29,7 @@ class TestUtils(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestUtils, self).setUp()
+        super().setUp()
         self.faker = FakerFactory.create()
 
         self.user = factories.UserFactory()

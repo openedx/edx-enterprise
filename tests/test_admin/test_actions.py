@@ -86,7 +86,7 @@ class TestCSVExportAction(unittest.TestCase):
         """
         Test suite set up method.
         """
-        super(TestCSVExportAction, self).setUp()
+        super().setUp()
         self.output_stream = BytesIO()
         response_instance_mock = mock.MagicMock(wraps=self.output_stream)
         self.response_mock = self._make_patch(

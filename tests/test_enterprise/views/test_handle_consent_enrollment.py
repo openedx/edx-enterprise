@@ -52,7 +52,7 @@ class TestHandleConsentEnrollmentView(EnterpriseViewMixin, TestCase):
                 "sku": "sku-audit",
             },
         ]
-        super(TestHandleConsentEnrollmentView, self).setUp()
+        super().setUp()
 
     def _login(self):
         """

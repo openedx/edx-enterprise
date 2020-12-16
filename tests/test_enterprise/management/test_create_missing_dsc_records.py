@@ -32,7 +32,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
     command = 'create_missing_dsc_records'
 
     def setUp(self):
-        super(CreateEnterpriseCourseEnrollmentCommandTests, self).setUp()
+        super().setUp()
 
         self.course_ids = [
             'course-v1:edX+DemoX+Demo_Course',

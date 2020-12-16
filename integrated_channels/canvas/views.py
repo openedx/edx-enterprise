@@ -78,12 +78,12 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
             enterprise_config = CanvasEnterpriseCustomerConfiguration.objects.get(
                 enterprise_customer=enterprise_customer
             )
-        except CanvasEnterpriseCustomerConfiguration.DoesNotExist:
+        except CanvasEnterpriseCustomerConfiguration.DoesNotExist as no_config_exception:
             raise NotFound(
                 "No enterprise canvas configuration found associated with enterprise customer: {}".format(
                     enterprise_customer_uuid
                 )
-            )
+            ) from no_config_exception
 
         access_token_request_params = {
             'grant_type': 'authorization_code',
@@ -103,8 +103,8 @@ class CanvasCompleteOAuthView(generics.ListAPIView):
         try:
             data = auth_response.json()
             refresh_token = data['refresh_token']
-        except (KeyError, ValueError):
-            raise requests.RequestException(response=auth_response)
+        except (KeyError, ValueError) as error:
+            raise requests.RequestException(response=auth_response) from error
 
         enterprise_config.refresh_token = refresh_token
         enterprise_config.save()

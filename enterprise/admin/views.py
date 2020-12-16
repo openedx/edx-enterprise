@@ -7,9 +7,8 @@ import datetime
 import logging
 
 from django.conf import settings
-from django.contrib import admin, messages
+from django.contrib import admin, auth, messages
 from django.contrib.auth import get_permission_codename
-from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db.models import Q
@@ -54,6 +53,7 @@ try:
     from common.djangoapps.student.api import create_manual_enrollment_audit
 except ImportError:
     create_manual_enrollment_audit = None
+User = auth.get_user_model()
 
 
 class TemplatePreviewView(View):

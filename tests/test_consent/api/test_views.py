@@ -40,7 +40,7 @@ class TestConsentAPIViews(APITest, ConsentMixin):
         self.discovery_client = discovery_client_class.start().return_value
         self.discovery_client.is_course_in_catalog.return_value = True
         self.addCleanup(discovery_client_class.stop)
-        super(TestConsentAPIViews, self).setUp()
+        super().setUp()
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """

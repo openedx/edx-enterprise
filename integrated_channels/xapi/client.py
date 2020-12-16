@@ -6,7 +6,7 @@ xAPI Client to send payload data.
 
 import logging
 
-from tincan.remote_lrs import RemoteLRS
+from tincan.remote_lrs import RemoteLRS  # pylint: disable=E0401
 
 from integrated_channels.exceptions import ClientError
 

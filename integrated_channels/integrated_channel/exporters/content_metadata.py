@@ -67,7 +67,7 @@ class ContentMetadataExporter(Exporter):
         """
         Initialize the exporter.
         """
-        super(ContentMetadataExporter, self).__init__(user, enterprise_configuration)
+        super().__init__(user, enterprise_configuration)
         self.enterprise_api = EnterpriseApiClient(self.user)
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 

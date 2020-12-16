@@ -17,7 +17,7 @@ class TestCanvasContentMetadataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestCanvasContentMetadataTransmitter, self).setUp()
+        super().setUp()
         self.enterprise_config = CanvasEnterpriseCustomerConfigurationFactory()
 
     def test_prepare_items_for_transmission(self):

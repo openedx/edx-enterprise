@@ -8,7 +8,7 @@ import logging
 
 from jsonfield.fields import JSONField
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
@@ -24,6 +24,7 @@ from integrated_channels.integrated_channel.transmitters.learner_data import Lea
 from integrated_channels.utils import convert_comma_separated_string_to_list
 
 LOGGER = logging.getLogger(__name__)
+User = auth.get_user_model()
 
 
 class EnterpriseCustomerPluginConfiguration(TimeStampedModel):

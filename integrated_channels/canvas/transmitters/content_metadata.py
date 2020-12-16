@@ -15,7 +15,7 @@ class CanvasContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         Use the ``CanvasAPIClient`` for content metadata transmission to Canvas.
         """
-        super(CanvasContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

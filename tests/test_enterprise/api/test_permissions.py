@@ -40,7 +40,7 @@ class TestIsInEnterpriseGroupPermissions(PermissionsTestMixin, APITestCase):
         """
         Setup the test cases.
         """
-        super(TestIsInEnterpriseGroupPermissions, self).setUp()
+        super().setUp()
         self.user = UserFactory(email='test@example.com', password='test', is_staff=True)
         self.permissions_class_map['enterprise_data_api_access'].ALLOWED_API_GROUPS = ['enterprise_data_api_access']
 

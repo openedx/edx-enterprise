@@ -25,7 +25,7 @@ class SapSuccessFactorsContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         Use the ``SAPSuccessFactorsAPIClient`` for content metadata transmission to SAPSF.
         """
-        super(SapSuccessFactorsContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

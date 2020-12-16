@@ -22,7 +22,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
     """
 
     def setUp(self):
-        super(TestEnterpriseCourseEnrollmentSerializer, self).setUp()
+        super().setUp()
 
         self.user = factories.UserFactory.create(is_staff=True, is_active=True)
         self.factory = RequestFactory()

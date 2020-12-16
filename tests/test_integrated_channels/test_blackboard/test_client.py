@@ -32,7 +32,7 @@ class TestBlackboardApiClient(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestBlackboardApiClient, self).setUp()
+        super().setUp()
         self.token = 'token'
         self.enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory(
             client_id='id',

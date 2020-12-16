@@ -17,7 +17,7 @@ class TestBlackboardContentMetadataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestBlackboardContentMetadataTransmitter, self).setUp()
+        super().setUp()
         self.enterprise_config = BlackboardEnterpriseCustomerConfigurationFactory()
 
     def test_prepare_items_for_transmission(self):

@@ -13,13 +13,15 @@ import responses
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 from slumber.exceptions import HttpClientError
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
 
 from enterprise.api_client.discovery import CourseCatalogApiClient, CourseCatalogApiServiceClient
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import MockLoggingHandler
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin
+
+User = auth.get_user_model()
 
 
 class TestCourseCatalogApiInitialization(unittest.TestCase):
@@ -54,7 +56,7 @@ class TestCourseCatalogApi(CourseDiscoveryApiTestMixin, unittest.TestCase):
     EMPTY_RESPONSES = (None, {}, [], set(), "")
 
     def setUp(self):
-        super(TestCourseCatalogApi, self).setUp()
+        super().setUp()
         self.user_mock = mock.Mock(spec=User)
         self.get_data_mock = self._make_patch(self._make_catalog_api_location("get_edx_api_data"))
         self.catalog_api_config_mock = self._make_patch(self._make_catalog_api_location("CatalogIntegration"))
@@ -514,7 +516,7 @@ class TestCourseCatalogApiService(CourseDiscoveryApiTestMixin, unittest.TestCase
         """
         Set up mocks for the test suite.
         """
-        super(TestCourseCatalogApiService, self).setUp()
+        super().setUp()
         self.user_mock = mock.Mock(spec=User)
         self.get_data_mock = self._make_patch(self._make_catalog_api_location("get_edx_api_data"))
         self.jwt_builder_mock = self._make_patch(self._make_catalog_api_location("JwtBuilder"))

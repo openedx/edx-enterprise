@@ -24,7 +24,7 @@ class TestSendCourseEnrollments(unittest.TestCase):
     Tests for the ``send_course_enrollments`` management command.
     """
     def setUp(self):
-        super(TestSendCourseEnrollments, self).setUp()
+        super().setUp()
         faker = FakerFactory.create()
 
         # pylint: disable=no-member

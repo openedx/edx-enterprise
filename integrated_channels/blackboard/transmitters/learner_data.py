@@ -17,7 +17,7 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
         """
         By default, use the ``BlackboardAPIClient`` for learner data transmission to Blackboard.
         """
-        super(BlackboardLearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )
@@ -32,7 +32,7 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'blackboard'
         kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'blackboard_user_email'
-        super(BlackboardLearnerTransmitter, self).transmit(payload, **kwargs)
+        super().transmit(payload, **kwargs)
 
     def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
         """
@@ -44,7 +44,7 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'blackboard'
         kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'blackboard_user_email'
-        super(BlackboardLearnerTransmitter, self).single_learner_assessment_grade_transmit(exporter, **kwargs)
+        super().single_learner_assessment_grade_transmit(exporter, **kwargs)
 
     def assessment_level_transmit(self, exporter, **kwargs):
         """
@@ -55,4 +55,4 @@ class BlackboardLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'blackboard'
         kwargs['model_name'] = 'BlackboardLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'blackboard_user_email'
-        super(BlackboardLearnerTransmitter, self).assessment_level_transmit(exporter, **kwargs)
+        super().assessment_level_transmit(exporter, **kwargs)

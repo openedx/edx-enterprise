@@ -17,7 +17,7 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
         """
         By default, use the ``CanvasAPIClient`` for learner data transmission to Canvas.
         """
-        super(CanvasLearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )
@@ -32,7 +32,7 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'canvas'
         kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'canvas_user_email'
-        super(CanvasLearnerTransmitter, self).transmit(payload, **kwargs)
+        super().transmit(payload, **kwargs)
 
     def single_learner_assessment_grade_transmit(self, exporter, **kwargs):
         """
@@ -44,7 +44,7 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'canvas'
         kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'canvas_user_email'
-        super(CanvasLearnerTransmitter, self).single_learner_assessment_grade_transmit(exporter, **kwargs)
+        super().single_learner_assessment_grade_transmit(exporter, **kwargs)
 
     def assessment_level_transmit(self, exporter, **kwargs):
         """
@@ -56,4 +56,4 @@ class CanvasLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'canvas'
         kwargs['model_name'] = 'CanvasLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'canvas_user_email'
-        super(CanvasLearnerTransmitter, self).assessment_level_transmit(exporter, **kwargs)
+        super().assessment_level_transmit(exporter, **kwargs)

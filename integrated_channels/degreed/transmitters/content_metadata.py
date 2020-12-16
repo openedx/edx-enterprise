@@ -16,7 +16,7 @@ class DegreedContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         Use the ``DegreedAPIClient`` for content metadata transmission to Degreed.
         """
-        super(DegreedContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

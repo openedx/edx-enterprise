@@ -36,7 +36,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
         self.jwt_builder = jwt_builder.start()
         self.addCleanup(jwt_builder.stop)
-        super(TestCornerstoneCoursesListView, self).setUp()
+        super().setUp()
 
     @responses.activate
     def test_course_list_without_ciid(self):

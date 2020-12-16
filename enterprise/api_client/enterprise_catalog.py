@@ -33,7 +33,7 @@ class EnterpriseCatalogApiClient(JwtLmsApiClient):
 
     def __init__(self, user=None):
         user = user if user else utils.get_enterprise_worker_user()
-        super(EnterpriseCatalogApiClient, self).__init__(user)
+        super().__init__(user)
 
     @JwtLmsApiClient.refresh_token
     def create_enterprise_catalog(

@@ -9,11 +9,13 @@ import ddt
 import mock
 from pytest import mark, raises
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 
 from enterprise.api_client.ecommerce import EcommerceApiClient
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import factories
+
+User = auth.get_user_model()
 
 
 class TestEcommerceApiClientInitialization(unittest.TestCase):
@@ -35,7 +37,7 @@ class TestEcommerceApiClient(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestEcommerceApiClient, self).setUp()
+        super().setUp()
         self.user = factories.UserFactory()
 
     def _setup_ecommerce_api_client(self, client_mock, method_name, return_value):

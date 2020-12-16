@@ -39,7 +39,7 @@ class Command(BaseCommand):
             help=_('End date and time in YYYY-MM-DDTHH:MM:SSZ format.'),
         )
 
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
     def handle(self, *args, **options):
         """

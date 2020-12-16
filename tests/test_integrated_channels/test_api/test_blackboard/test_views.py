@@ -17,7 +17,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     Tests for BlackboardConfigurationViewSet REST endpoints
     """
     def setUp(self):
-        super(BlackboardConfigurationViewSetTests, self).setUp()
+        super().setUp()
         self.user.is_superuser = True
         self.user.save()
 

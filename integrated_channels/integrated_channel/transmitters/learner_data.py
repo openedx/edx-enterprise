@@ -27,7 +27,7 @@ class LearnerTransmitter(Transmitter):
         """
         By default, use the abstract integrated channel API client which raises an error when used if not subclassed.
         """
-        super(LearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

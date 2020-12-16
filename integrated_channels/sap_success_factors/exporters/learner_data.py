@@ -122,7 +122,7 @@ class SapSuccessFactorsLearnerManger:
                     error=exc.__class__.__name__,
                     message=str(exc)
                 )
-            )
+            ) from exc
         total_sap_inactive_learners = len(sap_inactive_learners) if sap_inactive_learners else 0
         enterprise_customer = self.enterprise_configuration.enterprise_customer
         LOGGER.info(

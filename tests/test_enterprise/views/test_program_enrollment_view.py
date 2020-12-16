@@ -52,7 +52,7 @@ class TestProgramEnrollmentView(EmbargoAPIMixin, MessagesMixin, TestCase):
         self.demo_course_ids = [self.demo_course_id1, self.demo_course_id2]
         self.dummy_program_uuid = FAKE_PROGRAM_RESPONSE3['uuid']
         self.dummy_program = FAKE_PROGRAM_RESPONSE3
-        super(TestProgramEnrollmentView, self).setUp()
+        super().setUp()
 
     def _login(self):
         """

@@ -18,7 +18,7 @@ class TestMoodleContentMetadataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestMoodleContentMetadataTransmitter, self).setUp()
+        super().setUp()
         self.moodle_base_url = 'http://testing/'
         self.api_token = 'token'
         self.password = 'pass'

@@ -32,7 +32,7 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             return {'hooray': 'here is the data'}
 
     def setUp(self):
-        super(TestEnterpriseCourseEnrollmentView, self).setUp()
+        super().setUp()
 
         self.enterprise_customer = factories.EnterpriseCustomerFactory.create()
 

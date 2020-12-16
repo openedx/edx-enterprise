@@ -17,7 +17,7 @@ class CornerstoneLearnerTransmitter(LearnerTransmitter):
         """
         By default, use the ``CornerstoneAPIClient`` for learner data transmission to Cornerstone.
         """
-        super(CornerstoneLearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )
@@ -32,4 +32,4 @@ class CornerstoneLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'cornerstone'
         kwargs['model_name'] = 'CornerstoneLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'user_guid'
-        super(CornerstoneLearnerTransmitter, self).transmit(payload, **kwargs)
+        super().transmit(payload, **kwargs)

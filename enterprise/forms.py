@@ -42,7 +42,7 @@ class EnterpriseSelectionForm(forms.Form):
         """
         Initialize form.
         """
-        super(EnterpriseSelectionForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         initial = kwargs['initial']
         self._user_id = kwargs['initial'].pop('user_id')
         self.fields['enterprise'].choices = initial['enterprises']
@@ -52,13 +52,13 @@ class EnterpriseSelectionForm(forms.Form):
         """
         Validate POST data.
         """
-        cleaned_data = super(EnterpriseSelectionForm, self).clean()
+        cleaned_data = super().clean()
         enterprise = cleaned_data.get('enterprise')
 
         try:
             EnterpriseCustomer.objects.get(uuid=enterprise)  # pylint: disable=no-member
-        except EnterpriseCustomer.DoesNotExist:
-            raise forms.ValidationError(_("Enterprise not found"))
+        except EnterpriseCustomer.DoesNotExist as no_customer_error:
+            raise forms.ValidationError(_("Enterprise not found")) from no_customer_error
 
         # verify that learner is really a member of selected enterprise
         if not EnterpriseCustomerUser.objects.filter(enterprise_customer=enterprise, user_id=self._user_id).exists():
@@ -83,15 +83,15 @@ class EnterpriseLoginForm(forms.Form):
         """
         Validate POST data.
         """
-        cleaned_data = super(EnterpriseLoginForm, self).clean()
+        cleaned_data = super().clean()
         enterprise_slug = cleaned_data['enterprise_slug']
 
         # verify that given slug has any associated enterprise customer.
         try:
             enterprise_customer = EnterpriseCustomer.objects.get(slug=enterprise_slug)
-        except EnterpriseCustomer.DoesNotExist:
+        except EnterpriseCustomer.DoesNotExist as no_customer_error:
             LOGGER.error("[Enterprise Slug Login] Not found enterprise: {}".format(enterprise_slug))
-            raise forms.ValidationError(ERROR_MESSAGE_FOR_SLUG_LOGIN)
+            raise forms.ValidationError(ERROR_MESSAGE_FOR_SLUG_LOGIN) from no_customer_error
 
         # verify that enterprise customer has enabled the slug login feature.
         if not enterprise_customer.enable_slug_login:

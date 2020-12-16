@@ -32,7 +32,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestSAPSuccessFactorsAPIClient, self).setUp()
+        super().setUp()
         self.oauth_api_path = "learning/oauth-api/rest/v1/token"
         self.completion_status_api_path = "learning/odatav4/public/admin/ocn/v1/current-user/item/learning-event"
         self.course_api_path = "learning/odatav4/public/admin/ocn/v1/OcnCourses"

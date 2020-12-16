@@ -241,7 +241,7 @@ class NonAtomicView(View):
         However, we need to be able to save data in the middle of get/post(), so that it's available for calls to
         external APIs.  To allow this, we need to disable atomicity at the top dispatch level.
         """
-        return super(NonAtomicView, self).dispatch(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class GrantDataSharingPermissions(View):
@@ -490,7 +490,7 @@ class GrantDataSharingPermissions(View):
                         )
                     )
                     LOGGER.error(log_message)
-                    raise Http404
+                    raise Http404 from error
 
                 course_start_date = ''
 
@@ -1004,7 +1004,7 @@ class EnterpriseLoginView(FormView):
 
     def get_context_data(self, **kwargs):
         """Return the context data needed to render the view."""
-        context_data = super(EnterpriseLoginView, self).get_context_data(**kwargs)
+        context_data = super().get_context_data(**kwargs)
         context_data.update({
             'page_title': _(u'Enterprise Slug Login'),
             'enterprise_login_title_message': ENTERPRISE_LOGIN_TITLE,
@@ -1103,7 +1103,7 @@ class EnterpriseSelectionView(FormView):
 
     def get_initial(self):
         """Return the initial data to use for forms on this view."""
-        initial = super(EnterpriseSelectionView, self).get_initial()
+        initial = super().get_initial()
         enterprises = EnterpriseCustomerUser.objects.filter(
             user_id=self.request.user.id
         ).values_list(
@@ -1122,7 +1122,7 @@ class EnterpriseSelectionView(FormView):
 
     def get_context_data(self, **kwargs):
         """Return the context data needed to render the view."""
-        context_data = super(EnterpriseSelectionView, self).get_context_data(**kwargs)
+        context_data = super().get_context_data(**kwargs)
         context_data.update({
             'page_title': _(u'Select Organization'),
             'select_enterprise_message_title': _(u'Select an organization'),
@@ -2285,8 +2285,8 @@ class RouterView(NonAtomicView):
         """
         try:
             course = get_course_catalog_api_service_client(enterprise_customer.site).get_course_details(course_key)
-        except ImproperlyConfigured:
-            raise Http404
+        except ImproperlyConfigured as error:
+            raise Http404 from error
 
         users_all_enrolled_courses = EnrollmentApiClient().get_enrolled_courses(user.username)
         users_active_course_runs = get_active_course_runs(

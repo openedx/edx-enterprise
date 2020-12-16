@@ -36,7 +36,7 @@ class TestRouterView(TestCase):
     }
 
     def setUp(self):
-        super(TestRouterView, self).setUp()
+        super().setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.course_run_id = 'course-v1:edX+DemoX+Demo_Course'
         self.request = mock.MagicMock(

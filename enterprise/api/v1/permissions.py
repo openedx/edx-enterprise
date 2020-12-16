@@ -15,7 +15,7 @@ class IsInEnterpriseGroup(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return (
-            super(IsInEnterpriseGroup, self).has_permission(request, view) and (
+            super().has_permission(request, view) and (
                 request.user.groups.filter(name__in=self.ALLOWED_API_GROUPS).exists() or
                 request.user.groups.filter(name__in=request.query_params.getlist('permissions')).exists()
             )

@@ -42,7 +42,7 @@ class SaveEnterpriseCustomerUsersCommandTests(TestCase):
             user_id=self.user_2.id,
             enterprise_customer=self.enterprise_customer_2
         )
-        super(SaveEnterpriseCustomerUsersCommandTests, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.management.commands.save_enterprise_customer_users.LOGGER')
     def test_enterprise_customer_user_saved(self, logger_mock):

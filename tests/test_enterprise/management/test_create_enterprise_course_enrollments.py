@@ -40,7 +40,7 @@ class CreateEnterpriseCourseEnrollmentCommandTests(TestCase):
             user_id=self.user.id,
             enterprise_customer=self.enterprise_customer
         )
-        super(CreateEnterpriseCourseEnrollmentCommandTests, self).setUp()
+        super().setUp()
 
     def mock_db_connection(self, connection_mock):
         """

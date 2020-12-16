@@ -6,7 +6,7 @@ Models for xAPI.
 
 import base64
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -14,6 +14,8 @@ from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from enterprise.models import EnterpriseCustomer
+
+User = auth.get_user_model()
 
 
 @python_2_unicode_compatible

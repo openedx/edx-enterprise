@@ -90,9 +90,10 @@ class IntegratedChannelCommandMixin:
             return None
         try:
             return EnterpriseCustomer.active_customers.get(uuid=uuid)
-        except EnterpriseCustomer.DoesNotExist:
+        except EnterpriseCustomer.DoesNotExist as no_customer_exception:
             raise CommandError(
-                _('Enterprise customer {uuid} not found, or not active').format(uuid=uuid))
+                _('Enterprise customer {uuid} not found, or not active').format(uuid=uuid)
+            ) from no_customer_exception
 
     @staticmethod
     def get_channel_classes(channel_code):

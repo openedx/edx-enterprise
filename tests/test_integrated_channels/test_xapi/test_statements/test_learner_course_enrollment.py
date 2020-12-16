@@ -22,7 +22,7 @@ class TestLearnerCourseEnrollmentStatement(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestLearnerCourseEnrollmentStatement, self).setUp()
+        super().setUp()
         faker = FakerFactory.create()
 
         self.site = Mock(domain='xapi.testing.com')

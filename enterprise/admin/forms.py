@@ -10,7 +10,7 @@ from edx_rbac.admin.forms import UserRoleAssignmentAdminForm
 
 from django import forms
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.db.models.fields import BLANK_CHOICE_DASH
 from django.urls import reverse
@@ -36,6 +36,7 @@ except ImportError:
     saml_provider_configuration = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+User = auth.get_user_model()
 
 
 class ManageLearnersForm(forms.Form):
@@ -144,7 +145,7 @@ class ManageLearnersForm(forms.Form):
         user = kwargs.pop('user', None)
         self._user = user
         self._enterprise_customer = kwargs.pop('enterprise_customer', None)
-        super(ManageLearnersForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_email_or_username(self):
         """
@@ -219,7 +220,7 @@ class ManageLearnersForm(forms.Form):
         In this case, the form can be used to link single user or bulk link multiple users. These are mutually
         exclusive modes, so this method checks that only one field is passed.
         """
-        cleaned_data = super(ManageLearnersForm, self).clean()
+        cleaned_data = super().clean()
 
         # Here we take values from `data` (and not `cleaned_data`) as we need raw values - field clean methods
         # might "invalidate" the value and set it to None, while all we care here is if it was provided at all or not
@@ -324,7 +325,7 @@ class ManageLearnersDataSharingConsentForm(forms.Form):
             enterprise_customer (enterprise.models.EnterpriseCustomer): current customer
         """
         self._enterprise_customer = kwargs.pop('enterprise_customer', None)
-        super(ManageLearnersDataSharingConsentForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def clean_course(self):
         """
@@ -450,7 +451,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
 
         Substitutes CharField with TypedChoiceField for the provider_id field.
         """
-        super(EnterpriseCustomerIdentityProviderAdminForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         idp_choices = utils.get_idp_choices()
         help_text = ''
         if saml_provider_configuration:
@@ -483,7 +484,7 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
 
         1. Validate that selected site for enterprise customer matches with the selected identity provider's site.
         """
-        super(EnterpriseCustomerIdentityProviderAdminForm, self).clean()
+        super().clean()
 
         provider_id = self.cleaned_data.get('provider_id', None)
         enterprise_customer = self.cleaned_data.get('enterprise_customer', None)
@@ -565,7 +566,7 @@ class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):
         """
         Override of clean method to perform additional validation
         """
-        cleaned_data = super(EnterpriseCustomerReportingConfigAdminForm, self).clean()
+        cleaned_data = super().clean()
         report_customer = cleaned_data.get('enterprise_customer')
         data_type = cleaned_data.get('data_type')
 
@@ -618,12 +619,12 @@ class TransmitEnterpriseCoursesForm(forms.Form):
 
         try:
             User.objects.get(username=channel_worker_username)
-        except User.DoesNotExist:
+        except User.DoesNotExist as error:
             raise ValidationError(
                 ValidationMessages.INVALID_CHANNEL_WORKER.format(
                     channel_worker_username=channel_worker_username
                 )
-            )
+            ) from error
 
         return channel_worker_username
 

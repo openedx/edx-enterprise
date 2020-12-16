@@ -53,7 +53,7 @@ class LearnerExporter(Exporter):
 
         # Cached course details data from the Course API.
         self.course_details = dict()
-        super(LearnerExporter, self).__init__(user, enterprise_configuration)
+        super().__init__(user, enterprise_configuration)
 
     @property
     def grade_passing(self):

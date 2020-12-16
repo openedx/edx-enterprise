@@ -24,7 +24,7 @@ class TestSapSuccessFactorsLearnerDataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestSapSuccessFactorsLearnerDataTransmitter, self).setUp()
+        super().setUp()
         self.global_config = factories.SAPSuccessFactorsGlobalConfigurationFactory()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(

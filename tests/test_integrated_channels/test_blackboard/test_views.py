@@ -35,7 +35,7 @@ class TestBlackboardAPIViews(APITestCase):
     """
 
     def setUp(self):
-        super(TestBlackboardAPIViews, self).setUp()
+        super().setUp()
         self.site, _ = Site.objects.get_or_create(domain='http://example.com')
         self.enterprise_customer = EnterpriseCustomer.objects.create(
             uuid=ENTERPRISE_ID,

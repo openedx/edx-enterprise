@@ -10,7 +10,7 @@ from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
 
@@ -27,6 +27,7 @@ from enterprise.utils import (
 )
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()
 
 
 class ImmutableStateSerializer(serializers.Serializer):
@@ -214,18 +215,18 @@ class EnterpriseCourseEnrollmentWriteSerializer(serializers.ModelSerializer):
         """
         try:
             user = User.objects.get(username=value)
-        except User.DoesNotExist:
+        except User.DoesNotExist as no_user_error:
             error_message = ('[Enterprise API] The username for creating an EnterpriseCourseEnrollment'
                              ' record does not exist. User: {}').format(value)
             LOGGER.error(error_message)
-            raise serializers.ValidationError("User does not exist")
+            raise serializers.ValidationError("User does not exist") from no_user_error
 
         try:
             enterprise_customer_user = models.EnterpriseCustomerUser.objects.get(user_id=user.pk)
-        except models.EnterpriseCustomerUser.DoesNotExist:
+        except models.EnterpriseCustomerUser.DoesNotExist as no_user_error:
             error_message = '[Enterprise API] User has no EnterpriseCustomerUser. User: {}'.format(value)
             LOGGER.error(error_message)
-            raise serializers.ValidationError("User has no EnterpriseCustomerUser")
+            raise serializers.ValidationError("User has no EnterpriseCustomerUser") from no_user_error
 
         self.enterprise_customer_user = enterprise_customer_user
         return value
@@ -294,7 +295,7 @@ class EnterpriseCustomerCatalogDetailSerializer(EnterpriseCustomerCatalogSeriali
         request = self.context['request']
         enterprise_customer = instance.enterprise_customer
 
-        representation = super(EnterpriseCustomerCatalogDetailSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         # Retrieve the EnterpriseCustomerCatalog search results from the discovery service.
         paginated_content = instance.get_paginated_content(request.GET)
@@ -394,11 +395,11 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         """
         try:
             self.user = User.objects.get(username=value)
-        except User.DoesNotExist:
+        except User.DoesNotExist as no_user_error:
             error_message = ('[Enterprise API] Saving to EnterpriseCustomerUser failed'
                              ' due to non-existing user. User: {}').format(value)
             LOGGER.error(error_message)
-            raise serializers.ValidationError("User does not exist")
+            raise serializers.ValidationError("User does not exist") from no_user_error
 
         return value
 

@@ -14,7 +14,7 @@ from edx_rest_api_client.exceptions import HttpClientError
 from pytest import mark
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.contrib.messages import constants as messages
 from django.core import mail
 from django.test import Client, TestCase, override_settings
@@ -55,6 +55,8 @@ from test_utils.factories import (
 )
 from test_utils.file_helpers import MakeCsvStreamContextManager
 
+User = auth.get_user_model()
+
 
 @ddt.ddt
 @mark.django_db
@@ -80,7 +82,7 @@ class TestPreviewTemplateView(TestCase):
             subject_line='Enrollment Notification',
             enterprise_customer=EnterpriseCustomerFactory(),
         )
-        super(TestPreviewTemplateView, self).setUp()
+        super().setUp()
 
     @ddt.unpack
     @ddt.data(
@@ -160,7 +162,7 @@ class BaseEnterpriseCustomerView(TestCase):
         """
         Test set up
         """
-        super(BaseEnterpriseCustomerView, self).setUp()
+        super().setUp()
         self.user = UserFactory.create(is_staff=True, is_active=True)
         self.user.set_password('QWERTY')
         self.user.save()
@@ -200,7 +202,7 @@ class BaseTestEnterpriseCustomerManageLearnersDSCView(BaseEnterpriseCustomerView
         """
         Test set up
         """
-        super(BaseTestEnterpriseCustomerManageLearnersDSCView, self).setUp()
+        super().setUp()
         self.manage_learners_dsc_form = ManageLearnersDataSharingConsentForm()
         self.view_url = reverse(
             'admin:' + enterprise_admin.utils.UrlNames.MANAGE_LEARNERS_DSC,
@@ -381,7 +383,7 @@ class BaseTestEnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         """
         Test set up - installs common dependencies.
         """
-        super(BaseTestEnterpriseCustomerManageLearnersView, self).setUp()
+        super().setUp()
         self.view_url = reverse(
             "admin:" + enterprise_admin.utils.UrlNames.MANAGE_LEARNERS,
             args=(self.enterprise_customer.uuid,)
@@ -1895,7 +1897,7 @@ class BaseTestEnterpriseCustomerTransmitCoursesView(BaseEnterpriseCustomerView):
         """
         Test set up
         """
-        super(BaseTestEnterpriseCustomerTransmitCoursesView, self).setUp()
+        super().setUp()
         self.transmit_courses_metadata_form = TransmitEnterpriseCoursesForm()
         self.view_url = reverse(
             'admin:' + enterprise_admin.utils.UrlNames.TRANSMIT_COURSES_METADATA,

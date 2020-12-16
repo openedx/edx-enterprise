@@ -19,7 +19,7 @@ class MoodleContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         Use the ``MoodleAPIClient`` for content metadata transmission to Moodle.
         """
-        super(MoodleContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

@@ -15,7 +15,7 @@ class BlackboardContentMetadataTransmitter(ContentMetadataTransmitter):
         """
         Use the ``BlackboardAPIClient`` for content metadata transmission.
         """
-        super(BlackboardContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

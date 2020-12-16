@@ -33,7 +33,7 @@ class TestSapSuccessFactorsContentMetadataExporter(unittest.TestCase, Enterprise
         jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
         self.jwt_builder = jwt_builder.start()
         self.addCleanup(jwt_builder.stop)
-        super(TestSapSuccessFactorsContentMetadataExporter, self).setUp()
+        super().setUp()
 
     @ddt.data(
         (

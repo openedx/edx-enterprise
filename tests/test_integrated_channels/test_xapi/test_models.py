@@ -18,7 +18,7 @@ class TestXAPILRSConfiguration(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestXAPILRSConfiguration, self).setUp()
+        super().setUp()
         self.x_api_lrs_config = factories.XAPILRSConfigurationFactory()
 
     def test_string_representation(self):
@@ -50,7 +50,7 @@ class TestXAPILearnerDataTransmissionAudit(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestXAPILearnerDataTransmissionAudit, self).setUp()
+        super().setUp()
         self.xapi_learner_transmission = factories.XAPILearnerDataTransmissionAuditFactory(
             user_id=factories.UserFactory().id,
             course_id='dummy'

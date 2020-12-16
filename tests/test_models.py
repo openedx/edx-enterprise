@@ -62,7 +62,7 @@ class TestPendingEnrollment(unittest.TestCase):
         pending_link = factories.PendingEnterpriseCustomerUserFactory(user_email=email)
         self.enrollment = factories.PendingEnrollmentFactory(user=pending_link, course_id=course_id)
         self.user = factories.UserFactory(email=email)
-        super(TestPendingEnrollment, self).setUp()
+        super().setUp()
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -88,7 +88,7 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
-        super(TestEnterpriseCourseEnrollment, self).setUp()
+        super().setUp()
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -139,7 +139,7 @@ class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):
             license_uuid=self.LICENSE_UUID,
             enterprise_course_enrollment=self.enrollment
         )
-        super(TestLicensedEnterpriseCourseEnrollment, self).setUp()
+        super().setUp()
 
     def test_create_license_enrollment_no_course_enrollment(self):
         """
@@ -164,7 +164,7 @@ class TestEnterpriseCustomerManager(unittest.TestCase):
     """
 
     def tearDown(self):
-        super(TestEnterpriseCustomerManager, self).tearDown()
+        super().tearDown()
         EnterpriseCustomer.objects.all().delete()  # pylint: disable=no-member
 
     def test_active_customers_get_queryset_returns_only_active(self):
@@ -441,7 +441,7 @@ class TestEnterpriseCustomerUser(unittest.TestCase):
         """
         Test set up
         """
-        super(TestEnterpriseCustomerUser, self).setUp()
+        super().setUp()
         self.worker_user = factories.UserFactory(
             username=settings.ENTERPRISE_SERVICE_WORKER_USERNAME, is_staff=True, is_active=True
         )
@@ -1030,7 +1030,7 @@ class TestEnterpriseCustomerCatalog(unittest.TestCase):
         self.catalog_uuid = self.faker.uuid4()  # pylint: disable=no-member
         self.enterprise_uuid = self.faker.uuid4()  # pylint: disable=no-member
         self.enterprise_name = 'enterprisewithacatalog'
-        super(TestEnterpriseCustomerCatalog, self).setUp()
+        super().setUp()
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -1382,7 +1382,7 @@ class TestEnrollmentNotificationEmailTemplate(unittest.TestCase):
                 '<b>This is an HTML template! {{ course_name }}!!!</b>'
             ),
         )
-        super(TestEnrollmentNotificationEmailTemplate, self).setUp()
+        super().setUp()
 
     def test_render_all_templates(self):
         plain, html = self.template.render_all_templates(
@@ -1412,7 +1412,7 @@ class TestDataSharingConsentManager(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestDataSharingConsentManager, self).setUp()
+        super().setUp()
         factories.DataSharingConsentFactory(
             enterprise_customer=factories.EnterpriseCustomerFactory(
                 name='rich_enterprise'
@@ -1450,7 +1450,7 @@ class TestProxyDataSharingConsent(TransactionTestCase):
     """
 
     def setUp(self):
-        super(TestProxyDataSharingConsent, self).setUp()
+        super().setUp()
         self.proxy_dsc = ProxyDataSharingConsent(
             enterprise_customer=factories.EnterpriseCustomerFactory(
                 name='rich_enterprise'
@@ -1613,7 +1613,7 @@ class TestEnterpriseCustomerPluginConfiguration(unittest.TestCase):
     def setUp(self):
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.config = EnterpriseCustomerPluginConfiguration(enterprise_customer=self.enterprise_customer)
-        super(TestEnterpriseCustomerPluginConfiguration, self).setUp()
+        super().setUp()
 
     def test_channel_code_raises(self):
         with raises(NotImplementedError):
@@ -1735,7 +1735,7 @@ class TestSAPSuccessFactorsEnterpriseCustomerConfiguration(unittest.TestCase):
         self.config = factories.SAPSuccessFactorsEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
         )
-        super(TestSAPSuccessFactorsEnterpriseCustomerConfiguration, self).setUp()
+        super().setUp()
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):
@@ -1829,7 +1829,7 @@ class TestDegreedEnterpriseCustomerConfiguration(unittest.TestCase):
         self.config = factories.DegreedEnterpriseCustomerConfigurationFactory(
             enterprise_customer=self.enterprise_customer,
         )
-        super(TestDegreedEnterpriseCustomerConfiguration, self).setUp()
+        super().setUp()
 
     @ddt.data(str, repr)
     def test_string_conversion(self, method):

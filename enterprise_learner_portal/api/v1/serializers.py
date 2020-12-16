@@ -13,9 +13,7 @@ from enterprise_learner_portal.utils import get_course_run_status
 try:
     from lms.djangoapps.bulk_email.api import get_emails_enabled
     from lms.djangoapps.certificates.api import get_certificate_for_user
-    from lms.djangoapps.course_api.api import (
-        get_course_run_url,
-    )
+    from lms.djangoapps.course_api.api import get_course_run_url
 except ImportError:
     get_certificate_for_user = None
     get_course_run_url = None
@@ -34,10 +32,10 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
                 _('To use this EnterpriseCourseEnrollmentSerializer, this package must be '
                   'installed in an Open edX environment.')
             )
-        super(EnterpriseCourseEnrollmentSerializer, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def to_representation(self, instance):
-        representation = super(EnterpriseCourseEnrollmentSerializer, self).to_representation(instance)
+        representation = super().to_representation(instance)
 
         request = self.context['request']
         course_run_id = instance.course_id
