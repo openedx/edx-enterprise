@@ -15,6 +15,11 @@ Change Log
 
 Unreleased
 -----------
+[3.16.1]
+--------
+
+* Adding backend support for admin portal Blackboard configuration.
+
 [3.16.0]
 --------
 
