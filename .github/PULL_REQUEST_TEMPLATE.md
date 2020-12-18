@@ -17,7 +17,7 @@
 **Post merge:**
 - [ ] Tag pushed and a new [version](https://github.com/edx/edx-enterprise/releases) released
     - *Note*: Assets will be added automatically. You just need to provide a tag (should match your version number) and title and description.
-- [ ] After versioned build finishes in [Travis](https://travis-ci.org/github/edx/edx-enterprise), verify version has been pushed to [PyPI](https://pypi.org/project/edx-enterprise/)
+- [ ] After versioned build finishes in [GitHub Actions](https://github.com/edx/edx-enterprise/actions), verify version has been pushed to [PyPI](https://pypi.org/project/edx-enterprise/)
     - Each step in the release build has a condition flag that checks if the rest of the steps are done and if so will deploy to PyPi.
     (so basically once your build finishes, after maybe a minute you should see the new version in PyPi automatically (on refresh))
 - [ ] PR created in [edx-platform](https://github.com/edx/edx-platform) to upgrade dependencies (including edx-enterprise)

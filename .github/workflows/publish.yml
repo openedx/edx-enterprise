@@ -1,0 +1,26 @@
+name: Publish edx/edx-enterprise to PyPI
+
+on:
+  release:
+    types: [published]
+    branches: [master]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.5
+      - name: Install requirements
+        run: make requirements
+      - name: Build package
+        run: python setup.py sdist bdist_wheel
+      - name: Publish to PyPi
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_UPLOAD_TOKEN }}
