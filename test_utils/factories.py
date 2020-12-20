@@ -27,6 +27,7 @@ from enterprise.models import (
     PendingEnrollment,
     PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
+    SystemWideEnterpriseUserRoleAssignment,
 )
 from integrated_channels.blackboard.models import BlackboardEnterpriseCustomerConfiguration
 from integrated_channels.canvas.models import CanvasEnterpriseCustomerConfiguration
@@ -178,6 +179,21 @@ class PendingEnterpriseCustomerAdminUserFactory(factory.django.DjangoModelFactor
 
     enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
     user_email = factory.LazyAttribute(lambda x: FAKER.email())
+
+
+class SystemWideEnterpriseUserRoleAssignmentFactory(factory.django.DjangoModelFactory):
+    """
+    SystemWideEnterpriseUserRoleAssignment factory.
+
+    Creates an instance of SystemWideEnterpriseUserRoleAssignment.
+    """
+
+    class Meta:
+        """
+        Meta for SystemWideEnterpriseUserRoleAssignmentFactory.
+        """
+
+        model = SystemWideEnterpriseUserRoleAssignment
 
 
 class GroupFactory(factory.django.DjangoModelFactory):

@@ -15,6 +15,7 @@ from django.test import override_settings
 
 from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.models import (
+    EnterpriseAnalyticsUser,
     EnterpriseCourseEnrollment,
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
@@ -26,6 +27,7 @@ from enterprise.models import (
 )
 from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils.factories import (
+    EnterpriseAnalyticsUserFactory,
     EnterpriseCatalogQueryFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
@@ -33,6 +35,7 @@ from test_utils.factories import (
     PendingEnrollmentFactory,
     PendingEnterpriseCustomerAdminUserFactory,
     PendingEnterpriseCustomerUserFactory,
+    SystemWideEnterpriseUserRoleAssignmentFactory,
     UserFactory,
 )
 
@@ -105,7 +108,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         ).count() == 1
 
     @mock.patch('enterprise.utils.track_event')
-    @mock.patch('enterprise.signals.track_enrollment')
+    @mock.patch('enterprise.models.track_enrollment')
     @mock.patch('enterprise.models.EnrollmentApiClient')
     def test_handle_user_post_save_with_pending_course_enrollment(
             self,
@@ -147,6 +150,39 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
             user.username, course_id, 'audit', cohort=u'test_cohort'
         )
         mock_track_enrollment.assert_called_once_with('pending-admin-enrollment', user.id, course_id)
+
+    @mock.patch('enterprise.models.create_tableau_user')
+    def test_handle_user_post_save_with_pending_enterprise_admin(self, mock_create_tableau_user):
+        email = "jackie.chan@hollywood.com"
+        user = UserFactory(id=1, email=email)
+        enterprise_customer = EnterpriseCustomerFactory()
+        PendingEnterpriseCustomerAdminUserFactory(enterprise_customer=enterprise_customer, user_email=email)
+
+        assert PendingEnterpriseCustomerAdminUser.objects.filter(user_email=email).count() == 1, \
+            "Precondition check: pending admin user exists"
+
+        parameters = {"instance": user, "created": False}
+        handle_user_post_save(mock.Mock(), **parameters)
+
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1, \
+            "Precondition check: enterprise customer user exists"
+
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=user.id)
+
+        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
+        admin_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=user,
+            role=enterprise_admin_role,
+        )
+        assert admin_role_assignment.exists()
+
+        mock_create_tableau_user.assert_called_once_with(
+            str(enterprise_customer.uuid).replace('-', ''),
+            enterprise_customer_user,
+        )
+
+        assert PendingEnterpriseCustomerAdminUser.objects.filter(user_email=email).count() == 0, \
+            "Final check: pending admin user no longer exists"
 
     def test_handle_user_post_save_modified_user_already_linked(self):
         email = "jackie.chan@hollywood.com"
@@ -327,104 +363,7 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory()
         super(TestEnterpriseAdminRoleSignals, self).setUp()
 
-    @ddt.data(
-        {'has_pending_admin_user': True},
-        {'has_pending_admin_user': False},
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.signals.create_tableau_user')
-    def test_assign_enterprise_admin_role_success(
-            self,
-            mock_create_tableau_user,  # pylint: disable=unused-argument
-            has_pending_admin_user
-    ):
-        """
-        Test that when a new `EnterpriseCustomerUser` record is created, an enterprise admin role is created for
-        that user, assuming a `PendingEnterpriseCustomerAdminUser` record exists.
-        """
-        if has_pending_admin_user:
-            PendingEnterpriseCustomerAdminUserFactory(
-                user_email=self.admin_user.email,
-                enterprise_customer=self.enterprise_customer,
-            )
-        # verify that no EnterpriseCustomerUser exists.
-        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
-            user_id=self.admin_user.id,
-        )
-        self.assertFalse(enterprise_customer_user.exists())
-
-        # verify that no admin role assignment exists.
-        admin_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-            user=self.admin_user,
-            role=self.enterprise_admin_role,
-        )
-        self.assertFalse(admin_role_assignment.exists())
-
-        # create a new EnterpriseCustomerUser record.
-        EnterpriseCustomerUserFactory(
-            user_id=self.admin_user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-
-        # verify that a new admin user role assignment is created when appropriate.
-        admin_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-            user=self.admin_user,
-            role=self.enterprise_admin_role,
-        )
-        assert admin_role_assignment.exists() == has_pending_admin_user
-
-    @ddt.data(
-        {'should_unlink_user': True, 'should_admin_role_exist': False},
-        {'should_unlink_user': False, 'should_admin_role_exist': True},
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.signals.create_tableau_user')
-    def test_assign_enterprise_admin_role_post_save(
-            self,
-            mock_create_tableau_user,  # pylint: disable=unused-argument
-            should_unlink_user,
-            should_admin_role_exist
-    ):
-        """
-        Verify that the enterprise_admin role is created on update.
-        When the EnterpriseCustomerUser record is unlinked, the role should be removed.
-        """
-        # create new PendingEnterpriseCustomerAdminUser and EnterpriseCustomerUser records.
-        PendingEnterpriseCustomerAdminUserFactory(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
-        EnterpriseCustomerUserFactory(
-            user_id=self.admin_user.id,
-            enterprise_customer=self.enterprise_customer,
-        )
-
-        # update EnterpriseCustomerUser record.
-        enterprise_customer_user = EnterpriseCustomerUser.objects.get(
-            user_id=self.admin_user.id
-        )
-        if should_unlink_user:
-            enterprise_customer_user.linked = False
-        else:
-            enterprise_customer_user.active = False
-        enterprise_customer_user.save()
-
-        if should_admin_role_exist:
-            # verify that the enterprise_admin role exists.
-            admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-                user=self.admin_user,
-                role=self.enterprise_admin_role,
-            )
-            self.assertTrue(admin_role_assignments.exists())
-        else:
-            # verify that the enterprise_admin role is deleted when unlinking an EnterpriseCustomerUser
-            admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-                user=self.admin_user,
-                role=self.enterprise_admin_role,
-            )
-            self.assertFalse(admin_role_assignments.exists())
-
-    @mock.patch('enterprise.signals.create_tableau_user')
+    @mock.patch('enterprise.models.create_tableau_user')
     def test_delete_enterprise_admin_role_assignment_success(
             self,
             mock_create_tableau_user,  # pylint: disable=unused-argument
@@ -433,17 +372,17 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         Test that when `EnterpriseCustomerUser` record is deleted, the associated
         enterprise admin user role assignment is also deleted.
         """
-        # create new PendingEnterpriseCustomerAdminUser and EnterpriseCustomerUser records.
-        PendingEnterpriseCustomerAdminUserFactory(
-            user_email=self.admin_user.email,
-            enterprise_customer=self.enterprise_customer,
-        )
+        # create new EnterpriseCustomerUser and SystemWideEnterpriseUserRoleAssignment records.
         EnterpriseCustomerUserFactory(
             user_id=self.admin_user.id,
             enterprise_customer=self.enterprise_customer,
         )
+        SystemWideEnterpriseUserRoleAssignmentFactory(
+            user=self.admin_user,
+            role=self.enterprise_admin_role,
+        )
 
-        # verify that a new admin role assignment is created.
+        # verify that a new admin role assignment was created.
         admin_role_assignments = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             user=self.admin_user,
             role=self.enterprise_admin_role,
@@ -903,7 +842,7 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
 @ddt.ddt
 class TestEnterpriseAnalyticsUserSignals(unittest.TestCase):
     """
-    Test signals associated with EnterpriseAnalyticsUser and EnterpriseCustomerUser.
+    Test signals associated with EnterpriseAnalyticsUser.
     """
 
     def setUp(self):
@@ -914,34 +853,23 @@ class TestEnterpriseAnalyticsUserSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory()
         super(TestEnterpriseAnalyticsUserSignals, self).setUp()
 
-    @ddt.data(
-        {'has_pending_admin_user': True},
-        # {'has_pending_admin_user': False},
-    )
-    @ddt.unpack
-    @mock.patch('enterprise.signals.create_tableau_user')
-    def test_create_tableau_user_success(self, mock_create_tableau_user, has_pending_admin_user):
+    @mock.patch('enterprise.signals.delete_tableau_user_by_id')
+    def test_delete_enterprise_analytics_user(self, mock_delete_tableau_user_by_id):
         """
-        Test that when a new `EnterpriseCustomerUser` record is created, a tableau user is also created,
-        assuming a `PendingEnterpriseCustomerAdminUser` record exists.
+        Test that when `EnterpriseCustomerUser` record is deleted, the associated
+        enterprise admin user role assignment is also deleted.
         """
-        if has_pending_admin_user:
-            PendingEnterpriseCustomerAdminUserFactory(
-                user_email=self.admin_user.email,
-                enterprise_customer=self.enterprise_customer,
-            )
-        # verify that no EnterpriseCustomerUser exists.
-        enterprise_customer_user = EnterpriseCustomerUser.objects.filter(
-            user_id=self.admin_user.id,
-        )
-        self.assertFalse(enterprise_customer_user.exists())
-
-        # create a new EnterpriseCustomerUser record.
+        # create new EnterpriseCustomerUser and SystemWideEnterpriseUserRoleAssignment records.
         EnterpriseCustomerUserFactory(
             user_id=self.admin_user.id,
             enterprise_customer=self.enterprise_customer,
         )
-        if has_pending_admin_user:
-            mock_create_tableau_user.assert_called_once()
-        else:
-            mock_create_tableau_user.assert_not_called()
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=self.admin_user.id)
+        EnterpriseAnalyticsUserFactory(
+            enterprise_customer_user=enterprise_customer_user,
+            analytics_user_id=self.admin_user.id,
+        )
+
+        # delete EnterpriseAnalyticsUser record and verify that Tableau user is deleted as well.
+        EnterpriseAnalyticsUser.objects.filter(analytics_user_id=self.admin_user.id).delete()
+        mock_delete_tableau_user_by_id.assert_called_once_with(str(self.admin_user.id))

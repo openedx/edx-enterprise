@@ -15,6 +15,12 @@ Change Log
 
 Unreleased
 -----------
+
+[3.16.2]
+--------
+
+* Refactor ``handle_user_post_save`` to be responsible for linking PendingEnterpriseCustomerUser records and granting admin permissions.
+
 [3.16.1]
 --------
 
