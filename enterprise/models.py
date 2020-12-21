@@ -1110,14 +1110,12 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         app_label = 'enterprise'
         ordering = ['created']
 
-    @classmethod
-    def link_pending_enterprise_user(cls, pending_ecu, is_user_created, user):
+    def link_pending_enterprise_user(self, user, is_user_created):
         """
         Link a PendingEnterpriseCustomerUser to the appropriate EnterpriseCustomer by
         creating a EnterpriseCustomerUser record.
 
         Arguments:
-            pending_ecu: a PendingEnterpriseCustomerUser instance
             is_user_created: a boolean whether the User instance was created or updated
             user: a User instance
 
@@ -1141,22 +1139,20 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                 pass  # nothing to do here
 
         enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
-            enterprise_customer=pending_ecu.enterprise_customer,
+            enterprise_customer=self.enterprise_customer,
             user_id=user.id,
         )
         return enterprise_customer_user
 
-    @classmethod
-    def fulfill_pending_course_enrollments(cls, pending_ecu, enterprise_customer_user):
+    def fulfill_pending_course_enrollments(self, enterprise_customer_user):
         """
         Enrolls a newly created EnterpriseCustomerUser in any courses attached to their
         PendingEnterpriseCustomerUser record.
 
         Arguments:
-            pending_ecu: a PendingEnterpriseCustomerUser instance
             enterprise_customer_user: a EnterpriseCustomerUser instance
         """
-        pending_enrollments = list(pending_ecu.pendingenrollment_set.all())
+        pending_enrollments = list(self.pendingenrollment_set.all())
         if pending_enrollments:
             def _complete_user_enrollment():
                 """

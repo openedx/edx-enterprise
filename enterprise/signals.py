@@ -70,15 +70,11 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
 
     # link PendingEnterpriseCustomerUser to the EnterpriseCustomer and fulfill pending enrollments
     if pending_ecu:
-        enterprise_customer_user = PendingEnterpriseCustomerUser.link_pending_enterprise_user(
-            pending_ecu=pending_ecu,
-            is_user_created=created,
+        enterprise_customer_user = pending_ecu.link_pending_enterprise_user(
             user=user_instance,
+            is_user_created=created,
         )
-        PendingEnterpriseCustomerUser.fulfill_pending_course_enrollments(
-            pending_ecu=pending_ecu,
-            enterprise_customer_user=enterprise_customer_user,
-        )
+        pending_ecu.fulfill_pending_course_enrollments(enterprise_customer_user)
         pending_ecu.delete()
 
     try:
@@ -87,9 +83,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         return  # nothing to do here
 
     # activate admin permissions for an existing EnterpriseCustomerUser, if applicable
-    PendingEnterpriseCustomerAdminUser.activate_admin_permissions(
-        enterprise_customer_user=enterprise_customer_user,
-    )
+    PendingEnterpriseCustomerAdminUser.activate_admin_permissions(enterprise_customer_user)
 
 
 @receiver(pre_save, sender=EnterpriseCustomer)
