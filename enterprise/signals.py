@@ -6,7 +6,6 @@ Django signal handlers.
 from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 
@@ -28,10 +27,8 @@ from enterprise.models import (
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
     NotConnectedToOpenEdX,
-    create_tableau_user,
     delete_tableau_user_by_id,
     get_default_catalog_content_filter,
-    track_enrollment,
     unset_enterprise_learner_language,
     unset_language_of_all_enterprise_learners,
 )
@@ -48,10 +45,17 @@ _UNSAVED_FILEFIELD = 'unsaved_filefield'
 @disable_for_loaddata
 def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     """
-    Handle User model changes - checks if pending enterprise customer user record exists and upgrades it to actual link.
+    Handle User model changes. Context: This signal runs any time a user logs in, including b2c users.
 
-    If there are pending enrollments attached to the PendingEnterpriseCustomerUser, then this signal also takes the
-    newly-created users and enrolls them in the relevant courses.
+    Steps:
+    1. Check for existing PendingEnterpriseCustomerUser for user's email. If one exists,
+        create an EnterpriseCustomerUser record which will ensure the user has the "enterprise_learner" role.
+    2. When we get a new EnterpriseCustomerUser record (or an existing record if one existed), check if the
+        PendingEnterpriseCustomerUser has any pending course enrollments. If so, enroll the user in these courses.
+    3. Delete the PendingEnterpriseCustomerUser record as its no longer needed.
+    4. Using the newly created EnterpriseCustomerUser (or an existing record if one existed), check if there
+        is a PendingEnterpriseCustomerAdminUser. If so, ensure the user has the "enterprise_admin" role and
+        a Tableau user is created for the user.
     """
     created = kwargs.get("created", False)
     user_instance = kwargs.get("instance", None)
@@ -62,51 +66,24 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     try:
         pending_ecu = PendingEnterpriseCustomerUser.objects.get(user_email=user_instance.email)
     except PendingEnterpriseCustomerUser.DoesNotExist:
-        return  # nothing to do in this case
+        pending_ecu = None
 
-    if not created:
-        # existing user changed his email to match one of pending link records - try linking him to EC
-        try:
-            existing_record = EnterpriseCustomerUser.objects.get(user_id=user_instance.id)
-            message_template = "User {user} have changed email to match pending Enterprise Customer link, " \
-                               "but was already linked to Enterprise Customer {enterprise_customer} - " \
-                               "deleting pending link record"
-            logger.info(message_template.format(
-                user=user_instance, enterprise_customer=existing_record.enterprise_customer
-            ))
-            pending_ecu.delete()
-            return
-        except EnterpriseCustomerUser.DoesNotExist:
-            pass  # everything ok - current user is not linked to other ECs
-
-    enterprise_customer_user = EnterpriseCustomerUser.objects.create(
-        enterprise_customer=pending_ecu.enterprise_customer,
-        user_id=user_instance.id
-    )
-    pending_enrollments = list(pending_ecu.pendingenrollment_set.all())
-    if pending_enrollments:
-        def _complete_user_enrollment():
-            """
-            Complete an Enterprise User's enrollment.
-
-            EnterpriseCustomers may enroll users in courses before the users themselves
-            actually exist in the system; in such a case, the enrollment for each such
-            course is finalized when the user registers with the OpenEdX platform.
-            """
-            for enrollment in pending_enrollments:
-                enterprise_customer_user.enroll(
-                    enrollment.course_id,
-                    enrollment.course_mode,
-                    cohort=enrollment.cohort_name,
-                    source_slug=getattr(enrollment.source, 'slug', None),
-                    discount_percentage=enrollment.discount_percentage,
-                    sales_force_id=enrollment.sales_force_id,
-                )
-                track_enrollment('pending-admin-enrollment', user_instance.id, enrollment.course_id)
-            pending_ecu.delete()
-        transaction.on_commit(_complete_user_enrollment)
-    else:
+    # link PendingEnterpriseCustomerUser to the EnterpriseCustomer and fulfill pending enrollments
+    if pending_ecu:
+        enterprise_customer_user = pending_ecu.link_pending_enterprise_user(
+            user=user_instance,
+            is_user_created=created,
+        )
+        pending_ecu.fulfill_pending_course_enrollments(enterprise_customer_user)
         pending_ecu.delete()
+
+    try:
+        enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=user_instance.id)
+    except EnterpriseCustomerUser.DoesNotExist:
+        return  # nothing to do here
+
+    # activate admin permissions for an existing EnterpriseCustomerUser, if applicable
+    PendingEnterpriseCustomerAdminUser.activate_admin_permissions(enterprise_customer_user)
 
 
 @receiver(pre_save, sender=EnterpriseCustomer)
@@ -154,54 +131,6 @@ def default_content_filter(sender, instance, **kwargs):     # pylint: disable=un
     if kwargs['created'] and not instance.content_filter:
         instance.content_filter = get_default_catalog_content_filter()
         instance.save()
-
-
-@receiver(post_save, sender=EnterpriseCustomerUser)
-def assign_or_delete_enterprise_admin_role(sender, instance, **kwargs):     # pylint: disable=unused-argument
-    """
-    Assign or delete enterprise_admin role for EnterpriseCustomerUser when updated.
-    Create third party analytics user.
-
-    This only occurs if a PendingEnterpriseCustomerAdminUser record exists.
-    """
-    if instance.user:
-        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
-        try:
-            pending_enterprise_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
-                user_email=instance.user.email,
-                enterprise_customer=instance.enterprise_customer,
-            )
-        except PendingEnterpriseCustomerAdminUser.DoesNotExist:
-            pending_enterprise_admin_user = None
-
-        if kwargs['created'] and pending_enterprise_admin_user:
-            # EnterpriseCustomerUser record was created and a pending admin user
-            # exists, so assign the enterprise_admin role.
-            pending_enterprise_admin_user.activate_admin_permissions(
-                user=instance.user,
-                enterprise_customer=instance.enterprise_customer,
-            )
-            # Also create the Enterprise admin user in third party analytics application with the enterprise
-            # customer uuid as username.
-            tableau_username = str(instance.enterprise_customer.uuid).replace('-', '')
-            create_tableau_user(tableau_username, instance)
-        elif not kwargs['created'] and not instance.linked:
-            # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_admin role.
-            try:
-                SystemWideEnterpriseUserRoleAssignment.objects.get(
-                    user=instance.user,
-                    role=enterprise_admin_role
-                ).delete()
-            except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
-                # Do nothing if no role assignment is present for the enterprise customer user.
-                pass
-        else:
-            logger.info(
-                'Could not assign or delete enterprise_admin role for user %s'
-                ' due to a PendingEnterpriseCustomerAdminUser record not existing'
-                ' or the user not being linked.',
-                instance.user.id,
-            )
 
 
 @receiver(post_delete, sender=EnterpriseCustomerUser)
@@ -278,7 +207,7 @@ def update_learner_language_preference(sender, instance, created, **kwargs):    
 @receiver(pre_delete, sender=EnterpriseAnalyticsUser)
 def delete_enterprise_analytics_user(sender, instance, **kwargs):     # pylint: disable=unused-argument
     """
-    Delete the associated enterprise analytics user in tableau.
+    Delete the associated enterprise analytics user in Tableau.
     """
     if instance.analytics_user_id:
         delete_tableau_user_by_id(instance.analytics_user_id)

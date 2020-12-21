@@ -1546,7 +1546,7 @@ def add_user_to_tableau_group(tableau_user_id, tableau_group):
 
 def delete_tableau_user(enterprise_customer_user):
     """
-    Delete the user in tableau.
+    Delete the user in Tableau.
     """
     from enterprise.models import EnterpriseAnalyticsUser  # pylint: disable=import-outside-toplevel
     enterprise_analytics_user = EnterpriseAnalyticsUser.objects.filter(
@@ -1563,7 +1563,7 @@ def delete_tableau_user(enterprise_customer_user):
 
 def delete_tableau_user_by_id(tableau_user_id):
     """
-    Delete the user in tableau.
+    Delete the user in Tableau.
     """
     tableau_auth, server = get_tableau_server()
     if tableau_user_id and tableau_auth and server:
@@ -1572,12 +1572,12 @@ def delete_tableau_user_by_id(tableau_user_id):
                 server.users.remove(tableau_user_id)
         except ServerResponseError as exc:
             LOGGER.info(
-                '[TABLEAU USER SYNC] Could not delete enterprise admin user in tableau.'
+                '[TABLEAU USER SYNC] Could not delete enterprise admin user in Tableau.'
                 'Server returned: %s', str(exc),
             )
     else:
         LOGGER.warning(
-            '[TABLEAU USER SYNC] Could not delete the tableau user %s.',
+            '[TABLEAU USER SYNC] Could not delete the Tableau user %s.',
             tableau_user_id,
         )
 

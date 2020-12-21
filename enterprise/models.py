@@ -29,7 +29,7 @@ from django.core import mail
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
 from django.core.files.storage import default_storage
 from django.core.validators import MaxValueValidator, MinValueValidator
-from django.db import IntegrityError, models
+from django.db import IntegrityError, models, transaction
 from django.template import Context, Template
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text, python_2_unicode_compatible
@@ -58,10 +58,13 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
+    create_tableau_user,
+    delete_tableau_user,
     get_configuration_value,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
     get_platform_logo_url,
+    track_enrollment,
 )
 from enterprise.validators import (
     validate_content_filter_fields,
@@ -1106,6 +1109,70 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
+
+    def link_pending_enterprise_user(self, user, is_user_created):
+        """
+        Link a PendingEnterpriseCustomerUser to the appropriate EnterpriseCustomer by
+        creating a EnterpriseCustomerUser record.
+
+        Arguments:
+            is_user_created: a boolean whether the User instance was created or updated
+            user: a User instance
+
+        Returns: an EnterpriseCustomerUser instance
+        """
+        if not is_user_created:
+            # user already existed and may simply be logging in or existing user may have changed
+            # their email to match one of pending link records - try linking them to EnterpriseCustomer.
+            try:
+                enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=user.id)
+                message_template = "User {user} has logged in or changed email to match pending " \
+                    "Enterprise Customer link, but was already " \
+                    "linked to Enterprise Customer {enterprise_customer} - " \
+                    "deleting pending link record"
+                LOGGER.info(message_template.format(
+                    user=user,
+                    enterprise_customer=enterprise_customer_user.enterprise_customer,
+                ))
+                return enterprise_customer_user
+            except EnterpriseCustomerUser.DoesNotExist:
+                pass  # nothing to do here
+
+        enterprise_customer_user, __ = EnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=self.enterprise_customer,
+            user_id=user.id,
+        )
+        return enterprise_customer_user
+
+    def fulfill_pending_course_enrollments(self, enterprise_customer_user):
+        """
+        Enrolls a newly created EnterpriseCustomerUser in any courses attached to their
+        PendingEnterpriseCustomerUser record.
+
+        Arguments:
+            enterprise_customer_user: a EnterpriseCustomerUser instance
+        """
+        pending_enrollments = list(self.pendingenrollment_set.all())
+        if pending_enrollments:
+            def _complete_user_enrollment():
+                """
+                Complete an Enterprise User's enrollment.
+
+                EnterpriseCustomers may enroll users in courses before the users themselves
+                actually exist in the system; in such a case, the enrollment for each such
+                course is finalized when the user registers with the OpenEdX platform.
+                """
+                for enrollment in pending_enrollments:
+                    enterprise_customer_user.enroll(
+                        enrollment.course_id,
+                        enrollment.course_mode,
+                        cohort=enrollment.cohort_name,
+                        source_slug=getattr(enrollment.source, 'slug', None),
+                        discount_percentage=enrollment.discount_percentage,
+                        sales_force_id=enrollment.sales_force_id,
+                    )
+                    track_enrollment('pending-admin-enrollment', enterprise_customer_user.user.id, enrollment.course_id)
+            transaction.on_commit(_complete_user_enrollment)
 
     def __str__(self):
         """
@@ -2510,32 +2577,56 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         return registration_url
 
     @classmethod
-    def activate_admin_permissions(cls, user, enterprise_customer):
+    def activate_admin_permissions(cls, enterprise_customer_user):
         """
         Activates admin permissions for an existing PendingEnterpriseCustomerAdminUser.
 
         Specifically, the "enterprise_admin" system-wide role is assigned to the user and
         the PendingEnterpriseCustomerAdminUser record is removed.
 
+        Requires an EnterpriseCustomerUser record to exist which ensures the user already
+        has the "enterprise_learner" role as a prerequisite.
+
         Arguments:
-            user: a User instance
-            enterprise_customer: An EnterpriseCustomer instance
+            enterprise_customer_user: an EnterpriseCustomerUser instance
         """
         try:
             pending_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
-                user_email=user.email,
-                enterprise_customer=enterprise_customer,
+                user_email=enterprise_customer_user.user.email,
+                enterprise_customer=enterprise_customer_user.enterprise_customer,
             )
         except PendingEnterpriseCustomerAdminUser.DoesNotExist:
-            LOGGER.error(
-                'Unable to activate admin permissions as no PendingEnterpriseCustomerAdminUser'
-                ' records exist for user %s', user.id,
-            )
-            return
+            return  # this is ok, nothing to do
 
-        # create enterprise_admin role and delete pending admin user record
+        # get_or_create "enterprise_admin" role
         enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
-        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(user=user, role=enterprise_admin_role)
+
+        if not enterprise_customer_user.linked:
+            # EnterpriseCustomerUser is no longer linked, so delete the "enterprise_admin" role and
+            # their Tableau user.
+            try:
+                SystemWideEnterpriseUserRoleAssignment.objects.get(
+                    user=enterprise_customer_user.user,
+                    role=enterprise_admin_role,
+                ).delete()
+            except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
+                pass
+
+            delete_tableau_user(enterprise_customer_user)
+            return  # nothing left to do
+
+        # grant the "enterprise_admin" role
+        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=enterprise_customer_user.user,
+            role=enterprise_admin_role,
+        )
+
+        # Also create the Enterprise admin user in third-party analytics application with the enterprise
+        # customer uuid as username.
+        tableau_username = str(enterprise_customer_user.enterprise_customer.uuid).replace('-', '')
+        create_tableau_user(tableau_username, enterprise_customer_user)
+
+        # delete the PendingEnterpriseCustomerAdminUser record
         pending_admin_user.delete()
 
     def __str__(self):
