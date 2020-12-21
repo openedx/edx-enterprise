@@ -16,6 +16,14 @@ Change Log
 Unreleased
 -----------
 
+[3.16.7]
+--------
+
+* Modify the learner portal enterprise_course_enrollments endpoint to include an ``is_enrollment_active``
+  key that indicates the status of the enterprise enrollment's related ``student.CourseEnrollment`.
+  Allow the endpoint to optionally accept an ``?is_active`` query param, so that clients may request
+  only active enrollments from it.
+
 [3.16.6]
 --------
 
@@ -28,6 +36,7 @@ Unreleased
 
 [3.16.4]
 --------
+
 * Add SuccessFactors Customer Configuration API endpoint.
 
 [3.16.3]

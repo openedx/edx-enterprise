@@ -74,9 +74,11 @@ from enterprise.validators import (
 )
 
 try:
+    from common.djangoapps.student.models import CourseEnrollment
     from lms.djangoapps.email_marketing.tasks import update_user
 except ImportError:
     update_user = None
+    CourseEnrollment = None
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
@@ -1568,6 +1570,22 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         except LicensedEnterpriseCourseEnrollment.DoesNotExist:
             associated_license = None
         return associated_license
+
+    @cached_property
+    def course_enrollment(self):
+        """
+        Returns the ``student.CourseEnrollment`` associated with this enterprise course enrollment record.
+        """
+        if not CourseEnrollment:
+            return None
+        try:
+            return CourseEnrollment.objects.get(
+                user=self.enterprise_customer_user.user,
+                course_id=self.course_id,
+            )
+        except CourseEnrollment.DoesNotExist:
+            LOGGER.error('{} does not have a matching student.CourseEnrollment'.format(self))
+            return None
 
     @classmethod
     def get_enterprise_course_enrollment_id(cls, user, course_id, enterprise_customer):

@@ -5,6 +5,7 @@ Tests for the EnterpriseCourseEnrollmentview of the enterprise_learner_portal ap
 
 import uuid
 
+import ddt
 import mock
 from pytest import mark
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
@@ -16,8 +17,12 @@ from django.urls import reverse
 from enterprise.utils import NotConnectedToOpenEdX
 from test_utils import factories
 
+SERIALIZED_MOCK_ACTIVE_ENROLLMENT = {'course_id': 'foo', 'is_enrollment_active': True}
+SERIALIZED_MOCK_INACTIVE_ENROLLMENT = {'course_id': 'bar', 'is_enrollment_active': False}
+
 
 @mark.django_db
+@ddt.ddt
 class TestEnterpriseCourseEnrollmentView(TestCase):
     """
     EnterpriseCourseEnrollmentView tests.
@@ -29,7 +34,10 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
         @property
         def data(self):
             """ Return fake serialized data. """
-            return {'hooray': 'here is the data'}
+            return [
+                SERIALIZED_MOCK_ACTIVE_ENROLLMENT,
+                SERIALIZED_MOCK_INACTIVE_ENROLLMENT,
+            ]
 
     def setUp(self):
         super().setUp()
@@ -80,7 +88,41 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             )
         )
         assert resp.status_code == 200
-        assert resp.json() == {'hooray': 'here is the data'}
+        assert resp.json() == [
+            SERIALIZED_MOCK_ACTIVE_ENROLLMENT,
+            SERIALIZED_MOCK_INACTIVE_ENROLLMENT,
+        ]
+
+    @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
+    @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
+    @ddt.data('true', 'false')
+    def test_view_get_filters_active_enrollments(
+            self,
+            active_filter_value,
+            mock_get_overviews,
+            mock_serializer,
+    ):
+        """
+        View should return data created by EnterpriseCourseEnrollmentSerializer
+        (which we mock in this case)
+        """
+        mock_get_overviews.return_value = {'overview_info': 'this would be a larger dict'}
+        mock_serializer.return_value = self.MockSerializer()
+
+        resp = self.client.get(
+            '{host}{path}?enterprise_id={enterprise_id}&is_active={active_filter_value}'.format(
+                host=settings.TEST_SERVER,
+                path=reverse('enterprise-learner-portal-course-enrollment-list'),
+                enterprise_id=str(self.enterprise_customer.uuid),
+                active_filter_value=active_filter_value
+            )
+        )
+        assert resp.status_code == 200
+        if active_filter_value == 'true':
+            expected_result = [SERIALIZED_MOCK_ACTIVE_ENROLLMENT]
+        else:
+            expected_result = [SERIALIZED_MOCK_INACTIVE_ENROLLMENT]
+        assert resp.json() == expected_result
 
     @mock.patch('enterprise_learner_portal.api.v1.views.EnterpriseCourseEnrollmentSerializer')
     @mock.patch('enterprise_learner_portal.api.v1.views.get_course_overviews')
@@ -172,7 +214,10 @@ class TestEnterpriseCourseEnrollmentView(TestCase):
             )
         )
         assert resp.status_code == 200
-        assert resp.json() == {'hooray': 'here is the data'}
+        assert resp.json() == [
+            SERIALIZED_MOCK_ACTIVE_ENROLLMENT,
+            SERIALIZED_MOCK_INACTIVE_ENROLLMENT,
+        ]
 
         self.enterprise_enrollment.refresh_from_db()
         assert self.enterprise_enrollment.saved_for_later
