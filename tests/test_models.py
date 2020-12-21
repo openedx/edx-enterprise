@@ -118,6 +118,29 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
         """
         assert self.enrollment.license is None
 
+    @mock.patch('enterprise.models.CourseEnrollment')
+    def test_course_enrollment_does_not_exist(self, mock_course_enrollment_class):
+        """
+        Test that the ``course_enrollment`` property returns None when no CourseEnrollment exists.
+        """
+        mock_course_enrollment_class.DoesNotExist = Exception
+        mock_course_enrollment_class.objects.get.side_effect = mock_course_enrollment_class.DoesNotExist
+        self.assertIsNone(self.enrollment.course_enrollment)
+
+    @mock.patch('enterprise.models.CourseEnrollment')
+    def test_course_enrollment_exists(self, mock_course_enrollment_class):
+        """
+        Test that the ``course_enrollment`` property a CourseEnrollment
+        """
+        expected_result = mock_course_enrollment_class.objects.get.return_value
+        self.assertEqual(expected_result, self.enrollment.course_enrollment)
+
+    def test_course_enrollment_class_is_none(self):
+        """
+        Test that the ``course_enrollment`` property returns None when we're not in an edx-platform runtime.
+        """
+        self.assertIsNone(self.enrollment.course_enrollment)
+
 
 @mark.django_db
 class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):

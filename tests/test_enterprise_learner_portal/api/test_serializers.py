@@ -28,6 +28,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
         self.factory = RequestFactory()
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory.create(user_id=self.user.id)
 
+    @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_status')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_emails_enabled')
     @mock.patch('enterprise_learner_portal.api.v1.serializers.get_course_run_url')
@@ -38,6 +39,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             mock_get_course_run_url,
             mock_get_emails_enabled,
             mock_get_course_run_status,
+            mock_course_enrollment_class,
     ):
         """
         EnterpriseCourseEnrollmentSerializer should create proper representation
@@ -66,6 +68,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=course_run_id
         )
+        mock_course_enrollment_class.objects.get.return_value.is_active = True
 
         request = self.factory.get('/')
         request.user = self.user
@@ -89,6 +92,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('pacing', 'instructor'),
             ('org_name', 'my university'),
             ('is_revoked', False),
+            ('is_enrollment_active', True),
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)
