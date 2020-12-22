@@ -89,6 +89,7 @@ class Command(BaseCommand):
                 'enable_portal_reporting_config_screen': True,
                 'enable_portal_saml_configuration_screen': True,
                 'enable_portal_subscription_management_screen': True,
+                'enable_portal_lms_configurations_screen': True,
             },
         )
         return enterprise_customer
