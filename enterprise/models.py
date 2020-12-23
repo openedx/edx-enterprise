@@ -1118,6 +1118,7 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         ]
         indexes = [
             models.Index(fields=['user_email', 'enterprise_customer']),
+            models.Index(fields=['user_email']),
         ]
 
     def link_pending_enterprise_user(self, user, is_user_created):
@@ -2581,6 +2582,7 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         ]
         indexes = [
             models.Index(fields=['user_email', 'enterprise_customer']),
+            models.Index(fields=['user_email']),
         ]
 
     @cached_property
