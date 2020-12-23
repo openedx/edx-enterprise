@@ -708,7 +708,8 @@ class EnterpriseCustomerUserManager(models.Manager):
             pass
 
         try:
-            return PendingEnterpriseCustomerUser.objects.get(user_email=user_email)
+            # return the first element in case of admin/learner with multiple pending enterprise associations.
+            return PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).first()
         except PendingEnterpriseCustomerUser.DoesNotExist:
             pass
 

@@ -94,12 +94,8 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         user = UserFactory(id=1, email=email)
         enterprise_customer = EnterpriseCustomerFactory()
         enterprise_customer_2 = EnterpriseCustomerFactory()
-        pending_link = PendingEnterpriseCustomerUserFactory(
-            enterprise_customer=enterprise_customer, user_email=email,
-        )
-        pending_link_2 = PendingEnterpriseCustomerUserFactory(
-            enterprise_customer=enterprise_customer_2, user_email=email,
-        )
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_email=email)
+        PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer_2, user_email=email)
 
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 2, \
