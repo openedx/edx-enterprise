@@ -48,8 +48,9 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     Handle User model changes. Context: This signal runs any time a user logs in, including b2c users.
 
     Steps:
-    1. Check for existing PendingEnterpriseCustomerUser for user's email. If one exists,
-        create an EnterpriseCustomerUser record which will ensure the user has the "enterprise_learner" role.
+    1. Check for existing PendingEnterpriseCustomerUser(s) for user's email. If one or more
+        exists, create an EnterpriseCustomerUser record for each which will ensure the user
+        has the "enterprise_learner" role.
     2. When we get a new EnterpriseCustomerUser record (or an existing record if one existed), check if the
         PendingEnterpriseCustomerUser has any pending course enrollments. If so, enroll the user in these courses.
     3. Delete the PendingEnterpriseCustomerUser record as its no longer needed.
@@ -63,13 +64,10 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     if user_instance is None:
         return  # should never happen, but better safe than 500 error
 
-    try:
-        pending_ecu = PendingEnterpriseCustomerUser.objects.get(user_email=user_instance.email)
-    except PendingEnterpriseCustomerUser.DoesNotExist:
-        pending_ecu = None
+    pending_ecus = PendingEnterpriseCustomerUser.objects.filter(user_email=user_instance.email)
 
     # link PendingEnterpriseCustomerUser to the EnterpriseCustomer and fulfill pending enrollments
-    if pending_ecu:
+    for pending_ecu in pending_ecus:
         enterprise_customer_user = pending_ecu.link_pending_enterprise_user(
             user=user_instance,
             is_user_created=created,
@@ -77,13 +75,10 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         pending_ecu.fulfill_pending_course_enrollments(enterprise_customer_user)
         pending_ecu.delete()
 
-    try:
-        enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=user_instance.id)
-    except EnterpriseCustomerUser.DoesNotExist:
-        return  # nothing to do here
-
-    # activate admin permissions for an existing EnterpriseCustomerUser, if applicable
-    PendingEnterpriseCustomerAdminUser.activate_admin_permissions(enterprise_customer_user)
+    enterprise_customer_users = EnterpriseCustomerUser.objects.filter(user_id=user_instance.id)
+    for enterprise_customer_user in enterprise_customer_users:
+        # activate admin permissions for an existing EnterpriseCustomerUser(s), if applicable
+        PendingEnterpriseCustomerAdminUser.activate_admin_permissions(enterprise_customer_user)
 
 
 @receiver(pre_save, sender=EnterpriseCustomer)

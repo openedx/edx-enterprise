@@ -89,6 +89,34 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
             enterprise_customer=pending_link.enterprise_customer, user_id=user.id
         ).count() == 1
 
+    def test_handle_user_post_save_created_user_multiple_enterprises(self):
+        email = "jackie.chan@hollywood.com"
+        user = UserFactory(id=1, email=email)
+        enterprise_customer = EnterpriseCustomerFactory()
+        enterprise_customer_2 = EnterpriseCustomerFactory()
+        pending_link = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer, user_email=email,
+        )
+        pending_link_2 = PendingEnterpriseCustomerUserFactory(
+            enterprise_customer=enterprise_customer_2, user_email=email,
+        )
+
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 0, "Precondition check: no links exist"
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 2, \
+            "Precondition check: pending link exists"
+
+        parameters = {"instance": user, "created": True}
+        with transaction.atomic():
+            handle_user_post_save(mock.Mock(), **parameters)
+
+        assert PendingEnterpriseCustomerUser.objects.count() == 0
+        assert EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=enterprise_customer, user_id=user.id
+        ).count() == 1
+        assert EnterpriseCustomerUser.objects.filter(
+            enterprise_customer=enterprise_customer_2, user_id=user.id
+        ).count() == 1
+
     def test_handle_user_post_save_modified_user_not_linked(self):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)

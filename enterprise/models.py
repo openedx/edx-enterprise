@@ -1103,12 +1103,21 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     """  # pylint: enable=line-too-long
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False, on_delete=models.CASCADE)
-    user_email = models.EmailField(null=False, blank=False, unique=True)
+    user_email = models.EmailField(null=False, blank=False)
     history = HistoricalRecords()
 
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user_email', 'enterprise_customer'],
+                name='unique user and EnterpriseCustomer',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user_email', 'enterprise_customer']),
+        ]
 
     def link_pending_enterprise_user(self, user, is_user_created):
         """
@@ -2563,7 +2572,15 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
-        unique_together = (('enterprise_customer', 'user_email'),)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user_email', 'enterprise_customer'],
+                name='unique pending admin user and EnterpriseCustomer',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user_email', 'enterprise_customer']),
+        ]
 
     @cached_property
     def admin_registration_url(self):
