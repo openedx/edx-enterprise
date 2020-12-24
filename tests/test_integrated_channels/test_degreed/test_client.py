@@ -31,7 +31,7 @@ class TestDegreedApiClient(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestDegreedApiClient, self).setUp()
+        super().setUp()
         self.url_base = "http://betatest.degreed.com/"
         self.oauth_api_path = "oauth/token"
         self.oauth_url = urljoin(self.url_base, self.oauth_api_path)

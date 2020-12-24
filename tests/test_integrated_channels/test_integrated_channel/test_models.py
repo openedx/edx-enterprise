@@ -18,7 +18,7 @@ class TestContentMetadataItemTransmission(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestContentMetadataItemTransmission, self).setUp()
+        super().setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
 
     def test_content_meta_data_string_representation(self):

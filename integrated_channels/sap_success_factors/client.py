@@ -71,8 +71,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         try:
             data = response.json()
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
-        except (KeyError, ValueError):
-            raise ClientError(response, response.status_code)
+        except (KeyError, ValueError) as error:
+            raise ClientError(response, response.status_code) from error
 
     def __init__(self, enterprise_configuration):
         """
@@ -82,7 +82,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             enterprise_configuration (SAPSuccessFactorsEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with SAP SuccessFactors
         """
-        super(SAPSuccessFactorsAPIClient, self).__init__(enterprise_configuration)
+        super().__init__(enterprise_configuration)
         self.global_sap_config = apps.get_model('sap_success_factors', 'SAPSuccessFactorsGlobalConfiguration').current()
         self.session = None
         self.expires_at = None
@@ -189,7 +189,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
                     error=exc.__class__.__name__,
                     message=str(exc)
                 )
-            )
+            ) from exc
 
         if status_code >= 400:
             raise ClientError(
@@ -302,8 +302,8 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         try:
             response = self.session.get(search_student_paginated_url)
             sap_inactive_learners = response.json()
-        except ValueError:
-            raise ClientError(response, response.status_code)
+        except ValueError as error:
+            raise ClientError(response, response.status_code) from error
         except (ConnectionError, Timeout):
             LOGGER.warning(
                 'Unable to fetch inactive learners from SAP searchStudent API with url '

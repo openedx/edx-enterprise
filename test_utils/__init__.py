@@ -265,7 +265,7 @@ class APITest(APITestCase):
         """
         Perform operations common to all tests.
         """
-        super(APITest, self).setUp()
+        super().setUp()
         self.create_user(username=TEST_USERNAME, email=TEST_EMAIL, password=TEST_PASSWORD)
         self.client = APIClient()
         self.client.login(username=TEST_USERNAME, password=TEST_PASSWORD)
@@ -276,7 +276,7 @@ class APITest(APITestCase):
         """
         # Remove client authentication credentials
         self.client.logout()
-        super(APITest, self).tearDown()
+        super().tearDown()
 
     def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, **kwargs):
         """
@@ -379,7 +379,7 @@ class EnterpriseFormViewTestCase(TestCase):
         """
         Mocked the rendering the template file.
         """
-        super(EnterpriseFormViewTestCase, self).setUp()
+        super().setUp()
         # create a temporary template file
         # rendering View's template fails becuase of dependency on edx-platform
         tpl = tempfile.NamedTemporaryFile(

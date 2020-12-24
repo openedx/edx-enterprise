@@ -32,7 +32,7 @@ class TestTpaPipeline(unittest.TestCase):
         self.request_factory = RequestFactory()
         self.request = self.request_factory.get('/')
         self.request.session = cache.SessionStore()
-        super(TestTpaPipeline, self).setUp()
+        super().setUp()
 
     def get_mocked_sso_backend(self):
         """

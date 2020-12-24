@@ -46,7 +46,7 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             enterprise_configuration (BlackboardEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with Blackboard
         """
-        super(BlackboardAPIClient, self).__init__(enterprise_configuration)
+        super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('blackboard')
         self.session = None
         self.expires_at = None
@@ -324,8 +324,8 @@ class BlackboardAPIClient(IntegratedChannelApiClient):
             self.enterprise_configuration.refresh_token = data["refresh_token"]
             self.enterprise_configuration.save()
             return data['access_token'], data["expires_in"]
-        except (KeyError, ValueError):
-            raise ClientError(auth_response.text, auth_response.status_code)
+        except (KeyError, ValueError) as error:
+            raise ClientError(auth_response.text, auth_response.status_code) from error
 
     def _create_auth_header(self):
         """

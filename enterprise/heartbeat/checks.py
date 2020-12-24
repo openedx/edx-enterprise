@@ -31,12 +31,14 @@ def check_lms():
     client = NoAuthLMSClient()
     try:
         client.get_health()
-    except HttpServerError:
-        raise LMSNotAvailable('Service is down.', traceback.format_exc())
-    except (ConnectionError, Timeout):
-        raise LMSNotAvailable('Service is not accessible.', traceback.format_exc())
-    except SlumberBaseException:
-        raise LMSNotAvailable('An error occurred while checking service status.', traceback.format_exc())
+    except HttpServerError as error:
+        raise LMSNotAvailable('Service is down.', traceback.format_exc()) from error
+    except (ConnectionError, Timeout) as error:
+        raise LMSNotAvailable('Service is not accessible.', traceback.format_exc()) from error
+    except SlumberBaseException as exception:
+        raise LMSNotAvailable(
+            'An error occurred while checking service status.', traceback.format_exc()
+        ) from exception
 
     return 'Learning Management System (LMS)', 'Service is up and running.'
 
@@ -54,12 +56,14 @@ def check_ecommerce():
     client = NoAuthEcommerceClient()
     try:
         client.get_health()
-    except HttpServerError:
-        raise EcommerceNotAvailable('Service is down.', traceback.format_exc())
-    except (ConnectionError, Timeout):
-        raise EcommerceNotAvailable('Service is not accessible.', traceback.format_exc())
-    except SlumberBaseException:
-        raise EcommerceNotAvailable('An error occurred while checking service status.', traceback.format_exc())
+    except HttpServerError as error:
+        raise EcommerceNotAvailable('Service is down.', traceback.format_exc()) from error
+    except (ConnectionError, Timeout) as error:
+        raise EcommerceNotAvailable('Service is not accessible.', traceback.format_exc()) from error
+    except SlumberBaseException as exception:
+        raise EcommerceNotAvailable(
+            'An error occurred while checking service status.', traceback.format_exc()
+        ) from exception
 
     return 'E-Commerce', 'Service is up and running.'
 
@@ -77,12 +81,14 @@ def check_discovery():
     client = NoAuthDiscoveryClient()
     try:
         client.get_health()
-    except HttpServerError:
-        raise DiscoveryNotAvailable('Service is down.', traceback.format_exc())
-    except (ConnectionError, Timeout):
-        raise DiscoveryNotAvailable('Service is not accessible.', traceback.format_exc())
-    except SlumberBaseException:
-        raise DiscoveryNotAvailable('An error occurred while checking service status.', traceback.format_exc())
+    except HttpServerError as error:
+        raise DiscoveryNotAvailable('Service is down.', traceback.format_exc()) from error
+    except (ConnectionError, Timeout) as error:
+        raise DiscoveryNotAvailable('Service is not accessible.', traceback.format_exc()) from error
+    except SlumberBaseException as exception:
+        raise DiscoveryNotAvailable(
+            'An error occurred while checking service status.', traceback.format_exc()
+        ) from exception
 
     return 'Course Discovery', 'Service is up and running.'
 
@@ -100,11 +106,13 @@ def check_enterprise_catalog():
     client = NoAuthEnterpriseCatalogClient()
     try:
         client.get_health()
-    except HttpServerError:
-        raise EnterpriseCatalogNotAvailable('Service is down.', traceback.format_exc())
-    except (ConnectionError, Timeout):
-        raise EnterpriseCatalogNotAvailable('Service is not accessible.', traceback.format_exc())
-    except SlumberBaseException:
-        raise EnterpriseCatalogNotAvailable('An error occurred while checking service status.', traceback.format_exc())
+    except HttpServerError as error:
+        raise EnterpriseCatalogNotAvailable('Service is down.', traceback.format_exc()) from error
+    except (ConnectionError, Timeout) as error:
+        raise EnterpriseCatalogNotAvailable('Service is not accessible.', traceback.format_exc()) from error
+    except SlumberBaseException as exception:
+        raise EnterpriseCatalogNotAvailable(
+            'An error occurred while checking service status.', traceback.format_exc()
+        ) from exception
 
     return 'Enterprise Catalog', 'Service is up and running.'

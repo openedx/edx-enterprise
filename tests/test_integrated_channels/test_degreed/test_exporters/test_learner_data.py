@@ -59,7 +59,7 @@ class TestDegreedLearnerExporter(unittest.TestCase):
         self.course_catalog_client = course_catalog_api_client_mock.start()
         setup_course_catalog_api_client_mock(self.course_catalog_client)
         self.addCleanup(course_catalog_api_client_mock.stop)
-        super(TestDegreedLearnerExporter, self).setUp()
+        super().setUp()
 
     @ddt.data(
         (None, False),

@@ -296,7 +296,7 @@ class TestPendingEnterpriseAdminUserSignals(unittest.TestCase):
         """
         self.admin_user = UserFactory(id=2, email='user@example.com')
         self.enterprise_customer = EnterpriseCustomerFactory()
-        super(TestPendingEnterpriseAdminUserSignals, self).setUp()
+        super().setUp()
 
     def _assert_pending_ecus_exist(self, should_exist=True):
         """
@@ -361,7 +361,7 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         self.enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
         self.admin_user = UserFactory(id=2, email='user@example.com')
         self.enterprise_customer = EnterpriseCustomerFactory()
-        super(TestEnterpriseAdminRoleSignals, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.models.create_tableau_user')
     def test_delete_enterprise_admin_role_assignment_success(
@@ -413,7 +413,7 @@ class TestEnterpriseLearnerRoleSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory(
             name='Team Titans',
         )
-        super(TestEnterpriseLearnerRoleSignals, self).setUp()
+        super().setUp()
 
     def test_assign_enterprise_learner_role_success(self):
         """
@@ -659,7 +659,7 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
         )
         self.non_enterprise_user = UserFactory(id=999, email='user999@example.com')
-        super(TestCourseEnrollmentSignals, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
     def test_receiver_calls_task_if_ecu_exists(self, mock_task):
@@ -851,7 +851,7 @@ class TestEnterpriseAnalyticsUserSignals(unittest.TestCase):
         """
         self.admin_user = UserFactory(id=2, email='user@example.com')
         self.enterprise_customer = EnterpriseCustomerFactory()
-        super(TestEnterpriseAnalyticsUserSignals, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.signals.delete_tableau_user_by_id')
     def test_delete_enterprise_analytics_user(self, mock_delete_tableau_user_by_id):

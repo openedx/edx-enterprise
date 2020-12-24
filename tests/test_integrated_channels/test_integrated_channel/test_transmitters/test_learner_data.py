@@ -21,7 +21,7 @@ class TestLearnerDataTransmitter(unittest.TestCase):
     Tests for the class ``LearnerDataTransmitter``.
     """
     def setUp(self):
-        super(TestLearnerDataTransmitter, self).setUp()
+        super().setUp()
 
         enterprise_customer = factories.EnterpriseCustomerFactory(name='Starfleet Academy')
 

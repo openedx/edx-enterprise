@@ -424,9 +424,11 @@ class CourseCatalogApiServiceClient(CourseCatalogApiClient):
         if catalog_integration.enabled:
             try:
                 user = catalog_integration.get_service_user()
-                super(CourseCatalogApiServiceClient, self).__init__(user, site)
-            except ObjectDoesNotExist:
-                raise ImproperlyConfigured(_("The configured CatalogIntegration service user does not exist."))
+                super().__init__(user, site)
+            except ObjectDoesNotExist as error:
+                raise ImproperlyConfigured(
+                    _("The configured CatalogIntegration service user does not exist.")
+                ) from error
         else:
             raise ImproperlyConfigured(_("There is no active CatalogIntegration."))
 

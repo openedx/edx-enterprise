@@ -8,12 +8,14 @@ import unittest
 import mock
 from pytest import mark
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.db.models.signals import pre_migrate
 
 import enterprise
 import integrated_channels
 from test_utils.factories import EnterpriseCustomerFactory, UserFactory
+
+User = auth.get_user_model()
 
 
 @mark.django_db
@@ -26,7 +28,7 @@ class TestEnterpriseConfig(unittest.TestCase):
         """
         Set up test environment.
         """
-        super(TestEnterpriseConfig, self).setUp()
+        super().setUp()
         self.post_save_mock = mock.Mock()
         patcher = mock.patch('enterprise.signals.handle_user_post_save', self.post_save_mock)
         patcher.start()
@@ -70,7 +72,7 @@ class TestIntegratedChannelConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestIntegratedChannelConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.integrated_channel.apps.IntegratedChannelConfig(
             'integrated_channel', integrated_channels.integrated_channel
         )
@@ -89,7 +91,7 @@ class TestSAPSuccessFactorsConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestSAPSuccessFactorsConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.sap_success_factors.apps.SAPSuccessFactorsConfig(
             'sap_success_factors', integrated_channels.sap_success_factors
         )
@@ -108,7 +110,7 @@ class TestDegreedConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestDegreedConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.degreed.apps.DegreedConfig(
             'degreed', integrated_channels.degreed
         )
@@ -127,7 +129,7 @@ class TestCanvasConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestCanvasConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.canvas.apps.CanvasConfig(
             'canvas', integrated_channels.canvas
         )
@@ -146,7 +148,7 @@ class TestBlackboardConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestBlackboardConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.blackboard.apps.BlackboardConfig(
             'blackboard', integrated_channels.blackboard
         )
@@ -165,7 +167,7 @@ class TestXAPIConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestXAPIConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.xapi.apps.XAPIConfig(
             'xapi', integrated_channels.xapi
         )
@@ -184,7 +186,7 @@ class TestMoodleConfig(unittest.TestCase):
         """
         Set up test environment
         """
-        super(TestMoodleConfig, self).setUp()
+        super().setUp()
         self.app_config = integrated_channels.moodle.apps.MoodleConfig(
             'moodle', integrated_channels.moodle
         )

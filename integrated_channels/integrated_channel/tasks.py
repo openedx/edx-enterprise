@@ -8,7 +8,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from edx_django_utils.monitoring import set_code_owner_attribute
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.utils import timezone
 
 from enterprise.utils import get_enterprise_customer_for_user
@@ -19,6 +19,7 @@ from integrated_channels.integrated_channel.management.commands import (
 from integrated_channels.utils import generate_formatted_log
 
 LOGGER = get_task_logger(__name__)
+User = auth.get_user_model()
 
 
 @shared_task

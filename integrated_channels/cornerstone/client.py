@@ -29,7 +29,7 @@ class CornerstoneAPIClient(IntegratedChannelApiClient):
             enterprise_configuration (CornerstoneEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with Cornerstone
         """
-        super(CornerstoneAPIClient, self).__init__(enterprise_configuration)
+        super().__init__(enterprise_configuration)
         self.global_cornerstone_config = apps.get_model('cornerstone', 'CornerstoneGlobalConfiguration').current()
         self.session = None
         self.expires_at = None

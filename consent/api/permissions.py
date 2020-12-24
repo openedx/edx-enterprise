@@ -27,4 +27,4 @@ class IsStaffOrUserInRequest(IsUserInRequest):
         if request.user.is_staff:
             return True
 
-        return super(IsStaffOrUserInRequest, self).has_permission(request, view)
+        return super().has_permission(request, view)

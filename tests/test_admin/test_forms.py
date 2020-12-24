@@ -387,7 +387,7 @@ class TestManageLearnersDataSharingConsentForm(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestManageLearnersDataSharingConsentForm, self).setUp()
+        super().setUp()
         self.enterprise_customer = EnterpriseCustomerFactory()
 
     def _make_bound_form(
@@ -444,7 +444,7 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         """
         Test set up.
         """
-        super(TestEnterpriseCustomerIdentityProviderAdminForm, self).setUp()
+        super().setUp()
         self.idp_choices = (("saml-idp1", "SAML IdP 1"), ('saml-idp2', "SAML IdP 2"))
 
         self.first_site = SiteFactory(domain="first.localhost.com")
@@ -616,7 +616,7 @@ class TestEnterpriseCustomerReportingConfigAdminForm(unittest.TestCase):
         """
         Test set up.
         """
-        super(TestEnterpriseCustomerReportingConfigAdminForm, self).setUp()
+        super().setUp()
 
         self.ent_customer1 = EnterpriseCustomerFactory()
         self.ent_customer2 = EnterpriseCustomerFactory()
@@ -707,7 +707,7 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
         """
         Test set up.
         """
-        super(EnterpriseCustomerCatalogAdminFormTest, self).setUp()
+        super().setUp()
         EnterpriseCatalogQueryFactory(content_filter=self.catalog_query_content_filter)
 
     @ddt.unpack

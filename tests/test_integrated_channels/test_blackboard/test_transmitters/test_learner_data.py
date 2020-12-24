@@ -19,7 +19,7 @@ class TestBlackboardLearnerDataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestBlackboardLearnerDataTransmitter, self).setUp()
+        super().setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory()
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,

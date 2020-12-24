@@ -20,7 +20,7 @@ class MoodleEnterpriseCustomerConfigurationForm(forms.ModelForm):
         fields = '__all__'
 
     def clean(self):
-        cleaned_data = super(MoodleEnterpriseCustomerConfigurationForm, self).clean()
+        cleaned_data = super().clean()
         cleaned_username = cleaned_data.get('username')
         cleaned_password = cleaned_data.get('password')
         cleaned_token = cleaned_data.get('token')

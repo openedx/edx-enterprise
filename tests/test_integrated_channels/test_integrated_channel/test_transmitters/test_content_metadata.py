@@ -24,7 +24,7 @@ class TestContentMetadataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestContentMetadataTransmitter, self).setUp()
+        super().setUp()
         enterprise_customer = factories.EnterpriseCustomerFactory(name='Starfleet Academy')
         # We need some non-abstract configuration for these things to work,
         # so it's okay for it to be any arbitrary channel. We randomly choose SAPSF.

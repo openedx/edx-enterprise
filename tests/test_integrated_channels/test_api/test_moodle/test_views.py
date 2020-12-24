@@ -14,7 +14,7 @@ ENTERPRISE_ID = str(uuid4())
 
 class MoodleConfigurationViewSetTests(APITest):
     def setUp(self):
-        super(MoodleConfigurationViewSetTests, self).setUp()
+        super().setUp()
         self.set_jwt_cookie(self.client, [(ENTERPRISE_ADMIN_ROLE, ENTERPRISE_ID)])
         self.client.force_authenticate(user=self.user)
 

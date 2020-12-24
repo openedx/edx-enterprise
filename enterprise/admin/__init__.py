@@ -11,8 +11,7 @@ from simple_history.admin import SimpleHistoryAdmin
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
 from django.conf.urls import url
-from django.contrib import admin
-from django.contrib.auth.models import User
+from django.contrib import admin, auth
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect
@@ -66,6 +65,7 @@ try:
     from openedx.features.enterprise_support.admin.views import EnrollmentAttributeOverrideView
 except ImportError:
     EnrollmentAttributeOverrideView = None
+User = auth.get_user_model()
 
 
 class EnterpriseCustomerBrandingConfigurationInline(admin.StackedInline):
@@ -106,7 +106,7 @@ class EnterpriseCustomerCatalogInline(admin.TabularInline):
     can_delete = False
 
     def get_formset(self, request, obj=None, **kwargs):
-        formset = super(EnterpriseCustomerCatalogInline, self).get_formset(request, obj, **kwargs)
+        formset = super().get_formset(request, obj, **kwargs)
         formset.form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return formset
 
@@ -200,7 +200,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
             catalog_content_metadata_url = \
                 EnterpriseCatalogApiClient.get_content_metadata_url(catalog_uuid)
             return HttpResponseRedirect(catalog_content_metadata_url)
-        return super(EnterpriseCustomerAdmin, self).change_view(
+        return super().change_view(
             request,
             object_id,
             form_url,
@@ -212,7 +212,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
         Retrieve the appropriate form to use, saving the request user
         into the form for use in loading catalog details
         """
-        form = super(EnterpriseCustomerAdmin, self).get_form(request, obj, change, **kwargs)
+        form = super().get_form(request, obj, change, **kwargs)
         form.user = request.user
         return form
 
@@ -309,7 +309,7 @@ class EnterpriseCustomerAdmin(DjangoObjectActions, SimpleHistoryAdmin):
                 name=UrlNames.TRANSMIT_COURSES_METADATA
             )
         ]
-        return customer_urls + super(EnterpriseCustomerAdmin, self).get_urls()
+        return customer_urls + super().get_urls()
 
 
 @admin.register(EnterpriseCustomerUser)
@@ -362,7 +362,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
                 )
             )
         else:
-            queryset, use_distinct = super(EnterpriseCustomerUserAdmin, self).get_search_results(
+            queryset, use_distinct = super().get_search_results(
                 request,
                 queryset,
                 search_term
@@ -425,7 +425,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         """
         Make all fields readonly when editing existing model.
         """
-        readonly_fields = super(EnterpriseCustomerUserAdmin, self).get_readonly_fields(request, obj=obj)
+        readonly_fields = super().get_readonly_fields(request, obj=obj)
         if obj:  # editing an existing object
             return readonly_fields + tuple(get_all_field_names(self.model))
         return readonly_fields
@@ -540,7 +540,7 @@ class EnrollmentNotificationEmailTemplateAdmin(DjangoObjectActions, admin.ModelA
                 name=UrlNames.PREVIEW_EMAIL_TEMPLATE
             )
         ]
-        return preview_urls + super(EnrollmentNotificationEmailTemplateAdmin, self).get_urls()
+        return preview_urls + super().get_urls()
 
     def preview(self, obj, preview_type):
         """
@@ -615,7 +615,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         """
         extra_context = extra_context or {}
         extra_context['attr_override_button'] = bool(EnrollmentAttributeOverrideView)
-        return super(EnterpriseCourseEnrollmentAdmin, self).changelist_view(request, extra_context=extra_context)
+        return super().changelist_view(request, extra_context=extra_context)
 
     def get_urls(self):
         """
@@ -631,7 +631,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
                 ),
             ]
 
-        return custom_urls + super(EnterpriseCourseEnrollmentAdmin, self).get_urls()
+        return custom_urls + super().get_urls()
 
 
 @admin.register(PendingEnrollment)
@@ -755,7 +755,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     uuid_nowrap.short_description = 'UUID'
 
     def get_form(self, request, obj=None, change=False, **kwargs):
-        form = super(EnterpriseCustomerCatalogAdmin, self).get_form(request, obj, change, **kwargs)
+        form = super().get_form(request, obj, change, **kwargs)
         form.base_fields['content_filter'].initial = json.dumps(get_default_catalog_content_filter())
         return form
 
@@ -763,7 +763,7 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
         """
         Disallow the delete selected action as that does not send a DELETE request to enterprise-catalog
         """
-        actions = super(EnterpriseCustomerCatalogAdmin, self).get_actions(request)
+        actions = super().get_actions(request)
         if 'delete_selected' in actions:
             del actions['delete_selected']
         return actions
@@ -797,7 +797,7 @@ class EnterpriseCustomerReportingConfigurationAdmin(admin.ModelAdmin):
         """
         Return the fields that should be displayed on the admin form.
         """
-        fields = list(super(EnterpriseCustomerReportingConfigurationAdmin, self).get_fields(request, obj))
+        fields = list(super().get_fields(request, obj))
         if obj:
             # Exclude password fields when we are editing an existing model.
             return [f for f in fields if f not in {'decrypted_password', 'decrypted_sftp_password'}]
@@ -841,7 +841,7 @@ class SystemWideEnterpriseUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
         Filters the data displayed that match the given search_term. If no search_term
         is provided than return all results.
         """
-        queryset, use_distinct = super(SystemWideEnterpriseUserRoleAssignmentAdmin, self).get_search_results(
+        queryset, use_distinct = super().get_search_results(
             request,
             queryset,
             search_term

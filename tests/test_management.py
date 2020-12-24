@@ -19,7 +19,7 @@ from pytest import mark, raises
 from requests.compat import urljoin
 from testfixtures import LogCapture
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.db.models import signals
@@ -55,6 +55,7 @@ from test_utils import factories
 from test_utils.fake_catalog_api import CourseDiscoveryApiTestMixin, setup_course_catalog_api_client_mock
 from test_utils.fake_enterprise_api import EnterpriseMockMixin
 
+User = auth.get_user_model()
 NOW = datetime(2017, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 NOW_TIMESTAMP = 1483326245000
 NOW_TIMESTAMP_FORMATTED = NOW.strftime('%F')
@@ -119,7 +120,7 @@ class TestTransmitCourseMetadataManagementCommand(unittest.TestCase, EnterpriseM
         self.catalog_api_client_mock = self._make_patch(
             self._make_catalog_api_location("CourseCatalogApiServiceClient")
         )
-        super(TestTransmitCourseMetadataManagementCommand, self).setUp()
+        super().setUp()
 
     def test_enterprise_customer_not_found(self):
         faker = FakerFactory.create()
@@ -392,7 +393,7 @@ class TestTransmitLearnerData(unittest.TestCase):
             active=True,
         )
         self.sapsf_global_configuration = factories.SAPSuccessFactorsGlobalConfigurationFactory()
-        super(TestTransmitLearnerData, self).setUp()
+        super().setUp()
 
     def test_api_user_required(self):
         error = 'Error: the following arguments are required: --api_user'
@@ -959,7 +960,7 @@ class TestLearnerDataTransmitIntegration(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestLearnerDataTransmitIntegration, self).setUp()
+        super().setUp()
 
         # pylint: disable=invalid-name
         # Degreed
@@ -1130,7 +1131,7 @@ class TestUnlinkSAPLearnersManagementCommand(unittest.TestCase, EnterpriseMockMi
                 start_at=0,
             ),
         )
-        super(TestUnlinkSAPLearnersManagementCommand, self).setUp()
+        super().setUp()
 
     @responses.activate
     def test_unlink_inactive_sap_learners_task_with_no_sap_channel(self):
@@ -1389,7 +1390,7 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
     """
     @factory.django.mute_signals(signals.post_save)
     def setUp(self):
-        super(TestMigrateEnterpriseUserRolesCommand, self).setUp()
+        super().setUp()
 
         data_api_access_group = factories.GroupFactory(name=ENTERPRISE_DATA_API_ACCESS_GROUP)
         enrollment_api_access_group = factories.GroupFactory(name=ENTERPRISE_ENROLLMENT_API_ACCESS_GROUP)

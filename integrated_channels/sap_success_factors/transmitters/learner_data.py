@@ -24,7 +24,7 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
         """
         By default, use the ``SAPSuccessFactorsAPIClient`` for learner data transmission to SAPSF.
         """
-        super(SapSuccessFactorsLearnerTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )
@@ -39,7 +39,7 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
         kwargs['app_label'] = 'sap_success_factors'
         kwargs['model_name'] = 'SapSuccessFactorsLearnerDataTransmissionAudit'
         kwargs['remote_user_id'] = 'sapsf_user_id'
-        super(SapSuccessFactorsLearnerTransmitter, self).transmit(payload, **kwargs)
+        super().transmit(payload, **kwargs)
 
     def handle_transmission_error(self, learner_data, client_exception):
         """Handle the case where the employee on SAPSF's side is marked as inactive."""
@@ -59,4 +59,4 @@ class SapSuccessFactorsLearnerTransmitter(LearnerTransmitter):
                     ecu.username, ecu.user_id, ecu.user_email, ecu.enterprise_customer
                 )
                 return
-        super(SapSuccessFactorsLearnerTransmitter, self).handle_transmission_error(learner_data, client_exception)
+        super().handle_transmission_error(learner_data, client_exception)

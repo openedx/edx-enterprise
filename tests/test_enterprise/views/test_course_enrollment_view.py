@@ -66,7 +66,7 @@ class TestCourseEnrollmentView(EmbargoAPIMixin, EnterpriseViewMixin, MessagesMix
         ]
         self.faker = FakerFactory.create()
         self.provider_id = self.faker.slug()  # pylint: disable=no-member
-        super(TestCourseEnrollmentView, self).setUp()
+        super().setUp()
 
     def _login(self):
         """

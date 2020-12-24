@@ -30,7 +30,7 @@ class TestCanvasApiClient(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestCanvasApiClient, self).setUp()
+        super().setUp()
         self.account_id = random.randint(1, 1000)
         self.canvas_email = "test@test.com"
         self.canvas_user_id = random.randint(1, 1000)

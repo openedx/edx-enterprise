@@ -42,7 +42,7 @@ class ServiceUserThrottle(UserRateThrottle):
         if request.user.username in service_users:
             self.update_throttle_scope()
 
-        return super(ServiceUserThrottle, self).allow_request(request, view)
+        return super().allow_request(request, view)
 
     def update_throttle_scope(self):
         """

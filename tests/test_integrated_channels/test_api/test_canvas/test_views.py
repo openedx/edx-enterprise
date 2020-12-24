@@ -17,7 +17,7 @@ class CanvasConfigurationViewSetTests(APITest):
     Tests for CanvasConfigurationViewSet REST endpoints
     """
     def setUp(self):
-        super(CanvasConfigurationViewSetTests, self).setUp()
+        super().setUp()
         self.user.is_superuser = True
         self.user.save()
 

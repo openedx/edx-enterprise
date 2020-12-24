@@ -22,7 +22,7 @@ from tableauserverclient.server.endpoint.exceptions import ServerResponseError
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
@@ -61,9 +61,9 @@ except ImportError:
 # Only create manual enrollments if running in edx-platform
 try:
     from common.djangoapps.student.api import (
-        create_manual_enrollment_audit,
-        UNENROLLED_TO_ENROLLED,
         UNENROLLED_TO_ALLOWEDTOENROLL,
+        UNENROLLED_TO_ENROLLED,
+        create_manual_enrollment_audit,
     )
 except ImportError:
     create_manual_enrollment_audit = None
@@ -71,7 +71,7 @@ except ImportError:
     UNENROLLED_TO_ALLOWEDTOENROLL = None
 
 LOGGER = logging.getLogger(__name__)
-
+User = auth.get_user_model()
 try:
     from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
 except ImportError as exception:
@@ -170,7 +170,7 @@ class NotConnectedToOpenEdX(Exception):
         Log a warning and initialize the exception.
         """
         LOGGER.warning('edx-enterprise unexpectedly failed as if not installed in an OpenEdX platform')
-        super(NotConnectedToOpenEdX, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class CourseCatalogApiError(Exception):
@@ -622,9 +622,9 @@ def get_enterprise_customer_or_404(enterprise_uuid):
     try:
         enterprise_uuid = UUID(enterprise_uuid)
         return EnterpriseCustomer.objects.get(uuid=enterprise_uuid)  # pylint: disable=no-member
-    except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist):
+    except (TypeError, ValueError, EnterpriseCustomer.DoesNotExist) as no_customer_error:
         LOGGER.error('Unable to find enterprise customer for UUID: [%s]', enterprise_uuid)
-        raise Http404
+        raise Http404 from no_customer_error
 
 
 def get_enterprise_customer_by_slug_or_404(slug):
@@ -1228,8 +1228,8 @@ def validate_email_to_link(email, raw_email=None, message_template=None, ignore_
     message_template = message_template if message_template is not None else ValidationMessages.INVALID_EMAIL
     try:
         validate_email(email)
-    except ValidationError:
-        raise ValidationError(message_template.format(argument=raw_email))
+    except ValidationError as validation_error:
+        raise ValidationError(message_template.format(argument=raw_email)) from validation_error
 
     existing_record = enterprise_customer_user_model().objects.get_link_by_email(email)
     if existing_record and not ignore_existing:

@@ -29,7 +29,7 @@ class TestSapSuccessFactorsContentMetadataTransmitter(unittest.TestCase):
     """
 
     def setUp(self):
-        super(TestSapSuccessFactorsContentMetadataTransmitter, self).setUp()
+        super().setUp()
         self.url_base = 'http://test.successfactors.com/'
         self.oauth_api_path = 'learning/oauth-api/rest/v1/token'
         self.completion_status_api_path = 'learning/odatav4/public/admin/ocn/v1/current-user/item/learning-event'

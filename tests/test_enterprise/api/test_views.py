@@ -136,7 +136,7 @@ class TestEnterpriseAPIViews(APITest):
     maxDiff = None
 
     def setUp(self):
-        super(TestEnterpriseAPIViews, self).setUp()
+        super().setUp()
         self.set_jwt_cookie(ENTERPRISE_OPERATOR_ROLE, ALL_ACCESS_CONTEXT)
 
     # pylint: disable=arguments-differ

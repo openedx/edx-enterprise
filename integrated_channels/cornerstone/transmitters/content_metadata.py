@@ -13,7 +13,7 @@ class CornerstoneContentMetadataTransmitter(ContentMetadataTransmitter):
     """
 
     def __init__(self, enterprise_configuration, client=CornerstoneAPIClient):
-        super(CornerstoneContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

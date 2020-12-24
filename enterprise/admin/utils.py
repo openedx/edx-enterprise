@@ -5,7 +5,7 @@ Admin utilities.
 
 import unicodecsv
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.exceptions import ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger
 
@@ -15,6 +15,7 @@ from enterprise.utils import ValidationMessages
 DOT = '.'
 PAGES_ON_EACH_SIDE = 3
 PAGES_ON_ENDS = 2
+User = auth.get_user_model()
 
 
 class UrlNames:
@@ -45,8 +46,8 @@ def validate_csv(file_stream, expected_columns=None):
     try:
         reader = unicodecsv.DictReader(file_stream, encoding="utf-8")
         reader_fieldnames = reader.fieldnames
-    except (unicodecsv.Error, UnicodeDecodeError):
-        raise ValidationError(ValidationMessages.INVALID_ENCODING)
+    except (unicodecsv.Error, UnicodeDecodeError) as error:
+        raise ValidationError(ValidationMessages.INVALID_ENCODING) from error
 
     if expected_columns and set(expected_columns) - set(reader_fieldnames):
         raise ValidationError(ValidationMessages.MISSING_EXPECTED_COLUMNS.format(

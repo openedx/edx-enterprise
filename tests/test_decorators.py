@@ -41,7 +41,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         """
         Set up test environment.
         """
-        super(TestEnterpriseDecorators, self).setUp()
+        super().setUp()
         faker = FakerFactory.create()
         self.provider_id = faker.slug()  # pylint: disable=no-member
         self.uuid = faker.uuid4()  # pylint: disable=no-member

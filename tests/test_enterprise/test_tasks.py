@@ -32,7 +32,7 @@ class TestEnterpriseTasks(unittest.TestCase):
             user_id=self.user.id,
             enterprise_customer=self.enterprise_customer,
         )
-        super(TestEnterpriseTasks, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.models.EnterpriseCustomer.catalog_contains_course')
     def test_create_enrollment_task_course_in_catalog(self, mock_contains_course):

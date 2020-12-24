@@ -5,13 +5,14 @@ Transmits information about an enterprise's course catalog to connected Integrat
 
 from logging import getLogger
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
 from integrated_channels.integrated_channel.tasks import transmit_content_metadata
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()
 
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):
@@ -30,7 +31,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             metavar='ENTERPRISE_CATALOG_API_USERNAME',
             help='Use this user to access the Course Catalog API.'
         )
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
     def handle(self, *args, **options):
         """
@@ -41,8 +42,8 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         # Before we do a whole bunch of database queries, make sure that the user we were passed exists.
         try:
             User.objects.get(username=username)
-        except User.DoesNotExist:
-            raise CommandError('A user with the username {} was not found.'.format(username))
+        except User.DoesNotExist as no_user_error:
+            raise CommandError('A user with the username {} was not found.'.format(username)) from no_user_error
 
         channels = self.get_integrated_channels(options)
 

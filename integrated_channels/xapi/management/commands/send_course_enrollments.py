@@ -48,7 +48,7 @@ class Command(BaseCommand):
             required=False,
             help='Send xAPI analytics for this enterprise customer only.'
         )
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
     @staticmethod
     def parse_arguments(*args, **options):  # pylint: disable=unused-argument
@@ -74,10 +74,10 @@ class Command(BaseCommand):
             try:
                 # pylint: disable=no-member
                 enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
-            except EnterpriseCustomer.DoesNotExist:
+            except EnterpriseCustomer.DoesNotExist as no_user_error:
                 raise CommandError('Enterprise customer with uuid "{enterprise_customer_uuid}" does not exist.'.format(
                     enterprise_customer_uuid=enterprise_customer_uuid
-                ))
+                )) from no_user_error
 
         return days, enterprise_customer
 
@@ -96,10 +96,10 @@ class Command(BaseCommand):
                     active=True,
                     enterprise_customer=enterprise_customer
                 )
-            except XAPILRSConfiguration.DoesNotExist:
+            except XAPILRSConfiguration.DoesNotExist as no_config_error:
                 raise CommandError('No xAPI Configuration found for "{enterprise_customer}"'.format(
                     enterprise_customer=enterprise_customer.name
-                ))
+                )) from no_config_error
 
             # Send xAPI analytics data to the configured LRS
             self.send_xapi_statements(lrs_configuration, days)

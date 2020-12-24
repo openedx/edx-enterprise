@@ -28,7 +28,7 @@ class MigrateEnterpriseCatalogsCommandTests(TestCase):
         self.enterprise_catalog = EnterpriseCustomerCatalogFactory(
             enterprise_customer=self.enterprise_customer
         )
-        super(MigrateEnterpriseCatalogsCommandTests, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.management.commands.migrate_enterprise_catalogs.LOGGER')
     @mock.patch('enterprise.management.commands.migrate_enterprise_catalogs.EnterpriseCatalogApiClient')

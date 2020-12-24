@@ -23,7 +23,7 @@ class TestUserFilterBackend(APITest):
     """
 
     def setUp(self):
-        super(TestUserFilterBackend, self).setUp()
+        super().setUp()
         self.enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
         self.enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
@@ -86,7 +86,7 @@ class TestEnterpriseCustomerUserFilterBackend(APITest):
     """
 
     def setUp(self):
-        super(TestEnterpriseCustomerUserFilterBackend, self).setUp()
+        super().setUp()
         enterprise_customer = factories.EnterpriseCustomerFactory()
         factories.EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer, user_id=self.user.id)
         self.url = settings.TEST_SERVER + reverse('enterprise-learner-list')
@@ -130,7 +130,7 @@ class TestEnterpriseLinkedUserFilterBackend(APITest):
     """
 
     def setUp(self):
-        super(TestEnterpriseLinkedUserFilterBackend, self).setUp()
+        super().setUp()
         self.url = settings.TEST_SERVER + ENTERPRISE_CUSTOMER_LIST_ENDPOINT
         self.enterprise_customer_data = {
             'active': True,

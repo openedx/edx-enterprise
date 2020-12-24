@@ -23,7 +23,7 @@ from six.moves.urllib.parse import urljoin  # pylint: disable=import-error,ungro
 
 from django.apps import apps
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.core import mail
 from django.core.exceptions import NON_FIELD_ERRORS, ObjectDoesNotExist, ValidationError
@@ -79,7 +79,7 @@ except ImportError:
     update_user = None
 
 LOGGER = getLogger(__name__)
-
+User = auth.get_user_model()
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
 
 
@@ -99,7 +99,7 @@ class EnterpriseCustomerManager(models.Manager):
         """
         Return a new QuerySet object. Filters out inactive Enterprise Customers.
         """
-        return super(EnterpriseCustomerManager, self).get_queryset().filter(active=True)
+        return super().get_queryset().filter(active=True)
 
 
 @python_2_unicode_compatible
@@ -672,16 +672,16 @@ class EnterpriseCustomerUserManager(models.Manager):
             linked_only (Bool): create a manager with linked learners only if True else all(linked and unlinked) records
         """
         self.linked_only = kwargs.pop('linked_only', True)
-        super(EnterpriseCustomerUserManager, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_queryset(self):
         """
         Return linked or unlinked learners based on how the manager is created.
         """
         if self.linked_only:
-            return super(EnterpriseCustomerUserManager, self).get_queryset().filter(linked=True)
+            return super().get_queryset().filter(linked=True)
 
-        return super(EnterpriseCustomerUserManager, self).get_queryset()
+        return super().get_queryset()
 
     def get(self, **kwargs):
         """
@@ -831,7 +831,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
                 # No existing record found so do nothing and proceed with normal operation
                 pass
 
-        return super(EnterpriseCustomerUser, self).save(*args, **kwargs)
+        return super().save(*args, **kwargs)
 
     @property
     def user(self):
@@ -1457,9 +1457,9 @@ class EnterpriseCourseEnrollmentManager(models.Manager):
         """
         Override to return only those enrollment records for which learner is linked to an enterprise.
         """
-        return super(
-            EnterpriseCourseEnrollmentManager, self
-        ).get_queryset().select_related('enterprise_customer_user').filter(enterprise_customer_user__linked=True)
+        return super().get_queryset().select_related('enterprise_customer_user').filter(
+            enterprise_customer_user__linked=True
+        )
 
 
 @python_2_unicode_compatible
@@ -2475,7 +2475,7 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         if self.role.name == ENTERPRISE_OPERATOR_ROLE:  # pylint: disable=no-member
             return [ALL_ACCESS_CONTEXT]
 
-        return super(SystemWideEnterpriseUserRoleAssignment, self).get_context()
+        return super().get_context()
 
     def __str__(self):
         """

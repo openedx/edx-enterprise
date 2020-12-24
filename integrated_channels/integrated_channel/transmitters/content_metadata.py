@@ -29,7 +29,7 @@ class ContentMetadataTransmitter(Transmitter):
         """
         By default, use the abstract integrated channel API client which raises an error when used if not subclassed.
         """
-        super(ContentMetadataTransmitter, self).__init__(
+        super().__init__(
             enterprise_configuration=enterprise_configuration,
             client=client
         )

@@ -45,7 +45,7 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         jwt_builder = mock.patch('enterprise.api_client.lms.JwtBuilder', mock.Mock())
         self.jwt_builder = jwt_builder.start()
         self.addCleanup(jwt_builder.stop)
-        super(TestCanvasContentMetadataExporter, self).setUp()
+        super().setUp()
 
     @mock.patch('enterprise.api_client.enterprise_catalog.EnterpriseCatalogApiClient.get_content_metadata')
     def test_content_exporter_export(self, mock_get_content_metadata):

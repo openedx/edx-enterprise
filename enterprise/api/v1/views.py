@@ -498,7 +498,7 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                     )
                 )
                 LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
-                raise EnrollmentModificationException(msg)
+                raise EnrollmentModificationException(msg) from exc
             finally:
                 enterprise_enrollment.license.revoke()
         else:
@@ -524,13 +524,13 @@ class LicensedEnterpriseCourseEnrollmentViewSet(EnterpriseWrapperApiViewSet):
                     )
                 )
                 LOGGER.error('{msg}: {exc}'.format(msg=msg, exc=exc))
-                raise EnrollmentModificationException(msg)
+                raise EnrollmentModificationException(msg) from exc
             finally:
                 enterprise_enrollment.license.revoke()
 
     @action(methods=['post'], detail=False)
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request: request.data.get('enterprise_id'))
-    def license_revoke(self, request, *args, **kwargs):
+    def license_revoke(self, request, *args, **kwargs):  # pylint: disable=W0613
         """
         Changes the mode for a user's licensed enterprise course enrollments to the "audit" course mode,
         or unenroll the user if no audit mode exists for a given course.
@@ -689,13 +689,13 @@ class EnterpriseCustomerCatalogViewSet(EnterpriseReadOnlyModelViewSet):
 
     @permission_required('enterprise.can_view_catalog', fn=lambda request, *args, **kwargs: None)
     def list(self, request, *args, **kwargs):
-        return super(EnterpriseCustomerCatalogViewSet, self).list(request, *args, **kwargs)  # pylint: disable=no-member
+        return super().list(request, *args, **kwargs)  # pylint: disable=no-member
 
     @permission_required(
         'enterprise.can_view_catalog',
         fn=lambda request, *args, **kwargs: get_enterprise_customer_from_catalog_id(kwargs['pk']))
     def retrieve(self, request, *args, **kwargs):
-        return super(EnterpriseCustomerCatalogViewSet, self).retrieve(request, *args, **kwargs)
+        return super().retrieve(request, *args, **kwargs)
 
     def get_serializer_class(self):
         view_action = getattr(self, 'action', None)
@@ -837,14 +837,14 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def retrieve(self, request, *args, **kwargs):
         # pylint: disable=no-member
-        return super(EnterpriseCustomerReportingConfigurationViewSet, self).retrieve(request, *args, **kwargs)
+        return super().retrieve(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_enterprise_customer_from_user_id(request.user.id))
     def list(self, request, *args, **kwargs):
         # pylint: disable=no-member
-        return super(EnterpriseCustomerReportingConfigurationViewSet, self).list(request, *args, **kwargs)
+        return super().list(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
@@ -863,21 +863,21 @@ class EnterpriseCustomerReportingConfigurationViewSet(EnterpriseReadWriteModelVi
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def update(self, request, *args, **kwargs):
         # pylint: disable=no-member
-        return super(EnterpriseCustomerReportingConfigurationViewSet, self).update(request, *args, **kwargs)
+        return super().update(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def partial_update(self, request, *args, **kwargs):
         # pylint: disable=no-member
-        return super(EnterpriseCustomerReportingConfigurationViewSet, self).partial_update(request, *args, **kwargs)
+        return super().partial_update(request, *args, **kwargs)
 
     @permission_required(
         'enterprise.can_manage_reporting_config',
         fn=lambda request, *args, **kwargs: get_ent_cust_from_report_config_uuid(kwargs['uuid']))
     def destroy(self, request, *args, **kwargs):
         # pylint: disable=no-member
-        return super(EnterpriseCustomerReportingConfigurationViewSet, self).destroy(request, *args, **kwargs)
+        return super().destroy(request, *args, **kwargs)
 
 
 class CatalogQueryView(APIView):

@@ -10,7 +10,7 @@ from config_models.models import ConfigurationModel
 from jsonfield import JSONField
 from simple_history.models import HistoricalRecords
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 from django.utils.translation import ugettext_lazy as _
@@ -24,6 +24,7 @@ from integrated_channels.cornerstone.transmitters.learner_data import Cornerston
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()
 
 
 # pylint: disable=feature-toggle-needs-doc
@@ -245,6 +246,7 @@ class CornerstoneLearnerDataTransmissionAudit(TimeStampedModel):
             'sessionToken': self.session_token,
             'status': 'Completed' if self.grade in ['Pass', 'Fail'] else 'In Progress',
             'completionDate':
+                # pylint: disable=E1123
                 self.completed_timestamp.replace(microsecond=0).isoformat() if self.completed_timestamp else None,
         }
         if self.grade != 'In Progress':

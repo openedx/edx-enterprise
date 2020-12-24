@@ -42,7 +42,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
-        super(TestGrantDataSharingPermissions, self).setUp()
+        super().setUp()
 
     url = reverse('grant_data_sharing_permissions')
 
@@ -827,7 +827,7 @@ class TestProgramDataSharingPermissions(TestCase):
             'program_uuid': 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
             'data_sharing_consent': 'true',
         }
-        super(TestProgramDataSharingPermissions, self).setUp()
+        super().setUp()
 
     def _assert_get_returns_404_with_mock(self, url, get_params):
         """
@@ -1093,7 +1093,7 @@ class TestGrantDataSharingPermissionsWithDB(TestCase):
             modal_affirm_decline_text='I decline',
             modal_abort_decline_text='View the data sharing policy',
         )
-        super(TestGrantDataSharingPermissionsWithDB, self).setUp()
+        super().setUp()
 
     def _login(self):
         """

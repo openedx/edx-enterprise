@@ -3,12 +3,14 @@
 Transmits consenting enterprise learner data to the integrated channels.
 """
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
 from integrated_channels.integrated_channel.management.commands import IntegratedChannelCommandMixin
 from integrated_channels.integrated_channel.tasks import transmit_subsection_learner_data
+
+User = auth.get_user_model()
 
 
 class Command(IntegratedChannelCommandMixin, BaseCommand):
@@ -35,7 +37,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
             metavar='LMS_API_USERNAME',
             help=_('Username of a user authorized to fetch grades from the LMS API.'),
         )
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
     def handle(self, *args, **options):
         """
@@ -45,8 +47,10 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         api_username = options['api_user']
         try:
             User.objects.get(username=api_username)
-        except User.DoesNotExist:
-            raise CommandError(_('A user with the username {username} was not found.').format(username=api_username))
+        except User.DoesNotExist as no_user_error:
+            raise CommandError(
+                _('A user with the username {username} was not found.').format(username=api_username)
+            ) from no_user_error
 
         # Transmit the learner data to each integrated channel
         for integrated_channel in self.get_integrated_channels(options):

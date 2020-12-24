@@ -28,7 +28,7 @@ class TestImmutableStateSerializer(APITest):
 
         Populate data base for api testing.
         """
-        super(TestImmutableStateSerializer, self).setUp()
+        super().setUp()
         self.instance = None
         self.data = {"data": "data"}
         self.validated_data = self.data
@@ -78,7 +78,7 @@ class TestEnterpriseCustomerUserWriteSerializer(APITest):
         """
         Perform operations common to all tests.
         """
-        super(TestEnterpriseCustomerUserWriteSerializer, self).setUp()
+        super().setUp()
         self.user.is_staff = True
         self.user.save()
         self.user.user_permissions.add(self.permission)

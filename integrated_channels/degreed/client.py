@@ -35,7 +35,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             enterprise_configuration (DegreedEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with Degreed
         """
-        super(DegreedAPIClient, self).__init__(enterprise_configuration)
+        super().__init__(enterprise_configuration)
         self.global_degreed_config = apps.get_model('degreed', 'DegreedGlobalConfiguration').current()
         self.session = None
         self.expires_at = None
@@ -150,7 +150,7 @@ class DegreedAPIClient(IntegratedChannelApiClient):
                     error=exc.__class__.__name__,
                     message=str(exc)
                 )
-            )
+            ) from exc
 
         if status_code >= 400:
             raise ClientError(
@@ -247,5 +247,5 @@ class DegreedAPIClient(IntegratedChannelApiClient):
             data = response.json()
             expires_at = data['expires_in'] + int(time.time())
             return data['access_token'], datetime.datetime.utcfromtimestamp(expires_at)
-        except (KeyError, ValueError):
-            raise ClientError(response.text, response.status_code)
+        except (KeyError, ValueError) as error:
+            raise ClientError(response.text, response.status_code) from error

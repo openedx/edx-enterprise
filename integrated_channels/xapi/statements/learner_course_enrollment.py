@@ -4,7 +4,7 @@
 xAPI statement for learner course enrollment.
 """
 
-from tincan import LanguageMap, Verb
+from tincan import LanguageMap, Verb  # pylint: disable=E0401
 
 from integrated_channels.xapi.constants import X_API_VERB_REGISTERED
 from integrated_channels.xapi.statements.base import EnterpriseStatement
@@ -30,7 +30,7 @@ class LearnerCourseEnrollmentStatement(EnterpriseStatement):
             verb=self.get_verb(),
             object=self.get_object(site.domain, course_overview, object_type)
         )
-        super(LearnerCourseEnrollmentStatement, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def get_verb(self):
         """

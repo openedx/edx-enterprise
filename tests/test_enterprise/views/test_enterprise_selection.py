@@ -30,7 +30,7 @@ class TestEnterpriseSelectionView(EnterpriseFormViewTestCase):
         self.user.set_password("QWERTY")
         self.user.save()
         self.client = Client()
-        super(TestEnterpriseSelectionView, self).setUp()
+        super().setUp()
 
         self.success_url = '/enterprise/grant_data_sharing_permissions'
         enterprises = ['Gryffindor', 'Hufflepuff', 'Ravenclaw', 'Slytherin']

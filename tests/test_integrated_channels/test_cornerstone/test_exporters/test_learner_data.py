@@ -62,7 +62,7 @@ class TestCornerstoneLearnerExporter(unittest.TestCase):
         course_catalog_client = course_catalog_api_client_mock.start()
         setup_course_catalog_api_client_mock(course_catalog_client)
         self.addCleanup(course_catalog_api_client_mock.stop)
-        super(TestCornerstoneLearnerExporter, self).setUp()
+        super().setUp()
 
     def _setup_enterprise_enrollment(self, user, course_id, course_key):
         """

@@ -8,7 +8,7 @@ from uuid import UUID
 import factory
 from faker import Factory as FakerFactory
 
-from django.contrib.auth.models import AnonymousUser, Group, User
+from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.utils import timezone
 
@@ -51,6 +51,7 @@ from integrated_channels.sap_success_factors.models import (
 from integrated_channels.xapi.models import XAPILearnerDataTransmissionAudit, XAPILRSConfiguration
 
 FAKER = FakerFactory.create()
+User = auth.get_user_model()
 
 
 # pylint: disable=no-member
@@ -204,7 +205,7 @@ class GroupFactory(factory.django.DjangoModelFactory):
     """
 
     class Meta:
-        model = Group
+        model = auth.models.Group
         django_get_or_create = ('name', )
 
     name = factory.Sequence(u'group{0}'.format)
@@ -247,7 +248,7 @@ class AnonymousUserFactory(factory.Factory):
         Meta for AnonymousUserFactory.
         """
 
-        model = AnonymousUser
+        model = auth.models.AnonymousUser
 
 
 class EnterpriseCustomerIdentityProviderFactory(factory.django.DjangoModelFactory):

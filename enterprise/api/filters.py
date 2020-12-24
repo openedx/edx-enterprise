@@ -5,7 +5,9 @@ Filters for enterprise API.
 
 from rest_framework import filters
 
-from django.contrib.auth.models import User
+from django.contrib import auth
+
+User = auth.get_user_model()
 
 
 class UserFilterBackend(filters.BaseFilterBackend):

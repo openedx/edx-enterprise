@@ -32,7 +32,7 @@ class TestConsentAPIPermissions(APITest):
         """
         Perform operations common to all tests.
         """
-        super(TestConsentAPIPermissions, self).setUp()
+        super().setUp()
         discovery_client_class = mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
         self.discovery_client = discovery_client_class.start().return_value
         self.discovery_client.is_course_in_catalog.return_value = True

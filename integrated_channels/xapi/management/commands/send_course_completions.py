@@ -7,7 +7,7 @@ from logging import getLogger
 
 import six
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
 
 from enterprise.api_client.discovery import get_course_catalog_api_service_client
@@ -27,6 +27,7 @@ except ImportError:
     CourseOverview = None
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()
 
 
 class Command(BaseCommand):
@@ -53,7 +54,7 @@ class Command(BaseCommand):
             required=False,
             help='Send xAPI analytics for this enterprise customer only.'
         )
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
     @staticmethod
     def parse_arguments(*args, **options):  # pylint: disable=unused-argument
@@ -79,10 +80,10 @@ class Command(BaseCommand):
             try:
                 # pylint: disable=no-member
                 enterprise_customer = EnterpriseCustomer.objects.get(uuid=enterprise_customer_uuid)
-            except EnterpriseCustomer.DoesNotExist:
+            except EnterpriseCustomer.DoesNotExist as no_customer_error:
                 raise CommandError('Enterprise customer with uuid "{enterprise_customer_uuid}" does not exist.'.format(
                     enterprise_customer_uuid=enterprise_customer_uuid
-                ))
+                )) from no_customer_error
 
         return days, enterprise_customer
 
@@ -101,10 +102,10 @@ class Command(BaseCommand):
                     active=True,
                     enterprise_customer=enterprise_customer
                 )
-            except XAPILRSConfiguration.DoesNotExist:
+            except XAPILRSConfiguration.DoesNotExist as no_config_exception:
                 raise CommandError('No xAPI Configuration found for "{enterprise_customer}"'.format(
                     enterprise_customer=enterprise_customer.name
-                ))
+                )) from no_config_exception
 
             # Send xAPI analytics data to the configured LRS
             self.send_xapi_statements(lrs_configuration, days)

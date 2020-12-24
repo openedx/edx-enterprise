@@ -6,7 +6,7 @@ import logging
 from time import sleep
 
 from django.apps import apps
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
 
 from enterprise.constants import (
@@ -29,6 +29,7 @@ from enterprise.models import (
 )
 
 LOGGER = logging.getLogger(__name__)
+User = auth.get_user_model()
 
 
 class Command(BaseCommand):

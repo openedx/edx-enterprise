@@ -5,7 +5,7 @@ Django management command for migrating EnterpriseCustomerCatalog data to new se
 
 import logging
 
-from django.contrib.auth.models import User
+from django.contrib import auth
 from django.core.management.base import BaseCommand, CommandError
 from django.utils.translation import ugettext as _
 
@@ -13,6 +13,7 @@ from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.models import EnterpriseCustomerCatalog
 
 LOGGER = logging.getLogger(__name__)
+User = auth.get_user_model()
 
 
 class Command(BaseCommand):
@@ -35,14 +36,16 @@ class Command(BaseCommand):
             metavar='ENT_CATALOG_UUIDS',
             help=_('Comma separated list of uuids of enterprise catalogs to migrate.'),
         )
-        super(Command, self).add_arguments(parser)
+        super().add_arguments(parser)
 
     def handle(self, *args, **options):
         api_username = options['api_user']
         try:
             user = User.objects.get(username=api_username)
-        except User.DoesNotExist:
-            raise CommandError(_('A user with the username {username} was not found.').format(username=api_username))
+        except User.DoesNotExist as user_exception:
+            raise CommandError(
+                _('A user with the username {username} was not found.').format(username=api_username)
+            ) from user_exception
 
         client = EnterpriseCatalogApiClient(user=user)
 

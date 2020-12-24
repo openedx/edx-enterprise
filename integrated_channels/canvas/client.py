@@ -48,7 +48,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             enterprise_configuration (CanvasEnterpriseCustomerConfiguration): An enterprise customers's
             configuration model for connecting with Canvas
         """
-        super(CanvasAPIClient, self).__init__(enterprise_configuration)
+        super().__init__(enterprise_configuration)
         self.config = apps.get_app_config('canvas')
         self.session = None
         self.expires_at = None
@@ -281,10 +281,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             integration_id = json.loads(
                 data.decode("utf-8")
             )['course']['integration_id']
-        except KeyError:
-            raise ClientError("Could not transmit data, no integration ID present.", HTTPStatus.NOT_FOUND.value)
-        except AttributeError:
-            raise ClientError("Unable to decode data.", HTTPStatus.BAD_REQUEST.value)
+        except KeyError as error:
+            raise ClientError(
+                "Could not transmit data, no integration ID present.", HTTPStatus.NOT_FOUND.value
+            ) from error
+        except AttributeError as error:
+            raise ClientError(
+                "Unable to decode data.", HTTPStatus.BAD_REQUEST.value
+            ) from error
 
         return integration_id
 
@@ -349,11 +353,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         try:
             canvas_user_id = get_users_by_email_response[0]['id']
-        except (KeyError, IndexError):
+        except (KeyError, IndexError) as error:
             raise ClientError(
                 "No Canvas user ID found associated with email: {}".format(user_email),
                 HTTPStatus.NOT_FOUND.value
-            )
+            ) from error
         return canvas_user_id
 
     def _get_canvas_user_courses_by_id(self, user_id):
@@ -410,13 +414,13 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     break
             # The validation check above should ensure that we have a 200 response from Canvas, but sanity catch if we
             # have a unexpected response format
-            except (KeyError, ValueError, TypeError):
+            except (KeyError, ValueError, TypeError) as error:
                 raise ClientError(
                     "Something went wrong retrieving assignments from Canvas. Got response: {}".format(
                         resp.text,
                     ),
                     resp.status_code
-                )
+                ) from error
 
         # Canvas requires a course assignment for a learner to be assigned a grade.
         # If no assignment has been made yet, create it.
@@ -434,13 +438,13 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
             try:
                 assignment_id = create_assignment_resp.json()['id']
-            except (ValueError, KeyError):
+            except (ValueError, KeyError) as error:
                 raise ClientError(
                     "Something went wrong creating an assignment on Canvas. Got response: {}".format(
                         create_assignment_resp.text,
                     ),
                     create_assignment_resp.status_code
-                )
+                ) from error
         return assignment_id
 
     def _handle_canvas_assignment_submission(self, grade, course_id, assignment_id, canvas_user_id):
@@ -555,5 +559,5 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         try:
             data = auth_response.json()
             return data['access_token'], data["expires_in"]
-        except (KeyError, ValueError):
-            raise ClientError(auth_response.text, auth_response.status_code)
+        except (KeyError, ValueError) as error:
+            raise ClientError(auth_response.text, auth_response.status_code) from error

@@ -85,9 +85,10 @@ class BlackboardCompleteOAuthView(generics.ListAPIView):
             enterprise_config = BlackboardEnterpriseCustomerConfiguration.objects.get(
                 enterprise_customer=enterprise_customer
             )
-        except BlackboardEnterpriseCustomerConfiguration.DoesNotExist:
-            raise NotFound("No Blackboard configuration found for enterprise: {}"
-                           .format(enterprise_customer_uuid))
+        except BlackboardEnterpriseCustomerConfiguration.DoesNotExist as error:
+            raise NotFound(
+                "No Blackboard configuration found for enterprise: {}".format(enterprise_customer_uuid)
+            ) from error
 
         auth_header = self._create_auth_header(enterprise_config)
 

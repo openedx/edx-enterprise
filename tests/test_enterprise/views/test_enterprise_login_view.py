@@ -31,7 +31,7 @@ class TestEnterpriseLoginView(EnterpriseFormViewTestCase):
     template_path = 'enterprise.views.EnterpriseLoginView.template_name'
 
     def setUp(self):
-        super(TestEnterpriseLoginView, self).setUp()
+        super().setUp()
         self.client = Client()
 
     def test_view_get(self):
