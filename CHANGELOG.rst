@@ -16,6 +16,10 @@ Change Log
 Unreleased
 -----------
 
+[3.16.4]
+--------
+* Add SuccessFactors Customer Configuration API endpoint.
+
 [3.16.3]
 --------
 
