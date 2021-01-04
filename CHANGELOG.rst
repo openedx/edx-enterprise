@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.16.6]
+--------
+
+* Improved error handling for SAP Success Factors OAuth2 response.
+
 [3.16.5]
 --------
 
