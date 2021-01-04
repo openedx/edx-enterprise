@@ -7,7 +7,7 @@ from logging import getLogger
 from integrated_channels.integrated_channel.exporters.content_metadata import ContentMetadataExporter
 
 LOGGER = getLogger(__name__)
-BLACKBOARD_COURSE_CONTENT_NAME = 'edX Integration'
+BLACKBOARD_COURSE_CONTENT_NAME = 'edX Course Details'
 
 
 class BlackboardContentMetadataExporter(ContentMetadataExporter):
@@ -71,7 +71,7 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         """
         title = content_metadata_item.get('title', None)
         return {
-            'title': 'edX Course Details',
+            'title': BLACKBOARD_COURSE_CONTENT_NAME,
             'availability': 'Yes',
             'contentHandler': {
                 'id': 'resource/x-bb-document',

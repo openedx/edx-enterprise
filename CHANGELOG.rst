@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.16.5]
+--------
+
+* Refactoring title content metadata in integrated course creation within the Blackboard integrated channel.
+
 [3.16.4]
 --------
 * Add SuccessFactors Customer Configuration API endpoint.
