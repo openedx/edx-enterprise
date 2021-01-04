@@ -16,6 +16,12 @@ Change Log
 Unreleased
 -----------
 
+[3.16.3]
+--------
+
+* Update unique constraints for pending Enterprise learners/admins to support users who may be pending for more than 1 Enterprise.
+* Fix ``handle_user_post_save`` to account for the potential of being a pending learner/admin for more than 1 Enterprise.
+
 [3.16.2]
 --------
 

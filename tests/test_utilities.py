@@ -1840,8 +1840,9 @@ class TestValidateEmailToLink(unittest.TestCase):
     def test_validate_email_to_link_existing_pending_record(self, ignore_existing):
         email = FAKER.email()  # pylint: disable=no-member
         existing_record = PendingEnterpriseCustomerUserFactory(user_email=email)
-        assert PendingEnterpriseCustomerUser.objects.get(user_email=email) == existing_record, \
-            "Precondition check - should have PendingEnterpriseCustomerUser"
+        assert PendingEnterpriseCustomerUser.objects.get(
+            user_email=email, enterprise_customer=existing_record.enterprise_customer,
+        ) == existing_record, "Precondition check - should have PendingEnterpriseCustomerUser"
         assert not EnterpriseCustomerUser.objects.exists(), \
             "Precondition check - should not have EnterpriseCustomerUser"
 

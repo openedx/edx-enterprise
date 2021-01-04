@@ -708,7 +708,8 @@ class EnterpriseCustomerUserManager(models.Manager):
             pass
 
         try:
-            return PendingEnterpriseCustomerUser.objects.get(user_email=user_email)
+            # return the first element in case of admin/learner with multiple pending enterprise associations.
+            return PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).first()
         except PendingEnterpriseCustomerUser.DoesNotExist:
             pass
 
@@ -1103,12 +1104,22 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
     """  # pylint: enable=line-too-long
 
     enterprise_customer = models.ForeignKey(EnterpriseCustomer, blank=False, null=False, on_delete=models.CASCADE)
-    user_email = models.EmailField(null=False, blank=False, unique=True)
+    user_email = models.EmailField(null=False, blank=False)
     history = HistoricalRecords()
 
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user_email', 'enterprise_customer'],
+                name='unique user and EnterpriseCustomer',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user_email', 'enterprise_customer']),
+            models.Index(fields=['user_email']),
+        ]
 
     def link_pending_enterprise_user(self, user, is_user_created):
         """
@@ -2563,7 +2574,16 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
     class Meta:
         app_label = 'enterprise'
         ordering = ['created']
-        unique_together = (('enterprise_customer', 'user_email'),)
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user_email', 'enterprise_customer'],
+                name='unique pending admin user and EnterpriseCustomer',
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['user_email', 'enterprise_customer']),
+            models.Index(fields=['user_email']),
+        ]
 
     @cached_property
     def admin_registration_url(self):

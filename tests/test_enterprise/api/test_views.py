@@ -431,7 +431,7 @@ class TestEnterpriseAPIViews(APITest):
 
     @ddt.data(
         {'is_staff': True, 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
-        {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
+        {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
         {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
         {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
@@ -457,7 +457,7 @@ class TestEnterpriseAPIViews(APITest):
         new_user_email = 'newuser@example.com'
         data = {
             'enterprise_customer': FAKE_UUIDS[0],
-            'user_email': 'newuser@example.com',
+            'user_email': new_user_email,
         }
         if user_exists:
             user = factories.UserFactory(email=new_user_email)
