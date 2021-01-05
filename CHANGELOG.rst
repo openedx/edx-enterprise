@@ -16,6 +16,12 @@ Change Log
 Unreleased
 -----------
 
+[3.17.0]
+--------
+
+* Listen for ``student.CourseEnrollment`` unenrollment signal and delete associated
+  ``EnterpriseCourseEnrollment`` record if one exists (we will have a historical record of the deletion).
+
 [3.16.11]
 ---------
 
