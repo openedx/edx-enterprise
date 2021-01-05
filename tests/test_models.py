@@ -141,6 +141,23 @@ class TestEnterpriseCourseEnrollment(unittest.TestCase):
         """
         self.assertIsNone(self.enrollment.course_enrollment)
 
+    def test_unenroll_user_from_course(self):
+        """
+        Calling ``unenroll_user_from_course()`` should cause the EnterpriseCourseEnrollment record
+        to be deleted.
+        """
+        self.enrollment.unenroll_user_from_course(
+            self.enterprise_customer_user,
+            self.course_id,
+        )
+
+        self.assertFalse(
+            EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=self.enterprise_customer_user,
+                course_id=self.course_id,
+            ).exists()
+        )
+
 
 @mark.django_db
 class TestLicensedEnterpriseCourseEnrollment(unittest.TestCase):

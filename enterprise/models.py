@@ -1034,7 +1034,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
         """
         enrollment_api_client = EnrollmentApiClient()
         if enrollment_api_client.unenroll_user_from_course(self.username, course_run_id):
-            EnterpriseCourseEnrollment.objects.filter(enterprise_customer_user=self, course_id=course_run_id).delete()
+            EnterpriseCourseEnrollment.unenroll_user_from_course(self, course_run_id)
             return True
         return False
 
@@ -1615,6 +1615,17 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
                 )
             )
         return enterprise_course_enrollment_id
+
+    @classmethod
+    def unenroll_user_from_course(cls, enterprise_customer_user, course_id):
+        """
+        Unenroll the enterprise user from the given course
+        by deleting the associated ``EnterpriseCourseEnrollment`` record.
+        """
+        cls.objects.filter(
+            enterprise_customer_user=enterprise_customer_user,
+            course_id=course_id,
+        ).delete()
 
     def __str__(self):
         """
