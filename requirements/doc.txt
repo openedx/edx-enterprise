@@ -50,7 +50,7 @@ jsondiff==1.2.0           # via -r requirements/test-master.txt
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements/test-master.txt
 kombu==4.6.11             # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
-newrelic==5.22.1.152      # via -r requirements/test-master.txt, edx-django-utils
+newrelic==5.24.0.153      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.8           # via -r requirements/test-master.txt, bleach, sphinx
 path.py==12.5.0           # via -r requirements/test-master.txt
 path==13.1.0              # via -r requirements/test-master.txt, path.py
@@ -67,7 +67,7 @@ pymongo==3.10.1           # via -r requirements/test-master.txt, edx-opaque-keys
 pyparsing==2.4.7          # via -r requirements/test-master.txt, packaging
 python-dateutil==2.4.0    # via -r requirements/test-master.txt, edx-drf-extensions
 python-slugify==4.0.1     # via -r requirements/test-master.txt, code-annotations
-pytz==2020.4              # via -r requirements/test-master.txt, babel, celery, django, edx-tincan-py35
+pytz==2020.5              # via -r requirements/test-master.txt, babel, celery, django, edx-tincan-py35
 pyyaml==5.3.1             # via -r requirements/test-master.txt, code-annotations
 readme-renderer==28.0     # via -r requirements/doc.in
 requests==2.25.1          # via -r requirements/test-master.txt, edx-drf-extensions, edx-rest-api-client, pyjwkest, slumber, sphinx, tableauserverclient
