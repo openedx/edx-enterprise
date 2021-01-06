@@ -38,4 +38,4 @@ factory-boy<4.0
 pytest<7.0
 
 # pinning it to latest release.
-celery<5.0
+celery==5.0.4

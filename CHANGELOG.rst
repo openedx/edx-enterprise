@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.16.9]
+--------
+
+* Upgrade celery to 5.0.4
+
 [3.16.8]
 --------
 
