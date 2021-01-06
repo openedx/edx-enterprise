@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.16.8]
+--------
+
+* Added ClientError exception handling for SAPSuccessFactorsAPIClient.
+
 [3.16.7]
 --------
 

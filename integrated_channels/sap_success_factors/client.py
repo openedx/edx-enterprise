@@ -71,9 +71,7 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
         try:
             data = response.json()
             return data['access_token'], datetime.datetime.utcfromtimestamp(data['expires_in'] + int(time.time()))
-        except (KeyError, ValueError) as error:
-            raise ClientError(response, response.status_code) from error
-        except TypeError as error:
+        except (KeyError, TypeError, ValueError) as error:
             LOGGER.error(
                 'SAP SF OAuth2 POST response is of invalid format. User: [%s], Company: [%s],'
                 ' Error: [%s], Response: [%s]',
