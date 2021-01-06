@@ -8,6 +8,7 @@ from requests import RequestException
 
 from django.contrib import admin
 
+from integrated_channels.exceptions import ClientError
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
 from integrated_channels.sap_success_factors.models import (
     SAPSuccessFactorsEnterpriseCustomerConfiguration,
@@ -100,7 +101,7 @@ class SAPSuccessFactorsEnterpriseCustomerConfigurationAdmin(admin.ModelAdmin):
                 obj.sapsf_user_id,
                 obj.user_type
             )
-        except (RequestException, ValueError):
+        except (RequestException, ClientError):
             return False
         return bool(access_token and expires_at)
 
