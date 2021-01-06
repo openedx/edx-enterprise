@@ -13,7 +13,7 @@ jobs:
       matrix:
         python-version: ['3.8']
         toxenv: [
-          'django22-celery44', 'django22-celery50', 'quality', 'docs', 'pii-annotations',
+          'django22-celery50', 'quality', 'docs', 'pii-annotations',
         ]
     env:
       RUNJSHINT: true
@@ -29,10 +29,10 @@ jobs:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
       - name: Run code coverage
-        if: matrix.toxenv=='django22-celery44' # Only run this once as part of tests
+        if: matrix.toxenv=='django22-celery50' # Only run this once as part of tests
         run: codecov
       - name: Run jshint
-        if: matrix.toxenv=='django22-celery44' # Only run this once as part of tests
+        if: matrix.toxenv=='django22-celery50' # Only run this once as part of tests
         run: |
           npm i
           make jshint

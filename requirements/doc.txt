@@ -5,16 +5,19 @@
 #    make upgrade
 #
 alabaster==0.7.12         # via sphinx
-amqp==2.6.1               # via -r requirements/test-master.txt, kombu
+amqp==5.0.2               # via -r requirements/test-master.txt, kombu
 aniso8601==8.1.0          # via -r requirements/test-master.txt, edx-tincan-py35
 babel==2.9.0              # via sphinx
 billiard==3.6.3.0         # via -r requirements/test-master.txt, celery
 bleach==3.2.1             # via -r requirements/test-master.txt, readme-renderer
-celery==4.4.7             # via -c requirements/constraints.txt, -r requirements/test-master.txt
+celery==5.0.4             # via -c requirements/constraints.txt, -r requirements/test-master.txt
 certifi==2020.12.5        # via -r requirements/test-master.txt, requests
 cffi==1.14.4              # via -r requirements/test-master.txt, cryptography
 chardet==4.0.0            # via -r requirements/test-master.txt, doc8, requests
-click==7.1.2              # via -r requirements/test-master.txt, code-annotations
+click-didyoumean==0.0.3   # via -r requirements/test-master.txt, celery
+click-plugins==1.1.1      # via -r requirements/test-master.txt, celery
+click-repl==0.1.6         # via -r requirements/test-master.txt, celery
+click==7.1.2              # via -r requirements/test-master.txt, celery, click-didyoumean, click-plugins, click-repl, code-annotations
 code-annotations==0.10.2  # via -r requirements/test-master.txt
 cryptography==3.2.1       # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
 defusedxml==0.6.0         # via -r requirements/test-master.txt, djangorestframework-xml
@@ -48,7 +51,7 @@ imagesize==1.2.0          # via sphinx
 jinja2==2.11.2            # via -r requirements/test-master.txt, code-annotations, sphinx
 jsondiff==1.2.0           # via -r requirements/test-master.txt
 jsonfield2==3.0.3         # via -c requirements/constraints.txt, -r requirements/test-master.txt
-kombu==4.6.11             # via -r requirements/test-master.txt, celery
+kombu==5.0.2              # via -r requirements/test-master.txt, celery
 markupsafe==1.1.1         # via -r requirements/test-master.txt, jinja2
 newrelic==5.24.0.153      # via -r requirements/test-master.txt, edx-django-utils
 packaging==20.8           # via -r requirements/test-master.txt, bleach, sphinx
@@ -57,6 +60,7 @@ path==13.1.0              # via -r requirements/test-master.txt, path.py
 pbr==5.5.1                # via -r requirements/test-master.txt, stevedore
 pillow==7.2.0             # via -r requirements/test-master.txt
 pockets==0.9.1            # via sphinxcontrib-napoleon
+prompt-toolkit==3.0.9     # via -r requirements/test-master.txt, click-repl
 psutil==5.8.0             # via -r requirements/test-master.txt, edx-django-utils
 pycparser==2.20           # via -r requirements/test-master.txt, cffi
 pycryptodomex==3.9.9      # via -r requirements/test-master.txt, pyjwkest
@@ -75,7 +79,7 @@ rest-condition==1.0.3     # via -r requirements/test-master.txt, edx-drf-extensi
 restructuredtext-lint==1.3.2  # via doc8
 rules==2.2                # via -r requirements/test-master.txt
 semantic-version==2.8.5   # via -r requirements/test-master.txt, edx-drf-extensions
-six==1.15.0               # via -r requirements/test-master.txt, bleach, cryptography, django-countries, django-simple-history, doc8, edx-drf-extensions, edx-opaque-keys, edx-rbac, edx-sphinx-theme, pockets, pyjwkest, python-dateutil, readme-renderer, sphinxcontrib-napoleon, stevedore
+six==1.15.0               # via -r requirements/test-master.txt, bleach, click-repl, cryptography, django-countries, django-simple-history, doc8, edx-drf-extensions, edx-opaque-keys, edx-rbac, edx-sphinx-theme, pockets, pyjwkest, python-dateutil, readme-renderer, sphinxcontrib-napoleon, stevedore
 slumber==0.7.1            # via -r requirements/test-master.txt, edx-rest-api-client
 snowballstemmer==2.0.0    # via sphinx
 sphinx==2.4.1             # via -c requirements/constraints.txt, -r requirements/doc.in, edx-sphinx-theme
@@ -93,7 +97,8 @@ testfixtures==6.17.0      # via -r requirements/test-master.txt
 text-unidecode==1.3       # via -r requirements/test-master.txt, python-slugify
 unicodecsv==0.14.1        # via -r requirements/test-master.txt
 urllib3==1.26.2           # via -r requirements/test-master.txt, requests
-vine==1.3.0               # via -r requirements/test-master.txt, amqp, celery
+vine==5.0.0               # via -r requirements/test-master.txt, amqp, celery
+wcwidth==0.2.5            # via -r requirements/test-master.txt, prompt-toolkit
 webencodings==0.5.1       # via -r requirements/test-master.txt, bleach
 
 # The following packages are considered to be unsafe in a requirements file:

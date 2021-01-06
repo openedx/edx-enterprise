@@ -10,6 +10,7 @@ bleach==3.2.1             # via -r requirements/test-master.txt
 certifi==2020.12.5        # via -r requirements/test-master.txt, requests
 cffi==1.14.4              # via -r requirements/test-master.txt, cryptography
 chardet==4.0.0            # via -r requirements/test-master.txt, requests
+click-plugins==1.1.1      # via -r requirements/test-master.txt, celery
 code-annotations==0.10.2  # via -r requirements/test-master.txt
 coverage==5.3.1           # via pytest-cov
 cryptography==3.2.1       # via -r requirements/test-master.txt, django-fernet-fields, pyjwt
@@ -80,7 +81,7 @@ responses==0.10.15        # via -c requirements/constraints.txt, -r requirements
 rest-condition==1.0.3     # via -r requirements/test-master.txt, edx-drf-extensions
 rules==2.2                # via -r requirements/test-master.txt
 semantic-version==2.8.5   # via -r requirements/test-master.txt, edx-drf-extensions
-six==1.15.0               # via -r requirements/test-master.txt, bleach, cryptography, django-countries, django-simple-history, edx-drf-extensions, edx-opaque-keys, edx-rbac, freezegun, mock, pyjwkest, python-dateutil, responses, stevedore
+six==1.15.0               # via -r requirements/test-master.txt, bleach, click-repl, cryptography, django-countries, django-simple-history, edx-drf-extensions, edx-opaque-keys, edx-rbac, freezegun, mock, pyjwkest, python-dateutil, responses, stevedore
 slumber==0.7.1            # via -r requirements/test-master.txt, edx-rest-api-client
 sqlparse==0.4.1           # via -r requirements/test-master.txt, django
 stevedore==1.32.0         # via -r requirements/test-master.txt, code-annotations, edx-django-utils, edx-opaque-keys
@@ -90,5 +91,6 @@ text-unidecode==1.3       # via -r requirements/test-master.txt, faker, python-s
 toml==0.10.2              # via pytest
 unicodecsv==0.14.1        # via -r requirements/test-master.txt
 urllib3==1.26.2           # via -r requirements/test-master.txt, requests
+wcwidth==0.2.5            # via -r requirements/test-master.txt, prompt-toolkit
 webencodings==0.5.1       # via -r requirements/test-master.txt, bleach
 zipp==1.0.0               # via -c requirements/constraints.txt, importlib-metadata
