@@ -16,6 +16,12 @@ Change Log
 Unreleased
 -----------
 
+[3.16.10]
+---------
+
+* Forcing embedded enrollment links within integrated Blackboard courses to open new windows to avoid security alert
+  prompt.
+
 [3.16.9]
 --------
 
