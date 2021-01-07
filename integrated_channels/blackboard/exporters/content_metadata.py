@@ -22,8 +22,9 @@ class BlackboardContentMetadataExporter(ContentMetadataExporter):
         'course_child_content_metadata': 'course_child_content_metadata',
     }
 
-    DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url}>Go to edX course page</a><br/>"
-    LARGE_DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url} style='font-size:150%'>Go to edX course page</a><br/>"
+    DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url} target=_blank>Go to edX course page</a><br/>"
+    LARGE_DESCRIPTION_TEXT_TEMPLATE = "<a href={enrollment_url} style='font-size:150%' target=_blank>" \
+                                      "Go to edX course page</a><br/>"
 
     COURSE_TITLE_TEMPLATE = '<h1 style="font-size:xxx-large; margin-bottom:0; margin-top:0">{title}</h1>'
 
