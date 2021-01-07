@@ -1136,9 +1136,13 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
         """
         if not is_user_created:
             # user already existed and may simply be logging in or existing user may have changed
-            # their email to match one of pending link records - try linking them to EnterpriseCustomer.
+            # their email to match one of pending link records. if an ``EnterpriseCustomerUser``
+            # record exists, return it since user is already linked.
             try:
-                enterprise_customer_user = EnterpriseCustomerUser.objects.get(user_id=user.id)
+                enterprise_customer_user = EnterpriseCustomerUser.objects.get(
+                    user_id=user.id,
+                    enterprise_customer=self.enterprise_customer,
+                )
                 message_template = "User {user} has logged in or changed email to match pending " \
                     "Enterprise Customer link, but was already " \
                     "linked to Enterprise Customer {enterprise_customer} - " \

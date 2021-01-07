@@ -68,7 +68,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
 
     # link PendingEnterpriseCustomerUser to the EnterpriseCustomer and fulfill pending enrollments
     for pending_ecu in pending_ecus:
-        enterprise_customer_user = pending_ecu.link_pending_enterprise_user(
+        enterprise_customer_user = pending_ecu.link_pending_enterprise_users(
             user=user_instance,
             is_user_created=created,
         )
