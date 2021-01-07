@@ -212,7 +212,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
         enterprise_customer1, enterprise_customer2 = EnterpriseCustomerFactory(), EnterpriseCustomerFactory()
-        existing_link = EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user.id)
+        EnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer1, user_id=user.id)
         PendingEnterpriseCustomerUserFactory(enterprise_customer=enterprise_customer2, user_email=email)
 
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 1, "Precondition check: links exists"
