@@ -222,9 +222,12 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         parameters = {"instance": user, "created": False}
         handle_user_post_save(mock.Mock(), **parameters)
 
-        link = EnterpriseCustomerUser.objects.get(user_id=user.id)
-        assert link.id == existing_link.id, "Should keep existing link intact"
-        assert link.enterprise_customer == enterprise_customer1, "Should keep existing link intact"
+        assert EnterpriseCustomerUser.objects.filter(user_id=user.id).count() == 2, "Should return 2 existing links"
+
+        link_1 = EnterpriseCustomerUser.objects.get(user_id=user.id, enterprise_customer1)
+        link_2 = EnterpriseCustomerUser.objects.get(user_id=user.id, enterprise_customer2)
+        assert link_1.enterprise_customer == enterprise_customer1
+        assert link_2.enterprise_customer == enterprise_customer2
 
         assert PendingEnterpriseCustomerUser.objects.count() == 0, "Should delete pending link"
 
