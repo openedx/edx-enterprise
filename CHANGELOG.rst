@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.16.11]
+---------
+
+* Retrieve ``EnterpriseCustomerUser`` by both user_id and enterprise_customer to handle users who are pending for more than 1 enterprise.
+
 [3.16.10]
 ---------
 
