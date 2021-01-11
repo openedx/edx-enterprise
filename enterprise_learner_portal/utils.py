@@ -3,10 +3,6 @@
 enterprise_learner_portal utils.
 """
 
-from datetime import datetime, timedelta
-
-from pytz import UTC
-
 
 class CourseRunProgressStatuses:
     """
