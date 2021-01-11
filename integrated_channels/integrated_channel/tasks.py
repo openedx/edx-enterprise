@@ -11,7 +11,7 @@ from edx_django_utils.monitoring import set_code_owner_attribute
 from django.contrib import auth
 from django.utils import timezone
 
-from enterprise.utils import get_enterprise_customer_for_user
+from enterprise.utils import get_enterprise_uuids_for_user_and_course
 from integrated_channels.integrated_channel.management.commands import (
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandUtils,
@@ -19,7 +19,7 @@ from integrated_channels.integrated_channel.management.commands import (
 from integrated_channels.utils import generate_formatted_log
 
 LOGGER = get_task_logger(__name__)
-User = auth.get_user_model()
+User = auth.get_user_model()  # pylint: disable=invalid-name
 
 
 @shared_task
@@ -108,29 +108,37 @@ def transmit_single_learner_data(username, course_run_id):
         course_run_id (str): The course run id of the course it should send data for.
     """
     user = User.objects.get(username=username)
-    LOGGER.info('[Integrated Channel] Single learner data transmission started.'
-                ' Course: {course_run}, Username: {username}'.format(
-                    course_run=course_run_id,
-                    username=username))
-    enterprise_customer = get_enterprise_customer_for_user(user)
-    channel_utils = IntegratedChannelCommandUtils()
-    # Transmit the learner data to each integrated channelStarting Export
-    for channel in channel_utils.get_integrated_channels(
-            {'channel': None, 'enterprise_customer': enterprise_customer.uuid}
-    ):
-        integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
-        LOGGER.info(
-            '[Integrated Channel] Processing learner for transmission. Configuration: {configuration},'
-            ' User: {user_id}'.format(
-                configuration=integrated_channel,
-                user_id=user.id))
-        integrated_channel.transmit_single_learner_data(
-            learner_to_transmit=user,
-            course_run_id=course_run_id,
-            completed_date=timezone.now(),
-            grade='Pass',
-            is_passing=True
-        )
+    enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, active=True)
+
+    # Transmit the learner data to each integrated channel for each related customer.
+    # Starting Export. N customer is usually 1 but multiple are supported in codebase.
+    for enterprise_customer_uuid in enterprise_customer_uuids:
+        LOGGER.info('[Integrated Channel] Single learner data transmission started.'
+                    ' Course: {course_run}, Username: {username}, Customer:{enterprise_uuid}'.format(
+                        course_run=course_run_id,
+                        username=username,
+                        enterprise_uuid=enterprise_customer_uuid
+                    ))
+
+        channel_utils = IntegratedChannelCommandUtils()
+        # Transmit the learner data to each integrated channelStarting Export
+        for channel in channel_utils.get_integrated_channels(
+                {'channel': None, 'enterprise_customer': enterprise_customer_uuid}
+        ):
+            integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
+            LOGGER.info(
+                '[Integrated Channel] Processing learner for transmission. Configuration: {configuration},'
+                ' User: {user_id}, Customer: {enterprise_uuid}'.format(
+                    configuration=integrated_channel,
+                    user_id=user.id,
+                    enterprise_uuid=enterprise_customer_uuid))
+            integrated_channel.transmit_single_learner_data(
+                learner_to_transmit=user,
+                course_run_id=course_run_id,
+                completed_date=timezone.now(),
+                grade='Pass',
+                is_passing=True
+            )
 
 
 @shared_task
@@ -149,28 +157,32 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
     """
     start = time.time()
     user = User.objects.get(username=username)
-    enterprise_customer = get_enterprise_customer_for_user(user)
+    enterprise_customer_uuids = get_enterprise_uuids_for_user_and_course(user, course_run_id, active=True)
     channel_utils = IntegratedChannelCommandUtils()
 
-    # Transmit the learner data to each integrated channelStarting Export
-    for channel in channel_utils.get_integrated_channels(
-            {'channel': None, 'enterprise_customer': enterprise_customer.uuid}
-    ):
-        integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
-        integrated_channel.transmit_single_subsection_learner_data(
-            learner_to_transmit=user,
-            course_run_id=course_run_id,
-            grade=grade,
-            subsection_id=subsection_id
-        )
+    # Transmit the learner data to each integrated channel for each related customer.
+    # Starting Export. N customer is usually 1 but multiple are supported in codebase.
+    for enterprise_customer_uuid in enterprise_customer_uuids:
+        for channel in channel_utils.get_integrated_channels(
+                {'channel': None, 'enterprise_customer': enterprise_customer_uuid}
+        ):
+            integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
+            integrated_channel.transmit_single_subsection_learner_data(
+                learner_to_transmit=user,
+                course_run_id=course_run_id,
+                grade=grade,
+                subsection_id=subsection_id
+            )
 
-    duration = time.time() - start
-    LOGGER.info(
-        '[Integrated Channel] Single learner data transmission task finished.'
-        ' Course: {course_run}, Duration: {duration}, Username: {username}'.format(
-            username=username,
-            course_run=course_run_id,
-            duration=duration))
+        duration = time.time() - start
+        LOGGER.info(
+            '[Integrated Channel] Single learner data transmission task finished.'
+            'Customer: {enterprise_uuid}, Course: {course_run}, Duration: {duration}, Username: {username}'.format(
+                username=username,
+                course_run=course_run_id,
+                duration=duration,
+                enterprise_uuid=enterprise_customer_uuid
+            ))
 
 
 @shared_task

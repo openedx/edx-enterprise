@@ -15,6 +15,7 @@ Change Log
 
 Unreleased
 -----------
+* Fixed unnessary integrated channel signal transmission on course completion to inactive customers by adding guard condition.
 
 [3.17.2]
 --------
