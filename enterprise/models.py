@@ -1489,6 +1489,12 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
     has been enrolled in a course, and is the repository for any other
     relevant metadata about such an enrollment.
 
+    Do not delete records of this model - there are downstream business
+    reporting processes that rely them, even if the underlying ``student.CourseEnrollment``
+    record has been marked inactive/un-enrolled.  As a consequence, the only
+    way to determine if a given ``EnterpriseCourseEnrollment`` is currently active
+    is to examine the ``is_active`` field of the associated ``student.CourseEnrollment``.
+
     .. no_pii:
     """
 
@@ -1590,6 +1596,13 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         except CourseEnrollment.DoesNotExist:
             LOGGER.error('{} does not have a matching student.CourseEnrollment'.format(self))
             return None
+
+    @property
+    def is_active(self):
+        """
+        Returns True iff this enrollment is currently active.
+        """
+        return self.course_enrollment.is_active
 
     @classmethod
     def get_enterprise_course_enrollment_id(cls, user, course_id, enterprise_customer):

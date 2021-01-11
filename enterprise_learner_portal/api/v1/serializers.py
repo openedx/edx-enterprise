@@ -67,7 +67,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['pacing'] = course_overview['pacing']
         representation['org_name'] = course_overview['display_org_with_default']
         representation['is_revoked'] = instance.license.is_revoked if instance.license else False
-        representation['is_enrollment_active'] = instance.course_enrollment.is_active
+        representation['is_enrollment_active'] = instance.is_active
 
         return representation
 
