@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.7]
+--------
+
+* Added new field ``sender_alias`` in enterprise customer which will be used in emails except of default alias.
+
 [3.17.6]
 --------
 
@@ -45,11 +50,6 @@ Unreleased
 --------
 
 * Add management command to process expired subscriptions and field on subscriptions to persist that the subscription expiration has been processed
-
-[3.17.7]
---------
-
-* Added new field ``sender_alias`` in enterprise customer which will be used in emails except of default alias.
 
 [3.17.0]
 --------
