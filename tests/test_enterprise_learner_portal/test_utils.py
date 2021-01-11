@@ -21,100 +21,44 @@ class TestUtils(TestCase):
     """
     Tests for enterprise_learner_portal utils.
     """
-    NOW = datetime.now(UTC)
 
     @ddt.data(
-        (
-            {
-                'pacing': 'instructor',
-                'has_ended': True,
-                'has_started': False,
-            },
-            {
-                'is_passing': True,
-                'created': NOW,
-            },
-            False,
-            CourseRunProgressStatuses.COMPLETED,
-        ),
-        (
-            {
-                'pacing': 'instructor',
-                'has_ended': False,
-                'has_started': True,
-            },
-            {
-                'is_passing': True,
-                'created': NOW,
-            },
-            False,
-            CourseRunProgressStatuses.IN_PROGRESS,
-        ),
-        (
-            {
-                'pacing': 'instructor',
-                'has_ended': False,
-                'has_started': False,
-            },
-            {
-                'is_passing': True,
-                'created': NOW,
-            },
-            False,
-            CourseRunProgressStatuses.UPCOMING,
-        ),
-        (
-            {
-                'pacing': 'self',
-                'has_ended': True,
-                'has_started': False,
-            },
-            {
-                'is_passing': True,
-                'created': NOW,
-            },
-            False,
-            CourseRunProgressStatuses.COMPLETED,
-        ),
-        (
-            {
-                'pacing': 'self',
-                'has_ended': False,
-                'has_started': True,
-            },
-            {
-                'is_passing': False,
-                'created': NOW,
-            },
-            False,
-            CourseRunProgressStatuses.IN_PROGRESS,
-        ),
-        (
-            {
-                'pacing': 'self',
-                'has_ended': False,
-                'has_started': False,
-            },
-            {
-                'is_passing': False,
-                'created': NOW,
-            },
-            False,
-            CourseRunProgressStatuses.UPCOMING,
-        ),
-        (
-            {
-                'pacing': 'instructor',
-                'has_ended': False,
-                'has_started': True,
-            },
-            {
-                'is_passing': False,
-                'created': NOW,
-            },
-            True,
-            CourseRunProgressStatuses.SAVED_FOR_LATER,
-        ),
+        {
+            'course_overview': {'has_started': False, 'has_ended': False},
+            'certificate_info': {'is_passing': False},
+            'saved_for_later': False,
+            'expected_status': CourseRunProgressStatuses.UPCOMING,
+        },
+        {
+            'course_overview': {'has_started': True, 'has_ended': False},
+            'certificate_info': {'is_passing': False},
+            'saved_for_later': False,
+            'expected_status': CourseRunProgressStatuses.IN_PROGRESS,
+        },
+        {
+            'course_overview': {'has_started': True, 'has_ended': False},
+            'certificate_info': {'is_passing': True},
+            'saved_for_later': False,
+            'expected_status': CourseRunProgressStatuses.COMPLETED,
+        },
+        {
+            'course_overview': {'has_started': True, 'has_ended': True},
+            'certificate_info': {'is_passing': False},
+            'saved_for_later': False,
+            'expected_status': CourseRunProgressStatuses.COMPLETED,
+        },
+        {
+            'course_overview': {'has_started': True, 'has_ended': True},
+            'certificate_info': {'is_passing': True},
+            'saved_for_later': False,
+            'expected_status': CourseRunProgressStatuses.COMPLETED,
+        },
+        {
+            'course_overview': {'has_started': True, 'has_ended': False},
+            'certificate_info': {'is_passing': False},
+            'saved_for_later': True,
+            'expected_status': CourseRunProgressStatuses.SAVED_FOR_LATER,
+        },
     )
     @ddt.unpack
     def test_get_course_run_status(
@@ -122,7 +66,7 @@ class TestUtils(TestCase):
             course_overview,
             certificate_info,
             saved_for_later,
-            expected,
+            expected_status,
     ):
         """
         Assert get_course_run_status returns the proper results based on input parameters
