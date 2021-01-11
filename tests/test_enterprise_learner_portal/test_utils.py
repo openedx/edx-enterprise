@@ -3,11 +3,8 @@
 Tests for the utils of the enterprise_learner_portal app.
 """
 
-from datetime import datetime
-
 import ddt
 from pytest import mark
-from pytz import UTC
 
 from django.test import TestCase
 
@@ -72,9 +69,9 @@ class TestUtils(TestCase):
         Assert get_course_run_status returns the proper results based on input parameters
         """
         enterprise_enrollment = factories.EnterpriseCourseEnrollmentFactory.create(saved_for_later=saved_for_later)
-        actual = get_course_run_status(
+        actual_status = get_course_run_status(
             course_overview,
             certificate_info,
             enterprise_enrollment
         )
-        assert actual == expected
+        assert actual_status == expected_status
