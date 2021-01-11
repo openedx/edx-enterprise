@@ -15,7 +15,6 @@ from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
     EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
-    EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
@@ -36,10 +35,8 @@ from enterprise.utils import (
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
-    from common.djangoapps.student.signals import UNENROLL_DONE
 except ImportError:
     CourseEnrollment = None
-    UNENROLL_DONE = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -350,31 +347,6 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
         )
 
 
-def delete_enterprise_enrollment_receiver(sender, **kwargs):  # pylint: disable=unused-argument
-    """
-    Receives the ``UNENROLL_DONE`` signal, defined in
-    https://github.com/edx/edx-platform/blob/master/common/djangoapps/student/signals/signals.py
-
-    and deletes any ``EnterpriseCourseEnrollment`` associated with the modified
-    ``student.CourseEnrollment``.
-    """
-    course_enrollment = kwargs['course_enrollment']
-
-    user_id = course_enrollment.user.id
-    course_id = course_enrollment.course_id
-
-    EnterpriseCourseEnrollment.objects.filter(
-        enterprise_customer_user__user_id=user_id,
-        course_id=course_id,
-    ).delete()
-
-    logger.info('Deleted EnterpriseCourseEnrollment(s) for user {} in course {}'.format(user_id, course_id))
-
-
-# Don't connect the enrollment create/delete receivers
-# if we dont have access to objects defined in edx-platform
+# Don't connect this receiver if we dont have access to CourseEnrollment model
 if CourseEnrollment is not None:
     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
-
-if UNENROLL_DONE is not None:
-    UNENROLL_DONE.connect(delete_enterprise_enrollment_receiver)

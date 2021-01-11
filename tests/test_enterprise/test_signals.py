@@ -25,15 +25,10 @@ from enterprise.models import (
     SystemWideEnterpriseRole,
     SystemWideEnterpriseUserRoleAssignment,
 )
-from enterprise.signals import (
-    create_enterprise_enrollment_receiver,
-    delete_enterprise_enrollment_receiver,
-    handle_user_post_save,
-)
+from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
 from test_utils.factories import (
     EnterpriseAnalyticsUserFactory,
     EnterpriseCatalogQueryFactory,
-    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -697,13 +692,6 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
             enterprise_customer=self.enterprise_customer,
         )
         self.non_enterprise_user = UserFactory(id=999, email='user999@example.com')
-        self.enterprise_course_enrollment = EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=self.enterprise_customer_user,
-        )
-        self.course_enrollment = mock.Mock(
-            user=self.user,
-            course_id=self.enterprise_course_enrollment.course_id,
-        )
         super().setUp()
 
     @mock.patch('enterprise.tasks.create_enterprise_enrollment.delay')
@@ -751,40 +739,6 @@ class TestCourseEnrollmentSignals(unittest.TestCase):
 
         create_enterprise_enrollment_receiver(sender, instance, **kwargs)
         mock_task.assert_not_called()
-
-    def test_delete_enterprise_enrollment_receiver(self):
-        """
-        The receiver should cause an EnterpriseCourseEnrollment associated with
-        a CourseEnrollment instance to be deleted when it receives a signal
-        indicating that the CourseEnrollment has transitioned to an unenrolled state.
-        """
-        # setup an additional enrollment for the same user_id in the same course,
-        # and then make sure that both are deleted.
-        other_enterprise_customer = EnterpriseCustomerFactory(
-            name='Team Foo',
-        )
-        other_enterprise_customer_user = EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=other_enterprise_customer,
-        )
-        _ = EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=other_enterprise_customer_user,
-            course_id=self.enterprise_course_enrollment.course_id,
-        )
-
-        delete_enterprise_enrollment_receiver(
-            mock.Mock(),
-            course_enrollment=self.course_enrollment,
-        )
-
-        # The enterprise course enrollments still exists in memory,
-        # but should be deleted from the database.
-        self.assertFalse(
-            EnterpriseCourseEnrollment.objects.filter(
-                enterprise_customer_user__user_id=self.user.id,
-                course_id=self.enterprise_course_enrollment.course_id,
-            ).exists()
-        )
 
 
 @mark.django_db

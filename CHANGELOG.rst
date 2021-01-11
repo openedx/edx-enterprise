@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.17.2]
+--------
+
+* Stop listening for ``student.CourseEnrollment`` unenrollment signal, as introduced in 3.17.0
+
 [3.17.1]
 --------
 
