@@ -57,7 +57,7 @@ class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: d
         representation['course_run_status'] = get_course_run_status(
             course_overview,
             certificate_info,
-            instance,
+            instance
         )
         representation['start_date'] = course_overview['start']
         representation['end_date'] = course_overview['end']
