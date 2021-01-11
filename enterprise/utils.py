@@ -71,7 +71,7 @@ except ImportError:
     UNENROLLED_TO_ALLOWEDTOENROLL = None
 
 LOGGER = logging.getLogger(__name__)
-User = auth.get_user_model()
+User = auth.get_user_model()  # pylint: disable=invalid-name
 try:
     from common.djangoapps.third_party_auth.provider import Registry  # pylint: disable=unused-import
 except ImportError as exception:
@@ -492,12 +492,36 @@ def get_enterprise_customer(uuid):
         return None
 
 
-def get_enterprise_customer_for_user(auth_user):
+def get_enterprise_uuids_for_user_and_course(auth_user, course_run_id, active=None):
     """
-    Return enterprise customer instance for given user.
+    Get the ``EnterpriseCustomer`` UUID(s) associated with a user and a course id``.
 
     Some users are associated with an enterprise customer via `EnterpriseCustomerUser` model,
-        1. if given user is associated with any enterprise customer, return enterprise customer.
+        1. if given user is enrolled in a specific course via an enterprise customer enrollment,
+           return related enterprise customers as a list.
+        2. otherwise return empty list.
+
+    Arguments:
+        auth_user (contrib.auth.User): Django User
+        course_run_id (str): Course Run to lookup an enrollment against.
+        active: (boolean or None): Filter flag for returning active, inactive, or all uuids
+
+    Returns:
+        (list of str): enterprise customer uuids associated with the current user and course run or None
+
+    """
+    return enterprise_course_enrollment_model().get_enterprise_uuids_with_user_and_course(
+        auth_user.id,
+        course_run_id,
+        active)  # pylint: disable=invalid-name
+
+
+def get_enterprise_customer_for_user(auth_user):
+    """
+    Return first found enterprise customer instance for given user.
+
+    Some users are associated with an enterprise customer via `EnterpriseCustomerUser` model,
+        1. if given user is associated with any enterprise customer, return first enterprise customer.
         2. otherwise return `None`.
 
     Arguments:

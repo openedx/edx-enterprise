@@ -28,6 +28,7 @@ from integrated_channels.sap_success_factors.models import SAPSuccessFactorsEnte
 from test_utils import TEST_UUID, create_items, fake_catalog_api
 from test_utils.factories import (
     FAKER,
+    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerIdentityProviderFactory,
     EnterpriseCustomerUserFactory,
@@ -63,6 +64,7 @@ class TestEnterpriseUtils(unittest.TestCase):
     """
     Tests for enterprise utility functions.
     """
+
     def setUp(self):
         """
         Set up test environment.
@@ -826,6 +828,54 @@ class TestEnterpriseUtils(unittest.TestCase):
             utils.get_enterprise_customer_for_user(auth_user=UserFactory(id=2)),
             None,
         )
+
+    def test_get_enterprise_customer_uuid_for_user_and_course(self):
+        """
+        Test `get_enterprise_customer_for_user_and_course` helper method.
+        """
+        user = UserFactory(id=1)
+        ece1 = EnterpriseCourseEnrollmentFactory(enterprise_customer_user__user_id=user.id)
+        course_run_id = ece1.course_id
+        expected_uuid1 = str(ece1.enterprise_customer_user.enterprise_customer.uuid)
+
+        # Assert that 1 enrollments gives you correct list.
+        self.assertEqual(
+            utils.get_enterprise_uuids_for_user_and_course(user, course_run_id),
+            [expected_uuid1],
+        )
+
+        ece2 = EnterpriseCourseEnrollmentFactory(
+            course_id=course_run_id,
+            enterprise_customer_user__user_id=user.id)
+        expected_uuid2 = str(ece2.enterprise_customer_user.enterprise_customer.uuid)
+        # Assert that 2 enrollments gives you 2 uuids
+        uuid_list = utils.get_enterprise_uuids_for_user_and_course(user, course_run_id)
+        self.assertIn(expected_uuid1, uuid_list)
+        self.assertIn(expected_uuid2, uuid_list)
+        self.assertEqual(2, len(uuid_list))
+
+        # Assert that a customer from an unrelated enrollment is not returned:
+        ece3 = EnterpriseCourseEnrollmentFactory(enterprise_customer_user__user_id=user.id)
+        expected_uuid3 = str(ece3.enterprise_customer_user.enterprise_customer.uuid)
+        self.assertNotIn(expected_uuid3, utils.get_enterprise_uuids_for_user_and_course(user, course_run_id))
+
+        # Test that active filter query param works:
+        ece4 = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user__user_id=user.id,
+            course_id=course_run_id,
+            enterprise_customer_user__enterprise_customer__active=False
+        )
+        expected_uuid4 = str(ece4.enterprise_customer_user.enterprise_customer.uuid)
+        self.assertNotIn(expected_uuid4, utils.get_enterprise_uuids_for_user_and_course(
+            user,
+            course_run_id,
+            active=True))
+        self.assertIn(expected_uuid4, utils.get_enterprise_uuids_for_user_and_course(
+            user,
+            course_run_id))
+        self.assertIn(expected_uuid4, utils.get_enterprise_uuids_for_user_and_course(
+            user,
+            course_run_id, active=False))
 
     @ddt.data(
         (

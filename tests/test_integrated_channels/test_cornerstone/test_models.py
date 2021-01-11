@@ -15,6 +15,7 @@ from django.utils import timezone
 from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.tasks import transmit_single_learner_data
 from test_utils.factories import (
+    EnterpriseCourseEnrollmentFactory,
     EnterpriseCustomerCatalogFactory,
     EnterpriseCustomerFactory,
     EnterpriseCustomerUserFactory,
@@ -42,11 +43,17 @@ class TestCornerstoneEnterpriseCustomerConfiguration(unittest.TestCase):
         )
         self.config.save()
         self.user = UserFactory()
-        EnterpriseCustomerUserFactory(
+        ecu = EnterpriseCustomerUserFactory(
             enterprise_customer=self.enterprise_customer,
             user_id=self.user.id,
         )
-        self.demo_course_run_id = 'course-v1:edX+DemoX+Demo_Course_1'
+
+        ece1 = EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=ecu
+        )
+        # Demo course must be a course user is enrolled in through
+        # an enterprise customer for enterprise signal to be transmitted.
+        self.demo_course_run_id = ece1.course_id
 
         super().setUp()
 

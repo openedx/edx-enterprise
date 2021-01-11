@@ -81,7 +81,7 @@ except ImportError:
     CourseEnrollment = None
 
 LOGGER = getLogger(__name__)
-User = auth.get_user_model()
+User = auth.get_user_model()  # pylint: disable=invalid-name
 mark_safe_lazy = lazy(mark_safe, six.text_type)  # pylint: disable=invalid-name
 
 
@@ -1615,6 +1615,38 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
                 )
             )
         return enterprise_course_enrollment_id
+
+    @classmethod
+    def get_enterprise_uuids_with_user_and_course(cls, user_id, course_run_id, active=None):
+        """
+        Returns a list of UUID(s) for EnterpriseCustomer(s) that this enrollment
+        links together with the user_id and course_run_id
+        """
+        try:
+            queryset = cls.objects.filter(
+                course_id=course_run_id,
+                enterprise_customer_user__user_id=user_id
+            )
+            if active is not None:
+                queryset = queryset.filter(
+                    enterprise_customer_user__enterprise_customer__active=active
+                )
+
+            linked_enrollments = queryset.select_related(
+                'enterprise_customer_user',
+                'enterprise_customer_user__enterprise_customer',
+            )
+            return [str(le.enterprise_customer_user.enterprise_customer.uuid) for le in linked_enrollments]
+
+        except ObjectDoesNotExist:
+            LOGGER.info(
+                'EnterpriseCustomerUser entries not found for user id: {username}, course: {course_run_id}.'
+                .format(
+                    username=user_id,
+                    course_run_id=course_run_id
+                )
+            )
+            return []
 
     def __str__(self):
         """
