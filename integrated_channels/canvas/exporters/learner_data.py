@@ -58,7 +58,7 @@ class CanvasLearnerExporter(LearnerExporter):
                 canvas_user_email=enterprise_customer_user.user_email,
                 course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                 course_completed=completed_date is not None and is_passing,
-                grade=percent_grade
+                grade=percent_grade,
                 completed_timestamp=completed_timestamp,
             ),
         ]
