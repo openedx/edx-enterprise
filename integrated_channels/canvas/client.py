@@ -3,7 +3,6 @@
 Client for connecting to Canvas.
 """
 import json
-from datetime import datetime, timedelta
 from http import HTTPStatus
 
 import requests
@@ -183,18 +182,6 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         pass
 
     # Private Methods
-
-    def _create_session(self):
-        """
-        Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
-        connecting to Canvas should have a single client session.
-        Will only create a new session if token expiry has been reached
-        """
-        self.session, self.expires_at = refresh_session_if_expired(
-            self._get_oauth_access_token,
-            self.session,
-            self.expires_at,
-        )
 
     def _update_course_details(self, course_id, serialized_data):
         """
@@ -493,6 +480,18 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             )
 
         return canvas_course_id
+
+    def _create_session(self):
+        """
+        Instantiate a new session object for use in connecting with Canvas. Each enterprise customer
+        connecting to Canvas should have a single client session.
+        Will only create a new session if token expiry has been reached
+        """
+        self.session, self.expires_at = refresh_session_if_expired(
+            self._get_oauth_access_token,
+            self.session,
+            self.expires_at,
+        )
 
     def _get_oauth_access_token(self):
         """Uses the client id, secret and refresh token to request the user's auth token from Canvas.
