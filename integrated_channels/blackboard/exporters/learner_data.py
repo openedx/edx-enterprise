@@ -31,33 +31,30 @@ class BlackboardLearnerExporter(LearnerExporter):
         If completed_date is None, then course completion has not been met.
         If no remote ID can be found, return None.
         """
-        enterprise_customer = enterprise_enrollment.enterprise_customer_user
+        enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
+        if enterprise_customer_user.user_email is None:
+            LOGGER.debug(
+                'No learner data was sent for user [%s] because a Blackboard user ID could not be found.',
+                enterprise_customer_user.username
+            )
+            return None
+        percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = None
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        if enterprise_customer.user_email is None:
-            LOGGER.debug(
-                'No learner data was sent for user [%s] because a Blackboard user ID could not be found.',
-                enterprise_customer.username
-            )
-            return None
+        course_catalog_client = get_course_catalog_api_service_client(
+            site=enterprise_customer_user.enterprise_customer.site
+        )
 
         BlackboardLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
             'blackboard',
             'BlackboardLearnerDataTransmissionAudit'
         )
-
-        course_catalog_client = get_course_catalog_api_service_client(
-            site=enterprise_customer.enterprise_customer.site
-        )
-
-        percent_grade = kwargs.get('grade_percent', None)
-
         return [
             BlackboardLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                blackboard_user_email=enterprise_customer.user_email,
+                blackboard_user_email=enterprise_customer_user.user_email,
                 course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                 course_completed=completed_date is not None and is_passing,
                 grade=percent_grade,
