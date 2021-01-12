@@ -14,6 +14,7 @@ from django.apps import apps
 
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.client import IntegratedChannelApiClient
+from integrated_channels.utils import refresh_session_if_expired
 
 
 class CanvasAPIClient(IntegratedChannelApiClient):
@@ -189,23 +190,11 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         connecting to Canvas should have a single client session.
         Will only create a new session if token expiry has been reached
         """
-        now = datetime.utcnow()
-        if self.session is None or self.expires_at is None or now >= self.expires_at:
-            # need new session if session expired, or not initialized
-            if self.session:
-                self.session.close()
-            # Create a new session with a valid token
-            oauth_access_token, expires_in = self._get_oauth_access_token(
-                self.enterprise_configuration.client_id,
-                self.enterprise_configuration.client_secret,
-            )
-            session = requests.Session()
-            session.headers['Authorization'] = 'Bearer {}'.format(oauth_access_token)
-            session.headers['content-type'] = 'application/json'
-            self.session = session
-            # expiry expected after `expires_in` seconds
-            if expires_in is not None:
-                self.expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
+        self.session, self.expires_at = refresh_session_if_expired(
+            self._get_oauth_access_token,
+            self.session,
+            self.expires_at,
+        )
 
     def _update_course_details(self, course_id, serialized_data):
         """
@@ -505,12 +494,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return canvas_course_id
 
-    def _get_oauth_access_token(self, client_id, client_secret):
+    def _get_oauth_access_token(self):
         """Uses the client id, secret and refresh token to request the user's auth token from Canvas.
-
-        Args:
-            client_id (str): API client ID
-            client_secret (str): API client secret
 
         Returns:
             access_token (str): the OAuth access token to access the Canvas API as the user
@@ -519,6 +504,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             HTTPError: If we received a failure response code from Canvas.
             ClientError: If an unexpected response format was received that we could not parse.
         """
+        client_id = self.enterprise_configuration.client_id
+        client_secret = self.enterprise_configuration.client_secret
+
         if not client_id:
             raise ClientError(
                 "Failed to generate oauth access token: Client ID required.",
