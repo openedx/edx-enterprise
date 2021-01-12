@@ -16,6 +16,11 @@ Change Log
 Unreleased
 -----------
 
+[3.17.5]
+--------
+
+* Non-effectual code cleanup / refactor to remove some final pieces of duplication (canvas, blackboard).
+
 [3.17.4]
 --------
 
