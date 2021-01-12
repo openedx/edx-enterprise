@@ -34,7 +34,6 @@ def get_course_run_status(course_overview, certificate_info, enterprise_enrollme
             CourseRunProgressStatuses.IN_PROGRESS,
             CourseRunProgressStatuses.UPCOMING,
         )
-        None if pacing type is not matched
     """
     if enterprise_enrollment and enterprise_enrollment.saved_for_later:
         return CourseRunProgressStatuses.SAVED_FOR_LATER
