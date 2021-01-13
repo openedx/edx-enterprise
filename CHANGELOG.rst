@@ -26,7 +26,6 @@ Unreleased
 
 * Ensure enterprise course enrollments return valid course run statuses such that when a learner earns a passing certificate, the ``enterprise_course_enrollments`` API endpoint deems the course is complete even though the course itself may not have ended yet per the configured dates.
 
-
 [3.17.4]
 --------
 
