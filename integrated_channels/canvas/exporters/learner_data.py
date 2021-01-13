@@ -32,14 +32,19 @@ class CanvasLearnerExporter(LearnerExporter):
 
         If no remote ID can be found, return None.
         """
-        if enterprise_enrollment.enterprise_customer_user.user_email is None:
+        enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
+        if enterprise_customer_user.user_email is None:
             LOGGER.debug(
                 'No learner data was sent for user [%s] because a Canvas user ID could not be found.',
-                enterprise_enrollment.enterprise_customer_user.username
+                enterprise_customer_user.username
             )
             return None
         percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
+
+        course_catalog_client = get_course_catalog_api_service_client(
+            site=enterprise_customer_user.enterprise_customer.site
+        )
 
         CanvasLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
             'canvas',
@@ -47,17 +52,14 @@ class CanvasLearnerExporter(LearnerExporter):
         )
         # We return two records here, one with the course key and one with the course run id, to account for
         # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-        course_catalog_client = get_course_catalog_api_service_client(
-            site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
-        )
         return [
             CanvasLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                canvas_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
+                canvas_user_email=enterprise_customer_user.user_email,
                 course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                 course_completed=completed_date is not None and is_passing,
+                grade=percent_grade,
                 completed_timestamp=completed_timestamp,
-                grade=percent_grade
             ),
         ]
 
@@ -81,7 +83,8 @@ class CanvasLearnerExporter(LearnerExporter):
                 customer, course ID, and enrollment source.
             assessment_grade_data (Dict): learner data retrieved from platform's gradebook api.
         """
-        if enterprise_enrollment.enterprise_customer_user.user_email is None:
+        enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
+        if enterprise_customer_user.user_email is None:
             # We need an email to find the user on Canvas.
             LOGGER.debug(
                 'No learner data was sent for user [%s] because a Canvas user ID could not be found.',
@@ -104,12 +107,12 @@ class CanvasLearnerExporter(LearnerExporter):
                 continue
 
             course_catalog_client = get_course_catalog_api_service_client(
-                site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
+                site=enterprise_customer_user.enterprise_customer.site
             )
 
             transmission_audit = CanvasLearnerAssessmentDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
-                canvas_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
+                canvas_user_email=enterprise_customer_user.user_email,
                 course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
                 subsection_id=subsection_id,
                 grade=subsection_percent_grade,
