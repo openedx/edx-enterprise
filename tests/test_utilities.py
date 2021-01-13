@@ -128,6 +128,7 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "default_contract_discount",
                 "default_language",
                 "sender_alias",
+                "system_wide_role_assignments",
             ]
         ),
         (

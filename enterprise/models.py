@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 """
 Database models for enterprise.
@@ -2582,6 +2583,19 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
     """
 
     role_class = SystemWideEnterpriseRole
+
+    enterprise_customer = models.ForeignKey(
+        EnterpriseCustomer,
+        null=True,
+        blank=True,
+        related_name="system_wide_role_assignments",
+        on_delete=models.CASCADE,
+        help_text=_(
+            'The EnterpriseCustomer for which the role is assigned for the user.  If creating a new assignment, '
+            'you must first provide a user email and role, then click "Save and continue editing" '
+            'BEFORE selecting from this dropdown.'
+        ),
+    )
 
     def get_context(self):
         """
