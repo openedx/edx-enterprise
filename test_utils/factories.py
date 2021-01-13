@@ -197,6 +197,9 @@ class SystemWideEnterpriseUserRoleAssignmentFactory(factory.django.DjangoModelFa
 
         model = SystemWideEnterpriseUserRoleAssignment
 
+    enterprise_customer = factory.SubFactory(EnterpriseCustomerFactory)
+    applies_to_all_contexts = False
+
 
 class GroupFactory(factory.django.DjangoModelFactory):
     """

@@ -16,6 +16,17 @@ Change Log
 Unreleased
 ----------
 
+[3.17.14]
+---------
+
+* On the ``SystemWideEnterpriseUserRoleAssignment`` model, adds an ``enterprise_customer`` FK (nullable)
+  and an ``applies_to_all`` boolean field (defaults to False) that indicates if the user has wildcard permissions.
+* Updates the admin to show the "effective" customer in the detail view, and the explicit value in the list view.
+  The effective value is the deprecated way we currently determine role assignment -
+  by implicitly assigning the role on every customer to which the user is linked.
+* In the detail view/form, the "Enterprise customer" dropdown contains only customers
+  to which the user is currently linked.
+
 [3.17.13]
 ---------
 

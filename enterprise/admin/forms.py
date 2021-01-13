@@ -637,7 +637,26 @@ class SystemWideEnterpriseUserRoleAssignmentForm(UserRoleAssignmentAdminForm):
 
     class Meta:
         model = SystemWideEnterpriseUserRoleAssignment
-        fields = ['user', 'role']
+        fields = [
+            'user',
+            'role',
+            'enterprise_customer',
+            'applies_to_all_contexts',
+        ]
+
+    def __init__(self, *args, **kwargs):
+        """
+        Modifies the enterprise_customer queryset to only include
+        EnterpriseCustomer instances to which the user for this instance
+        of a SystemWideEnterpriseUserRoleAssignment is linked.
+        """
+        super().__init__(*args, **kwargs)
+        try:
+            self.fields['enterprise_customer'].queryset = EnterpriseCustomer.objects.filter(
+                enterprise_customer_users__user_id=self.instance.user.id,
+            )
+        except SystemWideEnterpriseUserRoleAssignment.user.RelatedObjectDoesNotExist:
+            self.fields['enterprise_customer'].queryset = EnterpriseCustomer.objects.none()
 
 
 class EnterpriseFeatureUserRoleAssignmentForm(UserRoleAssignmentAdminForm):

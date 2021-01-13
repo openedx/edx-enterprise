@@ -12,6 +12,7 @@ from faker import Factory as FakerFactory
 from pytest import mark
 
 from django.core.files import File
+from django.test import TestCase
 
 from enterprise.admin.forms import (
     EnterpriseCustomerCatalogAdminForm,
@@ -19,9 +20,11 @@ from enterprise.admin.forms import (
     EnterpriseCustomerReportingConfigAdminForm,
     ManageLearnersDataSharingConsentForm,
     ManageLearnersForm,
+    SystemWideEnterpriseUserRoleAssignmentForm,
 )
 from enterprise.admin.utils import ValidationMessages
-from enterprise.models import EnterpriseCustomer
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE
+from enterprise.models import EnterpriseCustomer, SystemWideEnterpriseRole
 from test_utils import fake_enrollment_api
 from test_utils.factories import (
     EnterpriseCatalogQueryFactory,
@@ -31,6 +34,7 @@ from test_utils.factories import (
     EnterpriseCustomerUserFactory,
     PendingEnterpriseCustomerUserFactory,
     SiteFactory,
+    SystemWideEnterpriseUserRoleAssignmentFactory,
     UserFactory,
 )
 
@@ -762,3 +766,49 @@ class EnterpriseCustomerCatalogAdminFormTest(unittest.TestCase):
     )
     def test_get_catalog_with_two_preview_buttons(self, post_data, expected_result):
         assert self.form.get_catalog_preview_uuid(post_data) == expected_result
+
+
+class SystemWideEnterpriseUserRoleAssignmentFormTest(TestCase):
+    """
+    Tests that this form appropriately filters the set of enterprise_customers to choose from.
+    """
+    @classmethod
+    def setUpTestData(cls):
+        cls.enterprise_customer = EnterpriseCustomerFactory.create()
+        cls.other_enterprise_customer = EnterpriseCustomerFactory.create()
+
+        cls.user = UserFactory.create()
+        cls.enterprise_admin_role, _ = SystemWideEnterpriseRole.objects.get_or_create(
+            name=ENTERPRISE_ADMIN_ROLE,
+        )
+        cls.role_assignment = SystemWideEnterpriseUserRoleAssignmentFactory.create(
+            user=cls.user,
+            role=cls.enterprise_admin_role,
+        )
+
+        _ = EnterpriseCustomerUserFactory.create(
+            user_id=cls.user.id,
+            enterprise_customer=cls.enterprise_customer,
+        )
+        super().setUpTestData()
+
+    def test_enterprise_customer_field_contains_only_linked_customers(self):
+        form = SystemWideEnterpriseUserRoleAssignmentForm(
+            instance=self.role_assignment,
+        )
+
+        actual_customers = list(form.fields['enterprise_customer'].queryset)
+        expected_customers = [self.enterprise_customer]
+        assert expected_customers == actual_customers
+
+    def test_form_without_instance_references_no_enterprise_customers(self):
+        form = SystemWideEnterpriseUserRoleAssignmentForm(
+            data={
+                'user': self.user.email,
+                'role': ENTERPRISE_ADMIN_ROLE,
+            }
+        )
+
+        actual_customers = list(form.fields['enterprise_customer'].queryset)
+        expected_customers = []
+        assert expected_customers == actual_customers
