@@ -399,6 +399,7 @@ class EnterpriseCustomerAdminForm(forms.ModelForm):
             "contact_email",
             "default_contract_discount",
             "default_language",
+            "sender_alias",
         )
 
 

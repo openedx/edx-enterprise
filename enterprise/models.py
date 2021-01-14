@@ -346,6 +346,15 @@ class EnterpriseCustomer(TimeStampedModel):
         )
     )
 
+    sender_alias = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Specifies the sender alias which will be used in enterprise customer Assign/Remind/Revoke emails."
+        )
+    )
+
     @property
     def enterprise_customer_identity_provider(self):  # pylint: disable=invalid-name
         """
