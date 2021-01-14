@@ -139,3 +139,12 @@ class TestCanvasContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
         content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
         exporter = CanvasContentMetadataExporter('fake-user', self.config)
         assert exporter.transform_self_enrollment(content_metadata_item) is True
+
+    @responses.activate
+    def test_transform_indexed(self):
+        """
+        `CanvasContentMetadataExporter``'s ''transform_indexed` returns 1 as a value
+        """
+        content_metadata_item = GENERIC_CONTENT_METADATA_ITEM
+        exporter = CanvasContentMetadataExporter('fake-user', self.config)
+        assert exporter.transform_indexed(content_metadata_item) == 1
