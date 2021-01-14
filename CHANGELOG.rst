@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.8]
+--------
+
+* Added new API endpoints for Degreed integrated channel.
+
 [3.17.7]
 --------
 
