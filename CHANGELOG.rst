@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.7]
+--------
+
+* Added new field ``sender_alias`` in enterprise customer which will be used in emails except of default alias.
+
 [3.17.6]
 --------
 

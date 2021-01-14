@@ -510,7 +510,7 @@ class TestEnterpriseAPIViews(APITest):
                 'active': True, 'enable_data_sharing_consent': True,
                 'enforce_data_sharing_consent': 'at_enrollment', 'enable_audit_data_reporting': True,
                 'site__domain': 'example.com', 'site__name': 'example.com',
-                'contact_email': 'fake@example.com',
+                'contact_email': 'fake@example.com', 'sender_alias': 'Test Sender Alias',
             }],
             [{
                 'uuid': FAKE_UUIDS[0], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -532,6 +532,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
+                'sender_alias': 'Test Sender Alias',
             }],
         ),
         (
@@ -548,6 +549,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__site__domain': 'example.com',
                 'enterprise_customer__site__name': 'example.com',
                 'enterprise_customer__contact_email': 'fake@example.com',
+                'enterprise_customer__sender_alias': 'Test Sender Alias',
 
             }],
             [{
@@ -573,6 +575,7 @@ class TestEnterpriseAPIViews(APITest):
                     'enable_analytics_screen': False,
                     'contact_email': 'fake@example.com',
                     'hide_course_original_price': False,
+                    'sender_alias': 'Test Sender Alias',
                 }
             }],
         ),
@@ -603,6 +606,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enterprise_customer__site__domain': 'example.com',
                 'enterprise_customer__site__name': 'example.com',
                 'enterprise_customer__contact_email': 'fake@example.com',
+                'enterprise_customer__sender_alias': 'Test Sender Alias',
 
             }],
             [{
@@ -626,6 +630,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
+                'sender_alias': 'Test Sender Alias',
             }],
         ),
         (
@@ -766,6 +771,7 @@ class TestEnterpriseAPIViews(APITest):
             'enable_portal_subscription_management_screen': False,
             'enable_analytics_screen': False,
             'contact_email': 'fake@example.com',
+            'sender_alias': 'Test Sender Alias',
         }
         enterprise_customer = factories.EnterpriseCustomerFactory(**enterprise_customer_data)
 
@@ -812,6 +818,7 @@ class TestEnterpriseAPIViews(APITest):
                 'enable_analytics_screen': False,
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
+                'sender_alias': 'Test Sender Alias',
             }
         else:
             assert response == expected_error

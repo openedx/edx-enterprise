@@ -101,6 +101,7 @@ class EnterpriseCustomerFactory(factory.django.DjangoModelFactory):
     country = 'US'
     contact_email = factory.LazyAttribute(lambda x: FAKER.email())
     default_language = 'en'
+    sender_alias = factory.LazyAttribute(lambda x: FAKER.word())
 
 
 class EnterpriseCustomerUserFactory(factory.django.DjangoModelFactory):
