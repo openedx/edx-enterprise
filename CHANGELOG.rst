@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.9]
+--------
+
+* Fix deprecation warning: ``third_party_auth`` should be imported as ``common.djangoapps.third_party_auth``.
+
 [3.17.8]
 --------
 
