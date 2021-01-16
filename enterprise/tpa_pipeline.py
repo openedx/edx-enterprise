@@ -20,7 +20,7 @@ except ImportError:
     UserSocialAuth = None
 
 try:
-    from third_party_auth.provider import Registry
+    from common.djangoapps.third_party_auth.provider import Registry
 except ImportError:
     Registry = None
 
