@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+
+[3.17.10]
+-------------
+
+* added home page logo for EnterpriseSelectionView and EnterpriseLoginView
+
 [3.17.9]
 --------
 

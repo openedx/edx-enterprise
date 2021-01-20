@@ -1005,6 +1005,7 @@ class EnterpriseLoginView(FormView):
     def get_context_data(self, **kwargs):
         """Return the context data needed to render the view."""
         context_data = super().get_context_data(**kwargs)
+        context_data.update(get_global_context(self.request))
         context_data.update({
             'page_title': _(u'Enterprise Slug Login'),
             'enterprise_login_title_message': ENTERPRISE_LOGIN_TITLE,
@@ -1123,6 +1124,7 @@ class EnterpriseSelectionView(FormView):
     def get_context_data(self, **kwargs):
         """Return the context data needed to render the view."""
         context_data = super().get_context_data(**kwargs)
+        context_data.update(get_global_context(self.request))
         context_data.update({
             'page_title': _(u'Select Organization'),
             'select_enterprise_message_title': _(u'Select an organization'),
