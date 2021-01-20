@@ -197,8 +197,9 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     self.enterprise_configuration.canvas_base_url,
                     course_id,
                 )
+                # Providing the param `event` and setting it to `offer` is equivalent to publishing the course.
                 self._put(url, json.dumps({
-                    'course': {'image_url': content_metadata_item['image_url']}
+                    'course': {'image_url': content_metadata_item['image_url'], 'event': 'offer'}
                 }).encode('utf-8'))
         except Exception:  # pylint: disable=broad-except
             # we do not want course image update to cause failures

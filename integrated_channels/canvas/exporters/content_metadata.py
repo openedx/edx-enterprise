@@ -24,6 +24,7 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         'is_public': 'is_public',
         'self_enrollment': 'self_enrollment',
         'course_code': 'key',
+        'indexed': 'indexed'
     }
 
     LONG_STRING_LIMIT = 2000
@@ -60,7 +61,9 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
 
     def transform_is_public(self, content_metadata_item):  # pylint: disable=unused-argument
         """
-        Whether to make the course visible in the public Canvas index by default.
+        Whether to make the course content visible to students by default. Note that setting this feature to false
+        will not remove the course from discovery, but will rather remove all visible content from the course if
+        any student attempts to access it.
         """
         return True
 
@@ -69,3 +72,9 @@ class CanvasContentMetadataExporter(ContentMetadataExporter):
         Whether to allow students to self enroll. Helps students enroll via link or enroll button.
         """
         return True
+
+    def transform_indexed(self, content_metadata_item):  # pylint: disable=unused-argument
+        """
+        Whether to make the course default to the public index or not.
+        """
+        return 1
