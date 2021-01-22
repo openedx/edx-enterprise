@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.17.11]
+-------------
+
+* added endpoints for Cornerstone integrated channel.
 
 [3.17.10]
 -------------
