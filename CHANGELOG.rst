@@ -17,8 +17,13 @@ Unreleased
 ----------
 
 
+[3.17.11]
+---------
+
+* Apply edx-rbac migration to add ``applies_to_all_contexts`` field to ``SystemWideEnterpriseUserRoleAssignment``.
+
 [3.17.10]
--------------
+---------
 
 * added home page logo for EnterpriseSelectionView and EnterpriseLoginView
 
