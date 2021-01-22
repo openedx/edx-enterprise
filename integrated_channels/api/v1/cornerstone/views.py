@@ -1,5 +1,5 @@
 """
-Viewsets for Degreed
+Viewsets for Cornerstone
 """
 
 from edx_rbac.mixins import PermissionRequiredMixin
@@ -9,13 +9,13 @@ from django.core.exceptions import PermissionDenied
 from django.http import Http404
 
 from enterprise.models import EnterpriseCustomerUser
-from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
+from integrated_channels.cornerstone.models import CornerstoneEnterpriseCustomerConfiguration
 
-from .serializers import DegreedConfigSerializer
+from .serializers import CornerstoneConfigSerializer
 
 
-class DegreedConfigurationViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
-    serializer_class = DegreedConfigSerializer
+class CornerstoneConfigurationViewSet(PermissionRequiredMixin, viewsets.ModelViewSet):
+    serializer_class = CornerstoneConfigSerializer
     permission_classes = (permissions.IsAuthenticated,)
     permission_required = 'enterprise.can_access_admin_dashboard'
 
@@ -28,11 +28,11 @@ class DegreedConfigurationViewSet(PermissionRequiredMixin, viewsets.ModelViewSet
 
             if enterprise_customer_uuid:
                 if enterprise_customer_uuid in enterprise_customers_uuids:
-                    return DegreedEnterpriseCustomerConfiguration.objects.filter(
+                    return CornerstoneEnterpriseCustomerConfiguration.objects.filter(
                         enterprise_customer__uuid=enterprise_customer_uuid
                     )
                 raise PermissionDenied()
-            return DegreedEnterpriseCustomerConfiguration.objects.filter(
+            return CornerstoneEnterpriseCustomerConfiguration.objects.filter(
                 enterprise_customer__uuid__in=enterprise_customers_uuids
             )
         raise Http404
