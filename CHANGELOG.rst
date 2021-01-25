@@ -17,14 +17,10 @@ Unreleased
 ----------
 
 [3.17.11]
--------------
-
-* added endpoints for Cornerstone integrated channel.
-
-[3.17.11]
 ---------
 
 * Apply edx-rbac migration to add ``applies_to_all_contexts`` field to ``SystemWideEnterpriseUserRoleAssignment``.
+* Added endpoints for Cornerstone integrated channel.
 
 [3.17.10]
 ---------
