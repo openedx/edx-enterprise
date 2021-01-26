@@ -87,7 +87,7 @@ django-fernet-fields==0.6
     # via -r requirements/test-master.txt
 django-filter==2.4.0
     # via -r requirements/test-master.txt
-django-ipware==2.1.0
+django-ipware==3.0.2
     # via -r requirements/test-master.txt
 django-model-utils==4.1.1
     # via
