@@ -10,6 +10,7 @@ from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
 from six.moves.urllib.parse import urlencode  # pylint: disable=import-error
 
+from django.conf import settings
 from django.conf.urls import url
 from django.contrib import admin, auth
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -20,6 +21,7 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 
+from enterprise import constants
 from enterprise.admin.actions import export_as_csv_action, refresh_catalog
 from enterprise.admin.forms import (
     EnterpriseCustomerAdminForm,
@@ -586,6 +588,7 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         'enterprise_customer_user',
         'course_id',
         'saved_for_later',
+        'license_uuid',
     )
 
     list_display = (
@@ -597,6 +600,12 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
     change_list_template = "enterprise/admin/enterprise_course_enrollments_list.html"
     search_fields = ('enterprise_customer_user__user_id', 'course_id',)
 
+    def license_uuid(self, obj):
+        """
+        Return the subscription license UUID (if any exists)  associated with this enrollment.
+        """
+        return str(obj.license.license_uuid)
+
     def has_add_permission(self, request):
         """
         Disable add permission for EnterpriseCourseEnrollment.
@@ -607,7 +616,8 @@ class EnterpriseCourseEnrollmentAdmin(admin.ModelAdmin):
         """
         Disable deletion for EnterpriseCourseEnrollment.
         """
-        return False
+        features = getattr(settings, 'FEATURES', {})
+        return features.get(constants.ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION, False)
 
     def changelist_view(self, request, extra_context=None):
         """
