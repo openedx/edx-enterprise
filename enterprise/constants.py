@@ -154,6 +154,10 @@ CONTENT_FILTER_FIELD_TYPES = {
     'first_enrollable_paid_seat_price__lte': {'type': str}
 }
 
+# FEATURE flag that indicates if deletion of EnterpriseCourseEnrollment records via
+# the Django Admin site is allowed.
+ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION = 'ALLOW_ADMIN_ENTERPRISE_COURSE_ENROLLMENT_DELETION'
+
 
 def json_serialized_course_modes():
     """

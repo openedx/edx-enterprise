@@ -16,6 +16,14 @@ Change Log
 Unreleased
 ----------
 
+[3.17.12]
+---------
+
+* Conditionally allows the deletion of individual ``EnterpriseCourseEnrollment`` and related
+  ``LicensedEnterpriseCourseEnrollment`` records via the Django Admin site, so that site admins can manually
+  delete enterprise enrollments that were created in error.
+  This is only allowed if a Django settings feature flag is set to ``True``.
+
 [3.17.11]
 ---------
 
