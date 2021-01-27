@@ -29,6 +29,8 @@ from enterprise.decorators import (
 from test_utils import get_magic_name, mock_view_function
 from test_utils.factories import EnterpriseCustomerFactory, EnterpriseCustomerIdentityProviderFactory, UserFactory
 
+FAKER = FakerFactory.create()
+
 
 @ddt.ddt
 @mark.django_db
@@ -42,11 +44,13 @@ class TestEnterpriseDecorators(unittest.TestCase):
         Set up test environment.
         """
         super().setUp()
-        faker = FakerFactory.create()
-        self.provider_id = faker.slug()  # pylint: disable=no-member
-        self.uuid = faker.uuid4()  # pylint: disable=no-member
+        self.provider_id = FAKER.slug()  # pylint: disable=no-member
+        self.uuid = FAKER.uuid4()  # pylint: disable=no-member
         self.customer = EnterpriseCustomerFactory(uuid=self.uuid)
-        EnterpriseCustomerIdentityProviderFactory(provider_id=self.provider_id, enterprise_customer=self.customer)
+        self.identity_provider = EnterpriseCustomerIdentityProviderFactory(
+            provider_id=self.provider_id,
+            enterprise_customer=self.customer
+        )
         self.session_engine = import_module(settings.SESSION_ENGINE)
 
     def _prepare_request(self, url, user):
@@ -102,7 +106,7 @@ class TestEnterpriseDecorators(unittest.TestCase):
         {},  # Missing required parameter `enterprise_uuid` arguments in kwargs
         {'enterprise_uuid': ''},  # Required parameter `enterprise_uuid` with empty value in kwargs.
         # pylint: disable=no-member
-        {'enterprise_uuid': FakerFactory.create().uuid4()},  # Invalid value of `enterprise_uuid` in kwargs.
+        {'enterprise_uuid': FAKER.uuid4()},  # Invalid value of `enterprise_uuid` in kwargs.
     )
     def test_enterprise_login_required_raises_404(self, kwargs):
         """
@@ -119,28 +123,55 @@ class TestEnterpriseDecorators(unittest.TestCase):
         with raises(Http404):
             enterprise_login_required(view_function)(request, **kwargs)
 
-    def test_enterprise_login_required_redirects_for_anonymous_users(self):
+    @ddt.data(
+        ('idp-1', 'idp-1', True, 'idp-1'),
+        (None, 'idp-1', True, 'idp-1'),
+        ('fake_idp', 'idp-1', True, None),
+        ('idp-1', 'idp-1', False, None),
+        (None, None, False, None),
+    )
+    @ddt.unpack
+    def test_enterprise_login_required_redirects_for_anonymous_users(
+            self,
+            tpa_hint_param,
+            identity_provided_id,
+            link_identity_provider,
+            redirected_tpa_hint
+    ):
         """
         Test that the decorator `enterprise_login_required` returns Http
         Redirect for anonymous users.
         """
+        enterprise_customer = EnterpriseCustomerFactory(uuid=FAKER.uuid4())  # pylint: disable=no-member
+        identity_provider = EnterpriseCustomerIdentityProviderFactory()
+
+        if identity_provided_id:
+            identity_provider.provider_id = identity_provided_id
+            identity_provider.save()
+
+        if link_identity_provider:
+            identity_provider.enterprise_customer = enterprise_customer
+            identity_provider.save()
+
         view_function = mock_view_function()
         course_id = 'course-v1:edX+DemoX+Demo_Course'
         enterprise_launch_url = reverse(
             'enterprise_course_run_enrollment_page',
-            args=[self.customer.uuid, course_id],
+            args=[enterprise_customer.uuid, course_id],
         )
-        request = self._prepare_request(enterprise_launch_url, AnonymousUser())
+        if tpa_hint_param:
+            enterprise_launch_url = f'{enterprise_launch_url}?tpa_hint={tpa_hint_param}'
 
+        request = self._prepare_request(enterprise_launch_url, AnonymousUser())
         response = enterprise_login_required(view_function)(
-            request, enterprise_uuid=self.customer.uuid, course_id=course_id
+            request, enterprise_uuid=enterprise_customer.uuid, course_id=course_id
         )
 
         # Assert that redirect status code 302 is returned when an anonymous
         # user tries to access enterprise course enrollment page.
         assert response.status_code == 302
         assert 'new_enterprise_login%3Dyes' in response.url
-        assert 'tpa_hint' in response.url
+        assert f'tpa_hint%3D{redirected_tpa_hint}' in response.url
 
     def test_enterprise_login_required_redirects_for_anonymous_users_with_querystring(self):
         """

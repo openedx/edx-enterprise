@@ -128,11 +128,7 @@ def enterprise_login_required(view):
         enterprise_uuid = kwargs['enterprise_uuid']
         enterprise_customer = get_enterprise_customer_or_404(enterprise_uuid)
         query_params = request.GET
-        # Check if tpa_hint was passed as query param
-        tpa_hint = query_params.get('tpa_hint')
-        if not tpa_hint and not enterprise_customer.has_multiple_idps:
-            tpa_hint = enterprise_customer.identity_provider\
-                if enterprise_customer.identity_provider else None
+        tpa_hint_param = query_params.get('tpa_hint')
 
         # Now verify if the user is logged in. If user is not logged in then
         # send the user to the login screen to sign in with an
@@ -141,7 +137,7 @@ def enterprise_login_required(view):
             parsed_current_url = urlparse(request.get_full_path())
             parsed_query_string = parse_qs(parsed_current_url.query)
             parsed_query_string.update({
-                'tpa_hint': tpa_hint,
+                'tpa_hint': enterprise_customer.get_tpa_hint(tpa_hint_param),
                 FRESH_LOGIN_PARAMETER: 'yes'
             })
             next_url = '{current_path}?{query_string}'.format(
