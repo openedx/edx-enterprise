@@ -242,7 +242,7 @@ def update_enterprise_catalog_query(sender, instance, **kwargs):     # pylint: d
             updated_content_filter
         )
     )
-    catalogs = instance.enterprise_customer_catalogs.filter(sync_enterprise_catalog_query=True)
+    catalogs = instance.enterprise_customer_catalogs.all()
 
     for catalog in catalogs:
         logger.info(

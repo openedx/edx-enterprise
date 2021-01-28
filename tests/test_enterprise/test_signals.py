@@ -838,11 +838,9 @@ class TestEnterpriseCatalogSignals(unittest.TestCase):
             content_filter=content_filter_1
         )
         enterprise_catalog_1 = EnterpriseCustomerCatalogFactory(
-            sync_enterprise_catalog_query=True,
             enterprise_catalog_query=test_query
         )
         enterprise_catalog_2 = EnterpriseCustomerCatalogFactory(
-            sync_enterprise_catalog_query=True,
             enterprise_catalog_query=test_query
         )
 
