@@ -16,6 +16,14 @@ Change Log
 Unreleased
 ----------
 
+[3.17.15]
+---------
+
+* In ``SystemWideEnterpriseUserRoleAssignment``, Use either ``applies_to_all_contexts`` or ``enterprise_customer``
+  if they are True or non-null, respectively, in determining the result of ``get_context()``,
+  but continue to return list of all linked enterprise customer UUIDs if not, (which is the current behavior).
+  This is a small step on our journey to explicitly defining user-role assignments.
+
 [3.17.14]
 ---------
 

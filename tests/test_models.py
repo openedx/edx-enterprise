@@ -1991,6 +1991,16 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
     Tests SystemWideEnterpriseUserRoleAssignment.
     """
 
+    def _create_and_link_user(self, user_email, *enterprise_customers):
+        """
+        Helper that creates a User with the given email, then links that user
+        to each of the given EnterpriseCustomers.
+        """
+        user = factories.UserFactory(email=user_email)
+        for enterprise_customer in enterprise_customers:
+            EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
+        return user
+
     @ddt.data(
         {
             'role_name': ENTERPRISE_LEARNER_ROLE,
@@ -2006,10 +2016,8 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         """
         Verify that `SystemWideEnterpriseUserRoleAssignment.get_context` method works as expected.
         """
-        user_email = 'edx@example.com'
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
-        user = factories.UserFactory(email=user_email)
-        EnterpriseCustomerUser.objects.link_user(enterprise_customer, user_email)
+        user = self._create_and_link_user('edx@example.com', enterprise_customer)
 
         enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
         enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
@@ -2035,12 +2043,9 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         Verify that `SystemWideEnterpriseUserRoleAssignment.get_context` method works as expected for user with
         multiple contexts.
         """
-        user_email = 'edx@example.com'
         enterprise_customer_1 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
         enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2c')
-        user = factories.UserFactory(email=user_email)
-        EnterpriseCustomerUser.objects.link_user(enterprise_customer_1, user_email)
-        EnterpriseCustomerUser.objects.link_user(enterprise_customer_2, user_email)
+        user = self._create_and_link_user('edx@example.com', enterprise_customer_1, enterprise_customer_2)
 
         enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
         enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
@@ -2049,6 +2054,40 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         )
 
         assert enterprise_role_assignment.get_context() == expected_context
+
+    def test_get_context_applies_to_all_contexts(self):
+        """
+        Verify that having a role assignment with ``applies_to_all_contexts`` set to True gives
+        the user a context of "*".
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        user = self._create_and_link_user('edx@example.com', enterprise_customer)
+
+        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
+        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user,
+            role=enterprise_role,
+            applies_to_all_contexts=True,
+        )
+
+        assert ['*'] == enterprise_role_assignment.get_context()
+
+    def test_get_context_explicit_enterprise_customer(self):
+        """
+        Verify that having a role assignment with non-null ``enterprise_customer`` field gives
+        the user a context of that customer's UUID.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
+        user = self._create_and_link_user('edx@example.com', enterprise_customer)
+
+        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
+        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
+            user=user,
+            role=enterprise_role,
+            enterprise_customer=enterprise_customer,
+        )
+
+        assert [str(enterprise_customer.uuid)] == enterprise_role_assignment.get_context()
 
 
 @mark.django_db
