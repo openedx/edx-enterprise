@@ -26,10 +26,10 @@ class TestEnterpriseProxyLoginView(TestCase):
         super().setUpTestData()
         cls.client = Client()
         cls.enterprise_customer = EnterpriseCustomerFactory()
-        cls.identity_providers = EnterpriseCustomerIdentityProviderFactory(enterprise_customer=cls.enterprise_customer)
+        cls.identity_provider = EnterpriseCustomerIdentityProviderFactory(enterprise_customer=cls.enterprise_customer)
 
     def _get_url_with_params(self, use_enterprise_slug=True, use_next=True, enterprise_slug_override=None,
-                             next_override=None, use_tpa_hint=False, tpa_hint=None):
+                             next_override=None, tpa_hint=None):
         """
         Helper to add the appropriate query parameters if specified and assert the correct response status.
         """
@@ -38,7 +38,7 @@ class TestEnterpriseProxyLoginView(TestCase):
             query_params['enterprise_slug'] = enterprise_slug_override or self.enterprise_customer.slug
         if use_next:
             query_params['next'] = next_override or self.next_url
-        if use_tpa_hint:
+        if tpa_hint:
             query_params['tpa_hint'] = tpa_hint
         url = self.base_url + '/?' + query_params.urlencode()
         return url
@@ -99,28 +99,50 @@ class TestEnterpriseProxyLoginView(TestCase):
         else:
             learner_portal_url = settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL
             next_url = learner_portal_url + '/' + self.enterprise_customer.slug
-        query_params['next'] = next_url + '?tpa_hint=' + str(self.enterprise_customer.identity_providers.first().
-                                                             provider_id)
+        query_params['next'] = f'{next_url}?tpa_hint={self.enterprise_customer.identity_provider}'
         expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)
 
     @ddt.data(
-        (True, 'fake_tpa_hint'),  # 'tpa_hint' query param is passed in URL
-        (False, None),  # 'tpa_hint' query param not passed in URL
+        ('idp-1', 'idp-1', True, 'idp-1'),
+        (None, 'idp-1', True, 'idp-1'),
+        ('fake_idp', 'idp-1', True, None),
+        ('idp-1', 'idp-1', False, None),
+        (None, None, False, None),
     )
     @ddt.unpack
-    def test_tpa_hint_redirect(self, use_tpa_hint, tpa_hint):
+    def test_tpa_redirects_using_tpa_hint_param(
+            self,
+            tpa_hint_param,
+            identity_provider_id,
+            link_identity_provider,
+            redirected_tpa_hint
+    ):
         """
         Verify the view adds the tpa_hint to the redirect if there is a tpa_hint provided in the query_param.
         """
-        url = self._get_url_with_params(use_tpa_hint=use_tpa_hint, tpa_hint=tpa_hint)
+
+        enterprise_customer = EnterpriseCustomerFactory()
+        identity_provider = EnterpriseCustomerIdentityProviderFactory()
+
+        if identity_provider_id:
+            identity_provider.provider_id = identity_provider_id
+            identity_provider.save()
+
+        if link_identity_provider:
+            identity_provider.enterprise_customer = enterprise_customer
+            identity_provider.save()
+
+        url = self._get_url_with_params(enterprise_slug_override=enterprise_customer.slug, tpa_hint=tpa_hint_param)
         response = self.client.get(url)
         query_params = QueryDict(mutable=True)
         next_url = self.next_url
-        if tpa_hint:
-            query_params['next'] = next_url + '?tpa_hint=' + tpa_hint
+
+        if redirected_tpa_hint:
+            query_params['next'] = f'{next_url}?tpa_hint={redirected_tpa_hint}'
         else:
-            query_params['next'] = next_url + '?tpa_hint=' + str(self.enterprise_customer.identity_providers.first().
-                                                                 provider_id)
-        expected_url = LMS_LOGIN_URL + '?' + query_params.urlencode()
+            query_params['enterprise_customer'] = str(enterprise_customer.uuid)
+            query_params['proxy_login'] = True
+            query_params['next'] = next_url
+        expected_url = f'{LMS_LOGIN_URL}?{query_params.urlencode()}'
         self.assertRedirects(response, expected_url, fetch_redirect_response=False)

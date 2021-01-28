@@ -366,15 +366,14 @@ class EnterpriseCustomer(TimeStampedModel):
     @property
     def identity_provider(self):
         """
-        Return the identity providers associated with this enterprise customer.
+        Return the first identity provider id associated with this enterprise customer.
         """
         # pylint: disable=no-member
-        try:
-            # pylint: disable=no-member
-            identity_provider = self.enterprise_customer_identity_providers.first()
-            return identity_provider and identity_provider.provider_id
-        except ObjectDoesNotExist:
-            return None
+        identity_provider = self.enterprise_customer_identity_providers.first()
+        if identity_provider:
+            return identity_provider.provider_id
+        LOGGER.info("No linked identity provider found for enterprise customer: %s", self.uuid)
+        return None
 
     @property
     def identity_providers(self):
@@ -382,6 +381,13 @@ class EnterpriseCustomer(TimeStampedModel):
         Return the identity providers associated with this enterprise customer.
         """
         return self.enterprise_customer_identity_providers.all()
+
+    @property
+    def identity_provider_ids(self):
+        """
+        Return the identity provider Ids associated with this enterprise customer.
+        """
+        return list(self.identity_providers.values_list('provider_id', flat=True))
 
     @property
     def has_identity_providers(self):
@@ -400,6 +406,14 @@ class EnterpriseCustomer(TimeStampedModel):
         return self.enterprise_customer_identity_providers.count() > 1
 
     @property
+    def has_single_idp(self):
+        """
+        Return True if there are exactly one identity provider associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.count() == 1
+
+    @property
     def sync_learner_profile_data(self):
         """
         Return the sync_learner_profile data flag for the identity provider associated with this enterprise customer.
@@ -411,6 +425,21 @@ class EnterpriseCustomer(TimeStampedModel):
             identity_provider.sync_learner_profile_data
             for identity_provider in self.identity_providers
         ) if self.has_identity_providers else False
+
+    def get_tpa_hint(self, tpa_hint_param=None):
+        """
+        :param tpa_hint_param: query param passed in the URL.
+        :return: tpa_hint to redirect
+        """
+
+        # if tpa_hint_param is provided and it is a linked identity provider, use it as tpa_hint
+        if tpa_hint_param and tpa_hint_param in self.identity_provider_ids:
+            return tpa_hint_param
+        # if there is only one identity provider linked with the customer and tpa_hint_param was not provider.
+        if self.has_single_idp and not tpa_hint_param:
+            return self.identity_providers.first().provider_id
+        # Now if there is not any linked identity provider OR there are multiple identity providers.
+        return None
 
     def __str__(self):
         """

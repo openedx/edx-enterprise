@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.13]
+---------
+
+* added check to make sure enterprise user can only use linked IdP with their enterprise customer.
+
 [3.17.12]
 ---------
 

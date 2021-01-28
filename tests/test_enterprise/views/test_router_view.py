@@ -44,7 +44,8 @@ class TestRouterView(TestCase):
                 'enterprise_course_run_enrollment_page',
                 args=[self.enterprise_customer.uuid, self.course_run_id]
             ),
-            user=factories.UserFactory()
+            user=factories.UserFactory(),
+            GET={},
         )
         self.kwargs = {
             'enterprise_uuid': str(self.enterprise_customer.uuid),
@@ -112,7 +113,7 @@ class TestRouterView(TestCase):
         """
         ``eligible_for_direct_audit_enrollment`` returns whether the request is eligible for direct audit enrollment.
         """
-        self.request.GET.get = mock.MagicMock(return_value=request_has_audit_query_param)
+        self.request.GET['audit'] = request_has_audit_query_param
         self.request.path = self.request.path if is_course_enrollment_url else None
         self.enterprise_customer.catalog_contains_course = mock.MagicMock(return_value=customer_catalog_contains_course)
         enrollment_api_client_mock.return_value.has_course_mode.return_value = has_course_mode
@@ -238,7 +239,6 @@ class TestRouterView(TestCase):
         """
         ``get`` redirects to the LMS courseware when the request is fully eligible for direct audit enrollment.
         """
-        self.request.GET.get = mock.MagicMock(return_value={})
         enrollment_api_client_mock.return_value.get_course_enrollment.return_value = None
         router_view_mock.eligible_for_direct_audit_enrollment = mock.MagicMock(return_value=True)
         response = router_view_mock.get(self.request, **self.kwargs)
