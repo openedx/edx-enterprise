@@ -2594,13 +2594,22 @@ class SystemWideEnterpriseUserRoleAssignment(EnterpriseRoleAssignmentContextMixi
         ),
     )
 
+    def has_access_to_all_contexts(self):
+        """
+        Returns true if the role for this assignment is ``ENTERPRISE_OPERATOR_ROLE``,
+        or if ``applies_to_all_contexts`` is true; returns false otherwise.
+        """
+        return (self.role.name == ENTERPRISE_OPERATOR_ROLE) or self.applies_to_all_contexts  # pylint: disable=no-member
+
     def get_context(self):
         """
         Return the context for this role assignment class.
         """
-        # do not add enterprise id for `enterprise_openedx_operator` role
-        if self.role.name == ENTERPRISE_OPERATOR_ROLE:  # pylint: disable=no-member
+        if self.has_access_to_all_contexts():
             return [ALL_ACCESS_CONTEXT]
+
+        if self.enterprise_customer:
+            return [str(self.enterprise_customer.uuid)]
 
         return super().get_context()
 
