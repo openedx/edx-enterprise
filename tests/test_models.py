@@ -29,7 +29,8 @@ from django.urls import reverse
 from consent.errors import InvalidProxyConsent
 from consent.helpers import get_data_sharing_consent
 from consent.models import DataSharingConsent, ProxyDataSharingConsent
-from enterprise.constants import ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise import roles_api
+from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -47,7 +48,7 @@ from enterprise.models import (
 )
 from enterprise.utils import CourseEnrollmentDowngradeError, get_default_catalog_content_filter
 from integrated_channels.integrated_channel.models import EnterpriseCustomerPluginConfiguration
-from test_utils import assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
+from test_utils import EmptyCacheMixin, assert_url, assert_url_contains_query_parameters, factories, fake_catalog_api
 
 
 @mark.django_db
@@ -1467,7 +1468,7 @@ class TestDataSharingConsentManager(unittest.TestCase):
 
 
 @ddt.ddt
-class TestProxyDataSharingConsent(TransactionTestCase):
+class TestProxyDataSharingConsent(EmptyCacheMixin, TransactionTestCase):
     """
     Tests of the ``ProxyDataSharingConsent`` class (pseudo-model).
     """
@@ -1995,6 +1996,8 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         """
         Helper that creates a User with the given email, then links that user
         to each of the given EnterpriseCustomers.
+        Since we're saving an `EnterpriseCustomerUser` instance(s), this
+        should also create some role assignments.
         """
         user = factories.UserFactory(email=user_email)
         for enterprise_customer in enterprise_customers:
@@ -2022,23 +2025,12 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
         enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
             user=user,
-            role=enterprise_role
+            role=enterprise_role,
         )
 
         assert enterprise_role_assignment.get_context() == expected_context
 
-    @ddt.data(
-        {
-            'role_name': ENTERPRISE_LEARNER_ROLE,
-            'expected_context': [u'47130371-0b6d-43f5-01de-71942664de2c', u'47130371-0b6d-43f5-01de-71942664de2b'],
-        },
-        {
-            'role_name': ENTERPRISE_OPERATOR_ROLE,
-            'expected_context': ['*'],
-        }
-    )
-    @ddt.unpack
-    def test_get_context_for_multiple_contexts(self, role_name, expected_context):
+    def test_get_context_for_multiple_learner_contexts(self):
         """
         Verify that `SystemWideEnterpriseUserRoleAssignment.get_context` method works as expected for user with
         multiple contexts.
@@ -2047,13 +2039,13 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         enterprise_customer_2 = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2c')
         user = self._create_and_link_user('edx@example.com', enterprise_customer_1, enterprise_customer_2)
 
-        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=role_name)
-        enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-            user=user,
-            role=enterprise_role
-        )
-
-        assert enterprise_role_assignment.get_context() == expected_context
+        for enterprise_customer in [enterprise_customer_1, enterprise_customer_2]:
+            enterprise_role_assignment = SystemWideEnterpriseUserRoleAssignment.objects.get(
+                user=user,
+                role=roles_api.learner_role(),
+                enterprise_customer=enterprise_customer,
+            )
+            assert [str(enterprise_customer.uuid)] == enterprise_role_assignment.get_context()
 
     def test_get_context_applies_to_all_contexts(self):
         """
@@ -2063,31 +2055,45 @@ class TestSystemWideEnterpriseUserRoleAssignment(unittest.TestCase):
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
         user = self._create_and_link_user('edx@example.com', enterprise_customer)
 
-        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
         enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
             user=user,
-            role=enterprise_role,
+            role=roles_api.learner_role(),
             applies_to_all_contexts=True,
         )
 
         assert ['*'] == enterprise_role_assignment.get_context()
 
-    def test_get_context_explicit_enterprise_customer(self):
+    @ddt.data(
+        {
+            'role_name': ENTERPRISE_LEARNER_ROLE,
+            'expected_context': ['47130371-0b6d-43f5-01de-71942664de2b'],
+        },
+        {
+            'role_name': ENTERPRISE_OPERATOR_ROLE,
+            'expected_context': ['*'],
+        },
+        {
+            'role_name': ENTERPRISE_ADMIN_ROLE,
+            'expected_context': ['47130371-0b6d-43f5-01de-71942664de2b'],
+        }
+    )
+    @ddt.unpack
+    def test_get_context_explicit_enterprise_customer(self, role_name, expected_context):
         """
-        Verify that having a role assignment with non-null ``enterprise_customer`` field gives
-        the user a context of that customer's UUID.
+        Verify that having an openedx operator role assignment gives
+        the user a context of "*".
         """
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid='47130371-0b6d-43f5-01de-71942664de2b')
         user = self._create_and_link_user('edx@example.com', enterprise_customer)
 
-        enterprise_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
         enterprise_role_assignment, __ = SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
             user=user,
-            role=enterprise_role,
+            role=roles_api.get_or_create_system_wide_role(role_name),
             enterprise_customer=enterprise_customer,
+            applies_to_all_contexts=False,
         )
 
-        assert [str(enterprise_customer.uuid)] == enterprise_role_assignment.get_context()
+        assert expected_context == enterprise_role_assignment.get_context()
 
 
 @mark.django_db

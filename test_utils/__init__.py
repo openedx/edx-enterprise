@@ -28,6 +28,7 @@ from six.moves.urllib.parse import (  # pylint: disable=import-error,ungrouped-i
 )
 
 from django.conf import settings
+from django.core.cache import caches
 from django.shortcuts import render
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -397,3 +398,12 @@ class EnterpriseFormViewTestCase(TestCase):
         )
         patcher.start()
         self.addCleanup(patcher.stop)
+
+
+class EmptyCacheMixin:
+    """
+    Mixin the clears the default cache before each test function.
+    """
+    def setUp(self):
+        super().setUp()
+        caches['default'].clear()

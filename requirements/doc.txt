@@ -10,7 +10,7 @@ amqp==5.0.5
     # via
     #   -r requirements/test-master.txt
     #   kombu
-aniso8601==8.1.0
+aniso8601==8.1.1
     # via
     #   -r requirements/test-master.txt
     #   edx-tincan-py35
@@ -20,7 +20,7 @@ billiard==3.6.3.0
     # via
     #   -r requirements/test-master.txt
     #   celery
-bleach==3.2.3
+bleach==3.3.0
     # via
     #   -r requirements/test-master.txt
     #   readme-renderer
@@ -61,7 +61,7 @@ click==7.1.2
     #   click-plugins
     #   click-repl
     #   code-annotations
-code-annotations==1.0.2
+code-annotations==1.1.0
     # via -r requirements/test-master.txt
 cryptography==3.2.1
     # via
@@ -72,6 +72,8 @@ defusedxml==0.6.0
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
+django-cache-memoize==0.1.7
+    # via -r requirements/test-master.txt
 django-config-models==2.1.1
     # via -r requirements/test-master.txt
 django-countries==5.5
@@ -102,7 +104,7 @@ django-waffle==2.1.0
     #   -r requirements/test-master.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.17
+django==2.2.18
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/test-master.txt
@@ -153,7 +155,7 @@ edx-drf-extensions==6.4.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
-edx-opaque-keys[django]==2.1.1
+edx-opaque-keys[django]==2.2.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
@@ -175,7 +177,7 @@ idna==2.10
     #   requests
 imagesize==1.2.0
     # via sphinx
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
@@ -198,7 +200,7 @@ newrelic==6.0.1.155
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
-packaging==20.8
+packaging==20.9
     # via
     #   -r requirements/test-master.txt
     #   bleach
@@ -263,7 +265,7 @@ python-slugify==4.0.1
     # via
     #   -r requirements/test-master.txt
     #   code-annotations
-pytz==2020.5
+pytz==2021.1
     # via
     #   -r requirements/test-master.txt
     #   babel
@@ -307,7 +309,6 @@ six==1.15.0
     #   django-simple-history
     #   doc8
     #   edx-drf-extensions
-    #   edx-opaque-keys
     #   edx-rbac
     #   edx-sphinx-theme
     #   pockets

@@ -6,13 +6,13 @@
 #
 amqp==5.0.5
     # via kombu
-aniso8601==8.1.0
+aniso8601==8.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-tincan-py35
 billiard==3.6.3.0
     # via celery
-bleach==3.2.3
+bleach==3.3.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -45,7 +45,7 @@ click==7.1.2
     #   click-plugins
     #   click-repl
     #   code-annotations
-code-annotations==1.0.2
+code-annotations==1.1.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -59,6 +59,8 @@ defusedxml==0.6.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
+django-cache-memoize==0.1.7
+    # via -r requirements/base.in
 django-config-models==2.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
@@ -104,7 +106,7 @@ django-waffle==2.1.0
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.17
+django==2.2.18
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -150,7 +152,7 @@ edx-drf-extensions==6.4.0
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   edx-rbac
-edx-opaque-keys[django]==2.1.1
+edx-opaque-keys[django]==2.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -172,7 +174,7 @@ idna==2.10
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
@@ -193,7 +195,7 @@ newrelic==6.0.1.155
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
-packaging==20.8
+packaging==20.9
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   bleach
@@ -253,7 +255,7 @@ python-slugify==4.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   code-annotations
-pytz==2020.5
+pytz==2021.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -295,7 +297,6 @@ six==1.15.0
     #   django-countries
     #   django-simple-history
     #   edx-drf-extensions
-    #   edx-opaque-keys
     #   edx-rbac
     #   pyjwkest
     #   python-dateutil
