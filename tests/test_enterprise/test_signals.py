@@ -26,6 +26,7 @@ from enterprise.models import (
     SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.signals import create_enterprise_enrollment_receiver, handle_user_post_save
+from test_utils import EmptyCacheMixin
 from test_utils.factories import (
     EnterpriseAnalyticsUserFactory,
     EnterpriseCatalogQueryFactory,
@@ -42,11 +43,10 @@ from test_utils.factories import (
 
 @mark.django_db(transaction=True)
 @ddt.ddt
-class TestUserPostSaveSignalHandler(unittest.TestCase):
+class TestUserPostSaveSignalHandler(EmptyCacheMixin, unittest.TestCase):
     """
     Test User post_save signal handler.
     """
-
     def test_handle_user_post_save_no_user_instance_nothing_happens(self):
         # precondition checks
         assert PendingEnterpriseCustomerUser.objects.count() == 0
@@ -175,7 +175,7 @@ class TestUserPostSaveSignalHandler(unittest.TestCase):
         )
         mock_track_enrollment.assert_called_once_with('pending-admin-enrollment', user.id, course_id)
 
-    @mock.patch('enterprise.models.create_tableau_user')
+    @mock.patch('enterprise.api.create_tableau_user')
     def test_handle_user_post_save_with_pending_enterprise_admin(self, mock_create_tableau_user):
         email = "jackie.chan@hollywood.com"
         user = UserFactory(id=1, email=email)
@@ -396,7 +396,7 @@ class TestEnterpriseAdminRoleSignals(unittest.TestCase):
         self.enterprise_customer = EnterpriseCustomerFactory()
         super().setUp()
 
-    @mock.patch('enterprise.models.create_tableau_user')
+    @mock.patch('enterprise.api.create_tableau_user')
     def test_delete_enterprise_admin_role_assignment_success(
             self,
             mock_create_tableau_user,  # pylint: disable=unused-argument

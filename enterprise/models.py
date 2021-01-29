@@ -50,7 +50,6 @@ from enterprise.api_client.lms import EnrollmentApiClient, ThirdPartyAuthApiClie
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
     AVAILABLE_LANGUAGES,
-    ENTERPRISE_ADMIN_ROLE,
     ENTERPRISE_OPERATOR_ROLE,
     DefaultColors,
     json_serialized_course_modes,
@@ -59,8 +58,6 @@ from enterprise.utils import (
     CourseEnrollmentDowngradeError,
     CourseEnrollmentPermissionError,
     NotConnectedToOpenEdX,
-    create_tableau_user,
-    delete_tableau_user,
     get_configuration_value,
     get_ecommerce_worker_user,
     get_enterprise_worker_user,
@@ -2727,59 +2724,6 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
             self.enterprise_customer.slug
         )
         return registration_url
-
-    @classmethod
-    def activate_admin_permissions(cls, enterprise_customer_user):
-        """
-        Activates admin permissions for an existing PendingEnterpriseCustomerAdminUser.
-
-        Specifically, the "enterprise_admin" system-wide role is assigned to the user and
-        the PendingEnterpriseCustomerAdminUser record is removed.
-
-        Requires an EnterpriseCustomerUser record to exist which ensures the user already
-        has the "enterprise_learner" role as a prerequisite.
-
-        Arguments:
-            enterprise_customer_user: an EnterpriseCustomerUser instance
-        """
-        try:
-            pending_admin_user = PendingEnterpriseCustomerAdminUser.objects.get(
-                user_email=enterprise_customer_user.user.email,
-                enterprise_customer=enterprise_customer_user.enterprise_customer,
-            )
-        except PendingEnterpriseCustomerAdminUser.DoesNotExist:
-            return  # this is ok, nothing to do
-
-        # get_or_create "enterprise_admin" role
-        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
-
-        if not enterprise_customer_user.linked:
-            # EnterpriseCustomerUser is no longer linked, so delete the "enterprise_admin" role and
-            # their Tableau user.
-            try:
-                SystemWideEnterpriseUserRoleAssignment.objects.get(
-                    user=enterprise_customer_user.user,
-                    role=enterprise_admin_role,
-                ).delete()
-            except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
-                pass
-
-            delete_tableau_user(enterprise_customer_user)
-            return  # nothing left to do
-
-        # grant the "enterprise_admin" role
-        SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-            user=enterprise_customer_user.user,
-            role=enterprise_admin_role,
-        )
-
-        # Also create the Enterprise admin user in third-party analytics application with the enterprise
-        # customer uuid as username.
-        tableau_username = str(enterprise_customer_user.enterprise_customer.uuid).replace('-', '')
-        create_tableau_user(tableau_username, enterprise_customer_user)
-
-        # delete the PendingEnterpriseCustomerAdminUser record
-        pending_admin_user.delete()
 
     def __str__(self):
         """

@@ -16,6 +16,15 @@ Change Log
 Unreleased
 ----------
 
+[3.17.21]
+---------
+
+* Introduce and use a ``roles_api`` module and use the roles API in signal receivers
+  that need to create or delete role assignments.
+* For created or updated learner and admin enterprise users, associate their user-role
+  with the ``enterprise_customer`` to which that user is linked.
+* Install django-cache-memoize.
+
 [3.17.20]
 ---------
 

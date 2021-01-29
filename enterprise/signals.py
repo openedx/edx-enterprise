@@ -9,8 +9,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
 
+from enterprise import roles_api
+from enterprise.api import activate_admin_permissions
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE
 from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
     EnterpriseAnalyticsUser,
@@ -21,8 +22,6 @@ from enterprise.models import (
     EnterpriseCustomerUser,
     PendingEnterpriseCustomerAdminUser,
     PendingEnterpriseCustomerUser,
-    SystemWideEnterpriseRole,
-    SystemWideEnterpriseUserRoleAssignment,
 )
 from enterprise.tasks import create_enterprise_enrollment
 from enterprise.utils import (
@@ -78,7 +77,7 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     enterprise_customer_users = EnterpriseCustomerUser.objects.filter(user_id=user_instance.id)
     for enterprise_customer_user in enterprise_customer_users:
         # activate admin permissions for an existing EnterpriseCustomerUser(s), if applicable
-        PendingEnterpriseCustomerAdminUser.activate_admin_permissions(enterprise_customer_user)
+        activate_admin_permissions(enterprise_customer_user)
 
 
 @receiver(pre_save, sender=EnterpriseCustomer)
@@ -134,11 +133,11 @@ def delete_enterprise_admin_role_assignment(sender, instance, **kwargs):     # p
     Delete the associated enterprise admin role assignment record when deleting an EnterpriseCustomerUser record.
     """
     if instance.user:
-        enterprise_admin_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_ADMIN_ROLE)
-        SystemWideEnterpriseUserRoleAssignment.objects.filter(
+        # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
+        # so that we delete a specific instance of a role assignment
+        roles_api.delete_admin_role_assignment(
             user=instance.user,
-            role=enterprise_admin_role
-        ).delete()
+        )
 
 
 @receiver(post_save, sender=EnterpriseCustomerUser)
@@ -150,24 +149,21 @@ def assign_or_delete_enterprise_learner_role(sender, instance, **kwargs):     # 
     initially created and removed when a EnterpriseCustomerUser record is updated and
     unlinked (i.e., soft delete - see ENT-2538).
     """
-    if instance.user:
-        enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
-        if kwargs['created']:
-            # EnterpriseCustomerUser record was created, so assign the enterprise_learner role
-            SystemWideEnterpriseUserRoleAssignment.objects.get_or_create(
-                user=instance.user,
-                role=enterprise_learner_role
-            )
-        elif not kwargs['created'] and not instance.linked:
-            # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_learner role
-            try:
-                SystemWideEnterpriseUserRoleAssignment.objects.get(
-                    user=instance.user,
-                    role=enterprise_learner_role
-                ).delete()
-            except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
-                # Do nothing if no role assignment is present for the enterprise customer user.
-                pass
+    if not instance.user:
+        return
+
+    if kwargs['created']:
+        roles_api.assign_learner_role(
+            instance.user,
+            enterprise_customer=instance.enterprise_customer,
+        )
+    elif not kwargs['created'] and not instance.linked:
+        # EnterpriseCustomerUser record was updated but is not linked, so delete the enterprise_learner role
+        # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
+        # so that we delete a specific instance of a role assignment
+        roles_api.delete_learner_role_assignment(
+            instance.user,
+        )
 
 
 @receiver(post_delete, sender=EnterpriseCustomerUser)
@@ -175,16 +171,14 @@ def delete_enterprise_learner_role_assignment(sender, instance, **kwargs):     #
     """
     Delete the associated enterprise learner role assignment record when deleting an EnterpriseCustomerUser record.
     """
-    if instance.user:
-        enterprise_learner_role, __ = SystemWideEnterpriseRole.objects.get_or_create(name=ENTERPRISE_LEARNER_ROLE)
-        try:
-            SystemWideEnterpriseUserRoleAssignment.objects.get(
-                user=instance.user,
-                role=enterprise_learner_role
-            ).delete()
-        except SystemWideEnterpriseUserRoleAssignment.DoesNotExist:
-            # Do nothing if no role assignment is present for the enterprise customer user.
-            pass
+    if not instance.user:
+        return
+
+    # TODO: ENT-3914 | Add `enterprise_customer=instance.enterprise_customer`,
+    # so that we delete a specific instance of a role assignment
+    roles_api.delete_learner_role_assignment(
+        instance.user,
+    )
 
 
 @receiver(post_save, sender=EnterpriseCustomerUser)
