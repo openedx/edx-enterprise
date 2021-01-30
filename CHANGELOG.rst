@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.16]
+---------
+
+* Include course mode for the user's ``student.CourseEnrollment`` in the ``EnterpriseCourseEnrollmentSerializer``.
+
 [3.17.15]
 ---------
 
