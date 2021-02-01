@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[3.17.20]
+---------
+
+* Adds better exception handling to the SAP integrated channels.
+* Adds better logging to the base transmission process in the integrated channels.
+
 [3.17.19]
 ---------
 

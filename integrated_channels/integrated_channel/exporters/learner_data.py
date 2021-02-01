@@ -272,9 +272,10 @@ class LearnerExporter(Exporter):
         # Fetch course details from the Course API, and cache between calls.
         course_details = None
 
+        enrollment_ids_to_export = [enrollment.id for enrollment in enrollment_queryset]
         generate_formatted_log(
             'Beginning export of enrollments: {enrollments}.'.format(
-                enrollments=list(enrollment_queryset.values()),
+                enrollments=enrollment_ids_to_export,
             ),
             channel_name=channel_name,
             enterprise_customer_identifier=self.enterprise_customer.name
@@ -415,7 +416,22 @@ class LearnerExporter(Exporter):
                 # failure of SSO or similar). In such a case, `get_learner_data_record`
                 # would return None, and we'd simply skip yielding it here.
                 for record in records:
+                    # Because we export a course and course run under the same enrollment, we can only remove the
+                    # enrollment from the list of enrollments to export, once.
+                    try:
+                        enrollment_ids_to_export.pop(enrollment_ids_to_export.index(enterprise_enrollment.id))
+                    except ValueError:
+                        pass
+
                     yield record
+
+        generate_formatted_log(
+            'Finished exporting enrollments. Skipped enrollments: {enrollments}.'.format(
+                enrollments=enrollment_ids_to_export,
+            ),
+            channel_name=channel_name,
+            enterprise_customer_identifier=self.enterprise_customer.name
+        )
 
     def get_learner_assessment_data_records(
             self,
