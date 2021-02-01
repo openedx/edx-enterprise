@@ -2777,9 +2777,17 @@ class PendingEnterpriseCustomerAdminUser(TimeStampedModel):
         )
 
         # Also create the Enterprise admin user in third-party analytics application with the enterprise
-        # customer uuid as username.
+        # customer uuid as username. If the Tableau server is unavailable, log the issue, but allow login to proceed.
         tableau_username = str(enterprise_customer_user.enterprise_customer.uuid).replace('-', '')
-        create_tableau_user(tableau_username, enterprise_customer_user)
+        try:
+            create_tableau_user(tableau_username, enterprise_customer_user)
+        except Exception as exc:
+            LOGGER.exception(
+                'Unable to create Tableau user [%s] for Enterprise Customer User [%s]',
+                tableau_username,
+                enterprise_customer_user.user.id,
+                str(exc)
+            )
 
         # delete the PendingEnterpriseCustomerAdminUser record
         pending_admin_user.delete()

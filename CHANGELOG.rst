@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.17]
+---------
+
+* Catch unhandled exceptions when trying to create a Tableau user during login
+
 [3.17.16]
 ---------
 
