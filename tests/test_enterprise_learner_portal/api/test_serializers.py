@@ -69,6 +69,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             course_id=course_run_id
         )
         mock_course_enrollment_class.objects.get.return_value.is_active = True
+        mock_course_enrollment_class.objects.get.return_value.mode = 'verified'
 
         request = self.factory.get('/')
         request.user = self.user
@@ -93,6 +94,7 @@ class TestEnterpriseCourseEnrollmentSerializer(TestCase):
             ('org_name', 'my university'),
             ('is_revoked', False),
             ('is_enrollment_active', True),
+            ('mode', 'verified')
         ])
         actual = serializer.data[0]
         self.assertDictEqual(actual, expected)
