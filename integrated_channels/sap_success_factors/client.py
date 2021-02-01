@@ -320,14 +320,24 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             return None
 
         if 'error' in sap_inactive_learners:
-            LOGGER.warning(
-                'SAP searchStudent API for customer %s and base url %s returned response with '
-                'error message "%s" and with error code "%s".',
-                self.enterprise_configuration.enterprise_customer.name,
-                self.enterprise_configuration.sapsf_base_url,
-                sap_inactive_learners['error'].get('message'),
-                sap_inactive_learners['error'].get('code'),
-            )
+            try:
+                LOGGER.warning(
+                    'SAP searchStudent API for customer %s and base url %s returned response with '
+                    'error message "%s" and with error code "%s".',
+                    self.enterprise_configuration.enterprise_customer.name,
+                    self.enterprise_configuration.sapsf_base_url,
+                    sap_inactive_learners['error'].get('message'),
+                    sap_inactive_learners['error'].get('code'),
+                )
+            except AttributeError:
+                LOGGER.warning(
+                    'SAP searchStudent API for customer %s and base url %s returned response with '
+                    'error message "%s" and with error code "%s".',
+                    self.enterprise_configuration.enterprise_customer.name,
+                    self.enterprise_configuration.sapsf_base_url,
+                    sap_inactive_learners['error'],
+                    response.status_code,
+                )
             return None
 
         new_page_start_at = page_size + start_at
