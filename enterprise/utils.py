@@ -1511,6 +1511,11 @@ def create_tableau_user(user_id, enterprise_customer_user):
                     '[TABLEAU USER SYNC] Could not sync enterprise admin user %s in tableau.'
                     'Server returned: %s', user_id, str(exc),
                 )
+        except Exception as exc:  # pylint: disable=broad-except
+            LOGGER.exception(
+                '[TABLEAU USER SYNC] Could not sync enterprise admin user %s in tableau.'
+                'Server returned: %s', user_id, str(exc),
+            )
     else:
         LOGGER.warning(
             '[TABLEAU USER SYNC] Could not create user %s in tableau.',
@@ -1596,6 +1601,11 @@ def delete_tableau_user_by_id(tableau_user_id):
                 server.users.remove(tableau_user_id)
         except ServerResponseError as exc:
             LOGGER.info(
+                '[TABLEAU USER SYNC] Could not delete enterprise admin user in Tableau.'
+                'Server returned: %s', str(exc),
+            )
+        except Exception as exc:  # pylint: disable=broad-except
+            LOGGER.exception(
                 '[TABLEAU USER SYNC] Could not delete enterprise admin user in Tableau.'
                 'Server returned: %s', str(exc),
             )
