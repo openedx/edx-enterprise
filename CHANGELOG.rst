@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[3.17.19]
+---------
+
+* Removes the sync_enterprise_catalog_query boolean field from the EnterpriseCustomerCatalog model.
+* Adds migration to remove the sync_enterprise_catalog_query boolean field.
+
 [3.17.18]
 ---------
 
