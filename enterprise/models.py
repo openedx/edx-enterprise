@@ -1855,6 +1855,9 @@ class EnterpriseCustomerCatalog(TimeStampedModel):
         related_name='enterprise_customer_catalogs',
         on_delete=models.deletion.CASCADE
     )
+    sync_enterprise_catalog_query = models.BooleanField(
+        default=False
+    )
     enterprise_catalog_query = models.ForeignKey(
         EnterpriseCatalogQuery,
         blank=True,

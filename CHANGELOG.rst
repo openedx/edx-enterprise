@@ -19,8 +19,9 @@ Unreleased
 [3.17.18]
 ---------
 
-* Removes the sync_enterprise_catalog_query boolean field from the EnterpriseCustomerCatalog model.
+* Removes all references to the sync_enterprise_catalog_query boolean field from the EnterpriseCustomerCatalog model.
 * Updates all conditional use of the sync_enterprise_catalog_query field to be True.
+* A second PR will follow to remove the model field and perform the db migration (blue/green deployment safe).
 
 [3.17.17]
 ---------
