@@ -8,6 +8,7 @@ import json
 import unittest
 
 import ddt
+import pytest
 import requests
 import responses
 from freezegun import freeze_time
@@ -74,6 +75,15 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             sapsf_user_id=self.user_id,
             secret=self.client_secret
         )
+        self.completion_payload = {
+            "userID": "abc123",
+            "courseID": "course-v1:ColumbiaX+DS101X+1T2016",
+            "providerID": "EDX",
+            "courseCompleted": "true",
+            "completedTimestamp": 1485283526,
+            "instructorName": "Professor Professorson",
+            "grade": "Pass"
+        }
 
     @responses.activate
     @freeze_time(NOW)
@@ -143,16 +153,7 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        payload = {
-            "userID": "abc123",
-            "courseID": "course-v1:ColumbiaX+DS101X+1T2016",
-            "providerID": "EDX",
-            "courseCompleted": "true",
-            "completedTimestamp": 1485283526,
-            "instructorName": "Professor Professorson",
-            "grade": "Pass"
-        }
-        expected_response_body = {"success": "true", "completion_status": payload}
+        expected_response_body = {"success": "true", "completion_status": self.completion_payload}
 
         responses.add(
             responses.POST,
@@ -161,6 +162,18 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
+        expected_response = 200, json.dumps(expected_response_body)
+
+        sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
+        actual_response = sap_client.create_course_completion(self.user_type, json.dumps(self.completion_payload))
+        assert actual_response == expected_response
+        assert len(responses.calls) == 2
+        assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
+        expected_url = self.url_base + self.completion_status_api_path
+        assert responses.calls[1].request.url == expected_url
+
+    @responses.activate
+    def test_failed_completion_reporting_exception_handling(self):
         responses.add(
             responses.POST,
             self.url_base + self.oauth_api_path,
@@ -168,15 +181,26 @@ class TestSAPSuccessFactorsAPIClient(unittest.TestCase):
             status=200
         )
 
-        expected_response = 200, json.dumps(expected_response_body)
+        expected_error_json = {'Error': 'An error has occurred.'}
+        expected_error_message = 'SAPSuccessFactorsAPIClient request failed with status 500: {}'.format(
+            json.dumps(expected_error_json)
+        )
+        expected_error_status_code = 500
+        responses.add(
+            responses.POST,
+            self.url_base + self.completion_status_api_path,
+            json=expected_error_json,
+            status=expected_error_status_code
+        )
 
         sap_client = SAPSuccessFactorsAPIClient(self.enterprise_config)
-        actual_response = sap_client.create_course_completion(self.user_type, json.dumps(payload))
-        assert actual_response == expected_response
+
+        with pytest.raises(ClientError) as client_error:
+            sap_client.create_course_completion(self.user_type, json.dumps(self.completion_payload))
+        assert client_error.value.message == expected_error_message
+        assert client_error.value.status_code == expected_error_status_code
+
         assert len(responses.calls) == 2
-        assert responses.calls[0].request.url == self.url_base + self.oauth_api_path
-        expected_url = self.url_base + self.completion_status_api_path
-        assert responses.calls[1].request.url == expected_url
 
     @responses.activate
     @ddt.data('create_content_metadata', 'update_content_metadata', 'delete_content_metadata')

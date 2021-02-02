@@ -238,6 +238,13 @@ class SAPSuccessFactorsAPIClient(IntegratedChannelApiClient):  # pylint: disable
             }
         )
 
+        if response.status_code >= 400:
+            raise ClientError(
+                'SAPSuccessFactorsAPIClient request failed with status {status_code}: {message}'.format(
+                    status_code=response.status_code,
+                    message=response.text
+                )
+            )
         return response.status_code, response.text
 
     def _call_post_with_session(self, url, payload):

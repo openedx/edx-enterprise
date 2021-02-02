@@ -176,6 +176,7 @@ def is_already_transmitted(transmission, enterprise_enrollment_id, grade, subsec
         already_transmitted = transmission.objects.filter(
             enterprise_course_enrollment_id=enterprise_enrollment_id,
             error_message='',
+            status__lt=400
         )
         if subsection_id:
             already_transmitted = already_transmitted.filter(subsection_id=subsection_id)
