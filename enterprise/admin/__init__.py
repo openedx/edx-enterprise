@@ -736,7 +736,6 @@ class EnterpriseCustomerCatalogAdmin(admin.ModelAdmin):
     fields = (
         'title',
         'enterprise_customer',
-        'sync_enterprise_catalog_query',
         'enterprise_catalog_query',
         'content_filter',
         'enabled_course_modes',
