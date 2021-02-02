@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.17]
+---------
+
+* Added a catch all exception block to ensure login flow is not interrupted by analytics user sync.
+
 [3.17.16]
 ---------
 
