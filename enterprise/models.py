@@ -1643,6 +1643,13 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
         """
         return self.course_enrollment.is_active
 
+    @property
+    def mode(self):
+        """
+        Returns the mode of the ``student.CourseEnrollment`` associated with this enterprise course enrollment record.
+        """
+        return self.course_enrollment.mode
+
     @classmethod
     def get_enterprise_course_enrollment_id(cls, user, course_id, enterprise_customer):
         """

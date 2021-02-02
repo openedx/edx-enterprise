@@ -16,11 +16,21 @@ Change Log
 Unreleased
 ----------
 
-[3.17.16]
+[3.17.18]
 ---------
 
 * Removes the sync_enterprise_catalog_query boolean field from the EnterpriseCustomerCatalog model.
 * Updates all conditional use of the sync_enterprise_catalog_query field to be True.
+
+[3.17.17]
+---------
+
+* Added a catch all exception block to ensure login flow is not interrupted by analytics user sync.
+
+[3.17.16]
+---------
+
+* Include course mode for the user's ``student.CourseEnrollment`` in the ``EnterpriseCourseEnrollmentSerializer``.
 
 [3.17.15]
 ---------
