@@ -14,7 +14,7 @@ amqp==5.0.5
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   kombu
-aniso8601==8.1.0
+aniso8601==8.1.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -40,7 +40,7 @@ billiard==3.6.3.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   celery
-bleach==3.2.3
+bleach==3.3.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -105,7 +105,7 @@ click==7.1.2
     #   code-annotations
     #   edx-lint
     #   pip-tools
-code-annotations==1.0.2
+code-annotations==1.1.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -130,7 +130,7 @@ defusedxml==0.6.0
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   djangorestframework-xml
-diff-cover==4.2.0
+diff-cover==4.2.1
     # via -r requirements/test.txt
 distlib==0.3.1
     # via virtualenv
@@ -194,7 +194,7 @@ django-waffle==2.1.0
     #   -r requirements/test.txt
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.17
+django==2.2.18
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -r requirements/doc.txt
@@ -262,9 +262,9 @@ edx-drf-extensions==6.4.0
     #   edx-rbac
 edx-i18n-tools==0.5.3
     # via -r requirements/dev.in
-edx-lint==3.0.2
+edx-lint==4.0.0
     # via -r requirements/dev.in
-edx-opaque-keys[django]==2.1.1
+edx-opaque-keys[django]==2.2.0
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -340,7 +340,7 @@ jinja2-pluralize==0.3.0
     # via
     #   -r requirements/test.txt
     #   diff-cover
-jinja2==2.11.2
+jinja2==2.11.3
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -390,7 +390,7 @@ newrelic==6.0.1.155
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   edx-django-utils
-packaging==20.8
+packaging==20.9
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -546,7 +546,7 @@ python-slugify==4.0.1
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
     #   code-annotations
-pytz==2020.5
+pytz==2021.1
     # via
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
@@ -620,7 +620,6 @@ six==1.15.0
     #   edx-drf-extensions
     #   edx-i18n-tools
     #   edx-lint
-    #   edx-opaque-keys
     #   edx-rbac
     #   edx-sphinx-theme
     #   freezegun
@@ -717,7 +716,7 @@ toml==0.10.2
     #   tox
 tox-battery==0.6.1
     # via -r requirements/dev.in
-tox==3.21.3
+tox==3.21.4
     # via
     #   -r requirements/dev.in
     #   tox-battery
@@ -743,7 +742,7 @@ vine==5.0.0
     #   -r requirements/test.txt
     #   amqp
     #   celery
-virtualenv==20.4.0
+virtualenv==20.4.2
     # via tox
 wcwidth==0.2.5
     # via
