@@ -327,7 +327,7 @@ class TestCornerstoneContentMetadataExporter(unittest.TestCase, EnterpriseMockMi
                         "enrollment_start": None,
                         "pacing_type": "instructor_paced",
                         "end": "2013-02-05T05:00:00Z",
-                        "start": "2023-02-05T05:00:00Z",
+                        "start": "2013-02-05T05:00:00Z",
                         "modified": "2019-02-05T05:00:00Z",
                         "go_live_date": None,
                         "availability": "Archived"

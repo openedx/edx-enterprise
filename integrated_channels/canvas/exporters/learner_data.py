@@ -69,7 +69,7 @@ class CanvasLearnerExporter(LearnerExporter):
             assessment_grade_data,
     ):
         """
-        Return a CanvasLearnerDataTransmissionAudit with the given enrollment and assessment level data.
+        Return a CanvasLearnerAssessmentDataTransmissionAudit with the given enrollment and assessment level data.
 
         If there is no subsection grade then something has gone horribly wrong and it is recommended to look at the
         return value of platform's gradebook view.

@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.23]
+---------
+
+* Fixing assessment level reporting audit retrieval.
+
 [3.17.22]
 ---------
 

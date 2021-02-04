@@ -55,7 +55,7 @@ class LearnerTransmitter(Transmitter):
         for learner_data in exporter.single_assessment_level_export(**kwargs):
             serialized_payload = learner_data.serialize(enterprise_configuration=self.enterprise_configuration)
             try:
-                code, body = self.client.create_course_completion(
+                code, body = self.client.create_assessment_reporting(
                     getattr(learner_data, kwargs.get('remote_user_id')),
                     serialized_payload
                 )
