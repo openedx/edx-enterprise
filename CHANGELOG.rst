@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.22]
+---------
+
+* Adds content metadata item transmission table to Django Admin.
+
 [3.17.21]
 ---------
 
