@@ -7,7 +7,7 @@ from http import HTTPStatus
 
 import requests
 from requests.utils import quote
-from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
+from six.moves.urllib.parse import quote_plus, urljoin  # pylint: disable=import-error
 
 from django.apps import apps
 
@@ -316,7 +316,7 @@ class CanvasAPIClient(IntegratedChannelApiClient):
         get_user_id_from_email_url = '{url_base}/api/v1/accounts/{account_id}/users?search_term={email_address}'.format(
             url_base=self.enterprise_configuration.canvas_base_url,
             account_id=self.enterprise_configuration.canvas_account_id,
-            email_address=user_email
+            email_address=quote_plus(user_email)  # emails with unique symbols such as `+` can cause issues
         )
         rsps = self.session.get(get_user_id_from_email_url)
 
