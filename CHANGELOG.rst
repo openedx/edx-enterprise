@@ -16,7 +16,14 @@ Change Log
 Unreleased
 ----------
 
+[3.17.28]
+---------
+
+* Adds default field in enterprise customer identity provider table to select default IDP if there are more than one
+  IDPs attached with enterprise.
+
 [3.17.27]
+---------
 
 * Adding Logging to single learner assessment level reporting task.
 
