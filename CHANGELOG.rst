@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.24]
+---------
+
+* Making sure Canvas Integrated Channel properly url encodes user identifier fields.
+
 [3.17.23]
 ---------
 
