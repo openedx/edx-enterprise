@@ -82,7 +82,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     total_hours=total_hours,
                 ),
             ]
-        LOGGER.debug(
+        LOGGER.info(
             '[Integrated Channel] No learner data was sent for user [%s] because an SAP SuccessFactors user ID'
             ' could not be found.',
             enterprise_enrollment.enterprise_customer_user.username

@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.25]
+---------
+
+* Making failed SAP user remote ID retrievals log relevant context data.
+
 [3.17.24]
 ---------
 
