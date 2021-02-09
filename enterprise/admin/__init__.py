@@ -5,6 +5,7 @@ Django admin integration for enterprise app.
 
 import json
 
+from config_models.admin import ConfigurationModelAdmin
 from django_object_actions import DjangoObjectActions
 from edx_rbac.admin import UserRoleAssignmentAdmin
 from simple_history.admin import SimpleHistoryAdmin
@@ -39,6 +40,7 @@ from enterprise.admin.views import (
     TemplatePreviewView,
 )
 from enterprise.api_client.lms import CourseApiClient, EnrollmentApiClient
+from enterprise.config.models import UpdateRoleAssignmentsWithCustomersConfig
 from enterprise.models import (
     EnrollmentNotificationEmailTemplate,
     EnterpriseCatalogQuery,
@@ -907,3 +909,6 @@ class EnterpriseFeatureUserRoleAssignmentAdmin(UserRoleAssignmentAdmin):
 
     class Meta:
         model = EnterpriseFeatureUserRoleAssignment
+
+
+admin.site.register(UpdateRoleAssignmentsWithCustomersConfig, ConfigurationModelAdmin)
