@@ -167,6 +167,12 @@ class LearnerExporter(Exporter):
         # We are transmitting for a single enrollment, so grab just the one.
         enterprise_enrollment = enrollment_queryset.first()
 
+        generate_formatted_log(
+            'Beginning single exportation of learner data for enrollment: {enrollment}'.format(
+                enrollment=enterprise_enrollment.id
+            )
+        )
+
         already_transmitted = is_already_transmitted(
             TransmissionAudit,
             enterprise_enrollment.id,

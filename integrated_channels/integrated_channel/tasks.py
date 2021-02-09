@@ -167,6 +167,17 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
                 {'channel': None, 'enterprise_customer': enterprise_customer_uuid}
         ):
             integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
+
+            LOGGER.info(
+                'Beginning single learner data transmission task. Channel: {channel}, Customer: {enterprise_uuid}, '
+                'Course: {course_run}, Username: {username}, Subsection_id: {subsection}'.format(
+                    channel=channel.channel_code(),
+                    username=username,
+                    course_run=course_run_id,
+                    enterprise_uuid=enterprise_customer_uuid,
+                    subsection=subsection_id
+                ))
+
             integrated_channel.transmit_single_subsection_learner_data(
                 learner_to_transmit=user,
                 course_run_id=course_run_id,

@@ -16,6 +16,10 @@ Change Log
 Unreleased
 ----------
 
+[3.17.27]
+
+* Adding Logging to single learner assessment level reporting task.
+
 [3.17.26]
 ---------
 
