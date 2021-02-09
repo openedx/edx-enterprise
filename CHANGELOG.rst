@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.29]
+---------
+
+* Prevent NoneType string concatenation when handling multiple enterprises logistration without redirects.
+
 [3.17.28]
 ---------
 
