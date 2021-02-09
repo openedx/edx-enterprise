@@ -62,7 +62,7 @@ def transmit_content_metadata(username, channel_code, channel_pk):
 @set_code_owner_attribute
 def transmit_learner_data(username, channel_code, channel_pk):
     """
-    Task to send learner data to each linked integrated channel.
+    Task to send learner data to a linked integrated channel.
 
     Arguments:
         username (str): The username of the User to be used for making API requests for learner data.
@@ -189,7 +189,7 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
 @set_code_owner_attribute
 def transmit_subsection_learner_data(username, channel_code, channel_pk):
     """
-    Task to send assessment level learner data to each linked integrated channel.
+    Task to send assessment level learner data to a linked integrated channel.
 
     Arguments:
         username (str): The username of the User to be used for making API requests for learner data.

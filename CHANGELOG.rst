@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.26]
+---------
+
+* Updating docs to reflect method behaviors.
+
 [3.17.25]
 ---------
 
