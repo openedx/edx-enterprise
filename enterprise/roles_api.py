@@ -36,6 +36,17 @@ def openedx_operator_role():
     return get_or_create_system_wide_role(ENTERPRISE_OPERATOR_ROLE)
 
 
+def roles_by_name():
+    """
+    Returns a mapping of system wide roles by name.
+    """
+    return {
+        ENTERPRISE_ADMIN_ROLE: admin_role(),
+        ENTERPRISE_LEARNER_ROLE: learner_role(),
+        ENTERPRISE_OPERATOR_ROLE: openedx_operator_role(),
+    }
+
+
 def assign_learner_role(user, enterprise_customer=None, applies_to_all_contexts=False):
     """
     Assigns the given user the `enterprise_learner` role in the given customer.

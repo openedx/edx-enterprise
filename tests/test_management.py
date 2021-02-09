@@ -26,6 +26,7 @@ from django.db.models import signals
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
+from enterprise import roles_api
 from enterprise.api_client import lms as lms_api
 from enterprise.constants import (
     ENTERPRISE_ADMIN_ROLE,
@@ -37,6 +38,7 @@ from enterprise.constants import (
 )
 from enterprise.management.commands.assign_enterprise_user_roles import Command as AssignEnterpriseUserRolesCommand
 from enterprise.models import (
+    EnterpriseCustomer,
     EnterpriseCustomerIdentityProvider,
     EnterpriseCustomerUser,
     EnterpriseFeatureRole,
@@ -1562,3 +1564,184 @@ class TestMigrateEnterpriseUserRolesCommand(unittest.TestCase):
         with raises(CommandError) as excinfo:
             call_command('assign_enterprise_user_roles')
         assert str(excinfo.value) == error
+
+
+@ddt.ddt
+@mark.django_db
+class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
+    """
+    Test the `update_role_assignments_with_customers`  management command.
+    """
+    @factory.django.mute_signals(signals.post_save)
+    def setUp(self):
+        super().setUp()
+        self.cleanup_test_objects()
+        self.alice = factories.UserFactory(username='alice')
+        self.bob = factories.UserFactory(username='bob')
+        self.clarice = factories.UserFactory(username='clarice')
+        self.dexter = factories.UserFactory(username='dexter')
+
+        # elaine is an extra user we won't link to any customer
+        self.elaine = factories.UserFactory(username='elaine')
+
+        self.alpha_customer = factories.EnterpriseCustomerFactory(
+            name='alpha',
+        )
+        self.beta_customer = factories.EnterpriseCustomerFactory(
+            name='beta',
+        )
+
+        linkages = [
+            (self.alice, self.alpha_customer, roles_api.learner_role()),
+            (self.alice, self.beta_customer, roles_api.admin_role()),
+            (self.bob, self.alpha_customer, roles_api.learner_role()),
+            (self.clarice, self.beta_customer, roles_api.admin_role()),
+        ]
+
+        for linked_user, linked_customer, role in linkages:
+            factories.EnterpriseCustomerUserFactory(
+                user_id=linked_user.id,
+                enterprise_customer=linked_customer,
+            )
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=linked_user,
+                role=role,
+            ).save()
+            # create a potentially extra open role assignment, so we
+            # can test that extras are deleted after running the command.
+            factories.SystemWideEnterpriseUserRoleAssignment(
+                user=linked_user,
+                role=role,
+            ).save()
+
+        # Make dexter an openedx operator without an explicit link to an enterprise
+        factories.SystemWideEnterpriseUserRoleAssignment(
+            user=self.dexter,
+            role=roles_api.openedx_operator_role(),
+        ).save()
+
+        self.addCleanup(self.cleanup_test_objects)
+
+    def cleanup_test_objects(self):
+        """
+        Helper to delete all instances of role assignments, ECUs, Enterprise customers, and Users.
+        """
+        SystemWideEnterpriseUserRoleAssignment.objects.all().delete()
+        EnterpriseCustomerUser.objects.all().delete()
+        EnterpriseCustomer.objects.all().delete()
+        User.objects.all().delete()
+
+    # pylint: disable=invalid-name
+    def _learner_assertions(self, expected_customer=None):
+        """ Helper to assert that expected enterprise learner are assigned to expected customers. """
+        # AED: 2021-02-12
+        # Because Alice is linked to both the alpha and beta customer, and was assigned
+        # an enterprise_learner role with a null enterprise_customer,
+        # the management command will give Alice an explicit assignment
+        # of the learner role on BOTH the alpha and betacustomer, because that dual assignment
+        # is currently implied (at the time of this writing).
+        expected_user_customer_assignments = [
+            {'user': self.alice, 'enterprise_customer': self.alpha_customer},
+            {'user': self.alice, 'enterprise_customer': self.beta_customer},
+            {'user': self.bob, 'enterprise_customer': self.alpha_customer},
+        ]
+        if expected_customer:
+            expected_user_customer_assignments = [
+                assignment for assignment in expected_user_customer_assignments
+                if assignment['enterprise_customer'] == expected_customer
+            ]
+
+        for assignment_kwargs in expected_user_customer_assignments:
+            assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                role=roles_api.learner_role(),
+                applies_to_all_contexts=False,
+                **assignment_kwargs,
+            ).count() == 1
+
+        # assert that there are no other learner assignments
+        queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role=roles_api.learner_role()
+        )
+        if expected_customer:
+            queryset = queryset.filter(enterprise_customer=expected_customer)
+        assert len(expected_user_customer_assignments) == queryset.count()
+
+    def _admin_assertions(self, expected_customer=None):
+        """ Helper to assert that expected enterprise admins are assigned to expected customers. """
+        # AED: 2021-02-12
+        # Because Alice is linked to both the alpha and beta customer, and was assigned
+        # an enterprise_admin role with a null enterprise_customer,
+        # the management command will give Alice an explicit assignment
+        # of the admin role on BOTH the alpha and betacustomer, because that dual assignment
+        # is currently implied (at the time of this writing).
+        expected_user_customer_assignments = [
+            {'user': self.alice, 'enterprise_customer': self.alpha_customer},
+            {'user': self.alice, 'enterprise_customer': self.beta_customer},
+            {'user': self.clarice, 'enterprise_customer': self.beta_customer},
+        ]
+        if expected_customer:
+            expected_user_customer_assignments = [
+                assignment for assignment in expected_user_customer_assignments
+                if assignment['enterprise_customer'] == expected_customer
+            ]
+
+        for assignment_kwargs in expected_user_customer_assignments:
+            assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+                role=roles_api.admin_role(),
+                applies_to_all_contexts=False,
+                **assignment_kwargs,
+            ).count() == 1
+
+        # assert that there are no other admin assignments
+        queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role=roles_api.admin_role()
+        )
+        if expected_customer:
+            queryset = queryset.filter(enterprise_customer=expected_customer)
+        assert len(expected_user_customer_assignments) == queryset.count()
+
+    def _operator_assertions(self):
+        """ Helper to assert that expected enterprise operators have `applies_to_all_contexts=True`. """
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            user=self.dexter,
+            role=roles_api.openedx_operator_role(),
+            enterprise_customer=None,
+            applies_to_all_contexts=True,
+        ).count() == 1
+
+        # assert that there are no other openedx operator assignments
+        assert SystemWideEnterpriseUserRoleAssignment.objects.filter(
+            role=roles_api.openedx_operator_role()
+        ).count() == 1
+
+    def test_command_no_args(self):
+        """
+        Calling the command with no args should process every linked user and role.
+        """
+        call_command('update_role_assignments_with_customers')
+        self._admin_assertions()
+        self._learner_assertions()
+        self._operator_assertions()
+
+    @ddt.data(
+        ENTERPRISE_LEARNER_ROLE, ENTERPRISE_ADMIN_ROLE, ENTERPRISE_OPERATOR_ROLE
+    )
+    def test_command_with_role_argument(self, role_name):
+        assertions_by_role = {
+            ENTERPRISE_LEARNER_ROLE: self._learner_assertions,
+            ENTERPRISE_ADMIN_ROLE: self._admin_assertions,
+            ENTERPRISE_OPERATOR_ROLE: self._operator_assertions,
+        }
+        call_command('update_role_assignments_with_customers', '--role', role_name)
+        assertions_by_role[role_name]()
+
+    def test_command_with_customer_uuid_argument(self):
+        call_command(
+            'update_role_assignments_with_customers',
+            '--enterprise-customer-uuid',
+            self.alpha_customer.uuid,
+        )
+
+        self._admin_assertions(self.alpha_customer)
+        self._learner_assertions(self.alpha_customer)
+        self._operator_assertions()

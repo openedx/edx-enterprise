@@ -1661,3 +1661,18 @@ def validate_course_exists_for_enterprise(enterprise_customer, course_id, **kwar
     if not enterprise_customer.catalog_contains_course(course_id):
         raise ValidationError(ValidationMessages.COURSE_NOT_EXIST_IN_CATALOG.format(course_id=course_id))
     return course_details or False
+
+
+def batch(iterable, batch_size=1):
+    """
+    Break up an iterable into equal-sized batches.
+
+    Arguments:
+        iterable (e.g. list): an iterable to batch
+        batch_size (int): the size of each batch. Defaults to 1.
+    Returns:
+        generator: iterates through each batch of an iterable
+    """
+    iterable_len = len(iterable)
+    for index in range(0, iterable_len, batch_size):
+        yield iterable[index:min(index + batch_size, iterable_len)]
