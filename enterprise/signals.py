@@ -88,12 +88,13 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         # TODO: i _think_ we want to have a ``user`` follow the feed associated with their ``enterprise_customer``
         # such that when i retrieve my feed, i will see any updates across my enteprise, starting from when
         # i got linked to that enterprise.
-        follow(user_instance, enterprise_customer)
+        follow(user_instance, enterprise_customer, actor_only=False)
 
         # TODO: formalize when the enterprise_customer should be the
         # target vs. action_object so we're consistent?
         # do we need this event? probably not.
         action.send(user_instance, verb='joined', target=enterprise_customer)
+
 
 @receiver(pre_save, sender=EnterpriseCustomer)
 def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: disable=unused-argument

@@ -5,12 +5,15 @@ Django tasks.
 
 from logging import getLogger
 
+from actstream import action
 from celery import shared_task
+from django.contrib import auth
 from edx_django_utils.monitoring import set_code_owner_attribute
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()
 
 
 @shared_task
@@ -54,5 +57,11 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
             enterprise_customer_user=enterprise_customer_user,
             source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK)
         )
-        # TODO: need the auth.User instance for this EnterpriseCustomerUser,
-        # action.send(user_instance, verb='enrolled', target=enrollment)
+
+        user_instance = User.objects.get(id=enterprise_customer_user.user_id)
+        action.send(
+            user_instance,
+            action_object=enrollment,
+            target=enterprise_customer_user.enterprise_customer,
+            verb='enrolled in',
+        )

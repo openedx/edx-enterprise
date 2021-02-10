@@ -46,6 +46,7 @@ class EnterpriseConfig(AppConfig):
         # configure django-activity-streams
         registry.register(
             self.auth_user_model,
+            self.get_model('EnterpriseCourseEnrollment'),
             self.get_model('EnterpriseCustomer'),
             self.get_model('EnterpriseCustomerUser'),
         )
