@@ -267,7 +267,7 @@ edx-drf-extensions==6.4.0
     #   edx-rbac
 edx-i18n-tools==0.5.3
     # via -r requirements/dev.in
-edx-lint==3.0.2
+edx-lint==4.0.1
     # via -r requirements/dev.in
 edx-opaque-keys[django]==2.2.0
     # via
@@ -285,7 +285,7 @@ edx-rest-api-client==5.3.0
     #   -r requirements/doc.txt
     #   -r requirements/test-master.txt
     #   -r requirements/test.txt
-edx-sphinx-theme==1.6.1
+edx-sphinx-theme==2.0.0
     # via -r requirements/doc.txt
 edx-tincan-py35==1.0.0
     # via
@@ -296,7 +296,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
-faker==5.8.0
+faker==6.1.1
     # via
     #   -r requirements/test.txt
     #   factory-boy
@@ -385,7 +385,7 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.txt
-more-itertools==8.6.0
+more-itertools==8.7.0
     # via
     #   -r requirements/test.txt
     #   zipp
@@ -721,11 +721,11 @@ toml==0.10.2
     #   tox
 tox-battery==0.6.1
     # via -r requirements/dev.in
-tox==3.21.3
+tox==3.21.4
     # via
     #   -r requirements/dev.in
     #   tox-battery
-tqdm==4.56.0
+tqdm==4.56.1
     # via twine
 twine==1.11.0
     # via -r requirements/dev.in

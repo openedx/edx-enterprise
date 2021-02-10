@@ -4,7 +4,6 @@
 #
 #    make upgrade
 #
-amqp==5.0.5
     # via
     #   -r requirements/test-master.txt
     #   kombu
@@ -157,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==5.8.0
+faker==6.1.1
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -204,7 +203,7 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-more-itertools==8.6.0
+more-itertools==8.7.0
     # via zipp
 newrelic==6.0.1.155
     # via
