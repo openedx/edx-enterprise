@@ -6,6 +6,7 @@ bleach
 celery
 code-annotations
 cryptography
+django-activity-stream
 django-cache-memoize
 django-config-models
 django-countries

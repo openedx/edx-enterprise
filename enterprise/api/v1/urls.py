@@ -5,7 +5,7 @@ URL definitions for enterprise api version 1 endpoint.
 
 from rest_framework.routers import DefaultRouter
 
-from django.conf.urls import url
+from django.conf.urls import include, url
 
 from enterprise.api.v1 import views
 
@@ -46,6 +46,11 @@ urlpatterns = [
         r'^tableau_token$',
         views.TableauAuthViewSet.as_view(),
         name='tableau-token'
+    ),
+    url(
+        r'^activity/',
+        include('actstream.urls'),
+        name='activity-stream-api',
     ),
 ]
 

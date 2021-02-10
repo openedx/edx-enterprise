@@ -49,8 +49,10 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
         # We have made changes elsewhere to avoid this issue, but in the mean time
         # we believe a Source of ENROLLMENT_TASK is more clear.
 
-        EnterpriseCourseEnrollment.objects.create(
+        enrollment = EnterpriseCourseEnrollment.objects.create(
             course_id=course_id,
             enterprise_customer_user=enterprise_customer_user,
             source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK)
         )
+        # TODO: need the auth.User instance for this EnterpriseCustomerUser,
+        # action.send(user_instance, verb='enrolled', target=enrollment)

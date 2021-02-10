@@ -35,12 +35,20 @@ class EnterpriseConfig(AppConfig):
         """
         Perform other one-time initialization steps.
         """
+        from actstream import registry  # pylint: disable=import-outside-toplevel
         from enterprise.signals import handle_user_post_save  # pylint: disable=import-outside-toplevel
 
         from django.db.models.signals import post_save, pre_migrate  # pylint: disable=C0415, # isort:skip
 
         post_save.connect(handle_user_post_save, sender=self.auth_user_model, dispatch_uid=USER_POST_SAVE_DISPATCH_UID)
         pre_migrate.connect(self._disconnect_user_post_save_for_migrations)
+
+        # configure django-activity-streams
+        registry.register(
+            self.auth_user_model,
+            self.get_model('EnterpriseCustomer'),
+            self.get_model('EnterpriseCustomerUser'),
+        )
 
     def _disconnect_user_post_save_for_migrations(self, sender, **kwargs):  # pylint: disable=unused-argument
         """

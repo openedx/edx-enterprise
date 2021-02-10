@@ -66,6 +66,7 @@ INSTALLED_APPS = (
     "integrated_channels.xapi",
     "edx_rbac",
     "rules.apps.AutodiscoverRulesConfig",
+    "actstream",
 )
 
 MIDDLEWARE_CLASSES = [

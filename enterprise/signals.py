@@ -3,6 +3,8 @@
 Django signal handlers.
 """
 
+from actstream import action
+from actstream.actions import follow, unfollow
 from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -34,8 +36,10 @@ from enterprise.utils import (
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
+    from lms.djangoapps.certificates.models import GeneratedCertificate
 except ImportError:
     CourseEnrollment = None
+    GeneratedCertificate = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
@@ -79,6 +83,17 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         # activate admin permissions for an existing EnterpriseCustomerUser(s), if applicable
         activate_admin_permissions(enterprise_customer_user)
 
+        # add to the activity feed/stream!
+        enterprise_customer = enterprise_customer_user.enterprise_customer
+        # TODO: i _think_ we want to have a ``user`` follow the feed associated with their ``enterprise_customer``
+        # such that when i retrieve my feed, i will see any updates across my enteprise, starting from when
+        # i got linked to that enterprise.
+        follow(user_instance, enterprise_customer)
+
+        # TODO: formalize when the enterprise_customer should be the
+        # target vs. action_object so we're consistent?
+        # do we need this event? probably not.
+        action.send(user_instance, verb='joined', target=enterprise_customer)
 
 @receiver(pre_save, sender=EnterpriseCustomer)
 def update_lang_pref_of_all_learners(sender, instance, **kwargs):  # pylint: disable=unused-argument
@@ -341,6 +356,29 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
         )
 
 
-# Don't connect this receiver if we dont have access to CourseEnrollment model
+def generated_certificate_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
+    """
+    Watches for post_save signal for creates/updates on the GeneratedCertificate table.
+    """
+    # TODO: do some stuff
+
+    # verify certificate exists in a passing state as they can have various statuses:
+    # https://github.com/edx/edx-platform/blob/7db147e06a11307af93139239f35efd60c0ec968/lms/djangoapps/certificates/models.py#L116
+
+    # how do we know if this certificate is for a course enrollment associated with the cert-earning user's
+    # linked enterprise customer(s)? perhaps we need to call enterprise_catalog API to check for "contains_content_items".
+
+    # add this newly created certificate to the django-activity-stream stream for the User/EnterpriseCustomer!
+    # TODO: we may need to send addtl data here in the action, following this guide if we need any metadata
+    # from the certificate, for example it's downloadable URL so we can link to it from the UI (?):
+    # https://django-activity-stream.readthedocs.io/en/latest/data.html
+    pass
+
+
+# Don't connect this receiver if we don't have access to CourseEnrollment model
 if CourseEnrollment is not None:
     post_save.connect(create_enterprise_enrollment_receiver, sender=CourseEnrollment)
+
+# Don't connect this receiver if we don't have access to GeneratedCertificate model
+if GeneratedCertificate is not None:
+    post_save.connect(generated_certificate_receiver, sender=GeneratedCertificate)

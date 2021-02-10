@@ -15,9 +15,10 @@ try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
     from lms.djangoapps.course_api.api import get_course_run_url
 except ImportError:
-    get_certificate_for_user = None
-    get_course_run_url = None
     get_emails_enabled = None
+    get_certificate_for_user = None
+    GeneratedCertificate = None
+    get_course_run_url = None
 
 
 class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: disable=abstract-method
