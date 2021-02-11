@@ -8,6 +8,7 @@ from actstream.actions import follow
 from actstream.models import Action, followers
 from logging import getLogger
 
+from django.contrib import auth
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
@@ -19,6 +20,7 @@ from enterprise.decorators import disable_for_loaddata
 from enterprise.models import (
     EnterpriseAnalyticsUser,
     EnterpriseCatalogQuery,
+    EnterpriseCourseEnrollment,
     EnterpriseCustomer,
     EnterpriseCustomerBrandingConfiguration,
     EnterpriseCustomerCatalog,
@@ -37,12 +39,14 @@ from enterprise.utils import (
 
 try:
     from common.djangoapps.student.models import CourseEnrollment
-    from lms.djangoapps.certificates.models import GeneratedCertificate
+    from lms.djangoapps.certificates.models import CertificateStatuses, GeneratedCertificate
 except ImportError:
     CourseEnrollment = None
+    CertificateStatuses = None
     GeneratedCertificate = None
 
 logger = getLogger(__name__)  # pylint: disable=invalid-name
+User = auth.get_user_model()
 _UNSAVED_FILEFIELD = 'unsaved_filefield'
 
 
@@ -361,23 +365,28 @@ def create_enterprise_enrollment_receiver(sender, instance, **kwargs):     # pyl
         )
 
 
-def generated_certificate_receiver(sender, instance, **kwargs):     # pylint: disable=unused-argument
+def generated_certificate_receiver(sender, instance, **kwargs):  # pylint: disable=unused-argument
     """
     Watches for post_save signal for creates/updates on the GeneratedCertificate table.
+
+    Filters EnterpriseCourseEnrollments to find any associated with the given user and course.
+    If found, an activity stream action is sent to indicate the user earned a certificate.
     """
-    # TODO: do some stuff
-
-    # verify certificate exists in a passing state as they can have various statuses:
-    # https://github.com/edx/edx-platform/blob/7db147e06a11307af93139239f35efd60c0ec968/lms/djangoapps/certificates/models.py#L116
-
-    # how do we know if this certificate is for a course enrollment associated with the cert-earning user's
-    # linked enterprise customer(s)? perhaps we need to call enterprise_catalog API to check for "contains_content_items".
-
-    # add this newly created certificate to the django-activity-stream stream for the User/EnterpriseCustomer!
-    # TODO: we may need to send addtl data here in the action, following this guide if we need any metadata
-    # from the certificate, for example it's downloadable URL so we can link to it from the UI (?):
-    # https://django-activity-stream.readthedocs.io/en/latest/data.html
-    pass
+    if CertificateStatuses.is_passing_status(instance.status):
+        user_id = instance.user.id
+        enterprise_enrollment = EnterpriseCourseEnrollment.objects.filter(
+            enterprise_customer_user__user_id=user_id,
+            course_id=instance.course_id,
+        ).first()
+        if enterprise_enrollment:
+            user = User.objects.filter(id=user_id).first()
+            enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
+            action.send(
+                user,
+                action_object=enterprise_enrollment,
+                target=enterprise_customer,
+                verb='earned a certificate in',
+            )
 
 
 # Don't connect this receiver if we don't have access to CourseEnrollment model
