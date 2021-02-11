@@ -988,21 +988,21 @@ class EnterpriseCustomerActionSerializer(serializers.ModelSerializer):
         return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
 
 
-class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
+class EnterpriseCourseEnrollmentActionSerializer(serializers.ModelSerializer):
     """
-    DRF model serializer for :class:`~enterprise.models.EnterpriseCustomerEnrollment` when referenced
+    DRF model serializer for :class:`~enterprise.models.EnterpriseCourseEnrollment` when referenced
     from an action.
     """
 
     mode = serializers.SerializerMethodField()
     display_name = serializers.SerializerMethodField()
-    url = serializers.SerializerMethodField()
+    course_key = serializers.SerializerMethodField()
     org = serializers.SerializerMethodField()
 
     class Meta:
         model = models.EnterpriseCourseEnrollment
-        fields = ('id', 'course_id', 'mode', 'display_name', 'url', 'org')
-        read_only_fields = ('id', 'course_id', 'mode', 'display_name', 'url', 'org')
+        fields = ('id', 'course_id', 'mode', 'display_name', 'course_key', 'org')
+        read_only_fields = ('id', 'course_id', 'mode', 'display_name', 'course_key', 'org')
 
     def get_mode(self, obj):
         """
@@ -1016,20 +1016,19 @@ class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
         """
         return obj.course_enrollment.course.display_name
 
-    def get_url(self, obj):
+    def get_course_key(self, obj):
         """
         TODO
         """
         enterprise_customer = obj.enterprise_customer_user.enterprise_customer
-        enterprise_slug = enterprise_customer.slug
         course_keys_queryset = obj.course_enrollment.course.get_all_course_keys()
 
-        if not course_keys_queryset or not enterprise_customer.enable_learner_portal:
+        if not course_keys_queryset:
             return None
 
         course_locator = course_keys_queryset.first()
         course_key = f'{course_locator.org}+{course_locator.course}'
-        return f'{settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL}/{enterprise_slug}/course/{course_key}'
+        return course_key
 
     def get_org(self, obj):
         """
@@ -1041,7 +1040,7 @@ class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
 # Registry of GFK serializers used in activity stream.
 GFK_MODEL_SERIALIZER_MAPPING = {
     User: UserActionSerializer,
-    models.EnterpriseCourseEnrollment: EnterpriseCustomerEnrollmentActionSerializer,
+    models.EnterpriseCourseEnrollment: EnterpriseCourseEnrollmentActionSerializer,
     models.EnterpriseCustomer: EnterpriseCustomerActionSerializer,
 }
 
