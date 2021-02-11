@@ -11,6 +11,7 @@ from edx_rest_api_client.exceptions import HttpClientError
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
+from django.conf import settings
 from django.contrib import auth
 from django.contrib.sites.models import Site
 from django.utils.translation import ugettext_lazy as _
@@ -995,12 +996,13 @@ class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
 
     mode = serializers.SerializerMethodField()
     display_name = serializers.SerializerMethodField()
-    course_link = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
+    org = serializers.SerializerMethodField()
 
     class Meta:
         model = models.EnterpriseCourseEnrollment
-        fields = ('id', 'course_id', 'mode', 'display_name', 'course_link')
-        read_only_fields = ('id', 'course_id', 'mode', 'display_name', 'course_link')
+        fields = ('id', 'course_id', 'mode', 'display_name', 'url', 'org')
+        read_only_fields = ('id', 'course_id', 'mode', 'display_name', 'url', 'org')
 
     def get_mode(self, obj):
         """
@@ -1014,11 +1016,25 @@ class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
         """
         return obj.course_enrollment.course.display_name
 
-    def get_course_link(self, obj):
+    def get_url(self, obj):
         """
         TODO
         """
-        return "https://edx.org"
+        enterprise_slug = obj.enterprise_customer_user.enterprise_customer.slug
+        course_keys_queryset = obj.course_enrollment.course.get_all_course_keys()
+
+        if not course_keys_queryset or not enterprise_customer.enable_learner_portal:
+            return None
+
+        course_locator = course_keys_queryset.first()
+        course_key = f'{course_locator.org}+{course_locator.course}'
+        return f'{settings.ENTERPRISE_LEARNER_PORTAL_BASE_URL}/{enterprise_slug}/course/{course_key}'
+
+    def get_org(self, obj):
+        """
+        TODO
+        """
+        return obj.course_enrollment.course.org
 
 
 # Registry of GFK serializers used in activity stream.
@@ -1046,4 +1062,4 @@ class ActionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Action
-        fields = ('actor', 'action_object', 'target', 'verb', 'timestamp', 'timesince')
+        fields = ('actor', 'verb', 'action_object', 'target', 'timestamp', 'timesince')
