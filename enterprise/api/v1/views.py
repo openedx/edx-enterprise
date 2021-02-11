@@ -3,6 +3,7 @@
 Views for enterprise api version 1 endpoint.
 """
 
+from actstream.models import Action, user_stream
 from logging import getLogger
 from smtplib import SMTPException
 
@@ -155,7 +156,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=invalid-name,unused-argument
     def basic_list(self, request, *arg, **kwargs):
         """
-            Enterprise Customer's Basic data list without pagination
+        Enterprise Customer's Basic data list without pagination
         """
         startswith = request.GET.get('startswith')
         queryset = self.get_queryset().order_by('name')
@@ -1082,3 +1083,18 @@ class TableauAuthViewSet(generics.GenericAPIView):
         }
         response = requests.request("POST", url, headers=headers, data=payload, files=files)
         return Response(data=response.text)
+
+
+class ActivityViewSet(generics.GenericAPIView):
+    """
+    TODO
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request):
+        """
+        TODO
+        """
+        queryset = user_stream(self.request.user, with_user_activity=True)
+        print('ActivityViewSet!!!', queryset)
+        return Response(data=request.user.id)

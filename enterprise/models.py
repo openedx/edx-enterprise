@@ -1516,7 +1516,7 @@ class EnterpriseCourseEnrollmentManager(models.Manager):
 
 
 @python_2_unicode_compatible
-class EnterpriseCourseEnrollment(TimeStampedModel):
+class EnterpriseCourseEnrollment(TimeStampedModel, ActorModel):
     """
     Store information about the enrollment of a user in a course.
 

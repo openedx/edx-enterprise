@@ -4,7 +4,8 @@ Django signal handlers.
 """
 
 from actstream import action
-from actstream.actions import follow, unfollow
+from actstream.actions import follow
+from actstream.models import Action, followers
 from logging import getLogger
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -83,16 +84,19 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
         # activate admin permissions for an existing EnterpriseCustomerUser(s), if applicable
         activate_admin_permissions(enterprise_customer_user)
 
-        # add to the activity feed/stream!
+        # follow the Enterprise Customers associated with this ``user_instance``
+        # TODO: do not call ``follow`` or ``action.send`` if the user is already following
+        # the EnterpriseCustomer
         enterprise_customer = enterprise_customer_user.enterprise_customer
-        # TODO: i _think_ we want to have a ``user`` follow the feed associated with their ``enterprise_customer``
-        # such that when i retrieve my feed, i will see any updates across my enteprise, starting from when
-        # i got linked to that enterprise.
-        follow(user_instance, enterprise_customer, actor_only=False)
+        enterprise_followers = followers(enterprise_customer)
 
-        # TODO: formalize when the enterprise_customer should be the
-        # target vs. action_object so we're consistent?
-        # do we need this event? probably not.
+        # user is already a follower of this EnterpriseCustomer; nothing to do here.
+        if user_instance in enterprise_followers:
+            continue
+
+        # user is not yet a follower of this EnterpriseCustomer, so create a follow action
+        enterprise_customer = enterprise_customer_user.enterprise_customer
+        follow(user_instance, enterprise_customer, actor_only=False)
         action.send(user_instance, verb='joined', target=enterprise_customer)
 
 

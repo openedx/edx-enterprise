@@ -4,6 +4,7 @@ Serializers for enterprise api version 1.
 """
 
 import copy
+from actstream.models import Action
 from logging import getLogger
 
 from edx_rest_api_client.exceptions import HttpClientError
@@ -952,3 +953,18 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
         if not data.get('email') and not data.get('email_csv'):
             raise serializers.ValidationError('Must include either email or email_csv in request.')
         return data
+
+class GenericRelatedField(serializers.Field):
+    def to_representation(self, value):
+        if isinstance(value, models.EnterpriseCourseEnrollment):
+            return EnterpriseCourseEnrollmentReadOnlySerializer(value).data
+        # Not found - return string.
+        return str(value)
+
+class ActionSerializer(serializers.ModelSerializer):
+    actor = GenericRelatedField(read_only=True)
+    action_object = GenericRelatedField(read_only=True)
+    target = GenericRelatedField(read_only=True)
+
+    class Meta:
+        model = Action
