@@ -26,6 +26,7 @@ from enterprise.utils import (
     has_course_run_available_for_enrollment,
     track_enrollment,
 )
+from enterprise_learner_portal.api.v1.serializers import EnterpriseCourseEnrollmentSerializer
 
 LOGGER = getLogger(__name__)
 User = auth.get_user_model()
@@ -954,17 +955,95 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
             raise serializers.ValidationError('Must include either email or email_csv in request.')
         return data
 
-class GenericRelatedField(serializers.Field):
+
+class UserActionSerializer(serializers.ModelSerializer):
+    """
+    TODO
+    """
+
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'first_name', 'last_name')
+        read_only_fields = ('id', 'username', 'email', 'first_name', 'last_name')
+
+
+class EnterpriseCustomerActionSerializer(serializers.ModelSerializer):
+    """
+    DRF model serializer for :class:`~enterprise.models.EnterpriseCustomer` when referenced
+    from an action.
+    """
+
+    branding_configuration = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.EnterpriseCustomer
+        fields = ('uuid', 'name', 'slug', 'branding_configuration')
+        read_only_fields = ('uuid', 'name', 'slug', 'branding_configuration')
+
+    def get_branding_configuration(self, obj):
+        """
+        Return the serialized branding configuration object OR default object if null
+        """
+        return EnterpriseCustomerBrandingConfigurationSerializer(obj.safe_branding_configuration).data
+
+
+class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
+    """
+    DRF model serializer for :class:`~enterprise.models.EnterpriseCustomerEnrollment` when referenced
+    from an action.
+    """
+
+    mode = serializers.SerializerMethodField()
+    display_name = serializers.SerializerMethodField()
+    course_link = serializers.SerializerMethodField()
+
+    class Meta:
+        model = models.EnterpriseCourseEnrollment
+        fields = ('id', 'course_id', 'mode', 'display_name', 'course_link')
+        read_only_fields = ('id', 'course_id', 'mode', 'display_name', 'course_link')
+
+    def get_mode(self, obj):
+        """
+        TODO
+        """
+        return obj.mode
+
+    def get_display_name(self, obj):
+        """
+        TODO
+        """
+        return obj.course_enrollment.course.display_name
+
+    def get_course_link(self, obj):
+        """
+        TODO
+        """
+        return "https://edx.org"
+
+
+# Registry of GFK serializers used in activity stream.
+GFK_MODEL_SERIALIZER_MAPPING = {
+    User: UserActionSerializer,
+    models.EnterpriseCourseEnrollment: EnterpriseCustomerEnrollmentActionSerializer,
+    models.EnterpriseCustomer: EnterpriseCustomerActionSerializer,
+}
+
+class ActivityGenericRelatedField(serializers.Field):
+    """
+    DRF Serializer field that serializers GenericForeignKey fields on the :class:`~activity.models.Action`
+    of known model types to their respective ActionSerializer implementation.
+    """
+
     def to_representation(self, value):
-        if isinstance(value, models.EnterpriseCourseEnrollment):
-            return EnterpriseCourseEnrollmentReadOnlySerializer(value).data
-        # Not found - return string.
-        return str(value)
+        serializer_cls = GFK_MODEL_SERIALIZER_MAPPING.get(type(value), None)
+        return serializer_cls(value, context=self.context).data if serializer_cls else str(value)
+
 
 class ActionSerializer(serializers.ModelSerializer):
-    actor = GenericRelatedField(read_only=True)
-    action_object = GenericRelatedField(read_only=True)
-    target = GenericRelatedField(read_only=True)
+    actor = ActivityGenericRelatedField(read_only=True)
+    action_object = ActivityGenericRelatedField(read_only=True)
+    target = ActivityGenericRelatedField(read_only=True)
 
     class Meta:
         model = Action
+        fields = ('actor', 'action_object', 'target', 'verb', 'timestamp', 'timesince')

@@ -8,6 +8,7 @@ from logging import getLogger
 from smtplib import SMTPException
 
 import requests
+from django.db.models import Q
 from django_filters.rest_framework import DjangoFilterBackend
 from edx_rbac.decorators import permission_required
 from edx_rest_framework_extensions.auth.jwt.authentication import JwtAuthentication
@@ -1091,10 +1092,18 @@ class ActivityViewSet(generics.GenericAPIView):
     """
     permission_classes = (IsAuthenticated,)
 
+    def get_queryset(self):
+        queryset = user_stream(self.request.user, with_user_activity=True)
+        # filter out actions related to follows as this particular action
+        # can be considered an implementation detail that we don't need to expose
+        # to the consumers of this API. we are still tracking the "joined" action
+        # when going through the logistration flow.
+        return queryset.filter(~Q(verb='started following'))
+
     def get(self, request):
         """
         TODO
         """
-        queryset = user_stream(self.request.user, with_user_activity=True)
-        print('ActivityViewSet!!!', queryset)
-        return Response(data=request.user.id)
+        queryset = self.get_queryset()
+        serializer = serializers.ActionSerializer(queryset, many=True)
+        return Response(serializer.data)
