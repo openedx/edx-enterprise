@@ -1020,7 +1020,8 @@ class EnterpriseCustomerEnrollmentActionSerializer(serializers.ModelSerializer):
         """
         TODO
         """
-        enterprise_slug = obj.enterprise_customer_user.enterprise_customer.slug
+        enterprise_customer = obj.enterprise_customer_user.enterprise_customer
+        enterprise_slug = enterprise_customer.slug
         course_keys_queryset = obj.course_enrollment.course.get_all_course_keys()
 
         if not course_keys_queryset or not enterprise_customer.enable_learner_portal:
