@@ -71,6 +71,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     completed_timestamp=completed_timestamp,
                     grade=grade,
                     total_hours=total_hours,
+                    credit_hours=total_hours,
                 ),
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
@@ -80,6 +81,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                     completed_timestamp=completed_timestamp,
                     grade=grade,
                     total_hours=total_hours,
+                    credit_hours=total_hours,
                 ),
             ]
         LOGGER.info(
