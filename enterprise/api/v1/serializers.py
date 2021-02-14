@@ -162,6 +162,7 @@ class EnterpriseCustomerSerializer(serializers.ModelSerializer):
             'enable_portal_subscription_management_screen', 'hide_course_original_price', 'enable_analytics_screen',
             'enable_integrated_customer_learner_portal_search',
             'enable_portal_lms_configurations_screen', 'sender_alias',
+            'enable_community',
         )
 
     site = SiteSerializer()
@@ -348,7 +349,8 @@ class EnterpriseCustomerUserReadOnlySerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'id', 'enterprise_customer', 'active', 'user_id', 'user', 'data_sharing_consent_records', 'groups'
+            'id', 'enterprise_customer', 'active', 'user_id', 'user', 'data_sharing_consent_records',
+            'groups', 'is_community_member',
         )
 
     user = UserSerializer()
@@ -385,11 +387,12 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.EnterpriseCustomerUser
         fields = (
-            'enterprise_customer', 'username', 'active'
+            'enterprise_customer', 'username', 'active', 'is_community_member',
         )
 
     username = serializers.CharField(max_length=30)
     active = serializers.BooleanField(required=False, default=True)
+    is_community_member = serializers.BooleanField(required=False, default=False)
     user = None
 
     def validate_username(self, value):
@@ -412,16 +415,17 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         """
         enterprise_customer = self.validated_data['enterprise_customer']
         active = self.validated_data.get('active', True)
-        defaults = {'active': active}
+        is_community_member = self.validated_data.get('is_community_member', False)
+        defaults = {
+            'active': active,
+            'is_community_member': is_community_member,
+        }
 
         __, created = models.EnterpriseCustomerUser.objects.update_or_create(
             user_id=self.user.pk,
             enterprise_customer=enterprise_customer,
             defaults=defaults,
         )
-        if not created and active:
-            # if learner has activated enterprise we need to de-activate other enterprises learner is linked to
-            models.EnterpriseCustomerUser.inactivate_other_customers(self.user.pk, enterprise_customer)
 
 
 class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
@@ -1050,12 +1054,16 @@ class ActivityGenericRelatedField(serializers.Field):
     of known model types to their respective ActionSerializer implementation.
     """
 
-    def to_representation(self, value):
-        serializer_cls = GFK_MODEL_SERIALIZER_MAPPING.get(type(value), None)
-        return serializer_cls(value, context=self.context).data if serializer_cls else str(value)
+    def to_representation(self, obj):
+        serializer_cls = GFK_MODEL_SERIALIZER_MAPPING.get(type(obj), None)
+        return serializer_cls(obj, context=self.context).data if serializer_cls else str(obj)
 
 
 class ActionSerializer(serializers.ModelSerializer):
+    """
+    TODO
+    """
+
     actor = ActivityGenericRelatedField(read_only=True)
     action_object = ActivityGenericRelatedField(read_only=True)
     target = ActivityGenericRelatedField(read_only=True)

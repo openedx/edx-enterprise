@@ -651,7 +651,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend, EnterpriseCustomerUserFilterBackend)
 
     FIELDS = (
-        'enterprise_customer', 'user_id', 'active',
+        'enterprise_customer', 'user_id', 'active', 'is_community_member',
     )
     filterset_fields = FIELDS
     ordering_fields = FIELDS

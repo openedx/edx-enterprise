@@ -316,6 +316,11 @@ class EnterpriseCustomer(TimeStampedModel):
         help_text=_("Specifies whether the learner should be able to login through enterprise's slug login")
     )
 
+    enable_community = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether the Community feature should be enabled for this Enterprise Customer.")
+    )
+
     contact_email = models.EmailField(
         null=True,
         blank=True,
@@ -834,6 +839,7 @@ class EnterpriseCustomerUser(TimeStampedModel):
     user_id = models.PositiveIntegerField(null=False, blank=False, db_index=True)
     active = models.BooleanField(default=True)
     linked = models.BooleanField(default=True)
+    is_community_member = models.BooleanField(default=False)
 
     objects = EnterpriseCustomerUserManager()
     all_objects = EnterpriseCustomerUserManager(linked_only=False)

@@ -329,6 +329,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'user_email',
         'username',
         'created',
+        'is_community_member',
         'enterprise_enrollments',
         'other_enrollments',
     )
@@ -343,7 +344,7 @@ class EnterpriseCustomerUserAdmin(admin.ModelAdmin):
         'other_enrollments',
     )
 
-    list_display = ('username', 'user_email', 'get_enterprise_customer')
+    list_display = ('username', 'user_email', 'get_enterprise_customer', 'is_community_member',)
     search_fields = ('user_id',)
 
     def get_enterprise_customer(self, obj):
