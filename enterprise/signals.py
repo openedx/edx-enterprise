@@ -249,6 +249,11 @@ def enterprise_learner_joined_community(sender, instance, **kwargs):  # pylint: 
         return  # nothing to do here
 
     enterprise_customer = instance.enterprise_customer
+
+    # EnterpriseCustomer does not have the community feature enabled
+    if not enterprise_customer.enable_community:
+        return  # nothing to do here
+
     enterprise_followers = followers(enterprise_customer)
     is_user_following_enterprise_customer = user_instance in enterprise_followers
 
@@ -263,8 +268,7 @@ def enterprise_learner_joined_community(sender, instance, **kwargs):  # pylint: 
         return  # nothing left to do
 
     # user is not yet a follower of this EnterpriseCustomer, so create a follow and
-    # send an action with the verb "joined in".
-    # For details on ``send_action`` and ``actor_only``:
+    # send an action with the verb "joined in". For details on ``send_action`` and ``actor_only``:
     # https://django-activity-stream.readthedocs.io/en/latest/api.html#module-actstream.actions
     enterprise_customer = instance.enterprise_customer
     follow(user_instance, enterprise_customer, send_action=False, actor_only=False)
@@ -394,19 +398,19 @@ def generated_certificate_receiver(sender, instance, **kwargs):  # pylint: disab
 
     Filters EnterpriseCourseEnrollments to find any enrollments associated with the given user and
     course. If found, an activity stream action is sent to indicate the user earned a certificate. 🥳
-    This action is only sent if the EnterpriseCustomerUser is an active community member.
+    This action is only sent if the EnterpriseCustomerUser is an active community member and the
+    community feature is enabled for the associated EnterpriseCustomer.
     """
     if CertificateStatuses.is_passing_status(instance.status):
-        user_id = instance.user.id
+        user = instance.user
         enterprise_enrollments = EnterpriseCourseEnrollment.objects.filter(
-            enterprise_customer_user__user_id=user_id,
+            enterprise_customer_user__user_id=user.id,
             course_id=instance.course_id,
         )
         for enterprise_enrollment in enterprise_enrollments:
-            user = User.objects.filter(id=user_id).first()
             enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
-            if enterprise_customer_user.is_community_member:
-                enterprise_customer = enterprise_customer_user.enterprise_customer
+            enterprise_customer = enterprise_customer_user.enterprise_customer
+            if enterprise_customer.enable_community and enterprise_customer_user.is_community_member:
                 action.send(
                     user,
                     action_object=enterprise_enrollment,

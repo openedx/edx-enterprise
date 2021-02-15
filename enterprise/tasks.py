@@ -59,7 +59,7 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
             source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK)
         )
 
-        if enterprise_customer_user.is_community_member:
+        if enterprise_customer.enable_community and enterprise_customer_user.is_community_member:
             user_instance = User.objects.get(id=enterprise_customer_user.user_id)
             action.send(
                 user_instance,
