@@ -21,6 +21,7 @@ User = auth.get_user_model()
 def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
     """
     Create enterprise enrollment for user if course_id part of catalog for the ENT customer.
+    If the EnterpriseCustomerUser is an active community member, send an activity stream event.
     """
     enterprise_customer_user = EnterpriseCustomerUser.objects.get(
         id=enterprise_customer_user_id
@@ -58,10 +59,11 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
             source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK)
         )
 
-        user_instance = User.objects.get(id=enterprise_customer_user.user_id)
-        action.send(
-            user_instance,
-            action_object=enrollment,
-            target=enterprise_customer_user.enterprise_customer,
-            verb='enrolled in',
-        )
+        if enterprise_customer_user.is_community_member:
+            user_instance = User.objects.get(id=enterprise_customer_user.user_id)
+            action.send(
+                user_instance,
+                action_object=enrollment,
+                target=enterprise_customer_user.enterprise_customer,
+                verb='enrolled in',
+            )

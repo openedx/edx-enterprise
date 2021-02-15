@@ -250,21 +250,23 @@ def enterprise_learner_joined_community(sender, instance, **kwargs):  # pylint: 
 
     enterprise_customer = instance.enterprise_customer
     enterprise_followers = followers(enterprise_customer)
+    is_user_following_enterprise_customer = user_instance in enterprise_followers
 
-    # unfollow enterprise_customer if enterprise learner is no longer a community member
-    # or an active enterprise customer user
+    # ensure the learner unfollows ``enterprise_customer`` if enterprise learner is no longer
+    # a community member or an active enterprise customer user.
     if not instance.is_community_member or not instance.active:
-        if user_instance in enterprise_followers:
+        if is_user_following_enterprise_customer:
             unfollow(user_instance, enterprise_customer)
         return  # nothing left to do
 
-    if user_instance in enterprise_followers:
-        return  # user is already following this EnterpriseCustomer; nothing left to do
+    if is_user_following_enterprise_customer:
+        return  # nothing left to do
 
-    # user is not yet a follower of this EnterpriseCustomer, so create a follow action
-    enterprise_customer = instance.enterprise_customer
+    # user is not yet a follower of this EnterpriseCustomer, so create a follow and
+    # send an action with the verb "joined in".
     # For details on ``send_action`` and ``actor_only``:
     # https://django-activity-stream.readthedocs.io/en/latest/api.html#module-actstream.actions
+    enterprise_customer = instance.enterprise_customer
     follow(user_instance, enterprise_customer, send_action=False, actor_only=False)
     action.send(user_instance, verb='joined the', target=enterprise_customer)
 
@@ -390,24 +392,27 @@ def generated_certificate_receiver(sender, instance, **kwargs):  # pylint: disab
     """
     Watches for post_save signal for creates/updates on the GeneratedCertificate table.
 
-    Filters EnterpriseCourseEnrollments to find any associated with the given user and course.
-    If found, an activity stream action is sent to indicate the user earned a certificate.
+    Filters EnterpriseCourseEnrollments to find any enrollments associated with the given user and
+    course. If found, an activity stream action is sent to indicate the user earned a certificate. 🥳
+    This action is only sent if the EnterpriseCustomerUser is an active community member.
     """
     if CertificateStatuses.is_passing_status(instance.status):
         user_id = instance.user.id
-        enterprise_enrollment = EnterpriseCourseEnrollment.objects.filter(
+        enterprise_enrollments = EnterpriseCourseEnrollment.objects.filter(
             enterprise_customer_user__user_id=user_id,
             course_id=instance.course_id,
-        ).first()
-        if enterprise_enrollment:
+        )
+        for enterprise_enrollment in enterprise_enrollments:
             user = User.objects.filter(id=user_id).first()
-            enterprise_customer = enterprise_enrollment.enterprise_customer_user.enterprise_customer
-            action.send(
-                user,
-                action_object=enterprise_enrollment,
-                target=enterprise_customer,
-                verb='earned a certificate in',
-            )
+            enterprise_customer_user = enterprise_enrollment.enterprise_customer_user
+            if enterprise_customer_user.is_community_member:
+                enterprise_customer = enterprise_customer_user.enterprise_customer
+                action.send(
+                    user,
+                    action_object=enterprise_enrollment,
+                    target=enterprise_customer,
+                    verb='earned a certificate in',
+                )
 
 
 # Don't connect this receiver if we don't have access to CourseEnrollment model
