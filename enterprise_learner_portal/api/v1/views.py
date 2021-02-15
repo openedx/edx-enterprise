@@ -15,7 +15,10 @@ from django.utils.translation import ugettext as _
 
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser
 from enterprise.utils import NotConnectedToOpenEdX
-from enterprise_learner_portal.api.v1.serializers import EnterpriseCourseEnrollmentSerializer
+from enterprise_learner_portal.api.v1.serializers import (
+    EnterpriseCourseEnrollmentSerializer,
+    EnterpriseCustomerUserSerializer,
+)
 
 try:
     from openedx.core.djangoapps.content.course_overviews.api import get_course_overviews
@@ -150,3 +153,60 @@ class EnterpriseCourseEnrollmentView(APIView):
         ).data
 
         return Response(data)
+
+
+
+class EnterpriseCustomerUserView(APIView):
+    """
+    View for returning information around a user's enterprise customer user record
+    """
+
+    permission_classes = (permissions.IsAuthenticated,)
+    authentication_classes = (JwtAuthentication, SessionAuthentication,)
+
+    def get(self, request):
+        """
+        TODO
+        """
+        user = request.user
+        enterprise_customer_id = request.query_params.get('enterprise_customer', None)
+        if not enterprise_customer_id:
+            return Response(
+                {'error': 'enterprise_customer must be provided as a query parameter'},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        enterprise_customer_user = get_object_or_404(
+            EnterpriseCustomerUser,
+            user_id=user.id,
+            enterprise_customer__uuid=enterprise_customer_id,
+        )
+
+        serializer = EnterpriseCustomerUserSerializer(enterprise_customer_user)
+        return Response(serializer.data)
+
+    def patch(self, request):
+        """
+        Patch method for the view.
+        """
+        user = request.user
+        enterprise_customer_id = request.query_params.get('enterprise_customer', None)
+        is_community_member = request.query_params.get('is_community_member', None)
+
+        if not enterprise_customer_id or not is_community_member:
+            return Response(
+                {'error': 'enterprise_customer, is_community_member must be provided as query parameters'},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        enterprise_customer_user = get_object_or_404(
+            EnterpriseCustomerUser,
+            user_id=user.id,
+            enterprise_customer__uuid=enterprise_customer_id,
+        )
+
+        enterprise_customer_user.is_community_member = True if is_community_member.lower() == 'true' else False
+        enterprise_customer_user.save()
+
+        serializer = EnterpriseCustomerUserSerializer(enterprise_customer_user)
+        return Response(serializer.data)

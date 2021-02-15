@@ -48,16 +48,9 @@ urlpatterns = [
         name='tableau-token',
     ),
     url(
-        r'^enterprise-activity/$',
-        views.ActivityViewSet.as_view(),
-        name='enterprise-activity',
-    ),
-    # NOTE: these urls provide default API endpoints from django-activity-stream. we may or
-    # may not need to expose them in the end (TBD).
-    url(
-        r'^activity/',
-        include('actstream.urls'),
-        name='activity-stream-api',
+        r'^enterprise-community-activity/$',
+        views.EnterpriseCommunityActivityViewSet.as_view(),
+        name='enterprise-community-activity',
     ),
 ]
 

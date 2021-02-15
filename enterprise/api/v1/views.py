@@ -16,6 +16,7 @@ from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.pagination import CursorPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
@@ -1086,24 +1087,32 @@ class TableauAuthViewSet(generics.GenericAPIView):
         return Response(data=response.text)
 
 
-class ActivityViewSet(generics.GenericAPIView):
+class RecentActivityCursorPagination(CursorPagination):
+    page_size = 5
+    ordering = '-timestamp'
+
+
+class EnterpriseCommunityActivityViewSet(generics.GenericAPIView):
     """
     TODO
     """
     permission_classes = (IsAuthenticated,)
+    pagination_class = RecentActivityCursorPagination
 
     def get_queryset(self):
         queryset = user_stream(self.request.user, with_user_activity=True)
-        # filter out actions related to follows as this particular action
-        # can be considered an implementation detail that we don't need to expose
-        # to the consumers of this API. we are still tracking the "joined" action
-        # when going through the logistration flow.
-        return queryset.filter(~Q(verb='started following'))
+        return queryset
 
     def get(self, request):
         """
         TODO
         """
         queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+
+        if page is not None:
+            serializer = serializers.ActionSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = serializers.ActionSerializer(queryset, many=True)
         return Response(serializer.data)

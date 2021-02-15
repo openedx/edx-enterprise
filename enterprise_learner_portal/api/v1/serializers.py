@@ -21,6 +21,18 @@ except ImportError:
     get_course_run_url = None
 
 
+class EnterpriseCustomerUserSerializer(serializers.Serializer):  # pylint: disable=abstract-method
+    """
+    TODO
+    """
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['enterprise_customer'] = instance.enterprise_customer.uuid
+        representation['is_community_member'] = instance.is_community_member
+        return representation
+
+
 class EnterpriseCourseEnrollmentSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     A serializer for course enrollment information for a given course

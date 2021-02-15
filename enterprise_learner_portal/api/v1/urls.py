@@ -5,12 +5,17 @@ URL definitions for enterprise_learner_portal API endpoint.
 
 from django.conf.urls import url
 
-from enterprise_learner_portal.api.v1.views import EnterpriseCourseEnrollmentView
+from enterprise_learner_portal.api.v1 import views
 
 urlpatterns = [
     url(
         r'^enterprise_course_enrollments/$',
-        EnterpriseCourseEnrollmentView.as_view(),
-        name="enterprise-learner-portal-course-enrollment-list"
+        views.EnterpriseCourseEnrollmentView.as_view(),
+        name="enterprise-learner-portal-course-enrollment-list",
+    ),
+    url(
+        r'^enterprise_customer_user/$',
+        views.EnterpriseCustomerUserView.as_view(),
+        name="enterprise-learner-portal-enterprise-learner-detail",
     ),
 ]

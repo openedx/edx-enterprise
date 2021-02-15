@@ -4,11 +4,12 @@ Django signal handlers.
 """
 
 from actstream import action
-from actstream.actions import follow
+from actstream.actions import follow, unfollow
 from actstream.models import Action, followers
 from logging import getLogger
 
 from django.contrib import auth
+from django.contrib.auth.models import Permission
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models.signals import post_delete, post_save, pre_delete, pre_save
 from django.dispatch import receiver
@@ -87,21 +88,6 @@ def handle_user_post_save(sender, **kwargs):  # pylint: disable=unused-argument
     for enterprise_customer_user in enterprise_customer_users:
         # activate admin permissions for an existing EnterpriseCustomerUser(s), if applicable
         activate_admin_permissions(enterprise_customer_user)
-
-        # follow the Enterprise Customers associated with this ``user_instance``
-        # TODO: do not call ``follow`` or ``action.send`` if the user is already following
-        # the EnterpriseCustomer
-        enterprise_customer = enterprise_customer_user.enterprise_customer
-        enterprise_followers = followers(enterprise_customer)
-
-        # user is already a follower of this EnterpriseCustomer; nothing to do here.
-        if user_instance in enterprise_followers:
-            continue
-
-        # user is not yet a follower of this EnterpriseCustomer, so create a follow action
-        enterprise_customer = enterprise_customer_user.enterprise_customer
-        follow(user_instance, enterprise_customer, actor_only=False)
-        action.send(user_instance, verb='joined', target=enterprise_customer)
 
 
 @receiver(pre_save, sender=EnterpriseCustomer)
@@ -246,6 +232,41 @@ def delete_pending_enterprise_admin_user(sender, instance, **kwargs):  # pylint:
         enterprise_customer=instance.enterprise_customer,
         user_email=instance.user_email,
     ).delete()
+
+
+@receiver(post_save, sender=EnterpriseCustomerUser)
+def enterprise_learner_joined_community(sender, instance, **kwargs):  # pylint: disable=unused-argument
+    """
+    TODO
+    """
+    try:
+        user_instance = User.objects.get(id=instance.user_id)
+    except Exception as exc:  # pylint: disable=broad-except
+        # TODO: don't use broad exception!
+        logger.exception(
+            f'enterprise_learner_joined_community signal could not find ``auth.User`` for user_id {instance.user_id}'
+        )
+        return  # nothing to do here
+
+    enterprise_customer = instance.enterprise_customer
+    enterprise_followers = followers(enterprise_customer)
+
+    # unfollow enterprise_customer if enterprise learner is no longer a community member
+    # or an active enterprise customer user
+    if not instance.is_community_member or not instance.active:
+        if user_instance in enterprise_followers:
+            unfollow(user_instance, enterprise_customer)
+        return  # nothing left to do
+
+    if user_instance in enterprise_followers:
+        return  # user is already following this EnterpriseCustomer; nothing left to do
+
+    # user is not yet a follower of this EnterpriseCustomer, so create a follow action
+    enterprise_customer = instance.enterprise_customer
+    # For details on ``send_action`` and ``actor_only``:
+    # https://django-activity-stream.readthedocs.io/en/latest/api.html#module-actstream.actions
+    follow(user_instance, enterprise_customer, send_action=False, actor_only=False)
+    action.send(user_instance, verb='joined the', target=enterprise_customer)
 
 
 @receiver(post_save, sender=EnterpriseCatalogQuery)
