@@ -1456,6 +1456,10 @@ class EnterpriseCustomerIdentityProvider(TimeStampedModel):
         unique=True,
         help_text="Slug field containing a unique identifier for the identity provider.",
     )
+    default_provider = models.BooleanField(
+        default=False,
+        help_text=_("Specifies whether this is default provider for enterprise customer.")
+    )
 
     class Meta:
         app_label = 'enterprise'

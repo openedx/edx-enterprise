@@ -165,7 +165,8 @@ class TestEnterpriseUtils(unittest.TestCase):
                 "created",
                 "modified",
                 "enterprise_customer",
-                "provider_id"
+                "provider_id",
+                "default_provider"
             ]
         ),
     )
