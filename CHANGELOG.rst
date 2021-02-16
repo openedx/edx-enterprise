@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.30]
+---------
+
+* Investigatory logging to track down Integrated Channels transmission issues.
+
 [3.17.29]
 ---------
 
