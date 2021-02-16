@@ -3,6 +3,7 @@ Module provides elements to be used in third-party auth pipeline.
 """
 
 import re
+from logging import getLogger
 
 from django.urls import reverse
 
@@ -28,6 +29,8 @@ try:
     from openedx.core.djangoapps.user_api.accounts.utils import is_multiple_user_enterprises_feature_enabled
 except ImportError:
     is_multiple_user_enterprises_feature_enabled = None
+
+LOGGER = getLogger(__name__)
 
 
 def get_enterprise_customer_for_running_pipeline(request, pipeline):  # pylint: disable=invalid-name
@@ -152,9 +155,17 @@ def handle_redirect_after_social_auth_login(backend, user):
     """
     enterprise_customers_count = EnterpriseCustomerUser.objects.filter(user_id=user.id).count()
     next_url = backend.strategy.session_get('next')
-    using_enrollment_url = re.match(r'/enterprise/.*/course/.*/enroll', str(next_url))
-    if (enterprise_customers_count > 1) and not using_enrollment_url:
-        select_enterprise_page_as_redirect_url(backend.strategy)
+    if next_url is None:
+        using_enrollment_url = re.match(r'/enterprise/.*/course/.*/enroll', str(next_url))
+        if (enterprise_customers_count > 1) and not using_enrollment_url:
+            select_enterprise_page_as_redirect_url(backend.strategy)
+    else:
+        LOGGER.info(
+            'Could not locate redirect for user: {user_id} while handling multiple enterprises selection '
+            'redirect.'.format(
+                user_id=user.id
+            )
+        )
 
 
 def select_enterprise_page_as_redirect_url(strategy):  # pylint: disable=invalid-name
@@ -162,5 +173,8 @@ def select_enterprise_page_as_redirect_url(strategy):  # pylint: disable=invalid
     Change the redirect url for the user to enterprise selection page.
     """
     current_redirect = strategy.session_get('next')
-    select_enterprise_page = reverse('enterprise_select_active') + '?success_url=' + current_redirect
+    select_enterprise_page = '{select_active_enterprise_view}?success_url={current_redirect}'.format(
+        select_active_enterprise_view=reverse('enterprise_select_active'),
+        current_redirect=current_redirect
+    )
     strategy.session_set('next', select_enterprise_page)
