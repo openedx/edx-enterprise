@@ -42,6 +42,7 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
     def transform_title(self, content_metadata_item):
         """
         Returns the course title with all organizations (partners) appended in parantheses
+        Returned format is: courseTitle - via edX.org (Partner)
         """
         formatted_orgs = []
         for org in content_metadata_item.get('organizations', []):
@@ -55,8 +56,9 @@ class MoodleContentMetadataExporter(ContentMetadataExporter):
         else:
             final_orgs = ' ({})'.format(', '.join(formatted_orgs))
 
+        edx_formatted_title = '{} - via edX.org'.format(content_metadata_item.get('title'))
         return '{}{}'.format(
-            content_metadata_item.get('title'),
+            edx_formatted_title,
             final_orgs
         )
 
