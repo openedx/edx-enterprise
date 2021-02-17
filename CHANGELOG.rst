@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.31]
+---------
+
+* Change moodle course title in exporter, to include edX text.
+
 [3.17.30]
 ---------
 
@@ -1607,6 +1612,7 @@ Unreleased
 * Sorted results of enterprise-learner API by active flag in descending order so active enterprises are on the top
 
 [2.0.18] - 2019-11-13
+
 ---------------------
 
 * Better handling when Integrated Channels return unexpected results
