@@ -11,6 +11,7 @@ import unittest
 import pytest
 import responses
 from freezegun import freeze_time
+from requests.models import Response
 from six.moves.urllib.parse import urljoin  # pylint: disable=import-error
 
 from django.utils import timezone
@@ -37,7 +38,11 @@ class TestCanvasApiClient(unittest.TestCase):
         self.canvas_course_id = random.randint(1, 1000)
         self.canvas_assignment_id = random.randint(1, 1000)
         self.course_id = "edx+111"
-        self.course_grade = random.random()
+        self.subsection_id = "subsection:123"
+        self.subsection_name = 'subsection 1'
+        self.points_possible = random.randint(1, 100)
+        self.points_earned = self.points_possible - 1
+        self.grade = self.points_earned / float(self.points_possible)
         self.url_base = "http://betatest.instructure.com"
         self.oauth_token_auth_path = "/login/oauth2/token"
         self.oauth_url = urljoin(self.url_base, self.oauth_token_auth_path)
@@ -87,13 +92,25 @@ class TestCanvasApiClient(unittest.TestCase):
             random.randint(1, 10),
             random.randint(1, 10)
         )
-        self.course_completion_payload = \
+        self.completion_level_payload = \
             '{{"completedTimestamp": "{completion_date}", "courseCompleted": "true", '\
             '"courseID": "{course_id}", "grade": "{course_grade}", "userID": "{email}"}}'.format(
                 completion_date=self.course_completion_date,
                 course_id=self.course_id,
                 email=self.canvas_email,
-                course_grade=self.course_grade,
+                course_grade=self.grade
+            )
+        self.assessment_level_payload = \
+            '{{"courseID": "{course_id}", "points_possible": "{points_possible}", "points_earned": "{points_earned}",' \
+            ' "subsectionID": "{subsectionID}", "subsection_name": "{subsection_name}", "userID": "{email}", "grade":' \
+            ' "{grade}"}}'.format(
+                course_id=self.course_id,
+                email=self.canvas_email,
+                points_possible=self.points_possible,
+                points_earned=self.points_earned,
+                subsectionID=self.subsection_id,
+                subsection_name=self.subsection_name,
+                grade=self.grade
             )
 
     def _token_response(self):
@@ -294,6 +311,72 @@ class TestCanvasApiClient(unittest.TestCase):
             ).format(
                 str(self.canvas_assignment_id),
                 str(self.canvas_course_id)
+            )
+
+    def test_assessment_level_reporting_omits_from_final_grade(self):
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+
+            canvas_api_client._search_for_canvas_user_by_email = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=self.canvas_user_id
+            )
+            canvas_api_client._handle_get_user_canvas_course = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=self.canvas_course_id
+            )
+            canvas_api_client._handle_canvas_assignment_retrieval = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=self.canvas_assignment_id,
+                name='_handle_canvas_assignment_retrieval'
+            )
+            mocked_response = unittest.mock.Mock(spec=Response)
+            mocked_response.json.return_value = {}
+            mocked_response.status_code = 200
+            canvas_api_client._handle_canvas_assignment_submission = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=mocked_response
+            )
+
+            canvas_api_client.create_assessment_reporting(self.canvas_email, self.assessment_level_payload)
+            assert canvas_api_client._handle_canvas_assignment_retrieval.mock_calls[0].kwargs[  # pylint: disable=protected-access
+                'is_assessment_grade'
+            ]
+
+    def test_completion_level_reporting_included_in_final_grade(self):
+        with responses.RequestsMock() as rsps:
+            rsps.add(
+                responses.POST,
+                self.oauth_url,
+                json=self._token_response(),
+                status=200
+            )
+            canvas_api_client = CanvasAPIClient(self.enterprise_config)
+            canvas_api_client._create_session()  # pylint: disable=protected-access
+
+            canvas_api_client._search_for_canvas_user_by_email = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=self.canvas_user_id
+            )
+            canvas_api_client._handle_get_user_canvas_course = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=self.canvas_course_id
+            )
+            canvas_api_client._handle_canvas_assignment_retrieval = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=self.canvas_assignment_id,
+                name='_handle_canvas_assignment_retrieval'
+            )
+            mocked_response = unittest.mock.Mock(spec=Response)
+            mocked_response.json.return_value = {}
+            mocked_response.status_code = 200
+            canvas_api_client._handle_canvas_assignment_submission = unittest.mock.MagicMock(  # pylint: disable=protected-access
+                return_value=mocked_response
+            )
+
+            canvas_api_client.create_course_completion(self.canvas_email, self.assessment_level_payload)
+            assert not canvas_api_client._handle_canvas_assignment_retrieval.mock_calls[0].kwargs.get(  # pylint: disable=protected-access
+                'is_assessment_grade'
             )
 
     def test_create_client_session_with_oauth_access_key(self):
