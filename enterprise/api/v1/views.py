@@ -239,7 +239,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             try:
                 for email in emails:
                     try:
-                        already_linked = validate_email_to_link(email, ignore_existing=True)
+                        already_linked = validate_email_to_link(email, enterprise_customer, raise_exception=False)
                     except ValidationError as error:
                         errors.append(error)
                     else:

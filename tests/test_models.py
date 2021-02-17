@@ -364,19 +364,28 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_linked_user(self, email):
         user = factories.UserFactory(email=email)
-        existing_link = factories.EnterpriseCustomerUserFactory(user_id=user.id)
-        assert EnterpriseCustomerUser.objects.get_link_by_email(email) == existing_link
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        existing_link = factories.EnterpriseCustomerUserFactory(
+            user_id=user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email, enterprise_customer) == existing_link
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_pending_link(self, email):
-        existing_pending_link = factories.PendingEnterpriseCustomerUserFactory(user_email=email)
-        assert EnterpriseCustomerUser.objects.get_link_by_email(email) == existing_pending_link
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+        existing_pending_link = factories.PendingEnterpriseCustomerUserFactory(
+            user_email=email,
+            enterprise_customer=enterprise_customer,
+        )
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email, enterprise_customer) == existing_pending_link
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_get_link_by_email_no_link(self, email):
+        enterprise_customer = factories.EnterpriseCustomerFactory()
         assert EnterpriseCustomerUser.objects.count() == 0
         assert PendingEnterpriseCustomerUser.objects.count() == 0
-        assert EnterpriseCustomerUser.objects.get_link_by_email(email) is None
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email, enterprise_customer) is None
 
     @ddt.data("email1@example.com", "email2@example.com")
     def test_unlink_user_existing_user(self, email):

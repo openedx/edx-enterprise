@@ -136,10 +136,6 @@ class ValidationMessages:
     NO_FIELDS_SPECIFIED = _(
         "Either \"Email or Username\" or \"CSV bulk upload\" must be "
         "specified, but neither were.")
-    PENDING_USER_ALREADY_LINKED = _(
-        "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
-        "you will be able to add the learner once the user creates account or other enterprise "
-        "deletes the pending user")
     USER_ALREADY_REGISTERED = _(
         "User with email address {email} is already registered with Enterprise "
         "Customer {ec_name}")
@@ -1228,19 +1224,20 @@ def delete_data_sharing_consent(course_id, customer_uuid, user_email):
     TieredCache.delete_all_tiers(consent_cache_key)
 
 
-def validate_email_to_link(email, raw_email=None, message_template=None, ignore_existing=False):
+def validate_email_to_link(email, enterprise_customer, raw_email=None, message_template=None, raise_exception=True):
     """
     Validate email to be linked to Enterprise Customer.
 
     Performs two checks:
         * Checks that email is valid
-        * Checks that it is not already linked to any Enterprise Customer
+        * Checks that it is not already linked to the provided Enterprise Customer
 
     Arguments:
         email (str): user email to link
+        enterprise_customer (EnterpriseCustomer): the enterprise customer to link the email to
         raw_email (str): raw value as it was passed by user - used in error message.
         message_template (str): Validation error template string.
-        ignore_existing (bool): If True to skip the check for an existing Enterprise Customer
+        raise_exception (bool): whether to raise an exception when an email is invalidated
 
     Raises:
         ValidationError: if email is invalid or already linked to Enterprise Customer.
@@ -1255,8 +1252,8 @@ def validate_email_to_link(email, raw_email=None, message_template=None, ignore_
     except ValidationError as validation_error:
         raise ValidationError(message_template.format(argument=raw_email)) from validation_error
 
-    existing_record = enterprise_customer_user_model().objects.get_link_by_email(email)
-    if existing_record and not ignore_existing:
+    existing_record = enterprise_customer_user_model().objects.get_link_by_email(email, enterprise_customer)
+    if existing_record and raise_exception:
         raise ValidationError(ValidationMessages.USER_ALREADY_REGISTERED.format(
             email=email, ec_name=existing_record.enterprise_customer.name
         ))

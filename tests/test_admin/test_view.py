@@ -755,7 +755,7 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
         email = FAKER.email()  # pylint: disable=no-member
 
         user = UserFactory(email=email)
-        EnterpriseCustomerUserFactory(user_id=user.id)
+        EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=self.enterprise_customer)
         assert EnterpriseCustomerUser.objects.count() == 1
         assert PendingEnterpriseCustomerUser.objects.count() == 0
         self.client.post(
@@ -803,8 +803,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
 
     def test_post_existing_pending_record_with_another_enterprise_customer(self):
         """
-        Tests that a PendingEnterpriseCustomerUser already linked with an Enterprise cannot be linked with another
-        Enterprise and a warning message is created in response
+        Tests that a PendingEnterpriseCustomerUser already linked with an Enterprise can be linked with another
+        Enterprise
         """
         # precondition checks:
         self._login()
@@ -818,16 +818,8 @@ class TestEnterpriseCustomerManageLearnersViewPostSingleUser(BaseTestEnterpriseC
             self.view_url,
             data=self.add_required_data({ManageLearnersForm.Fields.EMAIL_OR_USERNAME: email})
         )
-        pending_user_message = (
-            "Pending user with email address {user_email} is already linked with another Enterprise {ec_name}, "
-            "you will be able to add the learner once the user creates account or other enterprise "
-            "deletes the pending user"
-        )
-        self._assert_django_messages(response, {
-            (messages.WARNING, pending_user_message.format(ec_name=another_ent.name, user_email=email)),
-        })
         self._test_post_existing_record_response(response)
-        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 1
+        assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 2
 
     def _enroll_user_request(self, user, mode, course_id="", notify=True, reason="tests", discount=0.0):
         """
@@ -1587,8 +1579,7 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         1. Users already linked to an EnterpriseCustomer should cause a warning message, and an
             additional link won't be created, but otherwise will behave normally.
         2. Users that appear in a CSV twice will be ignored and a message will be created.
-        3. Users that are attached to a different EnterpriseCustomer will be ignored, and
-            a message will be created.
+        3. Users that are attached to a different EnterpriseCustomer will be added to the enterprise being managed
         """
         self._login()
         user = UserFactory()
@@ -1613,28 +1604,20 @@ class TestEnterpriseCustomerManageLearnersViewPostBulkUpload(BaseTestEnterpriseC
         ]
         response = self._perform_request(columns, data)
 
-        assert EnterpriseCustomerUser.objects.count() == 3, \
+        assert EnterpriseCustomerUser.objects.count() == 4, \
             "Two linked users remain, and one new link is created"
         assert EnterpriseCustomerUser.objects.filter(user_id=linked_user.id).exists()
         assert EnterpriseCustomerUser.objects.filter(user_id=user.id).exists()
         assert PendingEnterpriseCustomerUser.objects.count() == 1, "One pending linked users should be created"
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=new_email).exists()
         self._assert_django_messages(response, set([
-            (messages.SUCCESS, "2 new learners were added to {}.".format(self.enterprise_customer.name)),
+            (messages.SUCCESS, "3 new learners were added to {}.".format(self.enterprise_customer.name)),
             (
                 messages.WARNING,
                 "The following learners were already associated with this "
                 "Enterprise Customer: {}".format(linked_user.email)
             ),
             (messages.WARNING, "The following duplicate email addresses were not added: {}".format(user.email)),
-            (
-                messages.WARNING,
-                "The following learners are already associated with another Enterprise Customer. "
-                "These learners were not added to {}: {}".format(
-                    self.enterprise_customer.name,
-                    user_linked_to_other_ec.email
-                )
-            )
         ]))
 
     def test_post_successful_test(self):

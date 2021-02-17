@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.33]
+---------
+
+* Enable manually adding learners to multiple enterprises
+
 [3.17.32]
 ---------
 
