@@ -603,7 +603,72 @@ class TestEnterpriseCustomerIdentityProviderAdminForm(unittest.TestCase):
         mock_method.return_value = mock.Mock(site=self.first_site)
 
         form = EnterpriseCustomerIdentityProviderAdminForm(
-            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid},
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid,
+                  "enterprise_customer_identity_providers-TOTAL_FORMS": 0},
+        )
+
+        # Validate and clean form data
+        assert form.is_valid()
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_error_if_multiple_default_providers(self, mock_method):
+        """
+        Test clean method on form runs without any errors.
+
+        Test that form's clean method runs fine when there are not errors or missing fields.
+        """
+        mock_method.return_value = mock.Mock(site=self.first_site)
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid,
+                  "enterprise_customer_identity_providers-TOTAL_FORMS": 2,
+                  "enterprise_customer_identity_providers-0-default_provider": "on",
+                  "enterprise_customer_identity_providers-1-default_provider": "on",
+                  },
+        )
+
+        error_message = "Please select only one default provider."
+
+        assert not form.is_valid()
+        assert error_message in form.errors["__all__"]
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_error_if_no_default_provider(self, mock_method):
+        """
+        Test clean method on form runs without any errors.
+
+        Test that form's clean method runs fine when there are not errors or missing fields.
+        """
+        mock_method.return_value = mock.Mock(site=self.first_site)
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid,
+                  "enterprise_customer_identity_providers-TOTAL_FORMS": 2,
+                  "enterprise_customer_identity_providers-0-default_provider": "",
+                  "enterprise_customer_identity_providers-1-default_provider": "",
+                  },
+        )
+
+        error_message = "Please select one default provider."
+
+        assert not form.is_valid()
+        assert error_message in form.errors["__all__"]
+
+    @mock.patch("enterprise.admin.forms.utils.get_identity_provider")
+    def test_no_errors_for_one_default_provider(self, mock_method):
+        """
+        Test clean method on form runs without any errors.
+
+        Test that form's clean method runs fine when there are not errors or missing fields.
+        """
+        mock_method.return_value = mock.Mock(site=self.first_site)
+
+        form = EnterpriseCustomerIdentityProviderAdminForm(
+            data={"provider_id": self.provider_id, "enterprise_customer": self.enterprise_customer.uuid,
+                  "enterprise_customer_identity_providers-TOTAL_FORMS": 2,
+                  "enterprise_customer_identity_providers-0-default_provider": "on",
+                  "enterprise_customer_identity_providers-1-default_provider": "",
+                  },
         )
 
         # Validate and clean form data
