@@ -32,7 +32,7 @@ certifi==2020.12.5
     # via
     #   -r requirements/test-master.txt
     #   requests
-cffi==1.14.4
+cffi==1.14.5
     # via
     #   -r requirements/test-master.txt
     #   cryptography
@@ -151,7 +151,7 @@ edx-django-utils==3.13.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.4.0
+edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -163,7 +163,7 @@ edx-rbac==1.4.1
     # via -r requirements/test-master.txt
 edx-rest-api-client==5.3.0
     # via -r requirements/test-master.txt
-edx-sphinx-theme==1.6.1
+edx-sphinx-theme==2.0.0
     # via -r requirements/doc.in
 edx-tincan-py35==1.0.0
     # via -r requirements/test-master.txt
@@ -219,7 +219,7 @@ pillow==7.2.0
     # via -r requirements/test-master.txt
 pockets==0.9.1
     # via sphinxcontrib-napoleon
-prompt-toolkit==3.0.14
+prompt-toolkit==3.0.16
     # via
     #   -r requirements/test-master.txt
     #   click-repl
@@ -231,11 +231,11 @@ pycparser==2.20
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.9.9
+pycryptodomex==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.7.4
+pygments==2.8.0
     # via
     #   doc8
     #   readme-renderer
