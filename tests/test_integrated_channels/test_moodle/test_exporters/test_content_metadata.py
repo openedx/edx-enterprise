@@ -161,7 +161,7 @@ class TestMoodleContentMetadataExporter(unittest.TestCase, EnterpriseMockMixin):
             ]
         }
         expected_title = '{} ({})'.format(
-            content_metadata_item['title'],
+            '{} - via edX.org'.format(content_metadata_item['title']),
             ', '.join(content_metadata_item['organizations'])
         )
         exporter = MoodleContentMetadataExporter('fake-user', self.config)
