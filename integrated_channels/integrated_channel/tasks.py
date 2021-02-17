@@ -164,7 +164,7 @@ def transmit_single_subsection_learner_data(username, course_run_id, subsection_
     # Starting Export. N customer is usually 1 but multiple are supported in codebase.
     for enterprise_customer_uuid in enterprise_customer_uuids:
         for channel in channel_utils.get_integrated_channels(
-                {'channel': None, 'enterprise_customer': enterprise_customer_uuid}
+                {'channel': None, 'enterprise_customer': enterprise_customer_uuid, 'assessment_level_support': True}
         ):
             integrated_channel = INTEGRATED_CHANNEL_CHOICES[channel.channel_code()].objects.get(pk=channel.pk)
 

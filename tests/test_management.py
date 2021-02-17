@@ -47,6 +47,7 @@ from enterprise.models import (
 from integrated_channels.degreed.models import DegreedEnterpriseCustomerConfiguration
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.integrated_channel.management.commands import (
+    ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES,
     INTEGRATED_CHANNEL_CHOICES,
     IntegratedChannelCommandMixin,
 )
@@ -87,6 +88,29 @@ class TestIntegratedChannelCommandMixin(unittest.TestCase):
         """
         channel_class = INTEGRATED_CHANNEL_CHOICES[channel_code]
         assert IntegratedChannelCommandMixin.get_channel_classes(channel_code) == [channel_class]
+
+    def test_does_not_return_unsupported_channels(self):
+        """
+        If an unsupported channel is requested while retrieving supported channels, should expect an exception.
+        """
+        channel = (set(INTEGRATED_CHANNEL_CHOICES) - set(ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES)).pop()
+        with raises(CommandError) as excinfo:
+            IntegratedChannelCommandMixin.get_channel_classes(
+                channel,
+                assessment_level_support=True,
+            )
+        assert excinfo.value.args == ('Invalid integrated channel: {channel}'.format(channel=channel),)
+
+    def test_get_assessment_level_reporting_supported_channels(self):
+        """
+        Only retrieve channels that support assessment level reporting.
+        """
+        channel = set(ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES).pop()
+        channel_class = ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES[channel]
+        assert IntegratedChannelCommandMixin.get_channel_classes(
+            channel,
+            assessment_level_support=True,
+        ) == [channel_class]
 
 
 @mark.django_db

@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.36]
+---------
+
+* Properly filtering integrated channels that support assessment level reporting.
+
 [3.17.35]
 ---------
 

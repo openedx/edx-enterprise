@@ -45,6 +45,7 @@ class Command(IntegratedChannelCommandMixin, BaseCommand):
         """
         # Ensure that we were given an api_user name, and that User exists.
         api_username = options['api_user']
+        options['assessment_level_support'] = True
         try:
             User.objects.get(username=api_username)
         except User.DoesNotExist as no_user_error:
