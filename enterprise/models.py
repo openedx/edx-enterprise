@@ -732,14 +732,17 @@ class EnterpriseCustomerUserManager(models.Manager):
             return fetched_object
         raise EnterpriseCustomerUser.DoesNotExist
 
-    def get_link_by_email(self, user_email):
+    def get_link_by_email(self, user_email, enterprise_customer):
         """
-        Return link by email.
+        Return link by email and enterprise_customer
         """
         try:
             user = User.objects.get(email=user_email)
             try:
-                return self.get(user_id=user.id)
+                return self.get(
+                    user_id=user.id,
+                    enterprise_customer=enterprise_customer
+                )
             except EnterpriseCustomerUser.DoesNotExist:
                 pass
         except User.DoesNotExist:
@@ -747,7 +750,10 @@ class EnterpriseCustomerUserManager(models.Manager):
 
         try:
             # return the first element in case of admin/learner with multiple pending enterprise associations.
-            return PendingEnterpriseCustomerUser.objects.filter(user_email=user_email).first()
+            return PendingEnterpriseCustomerUser.objects.filter(
+                user_email=user_email,
+                enterprise_customer=enterprise_customer
+            ).first()
         except PendingEnterpriseCustomerUser.DoesNotExist:
             pass
 

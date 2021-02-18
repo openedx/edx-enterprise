@@ -373,21 +373,16 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
         form_field_value = manage_learners_form.cleaned_data[ManageLearnersForm.Fields.EMAIL_OR_USERNAME]
         email = email_or_username__to__email(form_field_value)
         try:
-            existing_record = validate_email_to_link(email, form_field_value, ValidationMessages.
-                                                     INVALID_EMAIL_OR_USERNAME, True)
+            validate_email_to_link(
+                email,
+                enterprise_customer,
+                form_field_value,
+                ValidationMessages.INVALID_EMAIL_OR_USERNAME,
+                raise_exception=False,
+            )
         except ValidationError as exc:
             manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc)
         else:
-            if isinstance(existing_record, PendingEnterpriseCustomerUser) and existing_record.enterprise_customer \
-                    != enterprise_customer:
-                messages.warning(
-                    request,
-                    ValidationMessages.PENDING_USER_ALREADY_LINKED.format(
-                        user_email=email,
-                        ec_name=existing_record.enterprise_customer.name
-                    )
-                )
-                return None
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]
 
@@ -502,7 +497,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
                 course_id = row.get(ManageLearnersForm.CsvColumns.COURSE_ID, None)  # optional column
                 course_details = None
                 try:
-                    already_linked = validate_email_to_link(email, ignore_existing=True)
+                    already_linked = validate_email_to_link(email, enterprise_customer, raise_exception=False)
                     if course_id:
                         course_details = validate_course_exists_for_enterprise(enterprise_customer, course_id)
                 except ValidationError as exc:

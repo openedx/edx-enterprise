@@ -1844,6 +1844,13 @@ class TestValidateEmailToLink(unittest.TestCase):
     Tests for :method:`validate_email_to_link`.
     """
 
+    def setUp(self):
+        """
+        Set up test environment.
+        """
+        super().setUp()
+        self.enterprise_customer = EnterpriseCustomerFactory()
+
     def test_validate_email_to_link_normal(self):
         email = FAKER.email()  # pylint: disable=no-member
         assert PendingEnterpriseCustomerUser.objects.filter(user_email=email).count() == 0, \
@@ -1851,7 +1858,7 @@ class TestValidateEmailToLink(unittest.TestCase):
         assert EnterpriseCustomerUser.objects.count() == 0, \
             "Precondition check - should not have EnterpriseCustomerUser"
 
-        exists = utils.validate_email_to_link(email)  # should not raise any Exceptions
+        exists = utils.validate_email_to_link(email, self.enterprise_customer)  # should not raise any Exceptions
         assert exists is False
 
     @ddt.unpack
@@ -1860,52 +1867,86 @@ class TestValidateEmailToLink(unittest.TestCase):
         ("something_again@", "something_else", utils.ValidationMessages.INVALID_EMAIL)
     )
     def test_validate_email_to_link_invalid_email(self, email, raw_email, msg_template):
-        assert EnterpriseCustomerUser.objects.get_link_by_email(email) is None, \
+        assert EnterpriseCustomerUser.objects.get_link_by_email(email, self.enterprise_customer) is None, \
             "Precondition check - should not have EnterpriseCustomerUser or PendingEnterpriseCustomerUser"
 
         expected_message = msg_template.format(argument=raw_email)
 
         with raises(ValidationError, match=expected_message):
-            utils.validate_email_to_link(email, raw_email)
+            utils.validate_email_to_link(email, self.enterprise_customer, raw_email)
 
-    @ddt.data(True, False)
-    def test_validate_email_to_link_existing_user_record(self, ignore_existing):
+    def test_validate_email_to_link_existing_user_record_different_enterprise(self):
         user = UserFactory()
         email = user.email
-        existing_record = EnterpriseCustomerUserFactory(user_id=user.id)
+        different_enterprise = EnterpriseCustomerFactory()
+        existing_record = EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=different_enterprise)
         assert not PendingEnterpriseCustomerUser.objects.exists(), \
             "Precondition check - should not have PendingEnterpriseCustomerUser"
         assert EnterpriseCustomerUser.objects.get(user_id=user.id) == existing_record, \
             "Precondition check - should have EnterpriseCustomerUser"
 
-        if ignore_existing:
-            exists = utils.validate_email_to_link(email, ignore_existing=True)
-            assert exists
-        else:
+        exists = utils.validate_email_to_link(email, self.enterprise_customer)
+        assert not exists
+
+    @ddt.data(True, False)
+    def test_validate_email_to_link_existing_user_record_same_enterprise(self, raise_exception):
+        user = UserFactory()
+        email = user.email
+        existing_record = EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=self.enterprise_customer)
+        assert not PendingEnterpriseCustomerUser.objects.exists(), \
+            "Precondition check - should not have PendingEnterpriseCustomerUser"
+        assert EnterpriseCustomerUser.objects.get(user_id=user.id) == existing_record, \
+            "Precondition check - should have EnterpriseCustomerUser"
+
+        if raise_exception:
             expected_message = utils.ValidationMessages.USER_ALREADY_REGISTERED.format(
-                email=email, ec_name=existing_record.enterprise_customer.name
+                email=email,
+                ec_name=existing_record.enterprise_customer.name,
             )
 
             with raises(ValidationError, match=expected_message):
-                utils.validate_email_to_link(email)
+                utils.validate_email_to_link(email, self.enterprise_customer)
+        else:
+            exists = utils.validate_email_to_link(email, self.enterprise_customer, raise_exception=False)
+            assert exists
 
-    @ddt.data(True, False)
-    def test_validate_email_to_link_existing_pending_record(self, ignore_existing):
+    def test_validate_email_to_link_existing_pending_record_different_enterprise(self):
         email = FAKER.email()  # pylint: disable=no-member
-        existing_record = PendingEnterpriseCustomerUserFactory(user_email=email)
+        different_enterprise = EnterpriseCustomerFactory()
+        existing_record = PendingEnterpriseCustomerUserFactory(
+            user_email=email,
+            enterprise_customer=different_enterprise,
+        )
         assert PendingEnterpriseCustomerUser.objects.get(
             user_email=email, enterprise_customer=existing_record.enterprise_customer,
         ) == existing_record, "Precondition check - should have PendingEnterpriseCustomerUser"
         assert not EnterpriseCustomerUser.objects.exists(), \
             "Precondition check - should not have EnterpriseCustomerUser"
 
-        if ignore_existing:
-            exists = utils.validate_email_to_link(email, ignore_existing=True)
-            assert exists
-        else:
+        exists = utils.validate_email_to_link(email, self.enterprise_customer)
+        assert not exists
+
+    @ddt.data(True, False)
+    def test_validate_email_to_link_existing_pending_record_same_enterprise(self, raise_exception):
+        email = FAKER.email()  # pylint: disable=no-member
+        existing_record = PendingEnterpriseCustomerUserFactory(
+            user_email=email,
+            enterprise_customer=self.enterprise_customer,
+        )
+        assert PendingEnterpriseCustomerUser.objects.get(
+            user_email=email, enterprise_customer=existing_record.enterprise_customer,
+        ) == existing_record, "Precondition check - should have PendingEnterpriseCustomerUser"
+        assert not EnterpriseCustomerUser.objects.exists(), \
+            "Precondition check - should not have EnterpriseCustomerUser"
+
+        if raise_exception:
             expected_message = utils.ValidationMessages.USER_ALREADY_REGISTERED.format(
-                email=email, ec_name=existing_record.enterprise_customer.name
+                email=email,
+                ec_name=existing_record.enterprise_customer.name,
             )
 
             with raises(ValidationError, match=expected_message):
-                exists = utils.validate_email_to_link(email)
+                utils.validate_email_to_link(email, self.enterprise_customer)
+        else:
+            exists = utils.validate_email_to_link(email, self.enterprise_customer, raise_exception=False)
+            assert exists

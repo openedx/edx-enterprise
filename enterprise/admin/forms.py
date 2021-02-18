@@ -166,17 +166,19 @@ class ManageLearnersForm(forms.Form):
             for email in split_usernames_and_emails(email):
                 validate_email_to_link(
                     email,
+                    self._enterprise_customer,
                     None,
                     ValidationMessages.INVALID_EMAIL_OR_USERNAME,
-                    ignore_existing=True
+                    raise_exception=False,
                 )
             email = email_or_username
         else:
             validate_email_to_link(
                 email,
+                self._enterprise_customer,
                 email_or_username,
                 ValidationMessages.INVALID_EMAIL_OR_USERNAME,
-                ignore_existing=True
+                raise_exception=False,
             )
 
         return email
