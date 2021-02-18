@@ -288,16 +288,6 @@ class LearnerExporter(Exporter):
         )
 
         for enterprise_enrollment in enrollment_queryset:
-
-            if enterprise_enrollment.course_id == 'course-v1:RITx+LEAD103+2T2020':
-                generate_formatted_log(
-                    "Exporting course run course-v1:RITx+LEAD103+2T2020 for ent customer user: {ent_user_id}".format(
-                        ent_user_id=enterprise_enrollment.enterprise_customer_user_id
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name,
-                )
-
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             if TransmissionAudit and skip_transmitted and \
                     is_already_transmitted(TransmissionAudit, enterprise_enrollment.id, grade):
@@ -313,16 +303,6 @@ class LearnerExporter(Exporter):
                 continue
 
             course_id = enterprise_enrollment.course_id
-
-            if course_id == 'course-v1:RITx+LEAD103+2T2020':
-                generate_formatted_log(
-                    "Course course-v1:RITx+LEAD103+2T2020 was not already transmitted for ent customer user: "
-                    "{ent_user_id}.".format(
-                        ent_user_id=enterprise_enrollment.enterprise_customer_user_id
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name,
-                )
 
             # Fetch course details from Courses API
             # pylint: disable=unsubscriptable-object

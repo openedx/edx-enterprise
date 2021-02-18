@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.34]
+---------
+
+* Removing temporary logs from integrated channels.
+
 [3.17.33]
 ---------
 
