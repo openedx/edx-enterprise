@@ -489,7 +489,6 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
 
         provider_id = self.cleaned_data.get('provider_id', None)
         enterprise_customer = self.cleaned_data.get('enterprise_customer', None)
-        default_provider = self.cleaned_data.get('default_provider', None)
 
         if provider_id is None or enterprise_customer is None:
             # field validation for either provider_id or enterprise_customer has already raised
@@ -523,21 +522,18 @@ class EnterpriseCustomerIdentityProviderAdminForm(forms.ModelForm):
                 ),
             )
 
-        # There can be only default provider in case an enterprise has multiple providers.
-        if default_provider:
-            identity_provider_total_forms = int(self.data.get('enterprise_customer_identity_providers-TOTAL_FORMS'))
-            default_provider_values = []
-            for form_num in range(identity_provider_total_forms):
-                default_provider_values.append(
-                    self.data.get('enterprise_customer_identity_providers-{}-default_provider'.format(form_num))
-                )
-            providers_marked_default = default_provider_values.count('on')
-            if providers_marked_default > 1:
-                raise ValidationError(
-                    {
-                        'Please select only one default provider.'
-                    }
-                )
+        # There should be always one default provider in case an enterprise has multiple providers.
+        identity_provider_total_forms = int(self.data.get('enterprise_customer_identity_providers-TOTAL_FORMS'))
+        default_provider_values = []
+        for form_num in range(identity_provider_total_forms):
+            default_provider_values.append(
+                self.data.get('enterprise_customer_identity_providers-{}-default_provider'.format(form_num))
+            )
+        providers_marked_default = default_provider_values.count('on')
+        if providers_marked_default > 1:
+            raise ValidationError('Please select only one default provider.')
+        if identity_provider_total_forms > 1 and providers_marked_default == 0:
+            raise ValidationError('Please select one default provider.')
 
 
 class EnterpriseCustomerReportingConfigAdminForm(forms.ModelForm):

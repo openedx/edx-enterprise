@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.32]
+---------
+
+* Adding the logic to select default provider in case an enterprise has multiple identity providers attached.
+
 [3.17.31]
 ---------
 
