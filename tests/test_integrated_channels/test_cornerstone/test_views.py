@@ -79,7 +79,7 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
             keys = {key for item in response.data for key in item.keys()}
             expected_keys = [
                 "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
-                "Thumbnail", "Duration", "Owners", "Languages", "Subjects",
+                "Thumbnail", "Duration", "Partners", "Languages", "Subjects",
             ]
             for key in expected_keys:
                 self.assertIn(key, keys)
@@ -100,13 +100,13 @@ class TestCornerstoneCoursesListView(APITest, EnterpriseMockMixin):
         keys = {key for item in response.data for key in item.keys()}
         expected_keys = [
             "ID", "URL", "IsActive", "LastModifiedUTC", "Title", "Description",
-            "Thumbnail", "Owners", "Languages", "Subjects",
+            "Thumbnail", "Partners", "Languages", "Subjects",
         ]
         for key in expected_keys:
             self.assertIn(key, keys)
 
         # required fields should not be empty
-        required_keys = ["Owners", "Languages", "Subjects"]
+        required_keys = ["Partners", "Languages", "Subjects"]
         for item in response.data:
             for key in required_keys:
                 self.assertTrue(item[key])

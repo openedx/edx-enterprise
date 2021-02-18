@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.39]
+---------
+
+* Rename `Owners` field to `Partners` for Cornerstone Integration
+
 [3.17.38]
 
 * Omitting assessment level reporting from integrated Canvas learners final grade to not have redundant reported points
