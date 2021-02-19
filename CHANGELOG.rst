@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.38]
+
+* Omitting assessment level reporting from integrated Canvas learners final grade to not have redundant reported points
+  between final grades and subsection grades.
+
 [3.17.37]
 ---------
 

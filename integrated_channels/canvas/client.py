@@ -136,7 +136,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
             learner_data['subsectionID'],
             canvas_course_id,
             learner_data['subsection_name'],
-            learner_data['points_possible']
+            learner_data['points_possible'],
+            is_assessment_grade=True
         )
 
         # The percent grade from the grades api is represented as a decimal, but we can report the percent in the
@@ -355,7 +356,14 @@ class CanvasAPIClient(IntegratedChannelApiClient):
 
         return rsps.json()
 
-    def _handle_canvas_assignment_retrieval(self, integration_id, course_id, assignment_name, points_possible=100):
+    def _handle_canvas_assignment_retrieval(
+            self,
+            integration_id,
+            course_id,
+            assignment_name,
+            points_possible=100,
+            is_assessment_grade=False
+    ):
         """
         Helper method to handle course assignment creation or retrieval. Canvas requires an assignment
         in order for a user to get a grade, so first check the course for the "final grade"
@@ -408,7 +416,8 @@ class CanvasAPIClient(IntegratedChannelApiClient):
                     'submission_types': 'none',
                     'integration_id': integration_id,
                     'published': True,
-                    'points_possible': points_possible
+                    'points_possible': points_possible,
+                    'omit_from_final_grade': is_assessment_grade,
                 }
             }
             create_assignment_resp = self.session.post(canvas_assignments_url, json=assignment_creation_data)
