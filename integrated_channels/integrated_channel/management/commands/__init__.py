@@ -29,6 +29,14 @@ INTEGRATED_CHANNEL_CHOICES = OrderedDict([
     )
 ])
 
+ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES = OrderedDict([
+    (integrated_channel_class.channel_code(), integrated_channel_class)
+    for integrated_channel_class in (
+        BlackboardEnterpriseCustomerConfiguration,
+        CanvasEnterpriseCustomerConfiguration,
+    )
+])
+
 
 class IntegratedChannelCommandMixin:
     """
@@ -65,7 +73,11 @@ class IntegratedChannelCommandMixin:
 
         See ``add_arguments`` for the accepted options.
         """
-        channel_classes = self.get_channel_classes(options.get('channel'))
+        assessment_level_support = options.get('assessment_level_support', False)
+        channel_classes = self.get_channel_classes(
+            options.get('channel'),
+            assessment_level_support=assessment_level_support,
+        )
         filter_kwargs = {
             'active': True,
             'enterprise_customer__active': True,
@@ -96,7 +108,7 @@ class IntegratedChannelCommandMixin:
             ) from no_customer_exception
 
     @staticmethod
-    def get_channel_classes(channel_code):
+    def get_channel_classes(channel_code, assessment_level_support=False):
         """
         Assemble a list of integrated channel classes to transmit to.
 
@@ -104,16 +116,21 @@ class IntegratedChannelCommandMixin:
 
         Otherwise, use all the available channel types.
         """
+        if assessment_level_support:
+            channel_choices = ASSESSMENT_LEVEL_REPORTING_INTEGRATED_CHANNEL_CHOICES
+        else:
+            channel_choices = INTEGRATED_CHANNEL_CHOICES
+
         if channel_code:
             # Channel code is case-insensitive
             channel_code = channel_code.upper()
 
-            if channel_code not in INTEGRATED_CHANNEL_CHOICES:
+            if channel_code not in channel_choices:
                 raise CommandError(_('Invalid integrated channel: {channel}').format(channel=channel_code))
 
-            channel_classes = [INTEGRATED_CHANNEL_CHOICES[channel_code]]
+            channel_classes = [channel_choices[channel_code]]
         else:
-            channel_classes = list(INTEGRATED_CHANNEL_CHOICES.values())
+            channel_classes = list(channel_choices.values())
 
         return channel_classes
 
