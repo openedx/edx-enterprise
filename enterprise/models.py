@@ -971,20 +971,20 @@ class EnterpriseCustomerUser(TimeStampedModel):
 
         if enrolled_in_course and is_upgrading:
             LOGGER.info(
-                "[Enroll] Trying to upgrade the enterprise user [{learner_id}] in course [{course_run_id}] in "
+                "[Enroll] Trying to upgrade the enterprise customer user [{ecu_id}] in course [{course_run_id}] in "
                 "[{mode}] mode".format(
-                    learner_id=self.id,
+                    ecu_id=self.id,
                     course_run_id=course_run_id,
-                    mode=mode
+                    mode=mode,
                 )
             )
         if not enrolled_in_course:
             LOGGER.info(
-                "[Enroll] Trying to enroll the enterprise user [{learner_id}] in course [{course_run_id}] in "
+                "[Enroll] Trying to enroll the enterprise customer user [{ecu_id}] in course [{course_run_id}] in "
                 "[{mode}] mode".format(
-                    learner_id=self.id,
+                    ecu_id=self.id,
                     course_run_id=course_run_id,
-                    mode=mode
+                    mode=mode,
                 )
             )
 
@@ -992,43 +992,20 @@ class EnterpriseCustomerUser(TimeStampedModel):
             if cohort and not self.enterprise_customer.enable_autocohorting:
                 raise CourseEnrollmentPermissionError("Auto-cohorting is not enabled for this enterprise")
 
-            try:
-                enterprise_course_enrollment, created = EnterpriseCourseEnrollment.objects.get_or_create(
-                    enterprise_customer_user=self,
-                    course_id=course_run_id,
-                    defaults={
-                        'source': EnterpriseEnrollmentSource.get_source(source_slug)
-                    }
-                )
-            except IntegrityError:
-                # Added to try and fix ENT-2463. This can happen if the user is already a part of the enterprise
-                # because of the following:
-                # 1. (non-enterprise) CourseEnrollment data is created
-                # 2. An async task to is signaled to run after CourseEnrollment creation
-                #    (create_enterprise_enrollment_receiver)
-                # 3. Both async task and the code in the try block run `get_or_create` on
-                # `EnterpriseCourseEnrollment`
-                # 4. A race condition happens and it tries to create the same data twice
-                # Catching will allow us to continue and ensure we can still create an order for this enrollment.
-                LOGGER.exception("IntegrityError on attempt at EnterpriseCourseEnrollment for user with id [%s] "
-                                 "and course id [%s]", self.user_id, course_run_id)
             # Directly enroll into the specified track.
-            # This should happen after we create the EnterpriseCourseEnrollment
             succeeded = True
             LOGGER.info(
-                "[Enroll] Calling LMS enrollment API for user [username] in course [course_run_id] in mode "
-                "[mode]".format(
+                "[Enroll] Calling LMS enrollment API for user {username} in course {course_run_id} in "
+                " mode {mode}".format(
                     username=self.username,
                     course_run_id=course_run_id,
-                    mode=mode
+                    mode=mode,
                 )
             )
             try:
                 enrollment_api_client.enroll_user_in_course(self.username, course_run_id, mode, cohort=cohort)
             except HttpClientError as exc:
                 succeeded = False
-                if created:
-                    enterprise_course_enrollment.delete()
                 default_message = 'No error message provided'
                 try:
                     error_message = json.loads(exc.content.decode()).get('message', default_message)
@@ -1038,7 +1015,47 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     'Error while enrolling user %(user)s: %(message)s',
                     dict(user=self.user_id, message=error_message)
                 )
+
             if succeeded:
+                LOGGER.info(
+                    "[Enroll] LMS enrollment API succeeded for user {username} in course {course_run_id} in "
+                    " mode {mode}".format(
+                        username=self.username,
+                        course_run_id=course_run_id,
+                        mode=mode,
+                    )
+                )
+                try:
+                    EnterpriseCourseEnrollment.objects.get_or_create(
+                        enterprise_customer_user=self,
+                        course_id=course_run_id,
+                        defaults={
+                            'source': EnterpriseEnrollmentSource.get_source(source_slug)
+                        }
+                    )
+                    LOGGER.info(
+                        "EnterpriseCourseEnrollment created for enterprise customer user %s and course id %s",
+                        self.id, course_run_id,
+                    )
+                except IntegrityError:
+                    # Added to try and fix ENT-2463. This can happen if the user is already a part of the enterprise
+                    # because of the following:
+                    # 1. (non-enterprise) CourseEnrollment data is created
+                    # 2. An async task to is signaled to run after CourseEnrollment creation
+                    #    (create_enterprise_enrollment_receiver)
+                    # 3. Both async task and the code in the try block run `get_or_create` on
+                    # `EnterpriseCourseEnrollment`
+                    # 4. A race condition happens and it tries to create the same data twice
+                    # Catching will allow us to continue and ensure we can still create an order for this enrollment.
+                    LOGGER.exception(
+                        "IntegrityError on attempt at EnterpriseCourseEnrollment for user with id [%s] "
+                        "and course id [%s]", self.user_id, course_run_id,
+                    )
+
+                if mode in paid_modes:
+                    # create an ecommerce order for the course enrollment
+                    self.create_order_for_enrollment(course_run_id, discount_percentage, mode, sales_force_id)
+
                 utils.track_event(self.user_id, 'edx.bi.user.enterprise.enrollment.course', {
                     'category': 'enterprise',
                     'label': course_run_id,
@@ -1048,17 +1065,6 @@ class EnterpriseCustomerUser(TimeStampedModel):
                     'cohort': cohort,
                     'is_upgrading': is_upgrading,
                 })
-                LOGGER.info(
-                    "[Enroll] LMS enrollment API succeeded for user [username] in course [course_run_id] in mode "
-                    "[mode]".format(
-                        username=self.username,
-                        course_run_id=course_run_id,
-                        mode=mode
-                    )
-                )
-                if mode in paid_modes:
-                    # create an ecommerce order for the course enrollment
-                    self.create_order_for_enrollment(course_run_id, discount_percentage, mode, sales_force_id)
         elif enrolled_in_course and course_enrollment.get('mode') in paid_modes and mode in audit_modes:
             # This enrollment is attempting to "downgrade" the user from a paid track they are already in.
             raise CourseEnrollmentDowngradeError(

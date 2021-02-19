@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.37]
+---------
+
+* Refactor to only create an ``EnterpriseCourseEnrollment`` if we successfully create/update a ``CourseEnrollment`` record
+
 [3.17.36]
 ---------
 
