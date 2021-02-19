@@ -4,6 +4,7 @@ User-facing views for the Enterprise app.
 """
 
 import datetime
+import json
 import re
 from logging import getLogger
 from uuid import UUID
@@ -11,6 +12,7 @@ from uuid import UUID
 import pytz
 import waffle
 from dateutil.parser import parse
+from edx_rest_api_client.exceptions import HttpClientError
 from ipware.ip import get_ip
 from opaque_keys import InvalidKeyError
 from opaque_keys.edx.keys import CourseKey
@@ -1698,22 +1700,47 @@ class CourseEnrollmentView(NonAtomicView):
             # For the audit course modes (audit, honor), where DSC is not
             # required, enroll the learner directly through enrollment API
             # client and redirect the learner to LMS courseware page.
-            if not enterprise_course_enrollment:
-                # Create the Enterprise backend database records for this course enrollment.
-                EnterpriseCourseEnrollment.objects.create(
-                    enterprise_customer_user=enterprise_customer_user,
-                    course_id=course_id,
-                    source=enrollment_source
-                )
-                track_enrollment('course-landing-page-enrollment', request.user.id, course_id, request.get_full_path())
-
+            succeeded = True
             client = EnrollmentApiClient()
-            client.enroll_user_in_course(
-                request.user.username,
-                course_id,
-                selected_course_mode_name,
-                cohort=cohort_name
-            )
+            try:
+                client.enroll_user_in_course(
+                    request.user.username,
+                    course_id,
+                    selected_course_mode_name,
+                    cohort=cohort_name
+                )
+            except HttpClientError as exc:
+                succeeded = False
+                default_message = 'No error message provided'
+                try:
+                    error_message = json.loads(exc.content.decode()).get('message', default_message)
+                except ValueError:
+                    error_message = default_message
+                LOGGER.exception(
+                    'Error while enrolling user %(user)s: %(message)s',
+                    dict(user=self.user_id, message=error_message)
+                )
+            if succeeded:
+                try:
+                    # Create the Enterprise backend database records for this course enrollment.
+                    __, created = EnterpriseCourseEnrollment.objects.get_or_create(
+                        enterprise_customer_user=enterprise_customer_user,
+                        course_id=course_id,
+                        defaults={
+                            'source': enrollment_source
+                        }
+                    )
+                    if created:
+                        track_enrollment(
+                            'course-landing-page-enrollment', request.user.id,
+                            course_id, request.get_full_path(),
+                        )
+                except IntegrityError:
+                    LOGGER.exception(
+                        "[ENTERPRISE ENROLLMENT PAGE] IntegrityError on attempt at EnterpriseCourseEnrollment "
+                        "for enterprise customer user with id [%s] and course id [%s]",
+                        enterprise_customer_user.user_id, course_id,
+                    )
 
             return redirect(LMS_COURSEWARE_URL.format(course_id=course_id))
 

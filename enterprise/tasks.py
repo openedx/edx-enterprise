@@ -8,6 +8,8 @@ from logging import getLogger
 from celery import shared_task
 from edx_django_utils.monitoring import set_code_owner_attribute
 
+from django.db import IntegrityError
+
 from enterprise.models import EnterpriseCourseEnrollment, EnterpriseCustomerUser, EnterpriseEnrollmentSource
 
 LOGGER = getLogger(__name__)
@@ -49,8 +51,16 @@ def create_enterprise_enrollment(course_id, enterprise_customer_user_id):
         # We have made changes elsewhere to avoid this issue, but in the mean time
         # we believe a Source of ENROLLMENT_TASK is more clear.
 
-        EnterpriseCourseEnrollment.objects.create(
-            course_id=course_id,
-            enterprise_customer_user=enterprise_customer_user,
-            source=EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK)
-        )
+        try:
+            EnterpriseCourseEnrollment.objects.get_or_create(
+                course_id=course_id,
+                enterprise_customer_user=enterprise_customer_user,
+                defaults={
+                    'source': EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_TASK),
+                }
+            )
+        except IntegrityError:
+            LOGGER.exception(
+                "IntegrityError on attempt at EnterpriseCourseEnrollment for user with id [%s] "
+                "and course id [%s]", enterprise_customer_user.user_id, course_id,
+            )
