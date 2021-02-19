@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.35]
+---------
+
+* Map "estimated_hours" to "credit_hours" in addition to "total_hours" in SAP.
+
 [3.17.34]
 ---------
 

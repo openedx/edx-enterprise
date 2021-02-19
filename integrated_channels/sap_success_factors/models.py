@@ -231,6 +231,7 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
     instructor_name = models.CharField(max_length=255, blank=True)
     grade = models.CharField(max_length=100, blank=False, null=False)
     total_hours = models.FloatField(null=True, blank=True)
+    credit_hours = models.FloatField(null=True, blank=True)
 
     # We send a UNIX timestamp to SAPSF.
     completed_timestamp = models.BigIntegerField()
@@ -293,4 +294,5 @@ class SapSuccessFactorsLearnerDataTransmissionAudit(models.Model):
             completedTimestamp=self.completed_timestamp,
             grade=self.grade,
             totalHours=self.total_hours,
+            creditHours=self.credit_hours,
         )
