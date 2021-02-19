@@ -29,7 +29,7 @@ edx-tincan-py35
 edx-rbac
 future
 jsondiff
-jsonfield2
+jsonfield
 path.py
 pillow
 python-dateutil
