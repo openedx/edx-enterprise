@@ -16,6 +16,7 @@ class CanvasConfigurationViewSetTests(APITest):
     """
     Tests for CanvasConfigurationViewSet REST endpoints
     """
+
     def setUp(self):
         super().setUp()
         self.user.is_superuser = True
@@ -68,15 +69,16 @@ class CanvasConfigurationViewSetTests(APITest):
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
         )
         url = reverse('api:v1:canvas:configuration-list')
+        # using max value for BigintegerField
         payload = {
             'active': True,
-            'canvas_account_id': 0,
+            'canvas_account_id': 9223372036854775807,
             'enterprise_customer': self.enterprise_customer.uuid,
         }
         response = self.client.post(url, payload, format='json')
         data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 201)
-        self.assertEqual(data.get('canvas_account_id'), 0)
+        self.assertEqual(data.get('canvas_account_id'), 9223372036854775807)
         self.assertEqual(data.get('enterprise_customer'), self.enterprise_customer.uuid)
 
     @mock.patch('enterprise.rules.crum.get_current_request')
