@@ -144,7 +144,7 @@ class SapSuccessFactorsLearnerManger:
 
         for sap_inactive_learner in sap_inactive_learners:
             sap_student_id = sap_inactive_learner['studentID']
-            social_auth_user = get_user_from_social_auth(providers, sap_student_id)
+            social_auth_user = get_user_from_social_auth(providers, sap_student_id, enterprise_customer)
             if not social_auth_user:
                 LOGGER.info(
                     'No social auth data found for inactive user with SAP student id [%s] of enterprise '

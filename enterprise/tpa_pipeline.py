@@ -97,15 +97,20 @@ def handle_enterprise_logistration(backend, user, **kwargs):
     enterprise_customer_user.update_session(request)
 
 
-def get_user_from_social_auth(tpa_providers, user_id):
+def get_user_from_social_auth(tpa_providers, user_id, enterprise_customer):
     """
     Find the LMS user from the LMS model `UserSocialAuth`.
 
     Arguments:
         tpa_providers (third_party_auth.provider): list of third party auth provider objects
         user_id (str): User id of user in third party LMS
+        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
 
     """
+
+    default_idp_user_social_auth = get_default_idp_user_social_auth(enterprise_customer, user_idp_id=user_id)
+    if default_idp_user_social_auth:
+        return default_idp_user_social_auth.user
     providers_backend_names = []
     social_auth_uids = []
     for idp in tpa_providers:
@@ -132,9 +137,14 @@ def get_user_social_auth(user, enterprise_customer):
 
     Arguments:
         user (User): user object
-        enterprise_customer (EnterpriseCustomer): User id of user in third party LMS
+        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
 
     """
+    # Give the priority to default IDP of given enterprise when getting social auth entry of user. If found then
+    # return it otherwise check social auth entry with other connected IDP's of enterprise.
+    default_idp_user_social_auth = get_default_idp_user_social_auth(enterprise_customer, user=user)
+    if default_idp_user_social_auth:
+        return default_idp_user_social_auth
     provider_backend_names = []
     for idp in enterprise_customer.identity_providers:
         tpa_provider = get_identity_provider(idp.provider_id)
@@ -142,6 +152,38 @@ def get_user_social_auth(user, enterprise_customer):
     user_social_auth = UserSocialAuth.objects.filter(provider__in=provider_backend_names, user=user).first()
 
     return user_social_auth
+
+
+def get_default_idp_user_social_auth(enterprise_customer, user=None, user_idp_id=None):
+    """
+    Return social auth entry of user for given enterprise default IDP.
+
+    Arguments:
+        user (User): user object
+        enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
+        user_idp_id (str): User id of user in third party LMS
+
+    """
+    default_provider = enterprise_customer.default_provider_idp
+
+    if default_provider:
+        tpa_provider = get_identity_provider(default_provider.provider_id)
+        filter_kwargs = {
+            'provider': tpa_provider.backend_name,
+            'uid__contains': tpa_provider.provider_id[5:]
+        }
+        if user_idp_id:
+            provider_slug = tpa_provider.provider_id[5:]
+            social_auth_uid = '{0}:{1}'.format(provider_slug, user_idp_id)
+            filter_kwargs['uid'] = social_auth_uid
+        else:
+            filter_kwargs['user'] = user
+
+        user_social_auth = UserSocialAuth.objects.select_related('user').filter(**filter_kwargs).first()
+
+        return user_social_auth if user_social_auth else None
+
+    return None
 
 
 def handle_redirect_after_social_auth_login(backend, user):
