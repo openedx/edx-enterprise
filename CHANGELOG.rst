@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.40]
+---------
+
+* Read CSV files using `utf-8-sig` encoding to handle Byte Order Mark
+
 [3.17.39]
 ---------
 
