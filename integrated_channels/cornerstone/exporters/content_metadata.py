@@ -29,7 +29,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     LONG_STRING_LIMIT = 10000
     DEFAULT_SUBJECT = "Industry Specific"
     DEFAULT_LANGUAGE = "English"
-    DEFAULT_OWNER = {
+    DEFAULT_PARTNER = {
         "Name": "edX: edX Inc"
     }
     DATA_TRANSFORM_MAPPING = {
@@ -41,7 +41,7 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
         'IsActive': 'is_active',
         'LastModifiedUTC': 'modified',
         'Duration': 'estimated_hours',
-        'Owners': 'organizations',
+        'Partners': 'organizations',
         'Languages': 'languages',
         'Subjects': 'subjects',
     }
@@ -50,14 +50,14 @@ class CornerstoneContentMetadataExporter(ContentMetadataExporter):  # pylint: di
     def transform_organizations(self, content_metadata_item):
         """
         Return the transformed version of the course organizations
-        by converting each organization into cornerstone course owner object.
-        or default Owner if no owner found
+        by converting each organization into cornerstone course partner object.
+        or default Partner if no partner found
         """
-        owners = []
+        partners = []
         for org in content_metadata_item.get('organizations') or []:
             org_name = org[:500] if org else ''
-            owners.append({"Name": org_name})
-        return owners or [self.DEFAULT_OWNER]
+            partners.append({"Name": org_name})
+        return partners or [self.DEFAULT_PARTNER]
 
     def transform_is_active(self, content_metadata_item):
         """

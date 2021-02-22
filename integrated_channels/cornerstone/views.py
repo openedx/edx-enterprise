@@ -52,7 +52,7 @@ class CornerstoneCoursesListView(generics.ListAPIView):
 
                 * Duration: Course duration.
 
-                * Owners: List organizations that are course owners.
+                * Partners: List of organizations that are course owners.
 
                 * Languages: List of available languages for a course.
 
