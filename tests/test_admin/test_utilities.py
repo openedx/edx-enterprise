@@ -92,6 +92,22 @@ class TestParseCSV(unittest.TestCase):
             with raises(ValidationError, match=expected_error_message):
                 list(parse_csv(stream, expected_columns={"email"}))
 
+    def test_parse_csv_with_byte_order_mark(self):
+        """
+        Verify that `parse_csv` correctly reads a csv file containing BOM.
+        """
+        header = ("email",)
+        contents = (
+            ("learner100@example.com",),
+            ("learner200@example.com",)
+        )
+
+        with MakeCsvStreamContextManager(header, contents, encoding="utf-8-sig") as stream:
+            expected_result = self._make_expected_result(header, contents)
+
+            actual_result = list(parse_csv(stream, expected_columns=set(header)))
+            assert actual_result == expected_result
+
 
 @mark.django_db
 class TestEmailConversion(unittest.TestCase):

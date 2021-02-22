@@ -44,7 +44,7 @@ def validate_csv(file_stream, expected_columns=None):
         ValidationError
     """
     try:
-        reader = unicodecsv.DictReader(file_stream, encoding="utf-8")
+        reader = unicodecsv.DictReader(file_stream, encoding="utf-8-sig")
         reader_fieldnames = reader.fieldnames
     except (unicodecsv.Error, UnicodeDecodeError) as error:
         raise ValidationError(ValidationMessages.INVALID_ENCODING) from error
@@ -71,10 +71,7 @@ def parse_csv(file_stream, expected_columns=None):
         dict: CSV line parsed into a dictionary.
     """
     reader = validate_csv(file_stream, expected_columns)
-
-    # "yield from reader" would be nicer, but we're on python2.7 yet.
-    for row in reader:
-        yield row
+    yield from reader
 
 
 def email_or_username__to__email(email_or_username):
