@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.41]
+---------
+
+* Upgrade django-ipware to version 3.0.2
+
 [3.17.40]
 ---------
 
