@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.42]
+---------
+
+* Change canvas_course_id to BigInteger: Integrated Channels
+
 [3.17.41]
 ---------
 
