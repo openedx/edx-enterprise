@@ -4,11 +4,10 @@
 #
 #    make upgrade
 #
-amqp==5.0.5
     # via
     #   -r requirements/test-master.txt
     #   kombu
-aniso8601==8.1.1
+aniso8601==9.0.0
     # via
     #   -r requirements/test-master.txt
     #   edx-tincan-py35
@@ -26,7 +25,7 @@ certifi==2020.12.5
     # via
     #   -r requirements/test-master.txt
     #   requests
-cffi==1.14.4
+cffi==1.14.5
     # via
     #   -r requirements/test-master.txt
     #   cryptography
@@ -139,7 +138,7 @@ edx-django-utils==3.13.0
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.4.0
+edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -157,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==5.8.0
+faker==6.4.1
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -171,7 +170,7 @@ idna==2.10
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==3.4.0
+importlib-metadata==3.6.0
     # via inflect
 inflect==3.0.2
     # via
@@ -204,7 +203,7 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-more-itertools==8.6.0
+more-itertools==8.7.0
     # via zipp
 newrelic==6.0.1.155
     # via
@@ -246,11 +245,11 @@ pycparser==2.20
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.9.9
+pycryptodomex==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.7.4
+pygments==2.8.0
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -354,7 +353,7 @@ stevedore==1.32.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.14.1
+tableauserverclient==0.15.0
     # via -r requirements/test-master.txt
 testfixtures==6.17.1
     # via
