@@ -575,6 +575,12 @@ class GrantDataSharingPermissions(View):
         else:
             context_data.update(self.get_default_context(enterprise_customer, platform_name))
 
+        if request.GET.get('left_sidebar_text_override') is not None:
+            # Allows sidebar text to be overridden by calling API
+            context_data.update({'text_override_available': True,
+                                 'left_sidebar_text': request.GET.get('left_sidebar_text_override')
+                                 })
+
         return context_data
 
     @staticmethod
