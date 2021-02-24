@@ -107,7 +107,8 @@ def get_user_from_social_auth(tpa_providers, user_id, enterprise_customer):
         enterprise_customer (EnterpriseCustomer): Instance of the enterprise customer.
 
     """
-
+    # Give the priority to default IDP of given enterprise when getting social auth entry of user. If found then
+    # return it otherwise check social auth entry with other connected IDP's of enterprise.
     default_idp_user_social_auth = get_default_idp_user_social_auth(enterprise_customer, user_idp_id=user_id)
     if default_idp_user_social_auth:
         return default_idp_user_social_auth.user

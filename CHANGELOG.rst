@@ -15,6 +15,10 @@ Change Log
 
 Unreleased
 ----------
+[3.17.43]
+---------
+
+* Updated the default IDP priority of enterprises for social auth.
 
 [3.17.42]
 ---------
