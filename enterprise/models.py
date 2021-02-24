@@ -404,6 +404,14 @@ class EnterpriseCustomer(TimeStampedModel):
         return self.enterprise_customer_identity_providers.count() > 1
 
     @property
+    def default_provider_idp(self):
+        """
+        Return default_provider if associated with this enterprise customer.
+        """
+        # pylint: disable=no-member
+        return self.enterprise_customer_identity_providers.filter(default_provider=True).first()
+
+    @property
     def has_single_idp(self):
         """
         Return True if there are exactly one identity provider associated with this enterprise customer.
