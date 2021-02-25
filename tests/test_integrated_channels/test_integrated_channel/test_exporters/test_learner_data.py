@@ -362,7 +362,7 @@ class TestLearnerExporter(unittest.TestCase):
         (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE, 'verified'),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -376,7 +376,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
-            mock_enrollment_api
+            mock_course_enrollment_class
     ):
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -397,10 +397,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode=course_enrollment_mode,
-        )
-
+        mock_course_enrollment_class.objects.get.return_value.mode = course_enrollment_mode
         # Collect the learner data, with time set to NOW
         with freeze_time(self.NOW):
             learner_data = list(self.exporter.export())
@@ -581,7 +578,7 @@ class TestLearnerExporter(unittest.TestCase):
 
     @ddt.data(
         (True, True, 'audit', 2),
-        (True, False, 'audit', 0),
+        (True, False, 'audit', 0), #THIS ONE
         (False, True, 'audit', 0),
         (False, False, 'audit', 0),
         (True, True, 'verified', 2),
@@ -590,7 +587,7 @@ class TestLearnerExporter(unittest.TestCase):
         (False, False, 'verified', 2),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -603,7 +600,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
-            mock_enrollment_api
+            mock_course_enrollment_class
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
@@ -629,9 +626,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock enrollment data, in particular the enrollment mode
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode=mode
-        )
+        mock_course_enrollment_class.objects.get.return_value.mode = mode
 
         # Collect the learner data
         with freeze_time(self.NOW):
