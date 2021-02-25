@@ -219,6 +219,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def enterprise_learners(self, request, pk):
         """
         Creates a set of enterprise_learners by enrolling them in the specified course.
+        If request.data contains 'email' field it's considered prioritized
+        If not, request.data is checked for 'email_csv' base64 encoded string (csv case)
+        If neither, a SerializerException is thrown
         """
         enterprise_customer = self.get_object()
         serializer = serializers.EnterpriseCustomerBulkEnrollmentsSerializer(
@@ -229,13 +232,16 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             }
         )
         if serializer.is_valid(raise_exception=True):
-            singular_email = serializer.validated_data.get('email')
-            emails = set()
             already_linked_emails = []
             duplicate_emails = []
             errors = []
+
+            singular_email = serializer.validated_data.get('email')
             if singular_email:
-                emails.add(singular_email)
+                emails = set(singular_email.splitlines())
+            else:
+                emails = set(serializer.validated_data.get('email_csv', []))
+
             try:
                 for email in emails:
                     try:

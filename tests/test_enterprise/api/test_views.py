@@ -2661,6 +2661,17 @@ class TestEnterpriseAPIViews(APITest):
             'expected_code': 202,
             'expected_body': None,
         },
+        {
+            'body': {
+                'email': 'abc@test.com\ndef@test.com'
+                'email_csv': base64.b64encode(b'email\ntest@example.com').decode(),
+                'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                'course_mode': 'audit',
+                'discount': 100,
+            },
+            'expected_code': 202,
+            'expected_body': None,
+        },
     )
     @ddt.unpack
     def test_bulk_enrollment(self, body, expected_code, expected_body):
