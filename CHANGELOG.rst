@@ -15,6 +15,12 @@ Change Log
 
 Unreleased
 ----------
+
+[3.17.44]
+---------
+
+* Replaced an LMS Enrollment API call with direct call the DB to avoid LMS rate limiting during integrated channels bulk jobs.
+
 [3.17.43]
 ---------
 
