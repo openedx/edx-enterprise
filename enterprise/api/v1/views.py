@@ -235,6 +235,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             already_linked_emails = []
             duplicate_emails = []
             errors = []
+            enrolled_count = 0
 
             singular_email = serializer.validated_data.get('email')
             if singular_email:
@@ -284,6 +285,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         discount=discount,
                         sales_force_id=serializer.validated_data.get('salesforce_id'),
                     )
+                    enrolled_count = len(succeeded + pending)
                     if serializer.validated_data.get('notify'):
                         enterprise_customer.notify_enrolled_learners(
                             catalog_api_user=request.user,
@@ -305,7 +307,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                             "sales_force_id": serializer.validated_data.get('salesforce_id'),
                         } for success in succeeded]
                         EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
-            return Response(status=HTTP_202_ACCEPTED)
+            return Response('{} learners enrolled'.format(enrolled_count), status=HTTP_202_ACCEPTED)
         return Response(status=HTTP_400_BAD_REQUEST)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
