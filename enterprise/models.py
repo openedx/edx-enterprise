@@ -1622,13 +1622,11 @@ class EnterpriseCourseEnrollment(TimeStampedModel):
 
         :return: Whether the course enrollment mode is of an audit type.
         """
-        course_enrollment_api = EnrollmentApiClient()
-        course_enrollment = course_enrollment_api.get_course_enrollment(
-            self.enterprise_customer_user.username,
-            self.course_id
-        )
+
+        course_enrollment = self.course_enrollment
+
         audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
-        return course_enrollment and course_enrollment.get('mode') in audit_modes
+        return course_enrollment and (course_enrollment.mode in audit_modes)
 
     @property
     def license(self):
