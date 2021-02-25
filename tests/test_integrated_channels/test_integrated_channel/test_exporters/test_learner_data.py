@@ -362,7 +362,7 @@ class TestLearnerExporter(unittest.TestCase):
         (False, TOMORROW, None, LearnerExporter.GRADE_INCOMPLETE, 'verified'),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -376,7 +376,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
-            mock_enrollment_api
+            mock_course_enrollment_class
     ):
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -397,10 +397,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock enrollment data
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode=course_enrollment_mode,
-        )
-
+        mock_course_enrollment_class.objects.get.return_value.mode = course_enrollment_mode
         # Collect the learner data, with time set to NOW
         with freeze_time(self.NOW):
             learner_data = list(self.exporter.export())
@@ -590,7 +587,7 @@ class TestLearnerExporter(unittest.TestCase):
         (False, False, 'verified', 2),
     )
     @ddt.unpack
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -603,7 +600,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
-            mock_enrollment_api
+            mock_course_enrollment_class
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
@@ -629,9 +626,7 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         # Mock enrollment data, in particular the enrollment mode
-        mock_enrollment_api.return_value.get_course_enrollment.return_value = dict(
-            mode=mode
-        )
+        mock_course_enrollment_class.objects.get.return_value.mode = mode
 
         # Collect the learner data
         with freeze_time(self.NOW):
@@ -647,10 +642,15 @@ class TestLearnerExporter(unittest.TestCase):
                 assert report.course_completed
                 assert report.grade == LearnerExporter.GRADE_PASSING
 
-    @mock.patch('enterprise.models.EnrollmentApiClient')
+    @mock.patch('enterprise.models.CourseEnrollment')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    def test_learner_exporter_with_skip_transmitted(self, mock_course_api, mock_grades_api, mock_enrollment_api):
+    def test_learner_exporter_with_skip_transmitted(
+        self,
+        mock_course_api,
+        mock_grades_api,
+        mock_course_enrollment_class
+    ):
         enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
@@ -671,6 +671,11 @@ class TestLearnerExporter(unittest.TestCase):
         )
 
         assert not learner_data
-        assert mock_enrollment_api.call_count == 1
+
+        # Check that LMS enrollment populated as part of model used in audit check:
+        expected_result = mock_course_enrollment_class.objects.get.return_value
+        self.assertEqual(expected_result, enterprise_course_enrollment.course_enrollment)
+        assert mock_course_enrollment_class.objects.get.call_count == 2
+
         assert mock_course_api.call_count == 0
         assert mock_grades_api.call_count == 0
