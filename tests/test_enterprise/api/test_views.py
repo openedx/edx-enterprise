@@ -2649,7 +2649,7 @@ class TestEnterpriseAPIViews(APITest):
                 'discount': 100,
             },
             'expected_code': 202,
-            'expected_body': None,
+            'expected_body': '1 learners enrolled',
         },
         {
             'body': {
@@ -2659,7 +2659,18 @@ class TestEnterpriseAPIViews(APITest):
                 'discount': 100,
             },
             'expected_code': 202,
-            'expected_body': None,
+            'expected_body': '1 learners enrolled',
+        },
+        {
+            'body': {
+                'email': 'abc@test.com\ndef@test.com',
+                'email_csv': base64.b64encode(b'email\ntest@example.com').decode(),
+                'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                'course_mode': 'audit',
+                'discount': 100,
+            },
+            'expected_code': 202,
+            'expected_body': '2 learners enrolled',
         },
     )
     @ddt.unpack
@@ -2798,6 +2809,7 @@ class TestEnterpriseReportingConfigAPIViews(APITest):
     """
     Test Reporting Configuration Views
     """
+
     def _create_user_and_enterprise_customer(self, username, password):
         """
         Helper method to create the User and Enterprise Customer used in tests.

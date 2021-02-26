@@ -219,6 +219,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     def enterprise_learners(self, request, pk):
         """
         Creates a set of enterprise_learners by enrolling them in the specified course.
+        If request.data contains 'email' field it's considered prioritized
+        If not, request.data is checked for 'email_csv' base64 encoded string (csv case)
+        If neither, a SerializerException is thrown
         """
         enterprise_customer = self.get_object()
         serializer = serializers.EnterpriseCustomerBulkEnrollmentsSerializer(
@@ -229,13 +232,16 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             }
         )
         if serializer.is_valid(raise_exception=True):
-            singular_email = serializer.validated_data.get('email')
-            emails = set()
             already_linked_emails = []
-            duplicate_emails = []
             errors = []
-            if singular_email:
-                emails.add(singular_email)
+            enrolled_count = 0
+
+            email_list = serializer.validated_data.get('email')
+            if email_list:
+                emails = set(email_list.splitlines())
+            else:
+                emails = set(serializer.validated_data.get('email_csv', []))
+
             try:
                 for email in emails:
                     try:
@@ -245,10 +251,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     else:
                         if already_linked:
                             already_linked_emails.append((email, already_linked.enterprise_customer))
-                        elif email in emails:
-                            duplicate_emails.append(email)
-                        else:
-                            emails.add(email)
             except ValidationError as exc:
                 errors.append(exc)
 
@@ -278,29 +280,47 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         discount=discount,
                         sales_force_id=serializer.validated_data.get('salesforce_id'),
                     )
+                    enrolled_count = len(succeeded + pending)
                     if serializer.validated_data.get('notify'):
                         enterprise_customer.notify_enrolled_learners(
                             catalog_api_user=request.user,
                             course_id=course_run_key,
                             users=succeeded + pending,
                         )
-
-                    paid_modes = ['verified', 'professional']
-                    if mode in paid_modes:
-                        enrollments = [{
-                            "lms_user_id": success.id,
-                            "email": success.email,
-                            "username": success.username,
-                            "course_run_key": course_run_key,
-                            "discount_percentage": float(discount),
-                            "enterprise_customer_name": enterprise_customer.name,
-                            "enterprise_customer_uuid": str(enterprise_customer.uuid),
-                            "mode": mode,
-                            "sales_force_id": serializer.validated_data.get('salesforce_id'),
-                        } for success in succeeded]
-                        EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
-            return Response(status=HTTP_202_ACCEPTED)
+                    self._create_ecom_orders_for_enrollments(
+                        course_run_key,
+                        mode,
+                        discount,
+                        serializer.validated_data.get('salesforce_id'),
+                        succeeded,
+                    )
+            return Response('{} learners enrolled'.format(enrolled_count), status=HTTP_202_ACCEPTED)
         return Response(status=HTTP_400_BAD_REQUEST)
+
+    def _create_ecom_orders_for_enrollments(self,
+                                            course_run_key,
+                                            mode,
+                                            discount,
+                                            salesforce_id,
+                                            succeeded_enrollments):
+        """
+        Create ecommerce enrollment order for provided enrollments
+        """
+        paid_modes = ['verified', 'professional']
+        enterprise_customer = self.get_object()
+        if mode in paid_modes:
+            enrollments = [{
+                "lms_user_id": success.id,
+                "email": success.email,
+                "username": success.username,
+                "course_run_key": course_run_key,
+                "discount_percentage": float(discount),
+                "enterprise_customer_name": enterprise_customer.name,
+                "enterprise_customer_uuid": str(enterprise_customer.uuid),
+                "mode": mode,
+                "sales_force_id": salesforce_id,
+            } for success in succeeded_enrollments]
+            EcommerceApiClient(get_ecommerce_worker_user()).create_manual_enrollment_orders(enrollments)
 
     @method_decorator(require_at_least_one_query_parameter('permissions'))
     @action(permission_classes=[permissions.IsAuthenticated, IsInEnterpriseGroup], detail=False)
