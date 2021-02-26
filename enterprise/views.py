@@ -577,8 +577,8 @@ class GrantDataSharingPermissions(View):
 
         if request.GET.get('left_sidebar_text_override') is not None:
             # Allows sidebar text to be overridden by calling API
-            context_data.update({'text_override_available': True,
-                                 'left_sidebar_text': request.GET.get('left_sidebar_text_override')
+            context_data.update({'workflow_text_override_available': True,
+                                 'workflow_left_sidebar_text': request.GET.get('left_sidebar_text_override')
                                  })
 
         return context_data
