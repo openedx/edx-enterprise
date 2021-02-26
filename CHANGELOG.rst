@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.45]
+---------
+
+* Fix bulk enrollment endpoint to process email_csv and email as well
+
 [3.17.44]
 ---------
 
