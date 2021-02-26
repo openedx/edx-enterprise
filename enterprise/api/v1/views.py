@@ -287,7 +287,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                             course_id=course_run_key,
                             users=succeeded + pending,
                         )
-                    self._create_ecommerce_orders_for_successful_enrollments(
+                    self._create_ecom_orders_for_enrollments(
                         course_run_key,
                         mode,
                         discount,
@@ -297,7 +297,15 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             return Response('{} learners enrolled'.format(enrolled_count), status=HTTP_202_ACCEPTED)
         return Response(status=HTTP_400_BAD_REQUEST)
 
-    def _create_ecommerce_orders_for_successful_enrollments(self, course_run_key, mode, discount, salesforce_id, succeeded_enrollments):
+    def _create_ecom_orders_for_enrollments(self,
+                                            course_run_key,
+                                            mode,
+                                            discount,
+                                            salesforce_id,
+                                            succeeded_enrollments):
+        """
+        Create ecommerce enrollment order for provided enrollments
+        """
         paid_modes = ['verified', 'professional']
         enterprise_customer = self.get_object()
         if mode in paid_modes:
