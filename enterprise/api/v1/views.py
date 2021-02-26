@@ -237,9 +237,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             errors = []
             enrolled_count = 0
 
-            singular_email = serializer.validated_data.get('email')
-            if singular_email:
-                emails = set(singular_email.splitlines())
+            email_list = serializer.validated_data.get('email')
+            if email_list:
+                emails = set(email_list.splitlines())
             else:
                 emails = set(serializer.validated_data.get('email_csv', []))
 
