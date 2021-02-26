@@ -233,7 +233,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         )
         if serializer.is_valid(raise_exception=True):
             already_linked_emails = []
-            duplicate_emails = []
             errors = []
             enrolled_count = 0
 
@@ -252,8 +251,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     else:
                         if already_linked:
                             already_linked_emails.append((email, already_linked.enterprise_customer))
-                        elif email in emails:
-                            duplicate_emails.append(email)
             except ValidationError as exc:
                 errors.append(exc)
 
