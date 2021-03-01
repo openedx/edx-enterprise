@@ -38,14 +38,11 @@ class DegreedConfigurationViewSetTests(APITest):
     def test_get(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
-        url = reverse(
-            'api:v1:degreed:configuration-detail',
-            args=[self.degreed_config.id]
-        ) + '?enterprise_customer=' + ENTERPRISE_ID
+        url = reverse('api:v1:degreed:configuration-detail', args=[self.degreed_config.id])
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8'))
-        self.assertEqual(response.status_code, 200)
         self.assertEqual(data.get('degreed_company_id'), self.degreed_config.degreed_company_id)
         self.assertEqual(data.get('degreed_base_url'), self.degreed_config.degreed_base_url)
         self.assertEqual(data.get('degreed_user_id'), self.degreed_config.degreed_user_id)
@@ -58,6 +55,7 @@ class DegreedConfigurationViewSetTests(APITest):
     def test_update(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:degreed:configuration-detail', args=[self.degreed_config.id])
         payload = {
@@ -83,6 +81,7 @@ class DegreedConfigurationViewSetTests(APITest):
     def test_patch(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:degreed:configuration-detail', args=[self.degreed_config.id])
         payload = {
@@ -98,6 +97,7 @@ class DegreedConfigurationViewSetTests(APITest):
     def test_delete(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:degreed:configuration-detail', args=[self.degreed_config.id])
         response = self.client.delete(url)

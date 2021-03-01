@@ -35,6 +35,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     def test_list(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-list')
         response = self.client.get(url)
@@ -53,6 +54,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     def test_get(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
         response = self.client.get(url)
@@ -72,6 +74,7 @@ class BlackboardConfigurationViewSetTests(APITest):
         self.enterprise_customer_conf.delete()
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-list')
         payload = {
@@ -92,6 +95,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     def test_update(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
         payload = {
@@ -111,6 +115,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     def test_partial_update(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
         payload = {
@@ -123,6 +128,7 @@ class BlackboardConfigurationViewSetTests(APITest):
     def test_destroy(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:blackboard:configuration-detail', args=[self.enterprise_customer_conf.id])
         response = self.client.delete(url)
