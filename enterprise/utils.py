@@ -1390,6 +1390,7 @@ def enroll_users_in_course(
         enrollment_reason=None,
         discount=0.0,
         sales_force_id=None,
+        license_uuids={},
 ):
     """
     Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -1403,6 +1404,8 @@ def enroll_users_in_course(
         enrollment_reason (str): A reason for enrollment.
         discount (Decimal): Percentage discount for enrollment.
         sales_force_id (str): Salesforce opportunity id.
+        license_uuids (dict): dictionary containing a mapping of users' emails to license uuid's used to enroll.
+            Defaults to an empty dict if no subscriptions were used to enroll learners.
 
     Returns:
         successes: A list of users who were successfully enrolled in the course
@@ -1441,6 +1444,7 @@ def enroll_users_in_course(
             ),
             discount=discount,
             sales_force_id=sales_force_id,
+            license_uuid=license_uuids.get(email)
         )
         pending.append(pending_user)
         if enrollment_requester and enrollment_reason:

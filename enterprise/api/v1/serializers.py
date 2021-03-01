@@ -958,7 +958,9 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
     """
     Serializes an email field and for bulk enrollment requests.
     """
-    emails = serializers.CharField(required=False)
+    emails = serializers.DictField(
+        child=serializers.CharField(required=False, source='uuid'),
+    )
     courses = serializers.DictField(
         child=serializers.ChoiceField(
             choices=[

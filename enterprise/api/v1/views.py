@@ -231,7 +231,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if serializer.is_valid(raise_exception=True):
             errors = []
             enrolled_count = 0
-            emails = set(serializer.validated_data.get('emails').splitlines())
+            emails = set(serializer.validated_data.get('emails').keys())
             try:
                 for email in emails:
                     try:
@@ -249,8 +249,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
             course_run_keys = serializer.validated_data.get('courses')
 
-            for course_run_key, mode in course_run_keys:
-                if list(emails):
+            if list(emails):
+                for course_run_key, mode in course_run_keys:
                     discount = serializer.validated_data.get('discount', 0.0)
                     enrollment_reason = serializer.validated_data.get('reason')
                     succeeded, pending, _ = enroll_users_in_course(
@@ -262,6 +262,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         enrollment_reason=enrollment_reason,
                         discount=discount,
                         sales_force_id=serializer.validated_data.get('salesforce_id'),
+                        license_uuids=serializer.validated_data.get('emails')
                     )
                     enrolled_count = len(succeeded + pending)
                     if serializer.validated_data.get('notify'):
