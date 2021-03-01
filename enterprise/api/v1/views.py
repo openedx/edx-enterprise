@@ -216,6 +216,73 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
     # pylint: disable=invalid-name,unused-argument
+    def bulk_enroll_learners_in_courses(self, request, pk):
+        """
+        Creates a set of enterprise_learners by enrolling them in the specified course.
+        """
+        enterprise_customer = self.get_object()
+        serializer = serializers.EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(
+            data=request.data,
+            context={
+                'enterprise_customer': enterprise_customer,
+                'request_user': request.user,
+            }
+        )
+        if serializer.is_valid(raise_exception=True):
+            errors = []
+            enrolled_count = 0
+            emails = set(serializer.validated_data.get('emails').splitlines())
+            try:
+                for email in emails:
+                    try:
+                        validate_email_to_link(email, enterprise_customer, raise_exception=False)
+                    except ValidationError as error:
+                        errors.append(error)
+            except ValidationError as exc:
+                errors.append(exc)
+
+            if errors:
+                return Response(errors, status=HTTP_400_BAD_REQUEST)
+
+            for email in emails:
+                models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+
+            course_run_keys = serializer.validated_data.get('courses')
+
+            for course_run_key, mode in course_run_keys:
+                if list(emails):
+                    discount = serializer.validated_data.get('discount', 0.0)
+                    enrollment_reason = serializer.validated_data.get('reason')
+                    succeeded, pending, _ = enroll_users_in_course(
+                        enterprise_customer=enterprise_customer,
+                        course_id=course_run_key,
+                        course_mode=mode,
+                        emails=emails,
+                        enrollment_requester=request.user,
+                        enrollment_reason=enrollment_reason,
+                        discount=discount,
+                        sales_force_id=serializer.validated_data.get('salesforce_id'),
+                    )
+                    enrolled_count = len(succeeded + pending)
+                    if serializer.validated_data.get('notify'):
+                        enterprise_customer.notify_enrolled_learners(
+                            catalog_api_user=request.user,
+                            course_id=course_run_key,
+                            users=succeeded + pending,
+                        )
+                    self._create_ecom_orders_for_enrollments(
+                        course_run_key,
+                        mode,
+                        discount,
+                        serializer.validated_data.get('salesforce_id'),
+                        succeeded,
+                    )
+            return Response('{} learners enrolled'.format(enrolled_count), status=HTTP_202_ACCEPTED)
+        return Response(status=HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
+    # pylint: disable=invalid-name,unused-argument
     def enterprise_learners(self, request, pk):
         """
         Creates a set of enterprise_learners by enrolling them in the specified course.
