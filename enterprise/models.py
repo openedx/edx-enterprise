@@ -9,7 +9,7 @@ import json
 import os
 from decimal import Decimal
 from logging import getLogger
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import six
 from django_countries.fields import CountryField
@@ -611,11 +611,16 @@ class EnterpriseCustomer(TimeStampedModel):
             enterprise_customer=self,
             user_email=email
         )
+        try:
+            license_uuid = UUID(kwargs.get('license_uuid'))
+        except TypeError:
+            license_uuid = None
+
         for course_id in course_ids:
             PendingEnrollment.objects.update_or_create(
                 user=pending_ecu,
                 course_id=course_id,
-                license_uuid=kwargs.get('license_uuid', None),
+                license_uuid=license_uuid,
                 defaults={
                     'course_mode': course_mode,
                     'cohort_name': kwargs.get('cohort', None),
@@ -1246,8 +1251,8 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                         sales_force_id=enrollment.sales_force_id,
                     )
 
-                    # If the pending enrollment was using a license, generate a license enrollment alongside the
-                    # enterprise enrollment.
+                    # If the pending enrollment was using a subscription license, generate a license enrollment
+                    # alongside the enterprise enrollment.
                     if enrollment.license_uuid:
                         source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
                         enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(

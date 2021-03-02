@@ -472,6 +472,13 @@ def enterprise_course_enrollment_model():
     return apps.get_model('enterprise', 'EnterpriseCourseEnrollment')  # pylint: disable=invalid-name
 
 
+def licensed_enterprise_course_enrollment_model():  # pylint: disable=invalid-name
+    """
+    returns the ``LicensedEnterpriseCourseEnrollment`` class.
+    """
+    return apps.get_model('enterprise', 'LicensedEnterpriseCourseEnrollment')  # pylint: disable=invalid-name
+
+
 def get_enterprise_customer(uuid):
     """
     Get the ``EnterpriseCustomer`` instance associated with ``uuid``.
@@ -1381,6 +1388,42 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     return succeeded
 
 
+def get_create_ent_enrollment(
+    course_id,
+    enterprise_customer_user,
+    license_uuid=None,
+):
+    """
+    Get or Create the Enterprise Course Enrollment.
+
+    If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
+    """
+    source = enterprise_enrollment_source_model().get_source(enterprise_enrollment_source_model().ENROLLMENT_URL)
+    # Create the Enterprise backend database records for this course
+    # enrollment
+    enterprise_course_enrollment, created = enterprise_course_enrollment_model.objects.get_or_create(
+        enterprise_customer_user=enterprise_customer_user,
+        course_id=course_id,
+        defaults={
+            'source': source
+        }
+    )
+    if license_uuid and not enterprise_course_enrollment.license:
+        LOGGER.info(
+            'LicensedEnterpriseCourseEnrollment being created with following info: '
+            'License UUID: {license_uuid}, '
+            'EnterpriseCourseEnrollment: {enterprise_course_enrollment_uuid}'.format(
+                license_uuid=license_uuid,
+                enterprise_course_enrollment_uuid=enterprise_course_enrollment,
+            )
+        )
+        licensed_enterprise_course_enrollment_model().objects.create(
+            license_uuid=license_uuid,
+            enterprise_course_enrollment=enterprise_course_enrollment,
+        )
+    return enterprise_course_enrollment, created
+
+
 def enroll_users_in_course(
         enterprise_customer,
         course_id,
@@ -1390,7 +1433,7 @@ def enroll_users_in_course(
         enrollment_reason=None,
         discount=0.0,
         sales_force_id=None,
-        license_uuids={},
+        license_uuids=None,
 ):
     """
     Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -1431,10 +1474,16 @@ def enroll_users_in_course(
                     enrollment_reason,
                     course_id,
                 )
+
+            if license_uuids:
+                # create licensed enrollment if a subscription license is supplied
+                enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
+                get_create_ent_enrollment(course_id, enterprise_customer_user, license_uuids.get(user).get(course_id))
         else:
             failures.append(user)
 
     for email in unregistered_emails:
+        user_license = license_uuids.get(email, {}).get(course_id) if license_uuids else None
         pending_user = enterprise_customer.enroll_user_pending_registration(
             email,
             course_mode,
@@ -1444,7 +1493,7 @@ def enroll_users_in_course(
             ),
             discount=discount,
             sales_force_id=sales_force_id,
-            license_uuid=license_uuids.get(email)
+            license_uuid=user_license
         )
         pending.append(pending_user)
         if enrollment_requester and enrollment_reason:

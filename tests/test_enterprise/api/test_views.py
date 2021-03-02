@@ -98,6 +98,10 @@ ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
 )
 ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT = reverse('enterprise-customer-course-enrollments', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_ENTERPRISE_LEARNERS_ENDPOINT = reverse('enterprise-customer-enterprise-learners', (FAKE_UUIDS[0],))
+ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT = reverse(
+    'enterprise-customer-enroll-learners-in-courses',
+    (FAKE_UUIDS[0],)
+)
 ENTERPRISE_CUSTOMER_REPORTING_ENDPOINT = reverse('enterprise-customer-reporting-list')
 ENTERPRISE_LEARNER_LIST_ENDPOINT = reverse('enterprise-learner-list')
 ENTERPRISE_CUSTOMER_WITH_ACCESS_TO_ENDPOINT = reverse('enterprise-customer-with-access-to')
@@ -2688,6 +2692,93 @@ class TestEnterpriseAPIViews(APITest):
 
         response = self.client.post(
             settings.TEST_SERVER + ENTERPRISE_CUSTOMER_ENTERPRISE_LEARNERS_ENDPOINT,
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, expected_code)
+        if expected_body:
+            response_content_string = json.dumps(self.load_json(response.content))
+            self.assertIn(expected_body, response_content_string)
+
+    @ddt.data(
+        # Validation failure cases
+        {
+            'body': {},
+            'expected_code': 400,
+            'expected_body': 'Must include the \\"emails\\" parameter in request.'
+        },
+        {
+            'body': {
+                'license_info': {
+                    'abc@test.com': {'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'}
+                }
+            },
+            'expected_code': 400,
+            'expected_body': 'Must include the \\"courses\\" parameter in request.'
+        },
+        # Single learner, single course success
+        {
+            'body': {
+                'license_info': {
+                    'newuser@example.com': {'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'}
+                },
+                'courses': {'course-v1:edX+DemoX+Demo_Course': 'audit'},
+                'discount': 100,
+            },
+            'expected_code': 202,
+            'expected_body': '1 learners enrolled',
+        },
+        # Multi-learner, single course success
+        {
+            'body': {
+                'license_info': {
+                    'newuser@example.com': {'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'},
+                    'abc@test.com': {'course-v1:edX+DemoX+Demo_Course': '5a88bdcade7c4ecb838f8111b68e18ac'}
+                },
+                'courses': {'course-v1:edX+DemoX+Demo_Course': 'audit'},
+                'discount': 100,
+            },
+            'expected_code': 202,
+            'expected_body': '2 learners enrolled',
+        },
+        # Multi-learner, multi-course success
+        {
+            'body': {
+                'license_info': {
+                    'newuser@example.com': {
+                        'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae',
+                        'course-v2:edX+SuperDemoX+Super_Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'
+                    },
+                    'abc@test.com': {
+                        'course-v1:edX+DemoX+Demo_Course': '5a88bdcade7c4ecb838f8111b68e18ac',
+                        'course-v2:edX+SuperDemoX+Super_Demo_Course': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    }
+                },
+                'courses': {
+                    'course-v1:edX+DemoX+Demo_Course': 'audit',
+                    'course-v2:edX+SuperDemoX+Super_Demo_Course': 'audit'
+                },
+                'discount': 100,
+            },
+            'expected_code': 202,
+            'expected_body': '2 learners enrolled in 2 courses',
+        },
+    )
+    @ddt.unpack
+    def test_bulk_enrollment_in_bulk_courses(self, body, expected_code, expected_body):
+        """
+        Tests the bulk enrollment endpoint at enroll_learners_in_courses
+        """
+        factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
             data=json.dumps(body),
             content_type='application/json',
         )

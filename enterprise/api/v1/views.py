@@ -216,9 +216,31 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
     # pylint: disable=invalid-name,unused-argument
-    def bulk_enroll_learners_in_courses(self, request, pk):
+    def enroll_learners_in_courses(self, request, pk):
         """
-        Creates a set of enterprise_learners by enrolling them in the specified course.
+        Creates a set of licensed enterprise_learners by bulk enrolling them in the specified course.
+
+        Note: This endpoint isn't transactional in that if an enrollment fails, there can potentially be a scenario
+        with a subset of users enrolled. Requested learners' eligibility to enroll are expected to be pre-vetted.
+
+        Expected params:
+            - license_info (Dict): user emails as keys and the license UUIDs associated with each of the courses the
+            user's being enrolled in as values. Note, each user is expected to have exactly one license per course
+            listed in the 'courses' parameter.
+            Example:
+                license_info: {
+                    'newuser@test.com': {
+                        'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'
+                    },
+                    ...
+                }
+
+            - courses (Dict): course run keys as keys and the course mode as the value.
+            Example:
+                'courses': {
+                    'course-v1:edX+DemoX+Demo_Course': 'verified',
+                    ...
+                }
         """
         enterprise_customer = self.get_object()
         serializer = serializers.EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(
@@ -231,15 +253,27 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if serializer.is_valid(raise_exception=True):
             errors = []
             enrolled_count = 0
-            emails = set(serializer.validated_data.get('emails').keys())
+            license_uuids = serializer.validated_data.get('license_info')
+            course_run_keys = serializer.validated_data.get('courses')
+            users_missing_licenses = []
+
+            # Get a list of user emails from the license info.
+            emails = set(license_uuids.keys())
             try:
                 for email in emails:
                     try:
                         validate_email_to_link(email, enterprise_customer, raise_exception=False)
+                        if len(license_uuids[email]) != len(course_run_keys):
+                            users_missing_licenses.append(email)
                     except ValidationError as error:
                         errors.append(error)
             except ValidationError as exc:
                 errors.append(exc)
+
+            if users_missing_licenses:
+                msg = 'All requested users must have a valid license for each of the courses requested to be ' \
+                      'enrolled in. Users missing licenses: {}'.format(users_missing_licenses)
+                return Response(msg, status=HTTP_400_BAD_REQUEST)
 
             if errors:
                 return Response(errors, status=HTTP_400_BAD_REQUEST)
@@ -247,10 +281,8 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             for email in emails:
                 models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
 
-            course_run_keys = serializer.validated_data.get('courses')
-
             if list(emails):
-                for course_run_key, mode in course_run_keys:
+                for course_run_key, mode in course_run_keys.items():
                     discount = serializer.validated_data.get('discount', 0.0)
                     enrollment_reason = serializer.validated_data.get('reason')
                     succeeded, pending, _ = enroll_users_in_course(
@@ -262,7 +294,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         enrollment_reason=enrollment_reason,
                         discount=discount,
                         sales_force_id=serializer.validated_data.get('salesforce_id'),
-                        license_uuids=serializer.validated_data.get('emails')
+                        license_uuids=license_uuids
                     )
                     enrolled_count = len(succeeded + pending)
                     if serializer.validated_data.get('notify'):
@@ -278,7 +310,11 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                         serializer.validated_data.get('salesforce_id'),
                         succeeded,
                     )
-            return Response('{} learners enrolled'.format(enrolled_count), status=HTTP_202_ACCEPTED)
+            return Response(
+                '{} learners enrolled in {} courses'.format(
+                    enrolled_count, len(course_run_keys)
+                ), status=HTTP_202_ACCEPTED
+            )
         return Response(status=HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])

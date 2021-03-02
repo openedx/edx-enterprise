@@ -953,13 +953,17 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
             raise serializers.ValidationError('Must include either email or email_csv in request.')
         return data
 
+
 # pylint: disable=abstract-method
 class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serializer):
     """
     Serializes an email field and for bulk enrollment requests.
     """
-    emails = serializers.DictField(
-        child=serializers.CharField(required=False, source='uuid'),
+    license_info = serializers.DictField(
+        child=serializers.DictField(
+            child=serializers.CharField(required=False),
+        ),
+        required=False,
     )
     courses = serializers.DictField(
         child=serializers.ChoiceField(
@@ -972,7 +976,8 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
                 ("honor", _("Honor")),
             ],
             required=False,
-        )
+        ),
+        required=False,
     )
     reason = serializers.CharField(required=False)
     salesforce_id = serializers.CharField(required=False)
@@ -984,7 +989,7 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
 
     def validate(self, data):  # pylint: disable=arguments-differ
         if not data.get('emails'):
-            raise serializers.ValidationError('Must include the email parameter in request.')
+            raise serializers.ValidationError('Must include the "emails" parameter in request.')
         if not data.get('courses'):
-            raise serializers.ValidationError('Must include the course parameter in request.')
+            raise serializers.ValidationError('Must include the "courses" parameter in request.')
         return data
