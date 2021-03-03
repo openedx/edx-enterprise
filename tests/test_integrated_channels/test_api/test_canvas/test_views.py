@@ -36,6 +36,7 @@ class CanvasConfigurationViewSetTests(APITest):
     def test_list(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-list')
         response = self.client.get(url)
@@ -51,6 +52,7 @@ class CanvasConfigurationViewSetTests(APITest):
     def test_get(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-detail', args=[self.enterprise_customer_conf.id])
         response = self.client.get(url)
@@ -67,6 +69,7 @@ class CanvasConfigurationViewSetTests(APITest):
 
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-list')
         # using max value for BigintegerField
@@ -85,6 +88,7 @@ class CanvasConfigurationViewSetTests(APITest):
     def test_update(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-detail', args=[self.enterprise_customer_conf.id])
         payload = {
@@ -100,6 +104,7 @@ class CanvasConfigurationViewSetTests(APITest):
     def test_partial_update(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-detail', args=[self.enterprise_customer_conf.id])
         payload = {
@@ -112,6 +117,7 @@ class CanvasConfigurationViewSetTests(APITest):
     def test_destroy(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:canvas:configuration-detail', args=[self.enterprise_customer_conf.id])
         response = self.client.delete(url)

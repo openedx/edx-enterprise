@@ -38,11 +38,9 @@ class CornerstoneConfigurationViewSetTests(APITest):
     def test_get(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
-        url = reverse(
-            'api:v1:cornerstone:configuration-detail',
-            args=[self.cornerstone_config.id]
-        ) + '?enterprise_customer=' + ENTERPRISE_ID
+        url = reverse('api:v1:cornerstone:configuration-detail', args=[self.cornerstone_config.id])
         response = self.client.get(url)
         data = json.loads(response.content.decode('utf-8'))
         self.assertEqual(response.status_code, 200)
@@ -54,6 +52,7 @@ class CornerstoneConfigurationViewSetTests(APITest):
     def test_update(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:cornerstone:configuration-detail', args=[self.cornerstone_config.id])
         payload = {
@@ -69,6 +68,7 @@ class CornerstoneConfigurationViewSetTests(APITest):
     def test_patch(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:cornerstone:configuration-detail', args=[self.cornerstone_config.id])
         payload = {
@@ -84,6 +84,7 @@ class CornerstoneConfigurationViewSetTests(APITest):
     def test_delete(self, mock_current_request):
         mock_current_request.return_value = self.get_request_with_jwt_cookie(
             system_wide_role=ENTERPRISE_ADMIN_ROLE,
+            context=self.enterprise_customer.uuid,
         )
         url = reverse('api:v1:cornerstone:configuration-detail', args=[self.cornerstone_config.id])
         response = self.client.delete(url)
