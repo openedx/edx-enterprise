@@ -96,8 +96,6 @@ try:
 except ImportError:
     LANGUAGE_KEY = 'pref-lang'
 
-MANUAL_ENROLLMENT_ROLE = "Learner"
-
 
 class ValidationMessages:
     """
@@ -1429,7 +1427,6 @@ def enroll_users_in_course(
                     UNENROLLED_TO_ENROLLED,
                     enrollment_reason,
                     course_id,
-                    role=MANUAL_ENROLLMENT_ROLE,
                 )
         else:
             failures.append(user)
@@ -1453,7 +1450,6 @@ def enroll_users_in_course(
                 UNENROLLED_TO_ALLOWEDTOENROLL,
                 enrollment_reason,
                 course_id,
-                role=MANUAL_ENROLLMENT_ROLE,
             )
 
     return successes, pending, failures
