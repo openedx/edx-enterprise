@@ -349,7 +349,7 @@ class EnterpriseCustomer(TimeStampedModel):
         null=True,
         blank=True,
         help_text=_(
-            "Specifies the sender alias which will be used in enterprise customer Assign/Remind/Revoke emails."
+            "Specifies enterprise customized sender alias."
         )
     )
 

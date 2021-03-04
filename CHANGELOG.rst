@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.17.46]
+---------
+
+* Made help text of sender_alias more generic.
+
 [3.17.45]
 ---------
 
