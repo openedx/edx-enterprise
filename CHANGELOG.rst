@@ -16,6 +16,12 @@ Change Log
 Unreleased
 ----------
 
+[3.17.47]
+---------
+
+* Bug fix to remove a deprecated parameter that was causing bulk enrollments to fail.
+
+
 [3.17.46]
 ---------
 
