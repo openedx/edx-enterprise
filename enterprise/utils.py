@@ -26,6 +26,7 @@ from django.contrib import auth
 from django.core import mail
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import validate_email
+from django.db import transaction, utils
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
@@ -1424,6 +1425,79 @@ def get_create_ent_enrollment(
     return enterprise_course_enrollment, created
 
 
+def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, discount=100):
+    """
+    Takes a list of licensed learner data and enrolls each learner in the requested courses.
+
+    Args:
+        - enterprise_customer: The EnterpriseCustomer (object) which is sponsoring the enrollment
+        - licensed_users_info: (list) An array of dictionaries, each containing information necessary to create a licensed
+            enterprise enrollment for a specific learner in a specified course run.
+            Example:
+                licensed_users_info: [
+                    {
+                        'email': 'newuser@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+                    }
+                ]
+        - discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
+            default to 100
+    """
+    results = {
+        'successes': [],
+        'pending': [],
+        'failures': [],
+    }
+    try:
+        with transaction.atomic():
+            for licensed_user_info in licensed_users_info:
+                user = User.objects.filter(email=licensed_user_info['email']).first()
+
+                if user:
+                    succeeded = enroll_user(
+                        enterprise_customer,
+                        licensed_user_info['email'],
+                        licensed_user_info['course_mode'],
+                        licensed_user_info['course_run_key']
+                    )
+                    if succeeded:
+                        results['successes'].append(
+                            {'user': licensed_user_info['email'], 'course': licensed_user_info['course_run_key']}
+                        )
+
+                        enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
+                        get_create_ent_enrollment(
+                            licensed_user_info.get('course_run_key'),
+                            enterprise_customer_user,
+                            license_uuid=licensed_user_info.get('license_uuid')
+                        )
+                    else:
+                        results['failures'].append(
+                            {'user': licensed_user_info['email'], 'course': licensed_user_info['course_run_key']}
+                        )
+                else:
+                    pending_user = enterprise_customer.enroll_user_pending_registration(
+                        licensed_user_info['email'],
+                        licensed_user_info['course_mode'],
+                        licensed_user_info['course_run_key'],
+                        enrollment_source=enterprise_enrollment_source_model().get_source(
+                            enterprise_enrollment_source_model().MANUAL
+                        ),
+                        discount=discount,
+                        license_uuid=licensed_user_info['license_uuid']
+                    )
+                    results['pending'].append(
+                        {'user': pending_user, 'course': licensed_user_info['course_run_key']}
+                    )
+            if results['failures']:
+                raise utils.IntegrityError
+    except utils.IntegrityError:
+        return results
+
+    return results
+
 def enroll_users_in_course(
         enterprise_customer,
         course_id,
@@ -1433,7 +1507,6 @@ def enroll_users_in_course(
         enrollment_reason=None,
         discount=0.0,
         sales_force_id=None,
-        license_uuids=None,
 ):
     """
     Enroll existing users in a course, and create a pending enrollment for nonexisting users.
@@ -1447,8 +1520,6 @@ def enroll_users_in_course(
         enrollment_reason (str): A reason for enrollment.
         discount (Decimal): Percentage discount for enrollment.
         sales_force_id (str): Salesforce opportunity id.
-        license_uuids (dict): dictionary containing a mapping of users' emails to license uuid's used to enroll.
-            Defaults to an empty dict if no subscriptions were used to enroll learners.
 
     Returns:
         successes: A list of users who were successfully enrolled in the course
@@ -1474,16 +1545,10 @@ def enroll_users_in_course(
                     enrollment_reason,
                     course_id,
                 )
-
-            if license_uuids:
-                # create licensed enrollment if a subscription license is supplied
-                enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
-                get_create_ent_enrollment(course_id, enterprise_customer_user, license_uuids.get(user).get(course_id))
         else:
             failures.append(user)
 
     for email in unregistered_emails:
-        user_license = license_uuids.get(email, {}).get(course_id) if license_uuids else None
         pending_user = enterprise_customer.enroll_user_pending_registration(
             email,
             course_mode,
@@ -1493,7 +1558,6 @@ def enroll_users_in_course(
             ),
             discount=discount,
             sales_force_id=sales_force_id,
-            license_uuid=user_license
         )
         pending.append(pending_user)
         if enrollment_requester and enrollment_reason:

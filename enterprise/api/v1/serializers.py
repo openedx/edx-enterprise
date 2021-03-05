@@ -957,25 +957,11 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
 # pylint: disable=abstract-method
 class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serializer):
     """
-    Serializes an email field and for bulk enrollment requests.
+    Serializes a licenses info field for bulk enrollment requests.
     """
-    license_info = serializers.DictField(
+    licenses_info = serializers.ListField(
         child=serializers.DictField(
             child=serializers.CharField(required=False),
-        ),
-        required=False,
-    )
-    courses = serializers.DictField(
-        child=serializers.ChoiceField(
-            choices=[
-                ("audit", _("Audit")),
-                ("verified", _("Verified")),
-                ("professional", _("Professional Education")),
-                ("no-id-professional", _("Professional Education (no ID)")),
-                ("credit", _("Credit")),
-                ("honor", _("Honor")),
-            ],
-            required=False,
         ),
         required=False,
     )
@@ -988,8 +974,15 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
         return validated_data
 
     def validate(self, data):  # pylint: disable=arguments-differ
-        if not data.get('emails'):
-            raise serializers.ValidationError('Must include the "emails" parameter in request.')
-        if not data.get('courses'):
-            raise serializers.ValidationError('Must include the "courses" parameter in request.')
+        if not data.get('licenses_info'):
+            raise serializers.ValidationError('Must include the "license_info" parameter in request.')
+
+        # validate that each license info has the required keys
+        for license_info in data.get('licenses_info'):
+            required_info = {'email', 'course_run_key', 'course_mode', 'license_uuid'}
+            if not set(license_info.keys()) == required_info:
+                raise serializers.ValidationError(
+                    'All license infos must contain an email, course_run_key, course_mode and license_uuid. Missing '
+                    'fields: {}'.format(list(required_info - set(license_info.keys())))
+                )
         return data

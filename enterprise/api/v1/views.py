@@ -22,6 +22,7 @@ from rest_framework.status import (
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
+    HTTP_409_CONFLICT,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
 from rest_framework.views import APIView
@@ -59,6 +60,7 @@ from enterprise.errors import CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_users_in_course,
+    enroll_licensed_users_in_courses,
     get_ecommerce_worker_user,
     get_request_value,
     validate_email_to_link,
@@ -220,27 +222,31 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         """
         Creates a set of licensed enterprise_learners by bulk enrolling them in the specified course.
 
-        Note: This endpoint isn't transactional in that if an enrollment fails, there can potentially be a scenario
-        with a subset of users enrolled. Requested learners' eligibility to enroll are expected to be pre-vetted.
-
         Expected params:
-            - license_info (Dict): user emails as keys and the license UUIDs associated with each of the courses the
-            user's being enrolled in as values. Note, each user is expected to have exactly one license per course
-            listed in the 'courses' parameter.
+            - licenses_info (list of dicts): an array of dictionaries, each containing the necessary information to
+            create a licenced enrollment for a user in a specified course. Each dictionary must contain a user email, a
+            course run key, and a UUID of the license that the learner is using to enroll with.
             Example:
-                license_info: {
-                    'newuser@test.com': {
-                        'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'
+                licenses_info: [
+                    {
+                        'email': 'newuser@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
                     },
                     ...
-                }
+                ]
 
-            - courses (Dict): course run keys as keys and the course mode as the value.
-            Example:
-                'courses': {
-                    'course-v1:edX+DemoX+Demo_Course': 'verified',
-                    ...
-                }
+        Optional params:
+            - discount (int): the percent discount to be applied to all enrollments. Defaults to 100.
+
+        Expected Return Values:
+            Success cases:
+                - All users exist and are enrolled - [], 200
+                - Some or none of the users exist but are enrolled - [<pending user emails>], 202
+
+            Failure cases:
+                - Some or all of the users can't be enrolled, no users were enrolled - [<failed users], 409
         """
         enterprise_customer = self.get_object()
         serializer = serializers.EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(
@@ -250,72 +256,65 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 'request_user': request.user,
             }
         )
-        if serializer.is_valid(raise_exception=True):
-            errors = []
-            enrolled_count = 0
-            license_uuids = serializer.validated_data.get('license_info')
-            course_run_keys = serializer.validated_data.get('courses')
-            users_missing_licenses = []
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError:
+            return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-            # Get a list of user emails from the license info.
-            emails = set(license_uuids.keys())
+        errors = []
+        licenses_info = serializer.validated_data.get('licenses_info')
+        discount = serializer.validated_data.get('discount')
+
+        # Get a list of user emails from the license info.
+        emails = {license_info['email'] for license_info in licenses_info}
+        for email in emails:
             try:
-                for email in emails:
-                    try:
-                        validate_email_to_link(email, enterprise_customer, raise_exception=False)
-                        if len(license_uuids[email]) != len(course_run_keys):
-                            users_missing_licenses.append(email)
-                    except ValidationError as error:
-                        errors.append(error)
-            except ValidationError as exc:
-                errors.append(exc)
+                validate_email_to_link(email, enterprise_customer, raise_exception=False)
+            except ValidationError as error:
+                errors.append(error)
 
-            if users_missing_licenses:
-                msg = 'All requested users must have a valid license for each of the courses requested to be ' \
-                      'enrolled in. Users missing licenses: {}'.format(users_missing_licenses)
-                return Response(msg, status=HTTP_400_BAD_REQUEST)
+        if errors:
+            return Response(errors, status=HTTP_400_BAD_REQUEST)
 
-            if errors:
-                return Response(errors, status=HTTP_400_BAD_REQUEST)
+        for email in emails:
+            models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
 
-            for email in emails:
-                models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
+        results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
-            if list(emails):
-                for course_run_key, mode in course_run_keys.items():
-                    discount = serializer.validated_data.get('discount', 0.0)
-                    enrollment_reason = serializer.validated_data.get('reason')
-                    succeeded, pending, _ = enroll_users_in_course(
-                        enterprise_customer=enterprise_customer,
-                        course_id=course_run_key,
-                        course_mode=mode,
-                        emails=emails,
-                        enrollment_requester=request.user,
-                        enrollment_reason=enrollment_reason,
-                        discount=discount,
-                        sales_force_id=serializer.validated_data.get('salesforce_id'),
-                        license_uuids=license_uuids
-                    )
-                    enrolled_count = len(succeeded + pending)
-                    if serializer.validated_data.get('notify'):
-                        enterprise_customer.notify_enrolled_learners(
-                            catalog_api_user=request.user,
-                            course_id=course_run_key,
-                            users=succeeded + pending,
-                        )
-                    self._create_ecom_orders_for_enrollments(
-                        course_run_key,
-                        mode,
-                        discount,
-                        serializer.validated_data.get('salesforce_id'),
-                        succeeded,
-                    )
-            return Response(
-                '{} learners enrolled in {} courses'.format(
-                    enrolled_count, len(course_run_keys)
-                ), status=HTTP_202_ACCEPTED
+        if results['failures']:
+            return Response(results['failures'], status=HTTP_409_CONFLICT)
+
+        course_runs = {
+            {
+                'key': license_info['course_run_key'],
+                'mode': license_info['course_mode']
+            } for license_info in licenses_info
+        }
+        for course_run in course_runs:
+            pending_users = {
+                result['user'] for result in results['pending'] if result['course_run_key'] == course_run['key']
+            }
+            existing_users = {
+                result['user'] for result in results['successes'] if result['course_run_key'] == course_run['key']
+            }
+            if serializer.validated_data.get('notify'):
+                enterprise_customer.notify_enrolled_learners(
+                    catalog_api_user=request.user,
+                    course_id=course_run['key'],
+                    users=pending_users + existing_users,
+                )
+
+            self._create_ecom_orders_for_enrollments(
+                course_run['key'],
+                course_run['mode'],
+                discount,
+                serializer.validated_data.get('salesforce_id'),
+                existing_users,
             )
-        return Response(status=HTTP_400_BAD_REQUEST)
+
+        if results['pending']:
+            return Response(results['pending'], status=HTTP_202_ACCEPTED)
+        return Response([], status=HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
