@@ -220,7 +220,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=invalid-name,unused-argument
     def enroll_learners_in_courses(self, request, pk):
         """
-        Creates a set of licensed enterprise_learners by bulk enrolling them in the specified course.
+        Creates a set of licensed enterprise_learners by bulk enrolling them in the specified course. This endpoint is
+        not transactional, in that any one or more failures will not affect other successful enrollments made within
+        the same request.
 
         Expected params:
             - licenses_info (list of dicts): an array of dictionaries, each containing the necessary information to
@@ -243,10 +245,11 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         Expected Return Values:
             Success cases:
                 - All users exist and are enrolled - [], 200
-                - Some or none of the users exist but are enrolled - [<pending user emails>], 202
+                - Some or none of the users exist but are enrolled - [], 202
 
             Failure cases:
-                - Some or all of the users can't be enrolled, no users were enrolled - [<failed users], 409
+                - Some or all of the users can't be enrolled, no users were enrolled -
+                    {'successes': [], 'pending': [], 'failures': []}, 409
         """
         enterprise_customer = self.get_object()
         serializer = serializers.EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(
@@ -281,9 +284,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
-        if results['failures']:
-            return Response(results['failures'], status=HTTP_409_CONFLICT)
-
         course_runs = {
             {
                 'key': license_info['course_run_key'],
@@ -292,10 +292,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         }
         for course_run in course_runs:
             pending_users = {
-                result['user'] for result in results['pending'] if result['course_run_key'] == course_run['key']
+                result.pop('user') for result in results['pending'] if result['course_run_key'] == course_run['key']
             }
             existing_users = {
-                result['user'] for result in results['successes'] if result['course_run_key'] == course_run['key']
+                result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run['key']
             }
             if serializer.validated_data.get('notify'):
                 enterprise_customer.notify_enrolled_learners(
@@ -311,9 +311,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 serializer.validated_data.get('salesforce_id'),
                 existing_users,
             )
-
-        if results['pending']:
-            return Response(results['pending'], status=HTTP_202_ACCEPTED)
+        if results['failures']:
+            return Response(results, status=HTTP_409_CONFLICT)
+        elif results['pending']:
+            return Response([], status=HTTP_202_ACCEPTED)
         return Response([], status=HTTP_200_OK)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])

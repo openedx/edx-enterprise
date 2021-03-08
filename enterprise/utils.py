@@ -1444,57 +1444,68 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
                 ]
         - discount: (int) the discount offered to the learner for their enrollment. Subscription based enrollments
             default to 100
+
+    Expected Return Values:
+        Results: {
+            successes: [{ 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
+            pending: [{ 'email': <email>, 'course_run_key': <key>, 'user': <user object> } ... ],
+            failures: [{ 'email': <email>, 'course_run_key': <key> } ... ]
+        }
     """
     results = {
         'successes': [],
         'pending': [],
         'failures': [],
     }
-    try:
-        with transaction.atomic():
-            for licensed_user_info in licensed_users_info:
-                user = User.objects.filter(email=licensed_user_info['email']).first()
+    for licensed_user_info in licensed_users_info:
+        user = User.objects.filter(email=licensed_user_info['email']).first()
+        try:
+            if user:
+                succeeded = enroll_user(
+                    enterprise_customer,
+                    licensed_user_info['email'],
+                    licensed_user_info['course_mode'],
+                    licensed_user_info['course_run_key']
+                )
+                if succeeded:
+                    results['successes'].append({
+                        'user': user,
+                        'email': licensed_users_info['email'],
+                        'course': licensed_user_info['course_run_key']
+                    })
 
-                if user:
-                    succeeded = enroll_user(
-                        enterprise_customer,
-                        licensed_user_info['email'],
-                        licensed_user_info['course_mode'],
-                        licensed_user_info['course_run_key']
+                    enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
+                    get_create_ent_enrollment(
+                        licensed_user_info.get('course_run_key'),
+                        enterprise_customer_user,
+                        license_uuid=licensed_user_info.get('license_uuid')
                     )
-                    if succeeded:
-                        results['successes'].append(
-                            {'user': licensed_user_info['email'], 'course': licensed_user_info['course_run_key']}
-                        )
-
-                        enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
-                        get_create_ent_enrollment(
-                            licensed_user_info.get('course_run_key'),
-                            enterprise_customer_user,
-                            license_uuid=licensed_user_info.get('license_uuid')
-                        )
-                    else:
-                        results['failures'].append(
-                            {'user': licensed_user_info['email'], 'course': licensed_user_info['course_run_key']}
-                        )
                 else:
-                    pending_user = enterprise_customer.enroll_user_pending_registration(
-                        licensed_user_info['email'],
-                        licensed_user_info['course_mode'],
-                        licensed_user_info['course_run_key'],
-                        enrollment_source=enterprise_enrollment_source_model().get_source(
-                            enterprise_enrollment_source_model().MANUAL
-                        ),
-                        discount=discount,
-                        license_uuid=licensed_user_info['license_uuid']
-                    )
-                    results['pending'].append(
-                        {'user': pending_user, 'course': licensed_user_info['course_run_key']}
-                    )
-            if results['failures']:
-                raise utils.IntegrityError
-    except utils.IntegrityError:
-        return results
+                    results['failures'].append({
+                        'email': licensed_users_info['email'], 'course': licensed_user_info['course_run_key']
+                    })
+            else:
+                pending_user = enterprise_customer.enroll_user_pending_registration(
+                    licensed_user_info['email'],
+                    licensed_user_info['course_mode'],
+                    licensed_user_info['course_run_key'],
+                    enrollment_source=enterprise_enrollment_source_model().get_source(
+                        enterprise_enrollment_source_model().MANUAL
+                    ),
+                    discount=discount,
+                    license_uuid=licensed_user_info['license_uuid']
+                )
+                results['pending'].append({
+                    'user': pending_user,
+                    'email': licensed_users_info['email'],
+                    'course': licensed_user_info['course_run_key']
+                })
+        except utils.IntegrityError:
+            results['failures'].append({
+                'email': licensed_users_info['email'],
+                'course': licensed_user_info['course_run_key']
+            })
+            continue
 
     return results
 
