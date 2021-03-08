@@ -2705,69 +2705,150 @@ class TestEnterpriseAPIViews(APITest):
         {
             'body': {},
             'expected_code': 400,
-            'expected_body': 'Must include the \\"emails\\" parameter in request.'
+            'expected_response': {'non_field_errors': ['Must include the "license_info" parameter in request.']},
+            'expected_num_pending_licenses': 0,
         },
         {
             'body': {
-                'license_info': {
-                    'abc@test.com': {'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'}
-                }
+                'licenses_info': {}
             },
             'expected_code': 400,
-            'expected_body': 'Must include the \\"courses\\" parameter in request.'
+            'expected_response': {'licenses_info': ['Expected a list of items but got type "dict".']},
+            'expected_num_pending_licenses': 0,
+        },
+        {
+            'body': {
+                'licenses_info': [{'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'}]
+
+            },
+            'expected_code': 400,
+            'expected_response': {
+                'non_field_errors': [
+                    "All license_info dicts must contain an email, course_run_key, course_mode and license_uuid. "
+                    "Missing fields: ['course_mode', 'license_uuid']"
+                ]
+            },
+            'expected_num_pending_licenses': 0,
+        },
+        {
+            'body': {
+                'licenses_info': [{
+                    'email': 'BADLYFORMATTEDEMAIL',
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'course_mode': 'verified',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                }]
+            },
+            'expected_code': 409,
+            'expected_response': {
+                'successes': [], 'pending': [], 'failures': [], 'invalid_email_addresses': ['BADLYFORMATTEDEMAIL']
+            },
+            'expected_num_pending_licenses': 0,
         },
         # Single learner, single course success
         {
             'body': {
-                'license_info': {
-                    'newuser@example.com': {'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'}
-                },
-                'courses': {'course-v1:edX+DemoX+Demo_Course': 'audit'},
-                'discount': 100,
+                'licenses_info': [{
+                    'email': 'abc@test.com',
+                    'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                    'course_mode': 'verified',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                }]
             },
             'expected_code': 202,
-            'expected_body': '1 learners enrolled',
+            'expected_response': {
+                'successes': [],
+                'pending': [{'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'}],
+                'failures': []
+            },
+            'expected_num_pending_licenses': 1,
         },
-        # Multi-learner, single course success
+        # # Multi-learner, single course success
         {
             'body': {
-                'license_info': {
-                    'newuser@example.com': {'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'},
-                    'abc@test.com': {'course-v1:edX+DemoX+Demo_Course': '5a88bdcade7c4ecb838f8111b68e18ac'}
-                },
-                'courses': {'course-v1:edX+DemoX+Demo_Course': 'audit'},
-                'discount': 100,
+                'licenses_info': [
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                    },
+                ]
             },
             'expected_code': 202,
-            'expected_body': '2 learners enrolled',
+            'expected_response': {
+                'successes': [],
+                'pending': [
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'}
+                ],
+                'failures': []
+            },
+            'expected_num_pending_licenses': 2,
         },
         # Multi-learner, multi-course success
         {
             'body': {
-                'license_info': {
-                    'newuser@example.com': {
-                        'course-v1:edX+DemoX+Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae',
-                        'course-v2:edX+SuperDemoX+Super_Demo_Course': '5b77bdbade7b4fcb838f8111b68e18ae'
+                'licenses_info': [
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
-                    'abc@test.com': {
-                        'course-v1:edX+DemoX+Demo_Course': '5a88bdcade7c4ecb838f8111b68e18ac',
-                        'course-v2:edX+SuperDemoX+Super_Demo_Course': '5a88bdcade7c4ecb838f8111b68e18ac'
-                    }
-                },
-                'courses': {
-                    'course-v1:edX+DemoX+Demo_Course': 'audit',
-                    'course-v2:edX+SuperDemoX+Super_Demo_Course': 'audit'
-                },
-                'discount': 100,
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                    },
+                    {
+                        'email': 'abc@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                    },
+                    {
+                        'email': 'xyz@test.com',
+                        'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
+                        'course_mode': 'verified',
+                        'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                    },
+                ]
             },
             'expected_code': 202,
-            'expected_body': '2 learners enrolled in 2 courses',
+            'expected_response': {
+                'successes': [],
+                'pending': [
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v1:edX+DemoX+Demo_Course'},
+                    {'email': 'abc@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'},
+                    {'email': 'xyz@test.com', 'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course'}
+                ],
+                'failures': []
+            },
+            'expected_num_pending_licenses': 4,
         },
     )
     @ddt.unpack
-    def test_bulk_enrollment_in_bulk_courses(self, body, expected_code, expected_body):
+    @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
+    # pylint: disable=unused-argument
+    def test_bulk_enrollment_in_bulk_courses(
+        self,
+        mock_ecom_order,
+        body,
+        expected_code,
+        expected_response,
+        expected_num_pending_licenses
+    ):
         """
-        Tests the bulk enrollment endpoint at enroll_learners_in_courses
+        Tests the bulk enrollment endpoint at enroll_learners_in_courses.
         """
         factories.EnterpriseCustomerFactory(
             uuid=FAKE_UUIDS[0],
@@ -2777,15 +2858,70 @@ class TestEnterpriseAPIViews(APITest):
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
 
+        self.assertEqual(len(PendingEnrollment.objects.all()), 0)
         response = self.client.post(
             settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
             data=json.dumps(body),
             content_type='application/json',
         )
         self.assertEqual(response.status_code, expected_code)
-        if expected_body:
-            response_content_string = json.dumps(self.load_json(response.content))
-            self.assertIn(expected_body, response_content_string)
+        if expected_response:
+            response_json = response.json()
+            self.assertEqual(expected_response, response_json)
+        self.assertEqual(len(PendingEnrollment.objects.all()), expected_num_pending_licenses)
+
+    @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
+    @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
+    # pylint: disable=unused-argument
+    def test_enroll_learners_in_courses_partial_failure(self, mock_enroll_user, mock_ecom_order):
+        """
+        Tests that bulk users bulk enrollment endpoint properly handles partial failures.
+        """
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        pending_ecu, __ = PendingEnterpriseCustomerUser.objects.get_or_create(
+            enterprise_customer=ent_customer,
+            user_email='abc@test.com'
+        )
+
+        course = 'course-v1:edX+DemoX+Demo_Course'
+        enrollment_response = {
+            'pending': [{'email': 'abc@test.com', 'course_run_key': course, 'user': pending_ecu}],
+            'successes': [],
+            'failures': [{'email': 'xyz@test.com', 'course_run_key': course}]
+        }
+        mock_enroll_user.return_value = enrollment_response
+
+        body = {
+            'licenses_info': [
+                {
+                    'email': 'abc@test.com',
+                    'course_run_key': course,
+                    'course_mode': 'verified',
+                    'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
+                },
+                {
+                    'email': 'xyz@test.com',
+                    'course_run_key': course,
+                    'course_mode': 'verified',
+                    'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
+                },
+            ]
+        }
+
+        response = self.client.post(
+            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT,
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
+        self.assertEqual(response.json(), enrollment_response)
 
     @ddt.data(
         {'is_course_completed': False, 'has_audit_mode': True},

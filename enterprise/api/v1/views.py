@@ -19,6 +19,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.status import (
     HTTP_200_OK,
+    HTTP_201_CREATED,
     HTTP_202_ACCEPTED,
     HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
@@ -31,7 +32,7 @@ from six.moves.urllib.parse import quote_plus, unquote  # pylint: disable=import
 
 from django.apps import apps
 from django.conf import settings
-from django.core import mail
+from django.core import exceptions, mail
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
@@ -59,8 +60,8 @@ from enterprise.constants import COURSE_KEY_URL_PATTERN
 from enterprise.errors import CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
-    enroll_users_in_course,
     enroll_licensed_users_in_courses,
+    enroll_users_in_course,
     get_ecommerce_worker_user,
     get_request_value,
     validate_email_to_link,
@@ -220,7 +221,7 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     # pylint: disable=invalid-name,unused-argument
     def enroll_learners_in_courses(self, request, pk):
         """
-        Creates a set of licensed enterprise_learners by bulk enrolling them in the specified course. This endpoint is
+        Creates a set of licensed enterprise_learners by bulk enrolling them in all specified courses. This endpoint is
         not transactional, in that any one or more failures will not affect other successful enrollments made within
         the same request.
 
@@ -244,12 +245,15 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         Expected Return Values:
             Success cases:
-                - All users exist and are enrolled - [], 200
+                - All users exist and are enrolled - [], 201
                 - Some or none of the users exist but are enrolled - [], 202
 
             Failure cases:
                 - Some or all of the users can't be enrolled, no users were enrolled -
                     {'successes': [], 'pending': [], 'failures': []}, 409
+
+                - Some or all of the provided emails are invalid
+                    {'successes': [], 'pending': [], 'failures': [] 'invalid_email_addresses': []}, 409
         """
         enterprise_customer = self.get_object()
         serializer = serializers.EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(
@@ -264,32 +268,36 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         except ValidationError:
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
-        errors = []
+        email_errors = []
         licenses_info = serializer.validated_data.get('licenses_info')
-        discount = serializer.validated_data.get('discount')
+
+        # Default subscription discount is 100%
+        discount = serializer.validated_data.get('discount', 100.00)
 
         # Get a list of user emails from the license info.
         emails = {license_info['email'] for license_info in licenses_info}
         for email in emails:
             try:
                 validate_email_to_link(email, enterprise_customer, raise_exception=False)
-            except ValidationError as error:
-                errors.append(error)
+            except exceptions.ValidationError:
+                email_errors.append(email)
 
-        if errors:
-            return Response(errors, status=HTTP_400_BAD_REQUEST)
+        # Remove the bad emails from licenses_info and emails, don't attempt to enroll or link bad emails.
+        for errored_user in email_errors:
+            licenses_info[:] = [info for info in licenses_info if info['email'] != errored_user]
+            emails.remove(errored_user)
 
         for email in emails:
             models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
 
         results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
-        course_runs = {
-            {
-                'key': license_info['course_run_key'],
-                'mode': license_info['course_mode']
-            } for license_info in licenses_info
-        }
+        # Retrieve all unique course key/course mode pairings from licenses_info
+        course_runs = [
+            {'key': course[0], 'mode': course[1]} for course in {
+                (info['course_run_key'], info['course_mode']) for info in licenses_info
+            }
+        ]
         for course_run in course_runs:
             pending_users = {
                 result.pop('user') for result in results['pending'] if result['course_run_key'] == course_run['key']
@@ -311,11 +319,14 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                 serializer.validated_data.get('salesforce_id'),
                 existing_users,
             )
-        if results['failures']:
+        if email_errors:
+            results['invalid_email_addresses'] = email_errors
+
+        if results['failures'] or email_errors:
             return Response(results, status=HTTP_409_CONFLICT)
-        elif results['pending']:
-            return Response([], status=HTTP_202_ACCEPTED)
-        return Response([], status=HTTP_200_OK)
+        if results['pending']:
+            return Response(results, status=HTTP_202_ACCEPTED)
+        return Response(results, status=HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
