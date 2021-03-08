@@ -16,11 +16,16 @@ Change Log
 Unreleased
 ----------
 
+[3.18.0]
+---------
+
+* Adds a management command to update all ``SystemWideEnterpriseUserRoleAssignment`` records in a way
+  that makes them more explicitly defined.
+
 [3.17.47]
 ---------
 
 * Bug fix to remove a deprecated parameter that was causing bulk enrollments to fail.
-
 
 [3.17.46]
 ---------
