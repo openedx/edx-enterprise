@@ -2,7 +2,6 @@
 """
 Tests for the `edx-enterprise` utils module.
 """
-
 import unittest
 from unittest import mock
 
@@ -11,7 +10,9 @@ from pytest import mark
 
 from django.conf import settings
 
-from enterprise.utils import get_idiff_list, get_platform_logo_url
+from enterprise.models import EnterpriseCourseEnrollment
+from enterprise.utils import enroll_licensed_users_in_courses, get_idiff_list, get_platform_logo_url
+from test_utils import FAKE_UUIDS, TEST_PASSWORD, TEST_USERNAME, factories
 
 
 @mark.django_db
@@ -50,6 +51,15 @@ class TestUtils(unittest.TestCase):
     """
     Tests for utility functions in enterprise.utils
     """
+    # pylint: disable=arguments-differ
+    def create_user(self, username=TEST_USERNAME, password=TEST_PASSWORD, is_staff=False, **kwargs):
+        """
+        Create a test user and set its password.
+        """
+        # pylint: disable=attribute-defined-outside-init
+        self.user = factories.UserFactory(username=username, is_active=True, is_staff=is_staff, **kwargs)
+        self.user.set_password(password)  # pylint: disable=no-member
+        self.user.save()  # pylint: disable=no-member
 
     @ddt.unpack
     @ddt.data(
@@ -65,3 +75,165 @@ class TestUtils(unittest.TestCase):
         """
         mock_get_logo_url.return_value = logo_url
         self.assertEqual(get_platform_logo_url(), expected_logo_url)
+
+    @mock.patch('enterprise.utils.enroll_user')
+    def test_enroll_licensed_users_in_courses_fails(self, mock_enroll_user):
+        """
+        Test that `enroll_licensed_users_in_courses` properly handles failure cases where something goes wrong with the
+        user enrollment.
+        """
+        self.create_user()
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        mock_enroll_user.return_value = False
+        licensed_users_info = [{
+            'email': self.user.email,
+            'course_run_key': 'course-key-v1',
+            'course_mode': 'verified',
+            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+        }]
+
+        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'successes': [],
+                'failures': [{'email': self.user.email, 'course_run_key': 'course-key-v1'}],
+                'pending': []
+            },
+            result
+        )
+
+    @mock.patch('enterprise.utils.enroll_user')
+    def test_enroll_licensed_users_in_courses_fails_with_exception(self, mock_enroll_user):
+        """
+        Test that `enroll_licensed_users_in_courses` properly handles failure cases where badly formed data throws a
+        database Integrity Error.
+        """
+        self.create_user()
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        mock_enroll_user.return_value = True
+        licensed_users_info = [{
+            'email': self.user.email,
+            'course_run_key': 'course-key-v1',
+            'course_mode': 'verified',
+            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+        }]
+
+        # Attempt to enroll a user that isn't associated with an enterprise, causing an integrity error.
+        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'successes': [],
+                'pending': [],
+                'failures': [{'email': self.user.email, 'course_run_key': 'course-key-v1'}]
+            },
+            result
+        )
+
+    @mock.patch('enterprise.utils.enroll_user')
+    def test_enroll_licensed_users_in_courses_partially_fails(self, mock_enroll_user):
+        """
+        Test that `enroll_licensed_users_in_courses` properly handles partial failure states and still creates
+        enrollments for the users that succeed.
+        """
+        self.create_user()
+        failure_user = factories.UserFactory()
+
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=ent_customer,
+        )
+
+        licensed_users_info = [
+            {
+                'email': self.user.email,
+                'course_run_key': 'course-key-v1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+            },
+            {
+                'email': failure_user.email,
+                'course_run_key': 'course-key-v1',
+                'course_mode': 'verified',
+                'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+            }
+        ]
+
+        mock_enroll_user.return_value = True
+
+        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [{'email': self.user.email, 'course_run_key': 'course-key-v1', 'user': self.user}],
+                'failures': [{'email': failure_user.email, 'course_run_key': 'course-key-v1'}]
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
+
+    @mock.patch('enterprise.utils.enroll_user')
+    def test_enroll_licensed_users_in_courses_succeeds(self, mock_enroll_user):
+        """
+        Test that users that already exist are enrolled by enroll_licensed_users_in_courses and returned under the
+        `succeeded` field.
+        """
+        self.create_user()
+
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=ent_customer,
+        )
+        licensed_users_info = [{
+            'email': self.user.email,
+            'course_run_key': 'course-key-v1',
+            'course_mode': 'verified',
+            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+        }]
+
+        mock_enroll_user.return_value = True
+
+        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+        self.assertEqual(
+            {
+                'pending': [],
+                'successes': [{'email': self.user.email, 'course_run_key': 'course-key-v1', 'user': self.user}],
+                'failures': []
+            },
+            result
+        )
+        self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
+
+    def test_enroll_pending_licensed_users_in_courses_succeeds(self, ):
+        """
+        Test that users that do not exist are pre-enrolled by enroll_licensed_users_in_courses and returned under the
+        `pending` field.
+        """
+        ent_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise"
+        )
+        licensed_users_info = [{
+            'email': 'pending-user-email@example.com',
+            'course_run_key': 'course-key-v1',
+            'course_mode': 'verified',
+            'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
+        }]
+        result = enroll_licensed_users_in_courses(ent_customer, licensed_users_info)
+
+        self.assertEqual(result['pending'][0]['email'], 'pending-user-email@example.com')
+        self.assertFalse(result['successes'])
+        self.assertFalse(result['failures'])

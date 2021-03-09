@@ -16,8 +16,13 @@ Change Log
 Unreleased
 ----------
 
+[3.18.1]
+--------
+
+* Adds bulk enterprise learner in bulk courses enrollment endpoint with pending user support.
+
 [3.18.0]
----------
+--------
 
 * Adds a management command to update all ``SystemWideEnterpriseUserRoleAssignment`` records in a way
   that makes them more explicitly defined.

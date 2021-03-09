@@ -54,7 +54,6 @@ from enterprise.models import (
     EnterpriseCustomerCatalog,
     EnterpriseCustomerUser,
     EnterpriseEnrollmentSource,
-    LicensedEnterpriseCourseEnrollment,
 )
 from enterprise.utils import (
     CourseEnrollmentDowngradeError,
@@ -65,6 +64,7 @@ from enterprise.utils import (
     format_price,
     get_active_course_runs,
     get_configuration_value,
+    get_create_ent_enrollment,
     get_current_course_run,
     get_enterprise_customer_by_slug_or_404,
     get_enterprise_customer_or_404,
@@ -189,42 +189,6 @@ def render_page_with_error_code_message(request, context_data, error_code, log_m
         context=context_data,
         status=404,
     )
-
-
-def get_create_ent_enrollment(
-        course_id,
-        enterprise_customer_user,
-        license_uuid=None,
-):
-    """
-    Get or Create the Enterprise Course Enrollment.
-
-    If ``license_uuid`` present, will also create a LicensedEnterpriseCourseEnrollment record.
-    """
-    source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
-    # Create the Enterprise backend database records for this course
-    # enrollment
-    enterprise_course_enrollment, created = EnterpriseCourseEnrollment.objects.get_or_create(
-        enterprise_customer_user=enterprise_customer_user,
-        course_id=course_id,
-        defaults={
-            'source': source
-        }
-    )
-    if license_uuid and not enterprise_course_enrollment.license:
-        LOGGER.info(
-            'LicensedEnterpriseCourseEnrollment being created with following info: '
-            'License UUID: {license_uuid}, '
-            'EnterpriseCourseEnrollment: {enterprise_course_enrollment_uuid}'.format(
-                license_uuid=license_uuid,
-                enterprise_course_enrollment_uuid=enterprise_course_enrollment,
-            )
-        )
-        LicensedEnterpriseCourseEnrollment.objects.create(
-            license_uuid=license_uuid,
-            enterprise_course_enrollment=enterprise_course_enrollment,
-        )
-    return enterprise_course_enrollment, created
 
 
 class NonAtomicView(View):

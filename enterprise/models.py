@@ -9,7 +9,7 @@ import json
 import os
 from decimal import Decimal
 from logging import getLogger
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import six
 from django_countries.fields import CountryField
@@ -611,10 +611,16 @@ class EnterpriseCustomer(TimeStampedModel):
             enterprise_customer=self,
             user_email=email
         )
+        try:
+            license_uuid = UUID(kwargs.get('license_uuid'))
+        except TypeError:
+            license_uuid = None
+
         for course_id in course_ids:
             PendingEnrollment.objects.update_or_create(
                 user=pending_ecu,
                 course_id=course_id,
+                license_uuid=license_uuid,
                 defaults={
                     'course_mode': course_mode,
                     'cohort_name': kwargs.get('cohort', None),
@@ -1244,6 +1250,24 @@ class PendingEnterpriseCustomerUser(TimeStampedModel):
                         discount_percentage=enrollment.discount_percentage,
                         sales_force_id=enrollment.sales_force_id,
                     )
+
+                    # If the pending enrollment was using a subscription license, generate a license enrollment
+                    # alongside the enterprise enrollment.
+                    if enrollment.license_uuid:
+                        source = EnterpriseEnrollmentSource.get_source(EnterpriseEnrollmentSource.ENROLLMENT_URL)
+                        enterprise_course_enrollment = EnterpriseCourseEnrollment.objects.get(
+                            enterprise_customer_user=enterprise_customer_user,
+                            course_id=enrollment.course_id,
+                            defaults={
+                                'source': source
+                            }
+                        )
+
+                        LicensedEnterpriseCourseEnrollment.objects.create(
+                            license_uuid=enrollment.license_uuid,
+                            enterprise_course_enrollment=enterprise_course_enrollment,
+                        )
+
                     track_enrollment('pending-admin-enrollment', enterprise_customer_user.user.id, enrollment.course_id)
             transaction.on_commit(_complete_user_enrollment)
 
@@ -1319,6 +1343,7 @@ class PendingEnrollment(TimeStampedModel):
     sales_force_id = models.CharField(max_length=255, blank=True, null=True)
     history = HistoricalRecords()
     source = models.ForeignKey(EnterpriseEnrollmentSource, blank=False, null=True, on_delete=models.SET_NULL)
+    license_uuid = models.UUIDField(primary_key=False, editable=False, null=True, blank=True)
 
     class Meta:
         app_label = 'enterprise'
