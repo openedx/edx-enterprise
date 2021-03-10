@@ -112,6 +112,7 @@ LICENSED_ENTERPISE_COURSE_ENROLLMENTS_REVOKE_ENDPOINT = reverse(
 EXPIRED_LICENSED_ENTERPRISE_COURSE_ENROLLMENTS_ENDPOINT = reverse(
     'licensed-enterprise-course-enrollment-bulk-licensed-enrollments-expiration'
 )
+VERIFIED_SUBSCRIPTION_COURSE_MODE = 'verified'
 
 
 def side_effect(url, query_parameters):
@@ -1696,7 +1697,7 @@ class TestEnterpriseAPIViews(APITest):
         (
             True,
             True,
-            {'is_active': True, 'mode': 'verified'},
+            {'is_active': True, 'mode': VERIFIED_SUBSCRIPTION_COURSE_MODE},
             [{
                 'course_mode': 'audit',
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
@@ -1844,7 +1845,7 @@ class TestEnterpriseAPIViews(APITest):
             True,
             {'is_active': True, 'mode': 'audit'},
             [{
-                'course_mode': 'verified',
+                'course_mode': VERIFIED_SUBSCRIPTION_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
             }],
@@ -1853,7 +1854,7 @@ class TestEnterpriseAPIViews(APITest):
             True,
             {'is_active': False, 'mode': 'audit'},
             [{
-                'course_mode': 'verified',
+                'course_mode': VERIFIED_SUBSCRIPTION_COURSE_MODE,
                 'course_run_id': 'course-v1:edX+DemoX+Demo_Course',
                 'lms_user_id': 10,
                 'is_active': False,
@@ -2092,7 +2093,7 @@ class TestEnterpriseAPIViews(APITest):
         # Set up EnrollmentAPI responses
         mock_enrollment_client.return_value = mock.Mock(
             get_course_enrollment=mock.Mock(
-                side_effect=[None, {'is_active': True, 'mode': 'verified'}]
+                side_effect=[None, {'is_active': True, 'mode': VERIFIED_SUBSCRIPTION_COURSE_MODE}]
             ),
             enroll_user_in_course=mock.Mock()
         )
@@ -2724,8 +2725,8 @@ class TestEnterpriseAPIViews(APITest):
             'expected_code': 400,
             'expected_response': {
                 'non_field_errors': [
-                    "All license_info dicts must contain an email, course_run_key, course_mode and license_uuid. "
-                    "Missing fields: ['course_mode', 'license_uuid']"
+                    "All license_info dicts must contain an email, course_run_key and license_uuid. "
+                    "Missing fields: ['license_uuid']"
                 ]
             },
             'expected_num_pending_licenses': 0,
@@ -2735,7 +2736,6 @@ class TestEnterpriseAPIViews(APITest):
                 'licenses_info': [{
                     'email': 'BADLYFORMATTEDEMAIL',
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                    'course_mode': 'verified',
                     'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                 }]
             },
@@ -2751,7 +2751,6 @@ class TestEnterpriseAPIViews(APITest):
                 'licenses_info': [{
                     'email': 'abc@test.com',
                     'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                    'course_mode': 'verified',
                     'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                 }]
             },
@@ -2770,13 +2769,11 @@ class TestEnterpriseAPIViews(APITest):
                     {
                         'email': 'abc@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
                     {
                         'email': 'xyz@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                     },
                 ]
@@ -2799,25 +2796,21 @@ class TestEnterpriseAPIViews(APITest):
                     {
                         'email': 'abc@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
                     {
                         'email': 'xyz@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                     },
                     {
                         'email': 'abc@test.com',
                         'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                     },
                     {
                         'email': 'xyz@test.com',
                         'course_run_key': 'course-v2:edX+DemoX+Second_Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                     },
                 ]
@@ -2838,14 +2831,16 @@ class TestEnterpriseAPIViews(APITest):
     )
     @ddt.unpack
     @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     # pylint: disable=unused-argument
     def test_bulk_enrollment_in_bulk_courses(
         self,
+        mock_get_course_mode,
         mock_ecom_order,
         body,
         expected_code,
         expected_response,
-        expected_num_pending_licenses
+        expected_num_pending_licenses,
     ):
         """
         Tests the bulk enrollment endpoint at enroll_learners_in_courses.
@@ -2857,6 +2852,7 @@ class TestEnterpriseAPIViews(APITest):
 
         permission = Permission.objects.get(name='Can add Enterprise Customer')
         self.user.user_permissions.add(permission)
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
 
         self.assertEqual(len(PendingEnrollment.objects.all()), 0)
         response = self.client.post(
@@ -2872,8 +2868,9 @@ class TestEnterpriseAPIViews(APITest):
 
     @mock.patch('enterprise.api.v1.views.EnterpriseCustomerViewSet._create_ecom_orders_for_enrollments')
     @mock.patch('enterprise.api.v1.views.enroll_licensed_users_in_courses')
+    @mock.patch('enterprise.api.v1.views.get_best_mode_from_course_key')
     # pylint: disable=unused-argument
-    def test_enroll_learners_in_courses_partial_failure(self, mock_enroll_user, mock_ecom_order):
+    def test_enroll_learners_in_courses_partial_failure(self, mock_get_course_mode, mock_enroll_user, mock_ecom_order):
         """
         Tests that bulk users bulk enrollment endpoint properly handles partial failures.
         """
@@ -2897,19 +2894,18 @@ class TestEnterpriseAPIViews(APITest):
             'failures': [{'email': 'xyz@test.com', 'course_run_key': course}]
         }
         mock_enroll_user.return_value = enrollment_response
+        mock_get_course_mode.return_value = VERIFIED_SUBSCRIPTION_COURSE_MODE
 
         body = {
             'licenses_info': [
                 {
                     'email': 'abc@test.com',
                     'course_run_key': course,
-                    'course_mode': 'verified',
                     'license_uuid': '5a88bdcade7c4ecb838f8111b68e18ac'
                 },
                 {
                     'email': 'xyz@test.com',
                     'course_run_key': course,
-                    'course_mode': 'verified',
                     'license_uuid': '2c58acdade7c4ede838f7111b42e18ac'
                 },
             ]

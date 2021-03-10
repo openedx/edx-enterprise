@@ -40,6 +40,11 @@ from django.utils.translation import ungettext
 from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
 
 try:
+    from common.djangoapps.course_modes.models import CourseMode
+except ImportError:
+    CourseMode = None
+
+try:
     from openedx.core.djangoapps.site_configuration import helpers as configuration_helpers
 except ImportError:
     configuration_helpers = None
@@ -1787,3 +1792,17 @@ def batch(iterable, batch_size=1):
     iterable_len = len(iterable)
     for index in range(0, iterable_len, batch_size):
         yield iterable[index:min(index + batch_size, iterable_len)]
+
+
+def get_best_mode_from_course_key(course_key):
+    """
+    Helper method to retrieve a list of enrollments for a given course and select the one most applicable to enroll an
+    enterprise learner in.
+    """
+    course_modes = [mode.slug for mode in CourseMode.objects.filter(course_id=course_key)]
+    best_course_mode = 'verified' if 'verified' in course_modes \
+        else 'professional' if 'professional' in course_modes \
+        else 'no-id-professional' if 'no-id-professional' in course_modes \
+        else 'audit'
+
+    return best_course_mode

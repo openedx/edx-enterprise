@@ -16,6 +16,11 @@ Change Log
 Unreleased
 ----------
 
+[3.18.2]
+--------
+
+* Removes course mode as a required parameter to the bulk subscription enrollment endpoint.
+
 [3.18.1]
 --------
 

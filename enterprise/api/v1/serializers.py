@@ -979,12 +979,12 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
 
         # validate that each license info has the required keys
         for license_info in data.get('licenses_info'):
-            required_info = {'email', 'course_run_key', 'course_mode', 'license_uuid'}
+            required_info = {'email', 'course_run_key', 'license_uuid'}
             if not set(license_info.keys()) == required_info:
                 missing_fields = list(required_info - set(license_info.keys()))
                 missing_fields.sort()
                 raise serializers.ValidationError(
-                    'All license_info dicts must contain an email, course_run_key, course_mode and license_uuid. '
+                    'All license_info dicts must contain an email, course_run_key and license_uuid. '
                     'Missing fields: {}'.format(missing_fields)
                 )
         return data
