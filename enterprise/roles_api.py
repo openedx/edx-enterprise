@@ -3,7 +3,12 @@ Python API for doing CRUD operations on roles and user role assignments.
 """
 from cache_memoize import cache_memoize
 
-from enterprise.constants import ENTERPRISE_ADMIN_ROLE, ENTERPRISE_LEARNER_ROLE, ENTERPRISE_OPERATOR_ROLE
+from enterprise.constants import (
+    ENTERPRISE_ADMIN_ROLE,
+    ENTERPRISE_LEARNER_ROLE,
+    ENTERPRISE_OPERATOR_ROLE,
+    SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE,
+)
 from enterprise.models import SystemWideEnterpriseRole, SystemWideEnterpriseUserRoleAssignment
 
 
@@ -36,6 +41,11 @@ def openedx_operator_role():
     return get_or_create_system_wide_role(ENTERPRISE_OPERATOR_ROLE)
 
 
+def catalog_admin_role():
+    """ Returns the enterprise catalog admin role. """
+    return get_or_create_system_wide_role(SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE)
+
+
 def roles_by_name():
     """
     Returns a mapping of system wide roles by name.
@@ -44,6 +54,7 @@ def roles_by_name():
         ENTERPRISE_ADMIN_ROLE: admin_role(),
         ENTERPRISE_LEARNER_ROLE: learner_role(),
         ENTERPRISE_OPERATOR_ROLE: openedx_operator_role(),
+        SYSTEM_ENTERPRISE_CATALOG_ADMIN_ROLE: catalog_admin_role(),
     }
 
 

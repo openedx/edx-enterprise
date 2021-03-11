@@ -16,6 +16,13 @@ Change Log
 Unreleased
 ----------
 
+* Nothing.
+
+[3.18.3]
+--------
+
+* Adds the catalog admin role to ``roles_api.roles_by_name()``.
+
 [3.18.2]
 --------
 
