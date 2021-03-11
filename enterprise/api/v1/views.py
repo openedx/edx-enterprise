@@ -62,6 +62,7 @@ from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
     enroll_users_in_course,
+    get_best_mode_from_course_key,
     get_ecommerce_worker_user,
     get_request_value,
     validate_email_to_link,
@@ -234,7 +235,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
                     {
                         'email': 'newuser@test.com',
                         'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                        'course_mode': 'verified',
                         'license_uuid': '5b77bdbade7b4fcb838f8111b68e18ae'
                     },
                     ...
@@ -274,8 +274,17 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         # Default subscription discount is 100%
         discount = serializer.validated_data.get('discount', 100.00)
 
-        # Get a list of user emails from the license info.
-        emails = {license_info['email'] for license_info in licenses_info}
+        emails = set()
+
+        # Retrieve and store course modes for each unique course provided
+        course_runs_modes = {license_info['course_run_key']: None for license_info in licenses_info}
+        for course_run in course_runs_modes:
+            course_runs_modes[course_run] = get_best_mode_from_course_key(course_run)
+
+        for index, info in enumerate(licenses_info):
+            emails.add(info['email'])
+            licenses_info[index]['course_mode'] = course_runs_modes[info['course_run_key']]
+
         for email in emails:
             try:
                 validate_email_to_link(email, enterprise_customer, raise_exception=False)
@@ -292,29 +301,23 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         results = enroll_licensed_users_in_courses(enterprise_customer, licenses_info, discount)
 
-        # Retrieve all unique course key/course mode pairings from licenses_info
-        course_runs = [
-            {'key': course[0], 'mode': course[1]} for course in {
-                (info['course_run_key'], info['course_mode']) for info in licenses_info
-            }
-        ]
-        for course_run in course_runs:
+        for course_run in course_runs_modes:
             pending_users = {
-                result.pop('user') for result in results['pending'] if result['course_run_key'] == course_run['key']
+                result.pop('user') for result in results['pending'] if result['course_run_key'] == course_run
             }
             existing_users = {
-                result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run['key']
+                result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
             }
             if serializer.validated_data.get('notify'):
                 enterprise_customer.notify_enrolled_learners(
                     catalog_api_user=request.user,
-                    course_id=course_run['key'],
+                    course_id=course_run,
                     users=pending_users + existing_users,
                 )
 
             self._create_ecom_orders_for_enrollments(
-                course_run['key'],
-                course_run['mode'],
+                course_run,
+                course_runs_modes[course_run],
                 discount,
                 serializer.validated_data.get('salesforce_id'),
                 existing_users,

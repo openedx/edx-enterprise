@@ -390,6 +390,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @ddt.data(
         str(uuid.uuid4()),
@@ -399,6 +400,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             self,
             license_uuid,
             course_catalog_api_client_mock,
+            mock_get_course_mode,
             mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument
@@ -426,7 +428,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.get_course_id.return_value = course_id
 
         course_mode = 'verified'
-        mock_enrollment_api_client.return_value.get_course_modes.return_value = [{'slug': course_mode}]
+        mock_get_course_mode.return_value = course_mode
         params = {
             'enterprise_customer_uuid': str(enterprise_customer.uuid),
             'course_id': course_id,
@@ -515,6 +517,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.views.get_best_mode_from_course_key')
     @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @mock.patch('enterprise.views.reverse')
@@ -547,6 +550,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             reverse_mock,
             course_catalog_api_client_mock,
             enterprise_catalog_api_client_mock,
+            mock_get_course_mode,
             mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
@@ -586,7 +590,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         reverse_mock.return_value = '/dashboard'
         course_mode = 'verified'
-        mock_enrollment_api_client.return_value.get_course_modes.return_value = [{'slug': course_mode}]
+        mock_get_course_mode.return_value = course_mode
         post_data = {
             'enterprise_customer_uuid': enterprise_customer.uuid,
             'course_id': course_id,

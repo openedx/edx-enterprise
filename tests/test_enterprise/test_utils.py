@@ -217,7 +217,7 @@ class TestUtils(unittest.TestCase):
         )
         self.assertEqual(len(EnterpriseCourseEnrollment.objects.all()), 1)
 
-    def test_enroll_pending_licensed_users_in_courses_succeeds(self, ):
+    def test_enroll_pending_licensed_users_in_courses_succeeds(self):
         """
         Test that users that do not exist are pre-enrolled by enroll_licensed_users_in_courses and returned under the
         `pending` field.
