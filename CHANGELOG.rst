@@ -18,6 +18,14 @@ Unreleased
 
 * Nothing.
 
+[3.18.4]
+--------
+
+* fix: The update_role_assignments_with_customers command no longer deletes open assignments.  Allowing it to do so
+  left us prone to error when an explicit enterprise_customer_uuid arg is provided.  We should modify this command
+  in the future to perform deletions of open assignments as its only action, and it should only be invoked this way
+  after we have verified that all backfilled enterprise_customer fields on the assignments have been set correctly.
+
 [3.18.3]
 --------
 

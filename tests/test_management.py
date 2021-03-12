@@ -1608,7 +1608,7 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
                 role=role,
             ).save()
             # create a potentially extra open role assignment, so we
-            # can test that extras are deleted after running the command.
+            # can test that extras are not deleted after running the command.
             factories.SystemWideEnterpriseUserRoleAssignment(
                 user=linked_user,
                 role=role,
@@ -1658,13 +1658,13 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
                 **assignment_kwargs,
             ).count() == 1
 
-        # assert that there are no other learner assignments
         queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role=roles_api.learner_role()
         )
         if expected_customer:
             queryset = queryset.filter(enterprise_customer=expected_customer)
-        assert len(expected_user_customer_assignments) == queryset.count()
+        # There might be extra open assignments, which is ok.
+        assert len(expected_user_customer_assignments) <= queryset.count()
 
     def _admin_assertions(self, expected_customer=None):
         """ Helper to assert that expected enterprise admins are assigned to expected customers. """
@@ -1692,13 +1692,13 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
                 **assignment_kwargs,
             ).count() == 1
 
-        # assert that there are no other admin assignments
         queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role=roles_api.admin_role()
         )
         if expected_customer:
             queryset = queryset.filter(enterprise_customer=expected_customer)
-        assert len(expected_user_customer_assignments) == queryset.count()
+        # there might be extra open assignments, which is ok
+        assert len(expected_user_customer_assignments) <= queryset.count()
 
     def _operator_assertions(self):
         """ Helper to assert that expected enterprise operators have `applies_to_all_contexts=True`. """
