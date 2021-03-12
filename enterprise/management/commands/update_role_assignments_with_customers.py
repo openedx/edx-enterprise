@@ -188,7 +188,6 @@ class Command(BaseCommand):
         for a given user with enterprise customers that the user is linked to.  If there are more
         user-customer links that there are "open" assignments ("open" meaning that `enterprise_customer` is currently
         null), it will create enough assignments to capture all of these links.
-        If there are more open assignments than user-customer links, it will delete the excess open assignments.
         """
         # we'll bulk update/create objects in the DB after
         assignments_to_create = []
@@ -220,7 +219,7 @@ class Command(BaseCommand):
                 continue
 
             assignments_to_update.extend(
-                self._modify_and_delete_open_assignments(
+                self._modify_open_assignments(
                     open_assignments, customer_uuids_to_assign, linked_customers_by_uuid
                 )
             )
@@ -252,10 +251,11 @@ class Command(BaseCommand):
             assignments_to_update, ['enterprise_customer'], batch_size=100
         )
 
-    def _modify_and_delete_open_assignments(self, open_assignments, customer_uuids_to_assign, linked_customers_by_uuid):
+    def _modify_open_assignments(self, open_assignments, customer_uuids_to_assign, linked_customers_by_uuid):
         """
         If there are open assignments, update them with the customer uuids in need of assignment.
-        Deletes any excess open assignments.
+        This has a potential side-effect of removing records from both
+        ``open_assignments`` and ``customer_uuids_to_assign``.
         """
         assignments_to_update = []
         while open_assignments and customer_uuids_to_assign:
@@ -265,12 +265,6 @@ class Command(BaseCommand):
             ]
             open_assignment.enterprise_customer = enterprise_customer
             assignments_to_update.append(open_assignment)
-
-        # Any remaining open assignments should be deleted, otherwise, the context
-        # to which the role is applied will continue to be interpretted as
-        # being every customer the user is linked to, which is inappropriate for the admin role.
-        for assignment in open_assignments:
-            assignment.delete()
 
         return assignments_to_update
 
