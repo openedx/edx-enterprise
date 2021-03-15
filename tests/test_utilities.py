@@ -1541,6 +1541,36 @@ class TestEnterpriseUtils(unittest.TestCase):
 
     @ddt.data(
         (
+            # Test with two Current runs, but one not published. Should choose published one.
+            {
+                "course_runs": [
+                    fake_catalog_api.create_course_run_dict(
+                        availability="Current",
+                        start="2015-10-15T13:11:03Z",
+                        status="unpublished",
+                        end="2014-10-15T13:11:03Z",
+                        enrollment_start=None,
+                        enrollment_end=None,
+                    ),
+                    fake_catalog_api.create_course_run_dict(
+                        availability="Current",
+                        start="2015-10-15T13:11:03Z",
+                        end="2015-10-15T13:11:03Z",
+                        enrollment_start=None,
+                        enrollment_end=None,
+                    ),
+                ],
+            },
+            [],
+            fake_catalog_api.create_course_run_dict(
+                availability="Current",
+                start="2015-10-15T13:11:03Z",
+                end="2015-10-15T13:11:03Z",
+                enrollment_start=None,
+                enrollment_end=None,
+            ),
+        ),
+        (
             # Test with two enrollable/upgradeable course runs.
             {
                 "course_runs": [

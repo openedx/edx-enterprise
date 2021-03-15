@@ -1283,7 +1283,8 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
                            enrollment_start="2014-10-13T13:11:03Z",
                            enrollment_end="2999-10-13T13:11:04Z",
                            upgrade_deadline="3000-10-13T13:11:04Z",
-                           availability='Starting Soon',
+                           availability="Starting Soon",
+                           status="published",
                            weeks_to_complete=1):
     """
     Return enrollable and upgradeable course run dict.
@@ -1291,6 +1292,7 @@ def create_course_run_dict(start="2014-10-14T13:11:03Z", end="3000-10-13T13:11:0
     return {
         "start": start,
         "end": end,
+        "status": status,
         "enrollment_start": enrollment_start,
         "enrollment_end": enrollment_end,
         "seats": [{"type": "verified", "upgrade_deadline": upgrade_deadline}],
