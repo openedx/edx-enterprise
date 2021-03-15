@@ -245,8 +245,10 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
 
         Expected Return Values:
             Success cases:
-                - All users exist and are enrolled - [], 201
-                - Some or none of the users exist but are enrolled - [], 202
+                - All users exist and are enrolled -
+                    {'successes': [], 'pending': [], 'failures': []}, 201
+                - Some or none of the users exist but are enrolled -
+                    {'successes': [], 'pending': [], 'failures': []}, 202
 
             Failure cases:
                 - Some or all of the users can't be enrolled, no users were enrolled -
@@ -266,6 +268,9 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError:
+            error_message = "Something went wrong while validating bulk enrollment requests." \
+                            "Received exception: {}".format(serializer.errors)
+            LOGGER.warning(error_message)
             return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
         email_errors = []
@@ -308,11 +313,12 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
             existing_users = {
                 result.pop('user') for result in results['successes'] if result['course_run_key'] == course_run
             }
+            LOGGER.info("Successfully bulk enrolled learners: {}".format(pending_users | existing_users))
             if serializer.validated_data.get('notify'):
                 enterprise_customer.notify_enrolled_learners(
                     catalog_api_user=request.user,
                     course_id=course_run,
-                    users=pending_users + existing_users,
+                    users=pending_users | existing_users,
                 )
 
             self._create_ecom_orders_for_enrollments(

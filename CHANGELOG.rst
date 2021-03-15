@@ -18,6 +18,11 @@ Unreleased
 
 * Nothing.
 
+[3.18.7]
+--------
+
+* Refactored bulk enrollment serializer and bug fixes to the bulk enrollment endpoint.
+
 [3.18.6]
 --------
 

@@ -954,17 +954,35 @@ class EnterpriseCustomerBulkEnrollmentsSerializer(serializers.Serializer):
         return data
 
 
+class LicensesInfoSerializer(serializers.Serializer):
+    """
+    Nested serializer class to allow for many license info dictionaries.
+    """
+    email = serializers.CharField(required=False)
+    course_run_key = serializers.CharField(required=False)
+    license_uuid = serializers.CharField(required=False)
+
+    def create(self, validated_data):
+        return validated_data
+
+    def validate(self, data):  # pylint: disable=arguments-differ
+        missing_fields = []
+        for key in self.fields.keys():
+            if not data.get(key):
+                missing_fields.append(key)
+
+        if missing_fields:
+            raise serializers.ValidationError('Found missing licenses_info field(s): {}.'.format(missing_fields))
+
+        return data
+
+
 # pylint: disable=abstract-method
 class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serializer):
     """
     Serializes a licenses info field for bulk enrollment requests.
     """
-    licenses_info = serializers.ListField(
-        child=serializers.DictField(
-            child=serializers.CharField(required=False),
-        ),
-        required=False,
-    )
+    licenses_info = LicensesInfoSerializer(many=True, required=False)
     reason = serializers.CharField(required=False)
     salesforce_id = serializers.CharField(required=False)
     discount = serializers.DecimalField(None, 5, required=False)
@@ -974,17 +992,8 @@ class EnterpriseCustomerBulkSubscriptionEnrollmentsSerializer(serializers.Serial
         return validated_data
 
     def validate(self, data):  # pylint: disable=arguments-differ
-        if not data.get('licenses_info'):
-            raise serializers.ValidationError('Must include the "license_info" parameter in request.')
-
-        # validate that each license info has the required keys
-        for license_info in data.get('licenses_info'):
-            required_info = {'email', 'course_run_key', 'license_uuid'}
-            if not set(license_info.keys()) == required_info:
-                missing_fields = list(required_info - set(license_info.keys()))
-                missing_fields.sort()
-                raise serializers.ValidationError(
-                    'All license_info dicts must contain an email, course_run_key and license_uuid. '
-                    'Missing fields: {}'.format(missing_fields)
-                )
+        if data.get('licenses_info') is None:
+            raise serializers.ValidationError(
+                'Must include the "licenses_info" parameter in request.'
+            )
         return data
