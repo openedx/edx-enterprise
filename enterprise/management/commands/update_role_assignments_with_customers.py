@@ -27,7 +27,7 @@ User = auth.get_user_model()
 # pylint: disable=logging-fstring-interpolation
 class Command(BaseCommand):
     """
-    Management command for updating enterprise admin and learner role assignments
+    Management command for creating enterprise role assignments
     with a foreign key to an EnterpriseCustomer, or an explicit boolean
     flag indicating that the assignment grants the role to the user
     for every EnterpriseCustomer.
@@ -181,17 +181,11 @@ class Command(BaseCommand):
     def _handle_non_operators(self, customers_by_user_id, assignments_by_user_id_role, dry_run):
         """
         For a given mapping of users to enterprise customers, and (user, role) to assignments,
-        this method processes assignments such that there is exactly one SystemWideEnterpriseUserRoleAssignment,
-        with a role based on the `assignments_by_user_id_role` mapping, per user-customer link.
-        Note that this method can result in the updating, creation, or deletion of
-        SystemWideEnterpriseUserRoleAssignments.  Its "preference" is to update existing assignments
-        for a given user with enterprise customers that the user is linked to.  If there are more
-        user-customer links that there are "open" assignments ("open" meaning that `enterprise_customer` is currently
-        null), it will create enough assignments to capture all of these links.
+        this method creates one SystemWideEnterpriseUserRoleAssignment per user-customer link,
+        with a role based on the `assignments_by_user_id_role` mapping.
         """
-        # we'll bulk update/create objects in the DB after
+        # we'll bulk create the new objects in the DB after we loop through the assignment-user mapping
         assignments_to_create = []
-        assignments_to_update = []
 
         roles_by_name = roles_api.roles_by_name()
 
@@ -200,7 +194,8 @@ class Command(BaseCommand):
                 customer.uuid: customer for customer in customers_by_user_id[user_id]
             }
 
-            # What's the difference between explicit assignments and all linked enterprises?
+            # Some users may already have a role explicitly associated with an enterprise customer,
+            # so we first compute the difference between explicit assignments and all linked enterprises.
             existing_customer_assignments = set(
                 assignment.enterprise_customer.uuid for assignment in role_assignment_set
                 if assignment.enterprise_customer
@@ -209,24 +204,6 @@ class Command(BaseCommand):
             if not customer_uuids_to_assign:
                 continue
 
-            # which assignments have a role but no explicit enterprise_customer assignment?
-            open_assignments = [
-                assignment for assignment in role_assignment_set
-                if assignment.enterprise_customer is None
-            ]
-
-            if dry_run:
-                continue
-
-            assignments_to_update.extend(
-                self._modify_open_assignments(
-                    open_assignments, customer_uuids_to_assign, linked_customers_by_uuid
-                )
-            )
-
-            # For any remaining customer uuids to assign, create a role assignment
-            # object that we'll bulk create as the last step of processing
-            # this batch of EnterpriseCustomerUsers
             for customer_uuid in customer_uuids_to_assign:
                 assignments_to_create.append(
                     SystemWideEnterpriseUserRoleAssignment(
@@ -236,37 +213,17 @@ class Command(BaseCommand):
                     )
                 )
 
+        log.info(
+            f'There are {len(assignments_to_create)} assignments to create in this batch.'
+        )
+
         if dry_run:
             log.info('This is a dry run, no updates or creates will happen for this batch.')
             return
 
-        log.info(
-            f'There are {len(assignments_to_create)} assignments to create '
-            f'and {len(assignments_to_update)} to update in this batch.'
-        )
         SystemWideEnterpriseUserRoleAssignment.objects.bulk_create(
             assignments_to_create, batch_size=100
         )
-        SystemWideEnterpriseUserRoleAssignment.objects.bulk_update(
-            assignments_to_update, ['enterprise_customer'], batch_size=100
-        )
-
-    def _modify_open_assignments(self, open_assignments, customer_uuids_to_assign, linked_customers_by_uuid):
-        """
-        If there are open assignments, update them with the customer uuids in need of assignment.
-        This has a potential side-effect of removing records from both
-        ``open_assignments`` and ``customer_uuids_to_assign``.
-        """
-        assignments_to_update = []
-        while open_assignments and customer_uuids_to_assign:
-            open_assignment = open_assignments.pop(0)
-            enterprise_customer = linked_customers_by_uuid[
-                customer_uuids_to_assign.pop(0)
-            ]
-            open_assignment.enterprise_customer = enterprise_customer
-            assignments_to_update.append(open_assignment)
-
-        return assignments_to_update
 
     def _get_all_enterprise_customer_user_ids(self, enterprise_customer_uuid=None):
         """

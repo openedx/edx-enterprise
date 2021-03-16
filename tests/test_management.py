@@ -1659,12 +1659,13 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
             ).count() == 1
 
         queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(
-            role=roles_api.learner_role()
+            role=roles_api.learner_role(),
+        ).exclude(
+            enterprise_customer__isnull=True
         )
         if expected_customer:
             queryset = queryset.filter(enterprise_customer=expected_customer)
-        # There might be extra open assignments, which is ok.
-        assert len(expected_user_customer_assignments) <= queryset.count()
+        assert len(expected_user_customer_assignments) == queryset.count()
 
     def _admin_assertions(self, expected_customer=None):
         """ Helper to assert that expected enterprise admins are assigned to expected customers. """
@@ -1694,10 +1695,11 @@ class TestUpdateRoleAssignmentsCommand(unittest.TestCase):
 
         queryset = SystemWideEnterpriseUserRoleAssignment.objects.filter(
             role=roles_api.admin_role()
+        ).exclude(
+            enterprise_customer__isnull=True
         )
         if expected_customer:
             queryset = queryset.filter(enterprise_customer=expected_customer)
-        # there might be extra open assignments, which is ok
         assert len(expected_user_customer_assignments) <= queryset.count()
 
     def _operator_assertions(self):
