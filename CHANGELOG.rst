@@ -18,6 +18,12 @@ Unreleased
 
 * Nothing.
 
+[3.18.6]
+--------
+
+* fix: The update_role_assignments_with_customers command no longer updates records.  It only creates
+  new records, which helps de-risk the operation.
+
 [3.18.5]
 --------
 * fix: do not include unpublished courses when enrollment link resolves course_runs
