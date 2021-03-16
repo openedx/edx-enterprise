@@ -1047,8 +1047,9 @@ def get_current_course_run(course, users_active_course_runs):
                 filtered_course_runs.append(course_run)
 
         if not filtered_course_runs:
-            # Consider all runs if there were not any enrollable/upgradeable ones.
-            filtered_course_runs = all_course_runs
+            # Consider all published runs if there were not any enrollable/upgradeable ones.
+            filtered_course_runs = [course_run for course_run in all_course_runs
+                                    if course_run['status'] == 'published']
 
         if filtered_course_runs:
             current_course_runs = [

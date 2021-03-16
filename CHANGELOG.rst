@@ -18,6 +18,10 @@ Unreleased
 
 * Nothing.
 
+[3.18.5]
+--------
+* fix: do not include unpublished courses when enrollment link resolves course_runs
+
 [3.18.4]
 --------
 
