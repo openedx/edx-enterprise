@@ -853,7 +853,7 @@ class PendingEnterpriseCustomerUserViewSet(BasePendingEnterpriseCustomerViewSet)
         return return_status
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data, many=isinstance(request.data,list))
         return_status = self._get_return_status(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=return_status, headers=headers)
