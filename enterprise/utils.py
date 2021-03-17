@@ -1344,9 +1344,9 @@ def enroll_user(enterprise_customer, user, course_mode, *course_ids, **kwargs):
     Enroll a single user in any number of courses using a particular course mode.
 
     Args:
-        enterprise_customer: The EnterpriseCustomer which is sponsoring the enrollment
-        user: The user who needs to be enrolled in the course
-        course_mode: The mode with which the enrollment should be created
+        enterprise_customer: The EnterpriseCustomer model object which is sponsoring the enrollment
+        user: The user model object who needs to be enrolled in the course
+        course_mode: The string representation of the mode with which the enrollment should be created
         *course_ids: An iterable containing any number of course IDs to eventually enroll the user in.
         kwargs: Should contain enrollment_client if it's already been instantiated and should be passed in.
 
@@ -1472,7 +1472,7 @@ def enroll_licensed_users_in_courses(enterprise_customer, licensed_users_info, d
         user = User.objects.filter(email=licensed_user_info['email']).first()
         try:
             if user:
-                succeeded = enroll_user(enterprise_customer, user_email, course_mode, course_run_key)
+                succeeded = enroll_user(enterprise_customer, user, course_mode, course_run_key)
                 if succeeded:
                     enterprise_customer_user = get_enterprise_customer_user(user.id, enterprise_customer.uuid)
                     get_create_ent_enrollment(course_run_key, enterprise_customer_user, license_uuid=license_uuid)

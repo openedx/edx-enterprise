@@ -2706,7 +2706,7 @@ class TestEnterpriseAPIViews(APITest):
         {
             'body': {},
             'expected_code': 400,
-            'expected_response': {'non_field_errors': ['Must include the "license_info" parameter in request.']},
+            'expected_response': {'non_field_errors': ['Must include the "licenses_info" parameter in request.']},
             'expected_num_pending_licenses': 0,
         },
         {
@@ -2714,7 +2714,9 @@ class TestEnterpriseAPIViews(APITest):
                 'licenses_info': {}
             },
             'expected_code': 400,
-            'expected_response': {'licenses_info': ['Expected a list of items but got type "dict".']},
+            'expected_response': {
+                'licenses_info': {'non_field_errors': ['Expected a list of items but got type "dict".']}
+            },
             'expected_num_pending_licenses': 0,
         },
         {
@@ -2724,10 +2726,7 @@ class TestEnterpriseAPIViews(APITest):
             },
             'expected_code': 400,
             'expected_response': {
-                'non_field_errors': [
-                    "All license_info dicts must contain an email, course_run_key and license_uuid. "
-                    "Missing fields: ['license_uuid']"
-                ]
+                'licenses_info': [{'non_field_errors': ["Found missing licenses_info field(s): ['license_uuid']."]}]
             },
             'expected_num_pending_licenses': 0,
         },
@@ -2762,7 +2761,7 @@ class TestEnterpriseAPIViews(APITest):
             },
             'expected_num_pending_licenses': 1,
         },
-        # # Multi-learner, single course success
+        # Multi-learner, single course success
         {
             'body': {
                 'licenses_info': [
