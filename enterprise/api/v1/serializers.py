@@ -378,6 +378,7 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
     """
     Serializer for writing to the EnterpriseCustomerUser model.
     """
+    USER_DOES_NOT_EXIST = "User does not exist"
 
     class Meta:
         model = models.EnterpriseCustomerUser
@@ -395,11 +396,11 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
         """
         try:
             self.user = User.objects.get(username=value)
-        except User.DoesNotExist as no_user_error:
+        except User.DoesNotExist:
             error_message = ('[Enterprise API] Saving to EnterpriseCustomerUser failed'
                              ' due to non-existing user. User: {}').format(value)
             LOGGER.error(error_message)
-            raise serializers.ValidationError("User does not exist") from no_user_error
+            raise serializers.ValidationError(self.USER_DOES_NOT_EXIST)
 
         return value
 

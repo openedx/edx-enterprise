@@ -807,49 +807,64 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
         return serializers.EnterpriseCustomerUserWriteSerializer
 
 
-class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
-    """
-    API views for the ``pending-enterprise-learner`` API endpoint.
-    """
-
+class BasePendingEnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     queryset = models.PendingEnterpriseCustomerUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     serializer_class = serializers.PendingEnterpriseCustomerUserSerializer
     permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
 
     FIELDS = (
-        'enterprise_customer', 'user_email',
-    )
+          'enterprise_customer', 'user_email',
+      )
     filterset_fields = FIELDS
     ordering_fields = FIELDS
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    UNIQUE = 'unique'
+    USER_EXISTS_ERROR = 'EnterpriseCustomerUser record already exists'
+
+
+class PendingEnterpriseCustomerUserViewSet(BasePendingEnterpriseCustomerViewSet):
+    """
+    API views for the ``pending-enterprise-learner`` API endpoint.
+    """
+
+    def _get_return_status(self, serializer):
+        return_status = None
+
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as validation_error:
-            return_status = None
             if 'user_email' in serializer.errors:
                 for error in serializer.errors['user_email']:
                     # This error indicates that a PendingEnterpriseCustomerUser already exists.
-                    if error.code == 'unique':
-                        return_status = status.HTTP_204_NO_CONTENT
-                        break
+                    if error.code == self.UNIQUE:
+                        return status.HTTP_204_NO_CONTENT
+
             elif 'non_field_errors' in serializer.errors:
                 for error in serializer.errors['non_field_errors']:
                     # This error indicates that an EnterpriseCustomerUser already exists.
-                    if str(error) == 'EnterpriseCustomerUser record already exists':
-                        return_status = status.HTTP_204_NO_CONTENT
-                        break
+                    if str(error) == self.USER_EXISTS_ERROR:
+                        return status.HTTP_204_NO_CONTENT
 
-            if not return_status:
-                raise validation_error
-        else:
-            created = serializer.save()
-            return_status = status.HTTP_201_CREATED if created else status.HTTP_204_NO_CONTENT
+            raise validation_error
+
+        created = serializer.save()
+        return_status = status.HTTP_201_CREATED if created else status.HTTP_204_NO_CONTENT
+        return return_status
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        return_status = self._get_return_status(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=return_status, headers=headers)
 
+
+# class PendingEnterpriseCustomerUsersViewSet(BasePendingEnterpriseCustomerViewSet):
+#     def create(self, request, *args, **kwargs):
+#         serializer = self.get_serializer(data=request.data, many=True)
+#         try:
+#           serializer.is_valid(raise_exception=True)
+#         except
 
 class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):
     """
