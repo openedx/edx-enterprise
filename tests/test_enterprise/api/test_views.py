@@ -135,7 +135,7 @@ def side_effect(url, query_parameters):
 
 @ddt.ddt
 @mark.django_db
-class TestEnterpriseAPIViews(APITest):
+class BaseTestEnterpriseAPIViews(APITest):
     """
     Tests for enterprise api views.
     """
@@ -162,6 +162,92 @@ class TestEnterpriseAPIViews(APITest):
         """
         for item in items:
             factory.create(**item)
+
+    def create_course_enrollments_context(
+            self,
+            user_exists,
+            lms_user_id,
+            tpa_user_id,
+            user_email,
+            mock_tpa_client,
+            mock_enrollment_client,
+            course_enrollment,
+            mock_catalog_contains_course,
+            course_in_catalog,
+            enable_autocohorting=False
+    ):
+        """
+        Set up for tests that call the enterprise customer course enrollments detail route.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise",
+            enable_autocohorting=enable_autocohorting
+        )
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=enterprise_customer
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        user = None
+        # Create a preexisting EnterpriseCustomerUser
+        if user_exists:
+            if lms_user_id:
+                user = factories.UserFactory(id=lms_user_id)
+            elif tpa_user_id:
+                user = factories.UserFactory(username=tpa_user_id)
+            elif user_email:
+                user = factories.UserFactory(email=user_email)
+
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=enterprise_customer,
+            )
+
+        # Set up ThirdPartyAuth API response
+        if tpa_user_id:
+            mock_tpa_client.return_value = mock.Mock()
+            mock_tpa_client.return_value.get_username_from_remote_id = mock.Mock()
+            mock_tpa_client.return_value.get_username_from_remote_id.return_value = tpa_user_id
+
+        # Set up EnrollmentAPI responses
+        mock_enrollment_client.return_value = mock.Mock(
+            get_course_enrollment=mock.Mock(return_value=course_enrollment),
+            enroll_user_in_course=mock.Mock()
+        )
+
+        # Set up catalog_contains_course response.
+        mock_catalog_contains_course.return_value = course_in_catalog
+
+        return enterprise_customer, user
+
+    def _revocation_factory_objects(self):
+        """
+        Helper method to provide some testing objects for revocation tests.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+        )
+        licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=enterprise_course_enrollment,
+        )
+
+        assert not enterprise_course_enrollment.saved_for_later
+        assert not licensed_course_enrollment.is_revoked
+
+        return enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
+
+@ddt.ddt
+@mark.django_db
+class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
 
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @mock.patch("enterprise.api.v1.serializers.track_enrollment")
@@ -277,13 +363,13 @@ class TestEnterpriseAPIViews(APITest):
     )
     @ddt.unpack
     def test_post_enterprise_course_enrollment(
-            self,
-            has_permissions,
-            factory,
-            request_data,
-            enrollment_exists,
-            status_code,
-            mock_track_enrollment,
+        self,
+        has_permissions,
+        factory,
+        request_data,
+        enrollment_exists,
+        status_code,
+        mock_track_enrollment,
     ):
         """
         Make sure service users can post new EnterpriseCourseEnrollments.
@@ -332,6 +418,9 @@ class TestEnterpriseAPIViews(APITest):
         else:
             mock_track_enrollment.assert_not_called()
 
+@ddt.ddt
+@mark.django_db
+class TestGetEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -505,6 +594,9 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
     @ddt.data(
         (
             factories.EnterpriseCustomerFactory,
@@ -865,6 +957,9 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
         assert expected_item == response
 
+@ddt.ddt
+@mark.django_db
+class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
     @ddt.data(
         (False, False),
         (False, True),
@@ -1549,66 +1644,9 @@ class TestEnterpriseAPIViews(APITest):
 
         self.assertDictEqual(response, expected_result)
 
-    def create_course_enrollments_context(
-            self,
-            user_exists,
-            lms_user_id,
-            tpa_user_id,
-            user_email,
-            mock_tpa_client,
-            mock_enrollment_client,
-            course_enrollment,
-            mock_catalog_contains_course,
-            course_in_catalog,
-            enable_autocohorting=False
-    ):
-        """
-        Set up for tests that call the enterprise customer course enrollments detail route.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory(
-            uuid=FAKE_UUIDS[0],
-            name="test_enterprise",
-            enable_autocohorting=enable_autocohorting
-        )
-        factories.EnterpriseCustomerIdentityProviderFactory(
-            enterprise_customer=enterprise_customer
-        )
-
-        permission = Permission.objects.get(name='Can add Enterprise Customer')
-        self.user.user_permissions.add(permission)
-
-        user = None
-        # Create a preexisting EnterpriseCustomerUser
-        if user_exists:
-            if lms_user_id:
-                user = factories.UserFactory(id=lms_user_id)
-            elif tpa_user_id:
-                user = factories.UserFactory(username=tpa_user_id)
-            elif user_email:
-                user = factories.UserFactory(email=user_email)
-
-            factories.EnterpriseCustomerUserFactory(
-                user_id=user.id,
-                enterprise_customer=enterprise_customer,
-            )
-
-        # Set up ThirdPartyAuth API response
-        if tpa_user_id:
-            mock_tpa_client.return_value = mock.Mock()
-            mock_tpa_client.return_value.get_username_from_remote_id = mock.Mock()
-            mock_tpa_client.return_value.get_username_from_remote_id.return_value = tpa_user_id
-
-        # Set up EnrollmentAPI responses
-        mock_enrollment_client.return_value = mock.Mock(
-            get_course_enrollment=mock.Mock(return_value=course_enrollment),
-            enroll_user_in_course=mock.Mock()
-        )
-
-        # Set up catalog_contains_course response.
-        mock_catalog_contains_course.return_value = course_in_catalog
-
-        return enterprise_customer, user
-
+@ddt.ddt
+@mark.django_db
+class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
     @ddt.data(
         (
             False,
@@ -2127,6 +2165,9 @@ class TestEnterpriseAPIViews(APITest):
         response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
         self.assertEqual(response_xml['content-type'], 'application/xml; charset=utf-8')
 
+@ddt.ddt
+@mark.django_db
+class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
     def test_get_catalog_query(self):
         """
         Test that `CatalogQueryView` returns expected response.
@@ -2198,6 +2239,11 @@ class TestEnterpriseAPIViews(APITest):
         assert response.status_code == 403
         response = response.json()
         assert response['detail'] == 'Authentication credentials were not provided.'
+
+@ddt.ddt
+@mark.django_db
+class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
+    REQUEST_CODES_ENDPOINT = reverse('request-codes')
 
     @mock.patch('django.core.mail.send_mail')
     @ddt.data(
@@ -2292,10 +2338,9 @@ class TestEnterpriseAPIViews(APITest):
         """
         Ensure endpoint response data and status codes.
         """
-        endpoint_name = 'request-codes'
         mock_send_mail.side_effect = mock_side_effect
         response = self.client.post(
-            settings.TEST_SERVER + reverse(endpoint_name),
+            settings.TEST_SERVER + self.REQUEST_CODES_ENDPOINT,
             data=json.dumps(post_data),
             content_type='application/json',
         )
@@ -2347,13 +2392,16 @@ class TestEnterpriseAPIViews(APITest):
             'number_of_codes': '50',
         }
         response = client.post(
-            settings.TEST_SERVER + reverse('request-codes'),
+            settings.TEST_SERVER + self.REQUEST_CODES_ENDPOINT,
             data=json.dumps(post_data),
             content_type='application/json',
         )
 
         assert response.status_code == expected_status
 
+@ddt.ddt
+@mark.django_db
+class TestLicensedEnterpriseCourseEnfollemntViewset(BaseTestEnterpriseAPIViews):
     def test_validate_license_revoke_data_valid_data(self):
         request_data = {
             'user_id': 'anything',
@@ -2630,6 +2678,9 @@ class TestEnterpriseAPIViews(APITest):
                 course_id=enterprise_course_enrollment.course_id,
             )
 
+@ddt.ddt
+@mark.django_db
+class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     @ddt.data(
         {
             'body': {},
@@ -2918,6 +2969,10 @@ class TestEnterpriseAPIViews(APITest):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.json(), enrollment_response)
 
+@ddt.ddt
+@mark.django_db
+class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
+
     @ddt.data(
         {'is_course_completed': False, 'has_audit_mode': True},
         {'is_course_completed': True, 'has_audit_mode': True},
@@ -3001,29 +3056,6 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    def _revocation_factory_objects(self):
-        """
-        Helper method to provide some testing objects for revocation tests.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer,
-        )
-        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=enterprise_customer_user,
-        )
-        licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
-            enterprise_course_enrollment=enterprise_course_enrollment,
-        )
-
-        assert not enterprise_course_enrollment.saved_for_later
-        assert not licensed_course_enrollment.is_revoked
-
-        return enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
-
 
 @ddt.ddt
 @mark.django_db
