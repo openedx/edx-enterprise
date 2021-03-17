@@ -6,7 +6,7 @@
 #
 amqp==5.0.5
     # via kombu
-aniso8601==8.1.1
+aniso8601==9.0.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-tincan-py35
@@ -24,7 +24,7 @@ certifi==2020.12.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests
-cffi==1.14.4
+cffi==1.14.5
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cryptography
@@ -55,11 +55,11 @@ cryptography==3.2.1
     #   -r requirements/base.in
     #   django-fernet-fields
     #   pyjwt
-defusedxml==0.6.0
+defusedxml==0.7.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   djangorestframework-xml
-django-cache-memoize==0.1.7
+django-cache-memoize==0.1.8
     # via -r requirements/base.in
 django-config-models==2.1.1
     # via
@@ -106,7 +106,7 @@ django-waffle==2.1.0
     #   -r requirements/base.in
     #   edx-django-utils
     #   edx-drf-extensions
-django==2.2.18
+django==2.2.19
     # via
     #   -c https://raw.githubusercontent.com/edx/edx-lint/master/edx_lint/files/common_constraints.txt
     #   -c requirements/edx-platform-constraints.txt
@@ -140,14 +140,14 @@ drf-jwt==1.17.3
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
-edx-django-utils==3.13.0
+edx-django-utils==3.15.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.4.0
+edx-drf-extensions==6.5.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -191,7 +191,7 @@ markupsafe==1.1.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   jinja2
-newrelic==6.0.1.155
+newrelic==6.2.0.156
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-django-utils
@@ -215,7 +215,7 @@ pillow==7.2.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-prompt-toolkit==3.0.14
+prompt-toolkit==3.0.17
     # via click-repl
 psutil==5.8.0
     # via
@@ -225,7 +225,7 @@ pycparser==2.20
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   cffi
-pycryptodomex==3.9.9
+pycryptodomex==3.10.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   pyjwkest
@@ -317,7 +317,7 @@ stevedore==1.32.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.14.1
+tableauserverclient==0.15.0
     # via -r requirements/base.in
 testfixtures==6.17.1
     # via -r requirements/base.in
@@ -329,7 +329,7 @@ unicodecsv==0.14.1
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
-urllib3==1.26.3
+urllib3==1.26.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   requests

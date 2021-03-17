@@ -4,11 +4,10 @@
 #
 #    make upgrade
 #
-amqp==5.0.5
     # via
     #   -r requirements/test-master.txt
     #   kombu
-aniso8601==8.1.1
+aniso8601==9.0.1
     # via
     #   -r requirements/test-master.txt
     #   edx-tincan-py35
@@ -26,7 +25,7 @@ certifi==2020.12.5
     # via
     #   -r requirements/test-master.txt
     #   requests
-cffi==1.14.4
+cffi==1.14.5
     # via
     #   -r requirements/test-master.txt
     #   cryptography
@@ -54,7 +53,7 @@ click-plugins==1.1.1
     #   code-annotations
 code-annotations==1.1.0
     # via -r requirements/test-master.txt
-coverage==5.4
+coverage==5.5
     # via pytest-cov
 cryptography==3.2.1
     # via
@@ -63,13 +62,13 @@ cryptography==3.2.1
     #   pyjwt
 ddt==1.3.1
     # via -r requirements/test.in
-defusedxml==0.6.0
+defusedxml==0.7.1
     # via
     #   -r requirements/test-master.txt
     #   djangorestframework-xml
-diff-cover==4.2.1
+diff-cover==5.0.1
     # via -r requirements/test.in
-django-cache-memoize==0.1.7
+django-cache-memoize==0.1.8
     # via -r requirements/test-master.txt
 django-config-models==2.1.1
     # via -r requirements/test-master.txt
@@ -133,13 +132,13 @@ drf-jwt==1.17.3
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions
-edx-django-utils==3.13.0
+edx-django-utils==3.15.0
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
     #   edx-drf-extensions
     #   edx-rest-api-client
-edx-drf-extensions==6.4.0
+edx-drf-extensions==6.5.0
     # via
     #   -r requirements/test-master.txt
     #   edx-rbac
@@ -157,7 +156,7 @@ factory-boy==3.2.0
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-faker==5.8.0
+faker==6.6.1
     # via factory-boy
 freezegun==0.3.14
     # via
@@ -171,7 +170,7 @@ idna==2.10
     # via
     #   -r requirements/test-master.txt
     #   requests
-importlib-metadata==3.4.0
+importlib-metadata==3.7.3
     # via inflect
 inflect==3.0.2
     # via
@@ -204,9 +203,9 @@ mock==3.0.5
     # via
     #   -c requirements/constraints.txt
     #   -r requirements/test.in
-more-itertools==8.6.0
+more-itertools==8.7.0
     # via zipp
-newrelic==6.0.1.155
+newrelic==6.2.0.156
     # via
     #   -r requirements/test-master.txt
     #   edx-django-utils
@@ -246,11 +245,11 @@ pycparser==2.20
     # via
     #   -r requirements/test-master.txt
     #   cffi
-pycryptodomex==3.9.9
+pycryptodomex==3.10.1
     # via
     #   -r requirements/test-master.txt
     #   pyjwkest
-pygments==2.7.4
+pygments==2.8.1
     # via diff-cover
 pyjwkest==1.4.2
     # via
@@ -354,7 +353,7 @@ stevedore==1.32.0
     #   code-annotations
     #   edx-django-utils
     #   edx-opaque-keys
-tableauserverclient==0.14.1
+tableauserverclient==0.15.0
     # via -r requirements/test-master.txt
 testfixtures==6.17.1
     # via
@@ -369,7 +368,7 @@ toml==0.10.2
     # via pytest
 unicodecsv==0.14.1
     # via -r requirements/test-master.txt
-urllib3==1.26.3
+urllib3==1.26.4
     # via
     #   -r requirements/test-master.txt
     #   requests
