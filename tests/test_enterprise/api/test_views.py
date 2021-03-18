@@ -243,6 +243,7 @@ class BaseTestEnterpriseAPIViews(APITest):
 
         return enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
 
+
 @ddt.ddt
 @mark.django_db
 class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
@@ -419,6 +420,7 @@ class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
         else:
             mock_track_enrollment.assert_not_called()
 
+
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
@@ -530,6 +532,7 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         response = self.client.post(settings.TEST_SERVER + ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
+
 @ddt.ddt
 @mark.django_db
 class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
@@ -585,7 +588,6 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         # Create fake enterprise
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
 
-
         new_user_email = 'newuser@example.com'
         # data to be passed to the request
         data = {
@@ -638,7 +640,6 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         # Create fake enterprise
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
 
-
         new_user_email = 'newuser@example.com'
         # data to be passed to the request
         data = {
@@ -663,7 +664,8 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         {'is_staff': False, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 403},
     )
     @ddt.unpack
-    def test_post_pending_enterprise_customer_unauthorized_user(self,
+    def test_post_pending_enterprise_customer_unauthorized_user(
+        self,
         is_staff,
         user_exists,
         ecu_exists,
@@ -695,18 +697,17 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
 
-
     @ddt.data(
-      ([{ 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True },
-        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False },
-        { 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False },
-        { 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False },
-        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True }], 201),
-      ([{ 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True },
-        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False },
-        { 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False }], 201 ),
-      ([{ 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False },
-        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True }], 204)
+        ([{'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True}], 201),
+        ([{'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False}], 201),
+        ([{'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True}], 204)
     )
     @ddt.unpack
     def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
@@ -717,8 +718,8 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         for idx, user in enumerate(userlist):
             user_email = 'new_user{}@example.com'.format(idx)
             data.append({
-              'enterprise_customer': FAKE_UUIDS[0],
-              'user_email': user_email
+                'enterprise_customer': FAKE_UUIDS[0],
+                'user_email': user_email
             })
 
             existing_user = self.create_ent_user(
@@ -729,9 +730,9 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
                 enterprise_customer=enterprise_customer,
             )
             users.append({
-              'user_exists': user['user_exists'],
-              'user_email': user_email,
-              'existing_user': existing_user
+                'user_exists': user['user_exists'],
+                'user_email': user_email,
+                'existing_user': existing_user
             })
 
         response = self.client.post(
@@ -764,6 +765,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         }
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
+
 
 @ddt.ddt
 @mark.django_db
@@ -1130,6 +1132,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
         response = self.client.get(settings.TEST_SERVER + ENTERPRISE_CUSTOMER_BRANDING_DETAIL_ENDPOINT)
         response = self.load_json(response.content)
         assert expected_item == response
+
 
 @ddt.ddt
 @mark.django_db
@@ -1797,6 +1800,7 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         assert 'course_run_ids' in message
         assert response.status_code == 400
 
+
 @ddt.ddt
 @mark.django_db
 class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
@@ -2345,6 +2349,7 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
         response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
         self.assertEqual(response_xml['content-type'], 'application/xml; charset=utf-8')
 
+
 @ddt.ddt
 @mark.django_db
 class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
@@ -2425,6 +2430,7 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
         assert response.status_code == 403
         response = response.json()
         assert response['detail'] == 'Authentication credentials were not provided.'
+
 
 @ddt.ddt
 @mark.django_db
@@ -2588,6 +2594,7 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
         )
 
         assert response.status_code == expected_status
+
 
 @ddt.ddt
 @mark.django_db
@@ -2871,6 +2878,7 @@ class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
                 username=enterprise_customer_user.username,
                 course_id=enterprise_course_enrollment.course_id,
             )
+
 
 @ddt.ddt
 @mark.django_db
@@ -3167,6 +3175,7 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.json(), enrollment_response)
 
+
 @ddt.ddt
 @mark.django_db
 class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
@@ -3257,6 +3266,7 @@ class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
 
 @ddt.ddt
 @mark.django_db

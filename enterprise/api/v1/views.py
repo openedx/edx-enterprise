@@ -817,8 +817,8 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
 
     FIELDS = (
-          'enterprise_customer', 'user_email',
-      )
+        'enterprise_customer', 'user_email',
+    )
     filterset_fields = FIELDS
     ordering_fields = FIELDS
 
@@ -843,8 +843,8 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
         return status.HTTP_204_NO_CONTENT
 
     def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, many=isinstance(request.data,list))
-        return_status = self._get_return_status(serializer, many=isinstance(request.data,list))
+        serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
+        return_status = self._get_return_status(serializer, many=isinstance(request.data, list))
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=return_status, headers=headers)
 
