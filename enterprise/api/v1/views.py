@@ -828,43 +828,29 @@ class PendingEnterpriseCustomerUserViewSet(BasePendingEnterpriseCustomerViewSet)
     API views for the ``pending-enterprise-learner`` API endpoint.
     """
 
-    def _get_return_status(self, serializer):
+    def _get_return_status(self, serializer, many):
+        """
+        Run serializer validation and get return status
+        """
         return_status = None
+        serializer.is_valid(raise_exception=True)
+        if not many:
+            _, created = serializer.save()
+            return_status = status.HTTP_201_CREATED if created else status.HTTP_204_NO_CONTENT
+            return return_status
 
-        try:
-            serializer.is_valid(raise_exception=True)
-        except ValidationError as validation_error:
-            if 'user_email' in serializer.errors:
-                for error in serializer.errors['user_email']:
-                    # This error indicates that a PendingEnterpriseCustomerUser already exists.
-                    if error.code == self.UNIQUE:
-                        return status.HTTP_204_NO_CONTENT
-
-            elif 'non_field_errors' in serializer.errors:
-                for error in serializer.errors['non_field_errors']:
-                    # This error indicates that an EnterpriseCustomerUser already exists.
-                    if str(error) == self.USER_EXISTS_ERROR:
-                        return status.HTTP_204_NO_CONTENT
-
-            raise validation_error
-
-        created = serializer.save()
-        return_status = status.HTTP_201_CREATED if created else status.HTTP_204_NO_CONTENT
-        return return_status
+        data_list = serializer.save()
+        for _, created in data_list:
+          if created:
+            return status.HTTP_201_CREATED
+        return status.HTTP_204_NO_CONTENT
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, many=isinstance(request.data,list))
-        return_status = self._get_return_status(serializer)
+        return_status = self._get_return_status(serializer, many=isinstance(request.data,list))
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=return_status, headers=headers)
 
-
-# class PendingEnterpriseCustomerUsersViewSet(BasePendingEnterpriseCustomerViewSet):
-#     def create(self, request, *args, **kwargs):
-#         serializer = self.get_serializer(data=request.data, many=True)
-#         try:
-#           serializer.is_valid(raise_exception=True)
-#         except
 
 class EnterpriseCustomerBrandingConfigurationViewSet(EnterpriseReadOnlyModelViewSet):
     """

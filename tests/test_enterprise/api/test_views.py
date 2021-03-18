@@ -133,8 +133,6 @@ def side_effect(url, query_parameters):
     )
 
 
-@ddt.ddt
-@mark.django_db
 class BaseTestEnterpriseAPIViews(APITest):
     """
     Tests for enterprise api views.
@@ -420,7 +418,7 @@ class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
-class TestGetEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
+class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -526,16 +524,35 @@ class TestGetEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         response = self.client.post(settings.TEST_SERVER + ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
+@ddt.ddt
+@mark.django_db
+class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
+    def create_ent_user(self, user_exists, ecu_exists, pending_ecu_exists, uuid, user_email, enterprise_customer):
+        user = None
+        if user_exists:
+            user = factories.UserFactory(email=user_email)
+            if ecu_exists:
+                factories.EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
+
+        if pending_ecu_exists:
+            factories.PendingEnterpriseCustomerUserFactory(
+                user_email=user_email, enterprise_customer=enterprise_customer
+            )
+        return user
+
+    def setup_admin_user(self, is_staff=True):
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
     @ddt.data(
-        {'is_staff': True, 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
-        {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
         {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
-        {'is_staff': False, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 403},
     )
     @ddt.unpack
-    def test_post_pending_enterprise_customer_user(
+    def test_post_pending_enterprise_customer_user_creation(
             self,
             is_staff,
             user_exists,
@@ -545,42 +562,178 @@ class TestGetEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         """
         Make sure service users can post new PendingEnterpriseCustomerUsers.
         """
-        client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
 
+        # create user making the request
+        self.setup_admin_user(is_staff)
+
+        # Create fake enterprise
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
+
         new_user_email = 'newuser@example.com'
+        # data to be passed to the request
         data = {
             'enterprise_customer': FAKE_UUIDS[0],
             'user_email': new_user_email,
         }
-        if user_exists:
-            user = factories.UserFactory(email=new_user_email)
-            if ecu_exists:
-                factories.EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
 
-        if pending_ecu_exists:
-            factories.PendingEnterpriseCustomerUserFactory(
-                user_email=new_user_email, enterprise_customer=enterprise_customer
-            )
+        # create preexisting user(s) as necessary
+        user = self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            uuid=FAKE_UUIDS[0],
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
-        if status_code == 204:
-            assert not response.content
-        elif status_code == 201:
-            response = self.load_json(response.content)
-            self.assertDictEqual(data, response)
-            if not user_exists:
-                assert PendingEnterpriseCustomerUser.objects.get(
-                    user_email=new_user_email, enterprise_customer=enterprise_customer
-                )
-            else:
-                assert EnterpriseCustomerUser.objects.get(
-                    user_id=user.id, enterprise_customer=enterprise_customer, active=user.is_active
-                )
+        response = self.load_json(response.content)
+        self.assertDictEqual(data, response)
+        if not user_exists:
+            assert PendingEnterpriseCustomerUser.objects.get(
+                user_email=new_user_email, enterprise_customer=enterprise_customer
+            )
+        else:
+            assert EnterpriseCustomerUser.objects.get(
+                user_id=user.id, enterprise_customer=enterprise_customer, active=user.is_active
+            )
+
+    @ddt.data(
+        {'is_staff': True, 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
+        {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_user_creation_no_user_created(
+        self,
+        is_staff,
+        user_exists,
+        ecu_exists,
+        pending_ecu_exists,
+        status_code
+    ):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerUsers.
+        """
+
+        # create user making the request
+        self.setup_admin_user(is_staff)
+
+        # Create fake enterprise
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        user = self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            uuid=FAKE_UUIDS[0],
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == status_code
+        assert not response.content
+
+    @ddt.data(
+        {'is_staff': False, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 403},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_unauthorized_user(self,
+        is_staff,
+        user_exists,
+        ecu_exists,
+        pending_ecu_exists,
+        status_code
+    ):
+        # create user making the request
+        self.setup_admin_user(is_staff)
+
+        # create fake enterprise
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        user = self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            uuid=FAKE_UUIDS[0],
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == status_code
+
+
+    @ddt.data(
+      ([{ 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True },
+        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False },
+        { 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False },
+        { 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False },
+        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True }], 201),
+      ([{ 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True },
+        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False },
+        { 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False }], 201 ),
+      ([{ 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False },
+        { 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True }], 204)
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
+        self.setup_admin_user()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        data = []
+        users = []
+        for idx, user in enumerate(userlist):
+            user_email = 'new_user{}@example.com'.format(idx)
+            data.append({
+              'enterprise_customer': FAKE_UUIDS[0],
+              'user_email': user_email
+            })
+
+            existing_user = self.create_ent_user(
+                user_exists=user['user_exists'],
+                ecu_exists=user['ecu_exists'],
+                pending_ecu_exists=user['pending_ecu_exists'],
+                uuid=FAKE_UUIDS[0],
+                user_email=user_email,
+                enterprise_customer=enterprise_customer,
+            )
+            users.append({
+              'user_exists': user['user_exists'],
+              'user_email': user_email,
+              'existing_user': existing_user
+            })
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data, format='json')
+        assert response.status_code == status_code
+        for user in users:
+          # assert that the correct users were created
+          if not user['user_exists']:
+            assert PendingEnterpriseCustomerUser.objects.get(
+                user_email=user['user_email'], enterprise_customer=enterprise_customer
+            )
+          else:
+              assert EnterpriseCustomerUser.objects.get(
+                  user_id=user['existing_user'].id, enterprise_customer=enterprise_customer, active=user['existing_user'].is_active
+              )
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
         """
