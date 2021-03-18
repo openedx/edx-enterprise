@@ -807,7 +807,10 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
         return serializers.EnterpriseCustomerUserWriteSerializer
 
 
-class BasePendingEnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
+class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
+    """
+    API views for the ``pending-enterprise-learner`` API endpoint.
+    """
     queryset = models.PendingEnterpriseCustomerUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     serializer_class = serializers.PendingEnterpriseCustomerUserSerializer
@@ -822,12 +825,6 @@ class BasePendingEnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
     UNIQUE = 'unique'
     USER_EXISTS_ERROR = 'EnterpriseCustomerUser record already exists'
 
-
-class PendingEnterpriseCustomerUserViewSet(BasePendingEnterpriseCustomerViewSet):
-    """
-    API views for the ``pending-enterprise-learner`` API endpoint.
-    """
-
     def _get_return_status(self, serializer, many):
         """
         Run serializer validation and get return status
@@ -841,8 +838,8 @@ class PendingEnterpriseCustomerUserViewSet(BasePendingEnterpriseCustomerViewSet)
 
         data_list = serializer.save()
         for _, created in data_list:
-          if created:
-            return status.HTTP_201_CREATED
+            if created:
+                return status.HTTP_201_CREATED
         return status.HTTP_204_NO_CONTENT
 
     def create(self, request, *args, **kwargs):

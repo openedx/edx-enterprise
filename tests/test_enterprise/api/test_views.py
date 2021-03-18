@@ -135,7 +135,7 @@ def side_effect(url, query_parameters):
 
 class BaseTestEnterpriseAPIViews(APITest):
     """
-    Tests for enterprise api views.
+    Shared setup and methods for enterprise api views.
     """
     # Get current datetime, so that all tests can use same datetime.
     now = timezone.now()
@@ -246,6 +246,9 @@ class BaseTestEnterpriseAPIViews(APITest):
 @ddt.ddt
 @mark.django_db
 class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCourseEnrollmentViewSet
+    """
 
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @mock.patch("enterprise.api.v1.serializers.track_enrollment")
@@ -419,6 +422,9 @@ class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
+    """
+    Test enteprise learner list endpoint
+    """
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -527,7 +533,14 @@ class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
-    def create_ent_user(self, user_exists, ecu_exists, pending_ecu_exists, uuid, user_email, enterprise_customer):
+    """
+    Test PendingEnterpriseCustomerUserViewSet
+    """
+
+    def create_ent_user(self, user_exists, ecu_exists, pending_ecu_exists, user_email, enterprise_customer):
+        """
+        Creates enterprise users or pending users
+        """
         user = None
         if user_exists:
             user = factories.UserFactory(email=user_email)
@@ -541,6 +554,9 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         return user
 
     def setup_admin_user(self, is_staff=True):
+        """
+        Creates an admin user and logs them in
+        """
         client_username = 'client_username'
         self.client.logout()
         self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
@@ -582,7 +598,6 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             user_exists=user_exists,
             ecu_exists=ecu_exists,
             pending_ecu_exists=pending_ecu_exists,
-            uuid=FAKE_UUIDS[0],
             user_email=new_user_email,
             enterprise_customer=enterprise_customer,
         )
@@ -632,11 +647,10 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         }
 
         # create preexisting user(s) as necessary
-        user = self.create_ent_user(
+        self.create_ent_user(
             user_exists=user_exists,
             ecu_exists=ecu_exists,
             pending_ecu_exists=pending_ecu_exists,
-            uuid=FAKE_UUIDS[0],
             user_email=new_user_email,
             enterprise_customer=enterprise_customer,
         )
@@ -670,11 +684,10 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         }
 
         # create preexisting user(s) as necessary
-        user = self.create_ent_user(
+        self.create_ent_user(
             user_exists=user_exists,
             ecu_exists=ecu_exists,
             pending_ecu_exists=pending_ecu_exists,
-            uuid=FAKE_UUIDS[0],
             user_email=new_user_email,
             enterprise_customer=enterprise_customer,
         )
@@ -712,7 +725,6 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
                 user_exists=user['user_exists'],
                 ecu_exists=user['ecu_exists'],
                 pending_ecu_exists=user['pending_ecu_exists'],
-                uuid=FAKE_UUIDS[0],
                 user_email=user_email,
                 enterprise_customer=enterprise_customer,
             )
@@ -722,18 +734,24 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
               'existing_user': existing_user
             })
 
-        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data, format='json')
+        response = self.client.post(
+            settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT,
+            data=data,
+            format='json'
+        )
         assert response.status_code == status_code
         for user in users:
-          # assert that the correct users were created
-          if not user['user_exists']:
-            assert PendingEnterpriseCustomerUser.objects.get(
-                user_email=user['user_email'], enterprise_customer=enterprise_customer
-            )
-          else:
-              assert EnterpriseCustomerUser.objects.get(
-                  user_id=user['existing_user'].id, enterprise_customer=enterprise_customer, active=user['existing_user'].is_active
-              )
+            # assert that the correct users were created
+            if not user['user_exists']:
+                assert PendingEnterpriseCustomerUser.objects.get(
+                    user_email=user['user_email'], enterprise_customer=enterprise_customer
+                )
+            else:
+                assert EnterpriseCustomerUser.objects.get(
+                    user_id=user['existing_user'].id,
+                    enterprise_customer=enterprise_customer,
+                    active=user['existing_user'].is_active
+                )
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
         """
@@ -750,6 +768,9 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise customer list endpoint
+    """
     @ddt.data(
         (
             factories.EnterpriseCustomerFactory,
@@ -1113,6 +1134,9 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerCatalogViewSet
+    """
     @ddt.data(
         (False, False),
         (False, True),
@@ -1773,6 +1797,12 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
         assert 'course_run_ids' in message
         assert response.status_code == 400
 
+@ddt.ddt
+@mark.django_db
+class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
+    """
+    Test the Enteprise Customer course enrollments detail route
+    """
     def test_enterprise_customer_course_enrollments_non_list_request(self):
         """
         Test the Enterprise Customer course enrollments detail route with an invalid expected json format.
@@ -1797,9 +1827,6 @@ class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
 
         self.assertDictEqual(response, expected_result)
 
-@ddt.ddt
-@mark.django_db
-class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
     @ddt.data(
         (
             False,
@@ -2321,6 +2348,12 @@ class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
+    """
+    Test CatalogQueryView
+    """
+
+    CATALOG_QUERY_ENDPOINT = 'enterprise-catalog-query'
+
     def test_get_catalog_query(self):
         """
         Test that `CatalogQueryView` returns expected response.
@@ -2331,7 +2364,7 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
             content_filter=expected_content_filter
         )
         response = self.client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': catalog_query.id})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': catalog_query.id})
         )
         assert response.status_code == 200
         assert response.json() == expected_content_filter
@@ -2342,7 +2375,7 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
         """
         non_existed_id = 100
         response = self.client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': non_existed_id})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': non_existed_id})
         )
         assert response.status_code == 404
         response = response.json()
@@ -2353,7 +2386,7 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
         Test that `CatalogQueryView` does not allow POST method.
         """
         response = self.client.post(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1}),
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1}),
             data=json.dumps({'current_troll_hunter': 'Jim Lake Jr.'}),
             content_type='application/json'
         )
@@ -2373,7 +2406,7 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
         client = APIClient()
         client.login(username='test_user', password='test_password')
         response = client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
         )
 
         assert response.status_code == 403
@@ -2387,7 +2420,7 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
         client = APIClient()
         # User is not logged in.
         response = client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
         )
         assert response.status_code == 403
         response = response.json()
@@ -2396,6 +2429,10 @@ class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
+    """
+    Test CouponCodesView
+    """
+
     REQUEST_CODES_ENDPOINT = reverse('request-codes')
 
     @mock.patch('django.core.mail.send_mail')
@@ -2554,7 +2591,11 @@ class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
 
 @ddt.ddt
 @mark.django_db
-class TestLicensedEnterpriseCourseEnfollemntViewset(BaseTestEnterpriseAPIViews):
+class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
+    """
+    Test LicensedEnterpriseCourseEnrollemntViewset
+    """
+
     def test_validate_license_revoke_data_valid_data(self):
         request_data = {
             'user_id': 'anything',
@@ -2834,6 +2875,10 @@ class TestLicensedEnterpriseCourseEnfollemntViewset(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
+    """
+    Test bulk enrollment (EnterpriseCustomerViewSet)
+    """
+
     @ddt.data(
         {
             'body': {},
@@ -3125,6 +3170,9 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
 @ddt.ddt
 @mark.django_db
 class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
+    """
+    Test expired license course enrollment
+    """
 
     @ddt.data(
         {'is_course_completed': False, 'has_audit_mode': True},
