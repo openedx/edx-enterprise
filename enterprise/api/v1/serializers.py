@@ -400,7 +400,7 @@ class EnterpriseCustomerUserWriteSerializer(serializers.ModelSerializer):
             error_message = ('[Enterprise API] Saving to EnterpriseCustomerUser failed'
                              ' due to non-existing user. User: {}').format(value)
             LOGGER.error(error_message)
-            raise serializers.ValidationError(self.USER_DOES_NOT_EXIST)
+            raise serializers.ValidationError(self.USER_DOES_NOT_EXIST) from None
 
         return value
 
