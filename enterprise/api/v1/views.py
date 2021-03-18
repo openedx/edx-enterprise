@@ -811,7 +811,6 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``pending-enterprise-learner`` API endpoint.
     """
-
     queryset = models.PendingEnterpriseCustomerUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
     serializer_class = serializers.PendingEnterpriseCustomerUserSerializer
@@ -823,30 +822,29 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     filterset_fields = FIELDS
     ordering_fields = FIELDS
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-        except ValidationError as validation_error:
-            return_status = None
-            if 'user_email' in serializer.errors:
-                for error in serializer.errors['user_email']:
-                    # This error indicates that a PendingEnterpriseCustomerUser already exists.
-                    if error.code == 'unique':
-                        return_status = status.HTTP_204_NO_CONTENT
-                        break
-            elif 'non_field_errors' in serializer.errors:
-                for error in serializer.errors['non_field_errors']:
-                    # This error indicates that an EnterpriseCustomerUser already exists.
-                    if str(error) == 'EnterpriseCustomerUser record already exists':
-                        return_status = status.HTTP_204_NO_CONTENT
-                        break
+    UNIQUE = 'unique'
+    USER_EXISTS_ERROR = 'EnterpriseCustomerUser record already exists'
 
-            if not return_status:
-                raise validation_error
-        else:
-            created = serializer.save()
+    def _get_return_status(self, serializer, many):
+        """
+        Run serializer validation and get return status
+        """
+        return_status = None
+        serializer.is_valid(raise_exception=True)
+        if not many:
+            _, created = serializer.save()
             return_status = status.HTTP_201_CREATED if created else status.HTTP_204_NO_CONTENT
+            return return_status
+
+        data_list = serializer.save()
+        for _, created in data_list:
+            if created:
+                return status.HTTP_201_CREATED
+        return status.HTTP_204_NO_CONTENT
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
+        return_status = self._get_return_status(serializer, many=isinstance(request.data, list))
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=return_status, headers=headers)
 

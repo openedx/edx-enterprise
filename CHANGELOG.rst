@@ -18,6 +18,11 @@ Unreleased
 
 * Nothing.
 
+[3.19.0]
+--------
+
+* feat: add support for creating multiple pending enterprise users
+
 [3.18.7]
 --------
 

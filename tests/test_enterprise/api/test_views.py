@@ -133,11 +133,9 @@ def side_effect(url, query_parameters):
     )
 
 
-@ddt.ddt
-@mark.django_db
-class TestEnterpriseAPIViews(APITest):
+class BaseTestEnterpriseAPIViews(APITest):
     """
-    Tests for enterprise api views.
+    Shared setup and methods for enterprise api views.
     """
     # Get current datetime, so that all tests can use same datetime.
     now = timezone.now()
@@ -162,6 +160,96 @@ class TestEnterpriseAPIViews(APITest):
         """
         for item in items:
             factory.create(**item)
+
+    def create_course_enrollments_context(
+            self,
+            user_exists,
+            lms_user_id,
+            tpa_user_id,
+            user_email,
+            mock_tpa_client,
+            mock_enrollment_client,
+            course_enrollment,
+            mock_catalog_contains_course,
+            course_in_catalog,
+            enable_autocohorting=False
+    ):
+        """
+        Set up for tests that call the enterprise customer course enrollments detail route.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory(
+            uuid=FAKE_UUIDS[0],
+            name="test_enterprise",
+            enable_autocohorting=enable_autocohorting
+        )
+        factories.EnterpriseCustomerIdentityProviderFactory(
+            enterprise_customer=enterprise_customer
+        )
+
+        permission = Permission.objects.get(name='Can add Enterprise Customer')
+        self.user.user_permissions.add(permission)
+
+        user = None
+        # Create a preexisting EnterpriseCustomerUser
+        if user_exists:
+            if lms_user_id:
+                user = factories.UserFactory(id=lms_user_id)
+            elif tpa_user_id:
+                user = factories.UserFactory(username=tpa_user_id)
+            elif user_email:
+                user = factories.UserFactory(email=user_email)
+
+            factories.EnterpriseCustomerUserFactory(
+                user_id=user.id,
+                enterprise_customer=enterprise_customer,
+            )
+
+        # Set up ThirdPartyAuth API response
+        if tpa_user_id:
+            mock_tpa_client.return_value = mock.Mock()
+            mock_tpa_client.return_value.get_username_from_remote_id = mock.Mock()
+            mock_tpa_client.return_value.get_username_from_remote_id.return_value = tpa_user_id
+
+        # Set up EnrollmentAPI responses
+        mock_enrollment_client.return_value = mock.Mock(
+            get_course_enrollment=mock.Mock(return_value=course_enrollment),
+            enroll_user_in_course=mock.Mock()
+        )
+
+        # Set up catalog_contains_course response.
+        mock_catalog_contains_course.return_value = course_in_catalog
+
+        return enterprise_customer, user
+
+    def _revocation_factory_objects(self):
+        """
+        Helper method to provide some testing objects for revocation tests.
+        """
+        enterprise_customer = factories.EnterpriseCustomerFactory()
+
+        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer,
+        )
+        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
+            enterprise_customer_user=enterprise_customer_user,
+        )
+        licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
+            enterprise_course_enrollment=enterprise_course_enrollment,
+        )
+
+        assert not enterprise_course_enrollment.saved_for_later
+        assert not licensed_course_enrollment.is_revoked
+
+        return enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
+
+
+@ddt.ddt
+@mark.django_db
+class TestCourseEnrollmentView(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCourseEnrollmentViewSet
+    """
 
     @override_settings(ECOMMERCE_SERVICE_WORKER_USERNAME=TEST_USERNAME)
     @mock.patch("enterprise.api.v1.serializers.track_enrollment")
@@ -277,13 +365,13 @@ class TestEnterpriseAPIViews(APITest):
     )
     @ddt.unpack
     def test_post_enterprise_course_enrollment(
-            self,
-            has_permissions,
-            factory,
-            request_data,
-            enrollment_exists,
-            status_code,
-            mock_track_enrollment,
+        self,
+        has_permissions,
+        factory,
+        request_data,
+        enrollment_exists,
+        status_code,
+        mock_track_enrollment,
     ):
         """
         Make sure service users can post new EnterpriseCourseEnrollments.
@@ -332,6 +420,13 @@ class TestEnterpriseAPIViews(APITest):
         else:
             mock_track_enrollment.assert_not_called()
 
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
+    """
+    Test enteprise learner list endpoint
+    """
     def test_get_enterprise_customer_user_contains_consent_records(self):
         user = factories.UserFactory()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
@@ -437,16 +532,46 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.post(settings.TEST_SERVER + ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
+
+@ddt.ddt
+@mark.django_db
+class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
+    """
+    Test PendingEnterpriseCustomerUserViewSet
+    """
+
+    def create_ent_user(self, user_exists, ecu_exists, pending_ecu_exists, user_email, enterprise_customer):
+        """
+        Creates enterprise users or pending users
+        """
+        user = None
+        if user_exists:
+            user = factories.UserFactory(email=user_email)
+            if ecu_exists:
+                factories.EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
+
+        if pending_ecu_exists:
+            factories.PendingEnterpriseCustomerUserFactory(
+                user_email=user_email, enterprise_customer=enterprise_customer
+            )
+        return user
+
+    def setup_admin_user(self, is_staff=True):
+        """
+        Creates an admin user and logs them in
+        """
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
     @ddt.data(
-        {'is_staff': True, 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
-        {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
         {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
         {'is_staff': True, 'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
-        {'is_staff': False, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 403},
     )
     @ddt.unpack
-    def test_post_pending_enterprise_customer_user(
+    def test_post_pending_enterprise_customer_user_creation(
             self,
             is_staff,
             user_exists,
@@ -456,41 +581,177 @@ class TestEnterpriseAPIViews(APITest):
         """
         Make sure service users can post new PendingEnterpriseCustomerUsers.
         """
-        client_username = 'client_username'
-        self.client.logout()
-        self.create_user(username=client_username, password=TEST_PASSWORD, is_staff=is_staff)
-        self.client.login(username=client_username, password=TEST_PASSWORD)
 
+        # create user making the request
+        self.setup_admin_user(is_staff)
+
+        # Create fake enterprise
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
         new_user_email = 'newuser@example.com'
+        # data to be passed to the request
         data = {
             'enterprise_customer': FAKE_UUIDS[0],
             'user_email': new_user_email,
         }
-        if user_exists:
-            user = factories.UserFactory(email=new_user_email)
-            if ecu_exists:
-                factories.EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
 
-        if pending_ecu_exists:
-            factories.PendingEnterpriseCustomerUserFactory(
-                user_email=new_user_email, enterprise_customer=enterprise_customer
-            )
+        # create preexisting user(s) as necessary
+        user = self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
 
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == status_code
-        if status_code == 204:
-            assert not response.content
-        elif status_code == 201:
-            response = self.load_json(response.content)
-            self.assertDictEqual(data, response)
-            if not user_exists:
+        response = self.load_json(response.content)
+        self.assertDictEqual(data, response)
+        if not user_exists:
+            assert PendingEnterpriseCustomerUser.objects.get(
+                user_email=new_user_email, enterprise_customer=enterprise_customer
+            )
+        else:
+            assert EnterpriseCustomerUser.objects.get(
+                user_id=user.id, enterprise_customer=enterprise_customer, active=user.is_active
+            )
+
+    @ddt.data(
+        {'is_staff': True, 'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
+        {'is_staff': True, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_user_creation_no_user_created(
+        self,
+        is_staff,
+        user_exists,
+        ecu_exists,
+        pending_ecu_exists,
+        status_code
+    ):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerUsers.
+        """
+
+        # create user making the request
+        self.setup_admin_user(is_staff)
+
+        # Create fake enterprise
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == status_code
+        assert not response.content
+
+    @ddt.data(
+        {'is_staff': False, 'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 403},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_unauthorized_user(
+        self,
+        is_staff,
+        user_exists,
+        ecu_exists,
+        pending_ecu_exists,
+        status_code
+    ):
+        # create user making the request
+        self.setup_admin_user(is_staff)
+
+        # create fake enterprise
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': FAKE_UUIDS[0],
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == status_code
+
+    @ddt.data(
+        ([{'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True}], 201),
+        ([{'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False}], 201),
+        ([{'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True}], 204)
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
+        self.setup_admin_user()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        data = []
+        users = []
+        for idx, user in enumerate(userlist):
+            user_email = 'new_user{}@example.com'.format(idx)
+            data.append({
+                'enterprise_customer': FAKE_UUIDS[0],
+                'user_email': user_email
+            })
+
+            existing_user = self.create_ent_user(
+                user_exists=user['user_exists'],
+                ecu_exists=user['ecu_exists'],
+                pending_ecu_exists=user['pending_ecu_exists'],
+                user_email=user_email,
+                enterprise_customer=enterprise_customer,
+            )
+            users.append({
+                'user_exists': user['user_exists'],
+                'user_email': user_email,
+                'existing_user': existing_user
+            })
+
+        response = self.client.post(
+            settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT,
+            data=data,
+            format='json'
+        )
+        assert response.status_code == status_code
+        for user in users:
+            # assert that the correct users were created
+            if not user['user_exists']:
                 assert PendingEnterpriseCustomerUser.objects.get(
-                    user_email=new_user_email, enterprise_customer=enterprise_customer
+                    user_email=user['user_email'], enterprise_customer=enterprise_customer
                 )
             else:
                 assert EnterpriseCustomerUser.objects.get(
-                    user_id=user.id, enterprise_customer=enterprise_customer, active=user.is_active
+                    user_id=user['existing_user'].id,
+                    enterprise_customer=enterprise_customer,
+                    active=user['existing_user'].is_active
                 )
 
     def test_post_pending_enterprise_customer_user_logged_out(self):
@@ -505,6 +766,13 @@ class TestEnterpriseAPIViews(APITest):
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
         assert response.status_code == 401
 
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
+    """
+    Test enterprise customer list endpoint
+    """
     @ddt.data(
         (
             factories.EnterpriseCustomerFactory,
@@ -865,6 +1133,13 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
         assert expected_item == response
 
+
+@ddt.ddt
+@mark.django_db
+class TestEntepriseCustomerCatalogs(BaseTestEnterpriseAPIViews):
+    """
+    Test EnterpriseCustomerCatalogViewSet
+    """
     @ddt.data(
         (False, False),
         (False, True),
@@ -1525,6 +1800,13 @@ class TestEnterpriseAPIViews(APITest):
         assert 'course_run_ids' in message
         assert response.status_code == 400
 
+
+@ddt.ddt
+@mark.django_db
+class TestEnterpriesCustomerCourseEnrollments(BaseTestEnterpriseAPIViews):
+    """
+    Test the Enteprise Customer course enrollments detail route
+    """
     def test_enterprise_customer_course_enrollments_non_list_request(self):
         """
         Test the Enterprise Customer course enrollments detail route with an invalid expected json format.
@@ -1548,66 +1830,6 @@ class TestEnterpriseAPIViews(APITest):
         response = self.load_json(response.content)
 
         self.assertDictEqual(response, expected_result)
-
-    def create_course_enrollments_context(
-            self,
-            user_exists,
-            lms_user_id,
-            tpa_user_id,
-            user_email,
-            mock_tpa_client,
-            mock_enrollment_client,
-            course_enrollment,
-            mock_catalog_contains_course,
-            course_in_catalog,
-            enable_autocohorting=False
-    ):
-        """
-        Set up for tests that call the enterprise customer course enrollments detail route.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory(
-            uuid=FAKE_UUIDS[0],
-            name="test_enterprise",
-            enable_autocohorting=enable_autocohorting
-        )
-        factories.EnterpriseCustomerIdentityProviderFactory(
-            enterprise_customer=enterprise_customer
-        )
-
-        permission = Permission.objects.get(name='Can add Enterprise Customer')
-        self.user.user_permissions.add(permission)
-
-        user = None
-        # Create a preexisting EnterpriseCustomerUser
-        if user_exists:
-            if lms_user_id:
-                user = factories.UserFactory(id=lms_user_id)
-            elif tpa_user_id:
-                user = factories.UserFactory(username=tpa_user_id)
-            elif user_email:
-                user = factories.UserFactory(email=user_email)
-
-            factories.EnterpriseCustomerUserFactory(
-                user_id=user.id,
-                enterprise_customer=enterprise_customer,
-            )
-
-        # Set up ThirdPartyAuth API response
-        if tpa_user_id:
-            mock_tpa_client.return_value = mock.Mock()
-            mock_tpa_client.return_value.get_username_from_remote_id = mock.Mock()
-            mock_tpa_client.return_value.get_username_from_remote_id.return_value = tpa_user_id
-
-        # Set up EnrollmentAPI responses
-        mock_enrollment_client.return_value = mock.Mock(
-            get_course_enrollment=mock.Mock(return_value=course_enrollment),
-            enroll_user_in_course=mock.Mock()
-        )
-
-        # Set up catalog_contains_course response.
-        mock_catalog_contains_course.return_value = course_in_catalog
-
-        return enterprise_customer, user
 
     @ddt.data(
         (
@@ -2127,6 +2349,16 @@ class TestEnterpriseAPIViews(APITest):
         response_xml = self.client.get('/enterprise/api/v1/enterprise_catalogs.xml')
         self.assertEqual(response_xml['content-type'], 'application/xml; charset=utf-8')
 
+
+@ddt.ddt
+@mark.django_db
+class TestCatalogQueryView(BaseTestEnterpriseAPIViews):
+    """
+    Test CatalogQueryView
+    """
+
+    CATALOG_QUERY_ENDPOINT = 'enterprise-catalog-query'
+
     def test_get_catalog_query(self):
         """
         Test that `CatalogQueryView` returns expected response.
@@ -2137,7 +2369,7 @@ class TestEnterpriseAPIViews(APITest):
             content_filter=expected_content_filter
         )
         response = self.client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': catalog_query.id})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': catalog_query.id})
         )
         assert response.status_code == 200
         assert response.json() == expected_content_filter
@@ -2148,7 +2380,7 @@ class TestEnterpriseAPIViews(APITest):
         """
         non_existed_id = 100
         response = self.client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': non_existed_id})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': non_existed_id})
         )
         assert response.status_code == 404
         response = response.json()
@@ -2159,7 +2391,7 @@ class TestEnterpriseAPIViews(APITest):
         Test that `CatalogQueryView` does not allow POST method.
         """
         response = self.client.post(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1}),
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1}),
             data=json.dumps({'current_troll_hunter': 'Jim Lake Jr.'}),
             content_type='application/json'
         )
@@ -2179,7 +2411,7 @@ class TestEnterpriseAPIViews(APITest):
         client = APIClient()
         client.login(username='test_user', password='test_password')
         response = client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
         )
 
         assert response.status_code == 403
@@ -2193,11 +2425,21 @@ class TestEnterpriseAPIViews(APITest):
         client = APIClient()
         # User is not logged in.
         response = client.get(
-            settings.TEST_SERVER + reverse('enterprise-catalog-query', kwargs={'catalog_query_id': 1})
+            settings.TEST_SERVER + reverse(self.CATALOG_QUERY_ENDPOINT, kwargs={'catalog_query_id': 1})
         )
         assert response.status_code == 403
         response = response.json()
         assert response['detail'] == 'Authentication credentials were not provided.'
+
+
+@ddt.ddt
+@mark.django_db
+class TestRequestCodesEndpoint(BaseTestEnterpriseAPIViews):
+    """
+    Test CouponCodesView
+    """
+
+    REQUEST_CODES_ENDPOINT = reverse('request-codes')
 
     @mock.patch('django.core.mail.send_mail')
     @ddt.data(
@@ -2292,10 +2534,9 @@ class TestEnterpriseAPIViews(APITest):
         """
         Ensure endpoint response data and status codes.
         """
-        endpoint_name = 'request-codes'
         mock_send_mail.side_effect = mock_side_effect
         response = self.client.post(
-            settings.TEST_SERVER + reverse(endpoint_name),
+            settings.TEST_SERVER + self.REQUEST_CODES_ENDPOINT,
             data=json.dumps(post_data),
             content_type='application/json',
         )
@@ -2347,12 +2588,20 @@ class TestEnterpriseAPIViews(APITest):
             'number_of_codes': '50',
         }
         response = client.post(
-            settings.TEST_SERVER + reverse('request-codes'),
+            settings.TEST_SERVER + self.REQUEST_CODES_ENDPOINT,
             data=json.dumps(post_data),
             content_type='application/json',
         )
 
         assert response.status_code == expected_status
+
+
+@ddt.ddt
+@mark.django_db
+class TestLicensedEnterpriseCourseEnrollemntViewset(BaseTestEnterpriseAPIViews):
+    """
+    Test LicensedEnterpriseCourseEnrollemntViewset
+    """
 
     def test_validate_license_revoke_data_valid_data(self):
         request_data = {
@@ -2629,6 +2878,14 @@ class TestEnterpriseAPIViews(APITest):
                 username=enterprise_customer_user.username,
                 course_id=enterprise_course_enrollment.course_id,
             )
+
+
+@ddt.ddt
+@mark.django_db
+class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
+    """
+    Test bulk enrollment (EnterpriseCustomerViewSet)
+    """
 
     @ddt.data(
         {
@@ -2918,6 +3175,14 @@ class TestEnterpriseAPIViews(APITest):
         self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
         self.assertEqual(response.json(), enrollment_response)
 
+
+@ddt.ddt
+@mark.django_db
+class TestExpiredLicenseCourseEnrollment(BaseTestEnterpriseAPIViews):
+    """
+    Test expired license course enrollment
+    """
+
     @ddt.data(
         {'is_course_completed': False, 'has_audit_mode': True},
         {'is_course_completed': True, 'has_audit_mode': True},
@@ -3001,28 +3266,6 @@ class TestEnterpriseAPIViews(APITest):
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    def _revocation_factory_objects(self):
-        """
-        Helper method to provide some testing objects for revocation tests.
-        """
-        enterprise_customer = factories.EnterpriseCustomerFactory()
-
-        enterprise_customer_user = factories.EnterpriseCustomerUserFactory(
-            user_id=self.user.id,
-            enterprise_customer=enterprise_customer,
-        )
-        enterprise_course_enrollment = factories.EnterpriseCourseEnrollmentFactory(
-            enterprise_customer_user=enterprise_customer_user,
-        )
-        licensed_course_enrollment = factories.LicensedEnterpriseCourseEnrollmentFactory(
-            enterprise_course_enrollment=enterprise_course_enrollment,
-        )
-
-        assert not enterprise_course_enrollment.saved_for_later
-        assert not licensed_course_enrollment.is_revoked
-
-        return enterprise_customer_user, enterprise_course_enrollment, licensed_course_enrollment
 
 
 @ddt.ddt
