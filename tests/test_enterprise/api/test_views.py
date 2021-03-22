@@ -1059,7 +1059,6 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             user_email=new_user_email, enterprise_customer=enterprise_customer
         ).count() == 0
 
-
     def test_post_pending_enterprise_customer_user_logged_out(self):
         """
         Make sure users can't post PendingEnterpriseCustomerUsers when logged out.

@@ -876,7 +876,7 @@ class PendingEnterpriseCustomerUserEnterpriseAdminViewSet(PendingEnterpriseCusto
 
         Returns 201 if any users were created, 204 if no users were created.
         """
-        context = { 'enterprise_uuid': enterprise_uuid }
+        context = {'enterprise_uuid': enterprise_uuid}
         serializer = self.get_serializer(
             data=request.data,
             many=isinstance(request.data, list),
