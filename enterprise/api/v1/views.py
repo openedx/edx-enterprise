@@ -61,7 +61,6 @@ from enterprise.errors import CodesAPIRequestError
 from enterprise.utils import (
     NotConnectedToOpenEdX,
     enroll_licensed_users_in_courses,
-    enroll_users_in_course,
     get_best_mode_from_course_key,
     get_ecommerce_worker_user,
     get_request_value,
@@ -336,90 +335,6 @@ class EnterpriseCustomerViewSet(EnterpriseReadWriteModelViewSet):
         if results['pending']:
             return Response(results, status=HTTP_202_ACCEPTED)
         return Response(results, status=HTTP_201_CREATED)
-
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
-    @permission_required('enterprise.can_enroll_learners', fn=lambda request, pk: pk)
-    # pylint: disable=invalid-name,unused-argument
-    def enterprise_learners(self, request, pk):
-        """
-        Creates a set of enterprise_learners by enrolling them in the specified course.
-        If request.data contains 'email' field it's considered prioritized
-        If not, request.data is checked for 'email_csv' base64 encoded string (csv case)
-        If neither, a SerializerException is thrown
-        """
-        enterprise_customer = self.get_object()
-        serializer = serializers.EnterpriseCustomerBulkEnrollmentsSerializer(
-            data=request.data,
-            context={
-                'enterprise_customer': enterprise_customer,
-                'request_user': request.user,
-            }
-        )
-        if serializer.is_valid(raise_exception=True):
-            already_linked_emails = []
-            errors = []
-            enrolled_count = 0
-
-            email_list = serializer.validated_data.get('email')
-            if email_list:
-                emails = set(email_list.splitlines())
-            else:
-                emails = set(serializer.validated_data.get('email_csv', []))
-
-            try:
-                for email in emails:
-                    try:
-                        already_linked = validate_email_to_link(email, enterprise_customer, raise_exception=False)
-                    except ValidationError as error:
-                        errors.append(error)
-                    else:
-                        if already_linked:
-                            already_linked_emails.append((email, already_linked.enterprise_customer))
-            except ValidationError as exc:
-                errors.append(exc)
-
-            if errors:
-                return Response(errors, status=HTTP_400_BAD_REQUEST)
-
-            for email in emails:
-                models.EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
-
-            course_run_key = serializer.validated_data.get('course_run_key')
-            mode = serializer.validated_data.get('course_mode')
-            if course_run_key:
-                this_customer_linked_emails = [
-                    email for email, customer in already_linked_emails if customer == enterprise_customer
-                ]
-                linked_learners = list(emails) + this_customer_linked_emails
-                if linked_learners:
-                    discount = serializer.validated_data.get('discount', 0.0)
-                    enrollment_reason = serializer.validated_data.get('reason')
-                    succeeded, pending, _ = enroll_users_in_course(
-                        enterprise_customer=enterprise_customer,
-                        course_id=course_run_key,
-                        course_mode=mode,
-                        emails=emails,
-                        enrollment_requester=request.user,
-                        enrollment_reason=enrollment_reason,
-                        discount=discount,
-                        sales_force_id=serializer.validated_data.get('salesforce_id'),
-                    )
-                    enrolled_count = len(succeeded + pending)
-                    if serializer.validated_data.get('notify'):
-                        enterprise_customer.notify_enrolled_learners(
-                            catalog_api_user=request.user,
-                            course_id=course_run_key,
-                            users=succeeded + pending,
-                        )
-                    self._create_ecom_orders_for_enrollments(
-                        course_run_key,
-                        mode,
-                        discount,
-                        serializer.validated_data.get('salesforce_id'),
-                        succeeded,
-                    )
-            return Response('{} learners enrolled'.format(enrolled_count), status=HTTP_202_ACCEPTED)
-        return Response(status=HTTP_400_BAD_REQUEST)
 
     def _create_ecom_orders_for_enrollments(self,
                                             course_run_key,
