@@ -8,10 +8,10 @@ import json
 import uuid
 from operator import itemgetter
 from smtplib import SMTPException
-from faker import Faker
 
 import ddt
 import mock
+from faker import Faker
 from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -29,6 +29,7 @@ from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
+from enterprise.api.v1 import serializers
 from enterprise.api.v1.views import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
@@ -67,6 +68,7 @@ from test_utils import (
 )
 from test_utils.factories import FAKER
 from test_utils.fake_enterprise_api import get_default_branding_object
+
 fake = Faker()
 
 ENTERPRISE_CATALOGS_LIST_ENDPOINT = reverse('enterprise-catalogs-list')
@@ -751,6 +753,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         for user in users:
             # assert that the correct users were created
             if not user['user_exists']:
+
                 assert PendingEnterpriseCustomerUser.objects.get(
                     user_email=user['user_email'], enterprise_customer=enterprise_customer
                 )
@@ -848,7 +851,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         )
 
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
         )
         assert response.status_code == status_code
@@ -905,7 +908,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         )
 
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
         )
         assert response.status_code == status_code
@@ -936,7 +939,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         )
 
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
         )
         assert response.status_code == 403
@@ -968,7 +971,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
         )
 
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
         )
         assert response.status_code == 403
@@ -1014,7 +1017,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             })
 
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data,
             format='json',
         )
@@ -1038,23 +1041,26 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
 
         # Create fake enterprise
         ent_uuid = fake.uuid4()
+        other_ent_uuid = fake.uuid4()
         enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        factories.EnterpriseCustomerFactory(uuid=other_ent_uuid)
         # Fake enterprise admin permissions
         self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
 
         new_user_email = 'newuser@example.com'
         # data to be passed to the request
         data = {
-            'enterprise_customer': fake.uuid4(),
+            'enterprise_customer': other_ent_uuid,
             'user_email': new_user_email,
         }
 
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
         )
         # This should cause a validation error
         assert response.status_code == 400
+        assert serializers.LinkLearnersSerializer.NOT_AUTHORIZED_ERROR in response.data['enterprise_customer'][0]
         assert PendingEnterpriseCustomerUser.objects.filter(
             user_email=new_user_email, enterprise_customer=enterprise_customer
         ).count() == 0
@@ -1070,7 +1076,7 @@ class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterprise
             'username': self.user.username
         }
         response = self.client.post(
-            settings.TEST_SERVER + reverse('link-pending-enteprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
             data=data
         )
         assert response.status_code == 401

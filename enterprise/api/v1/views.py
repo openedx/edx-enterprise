@@ -845,8 +845,8 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
 
     def create(self, request, *args, **kwargs):
         """
-        If a Django user exists, but the correspinding EnterpriseUser does not, creates a PendingEnterpriseUser for
-        the email in question.
+        Creates a PendingEnterpriseCustomerUser if no EnterpriseCustomerUser for the given (customer, email)
+        combination(s) exists.
         Can accept one user or a list of users.
 
         Returns 201 if any users were created, 204 if no users were created.
@@ -864,19 +864,19 @@ class PendingEnterpriseCustomerUserEnterpriseAdminViewSet(PendingEnterpriseCusto
     Admin must be an administrator for the enterprise in question
     """
     permission_classes = (permissions.IsAuthenticated,)
-    serializer = serializers.LinkLearnersSerializer
+    serializer_class = serializers.LinkLearnersSerializer
 
     @action(methods=['post'], detail=False)
     @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, enterprise_uuid: enterprise_uuid)
     def link_learners(self, request, enterprise_uuid):
         """
-        If a Django user exists, but the correspinding EnterpriseUser does not, creates a PendingEnterpriseUser for
-        the email in question.
+        Creates a PendingEnterpriseCustomerUser if no EnterpriseCustomerUser for the given (customer, email)
+        combination(s) exists.
         Can accept one user or a list of users.
 
         Returns 201 if any users were created, 204 if no users were created.
         """
-        context = {'enterprise_uuid': enterprise_uuid}
+        context = {'enterprise_customer__uuid': enterprise_uuid}
         serializer = self.get_serializer(
             data=request.data,
             many=isinstance(request.data, list),

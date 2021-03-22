@@ -468,14 +468,17 @@ class LinkLearnersSerializer(PendingEnterpriseCustomerUserSerializer):
     Extends the PendingEnterpriseCustomerSerializer to validate that the enterprise customer uuid
     matches the uuid the user has permissions to update
     """
+    NOT_AUTHORIZED_ERROR = 'Not authorized for this enterprise'
 
-    def validate_enterprise_customer(self, data):
+    def validate_enterprise_customer(self, value):
         """
         Check that the enterprise customer is the same as the one the user has permissions for
+        The value recieved is an EnterpriseCustomer object
         """
-        if data['enterprise_customer'] != self.context.get('enterprise__uuid'):
-            raise serializers.ValidationError('Not authorized for this enterprise')
-        return data
+
+        if str(value.uuid) != self.context.get('enterprise_customer__uuid'):
+            raise serializers.ValidationError(self.NOT_AUTHORIZED_ERROR)
+        return value
 
 
 class CourseDetailSerializer(ImmutableStateSerializer):
