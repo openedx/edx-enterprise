@@ -463,6 +463,21 @@ class PendingEnterpriseCustomerUserSerializer(serializers.ModelSerializer):
         return new_user, created
 
 
+class LinkLearnersSerializer(PendingEnterpriseCustomerUserSerializer):
+    """
+    Extends the PendingEnterpriseCustomerSerializer to validate that the enterprise customer uuid
+    matches the uuid the user has permissions to update
+    """
+
+    def validate_enterprise_customer(self, data):
+        """
+        Check that the enterprise customer is the same as the one the user has permissions for
+        """
+        if data['enterprise_customer'] != self.context.get('enterprise__uuid'):
+            raise serializers.ValidationError('Not authorized for this enterprise')
+        return data
+
+
 class CourseDetailSerializer(ImmutableStateSerializer):
     """
     Serializer for course data retrieved from the discovery service course detail API endpoint.
