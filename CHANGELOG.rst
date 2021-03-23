@@ -15,8 +15,11 @@ Change Log
 
 Unreleased
 ----------
-
 * Nothing.
+
+[3.20.1]
+--------
+* update edx-rbac to 1.4.2, plus a bunch of other version bumps.
 
 [3.20.0]
 --------
@@ -24,7 +27,6 @@ Unreleased
 
 [3.19.0]
 --------
-
 * feat: add support for creating multiple pending enterprise users
 
 [3.18.7]
