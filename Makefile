@@ -100,12 +100,12 @@ check_pins: ## check that our local copy of edx-platform pins is accurate
 upgrade: export CUSTOM_COMPILE_COMMAND=make upgrade
 upgrade: check_pins	## update the requirements/*.txt files with the latest packages satisfying requirements/*.in
 	pip install -q pip-tools
-	$(PIP_COMPILE) -o requirements/test-master.txt requirements/test-master.in
-	$(PIP_COMPILE) -o requirements/doc.txt requirements/doc.in
-	$(PIP_COMPILE) -o requirements/test.txt requirements/test.in
-	$(PIP_COMPILE) -o requirements/dev.txt requirements/dev.in
-	$(PIP_COMPILE) -o requirements/ci.txt requirements/ci.in
-	$(PIP_COMPILE) -o requirements/js_test.txt requirements/js_test.in
+	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test-master.txt requirements/test-master.in
+	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/doc.txt requirements/doc.in
+	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/test.txt requirements/test.in
+	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/dev.txt requirements/dev.in
+	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/ci.txt requirements/ci.in
+	$(PIP_COMPILE) --no-emit-trusted-host --no-emit-index-url -o requirements/js_test.txt requirements/js_test.in
 	# This section removes django from test.txt to
 	# let tox control the Django version for tests
 	grep -e "^django==" requirements/test.txt > requirements/django.txt

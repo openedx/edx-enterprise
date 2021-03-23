@@ -382,6 +382,7 @@ class EnterpriseCustomerManageLearnersView(BaseEnterpriseCustomerView):
             )
         except ValidationError as exc:
             manage_learners_form.add_error(ManageLearnersForm.Fields.EMAIL_OR_USERNAME, exc)
+            return None
         else:
             EnterpriseCustomerUser.objects.link_user(enterprise_customer, email)
             return [email]

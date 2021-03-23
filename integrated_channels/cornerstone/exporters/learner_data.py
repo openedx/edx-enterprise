@@ -64,3 +64,4 @@ class CornerstoneLearnerExporter(LearnerExporter):
                 enterprise_enrollment.enterprise_customer_user.username,
                 enterprise_enrollment.enterprise_customer_user.enterprise_customer.name
             )
+            return None

@@ -10,7 +10,7 @@ from logging import getLogger
 from uuid import UUID
 
 import pytz
-import waffle
+import waffle  # pylint: disable=invalid-django-waffle-import
 from dateutil.parser import parse
 from edx_rest_api_client.exceptions import HttpClientError
 from ipware.ip import get_client_ip
