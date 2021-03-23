@@ -18,6 +18,10 @@ Unreleased
 
 * Nothing.
 
+[3.20.0]
+--------
+* feat: add support for enterprise admins to create pending enterprise users
+
 [3.19.0]
 --------
 

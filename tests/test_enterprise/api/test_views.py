@@ -11,6 +11,7 @@ from smtplib import SMTPException
 
 import ddt
 import mock
+from faker import Faker
 from pytest import mark, raises
 from rest_framework import status
 from rest_framework.reverse import reverse
@@ -28,6 +29,7 @@ from django.contrib.auth.models import Permission
 from django.test import override_settings
 from django.utils import timezone
 
+from enterprise.api.v1 import serializers
 from enterprise.api.v1.views import LicensedEnterpriseCourseEnrollmentViewSet
 from enterprise.constants import (
     ALL_ACCESS_CONTEXT,
@@ -66,6 +68,8 @@ from test_utils import (
 )
 from test_utils.factories import FAKER
 from test_utils.fake_enterprise_api import get_default_branding_object
+
+fake = Faker()
 
 ENTERPRISE_CATALOGS_LIST_ENDPOINT = reverse('enterprise-catalogs-list')
 ENTERPRISE_CATALOGS_DETAIL_ENDPOINT = reverse(
@@ -586,12 +590,13 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         self.setup_admin_user(is_staff)
 
         # Create fake enterprise
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
 
         new_user_email = 'newuser@example.com'
         # data to be passed to the request
         data = {
-            'enterprise_customer': FAKE_UUIDS[0],
+            'enterprise_customer': ent_uuid,
             'user_email': new_user_email,
         }
 
@@ -638,12 +643,13 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         self.setup_admin_user(is_staff)
 
         # Create fake enterprise
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
 
         new_user_email = 'newuser@example.com'
         # data to be passed to the request
         data = {
-            'enterprise_customer': FAKE_UUIDS[0],
+            'enterprise_customer': ent_uuid,
             'user_email': new_user_email,
         }
 
@@ -676,12 +682,13 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         self.setup_admin_user(is_staff)
 
         # create fake enterprise
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
 
         new_user_email = 'newuser@example.com'
         # data to be passed to the request
         data = {
-            'enterprise_customer': FAKE_UUIDS[0],
+            'enterprise_customer': ent_uuid,
             'user_email': new_user_email,
         }
 
@@ -712,13 +719,15 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
     @ddt.unpack
     def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
         self.setup_admin_user()
-        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=FAKE_UUIDS[0])
+        ent_uuid = fake.uuid4()
+
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
         data = []
         users = []
         for idx, user in enumerate(userlist):
             user_email = 'new_user{}@example.com'.format(idx)
             data.append({
-                'enterprise_customer': FAKE_UUIDS[0],
+                'enterprise_customer': ent_uuid,
                 'user_email': user_email
             })
 
@@ -744,6 +753,7 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
         for user in users:
             # assert that the correct users were created
             if not user['user_exists']:
+
                 assert PendingEnterpriseCustomerUser.objects.get(
                     user_email=user['user_email'], enterprise_customer=enterprise_customer
                 )
@@ -764,6 +774,311 @@ class TestPendingEnterpriseCustomerUser(BaseTestEnterpriseAPIViews):
             'username': self.user.username
         }
         response = self.client.post(settings.TEST_SERVER + PENDING_ENTERPRISE_LEARNER_LIST_ENDPOINT, data=data)
+        assert response.status_code == 401
+
+
+@ddt.ddt
+@mark.django_db
+class TestPendingEnterpriseCustomerUserEnterpriseAdminViewSet(BaseTestEnterpriseAPIViews):
+    """
+    Test PendingEnterpriseCustomerUserViewSet and LinkLearnersSerializer
+    """
+
+    def create_ent_user(self, user_exists, ecu_exists, pending_ecu_exists, user_email, enterprise_customer):
+        """
+        Creates enterprise users or pending users
+        """
+        user = None
+        if user_exists:
+            user = factories.UserFactory(email=user_email)
+            if ecu_exists:
+                factories.EnterpriseCustomerUserFactory(user_id=user.id, enterprise_customer=enterprise_customer)
+
+        if pending_ecu_exists:
+            factories.PendingEnterpriseCustomerUserFactory(
+                user_email=user_email, enterprise_customer=enterprise_customer
+            )
+        return user
+
+    def setup_admin_user(self):
+        """
+        Creates an admin user and logs them in
+        """
+        client_username = 'client_username'
+        self.client.logout()
+        self.create_user(username=client_username, password=TEST_PASSWORD)
+        self.client.login(username=client_username, password=TEST_PASSWORD)
+
+    @ddt.data(
+        {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 201},
+        {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
+        {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False, 'status_code': 201},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_user_creation(
+            self,
+            user_exists,
+            ecu_exists,
+            pending_ecu_exists,
+            status_code):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerUsers.
+        """
+
+        # create user making the request
+        self.setup_admin_user()
+
+        # Create fake enterprise
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        # Fake enterprise admin permissions
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        user = self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data
+        )
+        assert response.status_code == status_code
+        response = self.load_json(response.content)
+        self.assertDictEqual(data, response)
+        if not user_exists:
+            assert PendingEnterpriseCustomerUser.objects.get(
+                user_email=new_user_email, enterprise_customer=enterprise_customer
+            )
+        else:
+            assert EnterpriseCustomerUser.objects.get(
+                user_id=user.id, enterprise_customer=enterprise_customer, active=user.is_active
+            )
+
+    @ddt.data(
+        {'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False, 'status_code': 204},
+        {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True, 'status_code': 204},
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_user_creation_no_user_created(
+        self,
+        user_exists,
+        ecu_exists,
+        pending_ecu_exists,
+        status_code
+    ):
+        """
+        Make sure service users can post new PendingEnterpriseCustomerUsers.
+        """
+
+        # create user making the request
+        self.setup_admin_user()
+
+        # Create fake enterprise
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        # Fake enterprise admin permissions
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        self.create_ent_user(
+            user_exists=user_exists,
+            ecu_exists=ecu_exists,
+            pending_ecu_exists=pending_ecu_exists,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data
+        )
+        assert response.status_code == status_code
+        assert not response.content
+
+    def test_post_pending_enterprise_customer_unauthorized_user(self):
+        # create user making the request
+        self.setup_admin_user()
+
+        # create fake enterprise
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        self.create_ent_user(
+            user_exists=False,
+            ecu_exists=False,
+            pending_ecu_exists=False,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data
+        )
+        assert response.status_code == 403
+
+    def test_post_pending_enterprise_customer_user_authorized_for_different_enterprise(self):
+        # create user making the request
+        self.setup_admin_user()
+
+        # create fake enterprise
+        ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        # Fake enterprise admin permissions for different enterprise
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, fake.uuid4())
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        # create preexisting user(s) as necessary
+        self.create_ent_user(
+            user_exists=False,
+            ecu_exists=False,
+            pending_ecu_exists=False,
+            user_email=new_user_email,
+            enterprise_customer=enterprise_customer,
+        )
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data
+        )
+        assert response.status_code == 403
+
+    @ddt.data(
+        ([{'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True}], 201),
+        ([{'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': True},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': False},
+          {'user_exists': True, 'ecu_exists': False, 'pending_ecu_exists': False}], 201),
+        ([{'user_exists': True, 'ecu_exists': True, 'pending_ecu_exists': False},
+          {'user_exists': False, 'ecu_exists': False, 'pending_ecu_exists': True}], 204)
+    )
+    @ddt.unpack
+    def test_post_pending_enterprise_customer_multiple_customers(self, userlist, status_code):
+        self.setup_admin_user()
+        ent_uuid = fake.uuid4()
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        data = []
+        users = []
+        for idx, user in enumerate(userlist):
+            user_email = 'new_user{}@example.com'.format(idx)
+            data.append({
+                'enterprise_customer': ent_uuid,
+                'user_email': user_email
+            })
+
+            existing_user = self.create_ent_user(
+                user_exists=user['user_exists'],
+                ecu_exists=user['ecu_exists'],
+                pending_ecu_exists=user['pending_ecu_exists'],
+                user_email=user_email,
+                enterprise_customer=enterprise_customer,
+            )
+            users.append({
+                'user_exists': user['user_exists'],
+                'user_email': user_email,
+                'existing_user': existing_user
+            })
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data,
+            format='json',
+        )
+        assert response.status_code == status_code
+        for user in users:
+            # assert that the correct users were created
+            if not user['user_exists']:
+                assert PendingEnterpriseCustomerUser.objects.get(
+                    user_email=user['user_email'], enterprise_customer=enterprise_customer
+                )
+            else:
+                assert EnterpriseCustomerUser.objects.get(
+                    user_id=user['existing_user'].id,
+                    enterprise_customer=enterprise_customer,
+                    active=user['existing_user'].is_active
+                )
+
+    def test_post_pending_enterprise_customer_user_cannot_create_users_for_different_enterprise(self):
+        # create user making the request
+        self.setup_admin_user()
+
+        # Create fake enterprise
+        ent_uuid = fake.uuid4()
+        other_ent_uuid = fake.uuid4()
+        enterprise_customer = factories.EnterpriseCustomerFactory(uuid=ent_uuid)
+        factories.EnterpriseCustomerFactory(uuid=other_ent_uuid)
+        # Fake enterprise admin permissions
+        self.set_jwt_cookie(ENTERPRISE_ADMIN_ROLE, ent_uuid)
+
+        new_user_email = 'newuser@example.com'
+        # data to be passed to the request
+        data = {
+            'enterprise_customer': other_ent_uuid,
+            'user_email': new_user_email,
+        }
+
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data
+        )
+        # This should cause a validation error
+        assert response.status_code == 400
+        assert serializers.LinkLearnersSerializer.NOT_AUTHORIZED_ERROR in response.data['enterprise_customer'][0]
+        assert PendingEnterpriseCustomerUser.objects.filter(
+            user_email=new_user_email, enterprise_customer=enterprise_customer
+        ).count() == 0
+
+    def test_post_pending_enterprise_customer_user_logged_out(self):
+        """
+        Make sure users can't post PendingEnterpriseCustomerUsers when logged out.
+        """
+        self.client.logout()
+        ent_uuid = fake.uuid4()
+        data = {
+            'enterprise_customer': ent_uuid,
+            'username': self.user.username
+        }
+        response = self.client.post(
+            settings.TEST_SERVER + reverse('link-pending-enterprise-learner', kwargs={'enterprise_uuid': ent_uuid}),
+            data=data
+        )
         assert response.status_code == 401
 
 

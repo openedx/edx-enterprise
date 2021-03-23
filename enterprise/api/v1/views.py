@@ -810,6 +810,7 @@ class EnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
 class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
     """
     API views for the ``pending-enterprise-learner`` API endpoint.
+    Requires staff permissions
     """
     queryset = models.PendingEnterpriseCustomerUser.objects.all()
     filter_backends = (filters.OrderingFilter, DjangoFilterBackend)
@@ -843,7 +844,44 @@ class PendingEnterpriseCustomerUserViewSet(EnterpriseReadWriteModelViewSet):
         return status.HTTP_204_NO_CONTENT
 
     def create(self, request, *args, **kwargs):
+        """
+        Creates a PendingEnterpriseCustomerUser if no EnterpriseCustomerUser for the given (customer, email)
+        combination(s) exists.
+        Can accept one user or a list of users.
+
+        Returns 201 if any users were created, 204 if no users were created.
+        """
         serializer = self.get_serializer(data=request.data, many=isinstance(request.data, list))
+        return_status = self._get_return_status(serializer, many=isinstance(request.data, list))
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=return_status, headers=headers)
+
+
+class PendingEnterpriseCustomerUserEnterpriseAdminViewSet(PendingEnterpriseCustomerUserViewSet):
+    """
+    Viewset for allowing enterpise admins to create linked learners
+    Endpoint url: link_pending_enterprise_users/(?P<enterprise_uuid>[A-Za-z0-9-]+)/?$
+    Admin must be an administrator for the enterprise in question
+    """
+    permission_classes = (permissions.IsAuthenticated,)
+    serializer_class = serializers.LinkLearnersSerializer
+
+    @action(methods=['post'], detail=False)
+    @permission_required('enterprise.can_access_admin_dashboard', fn=lambda request, enterprise_uuid: enterprise_uuid)
+    def link_learners(self, request, enterprise_uuid):
+        """
+        Creates a PendingEnterpriseCustomerUser if no EnterpriseCustomerUser for the given (customer, email)
+        combination(s) exists.
+        Can accept one user or a list of users.
+
+        Returns 201 if any users were created, 204 if no users were created.
+        """
+        context = {'enterprise_customer__uuid': enterprise_uuid}
+        serializer = self.get_serializer(
+            data=request.data,
+            many=isinstance(request.data, list),
+            context=context,
+        )
         return_status = self._get_return_status(serializer, many=isinstance(request.data, list))
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=return_status, headers=headers)
@@ -1203,7 +1241,7 @@ class CouponCodesView(APIView):
             )
 
 
-class TableauAuthViewSet(generics.GenericAPIView):
+class TableauAuthView(generics.GenericAPIView):
     """
     API to authenticate user with Tableau.
     """
