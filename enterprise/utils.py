@@ -64,6 +64,11 @@ try:
 except ImportError:
     get_url = None
 
+try:
+    from social_django.models import UserSocialAuth
+except ImportError:
+    UserSocialAuth = None
+
 # Only create manual enrollments if running in edx-platform
 try:
     from common.djangoapps.student.api import (
@@ -189,6 +194,56 @@ class CourseEnrollmentPermissionError(Exception):
     """
     Exception to raise when an enterprise attempts to use enrollment features it's not configured to use.
     """
+
+
+def get_social_auth_from_idp(idp, user=None, user_idp_id=None):
+    """
+    Return social auth entry of user for given enterprise IDP.
+
+    idp (EnterpriseCustomerIdentityProvider): EnterpriseCustomerIdentityProvider Object
+    user (User): User Object
+    user_idp_id (str): User id of user in third party LMS
+    """
+
+    if idp:
+        tpa_provider = get_identity_provider(idp.provider_id)
+        filter_kwargs = {
+            'provider': tpa_provider.backend_name,
+            'uid__contains': tpa_provider.provider_id[5:]
+        }
+        if user_idp_id:
+            provider_slug = tpa_provider.provider_id[5:]
+            social_auth_uid = '{0}:{1}'.format(provider_slug, user_idp_id)
+            filter_kwargs['uid'] = social_auth_uid
+        else:
+            filter_kwargs['user'] = user
+
+        user_social_auth = UserSocialAuth.objects.select_related('user').filter(**filter_kwargs).first()
+
+        return user_social_auth if user_social_auth else None
+
+    return None
+
+
+def get_user_valid_idp(user, enterprise_customer):
+    """
+    Return the default idp if it has user social auth record else it
+    will return any idp with valid user social auth record
+
+    user (User): user object
+    enterprise_customer (EnterpriseCustomer): EnterpriseCustomer object
+    """
+    valid_identity_provider = None
+
+    # If default idp provider has UserSocialAuth record then it has the highest priority.
+    if get_social_auth_from_idp(enterprise_customer.default_provider_idp, user=user):
+        valid_identity_provider = enterprise_customer.default_provider_idp
+    else:
+        for idp in enterprise_customer.identity_providers:
+            if get_social_auth_from_idp(idp, user=user):
+                valid_identity_provider = idp
+                break
+    return valid_identity_provider
 
 
 def get_identity_provider(provider_id):

@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.21.2]
+--------
+* Added support of multiple identity_providers in enterprise.models.get_remote_id.
+
 [3.21.1]
 --------
 * Added multiple identity_providers in EnterpriseCustomerApi

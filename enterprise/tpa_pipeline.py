@@ -8,7 +8,7 @@ from logging import getLogger
 from django.urls import reverse
 
 from enterprise.models import EnterpriseCustomer, EnterpriseCustomerUser
-from enterprise.utils import get_identity_provider
+from enterprise.utils import get_identity_provider, get_social_auth_from_idp
 
 try:
     from social_core.pipeline.partial import partial
@@ -165,26 +165,7 @@ def get_default_idp_user_social_auth(enterprise_customer, user=None, user_idp_id
         user_idp_id (str): User id of user in third party LMS
 
     """
-    default_provider = enterprise_customer.default_provider_idp
-
-    if default_provider:
-        tpa_provider = get_identity_provider(default_provider.provider_id)
-        filter_kwargs = {
-            'provider': tpa_provider.backend_name,
-            'uid__contains': tpa_provider.provider_id[5:]
-        }
-        if user_idp_id:
-            provider_slug = tpa_provider.provider_id[5:]
-            social_auth_uid = '{0}:{1}'.format(provider_slug, user_idp_id)
-            filter_kwargs['uid'] = social_auth_uid
-        else:
-            filter_kwargs['user'] = user
-
-        user_social_auth = UserSocialAuth.objects.select_related('user').filter(**filter_kwargs).first()
-
-        return user_social_auth if user_social_auth else None
-
-    return None
+    return get_social_auth_from_idp(enterprise_customer.default_provider_idp, user=user, user_idp_id=user_idp_id)
 
 
 def handle_redirect_after_social_auth_login(backend, user):
