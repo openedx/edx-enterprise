@@ -107,7 +107,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             course_start_date,
             course_id,
             course_catalog_api_client_mock,
-            enterprise_catalog_api_client_mock,
+            enterprise_catalog_client_mock,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
         content_filter = {
@@ -120,7 +120,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             'title': 'Demo Course'
         }
 
-        enterprise_catalog_api_client_mock.return_value.enterprise_contains_content_items.return_value = True
+        enterprise_catalog_client_mock.return_value.enterprise_contains_content_items.return_value = True
 
         mock_discovery_catalog_api_client = course_catalog_api_client_mock.return_value
         mock_discovery_catalog_api_client.get_course_id.return_value = course_id
@@ -429,6 +429,10 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
 
         course_mode = 'verified'
         mock_get_course_mode.return_value = course_mode
+        mock_enrollment_api_client.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'audit'
+        }
         params = {
             'enterprise_customer_uuid': str(enterprise_customer.uuid),
             'course_id': course_id,
@@ -457,6 +461,94 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             )
         else:
             assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
+
+    @mock.patch('enterprise.views.render', side_effect=fake_render)
+    @mock.patch('enterprise.views.get_best_mode_from_course_key')
+    @mock.patch('enterprise.models.EnterpriseCatalogApiClient')
+    @mock.patch('enterprise.views.EnrollmentApiClient')
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @ddt.data(
+        str(uuid.uuid4()),
+        '',
+    )
+    def test_get_course_specific_data_sharing_consent_enabled_audit_enrollment_exists(
+            self,
+            license_uuid,
+            course_catalog_api_client_mock,
+            mock_enrollment_api_client,
+            enterprise_catalog_client_mock,
+            mock_get_course_mode,
+            *args
+    ):  # pylint: disable=unused-argument
+        self._login()
+        course_id = 'course-v1:edX+DemoX+Demo_Course'
+        enterprise_customer = EnterpriseCustomerFactory(
+            name='Starfleet Academy',
+            enable_data_sharing_consent=True,
+            enforce_data_sharing_consent='at_enrollment',
+        )
+        content_filter = {
+            'key': [
+                course_id,
+            ]
+        }
+        EnterpriseCustomerCatalogFactory(
+            enterprise_customer=enterprise_customer,
+            content_filter=content_filter
+        )
+        ecu = EnterpriseCustomerUserFactory(
+            user_id=self.user.id,
+            enterprise_customer=enterprise_customer
+        )
+        DataSharingConsentFactory(
+            username=self.user.username,
+            course_id=course_id,
+            enterprise_customer=enterprise_customer,
+            granted=True
+        )
+
+        course_catalog_api_client_mock.return_value.program_exists.return_value = True
+        course_catalog_api_client_mock.return_value.get_course_id.return_value = course_id
+
+        mock_enterprise_catalog_client = enterprise_catalog_client_mock.return_value
+        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = True
+
+        course_mode = 'verified'
+
+        mock_get_course_mode.return_value = course_mode
+        mock_enrollment_api_client.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'audit'
+        }
+        params = {
+            'enterprise_customer_uuid': str(enterprise_customer.uuid),
+            'course_id': course_id,
+            'next': 'https://google.com',
+            'failure_url': 'https://facebook.com',
+            'license_uuid': license_uuid,
+        }
+        response = self.client.get(self.url, data=params)
+        assert response.status_code == 302
+        self.assertRedirects(response, 'https://google.com', fetch_redirect_response=False)
+
+        if license_uuid:
+            # Verify the enterprise course enrollment was made with and without a license
+            assert EnterpriseCourseEnrollment.objects.filter(
+                enterprise_customer_user=ecu,
+            ).exists() is True
+
+            assert LicensedEnterpriseCourseEnrollment.objects.filter(
+                license_uuid=license_uuid,
+            ).exists() is True
+
+            mock_enrollment_api_client.return_value.enroll_user_in_course.assert_called_once_with(
+                self.user.username,
+                course_id,
+                course_mode
+            )
+        else:
+            assert not mock_enrollment_api_client.return_value.enroll_user_in_course.called
+            assert not mock_enrollment_api_client.return_value.get_course_enrollment.called
 
     @mock.patch('enterprise.views.render', side_effect=fake_render)
     @mock.patch('enterprise.views.EnrollmentApiClient')
@@ -497,6 +589,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_mode = 'verified'
         mock_enrollment_api_client.return_value.get_course_modes.return_value = [{'slug': course_mode}]
         mock_enrollment_api_client.return_value.enroll_user_in_course.side_effect = ClientError('error occurred')
+        mock_enrollment_api_client.return_value.get_course_enrollment.return_value = None
 
         license_uuid = str(uuid.uuid4())
         params = {
@@ -549,7 +642,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             license_uuid,
             reverse_mock,
             course_catalog_api_client_mock,
-            enterprise_catalog_api_client_mock,
+            enterprise_catalog_client_mock,
             mock_get_course_mode,
             mock_enrollment_api_client,
             *args
@@ -585,8 +678,12 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
 
-        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
-        mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = True
+        mock_enterprise_catalog_client = enterprise_catalog_client_mock.return_value
+        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = True
+        mock_enrollment_api_client.return_value.get_course_enrollment.return_value = {
+            'is_active': True,
+            'mode': 'audit'
+        }
 
         reverse_mock.return_value = '/dashboard'
         course_mode = 'verified'
@@ -641,7 +738,7 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
             self,
             reverse_mock,
             course_catalog_api_client_mock,
-            enterprise_catalog_api_client_mock,
+            enterprise_catalog_client_mock,
             mock_enrollment_api_client,
             *args
     ):  # pylint: disable=unused-argument,invalid-name
@@ -679,8 +776,8 @@ class TestGrantDataSharingPermissions(MessagesMixin, TestCase):
         course_catalog_api_client_mock.return_value.program_exists.return_value = True
         course_catalog_api_client_mock.return_value.get_course_id.return_value = 'edX+DemoX'
 
-        mock_enterprise_catalog_api_client = enterprise_catalog_api_client_mock.return_value
-        mock_enterprise_catalog_api_client.enterprise_contains_content_items.return_value = True
+        mock_enterprise_catalog_client = enterprise_catalog_client_mock.return_value
+        mock_enterprise_catalog_client.enterprise_contains_content_items.return_value = True
 
         reverse_mock.return_value = '/dashboard'
         post_data = {

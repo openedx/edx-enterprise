@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.20.2]
+--------
+* Allow licensed audit enrollment to have a path to upgrade into verified
+
 [3.20.1]
 --------
 * update edx-rbac to 1.4.2, plus a bunch of other version bumps.
