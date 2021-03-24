@@ -4,6 +4,9 @@
 #
 #    make upgrade
 #
+    # via
+    #   -r requirements/test-master.txt
+    #   kombu
 aniso8601==9.0.1
     # via
     #   -r requirements/test-master.txt
