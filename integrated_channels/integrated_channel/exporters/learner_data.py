@@ -271,22 +271,19 @@ class LearnerExporter(Exporter):
             enterprise_customer_identifier=self.enterprise_customer.name
         )
 
-        for enterprise_enrollment in enrollment_queryset:
+        if TransmissionAudit and skip_transmitted:
+            enrollments_to_transmit = self._filter_out_pre_transmitted_enrollments(
+                enrollment_queryset,
+                channel_name,
+                grade,
+                TransmissionAudit
+            )
+        else:
+            enrollments_to_transmit = enrollment_queryset
+
+        for enterprise_enrollment in enrollments_to_transmit:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
             enterprise_user_id = enterprise_enrollment.enterprise_customer_user.user_id
-            if TransmissionAudit and skip_transmitted and \
-                    is_already_transmitted(TransmissionAudit, enterprise_enrollment.id, grade):
-                # We've already sent a completion status for this enrollment
-                generate_formatted_log(
-                    'Skipping export of previously sent enterprise enrollment. '
-                    'EnterpriseEnrollment: {enterprise_enrollment_id}'.format(
-                        enterprise_enrollment_id=enterprise_enrollment.id
-                    ),
-                    channel_name=channel_name,
-                    enterprise_customer_identifier=self.enterprise_customer.name
-                )
-                continue
-
             course_id = enterprise_enrollment.course_id
 
             # Fetch course details from Courses API
@@ -425,6 +422,33 @@ class LearnerExporter(Exporter):
             channel_name=channel_name,
             enterprise_customer_identifier=self.enterprise_customer.name
         )
+
+    def _filter_out_pre_transmitted_enrollments(
+            self,
+            enrollment_queryset,
+            channel_name,
+            grade,
+            transmission_audit
+    ):
+        """
+        Given an enrollment_queryset, returns only enrollments that are not already transmitted
+        """
+        included_enrollments = set()
+        for enterprise_enrollment in enrollment_queryset:
+            if transmission_audit and \
+                    is_already_transmitted(transmission_audit, enterprise_enrollment.id, grade):
+                # We've already sent a completion status for this enrollment
+                generate_formatted_log(
+                    'Skipping export of previously sent enterprise enrollment. '
+                    'EnterpriseEnrollment: {enterprise_enrollment_id}'.format(
+                        enterprise_enrollment_id=enterprise_enrollment.id
+                    ),
+                    channel_name=channel_name,
+                    enterprise_customer_identifier=self.enterprise_customer.name
+                )
+                continue
+            included_enrollments.add(enterprise_enrollment)
+        return included_enrollments
 
     def create_enrollment_queryset(self, learner_to_transmit, course_run_id, channel_name):
         """
