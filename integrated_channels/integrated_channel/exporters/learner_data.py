@@ -231,7 +231,6 @@ class LearnerExporter(Exporter):
         * ``grade``: string grade recorded for the learner in the course.
         """
         channel_name = kwargs.get('app_label')
-        exporting_single_learner = False
         learner_to_transmit = kwargs.get('learner_to_transmit', None)
         course_run_id = kwargs.get('course_run_id', None)
         completed_date = kwargs.get('completed_date', None)
@@ -253,27 +252,12 @@ class LearnerExporter(Exporter):
             channel_name=channel_name,
             enterprise_customer_identifier=self.enterprise_customer.name
         )
-        enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
-            'enterprise_customer_user'
-        ).filter(
-            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
-            enterprise_customer_user__active=True,
+
+        enrollment_queryset = self.create_enrollment_queryset(
+            learner_to_transmit,
+            course_run_id,
+            channel_name,
         )
-        if learner_to_transmit and course_run_id:
-            enrollment_queryset = enrollment_queryset.filter(
-                course_id=course_run_id,
-                enterprise_customer_user__user_id=learner_to_transmit.id,
-            )
-            exporting_single_learner = True
-            generate_formatted_log(
-                'Exporting single learner. Course: {course_run}, User: {user_id}'.format(
-                    course_run=course_run_id,
-                    user_id=learner_to_transmit.id
-                ),
-                channel_name=channel_name,
-                enterprise_customer_identifier=self.enterprise_customer.name
-            )
-        enrollment_queryset = enrollment_queryset.order_by('course_id')
 
         # Fetch course details from the Course API, and cache between calls.
         course_details = None
@@ -289,6 +273,7 @@ class LearnerExporter(Exporter):
 
         for enterprise_enrollment in enrollment_queryset:
             is_audit_enrollment = enterprise_enrollment.is_audit_enrollment
+            enterprise_user_id = enterprise_enrollment.enterprise_customer_user.user_id
             if TransmissionAudit and skip_transmitted and \
                     is_already_transmitted(TransmissionAudit, enterprise_enrollment.id, grade):
                 # We've already sent a completion status for this enrollment
@@ -347,7 +332,7 @@ class LearnerExporter(Exporter):
                     enterprise_enrollment.audit_reporting_disabled):
                 continue
 
-            # For instructor-paced and not audit courses, let the certificate determine course completion
+            # For instructor-paced and non-audit courses, let the certificate determine course completion
             if course_details.get('pacing') == 'instructor' and not is_audit_enrollment:
                 completed_date_from_api, grade_from_api, is_passing_from_api, grade_percent = \
                     self._collect_certificate_data(enterprise_enrollment)
@@ -358,7 +343,7 @@ class LearnerExporter(Exporter):
                         grade=grade_from_api,
                         is_passing=is_passing_from_api,
                         course_id=course_id,
-                        user_id=enterprise_enrollment.enterprise_customer_user.user_id,
+                        user_id=enterprise_user_id,
                         enterprise=enterprise_enrollment.enterprise_customer_user.enterprise_customer.slug
                     ),
                     channel_name=channel_name,
@@ -375,12 +360,14 @@ class LearnerExporter(Exporter):
                         grade=grade_from_api,
                         is_passing=is_passing_from_api,
                         course_id=course_id,
-                        user_id=enterprise_enrollment.enterprise_customer_user.user_id,
+                        user_id=enterprise_user_id,
                         enterprise=enterprise_enrollment.enterprise_customer_user.enterprise_customer.slug
                     ),
                     channel_name=channel_name,
                     enterprise_customer_identifier=self.enterprise_customer.name
                 )
+
+            exporting_single_learner = learner_to_transmit and course_run_id
             if exporting_single_learner and (grade != grade_from_api or is_passing != is_passing_from_api):
                 enterprise_user = enterprise_enrollment.enterprise_customer_user
                 generate_formatted_log(
@@ -438,6 +425,33 @@ class LearnerExporter(Exporter):
             channel_name=channel_name,
             enterprise_customer_identifier=self.enterprise_customer.name
         )
+
+    def create_enrollment_queryset(self, learner_to_transmit, course_run_id, channel_name):
+        """
+        Creates queryset of EnterpriseCourseEnrollments ordered by course_id
+        Queryset is filtered by learner and course_run_id if both are provided
+        """
+        enrollment_queryset = EnterpriseCourseEnrollment.objects.select_related(
+            'enterprise_customer_user'
+        ).filter(
+            enterprise_customer_user__enterprise_customer=self.enterprise_customer,
+            enterprise_customer_user__active=True,
+        )
+        if learner_to_transmit and course_run_id:
+            enrollment_queryset = enrollment_queryset.filter(
+                course_id=course_run_id,
+                enterprise_customer_user__user_id=learner_to_transmit.id,
+            )
+            generate_formatted_log(
+                'Exporting single learner. Course: {course_run}, User: {user_id}'.format(
+                    course_run=course_run_id,
+                    user_id=learner_to_transmit.id
+                ),
+                channel_name=channel_name,
+                enterprise_customer_identifier=self.enterprise_customer.name
+            )
+        enrollment_queryset = enrollment_queryset.order_by('course_id')
+        return enrollment_queryset
 
     def get_learner_assessment_data_records(
             self,

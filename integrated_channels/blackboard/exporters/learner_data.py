@@ -7,9 +7,9 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.utils import parse_datetime_to_epoch_millis
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 
 LOGGER = getLogger(__name__)
 
@@ -43,10 +43,6 @@ class BlackboardLearnerExporter(LearnerExporter):
         if completed_date is not None:
             completed_timestamp = parse_datetime_to_epoch_millis(completed_date)
 
-        course_catalog_client = get_course_catalog_api_service_client(
-            site=enterprise_customer_user.enterprise_customer.site
-        )
-
         BlackboardLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
             'blackboard',
             'BlackboardLearnerDataTransmissionAudit'
@@ -55,7 +51,7 @@ class BlackboardLearnerExporter(LearnerExporter):
             BlackboardLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 blackboard_user_email=enterprise_customer_user.user_email,
-                course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=completed_date is not None and is_passing,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
@@ -102,14 +98,10 @@ class BlackboardLearnerExporter(LearnerExporter):
             if not subsection_percent_grade or not subsection_id:
                 continue
 
-            course_catalog_client = get_course_catalog_api_service_client(
-                site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
-            )
-
             transmission_audit = blackboardLearnerAssessmentDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 blackboard_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 subsection_id=subsection_id,
                 grade=subsection_percent_grade,
                 grade_point_score=subsection_data.get('grade_point_score'),
