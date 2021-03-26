@@ -6,8 +6,6 @@ Models for edX Enterprise's Consent application.
 import logging
 
 import six
-from opaque_keys import InvalidKeyError
-from opaque_keys.edx.keys import CourseKey
 from simple_history.models import HistoricalRecords
 
 from django.core.exceptions import ImproperlyConfigured
@@ -44,39 +42,32 @@ class DataSharingConsentQuerySet(models.query.QuerySet):
         This customizes the queryset to return an instance of ``ProxyDataSharingConsent`` when
         the searched-for ``DataSharingConsent`` instance does not exist.
         """
-        # TODO: ENT-2010
         original_kwargs = kwargs.copy()
         if 'course_id' in kwargs:
             try:
-                # Check if we have a course ID or a course run ID
-                course_run_key = str(CourseKey.from_string(kwargs['course_id']))
-            except InvalidKeyError:
-                # The ID we have is for a course instead of a course run; fall through
-                # to the second check.
-                pass
-            else:
+                # Try to get the record for the course OR course run, depending on what we got in kwargs,
+                # course_id or course_run_id
+                return self.get(*args, **kwargs)
+            except DataSharingConsent.DoesNotExist:
+                # If here, either the record for course OR course run doesn't exist.
+                # Try one more time by modifying the query parameters to look for just a course record this time.
+                site = None
+                if 'enterprise_customer' in kwargs:
+                    site = kwargs['enterprise_customer'].site
+
                 try:
-                    # Try to get the record for the course run specifically
-                    return self.get(*args, **kwargs)
-                except DataSharingConsent.DoesNotExist:
-                    # A record for the course run didn't exist, so modify the query
-                    # parameters to look for just a course record on the second pass.
-
-                    site = None
-                    if 'enterprise_customer' in kwargs:
-                        site = kwargs['enterprise_customer'].site
-
-                    try:
-                        course_id = get_course_catalog_api_service_client(site=site).get_course_id(
-                            course_identifier=course_run_key
-                        )
-                        kwargs['course_id'] = course_id
-                    except ImproperlyConfigured:
-                        LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
+                    course_id = get_course_catalog_api_service_client(site=site).get_course_id(
+                        course_identifier=kwargs['course_id']
+                    )
+                    kwargs['course_id'] = course_id
+                except ImproperlyConfigured:
+                    LOGGER.warning('CourseCatalogApiServiceClient is improperly configured.')
 
         try:
+            # Try to get the record of course
             return self.get(*args, **kwargs)
         except DataSharingConsent.DoesNotExist:
+            # If here, the record doesn't exist for course AND course run, so return a proxy record instead.
             return ProxyDataSharingConsent(**original_kwargs)
 
 

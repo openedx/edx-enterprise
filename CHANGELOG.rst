@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.20.4]
+--------
+* Refactored code in `proxied_get()` to clean up duplicate logic.
+
 [3.20.3]
 --------
 
