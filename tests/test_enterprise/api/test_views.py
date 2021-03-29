@@ -1119,6 +1119,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
+                'identity_providers': [],
             }],
         ),
         (
@@ -1162,6 +1163,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                     'contact_email': 'fake@example.com',
                     'hide_course_original_price': False,
                     'sender_alias': 'Test Sender Alias',
+                    'identity_providers': [],
                 }
             }],
         ),
@@ -1193,7 +1195,6 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'enterprise_customer__site__name': 'example.com',
                 'enterprise_customer__contact_email': 'fake@example.com',
                 'enterprise_customer__sender_alias': 'Test Sender Alias',
-
             }],
             [{
                 'uuid': FAKE_UUIDS[1], 'name': 'Test Enterprise Customer', 'slug': TEST_SLUG,
@@ -1217,6 +1218,12 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
+                'identity_providers': [
+                    {
+                        "provider_id": FAKE_UUIDS[0],
+                        "default_provider": False,
+                    },
+                ],
             }],
         ),
         (
@@ -1405,6 +1412,7 @@ class TestEnterpriseCustomerListViews(BaseTestEnterpriseAPIViews):
                 'contact_email': 'fake@example.com',
                 'hide_course_original_price': False,
                 'sender_alias': 'Test Sender Alias',
+                'identity_providers': [],
             }
         else:
             assert response == expected_error
