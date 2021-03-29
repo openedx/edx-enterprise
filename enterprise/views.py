@@ -582,35 +582,37 @@ class GrantDataSharingPermissions(View):
         if course_id and self.is_course_run_id(course_id):
             if license_uuid:
                 enrollment_api_client = EnrollmentApiClient()
-                course_mode = get_best_mode_from_course_key(course_id)
-                LOGGER.info(
-                    'Retrieved Course Mode: {course_modes} for Course {course_id}'.format(
-                        course_id=course_id,
-                        course_modes=course_mode
-                    )
-                )
-                try:
-                    enrollment_api_client.enroll_user_in_course(
-                        request.user.username,
-                        course_id,
-                        course_mode
-                    )
+                existing_enrollment = enrollment_api_client.get_course_enrollment(request.user.username, course_id)
+                if not existing_enrollment or existing_enrollment.get('mode') == constants.CourseModes.AUDIT:
+                    course_mode = get_best_mode_from_course_key(course_id)
                     LOGGER.info(
-                        'Created LMS enrollment for User {user} in Course {course_id} '
-                        'with License {license_uuid} in Course Mode {course_mode}.'.format(
-                            user=request.user.username,
+                        'Retrieved Course Mode: {course_modes} for Course {course_id}'.format(
                             course_id=course_id,
-                            license_uuid=license_uuid,
-                            course_mode=course_mode
+                            course_modes=course_mode
                         )
                     )
-                except Exception as exc:  # pylint: disable=broad-except
-                    LOGGER.error(
-                        'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
-                            exc=exc
+                    try:
+                        enrollment_api_client.enroll_user_in_course(
+                            request.user.username,
+                            course_id,
+                            course_mode
                         )
-                    )
-                    raise
+                        LOGGER.info(
+                            'Created LMS enrollment for User {user} in Course {course_id} '
+                            'with License {license_uuid} in Course Mode {course_mode}.'.format(
+                                user=request.user.username,
+                                course_id=course_id,
+                                license_uuid=license_uuid,
+                                course_mode=course_mode
+                            )
+                        )
+                    except Exception as exc:  # pylint: disable=broad-except
+                        LOGGER.error(
+                            'Unable to create an LMS enrollment from the DSC view: {exc}'.format(
+                                exc=exc
+                            )
+                        )
+                        raise
             try:
                 self.create_enterprise_course_enrollment(request, enterprise_customer, course_id, license_uuid)
             except IntegrityError:
@@ -690,18 +692,6 @@ class GrantDataSharingPermissions(View):
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
 
-            # If DSC is entirely disabled proceed to enroll the learner in the course
-            if not enterprise_customer.requests_data_sharing_consent:
-                try:
-                    self._enroll_learner_in_course(
-                        request=request,
-                        enterprise_customer=enterprise_customer,
-                        course_id=course_id,
-                        program_uuid=program_uuid,
-                        license_uuid=license_uuid)
-                    return redirect(success_url)
-                except Exception:  # pylint: disable=broad-except
-                    return redirect(failure_url)
             # Otherwise determine the learner's consent status
             try:
                 consent_record = get_data_sharing_consent(
@@ -729,6 +719,39 @@ class GrantDataSharingPermissions(View):
                     )
                 )
                 return render_page_with_error_code_message(request, context_data, error_code, log_message)
+
+            # In the event that a learner did enroll into audit from B2C and they consented on the data sharing consent
+            # page we want to upgrade their audit enrollment into verified when they view the course in the learner
+            # portal and hit this endpoint again
+            upgrade_to_license_enrollment = consent_record is not None and consent_record.granted and license_uuid
+
+            # If DSC is entirely disabled proceed to enroll the learner in the course
+            if not enterprise_customer.requests_data_sharing_consent or upgrade_to_license_enrollment:
+                try:
+                    self._enroll_learner_in_course(
+                        request=request,
+                        enterprise_customer=enterprise_customer,
+                        course_id=course_id,
+                        program_uuid=program_uuid,
+                        license_uuid=license_uuid)
+                    return redirect(success_url)
+                except Exception:  # pylint: disable=broad-except
+                    log_message = (
+                        'Failed to enroll licensed learner into course. '
+                        'Course: {course_id}, '
+                        'Program: {program_uuid}, '
+                        'EnterpriseCustomer: {enterprise_customer_uuid}, '
+                        'User: {user_id}, '
+                        'License: {license_uuid}'.format(
+                            course_id=course_id,
+                            program_uuid=program_uuid,
+                            enterprise_customer_uuid=enterprise_customer_uuid,
+                            user_id=request.user.id,
+                            license_uuid=license_uuid
+                        )
+                    )
+                    LOGGER.error(log_message)
+                    return redirect(failure_url)
 
             try:
                 consent_required = consent_record.consent_required()
@@ -1217,7 +1240,11 @@ class HandleConsentEnrollment(View):
             },
         )
 
-        audit_modes = getattr(settings, 'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES', ['audit', 'honor'])
+        audit_modes = getattr(
+            settings,
+            'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES',
+            [constants.CourseModes.AUDIT, constants.CourseModes.HONOR]
+        )
         if selected_course_mode['slug'] in audit_modes:
             # In case of Audit course modes enroll the learner directly through
             # enrollment API client and redirect the learner to dashboard.
@@ -1427,7 +1454,7 @@ class CourseEnrollmentView(NonAtomicView):
         audit_modes = getattr(
             settings,
             'ENTERPRISE_COURSE_ENROLLMENT_AUDIT_MODES',
-            ['audit', 'honor']
+            [constants.CourseModes.AUDIT, constants.CourseModes.HONOR]
         )
 
         for mode in modes:
@@ -2309,10 +2336,10 @@ class RouterView(NonAtomicView):
         course_identifier = course_key if course_key else resource_id
 
         # Return it in one big statement to utilize short-circuiting behavior. Avoid the API call if possible.
-        return request.GET.get('audit') and \
+        return request.GET.get(constants.CourseModes.AUDIT) and \
             request.path == self.COURSE_ENROLLMENT_VIEW_URL.format(enterprise_customer.uuid, course_identifier) and \
             enterprise_customer.catalog_contains_course(resource_id) and \
-            EnrollmentApiClient().has_course_mode(resource_id, 'audit')
+            EnrollmentApiClient().has_course_mode(resource_id, constants.CourseModes.AUDIT)
 
     def redirect(self, request, *args, **kwargs):
         """
@@ -2381,7 +2408,11 @@ class RouterView(NonAtomicView):
         resource_id = course_run_id or program_uuid
         if self.eligible_for_direct_audit_enrollment(request, enterprise_customer, resource_id, course_key):
             try:
-                enterprise_customer_user.enroll(resource_id, 'audit', cohort=request.GET.get('cohort', None))
+                enterprise_customer_user.enroll(
+                    resource_id,
+                    constants.CourseModes.AUDIT,
+                    cohort=request.GET.get('cohort', None)
+                )
                 track_enrollment('direct-audit-enrollment', request.user.id, resource_id, request.get_full_path())
             except (CourseEnrollmentDowngradeError, CourseEnrollmentPermissionError):
                 pass

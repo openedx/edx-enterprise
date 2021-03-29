@@ -37,7 +37,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext as _
 from django.utils.translation import ungettext
 
-from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION
+from enterprise.constants import ALLOWED_TAGS, DEFAULT_CATALOG_CONTENT_FILTER, PROGRAM_TYPE_DESCRIPTION, CourseModes
 
 try:
     from common.djangoapps.course_modes.models import CourseMode
@@ -1801,9 +1801,9 @@ def get_best_mode_from_course_key(course_key):
     enterprise learner in.
     """
     course_modes = [mode.slug for mode in CourseMode.objects.filter(course_id=course_key)]
-    best_course_mode = 'verified' if 'verified' in course_modes \
-        else 'professional' if 'professional' in course_modes \
-        else 'no-id-professional' if 'no-id-professional' in course_modes \
-        else 'audit'
+    best_course_mode = CourseModes.VERIFIED if CourseModes.VERIFIED in course_modes \
+        else CourseModes.PROFESSIONAL if CourseModes.PROFESSIONAL in course_modes \
+        else CourseModes.NO_ID_PROFESSIONAL if CourseModes.NO_ID_PROFESSIONAL in course_modes \
+        else CourseModes.AUDIT
 
     return best_course_mode
