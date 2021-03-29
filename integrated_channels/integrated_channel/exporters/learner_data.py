@@ -567,7 +567,6 @@ class LearnerExporter(Exporter):
         percent_grade = None
 
         try:
-            breakpoint()
             certificate = get_course_certificate(course_id, username)
         except InvalidKeyError:
             self._log_courseid_not_found(course_id, enterprise_enrollment, user_id)
