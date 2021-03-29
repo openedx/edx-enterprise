@@ -783,7 +783,9 @@ class EnterpriseCustomerUserManager(models.Manager):
         """
         try:
             existing_user = User.objects.get(email=user_email)
-            self.get_or_create(enterprise_customer=enterprise_customer, user_id=existing_user.id)
+            user_id = existing_user.id
+            self.get_or_create(enterprise_customer=enterprise_customer, user_id=user_id)
+            EnterpriseCustomerUser.inactivate_other_customers(user_id, enterprise_customer)
         except User.DoesNotExist:
             PendingEnterpriseCustomerUser.objects.get_or_create(enterprise_customer=enterprise_customer,
                                                                 user_email=user_email)

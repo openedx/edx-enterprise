@@ -462,6 +462,34 @@ class TestEnterpriseCustomerUserManager(unittest.TestCase):
         with raises(PendingEnterpriseCustomerUser.DoesNotExist):
             EnterpriseCustomerUser.objects.unlink_user(enterprise_customer, email)
 
+    def test_link_user_works_as_expected(self):
+        """
+        Verify that learner's correct enterprise is active.
+        """
+        user_email = "test_multi_ent_user@example.com"
+        enterprise_customer1 = factories.EnterpriseCustomerFactory()
+        enterprise_customer2 = factories.EnterpriseCustomerFactory()
+        user = factories.UserFactory(email=user_email)
+
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer1, user_email)
+        learner_with_ent1 = EnterpriseCustomerUser.objects.get(
+            enterprise_customer=enterprise_customer1, user_id=user.id
+        )
+        assert learner_with_ent1.active is True
+
+        # this should deactive learner's other enterprises
+        EnterpriseCustomerUser.objects.link_user(enterprise_customer2, user_email)
+        learner_with_ent2 = EnterpriseCustomerUser.objects.get(
+            enterprise_customer=enterprise_customer2, user_id=user.id
+        )
+        assert learner_with_ent2.active is True
+
+        # verify that learner's other enterprises are deactivated
+        learner_with_ent1 = EnterpriseCustomerUser.objects.get(
+            enterprise_customer=enterprise_customer1, user_id=user.id
+        )
+        assert learner_with_ent1.active is False
+
 
 @mark.django_db
 @ddt.ddt

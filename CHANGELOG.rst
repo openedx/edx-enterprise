@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.21.3]
+--------
+* When a learner is linked from manage learners page, in-activate learner's other enterprises
+
 [3.21.2]
 --------
 * Added support of multiple identity_providers in enterprise.models.get_remote_id.
