@@ -567,28 +567,32 @@ class LearnerExporter(Exporter):
         percent_grade = None
 
         try:
+            breakpoint()
             certificate = get_course_certificate(course_id, username)
-            if not certificate:
-                self._log_cert_not_found(course_id, enterprise_enrollment, user_id)
-                return completed_date, grade, is_passing, percent_grade
-            completed_date = certificate.get('created_date')
-            if completed_date:
-                completed_date = parse_datetime(completed_date)
-            else:
-                completed_date = timezone.now()
-
-            # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
-            is_passing = certificate.get('is_passing')
-            percent_grade = certificate.get('grade')
-            grade = self.grade_passing if is_passing else self.grade_failing
         except InvalidKeyError:
             self._log_courseid_not_found(course_id, enterprise_enrollment, user_id)
+            return completed_date, grade, is_passing, percent_grade
+
+        if not certificate:
+            self._log_cert_not_found(course_id, enterprise_enrollment, user_id)
+            return completed_date, grade, is_passing, percent_grade
+
+        completed_date = certificate.get('created_date')
+        if completed_date:
+            completed_date = parse_datetime(completed_date)
+        else:
+            completed_date = timezone.now()
+
+        # For consistency with _collect_grades_data, we only care about Pass/Fail grades. This could change.
+        is_passing = certificate.get('is_passing')
+        percent_grade = certificate.get('grade')
+        grade = self.grade_passing if is_passing else self.grade_failing
 
         return completed_date, grade, is_passing, percent_grade
 
     def _log_cert_not_found(self, course_id, enterprise_enrollment, user_id):
         """
-        Standardized logging for no certificate found
+        Standardized logging for no certificate found (refactor candidate)
         """
         LOGGER.error('[Integrated Channel] Certificate not found for user'
                      ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
@@ -601,7 +605,7 @@ class LearnerExporter(Exporter):
 
     def _log_courseid_not_found(self, course_id, enterprise_enrollment, user_id):
         """
-        Standardized logging for no certificate found
+        Standardized logging for no certificate found  (refactor candidate)
         """
         LOGGER.error('[Integrated Channel] Certificate fetch failed due to invalid course_id'
                      ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '

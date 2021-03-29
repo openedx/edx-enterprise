@@ -187,20 +187,18 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate(
-            self, mock_course_catalog_api, mock_certificate_api, mock_course_api, mock_enrollment_api
+            self, mock_get_course_certificate, mock_course_catalog_api, mock_course_api, mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
+        mock_get_course_certificate.return_value = None
 
         enrollment = factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
             course_id=self.course_id,
         )
-
-        # Raise 404 - no certificate found
-        mock_certificate_api.return_value.get_course_certificate.side_effect = HttpNotFoundError
 
         # Return instructor-paced course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -225,9 +223,9 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     def test_learner_data_instructor_paced_no_certificate_null_sso_id(
-            self, mock_certificate_api, mock_course_api, mock_enrollment_api
+            self, mock_get_course_certificate, mock_course_api, mock_enrollment_api
     ):
         factories.EnterpriseCourseEnrollmentFactory(
             enterprise_customer_user=self.enterprise_customer_user,
@@ -236,8 +234,8 @@ class TestLearnerExporter(unittest.TestCase):
         # No SSO user attached
         self.tpa_client.get_remote_id.return_value = None
 
-        # Raise 404 - no certificate found
-        mock_certificate_api.return_value.get_course_certificate.side_effect = HttpNotFoundError
+        # no certificate found
+        mock_get_course_certificate.return_value = None
 
         # Return instructor-paced course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -254,10 +252,10 @@ class TestLearnerExporter(unittest.TestCase):
 
     @mock.patch('enterprise.models.EnrollmentApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     def test_learner_data_instructor_paced_with_certificate(
-            self, mock_course_catalog_api, mock_certificate_api, mock_course_api, mock_enrollment_api
+            self, mock_course_catalog_api, mock_get_course_certificate, mock_course_api, mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
 
@@ -276,7 +274,7 @@ class TestLearnerExporter(unittest.TestCase):
             is_passing=True,
             grade='A-',
         )
-        mock_certificate_api.return_value.get_course_certificate.return_value = certificate
+        mock_get_course_certificate.return_value = certificate
 
         # Return instructor-paced course details
         mock_course_api.return_value.get_course_details.return_value = dict(
@@ -459,7 +457,7 @@ class TestLearnerExporter(unittest.TestCase):
     )
     @ddt.unpack
     @mock.patch('enterprise.models.EnrollmentApiClient')
-    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CertificatesApiClient')
+    @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.get_course_certificate')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.GradesApiClient')
     @mock.patch('integrated_channels.integrated_channel.exporters.learner_data.CourseApiClient')
     @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
@@ -470,7 +468,7 @@ class TestLearnerExporter(unittest.TestCase):
             mock_course_catalog_api,
             mock_course_api,
             mock_grades_api,
-            mock_certificate_api,
+            mock_get_course_certificate,
             mock_enrollment_api
     ):
         mock_course_catalog_api.return_value.get_course_id.return_value = self.course_key
@@ -526,8 +524,8 @@ class TestLearnerExporter(unittest.TestCase):
                     is_passing=True,
                     grade=grade,
                 )
-            raise HttpNotFoundError
-        mock_certificate_api.return_value.get_course_certificate.side_effect = get_course_certificate
+            return None
+        mock_get_course_certificate.side_effect = get_course_certificate
 
         def get_course_grade(course_id, username):
             """
