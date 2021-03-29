@@ -3,6 +3,7 @@ A utility collection for calls from integrated_channels to LMS APIs
 If integrated_channels calls LMS APIs, put them here for better tracking.
 """
 from opaque_keys.edx.keys import CourseKey
+
 try:
     from lms.djangoapps.certificates.api import get_certificate_for_user
 except ImportError:

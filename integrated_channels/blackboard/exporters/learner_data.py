@@ -7,9 +7,9 @@ from logging import getLogger
 
 from django.apps import apps
 
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.utils import parse_datetime_to_epoch_millis
-from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 
 LOGGER = getLogger(__name__)
 

@@ -8,6 +8,7 @@ enterprise customer.
 """
 
 from logging import getLogger
+
 from opaque_keys import InvalidKeyError
 from slumber.exceptions import HttpNotFoundError
 
@@ -19,12 +20,8 @@ from consent.models import DataSharingConsent
 from enterprise.api_client.lms import CourseApiClient, GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import (
-    generate_formatted_log,
-    is_already_transmitted,
-    parse_datetime_to_epoch_millis,
-)
 from integrated_channels.lms_utils import get_course_certificate
+from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
 
