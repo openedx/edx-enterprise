@@ -562,7 +562,7 @@ class LearnerExporter(Exporter):
 
         course_id = enterprise_enrollment.course_id
         username = enterprise_enrollment.enterprise_customer_user.user.username
-        user_id = enterprise_enrollment.enterprise_customer_user.user.id
+        user_id = enterprise_enrollment.enterprise_customer_user.user_id
 
         completed_date = None
         grade = self.grade_incomplete
@@ -572,14 +572,7 @@ class LearnerExporter(Exporter):
         try:
             certificate = get_course_certificate(course_id, username)
             if not certificate:
-                LOGGER.error('[Integrated Channel] Certificate not found for user'
-                             ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
-                             ' Learner id {user_id}'
-                             .format(
-                                 course_id=course_id,
-                                 enterprise_enrollment=enterprise_enrollment,
-                                 user_id=user_id,
-                             ))
+                self._log_cert_not_found(course_id, enterprise_enrollment, user_id)
                 return completed_date, grade, is_passing, percent_grade
             completed_date = certificate.get('created_date')
             if completed_date:
@@ -592,16 +585,35 @@ class LearnerExporter(Exporter):
             percent_grade = certificate.get('grade')
             grade = self.grade_passing if is_passing else self.grade_failing
         except InvalidKeyError:
-            LOGGER.error('[Integrated Channel] Certificate fetch failed due to invalid course_id'
-                         ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
-                         ' Learner id {user_id}'
-                         .format(
-                             course_id=course_id,
-                             enterprise_enrollment=enterprise_enrollment,
-                             user_id=user_id,
-                         ))
+            self._log_courseid_not_found(course_id, enterprise_enrollment, user_id)
 
         return completed_date, grade, is_passing, percent_grade
+
+    def _log_cert_not_found(self, course_id, enterprise_enrollment, user_id):
+        """
+        Standardized logging for no certificate found
+        """
+        LOGGER.error('[Integrated Channel] Certificate not found for user'
+                     ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
+                     ' Learner id {user_id}'
+                     .format(
+                         course_id=course_id,
+                         enterprise_enrollment=enterprise_enrollment,
+                         user_id=user_id,
+                     ))
+
+    def _log_courseid_not_found(self, course_id, enterprise_enrollment, user_id):
+        """
+        Standardized logging for no certificate found
+        """
+        LOGGER.error('[Integrated Channel] Certificate fetch failed due to invalid course_id'
+                     ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
+                     ' Learner id {user_id}'
+                     .format(
+                         course_id=course_id,
+                         enterprise_enrollment=enterprise_enrollment,
+                         user_id=user_id,
+                     ))
 
     def _collect_assessment_grades_data(self, enterprise_enrollment):
         """
