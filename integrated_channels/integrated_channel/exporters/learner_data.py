@@ -8,7 +8,7 @@ enterprise customer.
 """
 
 from logging import getLogger
-
+from opaque_keys import InvalidKeyError
 from slumber.exceptions import HttpNotFoundError
 
 from django.apps import apps
@@ -16,10 +16,15 @@ from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
 from consent.models import DataSharingConsent
-from enterprise.api_client.lms import CertificatesApiClient, CourseApiClient, GradesApiClient
+from enterprise.api_client.lms import CourseApiClient, GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
+from integrated_channels.utils import (
+    generate_formatted_log,
+    is_already_transmitted,
+    parse_datetime_to_epoch_millis,
+)
+from integrated_channels.lms_utils import get_course_certificate
 
 LOGGER = getLogger(__name__)
 
@@ -364,6 +369,7 @@ class LearnerExporter(Exporter):
                     enterprise_customer_identifier=self.enterprise_customer.name
                 )
 
+            # todo: we need to refactor so single learner is not so mixed in with bulk case
             exporting_single_learner = learner_to_transmit and course_run_id
             if exporting_single_learner and (grade != grade_from_api or is_passing != is_passing_from_api):
                 enterprise_user = enterprise_enrollment.enterprise_customer_user
@@ -554,14 +560,27 @@ class LearnerExporter(Exporter):
             is_passing: Boolean indicating if the grade is a passing grade or not.
         """
 
-        if self.certificates_api is None:
-            self.certificates_api = CertificatesApiClient(self.user)
-
         course_id = enterprise_enrollment.course_id
         username = enterprise_enrollment.enterprise_customer_user.user.username
+        user_id = enterprise_enrollment.enterprise_customer_user.user.id
+
+        completed_date = None
+        grade = self.grade_incomplete
+        is_passing = False
+        percent_grade = None
 
         try:
-            certificate = self.certificates_api.get_course_certificate(course_id, username)
+            certificate = get_course_certificate(course_id, username)
+            if not certificate:
+                LOGGER.error('[Integrated Channel] Certificate not found for user'
+                             ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
+                             ' Learner id {user_id}'
+                             .format(
+                                 course_id=course_id,
+                                 enterprise_enrollment=enterprise_enrollment,
+                                 user_id=user_id,
+                             ))
+                return completed_date, grade, is_passing, percent_grade
             completed_date = certificate.get('created_date')
             if completed_date:
                 completed_date = parse_datetime(completed_date)
@@ -572,18 +591,15 @@ class LearnerExporter(Exporter):
             is_passing = certificate.get('is_passing')
             percent_grade = certificate.get('grade')
             grade = self.grade_passing if is_passing else self.grade_failing
-
-        except HttpNotFoundError:
-            LOGGER.error('[Integrated Channel] Certificate data not found.'
-                         ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment},'
-                         ' Username: {username}'.format(
+        except InvalidKeyError:
+            LOGGER.error('[Integrated Channel] Certificate fetch failed due to invalid course_id'
+                         ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment}, '
+                         ' Learner id {user_id}'
+                         .format(
                              course_id=course_id,
-                             username=username,
-                             enterprise_enrollment=enterprise_enrollment.pk))
-            completed_date = None
-            grade = self.grade_incomplete
-            is_passing = False
-            percent_grade = None
+                             enterprise_enrollment=enterprise_enrollment,
+                             user_id=user_id,
+                         ))
 
         return completed_date, grade, is_passing, percent_grade
 
