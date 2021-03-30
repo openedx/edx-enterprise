@@ -723,7 +723,8 @@ class GrantDataSharingPermissions(View):
             # In the event that a learner did enroll into audit from B2C and they consented on the data sharing consent
             # page we want to upgrade their audit enrollment into verified when they view the course in the learner
             # portal and hit this endpoint again
-            upgrade_to_license_enrollment = consent_record is not None and consent_record.granted and license_uuid
+            upgrade_to_license_enrollment = consent_record is not None and consent_record.granted \
+                and license_uuid is not None
 
             # If DSC is entirely disabled proceed to enroll the learner in the course
             if not enterprise_customer.requests_data_sharing_consent or upgrade_to_license_enrollment:

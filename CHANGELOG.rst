@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing.
 
+[3.20.4]
+--------
+
+* Fix conditional to allow licensed learners to upgrade from audit to verified
+
 [3.20.3]
 --------
 
