@@ -673,7 +673,7 @@ class TestLearnerExporter(unittest.TestCase):
         # Check that LMS enrollment populated as part of model used in audit check:
         expected_result = mock_course_enrollment_class.objects.get.return_value
         self.assertEqual(expected_result, enterprise_course_enrollment.course_enrollment)
-        assert mock_course_enrollment_class.objects.get.call_count == 2
+        assert mock_course_enrollment_class.objects.get.call_count == 1
 
         assert mock_course_api.call_count == 0
         assert mock_grades_api.call_count == 0
