@@ -9,9 +9,9 @@ from requests import RequestException
 
 from django.apps import apps
 
-from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
