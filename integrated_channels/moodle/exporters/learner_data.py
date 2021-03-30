@@ -7,7 +7,7 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.utils import parse_datetime_to_epoch_millis
 
@@ -48,17 +48,13 @@ class MoodleLearnerExporter(LearnerExporter):
             'MoodleLearnerDataTransmissionAudit'
         )
 
-        course_catalog_client = get_course_catalog_api_service_client(
-            site=enterprise_customer.enterprise_customer.site
-        )
-
         percent_grade = kwargs.get('grade_percent', None)
 
         return [
             MoodleLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 moodle_user_email=enterprise_customer.user_email,
-                course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=completed_date is not None and is_passing,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,

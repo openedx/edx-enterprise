@@ -8,7 +8,7 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 
 LOGGER = getLogger(__name__)
@@ -18,6 +18,7 @@ class CanvasLearnerExporter(LearnerExporter):
     """
     Class to provide a Canvas learner data transmission audit prepared for serialization.
     """
+
     def get_learner_data_records(
             self,
             enterprise_enrollment,
@@ -42,10 +43,6 @@ class CanvasLearnerExporter(LearnerExporter):
         percent_grade = kwargs.get('grade_percent', None)
         completed_timestamp = completed_date.strftime("%F") if isinstance(completed_date, datetime) else None
 
-        course_catalog_client = get_course_catalog_api_service_client(
-            site=enterprise_customer_user.enterprise_customer.site
-        )
-
         CanvasLearnerDataTransmissionAudit = apps.get_model(  # pylint: disable=invalid-name
             'canvas',
             'CanvasLearnerDataTransmissionAudit'
@@ -56,7 +53,7 @@ class CanvasLearnerExporter(LearnerExporter):
             CanvasLearnerDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_customer_user.user_email,
-                course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 course_completed=completed_date is not None and is_passing,
                 grade=percent_grade,
                 completed_timestamp=completed_timestamp,
@@ -106,14 +103,10 @@ class CanvasLearnerExporter(LearnerExporter):
             if not subsection_percent_grade or not subsection_id:
                 continue
 
-            course_catalog_client = get_course_catalog_api_service_client(
-                site=enterprise_customer_user.enterprise_customer.site
-            )
-
             transmission_audit = CanvasLearnerAssessmentDataTransmissionAudit(
                 enterprise_course_enrollment_id=enterprise_enrollment.id,
                 canvas_user_email=enterprise_customer_user.user_email,
-                course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                course_id=get_course_id_for_enrollment(enterprise_enrollment),
                 subsection_id=subsection_id,
                 grade=subsection_percent_grade,
                 grade_point_score=subsection_data.get('grade_point_score'),

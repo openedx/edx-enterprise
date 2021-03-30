@@ -8,7 +8,7 @@ from logging import getLogger
 
 from django.apps import apps
 
-from enterprise.api_client.discovery import get_course_catalog_api_service_client
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 
 LOGGER = getLogger(__name__)
@@ -42,14 +42,11 @@ class DegreedLearnerExporter(LearnerExporter):
             )
             # We return two records here, one with the course key and one with the course run id, to account for
             # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-            course_catalog_client = get_course_catalog_api_service_client(
-                site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
-            )
             return [
                 DegreedLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     degreed_user_email=enterprise_enrollment.enterprise_customer_user.user_email,
-                    course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                    course_id=get_course_id_for_enrollment(enterprise_enrollment),
                     course_completed=completed_date is not None and is_passing,
                     completed_timestamp=completed_timestamp,
                 ),
