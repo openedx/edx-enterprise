@@ -17,6 +17,11 @@ Unreleased
 ----------
 * Nothing.
 
+[3.20.3]
+--------
+
+* Removing unused and out of date endpoints for Bulk Enrollment
+
 [3.20.2]
 --------
 * Allow licensed audit enrollment to have a path to upgrade into verified

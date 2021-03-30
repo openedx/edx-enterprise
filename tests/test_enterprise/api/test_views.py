@@ -3,7 +3,6 @@
 Tests for the `edx-enterprise` api module.
 """
 
-import base64
 import json
 import uuid
 from operator import itemgetter
@@ -101,7 +100,6 @@ ENTERPRISE_CUSTOMER_CONTAINS_CONTENT_ENDPOINT = reverse(
     kwargs={'pk': FAKE_UUIDS[0]}
 )
 ENTERPRISE_CUSTOMER_COURSE_ENROLLMENTS_ENDPOINT = reverse('enterprise-customer-course-enrollments', (FAKE_UUIDS[0],))
-ENTERPRISE_CUSTOMER_ENTERPRISE_LEARNERS_ENDPOINT = reverse('enterprise-customer-enterprise-learners', (FAKE_UUIDS[0],))
 ENTERPRISE_CUSTOMER_BULK_ENROLL_LEARNERS_IN_COURSES_ENDPOINT = reverse(
     'enterprise-customer-enroll-learners-in-courses',
     (FAKE_UUIDS[0],)
@@ -3201,77 +3199,6 @@ class TestBulkEnrollment(BaseTestEnterpriseAPIViews):
     """
     Test bulk enrollment (EnterpriseCustomerViewSet)
     """
-
-    @ddt.data(
-        {
-            'body': {},
-            'expected_code': 400,
-            'expected_body': 'Must include either email or email_csv in request.'
-        },
-        {
-            'body': {
-                'email_csv': base64.b64encode(b'bad_column\ntest@example.com').decode(),
-                'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                'course_mode': 'audit',
-                'discount': 100,
-            },
-            'expected_code': 400,
-            'expected_body': 'The .csv file must have a column of email addresses,',
-        },
-        {
-            'body': {
-                'email': 'newuser@example.com',
-                'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                'course_mode': 'audit',
-                'discount': 100,
-            },
-            'expected_code': 202,
-            'expected_body': '1 learners enrolled',
-        },
-        {
-            'body': {
-                'email_csv': base64.b64encode(b'email\ntest@example.com').decode(),
-                'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                'course_mode': 'audit',
-                'discount': 100,
-            },
-            'expected_code': 202,
-            'expected_body': '1 learners enrolled',
-        },
-        {
-            'body': {
-                'email': 'abc@test.com\ndef@test.com',
-                'email_csv': base64.b64encode(b'email\ntest@example.com').decode(),
-                'course_run_key': 'course-v1:edX+DemoX+Demo_Course',
-                'course_mode': 'audit',
-                'discount': 100,
-            },
-            'expected_code': 202,
-            'expected_body': '2 learners enrolled',
-        },
-    )
-    @ddt.unpack
-    def test_bulk_enrollment(self, body, expected_code, expected_body):
-        """
-        Tests the bulk enrollment endpoint at enterprise_learners
-        """
-        factories.EnterpriseCustomerFactory(
-            uuid=FAKE_UUIDS[0],
-            name="test_enterprise"
-        )
-
-        permission = Permission.objects.get(name='Can add Enterprise Customer')
-        self.user.user_permissions.add(permission)
-
-        response = self.client.post(
-            settings.TEST_SERVER + ENTERPRISE_CUSTOMER_ENTERPRISE_LEARNERS_ENDPOINT,
-            data=json.dumps(body),
-            content_type='application/json',
-        )
-        self.assertEqual(response.status_code, expected_code)
-        if expected_body:
-            response_content_string = json.dumps(self.load_json(response.content))
-            self.assertIn(expected_body, response_content_string)
 
     @ddt.data(
         # Validation failure cases
