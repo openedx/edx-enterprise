@@ -10,7 +10,6 @@ import ddt
 import mock
 from freezegun import freeze_time
 from pytest import mark
-from slumber.exceptions import HttpNotFoundError
 
 from django.utils import timezone
 
