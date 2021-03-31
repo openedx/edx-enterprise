@@ -12,6 +12,7 @@ from logging import getLogger
 from opaque_keys import InvalidKeyError
 from slumber.exceptions import HttpNotFoundError
 
+from django.contrib import auth
 from django.apps import apps
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -24,6 +25,7 @@ from integrated_channels.lms_utils import get_course_certificate, get_single_use
 from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
+User = auth.get_user_model()  # pylint: disable=invalid-name
 
 
 class LearnerExporter(Exporter):
@@ -565,8 +567,8 @@ class LearnerExporter(Exporter):
         """
 
         course_id = enterprise_enrollment.course_id
-        username = enterprise_enrollment.enterprise_customer_user.user.username
-        user_id = enterprise_enrollment.enterprise_customer_user.user_id
+        lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
+        user = User.objects.get(pk=lms_user_id)
 
         completed_date = None
         grade = self.grade_incomplete
@@ -574,13 +576,13 @@ class LearnerExporter(Exporter):
         percent_grade = None
 
         try:
-            certificate = get_course_certificate(course_id, username)
+            certificate = get_course_certificate(course_id, user)
         except InvalidKeyError:
-            self._log_courseid_not_found(course_id, enterprise_enrollment, user_id)
+            self._log_courseid_not_found(course_id, enterprise_enrollment, lms_user_id)
             return completed_date, grade, is_passing, percent_grade
 
         if not certificate:
-            self._log_cert_not_found(course_id, enterprise_enrollment, user_id)
+            self._log_cert_not_found(course_id, enterprise_enrollment, lms_user_id)
             return completed_date, grade, is_passing, percent_grade
 
         completed_date = certificate.get('created_date')
@@ -688,10 +690,10 @@ class LearnerExporter(Exporter):
         """
 
         course_id = enterprise_enrollment.course_id
-        username = enterprise_enrollment.enterprise_customer_user.user.username
         lms_user_id = enterprise_enrollment.enterprise_customer_user.user_id
+        user = User.objects.get(pk=lms_user_id)
 
-        grades_data = get_single_user_grade(course_id, username)
+        grades_data = get_single_user_grade(course_id, user)
 
         if grades_data is None:
             LOGGER.error('[Integrated Channel] Grades data not found.'

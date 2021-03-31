@@ -15,9 +15,9 @@ except ImportError:
     CourseGradeFactory = None
 
 
-def get_course_certificate(course_id, username):
+def get_course_certificate(course_id, user):
     """
-    A course certificate for a user.
+    A course certificate for a user (must be a django.contrib.auth.User instance).
     If there is a problem finding the course, throws a opaque_keys.InvalidKeyError
 
     Returns dict, for example:
@@ -35,13 +35,13 @@ def get_course_certificate(course_id, username):
     if not get_certificate_for_user:
         return None
     course_key = CourseKey.from_string(course_id)
-    user_cert = get_certificate_for_user(username=username, course_key=course_key)
+    user_cert = get_certificate_for_user(username=user.username, course_key=course_key)
     return user_cert
 
 
-def get_single_user_grade(course_id, grade_user):
+def get_single_user_grade(course_id, user):
     """
-    Returns a grade for the user object corresponding to the provided user
+    Returns a grade for the user (must be a django.contrib.auth.User instance).
     Args:
         course_key (CourseLocator): The course to retrieve user grades for.
 
@@ -51,5 +51,5 @@ def get_single_user_grade(course_id, grade_user):
     if not CourseGradeFactory:
         return None
     course_key = CourseKey.from_string(course_id)
-    course_grade = CourseGradeFactory().read(grade_user, course_key=course_key)
+    course_grade = CourseGradeFactory().read(user.username, course_key=course_key)
     return course_grade
