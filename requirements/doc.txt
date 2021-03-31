@@ -125,7 +125,7 @@ django==2.2.19
     #   rest-condition
 djangorestframework-xml==2.0.0
     # via -r requirements/test-master.txt
-djangorestframework==3.12.2
+djangorestframework==3.12.4
     # via
     #   -r requirements/test-master.txt
     #   django-config-models
@@ -141,7 +141,7 @@ docutils==0.16
     #   readme-renderer
     #   restructuredtext-lint
     #   sphinx
-drf-jwt==1.18.0
+drf-jwt==1.19.0
     # via
     #   -r requirements/test-master.txt
     #   edx-drf-extensions

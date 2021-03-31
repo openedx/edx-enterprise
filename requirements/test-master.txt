@@ -128,7 +128,7 @@ django==2.2.19
     #   rest-condition
 djangorestframework-xml==2.0.0
     # via -r requirements/base.in
-djangorestframework==3.12.2
+djangorestframework==3.12.4
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   -r requirements/base.in
@@ -136,7 +136,7 @@ djangorestframework==3.12.2
     #   drf-jwt
     #   edx-drf-extensions
     #   rest-condition
-drf-jwt==1.18.0
+drf-jwt==1.19.0
     # via
     #   -c requirements/edx-platform-constraints.txt
     #   edx-drf-extensions
