@@ -4,14 +4,13 @@ Tests for the catalog_service_utils used by integration channels.
 """
 
 import unittest
+
 import mock
 import pytest
-
 from opaque_keys import InvalidKeyError
 
-from test_utils import factories
 from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment
-
+from test_utils import factories
 
 A_GOOD_COURSE_ID = "edX/DemoX/Demo_Course"
 A_BAD_COURSE_ID = "this_shall_not_pass"
