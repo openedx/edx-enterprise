@@ -11,7 +11,6 @@ import json
 from collections import OrderedDict
 from logging import getLogger
 
-from enterprise.api_client.enterprise import EnterpriseApiClient
 from enterprise.api_client.enterprise_catalog import EnterpriseCatalogApiClient
 from enterprise.utils import get_content_metadata_item_id
 from integrated_channels.integrated_channel.exporters import Exporter
@@ -68,7 +67,6 @@ class ContentMetadataExporter(Exporter):
         Initialize the exporter.
         """
         super().__init__(user, enterprise_configuration)
-        self.enterprise_api = EnterpriseApiClient(self.user)
         self.enterprise_catalog_api = EnterpriseCatalogApiClient(self.user)
 
     def export(self, **kwargs):
