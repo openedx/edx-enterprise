@@ -17,6 +17,10 @@ Unreleased
 ----------
 * Nothing.
 
+[3.20.5]
+--------
+* Integrated channels learner_data module refactored to avoid making some LMS REST API calls
+
 [3.20.4]
 --------
 * Refactored code in `proxied_get()` to clean up duplicate logic.

@@ -9,9 +9,9 @@ from requests import RequestException
 
 from django.apps import apps
 
-from enterprise.api_client.discovery import get_course_catalog_api_service_client
 from enterprise.models import EnterpriseCustomerUser, PendingEnterpriseCustomerUser
 from enterprise.tpa_pipeline import get_user_from_social_auth
+from integrated_channels.catalog_service_utils import get_course_id_for_enrollment, get_course_run_for_enrollment
 from integrated_channels.exceptions import ClientError
 from integrated_channels.integrated_channel.exporters.learner_data import LearnerExporter
 from integrated_channels.sap_success_factors.client import SAPSuccessFactorsAPIClient
@@ -55,10 +55,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
             )
             # We return two records here, one with the course key and one with the course run id, to account for
             # uncertainty about the type of content (course vs. course run) that was sent to the integrated channel.
-            course_catalog_client = get_course_catalog_api_service_client(
-                site=enterprise_enrollment.enterprise_customer_user.enterprise_customer.site
-            )
-            course_run = course_catalog_client.get_course_run(enterprise_enrollment.course_id)
+            course_run = get_course_run_for_enrollment(enterprise_enrollment)
             total_hours = 0.0
             if course_run and self.enterprise_configuration.transmit_total_hours:
                 total_hours = course_run.get("estimated_hours", 0.0)
@@ -66,7 +63,7 @@ class SapSuccessFactorsLearnerExporter(LearnerExporter):
                 SapSuccessFactorsLearnerDataTransmissionAudit(
                     enterprise_course_enrollment_id=enterprise_enrollment.id,
                     sapsf_user_id=sapsf_user_id,
-                    course_id=course_catalog_client.get_course_id(enterprise_enrollment.course_id),
+                    course_id=get_course_id_for_enrollment(enterprise_enrollment),
                     course_completed=course_completed,
                     completed_timestamp=completed_timestamp,
                     grade=grade,
