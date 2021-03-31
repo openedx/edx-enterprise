@@ -12,8 +12,8 @@ from logging import getLogger
 from opaque_keys import InvalidKeyError
 from slumber.exceptions import HttpNotFoundError
 
-from django.contrib import auth
 from django.apps import apps
+from django.contrib import auth
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
