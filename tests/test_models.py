@@ -1594,14 +1594,17 @@ class TestProxyDataSharingConsent(EmptyCacheMixin, TransactionTestCase):
         for attr, val in expected_attrs.items():
             assert getattr(proxy_dsc, attr) == val
 
+    @mock.patch('enterprise.api_client.discovery.CourseCatalogApiServiceClient')
     @ddt.data(True, False)
-    def test_consent_exists_proxy_enrollment(self, user_exists):
+    def test_consent_exists_proxy_enrollment(self, user_exists, mock_catalog_api_class):
         """
         If we did proxy enrollment, we return ``True`` for the consent existence question.
         """
+        mock_catalog_api_class = mock_catalog_api_class.return_value
         if user_exists:
             factories.UserFactory(id=1)
         ece = factories.EnterpriseCourseEnrollmentFactory(enterprise_customer_user__user_id=1)
+        mock_catalog_api_class.get_course_id.return_value = ece.course_id
         consent_exists = get_data_sharing_consent(
             ece.enterprise_customer_user.username,
             ece.enterprise_customer_user.enterprise_customer.uuid,
