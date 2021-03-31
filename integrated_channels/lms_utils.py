@@ -9,6 +9,11 @@ try:
 except ImportError:
     get_certificate_for_user = None
 
+try:
+    from lms.djangoapps.grades.course_grade_factory import CourseGradeFactory
+except ImportError:
+    CourseGradeFactory = None
+
 
 def get_course_certificate(course_id, username):
     """
@@ -32,3 +37,19 @@ def get_course_certificate(course_id, username):
     course_key = CourseKey.from_string(course_id)
     user_cert = get_certificate_for_user(username=username, course_key=course_key)
     return user_cert
+
+
+def get_single_user_grade(course_id, grade_user):
+    """
+    Returns a grade for the user object corresponding to the provided user
+    Args:
+        course_key (CourseLocator): The course to retrieve user grades for.
+
+    Returns:
+        A serializable list of grade responses
+    """
+    if not CourseGradeFactory:
+        return None
+    course_key = CourseKey.from_string(course_id)
+    course_grade = CourseGradeFactory().read(grade_user, course_key=course_key)
+    return course_grade

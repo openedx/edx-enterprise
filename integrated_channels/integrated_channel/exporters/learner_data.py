@@ -20,7 +20,7 @@ from consent.models import DataSharingConsent
 from enterprise.api_client.lms import CourseApiClient, GradesApiClient
 from enterprise.models import EnterpriseCourseEnrollment
 from integrated_channels.integrated_channel.exporters import Exporter
-from integrated_channels.lms_utils import get_course_certificate
+from integrated_channels.lms_utils import get_course_certificate, get_single_user_grade
 from integrated_channels.utils import generate_formatted_log, is_already_transmitted, parse_datetime_to_epoch_millis
 
 LOGGER = getLogger(__name__)
@@ -674,39 +674,24 @@ class LearnerExporter(Exporter):
             course_details (dict): the course details for the course in the enterprise enrollment record.
 
         Returns:
-            completed_date: Date the course was completed, this is None if course has not been completed.
+            completed_date: Date the course was completed, None if course has not been completed.
             grade: Current grade in the course.
             is_passing: Boolean indicating if the grade is a passing grade or not.
+            percent_grade: a number between 0 and 100
         """
-        if self.grades_api is None:
-            self.grades_api = GradesApiClient(self.user)
 
         course_id = enterprise_enrollment.course_id
         username = enterprise_enrollment.enterprise_customer_user.user.username
+        user_id = enterprise_enrollment.enterprise_customer_user.user_id
 
-        try:
-            grades_data = self.grades_api.get_course_grade(course_id, username)
+        grades_data = get_single_user_grade(course_id, username)
 
-        except HttpNotFoundError as error:
-            # Grade not found, so we have nothing to report.
-            if hasattr(error, 'response'):
-                response_content = error.response.json()  # pylint: disable=no-member
-                if response_content.get('error_code', '') == 'user_not_enrolled':
-                    # This means the user has an enterprise enrollment record but is not enrolled in the course yet
-                    LOGGER.info(
-                        '[Integrated Channel] User is not enrolled in the course.'
-                        ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment},'
-                        ' Username: {username}'.format(
-                            course_id=course_id,
-                            username=username,
-                            enterprise_enrollment=enterprise_enrollment.pk))
-                    return None, None, None, None
-
+        if grades_data is None:
             LOGGER.error('[Integrated Channel] Grades data not found.'
                          ' Course: {course_id}, EnterpriseEnrollment: {enterprise_enrollment},'
-                         ' Username: {username}'.format(
+                         ' Userid: {user_id}'.format(
                              course_id=course_id,
-                             username=username,
+                             user_id=user_id,
                              enterprise_enrollment=enterprise_enrollment.pk))
             return None, None, None, None
 
